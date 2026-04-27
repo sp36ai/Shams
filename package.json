@@ -65,9 +65,11 @@
   "jest": {
     "preset": "react-native",
     "transformIgnorePatterns": [
-      "node_modules/(?!(jest-)?react-native|@react-native|@react-navigation)"
+      "node_modules/(?!(jest-)?react-native|@react-native|@react-navigation|react-native-mmkv|react-native-reanimated|react-native-svg)"
     ],
-    "setupFilesAfterEach": [],
+    "moduleNameMapper": {
+      "react-native-mmkv": "<rootDir>/__mocks__/react-native-mmkv.js"
+    },
     "moduleFileExtensions": [
       "ts",
       "tsx",
