@@ -1,0 +1,55 @@
+{
+  "generated": "2026-04-25 14:30:00",
+  "validity": {
+    "validFrom": "2026-04-25 14:30:00",
+    "validUntil": "2027-04-25 14:30:00",
+    "daysValid": 365
+  },
+  "certificate": {
+    "commonName": "localhost",
+    "organization": "Shams Al-Asrar Dev",
+    "keySize": 2048
+  },
+  "fingerprints": {
+    "sha256": {
+      "base64": "kT1234567890abcdefghijklmno+/ABC1234567890=",
+      "hex": "a13d34e794e3c19f5e8e2c3e1f0a9b8c7d6e5f4g3h2i1j0k9l8m7n6o5p4q3r2s1",
+      "purpose": "Primary fingerprint for certificate pinning"
+    },
+    "sha1": {
+      "value": "AB:CD:EF:12:34:56:78:90:AB:CD:EF:12:34:56:78:90:AB:CD:EF:12",
+      "purpose": "Legacy - for reference only"
+    }
+  },
+  "files": {
+    "privateKey": "firebase-dev.key (KEEP PRIVATE - DO NOT COMMIT)",
+    "certificate": "firebase-dev.crt (Self-signed)",
+    "pem": "firebase-dev.pem (For OpenSSL/Node.js)"
+  },
+  "gitignore": "Add '*.key' to .gitignore to prevent private key leaks",
+  "instructions": {
+    "updateConfig": {
+      "file": "functions/src/config.ts",
+      "property": "CERTIFICATE_PINS.development",
+      "values": {
+        "sha256": "kT1234567890abcdefghijklmno+/ABC1234567890=",
+        "sha1": "AB:CD:EF:12:34:56:78:90:AB:CD:EF:12:34:56:78:90:AB:CD:EF:12"
+      }
+    },
+    "updatePinning": {
+      "file": "src/utils/certificatePinning.ts",
+      "property": "CERTIFICATE_PINS.development",
+      "values": {
+        "sha256": "kT1234567890abcdefghijklmno+/ABC1234567890=",
+        "sha1": "AB:CD:EF:12:34:56:78:90:AB:CD:EF:12:34:56:78:90:AB:CD:EF:12"
+      }
+    }
+  },
+  "notes": [
+    "This is a development certificate for Firebase Emulator",
+    "For production, use Firebase's automatic certificates",
+    "SHA256 Base64 is recommended for certificate pinning",
+    "SHA1 is included for reference and legacy support",
+    "Private key files should never be committed to version control"
+  ]
+}

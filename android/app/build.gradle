@@ -1,0 +1,139 @@
+apply plugin: "com.android.application"
+apply plugin: "org.jetbrains.kotlin.android"
+apply plugin: "com.facebook.react"
+apply plugin: "com.google.gms.google-services"
+
+/**
+ * Shams al-Asrār — Android app module
+ * RN 0.74.x, Hermes ON, New Arch OFF, minSdk 24, targetSdk 34
+ */
+
+react {
+    // RN 0.74 — autolinking is applied via native_modules.gradle at the bottom of this file
+}
+
+/**
+ * Set this to true to Run Proguard on Release builds to minify the Java bytecode.
+ */
+def enableProguardInReleaseBuilds = true
+
+/**
+ * The preferred build flavor of JavaScriptCore (JSC).
+ * Hermes is enabled, so JSC is unused — keep default.
+ */
+def jscFlavor = 'org.webkit:android-jsc:+'
+
+android {
+    ndkVersion rootProject.ext.ndkVersion
+    buildToolsVersion rootProject.ext.buildToolsVersion
+    compileSdk rootProject.ext.compileSdkVersion
+
+    namespace "com.astrosarfaraz.shamsalasrar"
+
+    defaultConfig {
+        applicationId "com.astrosarfaraz.shamsalasrar"
+        minSdkVersion rootProject.ext.minSdkVersion
+        targetSdkVersion rootProject.ext.targetSdkVersion
+        versionCode 1
+        versionName "0.1.0"
+
+        // Reduce APK by stripping unused locales (we only ship en, ur, hi)
+        resourceConfigurations += ["en", "ur", "hi"]
+    }
+
+    splits {
+        abi {
+            reset()
+            enable false   // App Bundle handles per-ABI delivery in production
+            universalApk false
+            include "armeabi-v7a", "arm64-v8a", "x86", "x86_64"
+        }
+    }
+
+    signingConfigs {
+        debug {
+            storeFile file('debug.keystore')
+            storePassword 'android'
+            keyAlias 'androiddebugkey'
+            keyPassword 'android'
+        }
+        // Release signing — populate ~/.gradle/gradle.properties (NOT this file)
+        // with: SHAMS_UPLOAD_STORE_FILE, SHAMS_UPLOAD_STORE_PASSWORD,
+        //       SHAMS_UPLOAD_KEY_ALIAS, SHAMS_UPLOAD_KEY_PASSWORD
+        // Phase 5 will generate the keystore.
+        release {
+            if (project.hasProperty('SHAMS_UPLOAD_STORE_FILE')) {
+                storeFile file(SHAMS_UPLOAD_STORE_FILE)
+                storePassword SHAMS_UPLOAD_STORE_PASSWORD
+                keyAlias SHAMS_UPLOAD_KEY_ALIAS
+                keyPassword SHAMS_UPLOAD_KEY_PASSWORD
+            }
+        }
+    }
+
+    buildTypes {
+        debug {
+            signingConfig signingConfigs.debug
+            applicationIdSuffix ".debug"
+            versionNameSuffix "-debug"
+        }
+        release {
+            signingConfig project.hasProperty('SHAMS_UPLOAD_STORE_FILE') ? signingConfigs.release : signingConfigs.debug
+            minifyEnabled true
+            shrinkResources true
+            // proguard-android-optimize.txt enables more aggressive optimisation
+            // than the default proguard-android.txt (inlines, removes dead code).
+            proguardFiles getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro"
+
+            // Hard security: no debuggable release APKs — ever.
+            debuggable false
+
+            // Disable JS source-map bundling in release so no readable
+            // source ever lands on the device filesystem.
+            // (Metro's --sourcemap-output flag is not invoked in release
+            //  Gradle builds by default; this is a belt-and-suspenders guard.)
+            resValue "bool", "is_release_build", "true"
+        }
+    }
+
+    packagingOptions {
+        jniLibs {
+            useLegacyPackaging false
+            // Swiss Ephemeris WASM (Phase 2) ships as asset, not jniLib — no rules needed yet
+        }
+        resources {
+            excludes += [
+                'META-INF/DEPENDENCIES',
+                'META-INF/LICENSE',
+                'META-INF/LICENSE.txt',
+                'META-INF/NOTICE',
+                'META-INF/NOTICE.txt',
+                'META-INF/*.kotlin_module',
+            ]
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    kotlinOptions {
+        jvmTarget = "17"
+    }
+}
+
+dependencies {
+    implementation("com.facebook.react:react-android")
+    implementation("androidx.core:core-ktx:1.13.1")
+    implementation("androidx.swiperefreshlayout:swiperefreshlayout:1.1.0")
+    implementation("androidx.appcompat:appcompat:1.7.0")
+
+    if (hermesEnabled.toBoolean()) {
+        implementation("com.facebook.react:hermes-android")
+    } else {
+        implementation jscFlavor
+    }
+}
+
+apply from: file("../../node_modules/@react-native-community/cli-platform-android/native_modules.gradle"); applyNativeModulesAppBuildGradle(project)

@@ -1,0 +1,27 @@
+{
+  "name": "shams-al-asrar-functions",
+  "description": "Firebase Cloud Functions — Shams al-Asrar RKP engine (server-side)",
+  "main": "lib/index.js",
+  "scripts": {
+    "sync-engine": "node scripts/sync-engine.mjs",
+    "build": "npm run sync-engine && tsc",
+    "build:watch": "tsc --watch",
+    "serve": "npm run build && firebase emulators:start --only functions,firestore",
+    "deploy": "firebase deploy --only functions,firestore",
+    "logs": "firebase functions:log",
+    "lint": "eslint 'src/**/*.ts'",
+    "test": "jest --passWithNoTests"
+  },
+  "engines": {
+    "node": "20"
+  },
+  "dependencies": {
+    "firebase-admin": "^12.0.0",
+    "firebase-functions": "^5.0.0",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0"
+  }
+}

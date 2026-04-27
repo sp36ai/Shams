@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Release network security policy — Shams al-Asrār
+  ─────────────────────────────────────────────────
+  Guarantees:
+    1. No cleartext (HTTP) traffic — HTTPS only.
+    2. User-installed CAs are NOT trusted. This blocks MITM proxy attacks
+       (Burp Suite, Charles, mitmproxy) even if the attacker installs their
+       own root CA on the device. Only factory-installed system CAs accepted.
+    3. Certificate pinning scaffold for Supabase is in the commented block
+       below. Activate in Phase 5 after obtaining SHA-256 fingerprints from
+       the production cert and its backup.
+
+  Debug builds use debug/res/xml/network_security_config.xml which re-allows
+  localhost (Metro bundler) and developer-installed CAs.
+-->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="false">
+        <trust-anchors>
+            <!-- System (factory) CAs only — user-installed CAs NOT trusted -->
+            <certificates src="system" />
+        </trust-anchors>
+    </base-config>
+
+    <!--
+    PHASE 5 — Certificate pinning for Supabase.
+    Replace placeholders with real SHA-256 DER fingerprints.
+    Run: openssl s_client -connect <host>:443 2>/dev/null | \
+           openssl x509 -pubkey -noout | openssl pkey -pubin -outform der | \
+           openssl dgst -sha256 -binary | base64
+
+    <domain-config cleartextTrafficPermitted="false">
+        <domain includeSubdomains="true">YOUR_PROJECT.supabase.co</domain>
+        <pin-set expiration="2026-12-31">
+            <pin digest="SHA-256">LEAF_CERT_PIN_BASE64==</pin>
+            <pin digest="SHA-256">BACKUP_PIN_BASE64==</pin>
+        </pin-set>
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </domain-config>
+    -->
+</network-security-config>

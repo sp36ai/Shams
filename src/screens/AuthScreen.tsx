@@ -1,0 +1,556 @@
+/**
+ * AuthScreen — sign in / sign up with email + password.
+ * --------------------------------------------------------------------------
+ * Two tabs: Sign In | Create Account.
+ * Validates locally before calling Firebase Auth so the user gets instant
+ * feedback without burning a network round-trip on obvious typos.
+ *
+ * Security:
+ *   - Password is never stored, only passed directly to auth().
+ *   - secureTextEntry hides the password field from device screenshot APIs.
+ *   - Error messages are normalised — Firebase error codes are mapped to
+ *     app strings so internal error details are never leaked to the UI.
+ */
+
+import React, { useCallback, useEffect, useReducer, useRef, useState } from 'react';
+import {
+  ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+
+import { useColors, useTheme } from '@theme/ThemeProvider';
+import { useTypography } from '@theme/useTypography';
+import { useTranslation } from '@i18n/I18nProvider';
+import { useAuthStore } from '@stores/authStore';
+
+/* -------------------------------------------------------------------------- */
+/*  Form state machine                                                        */
+/* -------------------------------------------------------------------------- */
+
+type Tab = 'signIn' | 'signUp';
+
+interface FormState {
+  tab: Tab;
+  email: string;
+  password: string;
+  confirmPassword: string;
+  name: string;
+  showPassword: boolean;
+  emailError: string;
+  passwordError: string;
+  confirmError: string;
+  nameError: string;
+}
+
+type FormAction =
+  | { type: 'SET_TAB'; tab: Tab }
+  | { type: 'SET_EMAIL'; value: string }
+  | { type: 'SET_PASSWORD'; value: string }
+  | { type: 'SET_CONFIRM'; value: string }
+  | { type: 'SET_NAME'; value: string }
+  | { type: 'TOGGLE_SHOW_PASSWORD' }
+  | {
+      type: 'SET_ERRORS';
+      emailError?: string;
+      passwordError?: string;
+      confirmError?: string;
+      nameError?: string;
+    }
+  | { type: 'CLEAR_ERRORS' };
+
+const initialForm: FormState = {
+  tab: 'signIn',
+  email: '',
+  password: '',
+  confirmPassword: '',
+  name: '',
+  showPassword: false,
+  emailError: '',
+  passwordError: '',
+  confirmError: '',
+  nameError: '',
+};
+
+function formReducer(state: FormState, action: FormAction): FormState {
+  switch (action.type) {
+    case 'SET_TAB':
+      return { ...initialForm, tab: action.tab };
+    case 'SET_EMAIL':
+      return { ...state, email: action.value, emailError: '' };
+    case 'SET_PASSWORD':
+      return { ...state, password: action.value, passwordError: '' };
+    case 'SET_CONFIRM':
+      return { ...state, confirmPassword: action.value, confirmError: '' };
+    case 'SET_NAME':
+      return { ...state, name: action.value, nameError: '' };
+    case 'TOGGLE_SHOW_PASSWORD':
+      return { ...state, showPassword: !state.showPassword };
+    case 'SET_ERRORS':
+      return {
+        ...state,
+        emailError: action.emailError ?? state.emailError,
+        passwordError: action.passwordError ?? state.passwordError,
+        confirmError: action.confirmError ?? state.confirmError,
+        nameError: action.nameError ?? state.nameError,
+      };
+    case 'CLEAR_ERRORS':
+      return { ...state, emailError: '', passwordError: '', confirmError: '', nameError: '' };
+    default:
+      return state;
+  }
+}
+
+/* -------------------------------------------------------------------------- */
+/*  Validation                                                                */
+/* -------------------------------------------------------------------------- */
+
+function isValidEmail(email: string): boolean {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
+}
+
+/* -------------------------------------------------------------------------- */
+/*  Screen                                                                    */
+/* -------------------------------------------------------------------------- */
+
+const AuthScreen: React.FC = () => {
+  const { theme } = useTheme();
+  const colors = useColors();
+  const typography = useTypography();
+  const t = useTranslation();
+
+  const isLoading = useAuthStore(s => s.isLoading);
+  const authError = useAuthStore(s => s.error);
+  const signIn = useAuthStore(s => s.signIn);
+  const signUp = useAuthStore(s => s.signUp);
+  const clearError = useAuthStore(s => s.clearError);
+
+  const [form, dispatch] = useReducer(formReducer, initialForm);
+  const [serverError, setServerError] = useState('');
+
+  const passwordRef = useRef<TextInput>(null);
+  const confirmRef = useRef<TextInput>(null);
+
+  // Sync Firebase Auth error into local display state
+  useEffect(() => {
+    if (authError !== null && authError !== '') {
+      setServerError(normaliseAuthError(authError, t));
+    } else {
+      setServerError('');
+    }
+  }, [authError, t]);
+
+  const handleSubmit = useCallback(async () => {
+    dispatch({ type: 'CLEAR_ERRORS' });
+    setServerError('');
+    clearError();
+
+    // ── Local validation ──────────────────────────────────────────────
+    let valid = true;
+    if (!isValidEmail(form.email)) {
+      dispatch({ type: 'SET_ERRORS', emailError: t('auth.invalidEmail') });
+      valid = false;
+    }
+    if (form.password.length < 8) {
+      dispatch({ type: 'SET_ERRORS', passwordError: t('auth.weakPassword') });
+      valid = false;
+    }
+    if (form.tab === 'signUp') {
+      if (form.password !== form.confirmPassword) {
+        dispatch({ type: 'SET_ERRORS', confirmError: t('auth.passwordMismatch') });
+        valid = false;
+      }
+      if (form.name.trim().length === 0) {
+        dispatch({ type: 'SET_ERRORS', nameError: t('auth.nameRequired') });
+        valid = false;
+      }
+    }
+    if (!valid) {
+      return;
+    }
+
+    // ── Network call ──────────────────────────────────────────────────
+    if (form.tab === 'signIn') {
+      await signIn(form.email.trim(), form.password);
+    } else {
+      await signUp(form.email.trim(), form.password, form.name.trim());
+    }
+  }, [form, t, clearError, signIn, signUp]);
+
+  const isSignUp = form.tab === 'signUp';
+  const submitLabel = isSignUp ? t('auth.signUp') : t('auth.signIn');
+
+  return (
+    <SafeAreaView style={[styles.root, { backgroundColor: theme.colors.bg }]}>
+      <KeyboardAvoidingView
+        style={styles.flex}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 24}
+      >
+        <ScrollView
+          contentContainerStyle={styles.scroll}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        >
+          {/* App wordmark */}
+          <View style={styles.brand}>
+            <Text style={[typography('title'), { color: colors.accent, textAlign: 'center' }]}>
+              Shams al-Asrār
+            </Text>
+            <Text
+              style={[
+                typography('caption'),
+                { color: colors.textMuted, textAlign: 'center', marginTop: 4 },
+              ]}
+            >
+              RKP Horary Oracle
+            </Text>
+          </View>
+
+          {/* Tab row */}
+          <View style={[styles.tabRow, { borderColor: colors.border }]}>
+            <TabButton
+              label={t('auth.signInTab')}
+              active={form.tab === 'signIn'}
+              onPress={() => dispatch({ type: 'SET_TAB', tab: 'signIn' })}
+              colors={colors}
+              typography={typography}
+            />
+            <TabButton
+              label={t('auth.signUpTab')}
+              active={form.tab === 'signUp'}
+              onPress={() => dispatch({ type: 'SET_TAB', tab: 'signUp' })}
+              colors={colors}
+              typography={typography}
+            />
+          </View>
+
+          {/* Form */}
+          <View style={styles.form}>
+            {isSignUp && (
+              <Field
+                label={t('auth.name')}
+                value={form.name}
+                error={form.nameError}
+                autoCapitalize="words"
+                returnKeyType="next"
+                onChangeText={v => dispatch({ type: 'SET_NAME', value: v })}
+                onSubmitEditing={() => passwordRef.current?.focus()}
+                colors={colors}
+                typography={typography}
+              />
+            )}
+
+            <Field
+              label={t('auth.email')}
+              value={form.email}
+              error={form.emailError}
+              keyboardType="email-address"
+              autoCapitalize="none"
+              autoComplete="email"
+              returnKeyType="next"
+              onChangeText={v => dispatch({ type: 'SET_EMAIL', value: v })}
+              onSubmitEditing={() => passwordRef.current?.focus()}
+              colors={colors}
+              typography={typography}
+            />
+
+            <Field
+              ref={passwordRef}
+              label={t('auth.password')}
+              value={form.password}
+              error={form.passwordError}
+              secureTextEntry={!form.showPassword}
+              autoComplete={isSignUp ? 'new-password' : 'current-password'}
+              returnKeyType={isSignUp ? 'next' : 'done'}
+              onChangeText={v => dispatch({ type: 'SET_PASSWORD', value: v })}
+              onSubmitEditing={() => (isSignUp ? confirmRef.current?.focus() : void handleSubmit())}
+              rightLabel={form.showPassword ? t('auth.hidePassword') : t('auth.showPassword')}
+              onRightPress={() => dispatch({ type: 'TOGGLE_SHOW_PASSWORD' })}
+              colors={colors}
+              typography={typography}
+            />
+
+            {isSignUp && (
+              <Field
+                ref={confirmRef}
+                label={t('auth.confirmPassword')}
+                value={form.confirmPassword}
+                error={form.confirmError}
+                secureTextEntry={!form.showPassword}
+                autoComplete="new-password"
+                returnKeyType="done"
+                onChangeText={v => dispatch({ type: 'SET_CONFIRM', value: v })}
+                onSubmitEditing={() => void handleSubmit()}
+                colors={colors}
+                typography={typography}
+              />
+            )}
+
+            {serverError.length > 0 && (
+              <View style={[styles.serverError, { borderColor: colors.negative }]}>
+                <Text style={[typography('caption'), { color: colors.negative }]}>
+                  {serverError}
+                </Text>
+              </View>
+            )}
+
+            <Pressable
+              onPress={() => void handleSubmit()}
+              disabled={isLoading}
+              style={({ pressed }) => [
+                styles.submitBtn,
+                { backgroundColor: isLoading ? colors.surfaceElevated : colors.primary },
+                pressed && { opacity: 0.85 },
+              ]}
+              accessibilityRole="button"
+              accessibilityLabel={submitLabel}
+            >
+              {isLoading ? (
+                <ActivityIndicator color={colors.textOnPrimary} />
+              ) : (
+                <Text style={[typography('button'), { color: colors.textOnPrimary }]}>
+                  {submitLabel}
+                </Text>
+              )}
+            </Pressable>
+          </View>
+
+          {/* Terms notice */}
+          <Text
+            style={[
+              typography('caption'),
+              {
+                color: colors.textFaint,
+                textAlign: 'center',
+                marginTop: 16,
+                paddingHorizontal: 32,
+              },
+            ]}
+          >
+            {t('auth.termsNotice')}{' '}
+            <Text style={{ color: colors.accent }}>{t('auth.privacyLink')}</Text>
+            {' & '}
+            <Text style={{ color: colors.accent }}>{t('auth.termsLink')}</Text>
+          </Text>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
+  );
+};
+
+/* -------------------------------------------------------------------------- */
+/*  Sub-components                                                            */
+/* -------------------------------------------------------------------------- */
+
+interface TabButtonProps {
+  label: string;
+  active: boolean;
+  onPress: () => void;
+  colors: ReturnType<typeof useColors>;
+  typography: ReturnType<typeof useTypography>;
+}
+
+const TabButton: React.FC<TabButtonProps> = ({ label, active, onPress, colors, typography }) => (
+  <Pressable
+    onPress={onPress}
+    style={[styles.tabBtn, active && { borderBottomColor: colors.accent, borderBottomWidth: 2 }]}
+    accessibilityRole="tab"
+    accessibilityState={{ selected: active }}
+  >
+    <Text style={[typography('label'), { color: active ? colors.accent : colors.textMuted }]}>
+      {label}
+    </Text>
+  </Pressable>
+);
+
+interface FieldProps {
+  label: string;
+  value: string;
+  error: string;
+  onChangeText: (v: string) => void;
+  onSubmitEditing?: () => void;
+  secureTextEntry?: boolean;
+  keyboardType?: 'default' | 'email-address';
+  autoCapitalize?: 'none' | 'words' | 'sentences';
+  autoComplete?: 'email' | 'current-password' | 'new-password' | 'name' | 'off';
+  returnKeyType?: 'next' | 'done';
+  rightLabel?: string;
+  onRightPress?: () => void;
+  colors: ReturnType<typeof useColors>;
+  typography: ReturnType<typeof useTypography>;
+}
+
+const Field = React.forwardRef<TextInput, FieldProps>(
+  (
+    {
+      label,
+      value,
+      error,
+      onChangeText,
+      onSubmitEditing,
+      secureTextEntry = false,
+      keyboardType = 'default',
+      autoCapitalize = 'sentences',
+      autoComplete = 'off',
+      returnKeyType = 'next',
+      rightLabel,
+      onRightPress,
+      colors,
+      typography,
+    },
+    ref,
+  ) => (
+    <View style={styles.fieldWrap}>
+      <Text style={[typography('label'), { color: colors.textMuted, marginBottom: 6 }]}>
+        {label}
+      </Text>
+      <View
+        style={[
+          styles.inputRow,
+          {
+            borderColor: error ? colors.negative : colors.border,
+            backgroundColor: colors.surface,
+          },
+        ]}
+      >
+        <TextInput
+          ref={ref}
+          value={value}
+          onChangeText={onChangeText}
+          onSubmitEditing={onSubmitEditing}
+          secureTextEntry={secureTextEntry}
+          keyboardType={keyboardType}
+          autoCapitalize={autoCapitalize}
+          autoComplete={autoComplete}
+          returnKeyType={returnKeyType}
+          style={[styles.input, typography('body'), { color: colors.text, flex: 1 }]}
+          placeholderTextColor={colors.textFaint}
+          underlineColorAndroid="transparent"
+          blurOnSubmit={returnKeyType === 'done'}
+        />
+        {rightLabel !== undefined && (
+          <Pressable onPress={onRightPress} style={styles.fieldRight} hitSlop={8}>
+            <Text style={[typography('caption'), { color: colors.textMuted }]}>{rightLabel}</Text>
+          </Pressable>
+        )}
+      </View>
+      {error.length > 0 && (
+        <Text style={[typography('caption'), { color: colors.negative, marginTop: 4 }]}>
+          {error}
+        </Text>
+      )}
+    </View>
+  ),
+);
+
+/* -------------------------------------------------------------------------- */
+/*  Error normalisation                                                       */
+/* -------------------------------------------------------------------------- */
+
+function normaliseAuthError(raw: string, t: ReturnType<typeof useTranslation>): string {
+  // Firebase Auth embeds the error code in the message: [firebase_auth/code]
+  const lower = raw.toLowerCase();
+
+  // Sign-in failures
+  if (
+    lower.includes('wrong-password') ||
+    lower.includes('user-not-found') ||
+    lower.includes('invalid-credential') ||
+    lower.includes('invalid-email') ||
+    lower.includes('user-disabled')
+  ) {
+    return t('errors.signInFailed');
+  }
+
+  // Sign-up failures
+  if (lower.includes('email-already-in-use') || lower.includes('operation-not-allowed')) {
+    return t('errors.signUpFailed');
+  }
+
+  // Network / connectivity
+  if (
+    lower.includes('network-request-failed') ||
+    lower.includes('network') ||
+    lower.includes('fetch')
+  ) {
+    return t('errors.network');
+  }
+
+  // Generic fallback — do NOT leak raw Firebase error detail to production UI
+  if (!__DEV__) {
+    return t('errors.unknown');
+  }
+  return raw;
+}
+
+/* -------------------------------------------------------------------------- */
+/*  Styles                                                                    */
+/* -------------------------------------------------------------------------- */
+
+const styles = StyleSheet.create({
+  root: { flex: 1 },
+  flex: { flex: 1 },
+  scroll: {
+    flexGrow: 1,
+    paddingHorizontal: 24,
+    paddingBottom: 40,
+    justifyContent: 'center',
+  },
+  brand: {
+    marginBottom: 32,
+    marginTop: 16,
+    alignItems: 'center',
+  },
+  tabRow: {
+    flexDirection: 'row',
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    marginBottom: 24,
+  },
+  tabBtn: {
+    flex: 1,
+    alignItems: 'center',
+    paddingBottom: 10,
+  },
+  form: {
+    gap: 16,
+  },
+  fieldWrap: {
+    gap: 0,
+  },
+  inputRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: StyleSheet.hairlineWidth,
+    borderRadius: 10,
+    paddingHorizontal: 14,
+    minHeight: 50,
+  },
+  input: {
+    paddingVertical: 12,
+  },
+  fieldRight: {
+    paddingLeft: 8,
+  },
+  serverError: {
+    borderWidth: StyleSheet.hairlineWidth,
+    borderRadius: 8,
+    padding: 12,
+  },
+  submitBtn: {
+    height: 52,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 4,
+  },
+});
+
+export default AuthScreen;

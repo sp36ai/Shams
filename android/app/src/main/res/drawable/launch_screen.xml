@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Native splash drawable — shown by Android BEFORE the JS bundle is parsed.
+  Pure XML (no PNG dependency) so first-paint is instant.
+  The JS-side SplashScreen.tsx (animated mandala) takes over on first JS frame.
+-->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:drawable="@color/oracle_bg" />
+    <item>
+        <shape android:shape="oval">
+            <gradient
+                android:type="radial"
+                android:gradientRadius="600"
+                android:startColor="#1A0FA89A"
+                android:endColor="#00030E10"
+                android:centerX="0.5"
+                android:centerY="0.5" />
+        </shape>
+    </item>
+</layer-list>

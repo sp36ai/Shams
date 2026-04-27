@@ -1,0 +1,7 @@
+<resources>
+    <!-- Brand color anchors — kept in sync with src/theme/themes.ts (Teal default) -->
+    <color name="oracle_bg">#030E10</color>
+    <color name="oracle_accent">#14D4C4</color>
+    <color name="oracle_primary">#0FA89A</color>
+    <color name="oracle_amber">#B8952A</color>
+</resources>

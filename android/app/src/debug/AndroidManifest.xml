@@ -1,0 +1,17 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <!--
+      Debug-only overlay manifest.
+      - Allows cleartext traffic to localhost for the Metro bundler dev server.
+      - Adds RN devtools / Flipper-friendly flags via cleartextTraffic=true.
+      Production manifest stays HTTPS-only.
+    -->
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+
+    <application
+        android:usesCleartextTraffic="true"
+        android:networkSecurityConfig="@xml/network_security_config_debug"
+        tools:ignore="GoogleAppIndexingWarning"
+        tools:replace="android:usesCleartextTraffic,android:networkSecurityConfig" />
+</manifest>

@@ -1,0 +1,1029 @@
+/**
+ * OracleScreen — primary RKP question surface.
+ *
+ * New in this version:
+ *   - Context-sensitive quick-reply chips (initial / followup sets)
+ *   - Followup conversation handler (timing / why / remedy / new question)
+ *   - Enhanced VerdictCard: timing window, remedy, chart data strip
+ *   - Animated StarfieldBackground
+ */
+
+import React, { useCallback, useMemo, useRef, useState } from 'react';
+import {
+  ActivityIndicator,
+  FlatList,
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import type { RootStackParamList } from '@navigation/types';
+
+import { useColors, useTheme } from '@theme/ThemeProvider';
+import { useTypography } from '@theme/useTypography';
+import { useTranslation, useI18n } from '@i18n/I18nProvider';
+import { useReadingsStore, type Reading } from '@stores/readingsStore';
+import { useSettingsStore } from '@stores/settingsStore';
+import { useQuotaStore, selectQuestionsLeft, FREE_LIMIT } from '@stores/quotaStore';
+import { classifyQuestion } from '@astrology/kp/rules/questionKeywords';
+import { buildChart } from '@astrology/primitives/chartBuilder';
+import { judgeHorary } from '@astrology/kp/judgment/judgeHorary';
+import StarfieldBackground from '@components/StarfieldBackground';
+
+// ── Types ─────────────────────────────────────────────────────────────────────
+
+type Sender = 'shams' | 'user';
+type ConvStage = 'ready' | 'answered';
+
+interface ChatMessage {
+  id: string;
+  sender: Sender;
+  text: string;
+  reading?: Reading;
+  isUpgradeCta?: boolean;
+  createdAt: string;
+}
+
+// ── Sign names ────────────────────────────────────────────────────────────────
+
+const SIGN_NAMES = [
+  'Aries',
+  'Taurus',
+  'Gemini',
+  'Cancer',
+  'Leo',
+  'Virgo',
+  'Libra',
+  'Scorpio',
+  'Sagittarius',
+  'Capricorn',
+  'Aquarius',
+  'Pisces',
+] as const;
+
+function signName(idx: number | undefined): string {
+  if (idx === undefined || idx < 1 || idx > 12) {
+    return '—';
+  }
+  return SIGN_NAMES[idx - 1] ?? '—';
+}
+
+// ── Verdict JSON shape helpers ────────────────────────────────────────────────
+
+interface VjTiming {
+  window?: 'days' | 'weeks' | 'months' | 'years';
+  range?: { min?: number; max?: number };
+  activeDasha?: string;
+  activeAntardasha?: string;
+  activePratyantardasha?: string;
+}
+
+interface VjRemedy {
+  planet?: string;
+  action?: string;
+  avoid?: string;
+  mantra?: string;
+  charity?: string;
+}
+
+interface VjShape {
+  confidence?: number;
+  timing?: VjTiming;
+  remedy?: VjRemedy;
+  moonSubLord?: { planet?: string; occupiedHouse?: number };
+  rulingPlanets?: { dayLord?: string; horaLord?: string; minuteLord?: string };
+}
+
+interface CjShape {
+  ascendant?: { sign?: number; degreeInSign?: number };
+  planets?: { Moon?: { sign?: number } };
+}
+
+function asVj(raw: unknown): VjShape | null {
+  if (typeof raw !== 'object' || raw === null) {
+    return null;
+  }
+  return raw as VjShape;
+}
+
+function asCj(raw: unknown): CjShape | null {
+  if (typeof raw !== 'object' || raw === null) {
+    return null;
+  }
+  return raw as CjShape;
+}
+
+// ── Chips per language ────────────────────────────────────────────────────────
+
+const INITIAL_CHIPS: Record<'en' | 'ur' | 'hi', readonly string[]> = {
+  en: [
+    'Will I succeed?',
+    'Career & livelihood',
+    'Marriage & love',
+    'Finance',
+    'Health',
+    'Travel',
+    'Legal matter',
+    'Lost item',
+  ],
+  ur: [
+    'کیا میں کامیاب ہوں گا؟',
+    'نوکری اور روزگار',
+    'شادی اور رشتہ',
+    'مالی معاملہ',
+    'صحت',
+    'سفر',
+    'قانونی تنازع',
+    'گمشدہ چیز',
+  ],
+  hi: [
+    'क्या मैं सफल होऊंगा?',
+    'करियर',
+    'विवाह और प्रेम',
+    'वित्त',
+    'स्वास्थ्य',
+    'यात्रा',
+    'कानूनी मामला',
+    'खोई वस्तु',
+  ],
+};
+
+const FOLLOWUP_CHIPS: Record<'en' | 'ur' | 'hi', readonly string[]> = {
+  en: ['When will it happen?', 'Why this verdict?', 'What remedy?', 'New question'],
+  ur: ['کب ہوگا؟', 'یہ فیصلہ کیوں؟', 'علاج کیا ہے؟', 'نیا سوال'],
+  hi: ['कब होगा?', 'यह निर्णय क्यों?', 'उपाय क्या है?', 'नया सवाल'],
+};
+
+// ── Followup intent detection ─────────────────────────────────────────────────
+
+type FollowupIntent = 'timing' | 'why' | 'remedy' | 'new' | 'none';
+
+function detectIntent(text: string): FollowupIntent {
+  const q = text.toLowerCase();
+  if (
+    q.includes('new') ||
+    q.includes('نیا') ||
+    q.includes('नया') ||
+    q.includes('another') ||
+    q.includes('again')
+  ) {
+    return 'new';
+  }
+  if (
+    q.includes('when') ||
+    q.includes('timing') ||
+    q.includes('how long') ||
+    q.includes('کب') ||
+    q.includes('وقت') ||
+    q.includes('कब') ||
+    q.includes('समय')
+  ) {
+    return 'timing';
+  }
+  if (
+    q.includes('why') ||
+    q.includes('reason') ||
+    q.includes('کیوں') ||
+    q.includes('क्यों') ||
+    q.includes('because')
+  ) {
+    return 'why';
+  }
+  if (
+    q.includes('remedy') ||
+    q.includes('علاج') ||
+    q.includes('उपाय') ||
+    q.includes('mantra') ||
+    q.includes('what should') ||
+    q.includes('what to do')
+  ) {
+    return 'remedy';
+  }
+  return 'none';
+}
+
+// ── Followup response builders ────────────────────────────────────────────────
+
+function timingResponse(reading: Reading, lang: 'en' | 'ur' | 'hi'): string {
+  const vj = asVj(reading.verdictJson);
+  const t = vj?.timing;
+  if (!t) {
+    return 'The timing data is not available for this reading.';
+  }
+  const max = t.range?.max ?? 1;
+  const win = t.window ?? 'weeks';
+  const md = t.activeDasha ?? '—';
+  const ad = t.activeAntardasha ?? '—';
+  const winLabel: Record<string, Record<'en' | 'ur' | 'hi', string>> = {
+    days: { en: 'days', ur: 'دن', hi: 'दिन' },
+    weeks: { en: 'weeks', ur: 'ہفتے', hi: 'सप्ताह' },
+    months: { en: 'months', ur: 'مہینے', hi: 'महीने' },
+    years: { en: 'years', ur: 'سال', hi: 'वर्ष' },
+  };
+  const wl = winLabel[win]?.[lang] ?? win;
+  if (lang === 'ur') {
+    return `حرکت **${max} ${wl}** کے اندر متوقع ہے۔\n\nفعال مہادشا: **${md}** · انتردشا: **${ad}**\n\nستارے وقت کی کھڑکیاں دیتے ہیں، تقرریاں نہیں۔`;
+  }
+  if (lang === 'hi') {
+    return `**${max} ${wl}** के भीतर प्रगति अपेक्षित है।\n\nसक्रिय महादशा: **${md}** · अंतर्दशा: **${ad}**\n\nतारे खिड़कियाँ देते हैं, नियुक्तियाँ नहीं।`;
+  }
+  return `Movement is expected within **${max} ${wl}**.\n\nActive Mahādashā: **${md}** · Antardashā: **${ad}**\n\nThe stars offer windows, not appointments.`;
+}
+
+function whyResponse(reading: Reading, lang: 'en' | 'ur' | 'hi'): string {
+  const vj = asVj(reading.verdictJson);
+  const msl = vj?.moonSubLord;
+  const planet = msl?.planet ?? '—';
+  const house = msl?.occupiedHouse ?? '—';
+  const conf = vj?.confidence ?? 0;
+  if (lang === 'ur') {
+    return `فیصلہ **چاند کے ذیلی مالک ${planet}** پر منحصر ہے جو گھر **${house}** میں ہے۔\n\nیقین: **${conf}%** · RKP کا پانچ مرحلہ الگورتھم استعمال کیا گیا۔`;
+  }
+  if (lang === 'hi') {
+    return `यह निर्णय **चंद्र के उप-स्वामी ${planet}** पर निर्भर है जो घर **${house}** में स्थित है।\n\nविश्वास: **${conf}%** · RKP पांच-चरण एल्गोरिदम।`;
+  }
+  return `The verdict rests on **Moon's Sub-Lord ${planet}**, which occupies house **${house}**.\n\nConfidence: **${conf}%** — derived from the RKP 5-step algorithm.`;
+}
+
+function remedyResponse(reading: Reading, lang: 'en' | 'ur' | 'hi'): string {
+  const vj = asVj(reading.verdictJson);
+  const r = vj?.remedy;
+  if (!r) {
+    return lang === 'ur'
+      ? 'اس پڑھائی کے لیے کوئی مخصوص علاج نہیں ملا۔'
+      : lang === 'hi'
+        ? 'इस पठन के लिए कोई विशिष्ट उपाय नहीं मिला।'
+        : 'No specific remedy found for this reading.';
+  }
+  const lines: string[] = [];
+  if (r.action) {
+    lines.push(`• ${r.action}`);
+  }
+  if (r.avoid) {
+    lines.push(
+      lang === 'ur'
+        ? `• پرہیز: ${r.avoid}`
+        : lang === 'hi'
+          ? `• परहेज: ${r.avoid}`
+          : `• Avoid: ${r.avoid}`,
+    );
+  }
+  if (r.mantra) {
+    lines.push(
+      lang === 'ur'
+        ? `• منتر: *${r.mantra}*`
+        : lang === 'hi'
+          ? `• मंत्र: *${r.mantra}*`
+          : `• Mantra: *${r.mantra}*`,
+    );
+  }
+  if (r.charity) {
+    lines.push(
+      lang === 'ur'
+        ? `• دان: ${r.charity}`
+        : lang === 'hi'
+          ? `• दान: ${r.charity}`
+          : `• Charity: ${r.charity}`,
+    );
+  }
+  const header =
+    lang === 'ur'
+      ? `**${r.planet ?? ''}** کے لیے علاج:`
+      : lang === 'hi'
+        ? `**${r.planet ?? ''}** के लिए उपाय:`
+        : `Remedy for **${r.planet ?? ''}**:`;
+  return `${header}\n\n${lines.join('\n')}`;
+}
+
+// ── Narration extraction ──────────────────────────────────────────────────────
+
+function narrationForReading(reading: Reading): string {
+  const verdictJson = reading.verdictJson as {
+    narration?: Partial<Record<'en' | 'ur' | 'hi', string>>;
+  };
+  const narration = verdictJson?.narration;
+  if (narration === undefined) {
+    return '';
+  }
+  return narration[reading.questionLang] ?? narration.en ?? '';
+}
+
+// ── Engine ────────────────────────────────────────────────────────────────────
+
+async function runEngine(args: {
+  question: string;
+  questionLang: 'en' | 'ur' | 'hi';
+  lat: number | null;
+  lon: number | null;
+  locationRequiredText: string;
+}): Promise<Reading> {
+  const now = new Date().toISOString();
+  const rawQType = classifyQuestion(args.question);
+
+  if (args.lat === null || args.lon === null) {
+    return {
+      id: `r_${now}`,
+      question: args.question,
+      questionLang: args.questionLang,
+      category: rawQType,
+      verdict: 'UNCLEAR',
+      createdAt: now,
+      chartJson: { phase: 'no-location', moment: now },
+      verdictJson: {
+        verdict: 'UNCLEAR',
+        confidence: 0,
+        reasoning: ['Location unavailable — cannot compute house cusps.'],
+        narration: {
+          en: args.locationRequiredText,
+          ur: args.locationRequiredText,
+          hi: args.locationRequiredText,
+        },
+      },
+    };
+  }
+
+  const classifiedQuestion = {
+    text: args.question,
+    lang: args.questionLang,
+    qType: rawQType,
+    confidence: rawQType === 'general' ? 0.5 : 1.0,
+    matchedKeywords: [] as string[],
+  };
+
+  const chart = buildChart(now, args.lat, args.lon);
+  const verdict = judgeHorary(chart, classifiedQuestion);
+
+  return {
+    id: verdict.id,
+    question: args.question,
+    questionLang: args.questionLang,
+    category: rawQType,
+    verdict: verdict.verdict,
+    createdAt: now,
+    chartJson: chart as unknown as Record<string, unknown>,
+    verdictJson: verdict as unknown as Record<string, unknown>,
+  };
+}
+
+// ── OracleScreen ──────────────────────────────────────────────────────────────
+
+const OracleScreen: React.FC = () => {
+  const { theme } = useTheme();
+  const colors = useColors();
+  const typography = useTypography();
+  const t = useTranslation();
+  const { lang } = useI18n();
+
+  const lastLocation = useSettingsStore(
+    (s: ReturnType<typeof useSettingsStore.getState>) => s.lastLocation,
+  );
+  const addReading = useReadingsStore(
+    (s: ReturnType<typeof useReadingsStore.getState>) => s.addReading,
+  );
+  const canAsk = useQuotaStore(s => s.canAsk());
+  const consumeOne = useQuotaStore(s => s.consumeOne);
+  const questionsLeft = useQuotaStore(selectQuestionsLeft);
+
+  const initialGreeting: ChatMessage = useMemo(
+    () => ({
+      id: 'greet',
+      sender: 'shams',
+      text: t('oracle.welcomeMessage'),
+      createdAt: new Date().toISOString(),
+    }),
+    [t],
+  );
+
+  const [messages, setMessages] = useState<ChatMessage[]>([initialGreeting]);
+  const [input, setInput] = useState('');
+  const [sending, setSending] = useState(false);
+  const [stage, setStage] = useState<ConvStage>('ready');
+  const [lastReading, setLastReading] = useState<Reading | null>(null);
+  const listRef = useRef<FlatList<ChatMessage> | null>(null);
+
+  // Active chips depend on conversation stage
+  const activeChips: readonly string[] =
+    stage === 'answered'
+      ? (FOLLOWUP_CHIPS[lang] ?? FOLLOWUP_CHIPS.en)
+      : (INITIAL_CHIPS[lang] ?? INITIAL_CHIPS.en);
+
+  // ── Core send logic ─────────────────────────────────────────────────────────
+
+  const sendMessage = useCallback(
+    async (text: string) => {
+      if (!text || sending) {
+        return;
+      }
+
+      // Followup path — free, no quota
+      if (stage === 'answered' && lastReading !== null) {
+        const intent = detectIntent(text);
+
+        if (intent === 'new') {
+          // Reset to ready; let new question fall through to engine below
+          setStage('ready');
+          setLastReading(null);
+          // Fall through to engine run below
+        } else if (intent !== 'none') {
+          const userMsg: ChatMessage = {
+            id: `u_${Date.now()}`,
+            sender: 'user',
+            text,
+            createdAt: new Date().toISOString(),
+          };
+          setMessages(prev => [userMsg, ...prev]);
+
+          setSending(true);
+          await new Promise<void>(resolve => setTimeout(() => resolve(), 700));
+
+          let responseText = '';
+          if (intent === 'timing') {
+            responseText = timingResponse(lastReading, lang);
+          } else if (intent === 'why') {
+            responseText = whyResponse(lastReading, lang);
+          } else if (intent === 'remedy') {
+            responseText = remedyResponse(lastReading, lang);
+          }
+
+          const shamsMsg: ChatMessage = {
+            id: `s_fu_${Date.now()}`,
+            sender: 'shams',
+            text: responseText,
+            createdAt: new Date().toISOString(),
+          };
+          setMessages(prev => [shamsMsg, ...prev]);
+          setSending(false);
+          return;
+        }
+        // intent === 'none' while answered: treat as new question — fall through
+      }
+
+      // ── Engine path ────────────────────────────────────────────────────────
+      if (!canAsk) {
+        const quotaMsg: ChatMessage = {
+          id: `quota_${Date.now()}`,
+          sender: 'shams',
+          text: t('oracle.quotaExhausted'),
+          isUpgradeCta: true,
+          createdAt: new Date().toISOString(),
+        };
+        setMessages(prev => [quotaMsg, ...prev]);
+        return;
+      }
+
+      const now = new Date().toISOString();
+      const userMsg: ChatMessage = {
+        id: `u_${now}`,
+        sender: 'user',
+        text,
+        createdAt: now,
+      };
+      setMessages(prev => [userMsg, ...prev]);
+      setSending(true);
+
+      if (!consumeOne()) {
+        const quotaMsg: ChatMessage = {
+          id: `quota_${Date.now()}`,
+          sender: 'shams',
+          text: t('oracle.quotaExhausted'),
+          isUpgradeCta: true,
+          createdAt: new Date().toISOString(),
+        };
+        setMessages(prev => [quotaMsg, ...prev]);
+        setSending(false);
+        return;
+      }
+
+      try {
+        const reading = await runEngine({
+          question: text,
+          questionLang: lang,
+          lat: lastLocation?.lat ?? null,
+          lon: lastLocation?.lon ?? null,
+          locationRequiredText: t('errors.locationRequired'),
+        });
+
+        await addReading(reading);
+        setLastReading(reading);
+        setStage('answered');
+
+        const shamsMsg: ChatMessage = {
+          id: `s_${reading.id}`,
+          sender: 'shams',
+          text: narrationForReading(reading) || t('errors.unknown'),
+          reading,
+          createdAt: new Date().toISOString(),
+        };
+        setMessages(prev => [shamsMsg, ...prev]);
+      } catch (err) {
+        const errText = err instanceof Error ? err.message : t('errors.unknown');
+        setMessages(prev => [
+          {
+            id: `s_err_${now}`,
+            sender: 'shams',
+            text: errText,
+            createdAt: new Date().toISOString(),
+          },
+          ...prev,
+        ]);
+      } finally {
+        setSending(false);
+      }
+    },
+    [addReading, canAsk, consumeOne, lang, lastLocation, lastReading, sending, stage, t],
+  );
+
+  const handleSend = useCallback(async () => {
+    const trimmed = input.trim();
+    if (!trimmed || sending) {
+      return;
+    }
+    setInput('');
+    await sendMessage(trimmed);
+  }, [input, sending, sendMessage]);
+
+  const handleChipPress = useCallback(
+    (chip: string) => {
+      sendMessage(chip);
+    },
+    [sendMessage],
+  );
+
+  const renderItem = useCallback(
+    ({ item }: { item: ChatMessage }) => <Bubble message={item} />,
+    [],
+  );
+
+  const keyExtractor = useCallback((item: ChatMessage) => item.id, []);
+
+  const locationLabel =
+    lastLocation === null
+      ? t('errors.locationRequired')
+      : `${lastLocation.lat.toFixed(2)}, ${lastLocation.lon.toFixed(2)}`;
+
+  return (
+    <SafeAreaView style={[styles.root, { backgroundColor: theme.colors.bg }]} edges={['top']}>
+      {/* Animated starfield */}
+      <StarfieldBackground starColor={colors.starfield} />
+
+      {/* Header */}
+      <View style={[styles.header, { borderColor: colors.border }]}>
+        <Text style={[typography('subheading'), { color: colors.text }]}>
+          {t('oracle.headerTitle')}
+        </Text>
+        <View style={styles.headerRight}>
+          {questionsLeft !== Infinity && (
+            <View
+              style={[
+                styles.quotaBadge,
+                { borderColor: questionsLeft === 0 ? colors.negative : colors.borderAccent },
+              ]}
+            >
+              <Text
+                style={[
+                  typography('caption'),
+                  {
+                    color: questionsLeft === 0 ? colors.negative : colors.textMuted,
+                  },
+                ]}
+              >
+                {questionsLeft}/{FREE_LIMIT}
+              </Text>
+            </View>
+          )}
+          <View style={[styles.locationChip, { borderColor: colors.borderAccent }]}>
+            <Text style={[typography('caption'), { color: colors.textMuted }]} numberOfLines={1}>
+              {locationLabel}
+            </Text>
+          </View>
+        </View>
+      </View>
+
+      <KeyboardAvoidingView
+        style={styles.flex}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 24}
+      >
+        <FlatList
+          ref={listRef}
+          data={messages}
+          keyExtractor={keyExtractor}
+          renderItem={renderItem}
+          contentContainerStyle={styles.listContent}
+          inverted
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+        />
+
+        {/* Input area */}
+        <View
+          style={[
+            styles.inputArea,
+            { backgroundColor: colors.surface, borderColor: colors.border },
+          ]}
+        >
+          {/* Chips row */}
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.chipsContent}
+            style={styles.chipsRow}
+            keyboardShouldPersistTaps="handled"
+          >
+            {activeChips.map(chip => (
+              <Pressable
+                key={chip}
+                onPress={() => handleChipPress(chip)}
+                style={({ pressed }) => [
+                  styles.chip,
+                  {
+                    backgroundColor: pressed ? colors.borderAccent + '22' : colors.bg,
+                    borderColor: colors.border,
+                  },
+                ]}
+                accessibilityRole="button"
+              >
+                <Text style={[typography('caption'), { color: colors.textMuted }]}>{chip}</Text>
+              </Pressable>
+            ))}
+          </ScrollView>
+
+          {/* Composer */}
+          <View style={styles.composer}>
+            <TextInput
+              value={input}
+              onChangeText={setInput}
+              placeholder={t('oracle.placeholder')}
+              placeholderTextColor={colors.textFaint}
+              style={[styles.composerInput, typography('body'), { color: colors.text }]}
+              multiline
+              editable={!sending}
+              returnKeyType="send"
+              blurOnSubmit
+              onSubmitEditing={handleSend}
+              underlineColorAndroid="transparent"
+            />
+            <Pressable
+              onPress={handleSend}
+              disabled={sending || input.trim().length === 0 || !canAsk}
+              style={({ pressed }: { pressed: boolean }) => [
+                styles.sendBtn,
+                {
+                  backgroundColor:
+                    input.trim().length === 0 || !canAsk ? colors.surfaceElevated : colors.primary,
+                  opacity: pressed ? 0.8 : 1,
+                },
+              ]}
+              accessibilityRole="button"
+              accessibilityLabel={t('oracle.sendButton')}
+            >
+              {sending ? (
+                <ActivityIndicator color={colors.textOnPrimary} />
+              ) : (
+                <Text style={[typography('button'), { color: colors.textOnPrimary }]}>
+                  {t('oracle.sendButton')}
+                </Text>
+              )}
+            </Pressable>
+          </View>
+        </View>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
+  );
+};
+
+// ── Bubble ────────────────────────────────────────────────────────────────────
+
+const Bubble: React.FC<{ message: ChatMessage }> = ({ message }) => {
+  const colors = useColors();
+  const typography = useTypography();
+  const t = useTranslation();
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const isUser = message.sender === 'user';
+
+  const accentColor = isUser ? colors.chatUserBorder : colors.chatShamsBorder;
+  const bubbleBg = isUser ? colors.chatUserBg : colors.chatShamsBg;
+
+  // Bold formatting — **text** → bold
+  const renderText = (raw: string) => {
+    const parts = raw.split(/(\*\*[^*]+\*\*)/g);
+    return (
+      <Text style={[typography('body'), { color: colors.text }]}>
+        {parts.map((part, i) => {
+          if (part.startsWith('**') && part.endsWith('**')) {
+            return (
+              <Text key={i} style={{ fontWeight: '700', color: colors.accent }}>
+                {part.slice(2, -2)}
+              </Text>
+            );
+          }
+          return <Text key={i}>{part}</Text>;
+        })}
+      </Text>
+    );
+  };
+
+  return (
+    <View style={[styles.bubbleRow, { justifyContent: isUser ? 'flex-end' : 'flex-start' }]}>
+      <View
+        style={[
+          styles.bubble,
+          {
+            backgroundColor: bubbleBg,
+            borderLeftWidth: isUser ? 0 : 3,
+            borderRightWidth: isUser ? 3 : 0,
+            borderLeftColor: accentColor,
+            borderRightColor: accentColor,
+            borderColor: colors.border,
+            borderTopWidth: StyleSheet.hairlineWidth,
+            borderBottomWidth: StyleSheet.hairlineWidth,
+          },
+        ]}
+      >
+        {renderText(message.text)}
+        {message.reading !== undefined && <VerdictCard reading={message.reading} />}
+        {message.isUpgradeCta === true && (
+          <Pressable
+            onPress={() => navigation.navigate('Premium')}
+            style={({ pressed }) => [
+              styles.upgradeBtn,
+              { backgroundColor: colors.primary, opacity: pressed ? 0.8 : 1 },
+            ]}
+            accessibilityRole="button"
+            accessibilityLabel={t('oracle.upgradeCta')}
+          >
+            <Text style={[typography('button'), { color: colors.textOnPrimary }]}>
+              {t('oracle.upgradeCta')}
+            </Text>
+          </Pressable>
+        )}
+      </View>
+    </View>
+  );
+};
+
+// ── VerdictCard (enhanced) ────────────────────────────────────────────────────
+
+const VerdictCard: React.FC<{ reading: Reading }> = ({ reading }) => {
+  const colors = useColors();
+  const typography = useTypography();
+  const t = useTranslation();
+
+  const vj = asVj(reading.verdictJson);
+  const cj = asCj(reading.chartJson);
+
+  const verdictColor: string = (() => {
+    switch (reading.verdict) {
+      case 'YES':
+        return colors.positive;
+      case 'NO':
+        return colors.negative;
+      case 'CONDITIONAL':
+      case 'DELAYED':
+        return colors.caution;
+      default:
+        return colors.textMuted;
+    }
+  })();
+
+  const verdictLabel: string = (() => {
+    switch (reading.verdict) {
+      case 'YES':
+        return t('oracle.verdictYes');
+      case 'NO':
+        return t('oracle.verdictNo');
+      case 'CONDITIONAL':
+        return t('oracle.verdictConditional');
+      case 'DELAYED':
+        return t('oracle.verdictDelayed');
+      case 'UNCLEAR':
+        return t('oracle.verdictUnclear');
+      default:
+        return '…';
+    }
+  })();
+
+  // Timing
+  const timing = vj?.timing;
+  const timingStr = timing ? `${timing.range?.max ?? '?'} ${timing.window ?? 'weeks'}` : null;
+
+  // Remedy
+  const remedy = vj?.remedy;
+
+  // Chart strip values
+  const ascSign = signName(cj?.ascendant?.sign);
+  const moonSign = signName(cj?.planets?.Moon?.sign);
+  const subLord = vj?.moonSubLord?.planet ?? '—';
+  const confidence = vj?.confidence ?? 0;
+
+  return (
+    <View style={[styles.verdictCard, { borderColor: colors.borderAccent }]}>
+      {/* Header: category + verdict pill */}
+      <View style={styles.verdictHeader}>
+        <Text style={[typography('label'), { color: colors.textMuted }]}>
+          {reading.category.toUpperCase()}
+        </Text>
+        <View style={[styles.verdictPill, { borderColor: verdictColor }]}>
+          <Text style={[typography('button'), { color: verdictColor }]}>{verdictLabel}</Text>
+        </View>
+      </View>
+
+      {/* Chart moment */}
+      <Text style={[typography('caption'), { color: colors.textFaint, marginTop: 6 }]}>
+        {t('oracle.chartMomentLabel')}: {new Date(reading.createdAt).toLocaleString()}
+      </Text>
+
+      {/* Timing row */}
+      {timingStr !== null && (
+        <View style={[styles.timingRow, { borderTopColor: colors.border }]}>
+          <Text style={[typography('caption'), { color: colors.accent }]}>
+            ⊛ {t('oracle.timingLabel')}: within {timingStr}
+          </Text>
+        </View>
+      )}
+
+      {/* Remedy row */}
+      {remedy?.action !== undefined && (
+        <View style={[styles.remedyRow, { borderTopColor: colors.border }]}>
+          <Text style={[typography('caption'), { color: colors.amber, fontStyle: 'italic' }]}>
+            ◈ {t('oracle.remedyLabel')}: {remedy.action}
+          </Text>
+        </View>
+      )}
+
+      {/* Chart data strip */}
+      <View style={[styles.chartStrip, { borderTopColor: colors.border }]}>
+        <ChartPill label="Asc" value={ascSign} colors={colors} typography={typography} />
+        <ChartPill label="Moon" value={moonSign} colors={colors} typography={typography} />
+        <ChartPill label="Sub-Lord" value={subLord} colors={colors} typography={typography} />
+        <ChartPill
+          label={t('oracle.confidenceLabel')}
+          value={`${confidence}%`}
+          colors={colors}
+          typography={typography}
+        />
+      </View>
+    </View>
+  );
+};
+
+const ChartPill: React.FC<{
+  label: string;
+  value: string;
+  colors: ReturnType<typeof useColors>;
+  typography: ReturnType<typeof useTypography>;
+}> = ({ label, value, colors, typography }) => (
+  <View style={[styles.chartPill, { borderColor: colors.border }]}>
+    <Text style={[typography('caption'), { color: colors.textFaint, fontSize: 9 }]}>{label}</Text>
+    <Text style={[typography('label'), { color: colors.accent, fontSize: 11 }]}>{value}</Text>
+  </View>
+);
+
+// ── Styles ────────────────────────────────────────────────────────────────────
+
+const styles = StyleSheet.create({
+  root: { flex: 1 },
+  flex: { flex: 1 },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    gap: 12,
+  },
+  headerRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  quotaBadge: {
+    borderWidth: StyleSheet.hairlineWidth,
+    borderRadius: 999,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+  },
+  locationChip: {
+    borderWidth: StyleSheet.hairlineWidth,
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    maxWidth: '55%',
+  },
+  listContent: {
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    gap: 10,
+  },
+  bubbleRow: {
+    flexDirection: 'row',
+    marginVertical: 4,
+  },
+  bubble: {
+    maxWidth: '85%',
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 12,
+  },
+  upgradeBtn: {
+    marginTop: 12,
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+  // VerdictCard
+  verdictCard: {
+    marginTop: 10,
+    paddingTop: 10,
+    borderTopWidth: 1,
+  },
+  verdictHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  verdictPill: {
+    borderWidth: StyleSheet.hairlineWidth,
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 2,
+  },
+  timingRow: {
+    marginTop: 8,
+    paddingTop: 8,
+    borderTopWidth: StyleSheet.hairlineWidth,
+  },
+  remedyRow: {
+    marginTop: 6,
+    paddingTop: 6,
+    borderTopWidth: StyleSheet.hairlineWidth,
+  },
+  chartStrip: {
+    marginTop: 8,
+    paddingTop: 8,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    flexDirection: 'row',
+    gap: 6,
+    flexWrap: 'wrap',
+  },
+  chartPill: {
+    borderWidth: StyleSheet.hairlineWidth,
+    borderRadius: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    alignItems: 'center',
+    minWidth: 60,
+  },
+  // Input area
+  inputArea: {
+    borderTopWidth: StyleSheet.hairlineWidth,
+    paddingHorizontal: 12,
+    paddingTop: 6,
+    paddingBottom: 8,
+  },
+  chipsRow: {
+    marginBottom: 6,
+  },
+  chipsContent: {
+    gap: 6,
+    paddingRight: 4,
+  },
+  chip: {
+    borderWidth: StyleSheet.hairlineWidth,
+    borderRadius: 999,
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+  },
+  composer: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    gap: 8,
+  },
+  composerInput: {
+    flex: 1,
+    minHeight: 40,
+    maxHeight: 120,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+  },
+  sendBtn: {
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 10,
+    minHeight: 40,
+    minWidth: 64,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+});
+
+export default OracleScreen;

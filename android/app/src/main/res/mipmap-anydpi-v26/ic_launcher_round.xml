@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Round-variant adaptive launcher icon — Shams al-Asrār
+    ============================================================
+    AndroidManifest.xml declares both android:icon=@mipmap/ic_launcher
+    and android:roundIcon=@mipmap/ic_launcher_round. On API 26+ the
+    system honors whichever resource the launcher requests.
+
+    We re-use the same foreground/background pair: the adaptive shape
+    mask is owned by the launcher, not by us, so the round flavour
+    composes identically — Android crops to a circle automatically.
+-->
+<adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
+    <background android:drawable="@mipmap/ic_launcher_background" />
+    <foreground android:drawable="@mipmap/ic_launcher_foreground" />
+</adaptive-icon>

@@ -1,0 +1,4 @@
+<resources>
+    <!-- App label shown on launcher; localized variants in values-ur, values-hi -->
+    <string name="app_name">Shams al-Asrār</string>
+</resources>
