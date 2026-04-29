@@ -1,0 +1,38 @@
+module.exports = {
+  root: true,
+  extends: [
+    '@react-native',
+    'eslint-config-prettier',
+  ],
+  parser: '@typescript-eslint/parser',
+  plugins: ['prettier'],
+  rules: {
+    'prettier/prettier': 'error',
+    '@typescript-eslint/no-explicit-any': 'error',
+    '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
+    '@typescript-eslint/explicit-module-boundary-types': 'off',
+    'no-console': ['warn', { allow: ['warn', 'error'] }],
+    'react-native/no-inline-styles': 'off',
+    'react-hooks/exhaustive-deps': 'warn',
+    'no-void': 'off',
+    'react/no-unstable-nested-components': ['warn', { allowAsProps: true }],
+    'no-shadow': 'off',
+    '@typescript-eslint/no-shadow': 'error',
+    'curly': ['error', 'all'],
+    'eqeqeq': ['error', 'always'],
+  },
+  env: {
+    'react-native/react-native': true,
+    jest: true,
+  },
+  ignorePatterns: [
+    'node_modules/',
+    'android/',
+    'ios/',
+    'build/',
+    'dist/',
+    '*.config.js',
+    'babel.config.js',
+    'metro.config.js',
+  ],
+};

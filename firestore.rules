@@ -1,0 +1,121 @@
+rules_version = '2';
+
+/**
+ * Firestore Security Rules — Shams al-Asrar
+ *
+ * Design principles:
+ *  1. Deny-by-default: the final catch-all denies everything not explicitly allowed.
+ *  2. Clients are untrusted: privileged writes (quota, plan, audit logs) are
+ *     blocked for all clients and performed exclusively by Cloud Functions via
+ *     the Admin SDK (which bypasses these rules).
+ *  3. No cross-user reads: each user can only access documents whose userId
+ *     field matches their own UID.
+ *  4. No client writes to quota or plan fields: prevents privilege escalation.
+ *
+ * Auth model note:
+ *  The mobile app uses Supabase Auth. Firebase Auth is used only for App Check.
+ *  Because request.auth is the Firebase Auth context, and our users authenticate
+ *  via Supabase (not Firebase), request.auth will be null for direct client reads.
+ *
+ *  All sensitive reads/writes go through Cloud Functions (Admin SDK), which
+ *  bypass these rules. The rules below protect against direct Firestore SDK
+ *  access from rogue clients.
+ *
+ *  To enable direct client reads (e.g. history tab offline cache), integrate
+ *  Firebase Anonymous Auth + Supabase → Firebase custom token exchange.
+ *  Until then, all access is via Cloud Functions only.
+ */
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ── Helper predicates ────────────────────────────────────────────────────
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(uid) {
+      return isSignedIn() && request.auth.uid == uid;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && request.auth.token.get('admin', false) == true;
+    }
+
+    function hasNoPrivilegedFields() {
+      return !request.resource.data.keys().hasAny([
+        'plan', 'planExpiry', 'monthlyQuota', 'isPremium', 'admin', 'used'
+      ]);
+    }
+
+    // ── /users/{userId} ──────────────────────────────────────────────────────
+    // Profile data (display name, preferences). Quota state is in /quotas.
+
+    match /users/{userId} {
+      allow read:   if isOwner(userId) || isAdmin();
+      allow create: if isOwner(userId) && hasNoPrivilegedFields();
+      allow update: if isOwner(userId) && hasNoPrivilegedFields();
+      allow delete: if isOwner(userId) || isAdmin();
+    }
+
+    // ── /quotas/{userId} ────────────────────────────────────────────────────
+    // All writes are Cloud Functions only (Admin SDK).
+    // Users may read their own quota for display purposes.
+
+    match /quotas/{userId} {
+      allow read:  if isOwner(userId) || isAdmin();
+      allow write: if false; // Admin SDK only
+    }
+
+    // ── /readings/{readingId} ────────────────────────────────────────────────
+    // Readings are created and enriched by Cloud Functions.
+    // Users may read/delete their own readings.
+    // Direct create is blocked — must go through askOracle function.
+
+    match /readings/{readingId} {
+      allow read:   if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow delete: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow create: if false; // Cloud Functions only
+      allow update: if false; // Cloud Functions only
+      // Admins
+      allow read, write, delete: if isAdmin();
+    }
+
+    // ── /rateLimits/{userId}/minutes/{minuteKey} ─────────────────────────────
+    // Written exclusively by Cloud Functions. Clients have no access.
+
+    match /rateLimits/{userId}/{document=**} {
+      allow read, write: if false;
+    }
+
+    // ── /auditLogs/{logId} ───────────────────────────────────────────────────
+    // Admin read-only. Cloud Functions write via Admin SDK.
+
+    match /auditLogs/{logId} {
+      allow read:  if isAdmin();
+      allow write: if false;
+    }
+
+    // ── /securityEvents/{eventId} ────────────────────────────────────────────
+    // Admin read-only.
+
+    match /securityEvents/{eventId} {
+      allow read:  if isAdmin();
+      allow write: if false;
+    }
+
+    // ── /_system/{document} ──────────────────────────────────────────────────
+    // Internal configuration (feature flags, app signatures). Admin only.
+
+    match /_system/{document=**} {
+      allow read, write, delete: if isAdmin();
+    }
+
+    // ── Deny everything else ─────────────────────────────────────────────────
+
+    match /{document=**} {
+      allow read, write, delete: if false;
+    }
+  }
+}
