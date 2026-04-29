@@ -105,6 +105,7 @@ functions/lib/
 
 # Build logs
 install.log
+firebase-debug.log
 
 # Claude Code project settings
 .claude/
