@@ -1,5 +1,5 @@
 {
-  "projectId": "shams-al-asrar-ca95d",
+  "projectId": "shams-app-4d0e7",
   "functions": [
     {
       "source": "functions",
@@ -9,7 +9,6 @@
         ".git",
         "firebase-debug.log",
         "firebase-debug.*.log",
-        "lib",
         "scripts"
       ],
       "predeploy": [

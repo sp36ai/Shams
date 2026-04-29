@@ -30,6 +30,8 @@ import { useColors, useTheme } from '@theme/ThemeProvider';
 import { useTypography } from '@theme/useTypography';
 import { useTranslation } from '@i18n/I18nProvider';
 import { useAuthStore } from '@stores/authStore';
+import { GoogleSignin } from '@react-native-google-signin/google-signin';
+import { GOOGLE_WEB_CLIENT_ID } from '@stores/authStore';
 
 /* -------------------------------------------------------------------------- */
 /*  Form state machine                                                        */
@@ -130,7 +132,13 @@ const AuthScreen: React.FC = () => {
   const authError = useAuthStore(s => s.error);
   const signIn = useAuthStore(s => s.signIn);
   const signUp = useAuthStore(s => s.signUp);
+  const signInWithGoogle = useAuthStore(s => s.signInWithGoogle);
   const clearError = useAuthStore(s => s.clearError);
+
+  // Configure Google Sign-In once on mount
+  React.useEffect(() => {
+    GoogleSignin.configure({ webClientId: GOOGLE_WEB_CLIENT_ID });
+  }, []);
 
   const [form, dispatch] = useReducer(formReducer, initialForm);
   const [serverError, setServerError] = useState('');
@@ -322,6 +330,32 @@ const AuthScreen: React.FC = () => {
               )}
             </Pressable>
           </View>
+
+          {/* Social sign-in */}
+          <View style={styles.dividerRow}>
+            <View style={[styles.dividerLine, { backgroundColor: colors.border }]} />
+            <Text style={[typography('caption'), { color: colors.textMuted, marginHorizontal: 12 }]}>
+              {t('auth.orContinueWith')}
+            </Text>
+            <View style={[styles.dividerLine, { backgroundColor: colors.border }]} />
+          </View>
+
+          <Pressable
+            onPress={() => void signInWithGoogle()}
+            disabled={isLoading}
+            style={({ pressed }) => [
+              styles.socialBtn,
+              { borderColor: colors.border, backgroundColor: colors.surface },
+              pressed && { opacity: 0.8 },
+            ]}
+            accessibilityRole="button"
+            accessibilityLabel={t('auth.google')}
+          >
+            <Text style={[styles.googleG, { color: '#4285F4' }]}>G</Text>
+            <Text style={[typography('button'), { color: colors.text, marginLeft: 10 }]}>
+              {t('auth.google')}
+            </Text>
+          </Pressable>
 
           {/* Terms notice */}
           <Text
@@ -550,6 +584,28 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: 4,
+  },
+  dividerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 24,
+    marginBottom: 16,
+  },
+  dividerLine: {
+    flex: 1,
+    height: StyleSheet.hairlineWidth,
+  },
+  socialBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: 52,
+    borderRadius: 12,
+    borderWidth: StyleSheet.hairlineWidth,
+  },
+  googleG: {
+    fontSize: 20,
+    fontWeight: '700',
   },
 });
 

@@ -17,10 +17,22 @@
 
 import { create } from 'zustand';
 import type { FirebaseAuthTypes } from '@react-native-firebase/auth';
-import auth from '@react-native-firebase/auth';
+import {
+  getAuth,
+  onAuthStateChanged,
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  signInWithCredential,
+  signOut as firebaseSignOut,
+  GoogleAuthProvider,
+} from '@react-native-firebase/auth';
+import { GoogleSignin } from '@react-native-google-signin/google-signin';
 
 import { storage, KEYS } from '@storage/mmkv';
 import { useQuotaStore, type PlanTier } from './quotaStore';
+
+// Web client ID from Firebase Console → Authentication → Google → Web SDK configuration
+export const GOOGLE_WEB_CLIENT_ID = '347578830449-1uogokloffhn2c9nh060003rsvm1vu6n.apps.googleusercontent.com';
 
 /* -------------------------------------------------------------------------- */
 /*  Types                                                                     */
@@ -38,6 +50,7 @@ export interface AuthState {
   bootstrap: () => Promise<void>;
   signIn: (email: string, password: string) => Promise<Error | null>;
   signUp: (email: string, password: string, name: string) => Promise<Error | null>;
+  signInWithGoogle: () => Promise<Error | null>;
   signOut: () => Promise<void>;
   clearError: () => void;
 }
@@ -79,7 +92,7 @@ export const useAuthStore = create<AuthState>(set => ({
     // never flashes the Auth screen before the cached user resolves.
     await new Promise<void>(resolve => {
       let resolved = false;
-      auth().onAuthStateChanged(async fbUser => {
+      onAuthStateChanged(getAuth(), async fbUser => {
         if (fbUser) {
           try {
             const tokenResult = await fbUser.getIdTokenResult();
@@ -105,7 +118,7 @@ export const useAuthStore = create<AuthState>(set => ({
   signIn: async (email: string, password: string): Promise<Error | null> => {
     set({ isLoading: true, error: null });
     try {
-      const cred = await auth().signInWithEmailAndPassword(email, password);
+      const cred = await signInWithEmailAndPassword(getAuth(), email, password);
       const tokenResult = await cred.user.getIdTokenResult();
       const plan = (tokenResult.claims.plan as PlanTier | undefined) ?? 'free';
       useQuotaStore.getState().setPlan(plan);
@@ -122,7 +135,7 @@ export const useAuthStore = create<AuthState>(set => ({
   signUp: async (email: string, password: string, name: string): Promise<Error | null> => {
     set({ isLoading: true, error: null });
     try {
-      const cred = await auth().createUserWithEmailAndPassword(email, password);
+      const cred = await createUserWithEmailAndPassword(getAuth(), email, password);
       if (name) {
         await cred.user.updateProfile({ displayName: name });
       }
@@ -137,9 +150,37 @@ export const useAuthStore = create<AuthState>(set => ({
     }
   },
 
+  signInWithGoogle: async (): Promise<Error | null> => {
+    set({ isLoading: true, error: null });
+    try {
+      await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
+      const signInResult = await GoogleSignin.signIn();
+      const idToken = signInResult.data?.idToken ?? (signInResult as any).idToken;
+      if (!idToken) {
+        throw new Error('Google sign-in returned no ID token');
+      }
+      const googleCredential = GoogleAuthProvider.credential(idToken);
+      const cred = await signInWithCredential(getAuth(), googleCredential);
+      try {
+        const tokenResult = await cred.user.getIdTokenResult();
+        const plan = (tokenResult.claims.plan as PlanTier | undefined) ?? 'free';
+        useQuotaStore.getState().setPlan(plan);
+      } catch {
+        useQuotaStore.getState().setPlan('free');
+      }
+      cacheUserLocally(cred.user);
+      set({ user: cred.user, isLoading: false });
+      return null;
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Google sign-in failed';
+      set({ isLoading: false, error: msg });
+      return err instanceof Error ? err : new Error(msg);
+    }
+  },
+
   signOut: async (): Promise<void> => {
     set({ isLoading: true });
-    await auth().signOut();
+    await firebaseSignOut(getAuth());
     cacheUserLocally(null);
     useQuotaStore.getState().reset();
     set({ user: null, isLoading: false, error: null });

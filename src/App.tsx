@@ -1,7 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { StatusBar, StyleSheet, Text, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import appCheck from '@react-native-firebase/app-check';
+import {
+  initializeAppCheck,
+  ReactNativeFirebaseAppCheckProvider,
+} from '@react-native-firebase/app-check';
 
 import { ThemeProvider, readPersistedThemeId } from '@theme/ThemeProvider';
 import { I18nProvider, readPersistedLang, applyLayoutDirection } from '@i18n/I18nProvider';
@@ -11,7 +14,7 @@ import { runSecurityChecks, INTEGRITY_FAIL_MESSAGE } from '@utils/security';
 // Initialise App Check before any Firebase service is used.
 // Debug token is only injected in __DEV__ builds; production uses Play Integrity.
 // Register the debug token in Firebase Console → App Check → Manage debug tokens.
-const _rnfbProvider = appCheck().newReactNativeFirebaseAppCheckProvider();
+const _rnfbProvider = new ReactNativeFirebaseAppCheckProvider();
 _rnfbProvider.configure({
   android: {
     provider: __DEV__ ? 'debug' : 'playIntegrity',
@@ -22,7 +25,7 @@ _rnfbProvider.configure({
   },
   web: { provider: 'reCaptchaV3', siteKey: 'unused' },
 });
-appCheck().initializeAppCheck({ provider: _rnfbProvider, isTokenAutoRefreshEnabled: true });
+initializeAppCheck(undefined, { provider: _rnfbProvider, isTokenAutoRefreshEnabled: true });
 
 // Apply RTL layout direction synchronously before React tree mounts.
 const _initialLang = readPersistedLang();
