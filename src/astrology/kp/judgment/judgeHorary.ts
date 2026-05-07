@@ -348,7 +348,8 @@ function buildMoonSubLordSnapshot(
 
 function buildRpSnapshot(chart: Chart, rpScore: number): RulingPlanetsSnapshot {
   const rps = chart.rulingPlanets;
-  ret``    dayLord: rps[0] as Planet,
+  return {
+    dayLord: rps[0] as Planet,
     ascSignLord: rps[1] as Planet,
     ascStarLord: rps[2] as Planet,
     moonSignLord: rps[3] as Planet,
