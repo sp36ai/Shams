@@ -8,7 +8,8 @@
  *   - Animated StarfieldBackground
  */
 
-import React, { useCallback, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import functions from '@react-native-firebase/functions';
 import {
   ActivityIndicator,
   FlatList,
@@ -406,9 +407,21 @@ const OracleScreen: React.FC = () => {
   const addReading = useReadingsStore(
     (s: ReturnType<typeof useReadingsStore.getState>) => s.addReading,
   );
-  const canAsk = useQuotaStore(s => s.canAsk());
+  const storeCanAsk = useQuotaStore(s => s.canAsk());
   const consumeOne = useQuotaStore(s => s.consumeOne);
   const questionsLeft = useQuotaStore(selectQuestionsLeft);
+  const currentPlan = useQuotaStore(s => s.plan);
+
+  const [quotaRemaining, setQuotaRemaining] = useState<number | null>(null);
+
+  useEffect(() => {
+    functions().httpsCallable('getQuota')({})
+      .then(r => setQuotaRemaining((r.data as any).remaining))
+      .catch(() => setQuotaRemaining(null)); // null = don't enforce
+  }, []);
+
+  const isPremium = currentPlan !== 'free';
+  const canAsk = storeCanAsk && (isPremium || quotaRemaining === null || quotaRemaining > 0);
 
   const initialGreeting: ChatMessage = useMemo(
     () => ({

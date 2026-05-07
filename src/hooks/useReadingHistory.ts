@@ -9,6 +9,7 @@
  */
 
 import { useCallback, useState } from 'react';
+import functions from '@react-native-firebase/functions';
 
 import { useReadingsStore, type Reading } from '@stores/readingsStore';
 import type { AstroVerdictResult } from '../types/verdict';
@@ -91,6 +92,9 @@ export async function saveReading(
   const reading =
     result.mode === 'astro' ? astroToReading(result) : watchToReading(result);
   await useReadingsStore.getState().addReading(reading);
+
+  const syncFn = functions().httpsCallable('syncReadings');
+  syncFn({ readings: [reading] }).catch(() => {});
 }
 
 // ── useReadings ───────────────────────────────────────────────────────────────

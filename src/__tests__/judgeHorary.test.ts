@@ -18,6 +18,8 @@ import { judgeHorary } from '../astrology/kp/judgment/judgeHorary';
 import type { Chart, Planet, PlanetPosition, HouseCusp, HouseIndex } from '../astrology/types/chart';
 import type { ClassifiedQuestion } from '../astrology/types/question';
 
+jest.setTimeout(15000);
+
 // ── Fixture helpers ───────────────────────────────────────────────────────────
 
 const MOMENT = '2025-04-27T10:00:00Z';

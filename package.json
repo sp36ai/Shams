@@ -70,6 +70,7 @@
   },
   "jest": {
     "preset": "react-native",
+    "setupFiles": ["<rootDir>/jest.setup.js"],
     "transformIgnorePatterns": [
       "node_modules/(?!(jest-)?react-native|@react-native|@react-navigation|react-native-mmkv|react-native-reanimated|react-native-svg)"
     ],
