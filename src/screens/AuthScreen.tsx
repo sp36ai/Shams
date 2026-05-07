@@ -26,7 +26,7 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { getAuth, sendPasswordResetEmail } from '@react-native-firebase/auth';
+import auth from '@react-native-firebase/auth';
 
 import { useColors, useTheme } from '@theme/ThemeProvider';
 import { useTypography } from '@theme/useTypography';
@@ -210,7 +210,7 @@ const AuthScreen: React.FC = () => {
   const handleForgotPassword = useCallback(async () => {
     if (!form.email) return dispatch({ type: 'SET_ERRORS', emailError: t('auth.invalidEmail') });
     try {
-      await sendPasswordResetEmail(getAuth(), form.email.trim());
+      await auth().sendPasswordResetEmail(form.email.trim());
     } catch (error) {
       if (error instanceof Error) {
         setServerError(error.message);

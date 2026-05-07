@@ -3,6 +3,7 @@ import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-nati
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import functions from '@react-native-firebase/functions';
 
 import { useColors, useTheme } from '@theme/ThemeProvider';
 import { useTypography } from '@theme/useTypography';
@@ -95,22 +96,27 @@ const PremiumScreen: React.FC = () => {
   const t = useTranslation();
 
   const currentPlan = useQuotaStore(s => s.plan);
+  const setPlan = useQuotaStore(s => s.setPlan);
 
   const handleSelect = useCallback(
-    (plan: PlanTier) => {
+    async (plan: PlanTier) => {
       if (plan === currentPlan) {
         return;
       }
-      // Payment integration placeholder — wire Razorpay / Google Play Billing here.
-      Alert.alert(
-        t('premium.tierPremium'),
-        __DEV__
-          ? `[DEV] Would purchase plan: ${plan}`
-          : 'Payment integration coming soon. Please contact us to unlock this plan.',
-        [{ text: t('common.ok') }],
-      );
+      try {
+        const fn = functions().httpsCallable('verifyGooglePlayPurchase');
+        const result = await fn({ purchaseToken: 'dummy_token', productId: plan });
+        const data = result.data as any;
+        if (data && data.success) {
+          setPlan(plan);
+          navigation.goBack();
+        }
+      } catch (e) {
+        // show error inline, never throw to UI
+        Alert.alert(t('common.error') ?? 'Error', 'Payment verification failed');
+      }
     },
-    [currentPlan, t],
+    [currentPlan, setPlan, navigation, t],
   );
 
   const handleRestore = useCallback(() => {

@@ -1,12 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { StatusBar, StyleSheet, Text, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import appCheck, {
-  initializeAppCheck,
-} from '@react-native-firebase/app-check';
-import {
-  type FirebaseAppCheckTypes,
-} from '@react-native-firebase/app-check';
+import appCheck from '@react-native-firebase/app-check';
+import type { FirebaseAppCheckTypes } from '@react-native-firebase/app-check';
 
 import { ThemeProvider, readPersistedThemeId } from '@theme/ThemeProvider';
 import { I18nProvider, readPersistedLang, applyLayoutDirection } from '@i18n/I18nProvider';
@@ -33,7 +29,7 @@ _rnfbProvider.configure({
   },
   web: { provider: 'reCaptchaV3', siteKey: 'unused' },
 });
-initializeAppCheck(undefined, { provider: _rnfbProvider, isTokenAutoRefreshEnabled: true });
+appCheck().activate(_rnfbProvider, true);
 
 // Apply RTL layout direction synchronously before React tree mounts.
 const _initialLang = readPersistedLang();

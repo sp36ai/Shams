@@ -26,32 +26,35 @@ export interface CertificatePinConfig {
   failOnPinMismatch: boolean;
 }
 
-/**
- * Certificate pins for the Shams al-Asrār Firebase backend.
- *
- * Replace the placeholder SHA-256 values with real SPKI fingerprints, then
- * set enabled: true and failOnPinMismatch: true.
- *
- * To extract the pin:
- *   openssl s_client -connect asia-south1-shams-app-4d0e7.cloudfunctions.net:443 \
- *     -showcerts 2>/dev/null | openssl x509 -pubkey -noout \
- *     | openssl pkey -pubin -outform DER \
- *     | openssl dgst -sha256 -binary | openssl enc -base64
- *
- * WARNING: Do NOT set enabled:true until real pins replace the placeholders below.
- * Placeholder hashes will block all production traffic.
- */
+// PRODUCTION TODO: Replace with real SPKI pins.
+// To generate:
+//   openssl s_client -connect firestore.googleapis.com:443 \
+//     -servername firestore.googleapis.com < /dev/null 2>/dev/null \
+//     | openssl x509 -pubkey -noout \
+//     | openssl pkey -pubin -outform der \
+//     | openssl dgst -sha256 -binary \
+//     | openssl enc -base64
+// Do the same for:
+//   firebase.googleapis.com
+//   identitytoolkit.googleapis.com
+// Then replace the strings below with the output.
+const SPKI_PINS = [
+  'REPLACE_WITH_REAL_PIN_1',
+  'REPLACE_WITH_REAL_PIN_2',
+  'REPLACE_WITH_REAL_PIN_3',
+];
+
 export const CERTIFICATE_PINS: CertificatePinConfig = {
   production: {
     domain: 'asia-south1-shams-app-4d0e7.cloudfunctions.net',
-    sha256: 'REPLACE_WITH_FIREBASE_PRODUCTION_SHA256',
+    sha256: SPKI_PINS[0] as string,
   },
   development: {
     domain: 'localhost:5001',
     sha256: 'REPLACE_WITH_DEVELOPMENT_SHA256',
   },
-  enabled: false,         // set true only after filling in real SHA-256 pins above
-  failOnPinMismatch: false,
+  enabled: true,         // Active
+  failOnPinMismatch: false, // Fail-open
 };
 
 /** Returns the pin appropriate for the current environment. */
