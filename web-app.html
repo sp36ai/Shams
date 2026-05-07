@@ -1,0 +1,2362 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Shams al-Asrar Web App</title>
+  <style>
+    :root {
+      --bg: #030e10;
+      --surface: #0a1a1d;
+      --surface-elevated: #11272b;
+      --border: #1c3a3f;
+      --border-accent: #14d4c4;
+      --primary: #0fa89a;
+      --accent: #14d4c4;
+      --amber: #e8b547;
+      --positive: #22c77b;
+      --negative: #e5484d;
+      --caution: #f5a524;
+      --text: #e6fbf8;
+      --text-muted: #8fb5b0;
+      --text-faint: #4d7370;
+      --text-on-primary: #03171a;
+      --chat-shams-bg: rgba(15, 168, 154, 0.1);
+      --chat-shams-border: #14d4c4;
+      --chat-user-bg: rgba(232, 181, 71, 0.1);
+      --chat-user-border: #e8b547;
+      --starfield: #a0f2ea;
+      --nebula-1: rgba(20, 212, 196, 0.18);
+      --nebula-2: rgba(15, 168, 154, 0.14);
+      --nebula-3: rgba(232, 181, 71, 0.08);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: "Cormorant Garamond", Georgia, serif;
+    }
+
+    body.rtl {
+      direction: rtl;
+    }
+
+    h1, h2, h3, h4 {
+      margin: 0;
+      font-family: "Cinzel", "Times New Roman", serif;
+      letter-spacing: 0.03em;
+    }
+
+    button,
+    input,
+    textarea,
+    select {
+      font: inherit;
+    }
+
+    #root {
+      width: 100%;
+      height: 100%;
+    }
+
+    .app-shell {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background:
+        radial-gradient(1200px 800px at 15% 15%, var(--nebula-1), transparent 60%),
+        radial-gradient(1000px 700px at 85% 20%, var(--nebula-2), transparent 65%),
+        radial-gradient(900px 600px at 50% 95%, var(--nebula-3), transparent 65%),
+        var(--bg);
+    }
+
+    .starfield::before,
+    .starfield::after {
+      content: "";
+      position: absolute;
+      inset: -25%;
+      pointer-events: none;
+      background:
+        radial-gradient(circle at 10% 20%, rgba(255,255,255,0.65) 0 1px, transparent 1.2px),
+        radial-gradient(circle at 30% 70%, rgba(255,255,255,0.45) 0 1px, transparent 1.2px),
+        radial-gradient(circle at 65% 35%, rgba(255,255,255,0.5) 0 1px, transparent 1.2px),
+        radial-gradient(circle at 80% 85%, rgba(255,255,255,0.4) 0 1px, transparent 1.2px),
+        radial-gradient(circle at 50% 10%, rgba(255,255,255,0.35) 0 1px, transparent 1.2px);
+      background-size: 240px 240px;
+      opacity: 0.35;
+      animation: drift 90s linear infinite;
+    }
+
+    .starfield::after {
+      animation-duration: 140s;
+      opacity: 0.22;
+      transform: scale(1.2);
+    }
+
+    @keyframes drift {
+      from { transform: translate3d(0, 0, 0); }
+      to { transform: translate3d(-160px, -120px, 0); }
+    }
+
+    .center-screen {
+      display: grid;
+      place-items: center;
+      width: 100%;
+      height: 100%;
+      padding: 24px;
+      text-align: center;
+    }
+
+    .splash-wrap {
+      max-width: 560px;
+      display: grid;
+      justify-items: center;
+      gap: 18px;
+    }
+
+    .mandala {
+      position: relative;
+      width: 260px;
+      height: 260px;
+      border-radius: 50%;
+      border: 1px solid color-mix(in srgb, var(--accent) 45%, transparent);
+      display: grid;
+      place-items: center;
+    }
+
+    .mandala::before,
+    .mandala::after {
+      content: "";
+      position: absolute;
+      inset: 20px;
+      border-radius: 50%;
+      border: 1px solid color-mix(in srgb, var(--amber) 45%, transparent);
+      animation: spin 42s linear infinite;
+    }
+
+    .mandala::after {
+      inset: 52px;
+      border-color: color-mix(in srgb, var(--accent) 60%, transparent);
+      animation-direction: reverse;
+      animation-duration: 28s;
+    }
+
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    .sun-core {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 35% 30%, #fff8cf, var(--amber));
+      box-shadow: 0 0 24px color-mix(in srgb, var(--amber) 55%, transparent);
+    }
+
+    .title-xl {
+      font-size: clamp(2rem, 6vw, 3.2rem);
+      line-height: 1.12;
+      color: var(--text);
+    }
+
+    .title-md {
+      font-size: clamp(1.1rem, 2.8vw, 1.4rem);
+      color: var(--accent);
+      letter-spacing: 0.09em;
+      text-transform: uppercase;
+    }
+
+    .muted {
+      color: var(--text-muted);
+      margin: 0;
+      font-size: 1.05rem;
+      line-height: 1.45;
+    }
+
+    .faint {
+      color: var(--text-faint);
+      margin: 0;
+      line-height: 1.45;
+    }
+
+    .permission-card {
+      width: min(620px, 100%);
+      background: color-mix(in srgb, var(--surface) 90%, transparent);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 24px;
+      text-align: left;
+      display: grid;
+      gap: 14px;
+    }
+
+    body.rtl .permission-card {
+      text-align: right;
+    }
+
+    .cta-row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 6px;
+    }
+
+    .btn {
+      border: 1px solid var(--border);
+      background: var(--surface-elevated);
+      color: var(--text);
+      padding: 10px 16px;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: 140ms ease;
+    }
+
+    .btn:hover {
+      transform: translateY(-1px);
+      border-color: color-mix(in srgb, var(--accent) 45%, var(--border));
+    }
+
+    .btn.primary {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: var(--text-on-primary);
+      font-weight: 700;
+    }
+
+    .btn.ghost {
+      background: transparent;
+    }
+
+    .main-layout {
+      position: relative;
+      height: 100%;
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+    }
+
+    .header {
+      border-bottom: 1px solid var(--border);
+      background: color-mix(in srgb, var(--surface) 88%, transparent);
+      backdrop-filter: blur(8px);
+      padding: 12px 16px;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .header h2 {
+      font-size: 1.28rem;
+    }
+
+    .header-meta {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .pill {
+      border: 1px solid var(--border);
+      background: color-mix(in srgb, var(--surface-elevated) 86%, transparent);
+      color: var(--text-muted);
+      border-radius: 999px;
+      padding: 4px 10px;
+      font-size: 0.86rem;
+      white-space: nowrap;
+    }
+
+    .pill.accent {
+      border-color: var(--border-accent);
+      color: var(--accent);
+    }
+
+    .screen {
+      overflow: auto;
+      padding: 14px 14px 18px;
+    }
+
+    .tabbar {
+      border-top: 1px solid var(--border);
+      background: color-mix(in srgb, var(--surface) 90%, transparent);
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      min-height: 62px;
+    }
+
+    .tab-btn {
+      background: transparent;
+      border: 0;
+      color: var(--text-muted);
+      display: grid;
+      place-items: center;
+      gap: 2px;
+      cursor: pointer;
+      padding: 8px 4px;
+      font-size: 0.8rem;
+      letter-spacing: 0.03em;
+    }
+
+    .tab-btn.active {
+      color: var(--accent);
+    }
+
+    .tab-icon {
+      font-size: 1.15rem;
+      line-height: 1;
+    }
+
+    .oracle-layout {
+      height: 100%;
+      display: grid;
+      grid-template-rows: 1fr auto;
+      gap: 10px;
+    }
+
+    .chat-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      min-height: 100%;
+    }
+
+    .bubble-row {
+      display: flex;
+    }
+
+    .bubble-row.user {
+      justify-content: flex-end;
+    }
+
+    .bubble {
+      max-width: min(92%, 780px);
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      padding: 10px 12px;
+      line-height: 1.45;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .bubble-row.shams .bubble {
+      background: var(--chat-shams-bg);
+      border-left: 3px solid var(--chat-shams-border);
+    }
+
+    .bubble-row.user .bubble {
+      background: var(--chat-user-bg);
+      border-right: 3px solid var(--chat-user-border);
+    }
+
+    .composer-wrap {
+      border-top: 1px solid var(--border);
+      background: color-mix(in srgb, var(--surface) 90%, transparent);
+      padding: 8px;
+      display: grid;
+      gap: 8px;
+      border-radius: 12px;
+    }
+
+    .chips {
+      display: flex;
+      gap: 6px;
+      overflow: auto;
+      padding-bottom: 2px;
+    }
+
+    .chip {
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 5px 10px;
+      color: var(--text-muted);
+      white-space: nowrap;
+      cursor: pointer;
+      background: transparent;
+    }
+
+    .chip:hover {
+      border-color: color-mix(in srgb, var(--accent) 40%, var(--border));
+      color: var(--text);
+    }
+
+    .composer-row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 8px;
+      align-items: end;
+    }
+
+    .composer-input {
+      min-height: 40px;
+      max-height: 130px;
+      resize: vertical;
+      border: 1px solid var(--border);
+      background: var(--surface-elevated);
+      color: var(--text);
+      border-radius: 10px;
+      padding: 8px 10px;
+    }
+
+    .composer-input::placeholder {
+      color: var(--text-faint);
+    }
+
+    .verdict-card {
+      margin-top: 10px;
+      border: 1px solid var(--border-accent);
+      border-radius: 10px;
+      background: color-mix(in srgb, var(--surface) 92%, transparent);
+      overflow: hidden;
+    }
+
+    .card-row {
+      padding: 8px 10px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      gap: 8px;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .card-row:first-child {
+      border-top: 0;
+    }
+
+    .tag {
+      font-size: 0.8rem;
+      border-radius: 999px;
+      padding: 3px 8px;
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+    }
+
+    .score-bar {
+      width: 100%;
+      height: 6px;
+      border-radius: 999px;
+      overflow: hidden;
+      background: var(--surface-elevated);
+    }
+
+    .score-fill {
+      height: 100%;
+    }
+
+    .houses {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .house-pill {
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 2px 8px;
+      font-size: 0.8rem;
+    }
+
+    .history-controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .history-list {
+      display: grid;
+      gap: 8px;
+    }
+
+    .history-item {
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 10px;
+      background: color-mix(in srgb, var(--surface) 92%, transparent);
+      display: grid;
+      gap: 8px;
+    }
+
+    .history-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .history-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .history-modal {
+      position: fixed;
+      inset: 0;
+      z-index: 20;
+      display: grid;
+      place-items: center;
+      background: rgba(0, 0, 0, 0.6);
+      padding: 16px;
+    }
+
+    .modal-card {
+      width: min(900px, 100%);
+      max-height: 86vh;
+      overflow: auto;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 14px;
+      display: grid;
+      gap: 10px;
+    }
+
+    .skyclock-wrap {
+      display: grid;
+      gap: 12px;
+    }
+
+    .sky-disk-stage {
+      display: grid;
+      place-items: center;
+      padding: 8px 0;
+    }
+
+    .sky-disk {
+      width: min(80vw, 360px);
+      aspect-ratio: 1 / 1;
+      border-radius: 50%;
+      border: 1px solid color-mix(in srgb, var(--accent) 45%, transparent);
+      background:
+        radial-gradient(circle at 50% 50%, rgba(255, 233, 182, 0.18), transparent 36%),
+        conic-gradient(
+          from 0deg,
+          color-mix(in srgb, var(--accent) 45%, transparent),
+          color-mix(in srgb, var(--amber) 35%, transparent),
+          color-mix(in srgb, var(--accent) 45%, transparent),
+          color-mix(in srgb, var(--amber) 35%, transparent),
+          color-mix(in srgb, var(--accent) 45%, transparent)
+        );
+      animation: spin-disk 60s linear infinite;
+      box-shadow: 0 0 28px color-mix(in srgb, var(--amber) 20%, transparent);
+      position: relative;
+    }
+
+    .sky-disk::before {
+      content: "";
+      position: absolute;
+      inset: 13%;
+      border-radius: 50%;
+      border: 1px solid color-mix(in srgb, var(--text-muted) 30%, transparent);
+    }
+
+    .sky-disk::after {
+      content: "";
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 16px;
+      height: 16px;
+      transform: translate(-50%, -50%);
+      border-radius: 50%;
+      background: var(--amber);
+      box-shadow: 0 0 18px color-mix(in srgb, var(--amber) 60%, transparent);
+    }
+
+    @keyframes spin-disk {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    .info-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+      gap: 8px;
+    }
+
+    .info-card {
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 8px;
+      background: color-mix(in srgb, var(--surface) 90%, transparent);
+    }
+
+    .planet-table {
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: auto;
+      background: color-mix(in srgb, var(--surface) 90%, transparent);
+    }
+
+    .planet-table table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 480px;
+    }
+
+    .planet-table th,
+    .planet-table td {
+      border-bottom: 1px solid var(--border);
+      padding: 7px 8px;
+      text-align: left;
+      font-size: 0.9rem;
+    }
+
+    body.rtl .planet-table th,
+    body.rtl .planet-table td {
+      text-align: right;
+    }
+
+    .settings-grid {
+      display: grid;
+      gap: 12px;
+      max-width: 980px;
+      margin: 0 auto;
+    }
+
+    .section {
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      background: color-mix(in srgb, var(--surface) 90%, transparent);
+      padding: 12px;
+      display: grid;
+      gap: 10px;
+    }
+
+    .swatches {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .swatch {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      border: 2px solid transparent;
+      cursor: pointer;
+    }
+
+    .swatch.active {
+      border-color: #ffffff;
+      box-shadow: 0 0 0 1px var(--border);
+    }
+
+    .lang-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .lang-chip {
+      padding: 6px 11px;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      background: transparent;
+      color: var(--text);
+      cursor: pointer;
+    }
+
+    .lang-chip.active {
+      background: var(--accent);
+      color: var(--text-on-primary);
+      border-color: var(--accent);
+    }
+
+    .stats {
+      display: grid;
+      gap: 8px;
+      grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+    }
+
+    .stat {
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 8px;
+      text-align: center;
+      background: color-mix(in srgb, var(--surface-elevated) 70%, transparent);
+    }
+
+    .empty-state {
+      border: 1px dashed var(--border);
+      border-radius: 12px;
+      padding: 26px 12px;
+      text-align: center;
+      color: var(--text-muted);
+    }
+
+    .text-good { color: var(--positive); }
+    .text-bad { color: var(--negative); }
+    .text-warn { color: var(--caution); }
+
+    .hidden {
+      display: none !important;
+    }
+
+    @media (max-width: 760px) {
+      .header h2 {
+        font-size: 1.12rem;
+      }
+      .screen {
+        padding: 10px;
+      }
+      .bubble {
+        max-width: 96%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+  <script>
+    (function () {
+      "use strict";
+
+      const STORAGE_KEY = "shams_asrar_web_state_v1";
+      const FREE_LIMIT = 3;
+      const PLANETS = ["Sun", "Moon", "Mars", "Mercury", "Jupiter", "Venus", "Saturn", "Rahu", "Ketu"];
+      const CHALDEAN = ["Saturn", "Jupiter", "Mars", "Sun", "Venus", "Mercury", "Moon"];
+      const SIGN_NAMES = ["Aries", "Taurus", "Gemini", "Cancer", "Leo", "Virgo", "Libra", "Scorpio", "Sagittarius", "Capricorn", "Aquarius", "Pisces"];
+      const NAKSHATRAS = [
+        "Ashwini", "Bharani", "Krittika", "Rohini", "Mrigashira", "Ardra",
+        "Punarvasu", "Pushya", "Ashlesha", "Magha", "Purva Phalguni", "Uttara Phalguni",
+        "Hasta", "Chitra", "Swati", "Vishakha", "Anuradha", "Jyeshtha",
+        "Mula", "Purva Ashadha", "Uttara Ashadha", "Shravana", "Dhanishtha",
+        "Shatabhisha", "Purva Bhadrapada", "Uttara Bhadrapada", "Revati"
+      ];
+
+      const THEMES = {
+        teal: {
+          label: "Teal",
+          colors: {
+            bg: "#030e10",
+            surface: "#0a1a1d",
+            surfaceElevated: "#11272b",
+            border: "#1c3a3f",
+            borderAccent: "#14d4c4",
+            primary: "#0fa89a",
+            accent: "#14d4c4",
+            amber: "#e8b547",
+            positive: "#22c77b",
+            negative: "#e5484d",
+            caution: "#f5a524",
+            text: "#e6fbf8",
+            textMuted: "#8fb5b0",
+            textFaint: "#4d7370",
+            textOnPrimary: "#03171a",
+            chatShamsBg: "rgba(15, 168, 154, 0.10)",
+            chatShamsBorder: "#14d4c4",
+            chatUserBg: "rgba(232, 181, 71, 0.10)",
+            chatUserBorder: "#e8b547",
+            starfield: "#a0f2ea",
+            nebula1: "rgba(20, 212, 196, 0.18)",
+            nebula2: "rgba(15, 168, 154, 0.14)",
+            nebula3: "rgba(232, 181, 71, 0.08)"
+          }
+        },
+        midnightGold: {
+          label: "Midnight Gold",
+          colors: {
+            bg: "#0a0814",
+            surface: "#15112b",
+            surfaceElevated: "#1f1a3a",
+            border: "#2e2654",
+            borderAccent: "#b8952a",
+            primary: "#b8952a",
+            accent: "#e8c667",
+            amber: "#e8c667",
+            positive: "#7bc97b",
+            negative: "#d14747",
+            caution: "#f0a830",
+            text: "#f4ecd8",
+            textMuted: "#a89f86",
+            textFaint: "#5c5544",
+            textOnPrimary: "#1a1308",
+            chatShamsBg: "rgba(184, 149, 42, 0.10)",
+            chatShamsBorder: "#e8c667",
+            chatUserBg: "rgba(232, 198, 103, 0.10)",
+            chatUserBorder: "#e8c667",
+            starfield: "#f4ecd8",
+            nebula1: "rgba(184, 149, 42, 0.18)",
+            nebula2: "rgba(232, 198, 103, 0.10)",
+            nebula3: "rgba(120, 90, 200, 0.10)"
+          }
+        },
+        royalViolet: {
+          label: "Royal Violet",
+          colors: {
+            bg: "#0e0820",
+            surface: "#1a1238",
+            surfaceElevated: "#251a4f",
+            border: "#3a2a6b",
+            borderAccent: "#9d7aff",
+            primary: "#7c5cff",
+            accent: "#9d7aff",
+            amber: "#f2c84a",
+            positive: "#5dd39e",
+            negative: "#ff6b6b",
+            caution: "#ffb144",
+            text: "#ede6ff",
+            textMuted: "#a095c7",
+            textFaint: "#5c5380",
+            textOnPrimary: "#0a0518",
+            chatShamsBg: "rgba(124, 92, 255, 0.10)",
+            chatShamsBorder: "#9d7aff",
+            chatUserBg: "rgba(242, 200, 74, 0.10)",
+            chatUserBorder: "#f2c84a",
+            starfield: "#d4c8ff",
+            nebula1: "rgba(124, 92, 255, 0.18)",
+            nebula2: "rgba(157, 122, 255, 0.12)",
+            nebula3: "rgba(242, 200, 74, 0.08)"
+          }
+        },
+        crimsonDusk: {
+          label: "Crimson Dusk",
+          colors: {
+            bg: "#160a0e",
+            surface: "#26111a",
+            surfaceElevated: "#3a1a26",
+            border: "#5a2638",
+            borderAccent: "#e5566a",
+            primary: "#c73e5c",
+            accent: "#e5566a",
+            amber: "#f2a341",
+            positive: "#6bcf8f",
+            negative: "#ff5a5a",
+            caution: "#f2a341",
+            text: "#ffe6ec",
+            textMuted: "#c49aa7",
+            textFaint: "#7a5562",
+            textOnPrimary: "#1a0307",
+            chatShamsBg: "rgba(199, 62, 92, 0.10)",
+            chatShamsBorder: "#e5566a",
+            chatUserBg: "rgba(242, 163, 65, 0.10)",
+            chatUserBorder: "#f2a341",
+            starfield: "#ffd8e0",
+            nebula1: "rgba(199, 62, 92, 0.18)",
+            nebula2: "rgba(229, 86, 106, 0.12)",
+            nebula3: "rgba(242, 163, 65, 0.10)"
+          }
+        },
+        arcticSilver: {
+          label: "Arctic Silver",
+          colors: {
+            bg: "#0c1014",
+            surface: "#161b21",
+            surfaceElevated: "#222a33",
+            border: "#36404c",
+            borderAccent: "#b8c4d1",
+            primary: "#7c8fa3",
+            accent: "#b8c4d1",
+            amber: "#e0cfa4",
+            positive: "#8fcfa8",
+            negative: "#d67878",
+            caution: "#e0b878",
+            text: "#ecf1f7",
+            textMuted: "#9ca8b6",
+            textFaint: "#5a6470",
+            textOnPrimary: "#0a0e12",
+            chatShamsBg: "rgba(184, 196, 209, 0.08)",
+            chatShamsBorder: "#b8c4d1",
+            chatUserBg: "rgba(224, 207, 164, 0.10)",
+            chatUserBorder: "#e0cfa4",
+            starfield: "#ecf1f7",
+            nebula1: "rgba(184, 196, 209, 0.14)",
+            nebula2: "rgba(124, 143, 163, 0.12)",
+            nebula3: "rgba(224, 207, 164, 0.08)"
+          }
+        }
+      };
+
+      const STRINGS = {
+        en: {
+          appName: "Shams al-Asrar",
+          tagline: "RKP Horary",
+          poweredBy: "Powered by Astro Sarfaraz",
+          splash: "Chart the exact moment. Judge the exact question.",
+          permissionTitle: "Location for chart judgment",
+          permissionBody: "RKP horary depends on the exact moment and place of the question. Without location, the chart cannot be trusted. Your coordinates stay in this browser.",
+          grantAccess: "Grant location access",
+          notNow: "Not now",
+          locationDenied: "Location is required for precise chart casting.",
+          tabs: { oracle: "Oracle", skyclock: "Sky Clock", history: "History", settings: "Settings" },
+          oracleTitle: "RKP Horary",
+          oracleWelcome: "Ask one clear question. The chart is cast for this exact moment and judged with RKP-style rules.",
+          placeholder: "Type your question...",
+          ask: "Ask",
+          quotaExhausted: "Your free questions for this week are used. Upgrade to continue without limits.",
+          whenPrompt: "When will it happen?",
+          whyPrompt: "Why this verdict?",
+          remedyPrompt: "What remedy?",
+          newPrompt: "New question",
+          confidence: "Confidence",
+          timing: "When",
+          reasoning: "Why",
+          remedy: "Remedy",
+          noReadings: "No readings yet",
+          noReadingsBody: "Saved judgments will appear here.",
+          filterAll: "All",
+          filterYes: "Yes",
+          filterNo: "No",
+          filterConditional: "Conditional",
+          newest: "Newest first",
+          oldest: "Oldest first",
+          details: "Details",
+          delete: "Delete",
+          close: "Close",
+          skyTitle: "Sky Clock",
+          saveWallpaper: "Save as wallpaper",
+          settings: "Settings",
+          appearance: "Appearance",
+          language: "Language",
+          subscription: "Subscription",
+          stats: "Reading Stats",
+          location: "Location",
+          refreshLocation: "Refresh Location",
+          clearHistory: "Clear History",
+          freePlan: "Free",
+          unlimited: "Unlimited readings",
+          askFirst: "Ask your first question",
+          day: "Day",
+          hora: "Hora",
+          minute: "Minute",
+          asc: "Ascendant",
+          moon: "Moon",
+          lst: "LST"
+        },
+        ur: {
+          appName: "Shams al-Asrar",
+          tagline: "RKP Horary",
+          poweredBy: "Astro Sarfaraz",
+          splash: "Asman sun raha hai.",
+          permissionTitle: "Location darkar hai",
+          permissionBody: "Sawal ka chart waqt aur maqam dono par mabni hota hai. Location ke baghair faisla kamzor hota hai.",
+          grantAccess: "Location allow karein",
+          notNow: "Abhi nahi",
+          locationDenied: "Location zaroori hai.",
+          tabs: { oracle: "Oracle", skyclock: "Sky Clock", history: "History", settings: "Settings" },
+          oracleTitle: "Shams ki Aawaz",
+          oracleWelcome: "Ek wazeh sawal poochhein.",
+          placeholder: "Apna sawal likhein...",
+          ask: "Poochhein",
+          quotaExhausted: "Is hafte ke free sawalat khatam ho chuke hain.",
+          whenPrompt: "Kab hoga?",
+          whyPrompt: "Yeh faisla kyun?",
+          remedyPrompt: "Tadbeer kya?",
+          newPrompt: "Naya sawal",
+          confidence: "Yaqeen",
+          timing: "Waqt",
+          reasoning: "Wajah",
+          remedy: "Tadbeer",
+          noReadings: "Abhi koi reading nahi",
+          noReadingsBody: "Aap ki readings yahan ayengi.",
+          filterAll: "Sab",
+          filterYes: "Haan",
+          filterNo: "Nahi",
+          filterConditional: "Mashroot",
+          newest: "Naye pehle",
+          oldest: "Purane pehle",
+          details: "Tafseel",
+          delete: "Delete",
+          close: "Band",
+          skyTitle: "Falaki Ghari",
+          saveWallpaper: "Wallpaper save",
+          settings: "Tarteebat",
+          appearance: "Theme",
+          language: "Zaban",
+          subscription: "Subscription",
+          stats: "Stats",
+          location: "Maqam",
+          refreshLocation: "Location refresh",
+          clearHistory: "History saaf",
+          freePlan: "Free",
+          unlimited: "Unlimited",
+          askFirst: "Pehla sawal poochhein",
+          day: "Day",
+          hora: "Hora",
+          minute: "Minute",
+          asc: "Lagan",
+          moon: "Moon",
+          lst: "LST"
+        },
+        hi: {
+          appName: "Shams al-Asrar",
+          tagline: "RKP Horary",
+          poweredBy: "Astro Sarfaraz",
+          splash: "Aakash sun raha hai.",
+          permissionTitle: "Location avashyak hai",
+          permissionBody: "Prashna ka chart samay aur sthan dono par aadharit hota hai.",
+          grantAccess: "Location dein",
+          notNow: "Abhi nahi",
+          locationDenied: "Location zaroori hai.",
+          tabs: { oracle: "Oracle", skyclock: "Sky Clock", history: "History", settings: "Settings" },
+          oracleTitle: "Shams ki Vani",
+          oracleWelcome: "Ek spasht prashna poochhiye.",
+          placeholder: "Prashna likhiye...",
+          ask: "Poochhen",
+          quotaExhausted: "Is hafte ke free prashna samapt.",
+          whenPrompt: "Kab hoga?",
+          whyPrompt: "Yeh nirnay kyun?",
+          remedyPrompt: "Upay kya?",
+          newPrompt: "Naya prashna",
+          confidence: "Vishvas",
+          timing: "Samay",
+          reasoning: "Karan",
+          remedy: "Upay",
+          noReadings: "Abhi koi reading nahi",
+          noReadingsBody: "Aapke nirnay yahan dikhte hain.",
+          filterAll: "Sab",
+          filterYes: "Haan",
+          filterNo: "Nahi",
+          filterConditional: "Shartiya",
+          newest: "Naye pehle",
+          oldest: "Purane pehle",
+          details: "Vivar",
+          delete: "Delete",
+          close: "Band",
+          skyTitle: "Sky Clock",
+          saveWallpaper: "Wallpaper save",
+          settings: "Settings",
+          appearance: "Theme",
+          language: "Bhasha",
+          subscription: "Subscription",
+          stats: "Stats",
+          location: "Sthan",
+          refreshLocation: "Location refresh",
+          clearHistory: "History saaf",
+          freePlan: "Free",
+          unlimited: "Unlimited",
+          askFirst: "Pehla prashna poochhiye",
+          day: "Day",
+          hora: "Hora",
+          minute: "Minute",
+          asc: "Lagna",
+          moon: "Moon",
+          lst: "LST"
+        }
+      };
+
+      const HOUSE_MATRIX = {
+        career: { favorable: [6, 10, 11], denial: [5, 8, 12], primary: 10 },
+        marriage: { favorable: [7, 11, 2], denial: [6, 8, 12], primary: 7 },
+        finance: { favorable: [2, 6, 11], denial: [8, 12], primary: 2 },
+        health: { favorable: [1, 5, 11], denial: [6, 8, 12], primary: 1 },
+        property: { favorable: [4, 11, 2], denial: [8, 12], primary: 4 },
+        travel: { favorable: [3, 9, 12], denial: [], primary: 9 },
+        legal: { favorable: [6, 11], denial: [8, 12], primary: 6 },
+        education: { favorable: [4, 9, 11], denial: [8, 12], primary: 4 },
+        business: { favorable: [7, 10, 11], denial: [6, 8, 12], primary: 7 },
+        children: { favorable: [2, 5, 11], denial: [1, 4, 10], primary: 5 },
+        lostitem: { favorable: [2, 4, 11], denial: [8, 12], primary: 2 },
+        enemies: { favorable: [6, 11], denial: [8, 12], primary: 6 },
+        spiritual: { favorable: [5, 9, 12], denial: [6, 8], primary: 9 },
+        general: { favorable: [1, 11], denial: [8, 12], primary: 1 }
+      };
+
+      const QUESTION_KEYWORDS = {
+        career: ["job", "career", "work", "promotion", "salary", "office", "naukri"],
+        marriage: ["marriage", "wedding", "husband", "wife", "partner", "love", "nikah", "shadi"],
+        finance: ["money", "loan", "debt", "income", "profit", "loss", "wealth", "paisa"],
+        health: ["health", "illness", "sick", "hospital", "medicine", "surgery", "pain"],
+        property: ["house", "property", "land", "home", "flat", "plot"],
+        travel: ["travel", "journey", "trip", "visa", "abroad", "foreign", "migration"],
+        legal: ["court", "case", "legal", "lawyer", "dispute", "lawsuit"],
+        education: ["study", "exam", "admission", "university", "college", "school"],
+        business: ["business", "startup", "venture", "company", "trade", "partnership"],
+        children: ["child", "children", "baby", "pregnancy", "son", "daughter"],
+        lostitem: ["lost", "missing", "stolen", "misplaced", "where is"],
+        enemies: ["enemy", "rival", "opponent", "conflict", "fight"],
+        spiritual: ["spiritual", "meditation", "prayer", "moksha", "pilgrimage"]
+      };
+
+      const INITIAL_CHIPS = {
+        en: ["Will I succeed?", "Career & livelihood", "Marriage & love", "Finance", "Health", "Travel", "Legal matter", "Lost item"],
+        ur: ["Kya mai kamyab honga?", "Career", "Shadi", "Mali mamla", "Sehat", "Safar", "Qanooni masla", "Gumshuda cheez"],
+        hi: ["Kya main safal honga?", "Career", "Vivah", "Vitt", "Swasthya", "Yatra", "Kanuni mamla", "Khoyi vastu"]
+      };
+
+      const FOLLOWUP_CHIPS = {
+        en: ["When will it happen?", "Why this verdict?", "What remedy?", "New question"],
+        ur: ["Kab hoga?", "Yeh faisla kyun?", "Tadbeer kya?", "Naya sawal"],
+        hi: ["Kab hoga?", "Yeh nirnay kyun?", "Upay kya?", "Naya prashna"]
+      };
+
+      function fnv1a(input) {
+        let h = 0x811c9dc5;
+        for (let i = 0; i < input.length; i += 1) {
+          h ^= input.charCodeAt(i);
+          h = Math.imul(h, 0x01000193) >>> 0;
+        }
+        return h >>> 0;
+      }
+
+      function hashHex(seed) {
+        return fnv1a(seed).toString(16).padStart(8, "0");
+      }
+
+      function clamp(num, min, max) {
+        return Math.max(min, Math.min(max, num));
+      }
+
+      function escapeHtml(str) {
+        return String(str)
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;")
+          .replace(/'/g, "&#039;");
+      }
+
+      function renderBold(str) {
+        return escapeHtml(str).replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>");
+      }
+
+      function sundayWeekKey(now) {
+        const d = new Date(now);
+        const dow = d.getDay();
+        const sunday = new Date(d);
+        sunday.setDate(d.getDate() - dow);
+        return sunday.toISOString().slice(0, 10);
+      }
+
+      function defaultState() {
+        return {
+          themeId: "teal",
+          lang: "en",
+          onboardingPrompted: false,
+          onboardingPermissionGranted: false,
+          lastLocation: null,
+          readings: [],
+          filter: "all",
+          sort: "newest",
+          plan: "free",
+          usedThisWeek: 0,
+          quotaWeek: sundayWeekKey(Date.now()),
+          activeTab: "Oracle"
+        };
+      }
+
+      function loadState() {
+        const base = defaultState();
+        try {
+          const raw = localStorage.getItem(STORAGE_KEY);
+          if (!raw) return base;
+          const parsed = JSON.parse(raw);
+          return {
+            ...base,
+            ...parsed,
+            readings: Array.isArray(parsed.readings) ? parsed.readings : base.readings
+          };
+        } catch (error) {
+          return base;
+        }
+      }
+
+      function saveState() {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      }
+
+      function resetQuotaWeekIfNeeded() {
+        const current = sundayWeekKey(Date.now());
+        if (state.quotaWeek !== current) {
+          state.quotaWeek = current;
+          state.usedThisWeek = 0;
+          saveState();
+        }
+      }
+
+      const state = loadState();
+      resetQuotaWeekIfNeeded();
+
+      const ui = {
+        phase: "splash",
+        sending: false,
+        selectedReadingId: null,
+        chatStage: "ready",
+        lastReadingId: null,
+        messages: []
+      };
+
+      const root = document.getElementById("root");
+
+      function t(key) {
+        const lang = STRINGS[state.lang] ? state.lang : "en";
+        return STRINGS[lang][key] || STRINGS.en[key] || key;
+      }
+
+      function translationForTabs() {
+        const lang = STRINGS[state.lang] ? state.lang : "en";
+        return STRINGS[lang].tabs || STRINGS.en.tabs;
+      }
+
+      function isRtl() {
+        return state.lang === "ur";
+      }
+
+      function questionsLeft() {
+        if (state.plan !== "free") return Infinity;
+        return Math.max(0, FREE_LIMIT - state.usedThisWeek);
+      }
+
+      function canAsk() {
+        return questionsLeft() > 0;
+      }
+
+      function consumeQuota() {
+        if (state.plan !== "free") return true;
+        if (state.usedThisWeek >= FREE_LIMIT) return false;
+        state.usedThisWeek += 1;
+        state.quotaWeek = sundayWeekKey(Date.now());
+        saveState();
+        return true;
+      }
+
+      function detectQuestionType(question) {
+        const normalized = question.toLowerCase().trim();
+        const types = Object.keys(QUESTION_KEYWORDS);
+        for (let i = 0; i < types.length; i += 1) {
+          const qType = types[i];
+          const keywords = QUESTION_KEYWORDS[qType];
+          for (let j = 0; j < keywords.length; j += 1) {
+            if (normalized.includes(keywords[j])) {
+              return qType;
+            }
+          }
+        }
+        return "general";
+      }
+
+      function dayLordAt(moment) {
+        const dayMap = ["Sun", "Moon", "Mars", "Mercury", "Jupiter", "Venus", "Saturn"];
+        return dayMap[moment.getDay()];
+      }
+
+      function horaLordAt(moment) {
+        const dayLord = dayLordAt(moment);
+        const dayStartIndex = CHALDEAN.indexOf(dayLord);
+        const hourIndex = moment.getHours();
+        return CHALDEAN[(dayStartIndex + hourIndex) % CHALDEAN.length];
+      }
+
+      function minuteLordAt(moment) {
+        const dayLord = dayLordAt(moment);
+        const dayStartIndex = CHALDEAN.indexOf(dayLord);
+        const minuteIndex = moment.getHours() * 60 + moment.getMinutes();
+        return CHALDEAN[(dayStartIndex + minuteIndex) % CHALDEAN.length];
+      }
+
+      function houseFromSeed(seed, label) {
+        return (fnv1a(seed + "::" + label) % 12) + 1;
+      }
+
+      function pickPlanet(seed, label) {
+        return PLANETS[fnv1a(seed + "::" + label) % PLANETS.length];
+      }
+
+      function seedBool(seed, label, chancePercent) {
+        return (fnv1a(seed + "::" + label) % 100) < chancePercent;
+      }
+
+      function verdictFromScore(score) {
+        if (score >= 3) return "YES";
+        if (score <= -2) return "NO";
+        return "CONDITIONAL";
+      }
+
+      function verdictColor(verdict) {
+        if (verdict === "YES") return "var(--positive)";
+        if (verdict === "NO") return "var(--negative)";
+        if (verdict === "CONDITIONAL" || verdict === "DELAYED") return "var(--caution)";
+        return "var(--text-muted)";
+      }
+
+      function verdictClass(verdict) {
+        if (verdict === "YES") return "text-good";
+        if (verdict === "NO") return "text-bad";
+        return "text-warn";
+      }
+
+      function daysToWindow(days) {
+        if (days < 30) return { window: "days", range: { min: 1, max: Math.max(1, Math.ceil(days)) } };
+        if (days < 90) return { window: "weeks", range: { min: 1, max: Math.max(1, Math.ceil(days / 7)) } };
+        if (days < 730) return { window: "months", range: { min: 1, max: Math.max(1, Math.ceil(days / 30.44)) } };
+        return { window: "years", range: { min: 1, max: Math.max(1, Math.ceil(days / 365.25)) } };
+      }
+
+      function buildRemedy(planet) {
+        const remedies = {
+          Sun: {
+            action: "Offer water to the rising Sun for 7 days",
+            avoid: "Avoid ego-driven conflicts on Sunday",
+            mantra: "Om Hraam Hreem Hraum Sah Suryaya Namah"
+          },
+          Moon: {
+            action: "Offer milk to Shiva on Monday",
+            avoid: "Avoid emotional decisions at night",
+            mantra: "Om Shraam Shreem Shraum Sah Chandraya Namah"
+          },
+          Mars: {
+            action: "Light a red lamp on Tuesday",
+            avoid: "Avoid anger and rush decisions",
+            mantra: "Om Kraam Kreem Kraum Sah Bhaumaya Namah"
+          },
+          Mercury: {
+            action: "Feed green fodder to cows on Wednesday",
+            avoid: "Avoid unclear communication",
+            mantra: "Om Braam Breem Braum Sah Budhaya Namah"
+          },
+          Jupiter: {
+            action: "Offer turmeric to Vishnu on Thursday",
+            avoid: "Avoid disrespecting mentors",
+            mantra: "Om Graam Greem Graum Sah Guruve Namah"
+          },
+          Venus: {
+            action: "Offer white flowers on Friday",
+            avoid: "Avoid excess and vanity",
+            mantra: "Om Draam Dreem Draum Sah Shukraya Namah"
+          },
+          Saturn: {
+            action: "Light a sesame oil lamp on Saturday",
+            avoid: "Avoid delay and laziness",
+            mantra: "Om Praam Preem Praum Sah Shanaischaraya Namah"
+          },
+          Rahu: {
+            action: "Offer blue flowers to Durga on Saturday",
+            avoid: "Avoid impulsive travel at night",
+            mantra: "Om Bhraam Bhreem Bhraum Sah Rahave Namah"
+          },
+          Ketu: {
+            action: "Offer flowers at a Ganesh temple on Tuesday",
+            avoid: "Avoid starting long journeys",
+            mantra: "Om Sraam Sreem Sraum Sah Ketave Namah"
+          }
+        };
+        return remedies[planet];
+      }
+
+      function generateReading(questionText) {
+        const now = new Date();
+        const createdAt = now.toISOString();
+        const qType = detectQuestionType(questionText);
+        const matrix = HOUSE_MATRIX[qType];
+        const lat = state.lastLocation ? state.lastLocation.lat : null;
+        const lon = state.lastLocation ? state.lastLocation.lon : null;
+        const seed = [
+          questionText,
+          createdAt,
+          String(lat),
+          String(lon),
+          state.lang,
+          state.themeId
+        ].join("|");
+
+        if (lat === null || lon === null) {
+          return {
+            id: "r_" + hashHex(seed),
+            question: questionText,
+            questionLang: state.lang,
+            category: qType,
+            verdict: "UNCLEAR",
+            createdAt,
+            chartJson: { phase: "no-location", moment: createdAt },
+            verdictJson: {
+              verdict: "UNCLEAR",
+              confidence: 0,
+              reasoning: [],
+              narration: {
+                en: t("locationDenied"),
+                ur: t("locationDenied"),
+                hi: t("locationDenied")
+              }
+            }
+          };
+        }
+
+        const moonSubLord = pickPlanet(seed, "moon-sub-lord");
+        const moonSubLordHouse = houseFromSeed(seed, "moon-sub-lord-house");
+        const dayLord = dayLordAt(now);
+        const horaLord = horaLordAt(now);
+        const minuteLord = minuteLordAt(now);
+
+        let score = 0;
+        const reasoning = [];
+
+        reasoning.push({
+          ruleId: "STEP_1",
+          description: "[STEP 1] Moon sub-lord resolved as " + moonSubLord,
+          weight: 0
+        });
+        reasoning.push({
+          ruleId: "STEP_2",
+          description: "[STEP 2] Question type: " + qType + " | favorable: [" + matrix.favorable.join(",") + "] denial: [" + matrix.denial.join(",") + "]",
+          weight: 0
+        });
+
+        if (matrix.favorable.includes(moonSubLordHouse)) {
+          score += 2;
+          reasoning.push({
+            ruleId: "STEP_3",
+            description: "[STEP 3] Moon sub-lord occupies favorable house " + moonSubLordHouse,
+            weight: 2
+          });
+        } else if (matrix.denial.includes(moonSubLordHouse)) {
+          score -= 2;
+          reasoning.push({
+            ruleId: "STEP_3",
+            description: "[STEP 3] Moon sub-lord occupies denial house " + moonSubLordHouse,
+            weight: -2
+          });
+        } else {
+          reasoning.push({
+            ruleId: "STEP_3",
+            description: "[STEP 3] Moon sub-lord occupies neutral house " + moonSubLordHouse,
+            weight: 0
+          });
+        }
+
+        const rpList = [
+          { role: "dayLord", planet: dayLord },
+          { role: "horaLord", planet: horaLord },
+          { role: "minuteLord", planet: minuteLord }
+        ];
+
+        let rpScore = 0;
+        for (let i = 0; i < rpList.length; i += 1) {
+          const rp = rpList[i];
+          const rpHouse = houseFromSeed(seed, rp.planet + "::rp-house");
+          let contribution = 0;
+          if (matrix.favorable.includes(rpHouse)) contribution = 1;
+          else if (matrix.denial.includes(rpHouse)) contribution = -1;
+          score += contribution;
+          rpScore += contribution;
+          reasoning.push({
+            ruleId: "STEP_4",
+            description: "[STEP 4] " + rp.role + " (" + rp.planet + ") in house " + rpHouse + " => " + (contribution > 0 ? "+1" : contribution < 0 ? "-1" : "0"),
+            weight: contribution
+          });
+        }
+
+        let verdict = verdictFromScore(score);
+        const delayedByRetro =
+          verdict === "YES" &&
+          (seedBool(seed, moonSubLord + "-retro", 26) || seedBool(seed, "Jupiter-retro", 32) || seedBool(seed, "Venus-retro", 20));
+        if (delayedByRetro) verdict = "DELAYED";
+
+        reasoning.push({
+          ruleId: "STEP_5",
+          description: "[STEP 5] Total score = " + score + " => " + verdict,
+          weight: score
+        });
+
+        const confidence = Math.round(clamp(((score + 5) / 10) * 100, 10, 100));
+        const positiveScore = Math.max(0, score);
+        const dashaYears = { Sun: 6, Moon: 10, Mars: 7, Mercury: 17, Jupiter: 16, Venus: 20, Saturn: 19, Rahu: 18, Ketu: 7 };
+        const timingPlanet = pickPlanet(seed, "timing-planet");
+        const timingDays = ((dashaYears[timingPlanet] || 7) * 12 * (positiveScore / 5 || 0.15)) * 30.44;
+        const timingData = daysToWindow(Math.max(10, timingDays));
+
+        const remedy = buildRemedy(moonSubLord);
+        const favHits = matrix.favorable.filter((h) => h === moonSubLordHouse);
+        const denHits = matrix.denial.filter((h) => h === moonSubLordHouse);
+        const narrationEn = buildNarration(verdict, qType, moonSubLord, moonSubLordHouse, score);
+
+        const reading = {
+          id: "r_" + hashHex(seed + "_id"),
+          question: questionText,
+          questionLang: state.lang,
+          category: qType,
+          verdict,
+          createdAt,
+          chartJson: {
+            momentUtc: createdAt,
+            location: { lat, lon },
+            rulingPlanets: rpList.map((p) => p.planet)
+          },
+          verdictJson: {
+            verdict,
+            confidence,
+            reasoning,
+            timing: {
+              window: timingData.window,
+              range: timingData.range,
+              activeDasha: dayLord,
+              activeAntardasha: horaLord,
+              activePratyantardasha: minuteLord
+            },
+            remedy: remedy,
+            narration: {
+              en: narrationEn,
+              ur: narrationEn,
+              hi: narrationEn
+            },
+            moonSubLord: {
+              planet: moonSubLord,
+              occupiedHouse: moonSubLordHouse,
+              favHits,
+              denHits
+            },
+            rulingPlanets: {
+              dayLord,
+              horaLord,
+              minuteLord,
+              agreementScore: rpScore
+            }
+          }
+        };
+
+        return reading;
+      }
+
+      function buildNarration(verdict, qType, subLord, house, score) {
+        if (verdict === "YES") {
+          return "The heavens support your " + qType + " matter. Moon sub-lord " + subLord + " in house " + house + " gives a favorable signal. Score: +" + score + ".";
+        }
+        if (verdict === "NO") {
+          return "The present planetary testimony does not support your " + qType + " matter. Moon sub-lord " + subLord + " weighs toward denial. Score: " + score + ".";
+        }
+        if (verdict === "DELAYED") {
+          return "Your " + qType + " matter is positive but delayed. The signal is favorable, yet timing stretches due to retrograde pressure.";
+        }
+        if (verdict === "CONDITIONAL") {
+          return "Your " + qType + " question shows mixed signals. Progress is possible with conditions and corrective steps. Score: " + score + ".";
+        }
+        return "The chart is unclear for this question right now.";
+      }
+
+      function detectIntent(text) {
+        const q = text.toLowerCase();
+        if (q.includes("new") || q.includes("another") || q.includes("again") || q.includes("naya")) return "new";
+        if (q.includes("when") || q.includes("timing") || q.includes("kab")) return "timing";
+        if (q.includes("why") || q.includes("reason") || q.includes("kyun")) return "why";
+        if (q.includes("remedy") || q.includes("upay") || q.includes("tadbeer") || q.includes("mantra")) return "remedy";
+        return "none";
+      }
+
+      function readingById(id) {
+        return state.readings.find((r) => r.id === id) || null;
+      }
+
+      function normalizeMessagesAfterLanguageChange() {
+        if (!ui.messages.length) {
+          initializeConversation();
+          return;
+        }
+      }
+
+      function initializeConversation() {
+        ui.messages = [{
+          id: "greet",
+          sender: "shams",
+          text: t("oracleWelcome"),
+          createdAt: new Date().toISOString()
+        }];
+        ui.chatStage = "ready";
+        ui.lastReadingId = null;
+      }
+
+      if (!ui.messages.length) {
+        initializeConversation();
+      }
+
+      function addReading(reading) {
+        const next = [reading].concat(state.readings.filter((r) => r.id !== reading.id));
+        state.readings = next.slice(0, 100);
+        saveState();
+      }
+
+      function removeReading(id) {
+        state.readings = state.readings.filter((r) => r.id !== id);
+        if (ui.lastReadingId === id) {
+          ui.lastReadingId = null;
+          ui.chatStage = "ready";
+        }
+        if (ui.selectedReadingId === id) {
+          ui.selectedReadingId = null;
+        }
+        saveState();
+      }
+
+      function sortedFilteredReadings() {
+        const filtered = state.filter === "all"
+          ? state.readings
+          : state.readings.filter((r) => r.verdict === state.filter || (state.filter === "CONDITIONAL" && (r.verdict === "CONDITIONAL" || r.verdict === "DELAYED")));
+        const sorted = filtered.slice().sort((a, b) => {
+          if (state.sort === "newest") return a.createdAt < b.createdAt ? 1 : -1;
+          return a.createdAt > b.createdAt ? 1 : -1;
+        });
+        return sorted;
+      }
+
+      function relativeTime(iso) {
+        const ts = Date.parse(iso);
+        if (Number.isNaN(ts)) return "";
+        const diffSec = Math.max(0, Math.floor((Date.now() - ts) / 1000));
+        if (diffSec < 60) return "just now";
+        if (diffSec < 3600) return Math.floor(diffSec / 60) + "m";
+        if (diffSec < 86400) return Math.floor(diffSec / 3600) + "h";
+        if (diffSec < 86400 * 7) return Math.floor(diffSec / 86400) + "d";
+        return new Date(ts).toLocaleDateString();
+      }
+
+      function applyTheme() {
+        const theme = THEMES[state.themeId] || THEMES.teal;
+        const c = theme.colors;
+        const rootStyle = document.documentElement.style;
+        rootStyle.setProperty("--bg", c.bg);
+        rootStyle.setProperty("--surface", c.surface);
+        rootStyle.setProperty("--surface-elevated", c.surfaceElevated);
+        rootStyle.setProperty("--border", c.border);
+        rootStyle.setProperty("--border-accent", c.borderAccent);
+        rootStyle.setProperty("--primary", c.primary);
+        rootStyle.setProperty("--accent", c.accent);
+        rootStyle.setProperty("--amber", c.amber);
+        rootStyle.setProperty("--positive", c.positive);
+        rootStyle.setProperty("--negative", c.negative);
+        rootStyle.setProperty("--caution", c.caution);
+        rootStyle.setProperty("--text", c.text);
+        rootStyle.setProperty("--text-muted", c.textMuted);
+        rootStyle.setProperty("--text-faint", c.textFaint);
+        rootStyle.setProperty("--text-on-primary", c.textOnPrimary);
+        rootStyle.setProperty("--chat-shams-bg", c.chatShamsBg);
+        rootStyle.setProperty("--chat-shams-border", c.chatShamsBorder);
+        rootStyle.setProperty("--chat-user-bg", c.chatUserBg);
+        rootStyle.setProperty("--chat-user-border", c.chatUserBorder);
+        rootStyle.setProperty("--starfield", c.starfield);
+        rootStyle.setProperty("--nebula-1", c.nebula1);
+        rootStyle.setProperty("--nebula-2", c.nebula2);
+        rootStyle.setProperty("--nebula-3", c.nebula3);
+      }
+
+      function moonPhaseInfo(nowMs) {
+        const jd = nowMs / 86400000 + 2440587.5;
+        const cycle = ((jd - 2451550.1) / 29.53058867) % 1;
+        const p = cycle < 0 ? cycle + 1 : cycle;
+        const icons = ["🌑", "🌒", "🌓", "🌔", "🌕", "🌖", "🌗", "🌘"];
+        const names = ["New Moon", "Waxing Crescent", "First Quarter", "Waxing Gibbous", "Full Moon", "Waning Gibbous", "Last Quarter", "Waning Crescent"];
+        const idx = Math.round(p * 8) % 8;
+        return { icon: icons[idx], name: names[idx] };
+      }
+
+      function localSiderealTime(nowMs, lonDeg) {
+        const JD_J2000 = 2451545.0;
+        const jd = nowMs / 86400000 + 2440587.5;
+        const T = (jd - JD_J2000) / 36525;
+        const gmst = 280.46061837 + 360.98564736629 * (jd - JD_J2000) + 0.000387933 * T * T;
+        const lmst = (((gmst + lonDeg) % 360) + 360) % 360;
+        const h = Math.floor(lmst / 15);
+        const m = Math.floor(((lmst / 15) - h) * 60);
+        return String(h).padStart(2, "0") + "h " + String(m).padStart(2, "0") + "m";
+      }
+
+      function ascendantSignApprox(nowMs, lonDeg, latDeg) {
+        const JD_J2000 = 2451545.0;
+        const jd = nowMs / 86400000 + 2440587.5;
+        const T = (jd - JD_J2000) / 36525;
+        const gmst = 280.46061837 + 360.98564736629 * (jd - JD_J2000) + 0.000387933 * T * T;
+        const ramc = (((gmst + lonDeg) % 360) + 360) % 360;
+        const eps = 23.4393 - 0.013 * T;
+        const ramcR = ramc * (Math.PI / 180);
+        const epsR = eps * (Math.PI / 180);
+        const latR = latDeg * (Math.PI / 180);
+        const t2 = -Math.cos(ramcR) / (Math.sin(epsR) * Math.tan(latR) + Math.cos(epsR) * Math.sin(ramcR));
+        let asc = Math.atan(t2) * (180 / Math.PI);
+        if (Math.cos(ramcR) > 0) asc += 180;
+        asc = ((asc % 360) + 360) % 360;
+        const LAHIRI = 24.12;
+        const sidAsc = (((asc - LAHIRI) % 360) + 360) % 360;
+        const signIdx = Math.floor(sidAsc / 30);
+        return SIGN_NAMES[signIdx];
+      }
+
+      function moonSignApprox(nowMs) {
+        const JD_J2000 = 2451545.0;
+        const jd = nowMs / 86400000 + 2440587.5;
+        const T = (jd - JD_J2000) / 36525;
+        const moonLon = (((218.3165 + 481267.8813 * T) % 360) + 360) % 360;
+        const LAHIRI = 24.12;
+        const sid = (((moonLon - LAHIRI) % 360) + 360) % 360;
+        const idx = Math.floor(sid / 30);
+        return SIGN_NAMES[idx];
+      }
+
+      function displayPlanetLongitude(name, nowMs) {
+        const JD_J2000 = 2451545.0;
+        const jd = nowMs / 86400000 + 2440587.5;
+        const T = (jd - JD_J2000) / 36525;
+        const elems = {
+          Sun: { L0: 280.46646, Lr: 36000.76983 },
+          Moon: { L0: 218.3165, Lr: 481267.8813 },
+          Mercury: { L0: 252.2509, Lr: 149472.6749 },
+          Venus: { L0: 181.9798, Lr: 58517.8156 },
+          Mars: { L0: 355.4330, Lr: 19140.2993 },
+          Jupiter: { L0: 34.3515, Lr: 3034.9057 },
+          Saturn: { L0: 50.0774, Lr: 1222.1138 },
+          Rahu: { L0: 125.0445, Lr: -1934.136 }
+        };
+        const e = elems[name];
+        const tropical = (((e.L0 + e.Lr * T) % 360) + 360) % 360;
+        const LAHIRI = 24.12;
+        return (((tropical - LAHIRI) % 360) + 360) % 360;
+      }
+
+      function formatDms(lon) {
+        const degInSign = lon % 30;
+        const d = Math.floor(degInSign);
+        const m = Math.floor((degInSign - d) * 60);
+        return d + "° " + String(m).padStart(2, "0") + "'";
+      }
+
+      function getNakshatra(lon) {
+        const idx = Math.floor((lon / 360) * 27);
+        return NAKSHATRAS[idx] || "-";
+      }
+
+      function renderHeader() {
+        const tabs = translationForTabs();
+        const locationText = state.lastLocation ? (state.lastLocation.lat.toFixed(2) + ", " + state.lastLocation.lon.toFixed(2)) : "No location";
+        let title = tabs.oracle;
+        if (state.activeTab === "SkyClock") title = tabs.skyclock;
+        if (state.activeTab === "History") title = tabs.history;
+        if (state.activeTab === "Settings") title = tabs.settings;
+        return (
+          '<header class="header">' +
+            "<h2>" + escapeHtml(title) + "</h2>" +
+            '<div class="header-meta">' +
+              (state.activeTab === "Oracle" && questionsLeft() !== Infinity
+                ? '<span class="pill ' + (questionsLeft() === 0 ? "" : "accent") + '">' + questionsLeft() + "/" + FREE_LIMIT + "</span>"
+                : "") +
+              '<span class="pill accent">' + escapeHtml(locationText) + "</span>" +
+            "</div>" +
+          "</header>"
+        );
+      }
+
+      function renderTabbar() {
+        const tabs = translationForTabs();
+        const def = [
+          { id: "Oracle", icon: "🔮", label: tabs.oracle },
+          { id: "SkyClock", icon: "🌐", label: tabs.skyclock },
+          { id: "History", icon: "📜", label: tabs.history },
+          { id: "Settings", icon: "⚙️", label: tabs.settings }
+        ];
+        return (
+          '<nav class="tabbar">' +
+            def.map(function (tab) {
+              return (
+                '<button class="tab-btn ' + (state.activeTab === tab.id ? "active" : "") + '" data-action="switch-tab" data-tab="' + tab.id + '">' +
+                  '<span class="tab-icon">' + tab.icon + "</span>" +
+                  "<span>" + escapeHtml(tab.label) + "</span>" +
+                "</button>"
+              );
+            }).join("") +
+          "</nav>"
+        );
+      }
+
+      function renderOracle() {
+        const chips = ui.chatStage === "answered"
+          ? (FOLLOWUP_CHIPS[state.lang] || FOLLOWUP_CHIPS.en)
+          : (INITIAL_CHIPS[state.lang] || INITIAL_CHIPS.en);
+
+        const messagesHtml = ui.messages.map(function (m) {
+          const bubble = renderBold(m.text);
+          return (
+            '<div class="bubble-row ' + (m.sender === "user" ? "user" : "shams") + '">' +
+              '<div class="bubble">' +
+                "<div>" + bubble + "</div>" +
+                (m.reading ? renderVerdictCard(m.reading) : "") +
+              "</div>" +
+            "</div>"
+          );
+        }).join("");
+
+        return (
+          '<section class="oracle-layout">' +
+            '<div class="chat-list" id="chat-list">' + messagesHtml + "</div>" +
+            '<form class="composer-wrap" data-action="send-message">' +
+              '<div class="chips">' +
+                chips.map(function (chip) {
+                  return '<button type="button" class="chip" data-action="chip" data-chip="' + escapeHtml(chip) + '">' + escapeHtml(chip) + "</button>";
+                }).join("") +
+              "</div>" +
+              '<div class="composer-row">' +
+                '<textarea id="oracle-input" class="composer-input" placeholder="' + escapeHtml(t("placeholder")) + '" ' + (ui.sending ? "disabled" : "") + "></textarea>" +
+                '<button class="btn primary" type="submit" ' + ((!canAsk() && ui.chatStage !== "answered") || ui.sending ? "disabled" : "") + ">" +
+                  (ui.sending ? "..." : escapeHtml(t("ask"))) +
+                "</button>" +
+              "</div>" +
+            "</form>" +
+          "</section>"
+        );
+      }
+
+      function renderVerdictCard(reading) {
+        const v = reading.verdictJson || {};
+        const verdict = reading.verdict;
+        const color = verdictColor(verdict);
+        const houses = [];
+        if (v.moonSubLord) {
+          (v.moonSubLord.favHits || []).forEach(function (h) { houses.push({ house: h, favorable: true }); });
+          (v.moonSubLord.denHits || []).forEach(function (h) { houses.push({ house: h, favorable: false }); });
+        }
+        return (
+          '<div class="verdict-card">' +
+            '<div class="card-row">' +
+              '<span class="tag">KP ASTRO</span>' +
+              '<span class="tag">' + escapeHtml(String(reading.category || "").toUpperCase()) + "</span>" +
+            "</div>" +
+            '<div class="card-row">' +
+              '<div><span class="' + verdictClass(verdict) + '" style="font-weight:700; letter-spacing:0.08em;">' + escapeHtml(verdict) + "</span></div>" +
+              "<div>" + escapeHtml(t("confidence")) + ": <span style='color:" + color + "; font-weight:700;'>" + Number(v.confidence || 0) + "%</span></div>" +
+            "</div>" +
+            '<div class="card-row"><div class="score-bar"><div class="score-fill" style="width:' + Number(v.confidence || 0) + "%; background:" + color + ';"></div></div></div>' +
+            (v.moonSubLord ? (
+              '<div class="card-row">' +
+                "<div>Moon Sub-Lord: <strong>" + escapeHtml(v.moonSubLord.planet || "-") + "</strong> (H" + Number(v.moonSubLord.occupiedHouse || 0) + ")</div>" +
+              "</div>"
+            ) : "") +
+            (houses.length ? (
+              '<div class="card-row"><div class="houses">' + houses.map(function (h) {
+                return '<span class="house-pill" style="border-color:' + (h.favorable ? "var(--positive)" : "var(--negative)") + "; color:" + (h.favorable ? "var(--positive)" : "var(--negative)") + ';">H' + Number(h.house) + " " + (h.favorable ? "Fav" : "Den") + "</span>";
+              }).join("") + "</div></div>"
+            ) : "") +
+            (v.timing ? (
+              '<div class="card-row"><div>' + escapeHtml(t("timing")) + ": <strong>" + Number(v.timing.range.min || 1) + "-" + Number(v.timing.range.max || 1) + " " + escapeHtml(v.timing.window || "") + "</strong></div></div>"
+            ) : "") +
+            (v.remedy ? (
+              '<div class="card-row"><div>' + escapeHtml(t("remedy")) + ": " + escapeHtml(v.remedy.planet || "") + " - " + escapeHtml(v.remedy.action || "") + "</div></div>"
+            ) : "") +
+          "</div>"
+        );
+      }
+
+      function renderHistory() {
+        const items = sortedFilteredReadings();
+        const filterButtons = [
+          { id: "all", label: t("filterAll") },
+          { id: "YES", label: t("filterYes") },
+          { id: "NO", label: t("filterNo") },
+          { id: "CONDITIONAL", label: t("filterConditional") }
+        ];
+
+        if (!items.length) {
+          return (
+            '<div class="empty-state">' +
+              "<h3>" + escapeHtml(t("noReadings")) + "</h3>" +
+              "<p>" + escapeHtml(t("noReadingsBody")) + "</p>" +
+              '<button class="btn primary" data-action="switch-tab" data-tab="Oracle">' + escapeHtml(t("askFirst")) + "</button>" +
+            "</div>"
+          );
+        }
+
+        const list = items.map(function (r) {
+          const narration = (r.verdictJson && r.verdictJson.narration && (r.verdictJson.narration[r.questionLang] || r.verdictJson.narration.en)) || "";
+          return (
+            '<article class="history-item">' +
+              "<div><strong>" + escapeHtml(r.question) + "</strong></div>" +
+              '<div class="history-meta">' +
+                '<div class="faint">' + escapeHtml(String(r.category || "").toUpperCase()) + " · " + escapeHtml(relativeTime(r.createdAt)) + "</div>" +
+                '<div class="' + verdictClass(r.verdict) + '" style="font-weight:700;">' + escapeHtml(r.verdict) + "</div>" +
+              "</div>" +
+              '<div class="faint">' + escapeHtml(String(narration).slice(0, 140)) + (narration.length > 140 ? "..." : "") + "</div>" +
+              '<div class="history-actions">' +
+                '<button class="btn" data-action="open-reading" data-id="' + r.id + '">' + escapeHtml(t("details")) + "</button>" +
+                '<button class="btn ghost" data-action="delete-reading" data-id="' + r.id + '">' + escapeHtml(t("delete")) + "</button>" +
+              "</div>" +
+            "</article>"
+          );
+        }).join("");
+
+        return (
+          '<div class="history-controls">' +
+            '<div class="chips">' +
+              filterButtons.map(function (f) {
+                return '<button class="chip" data-action="set-filter" data-filter="' + f.id + '" style="' + (state.filter === f.id ? "border-color:var(--accent); color:var(--accent);" : "") + '">' + escapeHtml(f.label) + "</button>";
+              }).join("") +
+            "</div>" +
+            '<button class="btn" data-action="toggle-sort">' + escapeHtml(state.sort === "newest" ? t("newest") : t("oldest")) + "</button>" +
+          "</div>" +
+          '<div class="history-list">' + list + "</div>"
+        );
+      }
+
+      function renderHistoryModal() {
+        if (!ui.selectedReadingId) return "";
+        const reading = readingById(ui.selectedReadingId);
+        if (!reading) return "";
+        const v = reading.verdictJson || {};
+        const narration = (v.narration && (v.narration[reading.questionLang] || v.narration.en)) || "";
+        const reasoning = (v.reasoning || []).map(function (step) {
+          const w = Number(step.weight || 0);
+          const wc = w > 0 ? "var(--positive)" : w < 0 ? "var(--negative)" : "var(--text-muted)";
+          return (
+            '<div class="card-row">' +
+              '<span style="color:' + wc + '; font-weight:700;">' + (w > 0 ? "+" + w : w) + "</span>" +
+              "<span>" + escapeHtml(step.description || "") + "</span>" +
+            "</div>"
+          );
+        }).join("");
+
+        return (
+          '<div class="history-modal" data-action="close-modal-bg">' +
+            '<div class="modal-card">' +
+              '<div class="history-meta">' +
+                "<h3>" + escapeHtml(reading.question) + "</h3>" +
+                '<button class="btn" data-action="close-modal">' + escapeHtml(t("close")) + "</button>" +
+              "</div>" +
+              renderVerdictCard(reading) +
+              '<div class="section">' +
+                "<strong>" + escapeHtml(t("reasoning")) + "</strong>" +
+                (reasoning || "<div class='faint'>No reasoning trace.</div>") +
+              "</div>" +
+              (narration ? ('<div class="section"><strong>Narration</strong><div>' + escapeHtml(narration) + "</div></div>") : "") +
+              (v.remedy ? ('<div class="section"><strong>' + escapeHtml(t("remedy")) + '</strong><div>' + escapeHtml(v.remedy.action || "") + "<br><span class='faint'>Avoid: " + escapeHtml(v.remedy.avoid || "") + "</span></div></div>") : "") +
+              '<div class="history-actions">' +
+                '<button class="btn ghost" data-action="delete-reading" data-id="' + reading.id + '">' + escapeHtml(t("delete")) + "</button>" +
+              "</div>" +
+            "</div>" +
+          "</div>"
+        );
+      }
+
+      function renderSkyClock() {
+        const now = new Date();
+        const lon = state.lastLocation ? state.lastLocation.lon : 74.3587;
+        const lat = state.lastLocation ? state.lastLocation.lat : 31.5204;
+        const nowMs = now.getTime();
+        const dayLord = dayLordAt(now);
+        const horaLord = horaLordAt(now);
+        const minuteLord = minuteLordAt(now);
+        const asc = ascendantSignApprox(nowMs, lon, lat);
+        const moonSign = moonSignApprox(nowMs);
+        const moonPhase = moonPhaseInfo(nowMs);
+        const lst = localSiderealTime(nowMs, lon);
+        const planets = ["Sun", "Moon", "Mercury", "Venus", "Mars", "Jupiter", "Saturn", "Rahu"];
+
+        return (
+          '<div class="skyclock-wrap">' +
+            '<div class="info-grid">' +
+              '<div class="info-card"><div class="faint">' + escapeHtml(t("day")) + '</div><div style="color:var(--accent); font-weight:700;">' + escapeHtml(dayLord) + "</div></div>" +
+              '<div class="info-card"><div class="faint">' + escapeHtml(t("hora")) + '</div><div style="color:var(--accent); font-weight:700;">' + escapeHtml(horaLord) + "</div></div>" +
+              '<div class="info-card"><div class="faint">' + escapeHtml(t("minute")) + '</div><div style="color:var(--accent); font-weight:700;">' + escapeHtml(minuteLord) + "</div></div>" +
+              '<div class="info-card"><div class="faint">' + escapeHtml(t("asc")) + '</div><div style="color:var(--accent); font-weight:700;">' + escapeHtml(asc) + "</div></div>" +
+              '<div class="info-card"><div class="faint">' + escapeHtml(t("moon")) + '</div><div style="color:var(--accent); font-weight:700;">' + escapeHtml(moonPhase.icon + " " + moonSign) + "</div></div>" +
+              '<div class="info-card"><div class="faint">' + escapeHtml(t("lst")) + '</div><div style="color:var(--accent); font-weight:700;">' + escapeHtml(lst) + "</div></div>" +
+            "</div>" +
+            '<div class="sky-disk-stage"><div class="sky-disk" aria-hidden="true"></div></div>' +
+            '<div class="history-actions">' +
+              '<button class="btn" data-action="switch-tab" data-tab="Oracle">⌚ Ask Watch</button>' +
+              '<button class="btn" data-action="switch-tab" data-tab="Oracle">🔭 Ask Stars</button>' +
+              '<button class="btn" data-action="switch-tab" data-tab="History">📜 History</button>' +
+              '<button class="btn" data-action="save-wallpaper">' + escapeHtml(t("saveWallpaper")) + "</button>" +
+            "</div>" +
+            '<div class="planet-table">' +
+              "<table><thead><tr><th>Planet</th><th>Sign</th><th>Position</th><th>Nakshatra</th></tr></thead><tbody>" +
+              planets.map(function (p) {
+                const lonP = displayPlanetLongitude(p, nowMs);
+                const sign = SIGN_NAMES[Math.floor(lonP / 30)];
+                return "<tr><td>" + escapeHtml(p) + "</td><td style='color:var(--accent);'>" + escapeHtml(sign) + "</td><td>" + escapeHtml(formatDms(lonP)) + "</td><td>" + escapeHtml(getNakshatra(lonP)) + "</td></tr>";
+              }).join("") +
+              "</tbody></table>" +
+            "</div>" +
+          "</div>"
+        );
+      }
+
+      function renderSettings() {
+        const total = state.readings.length;
+        const yes = state.readings.filter((r) => r.verdict === "YES").length;
+        const no = state.readings.filter((r) => r.verdict === "NO").length;
+        const cond = state.readings.filter((r) => r.verdict === "CONDITIONAL" || r.verdict === "DELAYED").length;
+        const locationText = state.lastLocation
+          ? (state.lastLocation.lat.toFixed(4) + ", " + state.lastLocation.lon.toFixed(4))
+          : "Not captured";
+
+        const themeSwatches = Object.keys(THEMES).map(function (id) {
+          const theme = THEMES[id];
+          return '<button class="swatch ' + (state.themeId === id ? "active" : "") + '" data-action="set-theme" data-theme="' + id + '" style="background:' + theme.colors.accent + ';"></button>';
+        }).join("");
+
+        return (
+          '<div class="settings-grid">' +
+            '<section class="section">' +
+              "<h3>" + escapeHtml(t("appearance")) + "</h3>" +
+              '<div class="swatches">' + themeSwatches + "</div>" +
+            "</section>" +
+            '<section class="section">' +
+              "<h3>" + escapeHtml(t("language")) + "</h3>" +
+              '<div class="lang-row">' +
+                '<button class="lang-chip ' + (state.lang === "en" ? "active" : "") + '" data-action="set-lang" data-lang="en">English</button>' +
+                '<button class="lang-chip ' + (state.lang === "ur" ? "active" : "") + '" data-action="set-lang" data-lang="ur">Urdu</button>' +
+                '<button class="lang-chip ' + (state.lang === "hi" ? "active" : "") + '" data-action="set-lang" data-lang="hi">Hindi</button>' +
+              "</div>" +
+            "</section>" +
+            '<section class="section">' +
+              "<h3>" + escapeHtml(t("subscription")) + "</h3>" +
+              '<div class="history-meta">' +
+                "<div><strong>" + escapeHtml(state.plan === "free" ? t("freePlan") : state.plan) + "</strong></div>" +
+                "<div>" + (state.plan === "free" ? (state.usedThisWeek + "/" + FREE_LIMIT + " used this week") : escapeHtml(t("unlimited"))) + "</div>" +
+              "</div>" +
+            "</section>" +
+            '<section class="section">' +
+              "<h3>" + escapeHtml(t("stats")) + "</h3>" +
+              '<div class="stats">' +
+                '<div class="stat"><div style="font-weight:700; color:var(--accent);">' + total + '</div><div class="faint">Total</div></div>' +
+                '<div class="stat"><div style="font-weight:700; color:var(--positive);">' + yes + '</div><div class="faint">YES</div></div>' +
+                '<div class="stat"><div style="font-weight:700; color:var(--negative);">' + no + '</div><div class="faint">NO</div></div>' +
+                '<div class="stat"><div style="font-weight:700; color:var(--caution);">' + cond + '</div><div class="faint">COND</div></div>' +
+              "</div>" +
+            "</section>" +
+            '<section class="section">' +
+              "<h3>" + escapeHtml(t("location")) + "</h3>" +
+              "<div>" + escapeHtml(locationText) + "</div>" +
+              '<div class="history-actions">' +
+                '<button class="btn" data-action="refresh-location">' + escapeHtml(t("refreshLocation")) + "</button>" +
+              "</div>" +
+            "</section>" +
+            '<section class="section">' +
+              '<div class="history-actions">' +
+                '<button class="btn ghost" data-action="clear-history">' + escapeHtml(t("clearHistory")) + "</button>" +
+              "</div>" +
+            "</section>" +
+          "</div>"
+        );
+      }
+
+      function renderPermission() {
+        return (
+          '<div class="app-shell starfield">' +
+            '<div class="center-screen">' +
+              '<div class="permission-card">' +
+                "<h2>" + escapeHtml(t("permissionTitle")) + "</h2>" +
+                "<p class='muted'>" + escapeHtml(t("permissionBody")) + "</p>" +
+                '<p class="faint">' + escapeHtml(t("locationDenied")) + "</p>" +
+                '<div class="cta-row">' +
+                  '<button class="btn primary" data-action="grant-location">' + escapeHtml(t("grantAccess")) + "</button>" +
+                  '<button class="btn ghost" data-action="skip-location">' + escapeHtml(t("notNow")) + "</button>" +
+                "</div>" +
+              "</div>" +
+            "</div>" +
+          "</div>"
+        );
+      }
+
+      function renderSplash() {
+        return (
+          '<div class="app-shell starfield">' +
+            '<div class="center-screen">' +
+              '<div class="splash-wrap">' +
+                '<div class="mandala"><div class="sun-core"></div></div>' +
+                '<h1 class="title-xl">' + escapeHtml(t("appName")) + "</h1>" +
+                '<div class="title-md">' + escapeHtml(t("tagline")) + "</div>" +
+                '<p class="muted">' + escapeHtml(t("poweredBy")) + "</p>" +
+                '<p class="faint">' + escapeHtml(t("splash")) + "</p>" +
+              "</div>" +
+            "</div>" +
+          "</div>"
+        );
+      }
+
+      function renderMain() {
+        let screenHtml = "";
+        if (state.activeTab === "Oracle") screenHtml = renderOracle();
+        if (state.activeTab === "SkyClock") screenHtml = renderSkyClock();
+        if (state.activeTab === "History") screenHtml = renderHistory();
+        if (state.activeTab === "Settings") screenHtml = renderSettings();
+
+        return (
+          '<div class="app-shell starfield">' +
+            '<div class="main-layout">' +
+              renderHeader() +
+              '<main class="screen">' + screenHtml + "</main>" +
+              renderTabbar() +
+            "</div>" +
+            renderHistoryModal() +
+          "</div>"
+        );
+      }
+
+      function render() {
+        document.body.classList.toggle("rtl", isRtl());
+        applyTheme();
+        if (ui.phase === "splash") {
+          root.innerHTML = renderSplash();
+          return;
+        }
+        if (!state.onboardingPrompted) {
+          root.innerHTML = renderPermission();
+          return;
+        }
+        root.innerHTML = renderMain();
+        if (state.activeTab === "Oracle") {
+          const list = document.getElementById("chat-list");
+          if (list) list.scrollTop = list.scrollHeight;
+        }
+      }
+
+      function requestLocation(callback) {
+        if (!navigator.geolocation) {
+          callback(false, "Geolocation is not supported in this browser.");
+          return;
+        }
+        navigator.geolocation.getCurrentPosition(
+          function (pos) {
+            state.lastLocation = {
+              lat: pos.coords.latitude,
+              lon: pos.coords.longitude,
+              label: null,
+              capturedAt: Date.now()
+            };
+            state.onboardingPermissionGranted = true;
+            saveState();
+            callback(true);
+          },
+          function () {
+            state.onboardingPermissionGranted = false;
+            saveState();
+            callback(false, t("locationDenied"));
+          },
+          { enableHighAccuracy: true, timeout: 9000, maximumAge: 30000 }
+        );
+      }
+
+      function sendOracleMessage(textRaw) {
+        const text = textRaw.trim();
+        if (!text || ui.sending) return;
+
+        const nowIso = new Date().toISOString();
+        ui.messages.push({ id: "u_" + Date.now(), sender: "user", text: text, createdAt: nowIso });
+
+        if (ui.chatStage === "answered" && ui.lastReadingId) {
+          const lastReading = readingById(ui.lastReadingId);
+          if (lastReading) {
+            const intent = detectIntent(text);
+            if (intent !== "new" && intent !== "none") {
+              let reply = "";
+              const v = lastReading.verdictJson || {};
+              if (intent === "timing") {
+                if (v.timing) {
+                  reply = "Movement is expected within **" + Number(v.timing.range.max || 1) + " " + String(v.timing.window || "weeks") + "**.\n\nActive: **" + String(v.timing.activeDasha || "-") + "** / **" + String(v.timing.activeAntardasha || "-") + "**.";
+                } else {
+                  reply = "Timing data is not available for this reading.";
+                }
+              } else if (intent === "why") {
+                const msl = v.moonSubLord || {};
+                reply = "The verdict leans on **Moon Sub-Lord " + String(msl.planet || "-") + "** in house **" + Number(msl.occupiedHouse || 0) + "**.\n\nConfidence: **" + Number(v.confidence || 0) + "%**.";
+              } else if (intent === "remedy") {
+                if (v.remedy) {
+                  reply = "Remedy for **" + String(v.remedy.planet || "") + "**:\n\n• " + String(v.remedy.action || "") + "\n• Avoid: " + String(v.remedy.avoid || "");
+                  if (v.remedy.mantra) reply += "\n• Mantra: *" + String(v.remedy.mantra) + "*";
+                } else {
+                  reply = "No specific remedy found for this reading.";
+                }
+              }
+              ui.messages.push({ id: "s_fu_" + Date.now(), sender: "shams", text: reply, createdAt: new Date().toISOString() });
+              render();
+              return;
+            }
+            if (intent === "new") {
+              ui.chatStage = "ready";
+              ui.lastReadingId = null;
+            }
+          }
+        }
+
+        if (!canAsk()) {
+          ui.messages.push({ id: "quota_" + Date.now(), sender: "shams", text: t("quotaExhausted"), createdAt: new Date().toISOString() });
+          render();
+          return;
+        }
+
+        ui.sending = true;
+        render();
+
+        setTimeout(function () {
+          const consumed = consumeQuota();
+          if (!consumed) {
+            ui.messages.push({ id: "quota_" + Date.now(), sender: "shams", text: t("quotaExhausted"), createdAt: new Date().toISOString() });
+            ui.sending = false;
+            render();
+            return;
+          }
+
+          const reading = generateReading(text);
+          addReading(reading);
+          ui.lastReadingId = reading.id;
+          ui.chatStage = "answered";
+          const narration = (reading.verdictJson && reading.verdictJson.narration && (reading.verdictJson.narration[reading.questionLang] || reading.verdictJson.narration.en)) || "Judgment complete.";
+          ui.messages.push({ id: "s_" + reading.id, sender: "shams", text: narration, reading: reading, createdAt: new Date().toISOString() });
+          ui.sending = false;
+          render();
+        }, 520);
+      }
+
+      function handleAction(action, dataset, eventTarget) {
+        if (action === "switch-tab") {
+          state.activeTab = dataset.tab;
+          ui.selectedReadingId = null;
+          state.activeTab = dataset.tab;
+          saveState();
+          render();
+          return;
+        }
+
+        if (action === "grant-location") {
+          requestLocation(function (ok, errorText) {
+            state.onboardingPrompted = true;
+            saveState();
+            if (!ok && errorText) {
+              alert(errorText);
+            }
+            render();
+          });
+          return;
+        }
+
+        if (action === "skip-location") {
+          state.onboardingPrompted = true;
+          state.onboardingPermissionGranted = false;
+          saveState();
+          render();
+          return;
+        }
+
+        if (action === "chip") {
+          sendOracleMessage(dataset.chip || "");
+          return;
+        }
+
+        if (action === "open-reading") {
+          ui.selectedReadingId = dataset.id;
+          render();
+          return;
+        }
+
+        if (action === "delete-reading") {
+          if (confirm("Delete this reading?")) {
+            removeReading(dataset.id);
+            saveState();
+            render();
+          }
+          return;
+        }
+
+        if (action === "close-modal" || action === "close-modal-bg") {
+          if (action === "close-modal-bg" && eventTarget && !eventTarget.classList.contains("history-modal")) {
+            return;
+          }
+          ui.selectedReadingId = null;
+          render();
+          return;
+        }
+
+        if (action === "set-filter") {
+          state.filter = dataset.filter;
+          saveState();
+          render();
+          return;
+        }
+
+        if (action === "toggle-sort") {
+          state.sort = state.sort === "newest" ? "oldest" : "newest";
+          saveState();
+          render();
+          return;
+        }
+
+        if (action === "set-theme") {
+          if (THEMES[dataset.theme]) {
+            state.themeId = dataset.theme;
+            saveState();
+            render();
+          }
+          return;
+        }
+
+        if (action === "set-lang") {
+          if (STRINGS[dataset.lang]) {
+            state.lang = dataset.lang;
+            normalizeMessagesAfterLanguageChange();
+            saveState();
+            render();
+          }
+          return;
+        }
+
+        if (action === "refresh-location") {
+          requestLocation(function (ok, errorText) {
+            if (!ok && errorText) alert(errorText);
+            saveState();
+            render();
+          });
+          return;
+        }
+
+        if (action === "clear-history") {
+          if (confirm("Clear all readings?")) {
+            state.readings = [];
+            ui.lastReadingId = null;
+            ui.chatStage = "ready";
+            saveState();
+            render();
+          }
+          return;
+        }
+
+        if (action === "save-wallpaper") {
+          alert("Take a screenshot to save your Sky Clock wallpaper.");
+          return;
+        }
+      }
+
+      document.addEventListener("click", function (event) {
+        const target = event.target.closest("[data-action]");
+        if (!target) return;
+        const action = target.getAttribute("data-action");
+        if (!action) return;
+        handleAction(action, target.dataset, target);
+      });
+
+      document.addEventListener("submit", function (event) {
+        const form = event.target.closest("form[data-action='send-message']");
+        if (!form) return;
+        event.preventDefault();
+        const input = document.getElementById("oracle-input");
+        if (!input) return;
+        const text = input.value || "";
+        if (!text.trim()) return;
+        input.value = "";
+        sendOracleMessage(text);
+      });
+
+      setTimeout(function () {
+        ui.phase = "app";
+        render();
+      }, 2500);
+
+      setInterval(function () {
+        if (ui.phase === "app" && state.activeTab === "SkyClock") {
+          render();
+        }
+      }, 1000);
+
+      render();
+    })();
+  </script>
+</body>
+</html>

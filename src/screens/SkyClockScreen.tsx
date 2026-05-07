@@ -11,7 +11,7 @@
  */
 
 import React, { useEffect, useCallback, useState } from 'react';
-import { Alert, Image, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { Alert, Image, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Animated, {
   useSharedValue,
@@ -21,7 +21,9 @@ import Animated, {
   Easing,
   cancelAnimation,
 } from 'react-native-reanimated';
-import { useFocusEffect } from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
+import type { MainTabParamList } from '@navigation/types';
 
 import { useColors, useTheme } from '@theme/ThemeProvider';
 import { useTypography } from '@theme/useTypography';
@@ -33,6 +35,9 @@ import {
   minuteLordAtMoment,
 } from '@astrology/primitives/rulingPlanets';
 import StarfieldBackground from '@components/StarfieldBackground';
+import CosmicClock from '@components/home/CosmicClock';
+import { useReadingsStore, type Reading, type VerdictKind } from '@stores/readingsStore';
+import { useAuthStore, selectUserName } from '@stores/authStore';
 
 // ── Asset ─────────────────────────────────────────────────────────────────────
 
@@ -141,6 +146,78 @@ function moonSignApprox(nowMs: number): string {
   return signName(Math.floor(sidLon / 30) + 1);
 }
 
+// ── Display-only ephemeris (not for horary judgment) ─────────────────────────
+// Mean longitude elements copied from CosmicClock — display only.
+
+const PLANET_NAMES = ['Sun', 'Moon', 'Mercury', 'Venus', 'Mars', 'Jupiter', 'Saturn', 'Rahu'] as const;
+type PlanetName = (typeof PLANET_NAMES)[number];
+
+const J2K_DISPLAY: Readonly<Record<string, { L0: number; Lr: number }>> = {
+  Sun:     { L0: 280.46646, Lr: 36000.76983 },
+  Moon:    { L0: 218.3165,  Lr: 481267.8813 },
+  Mercury: { L0: 252.2509,  Lr: 149472.6749 },
+  Venus:   { L0: 181.9798,  Lr: 58517.8156  },
+  Mars:    { L0: 355.4330,  Lr: 19140.2993  },
+  Jupiter: { L0: 34.3515,   Lr: 3034.9057   },
+  Saturn:  { L0: 50.0774,   Lr: 1222.1138   },
+};
+
+const NAKSHATRAS: readonly string[] = [
+  'Ashwini', 'Bharani', 'Krittika', 'Rohini', 'Mrigashira', 'Ardra',
+  'Punarvasu', 'Pushya', 'Ashlesha', 'Magha', 'Purva Phalguni', 'Uttara Phalguni',
+  'Hasta', 'Chitra', 'Swati', 'Vishakha', 'Anuradha', 'Jyeshtha',
+  'Mula', 'Purva Ashadha', 'Uttara Ashadha', 'Shravana', 'Dhanishtha',
+  'Shatabhisha', 'Purva Bhadrapada', 'Uttara Bhadrapada', 'Revati',
+];
+
+function mod360d(x: number): number { return ((x % 360) + 360) % 360; }
+
+// Returns sidereal longitude (Lahiri) for display purposes only.
+function displayLongitude(name: PlanetName, nowMs: number): number {
+  const JD_J2000_D = 2451545.0;
+  const jd = nowMs / 86400000 + 2440587.5;
+  const T = (jd - JD_J2000_D) / 36525;
+  const tropical =
+    name === 'Rahu'
+      ? mod360d(125.0445 - 1934.136 * T)
+      : mod360d((J2K_DISPLAY[name]?.L0 ?? 0) + (J2K_DISPLAY[name]?.Lr ?? 0) * T);
+  return mod360d(tropical - LAHIRI_AYANAMSA_2025);
+}
+
+function nakshatra(lon: number): string {
+  const idx = Math.floor((lon / 360) * 27);
+  return NAKSHATRAS[idx] ?? '—';
+}
+
+function formatDMS(lon: number): string {
+  const inSign = lon % 30;
+  const deg = Math.floor(inSign);
+  const min = Math.floor((inSign - deg) * 60);
+  return `${deg}° ${String(min).padStart(2, '0')}′`;
+}
+
+// ── Greeting ──────────────────────────────────────────────────────────────────
+
+function greetingText(): string {
+  const h = new Date().getHours();
+  if (h >= 5 && h < 12) return 'Sabah al-Noor ✦';
+  if (h >= 12 && h < 17) return 'Good Afternoon ✦';
+  if (h >= 17 && h < 21) return 'Good Evening ✦';
+  return 'Good Night ✦';
+}
+
+// ── Verdict color helper ──────────────────────────────────────────────────────
+
+function verdictColor(v: VerdictKind, colors: ReturnType<typeof useColors>): string {
+  switch (v) {
+    case 'YES': return colors.positive;
+    case 'NO': return colors.negative;
+    case 'CONDITIONAL':
+    case 'DELAYED': return colors.caution;
+    default: return colors.textMuted;
+  }
+}
+
 // ── Live chart data ───────────────────────────────────────────────────────────
 
 interface LiveData {
@@ -180,6 +257,11 @@ const SkyClockScreen: React.FC = () => {
   const typography = useTypography();
   const t = useTranslation();
   const { width } = useWindowDimensions();
+
+  const navigation = useNavigation<BottomTabNavigationProp<MainTabParamList>>();
+  const userName = useAuthStore(selectUserName);
+  const readings = useReadingsStore(s => s.readings);
+  const lastReading: Reading | null = readings[0] ?? null;
 
   const lastLocation = useSettingsStore(
     (s: ReturnType<typeof useSettingsStore.getState>) => s.lastLocation,
@@ -236,87 +318,237 @@ const SkyClockScreen: React.FC = () => {
     <SafeAreaView style={[styles.root, { backgroundColor: theme.colors.bg }]} edges={['top']}>
       <StarfieldBackground starColor={colors.starfield} />
 
-      {/* Header */}
-      <View style={[styles.header, { borderBottomColor: colors.border }]}>
-        <Text style={[typography('subheading'), { color: colors.text }]}>
-          {t('skyClock.headerTitle')}
-        </Text>
-        <Text style={[typography('caption'), { color: colors.textMuted }]}>{data.timeLabel}</Text>
-      </View>
-
-      {/* Disk stage */}
-      <View style={styles.stage}>
-        {/* Ambient glow */}
-        <View
-          style={[
-            styles.glow,
-            {
-              width: diskSize * 1.12,
-              height: diskSize * 1.12,
-              borderRadius: (diskSize * 1.12) / 2,
-              backgroundColor: colors.amber,
-            },
-          ]}
-          pointerEvents="none"
-        />
-        {/* Rotating disk */}
-        <Animated.View style={[animatedStyle, { width: diskSize, height: diskSize }]}>
-          <Image
-            source={DISK_IMAGE}
-            style={{ width: diskSize, height: diskSize, borderRadius: diskSize / 2 }}
-            resizeMode="cover"
-          />
-        </Animated.View>
-      </View>
-
-      {/* 5-pill info bar */}
-      <View
-        style={[styles.infoBar, { backgroundColor: colors.surface, borderTopColor: colors.border }]}
+      <ScrollView
+        style={styles.scroll}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
       >
-        <InfoPill
-          label={t('skyClock.ascendantLabel')}
-          value={data.ascSign}
-          colors={colors}
-          typography={typography}
-        />
-        <View style={[styles.divider, { backgroundColor: colors.border }]} />
-        <InfoPill
-          label={t('skyClock.moonPhaseLabel')}
-          value={`${data.moonPhase.icon} ${data.moonSign}`}
-          colors={colors}
-          typography={typography}
-        />
-        <View style={[styles.divider, { backgroundColor: colors.border }]} />
-        <InfoPill
-          label={t('skyClock.horaLabel')}
-          value={data.horaLord}
-          colors={colors}
-          typography={typography}
-        />
-        <View style={[styles.divider, { backgroundColor: colors.border }]} />
-        <InfoPill label="Day" value={data.dayLord} colors={colors} typography={typography} />
-        <View style={[styles.divider, { backgroundColor: colors.border }]} />
-        <InfoPill label="LST" value={data.lst} colors={colors} typography={typography} />
-      </View>
+        {/* Greeting banner */}
+        <View style={styles.greetingBlock}>
+          <Text style={[typography('label'), { color: colors.amber, letterSpacing: 2 }]}>
+            {greetingText()}
+          </Text>
+          <Text style={[typography('bodyItalic'), { color: colors.textMuted, fontSize: 12 }]}>
+            {userName}
+          </Text>
+        </View>
 
-      {/* Wallpaper button */}
-      <View style={[styles.wallpaperRow, { borderTopColor: colors.border }]}>
-        <Text
-          onPress={handleSaveWallpaper}
-          style={[
-            typography('caption'),
-            {
-              color: colors.amber,
-              letterSpacing: 1,
-              textTransform: 'uppercase',
-              paddingVertical: 8,
-            },
-          ]}
-          accessibilityRole="button"
+        {/* Live ephemeris clock */}
+        <CosmicClock />
+
+        {/* Quick-action row */}
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.quickActionsContent}
+          style={styles.quickActionsRow}
         >
-          ◈ {t('skyClock.saveWallpaper')}
-        </Text>
-      </View>
+          {(
+            [
+              { label: '⌚ Ask Watch', tab: 'Oracle' },
+              { label: '🔭 Ask Stars', tab: 'Oracle' },
+              { label: '🌐 Sky Clock', tab: 'SkyClock' },
+              { label: '📜 History', tab: 'History' },
+            ] as const
+          ).map(item => (
+            <Pressable
+              key={item.label}
+              onPress={() => navigation.navigate(item.tab)}
+              style={({ pressed }) => [
+                styles.quickPill,
+                {
+                  backgroundColor: colors.surfaceElevated,
+                  borderColor: colors.border,
+                  opacity: pressed ? 0.7 : 1,
+                },
+              ]}
+              accessibilityRole="button"
+            >
+              <Text style={[typography('label'), { color: colors.text, fontSize: 10 }]}>
+                {item.label}
+              </Text>
+            </Pressable>
+          ))}
+        </ScrollView>
+
+        {/* Last reading preview */}
+        {lastReading !== null && (
+          <Pressable
+            onPress={() => navigation.navigate('History')}
+            style={({ pressed }) => [
+              styles.lastReadingCard,
+              {
+                backgroundColor: colors.surface,
+                borderColor: colors.border,
+                opacity: pressed ? 0.85 : 1,
+              },
+            ]}
+            accessibilityRole="button"
+            accessibilityLabel="View reading history"
+          >
+            <Text style={[typography('caption'), { color: colors.textFaint, fontSize: 9, marginBottom: 4 }]}>
+              LAST READING
+            </Text>
+            <Text
+              style={[typography('body'), { color: colors.text }]}
+              numberOfLines={2}
+            >
+              {lastReading.question.length > 0 ? lastReading.question : lastReading.category}
+            </Text>
+            <View style={styles.lastReadingFooter}>
+              <View
+                style={[
+                  styles.verdictBadgeSmall,
+                  { borderColor: verdictColor(lastReading.verdict, colors) },
+                ]}
+              >
+                <Text
+                  style={[
+                    typography('label'),
+                    { color: verdictColor(lastReading.verdict, colors), fontSize: 9 },
+                  ]}
+                >
+                  {lastReading.verdict}
+                </Text>
+              </View>
+              <Text style={[typography('caption'), { color: colors.accent, fontSize: 10 }]}>
+                View all →
+              </Text>
+            </View>
+          </Pressable>
+        )}
+
+        {/* Planet position table */}
+        <View style={[styles.planetTable, { borderColor: colors.border }]}>
+          <View style={[styles.planetTableHeader, { borderBottomColor: colors.border }]}>
+            {(['PLANET', 'SIGN', 'POSITION', 'NAKSHATRA'] as const).map(h => (
+              <Text
+                key={h}
+                style={[typography('label'), styles.planetCol, { color: colors.textFaint, fontSize: 8 }]}
+              >
+                {h}
+              </Text>
+            ))}
+          </View>
+          {PLANET_NAMES.map(name => {
+            const lon = displayLongitude(name, Date.now());
+            const signIdx = Math.floor(lon / 30);
+            const sign = SIGN_NAMES[signIdx] ?? '—';
+            const nk = nakshatra(lon);
+            const pos = formatDMS(lon);
+            return (
+              <View
+                key={name}
+                style={[styles.planetRow, { borderBottomColor: colors.border }]}
+              >
+                <Text style={[typography('caption'), styles.planetCol, { color: colors.text }]}>
+                  {name}
+                </Text>
+                <Text style={[typography('caption'), styles.planetCol, { color: colors.accent }]}>
+                  {sign}
+                </Text>
+                <Text style={[typography('caption'), styles.planetCol, { color: colors.textMuted }]}>
+                  {pos}
+                </Text>
+                <Text style={[typography('caption'), styles.planetCol, { color: colors.textMuted, fontSize: 10 }]}>
+                  {nk}
+                </Text>
+              </View>
+            );
+          })}
+        </View>
+
+        {/* Mode indicator */}
+        <View style={styles.modeIndicatorRow}>
+          <View style={[styles.modeIndicatorPill, { borderColor: colors.border }]}>
+            <Text style={[typography('caption'), { color: colors.textFaint, fontSize: 9 }]}>
+              Tropical Positions (display only)
+            </Text>
+          </View>
+        </View>
+
+        {/* Header */}
+        <View style={[styles.header, { borderBottomColor: colors.border }]}>
+          <Text style={[typography('subheading'), { color: colors.text }]}>
+            {t('skyClock.headerTitle')}
+          </Text>
+          <Text style={[typography('caption'), { color: colors.textMuted }]}>{data.timeLabel}</Text>
+        </View>
+
+        {/* Disk stage */}
+        <View style={[styles.stage, { height: diskSize * 1.2 }]}>
+          {/* Ambient glow */}
+          <View
+            style={[
+              styles.glow,
+              {
+                width: diskSize * 1.12,
+                height: diskSize * 1.12,
+                borderRadius: (diskSize * 1.12) / 2,
+                backgroundColor: colors.amber,
+              },
+            ]}
+            pointerEvents="none"
+          />
+          {/* Rotating disk */}
+          <Animated.View style={[animatedStyle, { width: diskSize, height: diskSize }]}>
+            <Image
+              source={DISK_IMAGE}
+              style={{ width: diskSize, height: diskSize, borderRadius: diskSize / 2 }}
+              resizeMode="cover"
+            />
+          </Animated.View>
+        </View>
+
+        {/* 5-pill info bar */}
+        <View
+          style={[styles.infoBar, { backgroundColor: colors.surface, borderTopColor: colors.border }]}
+        >
+          <InfoPill
+            label={t('skyClock.ascendantLabel')}
+            value={data.ascSign}
+            colors={colors}
+            typography={typography}
+          />
+          <View style={[styles.divider, { backgroundColor: colors.border }]} />
+          <InfoPill
+            label={t('skyClock.moonPhaseLabel')}
+            value={`${data.moonPhase.icon} ${data.moonSign}`}
+            colors={colors}
+            typography={typography}
+          />
+          <View style={[styles.divider, { backgroundColor: colors.border }]} />
+          <InfoPill
+            label={t('skyClock.horaLabel')}
+            value={data.horaLord}
+            colors={colors}
+            typography={typography}
+          />
+          <View style={[styles.divider, { backgroundColor: colors.border }]} />
+          <InfoPill label="Day" value={data.dayLord} colors={colors} typography={typography} />
+          <View style={[styles.divider, { backgroundColor: colors.border }]} />
+          <InfoPill label="LST" value={data.lst} colors={colors} typography={typography} />
+        </View>
+
+        {/* Wallpaper button */}
+        <View style={[styles.wallpaperRow, { borderTopColor: colors.border }]}>
+          <Text
+            onPress={handleSaveWallpaper}
+            style={[
+              typography('caption'),
+              {
+                color: colors.amber,
+                letterSpacing: 1,
+                textTransform: 'uppercase',
+                paddingVertical: 8,
+              },
+            ]}
+            accessibilityRole="button"
+          >
+            ◈ {t('skyClock.saveWallpaper')}
+          </Text>
+        </View>
+      </ScrollView>
     </SafeAreaView>
   );
 };
@@ -341,6 +573,8 @@ const InfoPill: React.FC<InfoPillProps> = ({ label, value, colors, typography })
 
 const styles = StyleSheet.create({
   root: { flex: 1 },
+  scroll: { flex: 1 },
+  scrollContent: { paddingBottom: 24 },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -350,7 +584,6 @@ const styles = StyleSheet.create({
     borderBottomWidth: StyleSheet.hairlineWidth,
   },
   stage: {
-    flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -377,6 +610,78 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderTopWidth: StyleSheet.hairlineWidth,
     paddingBottom: 4,
+  },
+  greetingBlock: {
+    alignItems: 'center',
+    paddingTop: 12,
+    paddingBottom: 4,
+    gap: 2,
+  },
+  quickActionsRow: {
+    marginTop: 8,
+  },
+  quickActionsContent: {
+    paddingHorizontal: 12,
+    gap: 8,
+  },
+  quickPill: {
+    borderWidth: StyleSheet.hairlineWidth,
+    borderRadius: 999,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+  },
+  lastReadingCard: {
+    marginHorizontal: 12,
+    marginTop: 10,
+    borderRadius: 12,
+    borderWidth: StyleSheet.hairlineWidth,
+    padding: 12,
+    gap: 6,
+  },
+  lastReadingFooter: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: 4,
+  },
+  verdictBadgeSmall: {
+    borderWidth: StyleSheet.hairlineWidth,
+    borderRadius: 4,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+  },
+  planetTable: {
+    marginHorizontal: 12,
+    marginTop: 12,
+    borderRadius: 10,
+    borderWidth: StyleSheet.hairlineWidth,
+    overflow: 'hidden',
+  },
+  planetTableHeader: {
+    flexDirection: 'row',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+  },
+  planetRow: {
+    flexDirection: 'row',
+    paddingHorizontal: 10,
+    paddingVertical: 7,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+  },
+  planetCol: {
+    flex: 1,
+  },
+  modeIndicatorRow: {
+    alignItems: 'center',
+    marginTop: 6,
+    marginBottom: 4,
+  },
+  modeIndicatorPill: {
+    borderWidth: StyleSheet.hairlineWidth,
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 3,
   },
 });
 

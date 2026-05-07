@@ -22,9 +22,11 @@ import {
   StyleSheet,
   Text,
   TextInput,
+  TouchableOpacity,
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { getAuth, sendPasswordResetEmail } from '@react-native-firebase/auth';
 
 import { useColors, useTheme } from '@theme/ThemeProvider';
 import { useTypography } from '@theme/useTypography';
@@ -142,6 +144,7 @@ const AuthScreen: React.FC = () => {
 
   const [form, dispatch] = useReducer(formReducer, initialForm);
   const [serverError, setServerError] = useState('');
+  const [successMsg, setSuccessMsg] = useState('');
 
   const passwordRef = useRef<TextInput>(null);
   const confirmRef = useRef<TextInput>(null);
@@ -155,9 +158,16 @@ const AuthScreen: React.FC = () => {
     }
   }, [authError, t]);
 
+  // Dismiss messages on next keypress
+  useEffect(() => {
+    setServerError('');
+    setSuccessMsg('');
+  }, [form.email, form.password, form.confirmPassword, form.name]);
+
   const handleSubmit = useCallback(async () => {
     dispatch({ type: 'CLEAR_ERRORS' });
     setServerError('');
+    setSuccessMsg('');
     clearError();
 
     // ── Local validation ──────────────────────────────────────────────
@@ -188,9 +198,29 @@ const AuthScreen: React.FC = () => {
     if (form.tab === 'signIn') {
       await signIn(form.email.trim(), form.password);
     } else {
-      await signUp(form.email.trim(), form.password, form.name.trim());
+      const error = await signUp(form.email.trim(), form.password, form.name.trim());
+      if (error) {
+        setServerError(error.message);
+      } else {
+        setSuccessMsg('Account created successfully.');
+      }
     }
   }, [form, t, clearError, signIn, signUp]);
+
+  const handleForgotPassword = useCallback(async () => {
+    if (!form.email) return dispatch({ type: 'SET_ERRORS', emailError: t('auth.invalidEmail') });
+    try {
+      await sendPasswordResetEmail(getAuth(), form.email.trim());
+    } catch (error) {
+      if (error instanceof Error) {
+        setServerError(error.message);
+        return;
+      }
+      setServerError(t('errors.unknown'));
+      return;
+    }
+    setSuccessMsg(`Reset link sent to ${form.email.trim()}`);
+  }, [form.email, t]);
 
   const isSignUp = form.tab === 'signUp';
   const submitLabel = isSignUp ? t('auth.signUp') : t('auth.signIn');
@@ -310,6 +340,14 @@ const AuthScreen: React.FC = () => {
               </View>
             )}
 
+            {successMsg.length > 0 && (
+              <View style={[styles.successBox, { borderColor: colors.accent }]}>
+                <Text style={[typography('caption'), { color: colors.accent }]}>
+                  {successMsg}
+                </Text>
+              </View>
+            )}
+
             <Pressable
               onPress={() => void handleSubmit()}
               disabled={isLoading}
@@ -329,6 +367,25 @@ const AuthScreen: React.FC = () => {
                 </Text>
               )}
             </Pressable>
+
+            <View style={styles.toggleRow}>
+              <Text style={[typography('caption'), { color: colors.textMuted }]}>
+                {isSignUp ? "Already have an account? " : "Don't have an account? "}
+              </Text>
+              <TouchableOpacity onPress={() => dispatch({ type: 'SET_TAB', tab: isSignUp ? 'signIn' : 'signUp' })}>
+                <Text style={[typography('caption'), { color: colors.accent, fontWeight: 'bold' }]}>
+                  {isSignUp ? t('auth.signInTab') : t('auth.signUpTab')}
+                </Text>
+              </TouchableOpacity>
+            </View>
+
+            {!isSignUp && (
+              <TouchableOpacity onPress={handleForgotPassword} style={styles.forgotBtn}>
+                <Text style={[typography('caption'), { color: colors.textMuted, textAlign: 'center' }]}>
+                  {t('auth.forgotPassword')}
+                </Text>
+              </TouchableOpacity>
+            )}
           </View>
 
           {/* Social sign-in */}
@@ -577,6 +634,13 @@ const styles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth,
     borderRadius: 8,
     padding: 12,
+    backgroundColor: '#301010',
+  },
+  successBox: {
+    borderWidth: 1,
+    borderRadius: 8,
+    padding: 12,
+    backgroundColor: '#102010',
   },
   submitBtn: {
     height: 52,
@@ -584,6 +648,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: 4,
+  },
+  toggleRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    marginTop: 12,
+  },
+  forgotBtn: {
+    marginTop: 12,
   },
   dividerRow: {
     flexDirection: 'row',

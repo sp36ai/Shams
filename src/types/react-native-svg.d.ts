@@ -78,14 +78,50 @@ declare module 'react-native-svg' {
     translate?: string;
     translateX?: number | string;
     translateY?: number | string;
+    onPress?: () => void;
+  }
+
+  export interface EllipseProps extends CommonProps {
+    cx?: number | string;
+    cy?: number | string;
+    rx?: number | string;
+    ry?: number | string;
+    rotation?: number | string;
+    origin?: string;
+  }
+
+  export interface DefsProps {
+    children?: React.ReactNode;
+  }
+
+  export interface RadialGradientProps {
+    id?: string;
+    cx?: number | string;
+    cy?: number | string;
+    rx?: number | string;
+    ry?: number | string;
+    fx?: number | string;
+    fy?: number | string;
+    gradientUnits?: string;
+    children?: React.ReactNode;
+  }
+
+  export interface StopProps {
+    offset?: number | string;
+    stopColor?: string;
+    stopOpacity?: number | string;
   }
 
   const Svg: React.FC<SvgProps>;
   const Path: React.FC<PathProps>;
   const Circle: React.FC<CircleProps>;
+  const Ellipse: React.FC<EllipseProps>;
   const Line: React.FC<LineProps>;
   const Text: React.FC<TextProps>;
   const G: React.FC<GProps>;
+  const Defs: React.FC<DefsProps>;
+  const RadialGradient: React.FC<RadialGradientProps>;
+  const Stop: React.FC<StopProps>;
 
-  export { Svg as default, Svg, Path, Circle, Line, Text, G };
+  export { Svg as default, Svg, Path, Circle, Ellipse, Line, Text, G, Defs, RadialGradient, Stop };
 }

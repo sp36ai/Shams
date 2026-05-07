@@ -54,6 +54,7 @@ import type {
 import { HOUSE_MATRIX } from '@astrology/kp/rules/houseMatrix';
 import { DASHA_YEARS } from '@astrology/kp/rules/vimshottari';
 import { calculateDasha } from '@astrology/primitives/dasha';
+import { getSubLords } from '@astrology/primitives/subLord';
 import { houseOfPlanet } from './significations';
 import { ENGINE_VERSION } from '@astrology/primitives/chartBuilder';
 
@@ -347,12 +348,32 @@ function buildMoonSubLordSnapshot(
 
 function buildRpSnapshot(chart: Chart, rpScore: number): RulingPlanetsSnapshot {
   const rps = chart.rulingPlanets;
-  return {
-    dayLord: (rps[0] ?? 'Sun') as Planet,
-    horaLord: (rps[1] ?? 'Sun') as Planet,
-    minuteLord: (rps[2] ?? 'Sun') as Planet,
+  ret``    dayLord: rps[0] as Planet,
+    ascSignLord: rps[1] as Planet,
+    ascStarLord: rps[2] as Planet,
+    moonSignLord: rps[3] as Planet,
+    moonStarLord: rps[4] as Planet,
+    horaLord: chart.horaLord,
     agreementScore: rpScore,
   };
+}
+
+function applyKotamrajuFilter(
+  significators: Planet[],
+  favorable: readonly number[],
+  denial: readonly number[],
+  chart: Chart,
+): Planet[] {
+  void favorable;
+  return significators.filter(planet => {
+    const planetData = chart.planets[planet];
+    if (planetData === undefined) {
+      return false;
+    }
+    const subLord = getSubLords(planetData.siderealLongitude).subLord as Planet;
+    const subLordHouse = houseOfPlanet(subLord, chart);
+    return !denial.includes(subLordHouse);
+  });
 }
 
 // ── Main entry point ──────────────────────────────────────────────────────────
@@ -366,6 +387,7 @@ function buildRpSnapshot(chart: Chart, rpScore: number): RulingPlanetsSnapshot {
  */
 export function judgeHorary(chart: Chart, question: ClassifiedQuestion): Verdict {
   const reasoning: ReasoningStep[] = [];
+  let score = 0;
 
   // ── STEP 1: Moon's Sub-Lord ───────────────────────────────────────────────
   const moonPos = chart.planets.Moon;
@@ -383,6 +405,17 @@ export function judgeHorary(chart: Chart, question: ClassifiedQuestion): Verdict
   const qType = question.qType;
   const matrix = HOUSE_MATRIX[qType];
   const { favorable, denial, primary } = matrix;
+  const kotamrajuMoon = applyKotamrajuFilter([moonSubLord], favorable, denial, chart);
+  if (kotamrajuMoon.length === 0) {
+    score -= 2;
+    reasoning.push(
+      step(
+        3,
+        `Kotamraju filter rejected Moon's Sub-Lord ${moonSubLord} (sub-lord linked to denial houses) -> -2`,
+        -2,
+      ),
+    );
+  }
 
   reasoning.push(
     step(
@@ -393,7 +426,6 @@ export function judgeHorary(chart: Chart, question: ClassifiedQuestion): Verdict
 
   // ── STEP 3: Moon's Sub-Lord house placement — primary signal ──────────────
   const moonSubLordHouse = houseOfPlanet(moonSubLord, chart);
-  let score = 0;
   let primarySignal = 'neutral';
 
   if ((favorable as number[]).includes(moonSubLordHouse)) {
@@ -417,9 +449,19 @@ export function judgeHorary(chart: Chart, question: ClassifiedQuestion): Verdict
   // ── STEP 4: Ruling Planets verification ───────────────────────────────────
   const rpNames = ['Day Lord', 'Hora Lord', 'Minute Lord'];
   let rpScore = 0;
+  const filteredRulingPlanets = applyKotamrajuFilter(
+    chart.rulingPlanets as Planet[],
+    favorable,
+    denial,
+    chart,
+  );
 
   for (let i = 0; i < chart.rulingPlanets.length; i++) {
     const rp = chart.rulingPlanets[i] as Planet;
+    if (!filteredRulingPlanets.includes(rp)) {
+      reasoning.push(step(4, `${rpNames[i] ?? `RP${i}`} = ${rp} removed by Kotamraju filter`, 0));
+      continue;
+    }
     const rpHouse = houseOfPlanet(rp, chart);
     const rpName = rpNames[i] ?? `RP${i}`;
     let contribution = 0;

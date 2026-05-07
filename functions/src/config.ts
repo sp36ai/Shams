@@ -4,6 +4,7 @@
  * Quota model: Sunday-anchored rolling week (matches quotaStore.ts on client).
  * Plan tiers:  free | starter | premium | consultation (matches PlanTier type).
  */
+import { defineInt, defineSecret } from 'firebase-functions/params';
 
 export type PlanTier = 'free' | 'starter' | 'premium' | 'consultation';
 
@@ -27,9 +28,22 @@ export const FUNCTION_OPTS = {
   // enforceAppCheck is set per-function — see individual function files.
 } as const;
 
-export const RAZORPAY_WEBHOOK_SECRET_KEY = 'RAZORPAY_WEBHOOK_SECRET';
-export const GOOGLE_PLAY_CLIENT_EMAIL_KEY = 'GOOGLE_PLAY_CLIENT_EMAIL';
-export const GOOGLE_PLAY_PRIVATE_KEY_KEY = 'GOOGLE_PLAY_PRIVATE_KEY';
+/**
+ * Secret Manager bindings.
+ * These must be attached to each function that needs them via `secrets: [...]`.
+ */
+export const RAZORPAY_WEBHOOK_SECRET = defineSecret('RAZORPAY_WEBHOOK_SECRET');
+export const GOOGLE_PLAY_CLIENT_EMAIL = defineSecret('GOOGLE_PLAY_CLIENT_EMAIL');
+export const GOOGLE_PLAY_PRIVATE_KEY = defineSecret('GOOGLE_PLAY_PRIVATE_KEY');
+
+/**
+ * Configurable callable rate limit (requests per user per minute).
+ * Set in `functions/.env` for emulator or via deployed params.
+ */
+export const RATE_LIMIT_PER_MINUTE = defineInt('RATE_LIMIT_PER_MINUTE', {
+  default: 10,
+  description: 'Maximum callable requests per user per minute',
+});
 
 /** Google Play product IDs mapped to plan tiers. */
 export const PLAY_PRODUCT_MAP: Record<string, PlanTier> = {

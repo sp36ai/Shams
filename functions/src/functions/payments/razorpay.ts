@@ -21,7 +21,8 @@ import { onRequest } from 'firebase-functions/v2/https';
 import { FieldValue } from 'firebase-admin/firestore';
 import { db, auth } from '../../utils/admin';
 import { logger } from '../../utils/logger';
-import { REGION, PLAN_DURATION_DAYS, type PlanTier } from '../../config';
+import { requestMetaFromHttp, type RequestAuditMeta } from '../../utils/requestMeta';
+import { RAZORPAY_WEBHOOK_SECRET, REGION, PLAN_DURATION_DAYS, type PlanTier } from '../../config';
 
 // Map Razorpay plan IDs to internal plan tiers
 const RAZORPAY_PLAN_MAP: Record<string, PlanTier> = {
@@ -31,8 +32,10 @@ const RAZORPAY_PLAN_MAP: Record<string, PlanTier> = {
 };
 
 function getRazorpaySecret(): string {
-  const s = process.env.RAZORPAY_WEBHOOK_SECRET;
+  const s = RAZORPAY_WEBHOOK_SECRET.value();
   if (!s) {
+    // Log at error severity so Cloud Logging alerts fire — this is a deploy misconfiguration.
+    logger.error('RAZORPAY_WEBHOOK_SECRET secret is empty — set it via: firebase functions:secrets:set RAZORPAY_WEBHOOK_SECRET');
     throw new Error('RAZORPAY_WEBHOOK_SECRET not configured');
   }
   return s;
@@ -47,7 +50,11 @@ function verifyRazorpaySignature(rawBody: Buffer, signature: string): boolean {
   );
 }
 
-async function upgradePlan(userId: string, plan: PlanTier): Promise<void> {
+async function upgradePlan(
+  userId: string,
+  plan: PlanTier,
+  requestMeta: RequestAuditMeta,
+): Promise<void> {
   const durationDays = PLAN_DURATION_DAYS[plan];
   const expiresAt = new Date(Date.now() + durationDays * 86_400_000);
 
@@ -64,19 +71,30 @@ async function upgradePlan(userId: string, plan: PlanTier): Promise<void> {
   // Firebase custom claims — client reads these on next getIdTokenResult()
   await auth.setCustomUserClaims(userId, { plan, planExpiry: expiresAt.toISOString() });
 
-  logger.info('plan upgraded', { userId, plan, expiresAt: expiresAt.toISOString() });
+  logger.info('plan upgraded', {
+    userId,
+    plan,
+    expiresAt: expiresAt.toISOString(),
+    ipHash: requestMeta.ipHash,
+  });
 
   await db.collection('auditLogs').add({
     userId,
     action: 'plan_upgraded',
     plan,
+    source: requestMeta.source,
+    ipHash: requestMeta.ipHash,
+    userAgent: requestMeta.userAgent,
     ts: FieldValue.serverTimestamp(),
   });
 }
 
 export const razorpayWebhook = onRequest(
-  { region: REGION, timeoutSeconds: 30 },
+  { region: REGION, timeoutSeconds: 30, cors: false, secrets: [RAZORPAY_WEBHOOK_SECRET] },
   async (req, res) => {
+    const startedAt = Date.now();
+    const requestMeta = requestMetaFromHttp(req);
+
     // Only accept POST
     if (req.method !== 'POST') {
       res.status(405).send('Method Not Allowed');
@@ -86,7 +104,10 @@ export const razorpayWebhook = onRequest(
     // 1. Verify signature before touching the body
     const signature = req.headers['x-razorpay-signature'];
     if (typeof signature !== 'string') {
-      logger.warn('razorpay webhook: missing signature');
+      logger.warn('razorpay webhook: missing signature', {
+        ipHash: requestMeta.ipHash,
+        durationMs: Date.now() - startedAt,
+      });
       res.status(400).send('Missing signature');
       return;
     }
@@ -94,7 +115,10 @@ export const razorpayWebhook = onRequest(
     // req.rawBody is populated by Cloud Functions when Content-Type is application/json
     const rawBody = (req as { rawBody?: Buffer }).rawBody;
     if (!rawBody) {
-      logger.warn('razorpay webhook: rawBody unavailable');
+      logger.warn('razorpay webhook: rawBody unavailable', {
+        ipHash: requestMeta.ipHash,
+        durationMs: Date.now() - startedAt,
+      });
       res.status(400).send('Bad request');
       return;
     }
@@ -102,15 +126,26 @@ export const razorpayWebhook = onRequest(
     let signatureValid: boolean;
     try {
       signatureValid = verifyRazorpaySignature(rawBody, signature);
-    } catch {
+    } catch (sigErr) {
+      logger.error('razorpay webhook: signature verification threw', {
+        err: String(sigErr),
+        ipHash: requestMeta.ipHash,
+        durationMs: Date.now() - startedAt,
+      });
       res.status(500).send('Signature verification error');
       return;
     }
 
     if (!signatureValid) {
-      logger.warn('razorpay webhook: invalid signature');
+      logger.warn('razorpay webhook: invalid signature', {
+        ipHash: requestMeta.ipHash,
+        durationMs: Date.now() - startedAt,
+      });
       await db.collection('securityEvents').add({
         type: 'razorpay_invalid_signature',
+        source: requestMeta.source,
+        ipHash: requestMeta.ipHash,
+        userAgent: requestMeta.userAgent,
         ts: FieldValue.serverTimestamp(),
       });
       res.status(401).send('Invalid signature');
@@ -127,7 +162,11 @@ export const razorpayWebhook = onRequest(
     }
 
     const eventType = event.event as string | undefined;
-    logger.info('razorpay webhook received', { event: eventType });
+    logger.info('razorpay webhook received', {
+      event: eventType,
+      ipHash: requestMeta.ipHash,
+      durationMs: Date.now() - startedAt,
+    });
 
     try {
       if (eventType === 'payment.captured') {
@@ -141,19 +180,26 @@ export const razorpayWebhook = onRequest(
         const razorPlan = notes?.planId ?? (entity?.description as string | undefined);
 
         if (!userId || !razorPlan) {
-          logger.warn('razorpay payment.captured: missing userId or planId in notes');
+          logger.warn('razorpay payment.captured: missing userId or planId in notes', {
+            ipHash: requestMeta.ipHash,
+            durationMs: Date.now() - startedAt,
+          });
           res.status(200).send('OK');
           return;
         }
 
         const plan = RAZORPAY_PLAN_MAP[razorPlan];
         if (!plan) {
-          logger.warn('razorpay: unknown plan', { razorPlan });
+          logger.warn('razorpay: unknown plan', {
+            razorPlan,
+            ipHash: requestMeta.ipHash,
+            durationMs: Date.now() - startedAt,
+          });
           res.status(200).send('OK');
           return;
         }
 
-        await upgradePlan(userId, plan);
+        await upgradePlan(userId, plan, requestMeta);
       } else if (eventType === 'subscription.activated') {
         const sub = (event.payload as Record<string, unknown>)?.subscription as
           | Record<string, unknown>
@@ -165,22 +211,33 @@ export const razorpayWebhook = onRequest(
         const razorPlan = entity?.plan_id as string | undefined;
 
         if (!userId || !razorPlan) {
-          logger.warn('razorpay subscription.activated: missing userId or plan_id');
+          logger.warn('razorpay subscription.activated: missing userId or plan_id', {
+            ipHash: requestMeta.ipHash,
+            durationMs: Date.now() - startedAt,
+          });
           res.status(200).send('OK');
           return;
         }
 
         const plan = RAZORPAY_PLAN_MAP[razorPlan];
         if (plan) {
-          await upgradePlan(userId, plan);
+          await upgradePlan(userId, plan, requestMeta);
         }
       }
       // All other event types: acknowledge silently
     } catch (err) {
-      logger.error('razorpay webhook handler error', { err: String(err) });
+      logger.error('razorpay webhook handler error', {
+        err: String(err),
+        ipHash: requestMeta.ipHash,
+        durationMs: Date.now() - startedAt,
+      });
       await db.collection('auditLogs').add({
         action: 'payment_razorpay_fail',
         err: String(err),
+        source: requestMeta.source,
+        ipHash: requestMeta.ipHash,
+        userAgent: requestMeta.userAgent,
+        durationMs: Date.now() - startedAt,
         ts: FieldValue.serverTimestamp(),
       });
       // Still return 200 so Razorpay doesn't retry indefinitely

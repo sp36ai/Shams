@@ -25,7 +25,15 @@ import { db, auth } from '../../utils/admin';
 import { verifyAuth } from '../../middleware/auth';
 import { parse, VerifyGooglePlaySchema } from '../../middleware/validate';
 import { logger } from '../../utils/logger';
-import { FUNCTION_OPTS, PLAY_PRODUCT_MAP, PLAN_DURATION_DAYS, type PlanTier } from '../../config';
+import { requestMetaFromCallable } from '../../utils/requestMeta';
+import {
+  FUNCTION_OPTS,
+  GOOGLE_PLAY_CLIENT_EMAIL,
+  GOOGLE_PLAY_PRIVATE_KEY,
+  PLAY_PRODUCT_MAP,
+  PLAN_DURATION_DAYS,
+  type PlanTier,
+} from '../../config';
 
 // ── Google Play API client (no googleapis SDK to keep bundle small) ───────────
 
@@ -110,8 +118,8 @@ function httpsPostAuth(url: string, accessToken: string): Promise<void> {
 }
 
 async function getGoogleAccessToken(): Promise<string> {
-  const clientEmail = process.env.GOOGLE_PLAY_CLIENT_EMAIL;
-  const privateKey = process.env.GOOGLE_PLAY_PRIVATE_KEY?.replace(/\\n/g, '\n');
+  const clientEmail = GOOGLE_PLAY_CLIENT_EMAIL.value();
+  const privateKey = GOOGLE_PLAY_PRIVATE_KEY.value().replace(/\\n/g, '\n');
 
   if (!clientEmail || !privateKey) {
     throw new HttpsError('internal', 'Play Store credentials not configured');
@@ -152,8 +160,11 @@ export const verifyGooglePlayPurchase = onCall(
   {
     ...FUNCTION_OPTS,
     enforceAppCheck: process.env.NODE_ENV !== 'development',
+    secrets: [GOOGLE_PLAY_CLIENT_EMAIL, GOOGLE_PLAY_PRIVATE_KEY],
   },
   async request => {
+    const startedAt = Date.now();
+    const requestMeta = requestMetaFromCallable(request);
     const { userId } = verifyAuth(request);
     const input = parse(VerifyGooglePlaySchema, request.data);
 
@@ -175,6 +186,8 @@ export const verifyGooglePlayPurchase = onCall(
           userId,
           status,
           body: body.slice(0, 200),
+          ipHash: requestMeta.ipHash,
+          durationMs: Date.now() - startedAt,
         });
         throw new HttpsError('invalid-argument', 'Purchase could not be verified');
       }
@@ -209,12 +222,22 @@ export const verifyGooglePlayPurchase = onCall(
       // Firebase custom claims — client reads these on next getIdTokenResult()
       await auth.setCustomUserClaims(userId, { plan, planExpiry: expiresAt.toISOString() });
 
-      logger.info('play purchase verified', { userId, plan, orderId: purchase.orderId });
+      logger.info('play purchase verified', {
+        userId,
+        plan,
+        orderId: purchase.orderId,
+        ipHash: requestMeta.ipHash,
+        durationMs: Date.now() - startedAt,
+      });
 
       await db.collection('auditLogs').add({
         userId,
         action: 'payment_play_ok',
         plan,
+        source: requestMeta.source,
+        ipHash: requestMeta.ipHash,
+        userAgent: requestMeta.userAgent,
+        durationMs: Date.now() - startedAt,
         ts: FieldValue.serverTimestamp(),
       });
 
@@ -227,11 +250,20 @@ export const verifyGooglePlayPurchase = onCall(
       if (err instanceof HttpsError) {
         throw err;
       }
-      logger.error('verifyGooglePlayPurchase error', { userId, err: String(err) });
+      logger.error('verifyGooglePlayPurchase error', {
+        userId,
+        err: String(err),
+        ipHash: requestMeta.ipHash,
+        durationMs: Date.now() - startedAt,
+      });
       await db.collection('auditLogs').add({
         userId,
         action: 'payment_play_fail',
         err: String(err),
+        source: requestMeta.source,
+        ipHash: requestMeta.ipHash,
+        userAgent: requestMeta.userAgent,
+        durationMs: Date.now() - startedAt,
         ts: FieldValue.serverTimestamp(),
       });
       throw new HttpsError('internal', 'Purchase verification failed');

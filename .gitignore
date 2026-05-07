@@ -87,6 +87,14 @@ buck-out/
 # OS
 Thumbs.db
 
+# Keys and Certificates (Defensive Production)
+*.keystore
+*.jks
+*.p12
+*.pem
+*.key
+!debug.keystore
+
 # Project-specific
 android/app/src/main/assets/index.android.bundle
 android/app/src/main/res/drawable-*/node_modules*
@@ -106,6 +114,18 @@ functions/lib/
 # Build logs
 install.log
 firebase-debug.log
+android-launch.log
+android-live-*.log
+android-live-*.txt
+android-live-*.err
+firebase-emulators-live*.log
+firebase-emulators-curl-test.log*
+metro-launch.log
+hs_err_pid*.log
+replay_pid*.log
+logs/
+.tmp_syntax_check.js
+firebase-emulator.local.json
 
 # Claude Code project settings
 .claude/

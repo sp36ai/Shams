@@ -1,0 +1,36 @@
+{
+  "projectId": "shams-app-4d0e7",
+  "lastUpdated": "2026-05-03",
+  "repoChecks": {
+    "googleServicesProjectMatches": true,
+    "firebaseApiKeyPresentInRepo": true,
+    "firebaseApiKeyChangedSinceInitialAudit": true,
+    "appCheckInitializedInCode": true,
+    "callablesEnforceAppCheck": true,
+    "functionSecretBindingsPresent": true,
+    "firestoreRulesTestsPresent": true,
+    "predeployValidatorInstalled": true,
+    "razorpayWebhookHelperPresent": true,
+    "certificatePinningFailClosedEnabled": false
+  },
+  "manualChecks": {
+    "apiKeyRotated": true,
+    "apiKeyRestrictedToAndroidAndRequiredApis": false,
+    "firebaseBillingVerified": false,
+    "appCheckEnabledInFirebaseConsole": false,
+    "functionsSecretsProvisioned": false,
+    "googlePlayServiceAccountConfigured": false,
+    "razorpayWebhookRegistered": false,
+    "certificatePinsCaptured": false
+  },
+  "notes": {
+    "apiKeyRotation": "Repo now contains a different Firebase API key than the initial May 1 audit. Confirm the old key was revoked in GCP and only the new key remains active.",
+    "apiKeyRestrictions": "Confirm Android app restrictions plus only the required Firebase/Google APIs in GCP Credentials.",
+    "billing": "Confirm Blaze plan and budget alerts in Firebase/GCP before launch.",
+    "appCheck": "Confirm App Check is enabled for the Android app in Firebase Console.",
+    "secrets": "Set RAZORPAY_WEBHOOK_SECRET, GOOGLE_PLAY_CLIENT_EMAIL, and GOOGLE_PLAY_PRIVATE_KEY in Firebase Secret Manager.",
+    "googlePlay": "Verify the Google Play service account has Android Publisher access.",
+    "razorpay": "Register the deployed razorpayWebhook URL in Razorpay Dashboard with payment.captured and subscription.activated.",
+    "certificatePins": "Certificate pin placeholders still exist in src/utils/certificatePinning.ts and fail-closed pinning is intentionally disabled until real SPKI pins are captured."
+  }
+}

@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { StatusBar, StyleSheet, Text, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import {
+import appCheck, {
   initializeAppCheck,
-  ReactNativeFirebaseAppCheckProvider,
+} from '@react-native-firebase/app-check';
+import {
+  type FirebaseAppCheckTypes,
 } from '@react-native-firebase/app-check';
 
 import { ThemeProvider, readPersistedThemeId } from '@theme/ThemeProvider';
@@ -12,13 +14,19 @@ import RootNavigator from '@navigation/RootNavigator';
 import { runSecurityChecks, INTEGRITY_FAIL_MESSAGE } from '@utils/security';
 
 // Initialise App Check before any Firebase service is used.
-// Debug token is only injected in __DEV__ builds; production uses Play Integrity.
-// Register the debug token in Firebase Console → App Check → Manage debug tokens.
-const _rnfbProvider = new ReactNativeFirebaseAppCheckProvider();
+// Debug token is optional and only read in __DEV__ builds.
+// Register debug tokens in Firebase Console → App Check → Manage debug tokens.
+const appCheckDebugToken =
+  __DEV__ && process.env.FIREBASE_APP_CHECK_DEBUG_TOKEN_ANDROID
+    ? process.env.FIREBASE_APP_CHECK_DEBUG_TOKEN_ANDROID.trim()
+    : undefined;
+
+const _rnfbProvider: FirebaseAppCheckTypes.ReactNativeFirebaseAppCheckProvider =
+  appCheck().newReactNativeFirebaseAppCheckProvider();
 _rnfbProvider.configure({
   android: {
     provider: __DEV__ ? 'debug' : 'playIntegrity',
-    debugToken: '0D11B4D0-FAD0-4C92-B580-6315423E181F',
+    debugToken: appCheckDebugToken,
   },
   apple: {
     provider: __DEV__ ? 'debug' : 'appAttestWithDeviceCheckFallback',

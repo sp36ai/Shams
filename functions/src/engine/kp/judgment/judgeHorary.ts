@@ -1,545 +1,225 @@
-/**
- * judgeHorary — Phase 3 RKP judgment engine.
- * --------------------------------------------------------------------------
- * Implements the exact 5-step RKP algorithm per docs/RKP_RULES_FROM_SARFARAZ.md.
- *
- * THE ALGORITHM (source: RKP_RULES_FROM_SARFARAZ.md):
- *
- *  STEP 1  Find Moon's nakshatra and Sub-Lord at the question moment.
- *          Moon's Sub-Lord = the planet ruling the proportional sub-division
- *          of the nakshatra at Moon's exact sidereal longitude.
- *          (Already computed by Phase 2 — chart.planets['Moon'].subLord)
- *
- *  STEP 2  Map question to house matrix (favorable + denial houses).
- *
- *  STEP 3  Check which house Moon's Sub-Lord OCCUPIES.
- *          This is the primary RKP signal:
- *            In favorable house → +2 to score
- *            In denial house    → −2 to score
- *
- *  STEP 4  Verify with 3 Ruling Planets (Day Lord + Hora Lord + Minute Lord).
- *          For each RP, check which house it occupies:
- *            Favorable house → +1
- *            Denial house    → −1
- *
- *  STEP 5  Total score → verdict:
- *            ≥ +3  → YES (favorable)
- *            ≤ −2  → NO (unfavorable)
- *            −1 to +2 → CONDITIONAL (mixed)
- *
- *  DELAYED modifier: if verdict is YES but Moon's Sub-Lord, Jupiter, or Venus
- *                    is retrograde → verdict becomes DELAYED.
- *
- *  TIMING: Timing planet = nakshatra lord of Moon's Sub-Lord.
- *          Months estimate = DASHA_YEARS[timingPlanet] × 12 × (score / maxScore)
- *
- * Determinism guarantee: same (chart, question) → identical Verdict.
- * No Date.now(), no Math.random(), no unordered Set iteration.
- */
-
-import type { Chart, Planet, HouseIndex } from '../../types/chart';
+import type { Chart, PlanetName } from '../../types/chart';
 import type { ClassifiedQuestion } from '../../types/question';
-import type {
-  Verdict,
-  VerdictKind,
-  MoonSubLordSnapshot,
-  QuestionCuspDetail,
-  RulingPlanetsSnapshot,
-  VerdictTiming,
-  VerdictRemedy,
-  VerdictNarration,
-  ReasoningStep,
-  TimingWindow,
-} from '../../types/verdict';
-import { HOUSE_MATRIX } from '../../kp/rules/houseMatrix';
-import { DASHA_YEARS } from '../../kp/rules/vimshottari';
-import { calculateDasha } from '../../primitives/dasha';
-import { houseOfPlanet } from './significations';
-import { ENGINE_VERSION } from '../../primitives/chartBuilder';
+import type { Verdict, VerdictKind, ReasoningStep } from '../../types/verdict';
+import { HOUSE_MATRIX, REMEDY_DATA } from '../rules/houseMatrix';
+import { DASHA_YEARS } from '../rules/vimshottari';
+import { hashText } from '../../../utils/logger';
+import { getSignifiedHouses } from './significations';
+import { ChartSchema, ClassifiedQuestionSchema, VerdictSchema } from './schemas';
+import { calculateDasha } from '../primitives/dasha';
+import { getSubLords } from '../primitives/subLord';
 
-// ── Deterministic ID (no Math.random — determinism spec) ──────────────────────
-
-function fnv1a(s: string): string {
-  let h = 0x811c9dc5;
-  for (let i = 0; i < s.length; i++) {
-    // eslint-disable-next-line no-bitwise
-    h ^= s.charCodeAt(i);
-    // eslint-disable-next-line no-bitwise
-    h = (h * 0x01000193) >>> 0;
-  }
-  return h.toString(16).padStart(8, '0');
-}
-
-function deterministicId(chart: Chart, question: ClassifiedQuestion): string {
-  const seed = `${chart.momentUtc}|${chart.location.latitude}|${chart.location.longitude}|${question.text}|${question.qType}`;
-  const a = fnv1a(seed);
-  const b = fnv1a(seed + 'b');
-  const c = fnv1a(seed + 'c');
-  const d = fnv1a(seed + 'd');
-  return `${a}-${b.slice(0, 4)}-4${b.slice(5, 8)}-${c.slice(0, 4)}-${c.slice(4)}${d.slice(0, 8)}`;
-}
-
-// ── Reasoning trace ───────────────────────────────────────────────────────────
-
-function step(n: number, msg: string, weight = 0): ReasoningStep {
-  return { ruleId: `STEP_${n}`, description: `[STEP ${n}] ${msg}`, weight };
-}
-
-// ── Timing ────────────────────────────────────────────────────────────────────
-
-/**
- * Convert raw days-remaining to a TimingWindow and a range.
- */
-function daysToWindow(daysRemaining: number): {
-  window: TimingWindow;
-  range: { min: number; max: number };
-} {
-  if (daysRemaining < 30) {
-    const d = Math.max(1, Math.ceil(daysRemaining));
-    return { window: 'days', range: { min: 1, max: d } };
-  }
-  if (daysRemaining < 90) {
-    const w = Math.max(1, Math.ceil(daysRemaining / 7));
-    return { window: 'weeks', range: { min: 1, max: w } };
-  }
-  if (daysRemaining < 730) {
-    const m = Math.max(1, Math.ceil(daysRemaining / 30.44));
-    return { window: 'months', range: { min: 1, max: m } };
-  }
-  const y = Math.max(1, Math.ceil(daysRemaining / 365.25));
-  return { window: 'years', range: { min: 1, max: y } };
+function applyKotamrajuFilter(
+  significators: PlanetName[],
+  favorable: readonly number[],
+  denial: readonly number[],
+  chart: Chart
+): PlanetName[] {
+  void favorable;
+  return significators.filter(planet => {
+    const planetData = chart.planets[planet];
+    if (!planetData) return false;
+    const subLord = getSubLords(planetData.longitude).subLord;
+    const subLordHouses = getSignifiedHouses(subLord as any, chart);
+    return !subLordHouses.some(h => denial.includes(h));
+  });
 }
 
 /**
- * RKP timing formula (from RKP_RULES_FROM_SARFARAZ.md):
- *   Timing planet = nakshatra lord of Moon's Sub-Lord
- *   Months = DASHA_YEARS[timingPlanet] × 12 × (positiveScore / maxScore)
- *
- * We convert the computed months to the natural window unit (days/weeks/months/years).
- */
-function buildTiming(
-  chart: Chart,
-  moonSubLord: Planet,
-  positiveScore: number,
-  maxScore: number,
-  reasoning: ReasoningStep[],
-): VerdictTiming {
-  // Timing planet = nakshatra lord of Moon's Sub-Lord
-  const timingPlanet = chart.planets[moonSubLord].nakshatraLord as Planet;
-  const dashaYears = DASHA_YEARS[timingPlanet] ?? 7;
-  const ratio = maxScore > 0 ? Math.max(0, Math.min(1, positiveScore / maxScore)) : 0;
-  const timingMonths = dashaYears * 12 * ratio;
-  const timingDays = timingMonths * 30.44;
-
-  const { window, range } = daysToWindow(timingDays);
-
-  // Also get active dasha periods for the trace
-  const momentMs = new Date(chart.momentUtc).getTime();
-  const moonLon = chart.planets.Moon.siderealLongitude;
-  const dasha = calculateDasha(moonLon, momentMs);
-
-  const md = dasha.mahadasha.lord as Planet;
-  const ad = dasha.currentAntardasha.lord as Planet;
-  const pd = dasha.currentPratyantar.lord as Planet;
-
-  reasoning.push(
-    step(
-      5,
-      `Timing planet = ${timingPlanet} (nakshatra lord of Moon's Sub-Lord ${moonSubLord})` +
-        ` → ${dashaYears}y × 12 × ${ratio.toFixed(2)} = ${timingMonths.toFixed(1)} months → ${window} (${range.max})` +
-        ` | Active dasha: MD=${md} AD=${ad} PD=${pd}`,
-      0,
-    ),
-  );
-
-  return {
-    window,
-    range,
-    activeDasha: md,
-    activeAntardasha: ad,
-    activePratyantardasha: pd,
-    transitTriggers: [],
-  };
-}
-
-// ── Remedy ────────────────────────────────────────────────────────────────────
-
-const REMEDY_TABLE: Readonly<
-  Record<Planet, { action: string; avoid: string; mantra?: string; charity?: string }>
-> = {
-  Sun: {
-    action: 'Offer water to the rising Sun for 7 days',
-    avoid: 'Avoid conflicts on Sunday',
-    mantra: 'Om Hraam Hreem Hraum Sah Suryaya Namah',
-    charity: 'Donate wheat or copper on Sunday',
-  },
-  Moon: {
-    action: 'Offer milk to Shiva on Monday',
-    avoid: 'Avoid starting new ventures on Monday night',
-    mantra: 'Om Shraam Shreem Shraum Sah Chandraya Namah',
-    charity: 'Donate rice or white cloth on Monday',
-  },
-  Mars: {
-    action: 'Light a red lamp on Tuesday',
-    avoid: 'Avoid anger on Tuesday',
-    mantra: 'Om Kraam Kreem Kraum Sah Bhaumaya Namah',
-    charity: 'Donate red lentils on Tuesday',
-  },
-  Mercury: {
-    action: 'Feed green fodder to cows on Wednesday',
-    avoid: 'Avoid dishonesty in communication',
-    mantra: 'Om Braam Breem Braum Sah Budhaya Namah',
-    charity: 'Donate green vegetables on Wednesday',
-  },
-  Jupiter: {
-    action: 'Offer turmeric to Lord Vishnu on Thursday',
-    avoid: 'Avoid disrespecting elders and teachers',
-    mantra: 'Om Graam Greem Graum Sah Guruve Namah',
-    charity: 'Donate yellow items on Thursday',
-  },
-  Venus: {
-    action: 'Offer white flowers to the deity on Friday',
-    avoid: 'Avoid excess on Fridays',
-    mantra: 'Om Draam Dreem Draum Sah Shukraya Namah',
-    charity: 'Donate white sweets on Friday',
-  },
-  Saturn: {
-    action: 'Light a sesame oil lamp on Saturday',
-    avoid: 'Avoid cutting trees or harming elderly',
-    mantra: 'Om Praam Preem Praum Sah Shanaischaraya Namah',
-    charity: 'Donate black sesame on Saturday',
-  },
-  Rahu: {
-    action: 'Offer blue flowers to Durga on Saturday',
-    avoid: 'Avoid impulsive decisions and travel at night',
-    mantra: 'Om Bhraam Bhreem Bhraum Sah Rahave Namah',
-    charity: 'Donate coal or blue cloth on Saturday',
-  },
-  Ketu: {
-    action: 'Offer flowers at a Ganesh temple on Tuesday',
-    avoid: 'Avoid starting long journeys on Tuesday',
-    mantra: 'Om Sraam Sreem Sraum Sah Ketave Namah',
-    charity: 'Donate mixed grain on Tuesday',
-  },
-};
-
-function buildRemedy(moonSubLord: Planet, reasoning: ReasoningStep[]): VerdictRemedy | undefined {
-  const r = REMEDY_TABLE[moonSubLord];
-  if (r === undefined) {
-    return undefined;
-  }
-  reasoning.push(
-    step(
-      0,
-      `Remedy planet = Moon's Sub-Lord ${moonSubLord} (PROVISIONAL — owner cultural text pending)`,
-      0,
-    ),
-  );
-  return { planet: moonSubLord, ...r };
-}
-
-// ── Narration ─────────────────────────────────────────────────────────────────
-
-function buildNarration(
-  verdict: VerdictKind,
-  qType: string,
-  moonSubLord: Planet,
-  moonSubLordHouse: HouseIndex,
-  score: number,
-): VerdictNarration {
-  const en = buildEn(verdict, qType, moonSubLord, moonSubLordHouse, score);
-  const ur = buildUr(verdict, qType);
-  const hi = buildHi(verdict, qType);
-  return { en, ur, hi };
-}
-
-function buildEn(
-  verdict: VerdictKind,
-  qType: string,
-  moonSubLord: Planet,
-  moonSubLordHouse: HouseIndex,
-  score: number,
-): string {
-  switch (verdict) {
-    case 'YES':
-      return `The heavens are favorable for your ${qType} matter. Moon's Sub-Lord ${moonSubLord} occupies house ${moonSubLordHouse} — a favorable house. Score: +${score}. The stars indicate success.`;
-    case 'NO':
-      return `The planetary testimony does not support your ${qType} matter at this time. Moon's Sub-Lord ${moonSubLord} occupies house ${moonSubLordHouse} — a denial house. Score: ${score}.`;
-    case 'CONDITIONAL':
-      return `Your ${qType} matter shows mixed signals. Moon's Sub-Lord ${moonSubLord} occupies house ${moonSubLordHouse}. Score: ${score}. Success depends on addressing the planetary conditions.`;
-    case 'DELAYED':
-      return `Your ${qType} matter will be fulfilled but with delay. Moon's Sub-Lord ${moonSubLord} is retrograde or afflicted. The result is positive but postponed.`;
-    case 'UNCLEAR':
-      return `The planetary testimony for your ${qType} matter is unclear at this moment. Please rephrase your question or ask at a different time.`;
-  }
-}
-
-function buildUr(verdict: VerdictKind, qType: string): string {
-  switch (verdict) {
-    case 'YES':
-      return `آپ کے ${qType} کے معاملے میں ستاروں کی گواہی موافق ہے۔ کامیابی کے آثار نظر آ رہے ہیں۔`;
-    case 'NO':
-      return `آپ کے ${qType} کے معاملے میں ابھی سیاروں کی حمایت حاصل نہیں ہے۔`;
-    case 'CONDITIONAL':
-      return `آپ کے ${qType} کے معاملے کا نتیجہ مشروط ہے۔ اقدامات کی ضرورت ہے۔`;
-    case 'DELAYED':
-      return `آپ کے ${qType} کے معاملے میں تاخیر ہو سکتی ہے لیکن نتیجہ موافق ہوگا۔`;
-    case 'UNCLEAR':
-      return `ابھی سیاروں کی گواہی واضح نہیں ہے۔ سوال دوبارہ پوچھیں۔`;
-  }
-}
-
-function buildHi(verdict: VerdictKind, qType: string): string {
-  switch (verdict) {
-    case 'YES':
-      return `आपके ${qType} विषय में ग्रहों की गवाही अनुकूल है। सफलता के संकेत हैं।`;
-    case 'NO':
-      return `आपके ${qType} विषय में अभी ग्रहों की अनुकूलता नहीं है।`;
-    case 'CONDITIONAL':
-      return `आपके ${qType} विषय का परिणाम सशर्त है। उपाय आवश्यक हैं।`;
-    case 'DELAYED':
-      return `आपके ${qType} विषय में विलंब संभव है, परंतु परिणाम अनुकूल होगा।`;
-    case 'UNCLEAR':
-      return `अभी ग्रहों की गवाही स्पष्ट नहीं है। कृपया प्रश्न पुनः पूछें।`;
-  }
-}
-
-// ── PrimaryCuspDetail (for the Moon's Sub-Lord cusp context) ─────────────────
-
-function buildQuestionCuspDetail(primaryHouseIdx: HouseIndex, chart: Chart): QuestionCuspDetail {
-  const cusp = chart.cusps[primaryHouseIdx - 1];
-  if (cusp === undefined) {
-    throw new RangeError(`[judgeHorary] cusp[${primaryHouseIdx - 1}] undefined`);
-  }
-  return {
-    house: cusp.house,
-    sign: cusp.sign,
-    degreeInSign: cusp.degreeInSign,
-    nakshatra: cusp.nakshatra,
-    nakshatraLord: cusp.nakshatraLord,
-    subLord: cusp.subLord,
-    subSubLord: cusp.subSubLord,
-    pada: 1,
-  };
-}
-
-// ── SignificatorChain (Moon's Sub-Lord chain) ────────────────────────────────
-
-function buildMoonSubLordSnapshot(
-  moonSubLord: Planet,
-  moonSubLordHouse: HouseIndex,
-  favHits: readonly HouseIndex[],
-  denHits: readonly HouseIndex[],
-  chart: Chart,
-): MoonSubLordSnapshot {
-  const nakshatraLord = chart.planets[moonSubLord].nakshatraLord as Planet;
-  return {
-    planet: moonSubLord,
-    nakshatraLord,
-    occupiedHouse: moonSubLordHouse,
-    signifiedHouses: [moonSubLordHouse],
-    favHits,
-    denHits,
-  };
-}
-
-// ── RulingPlanetsSnapshot ────────────────────────────────────────────────────
-
-function buildRpSnapshot(chart: Chart, rpScore: number): RulingPlanetsSnapshot {
-  const rps = chart.rulingPlanets;
-  return {
-    dayLord: (rps[0] ?? 'Sun') as Planet,
-    horaLord: (rps[1] ?? 'Sun') as Planet,
-    minuteLord: (rps[2] ?? 'Sun') as Planet,
-    agreementScore: rpScore,
-  };
-}
-
-// ── Main entry point ──────────────────────────────────────────────────────────
-
-/**
- * Judge a KP/RKP horary chart.
- *
- * @param chart     Fully populated Chart from Phase 2 buildChart()
- * @param question  Pre-classified question
- * @returns         Complete Verdict ready to persist and render
+ * judgeHorary — Main RKP Judgment Engine
  */
 export function judgeHorary(chart: Chart, question: ClassifiedQuestion): Verdict {
+  // Step 0: Validate high-fidelity inputs
+  ChartSchema.parse(chart);
+  ClassifiedQuestionSchema.parse(question);
+
   const reasoning: ReasoningStep[] = [];
-
-  // ── STEP 1: Moon's Sub-Lord ───────────────────────────────────────────────
-  const moonPos = chart.planets.Moon;
-  const moonSubLord = moonPos.subLord;
-
-  reasoning.push(
-    step(
-      1,
-      `Moon at ${moonPos.siderealLongitude.toFixed(2)}° sidereal` +
-        ` (nakshatra lord: ${moonPos.nakshatraLord}, sub-lord: ${moonSubLord})`,
-    ),
-  );
-
-  // ── STEP 2: House matrix for question type ────────────────────────────────
-  const qType = question.qType;
-  const matrix = HOUSE_MATRIX[qType];
-  const { favorable, denial, primary } = matrix;
-
-  reasoning.push(
-    step(
-      2,
-      `Question: '${qType}' | favorable houses=[${favorable.join(',')}] denial=[${denial.join(',')}]`,
-    ),
-  );
-
-  // ── STEP 3: Moon's Sub-Lord house placement — primary signal ──────────────
-  const moonSubLordHouse = houseOfPlanet(moonSubLord, chart);
   let score = 0;
-  let primarySignal = 'neutral';
 
-  if ((favorable as number[]).includes(moonSubLordHouse)) {
-    score += 2;
-    primarySignal = `favorable (house ${moonSubLordHouse} ∈ [${favorable.join(',')}]) → +2`;
-  } else if ((denial as number[]).includes(moonSubLordHouse)) {
+  // Step 1: Moon's Sub-Lord
+  const moonSL = chart.planets.Moon.subLord as PlanetName;
+  reasoning.push({ ruleId: 'STEP_1', weight: 0, description: `Moon Sub-Lord is ${moonSL}` });
+
+  // Step 2: House Matrix
+  const matrix = HOUSE_MATRIX[question.qType] || HOUSE_MATRIX.general;
+  
+  // Step 3: Moon SL House
+  const kotamrajuMoon = applyKotamrajuFilter(
+    [moonSL],
+    matrix.favorable,
+    matrix.denial,
+    chart
+  );
+  if (kotamrajuMoon.length === 0) {
     score -= 2;
-    primarySignal = `denial (house ${moonSubLordHouse} ∈ [${denial.join(',')}]) → −2`;
+    reasoning.push({
+      ruleId: 'STEP_3_KOT',
+      weight: -2,
+      description: `Kotamraju filter rejected Moon SL ${moonSL} due to denial-house sub-lord linkage`,
+    });
+  }
+
+  const moonSignifications = getSignifiedHouses(moonSL as any, chart);
+  const favorableHits = moonSignifications.filter(h => matrix.favorable.includes(h));
+  const denialHits = moonSignifications.filter(h => matrix.denial.includes(h));
+
+  if (favorableHits.includes(matrix.primary)) {
+    score += 3;
+    reasoning.push({ ruleId: 'STEP_3_PRI', weight: 3, description: `Moon SL signifies Primary house ${matrix.primary}` });
+  } else if (favorableHits.length > 0) {
+    score += 2;
+    reasoning.push({ ruleId: 'STEP_3_SEC', weight: 2, description: `Moon SL signifies Favorable houses: ${favorableHits.join(', ')}` });
+  } else if (denialHits.length > 0) {
+    score -= 2;
+    reasoning.push({ ruleId: 'STEP_3_DEN', weight: -2, description: `Moon SL signifies Denial houses: ${denialHits.join(', ')}` });
   } else {
-    primarySignal = `neutral (house ${moonSubLordHouse}) → 0`;
+    reasoning.push({ ruleId: 'STEP_3', weight: 0, description: `Moon SL significations are neutral for ${question.qType}` });
   }
 
-  reasoning.push(
-    step(
-      3,
-      `Moon's Sub-Lord ${moonSubLord} occupies house ${moonSubLordHouse} → ${primarySignal}`,
-      score,
-    ),
+  // Step 4: Ruling Planets (3 RP)
+  const filteredRulingPlanets = applyKotamrajuFilter(
+    chart.rulingPlanets as PlanetName[],
+    matrix.favorable,
+    matrix.denial,
+    chart
   );
-
-  // ── STEP 4: Ruling Planets verification ───────────────────────────────────
-  const rpNames = ['Day Lord', 'Hora Lord', 'Minute Lord'];
-  let rpScore = 0;
-
-  for (let i = 0; i < chart.rulingPlanets.length; i++) {
-    const rp = chart.rulingPlanets[i] as Planet;
-    const rpHouse = houseOfPlanet(rp, chart);
-    const rpName = rpNames[i] ?? `RP${i}`;
-    let contribution = 0;
-    let signal = 'neutral';
-
-    if ((favorable as number[]).includes(rpHouse)) {
-      contribution = 1;
-      signal = `favorable (house ${rpHouse}) → +1`;
-    } else if ((denial as number[]).includes(rpHouse)) {
-      contribution = -1;
-      signal = `denial (house ${rpHouse}) → −1`;
-    } else {
-      signal = `neutral (house ${rpHouse}) → 0`;
+  chart.rulingPlanets.forEach(rp => {
+    if (!filteredRulingPlanets.includes(rp as PlanetName)) {
+      reasoning.push({
+        ruleId: 'STEP_4_KOT',
+        weight: 0,
+        description: `Kotamraju filter removed RP ${rp} (sub-lord linked to denial houses)`,
+      });
+      return;
     }
+    const rpSignifications = getSignifiedHouses(rp as any, chart);
+    const rpFavorable = rpSignifications.some(h => matrix.favorable.includes(h));
+    const rpDenial = rpSignifications.some(h => matrix.denial.includes(h));
 
-    score += contribution;
-    rpScore += contribution;
-    reasoning.push(
-      step(4, `${rpName} = ${rp} occupies house ${rpHouse} → ${signal}`, contribution),
-    );
-  }
-
-  // ── STEP 5: Verdict from total score ────────────────────────────────────
-  let verdict: VerdictKind;
-  if (score >= 3) {
-    verdict = 'YES';
-  } else if (score <= -2) {
-    verdict = 'NO';
-  } else {
-    verdict = 'CONDITIONAL';
-  }
-
-  // DELAYED modifier: YES but Moon's Sub-Lord, Jupiter, or Venus is retrograde
-  if (verdict === 'YES') {
-    const mslRetro = chart.planets[moonSubLord].isRetrograde;
-    const jupRetro = chart.planets.Jupiter.isRetrograde;
-    const venRetro = chart.planets.Venus.isRetrograde;
-    if (mslRetro || jupRetro || venRetro) {
-      verdict = 'DELAYED';
-      const who = [mslRetro && `${moonSubLord}(MSL)`, jupRetro && 'Jupiter', venRetro && 'Venus']
-        .filter(Boolean)
-        .join(', ');
-      reasoning.push(step(5, `YES → DELAYED: retrograde planet(s): ${who}`, 0));
+    if (rpFavorable) {
+      score += 1;
+      reasoning.push({ ruleId: 'STEP_4_POS', weight: 1, description: `Ruling Planet ${rp} supports favorable houses` });
+    } else if (rpDenial) {
+      score -= 1;
+      reasoning.push({ ruleId: 'STEP_4_NEG', weight: -1, description: `Ruling Planet ${rp} supports denial houses` });
     }
+  });
+
+  // Step 5: Verdict & Confidence
+  let verdictKind: VerdictKind = 'CONDITIONAL';
+  if (score >= 3) verdictKind = 'YES';
+  else if (score <= -2) verdictKind = 'NO';
+  else if (score < 1 && score > -1) verdictKind = 'UNCLEAR';
+
+  // Retrograde Modifier
+  const isRetro = chart.planets[moonSL].isRetrograde || chart.planets.Jupiter.isRetrograde || chart.planets.Venus.isRetrograde;
+  if (verdictKind === 'YES' && isRetro) {
+    verdictKind = 'DELAYED';
+    reasoning.push({ ruleId: 'STEP_RETRO', weight: 0, description: 'Retrograde planets detected: Modified to DELAYED' });
   }
 
-  reasoning.push(
-    step(
-      5,
-      `Total score = ${score} → verdict = ${verdict}` + ` (≥3=YES, ≤−2=NO, else CONDITIONAL)`,
-      score,
-    ),
-  );
+  const confidence = Math.min(95, Math.max(20, 50 + (score * 10)));
 
-  // ── Confidence ────────────────────────────────────────────────────────────
-  // Max possible score = +5 (Moon's Sub-Lord +2, 3 RPs +1 each)
-  const maxScore = 5;
-  const confidence = Math.round(
-    Math.min(100, Math.max(10, ((score + maxScore) / (2 * maxScore)) * 100)),
-  );
+  // Reading ID (Deterministic)
+  const readingId = generateReadingId(chart.momentUtc + question.text);
 
-  // ── Timing ────────────────────────────────────────────────────────────────
-  const positiveScore = Math.max(0, score);
-  const timing = buildTiming(chart, moonSubLord, positiveScore, maxScore, reasoning);
+  // Timing & Real Dasha Calculation
+  const momentMs = new Date(chart.momentUtc).getTime();
+  const dasha = calculateDasha(chart.planets.Moon.longitude, momentMs);
+ 
+  // Calculate timingValue based on the remaining dasha balance in current Antardasha (AD)
+  const msRemaining = dasha.currentAntardasha.end.getTime() - momentMs;
+  const daysRemaining = Math.max(1, Math.ceil(msRemaining / (1000 * 60 * 60 * 24)));
+ 
+  const timingWindow = daysRemaining > 365 ? 'years' : 
+                       daysRemaining > 30 ? 'months' : 
+                       daysRemaining > 7 ? 'weeks' : 'days';
+ 
+  const timingValue = timingWindow === 'years' ? Math.ceil(daysRemaining / 365.25) :
+                      timingWindow === 'months' ? Math.ceil(daysRemaining / 30.44) :
+                      timingWindow === 'weeks' ? Math.ceil(daysRemaining / 7) : daysRemaining;
 
-  // ── Retrograde / combust flags ────────────────────────────────────────────
-  const retrogradeFlags: Planet[] = [];
-  const combustFlags: Planet[] = [];
-  for (const [p, pos] of Object.entries(chart.planets) as [
-    Planet,
-    (typeof chart.planets)[Planet],
-  ][]) {
-    if (pos.isRetrograde) {
-      retrogradeFlags.push(p);
-    }
-    if (pos.isCombust) {
-      combustFlags.push(p);
-    }
-  }
-
-  // ── Assemble sub-objects ──────────────────────────────────────────────────
-  const favHits = ([moonSubLordHouse] as HouseIndex[]).filter(h =>
-    (favorable as number[]).includes(h),
-  );
-  const denHits = ([moonSubLordHouse] as HouseIndex[]).filter(h =>
-    (denial as number[]).includes(h),
-  );
-
-  const moonSubLordSnapshot = buildMoonSubLordSnapshot(
-    moonSubLord,
-    moonSubLordHouse,
-    favHits,
-    denHits,
-    chart,
-  );
-  const rpSnapshot = buildRpSnapshot(chart, rpScore);
-  const questionCuspDetail = buildQuestionCuspDetail(primary as HouseIndex, chart);
-  const remedy = buildRemedy(moonSubLord, reasoning);
-  const narration = buildNarration(verdict, qType, moonSubLord, moonSubLordHouse, score);
-
-  // ── Final Verdict ─────────────────────────────────────────────────────────
-  return Object.freeze({
-    id: deterministicId(chart, question),
-    computedAt: chart.momentUtc,
-    question,
-    qType,
-    chart,
-    favorableHouses: favorable as HouseIndex[],
-    denialHouses: denial as HouseIndex[],
-    questionCusp: questionCuspDetail,
-    moonSubLord: moonSubLordSnapshot,
-    rulingPlanets: rpSnapshot,
-    verdict,
+  const finalVerdict: Verdict = {
+    readingId,
+    verdict: verdictKind,
     confidence,
-    reasoning: Object.freeze(reasoning),
-    timing,
-    remedy,
-    narration,
-    retrogradeFlags: Object.freeze(retrogradeFlags),
-    combustFlags: Object.freeze(combustFlags),
-    engineVersion: ENGINE_VERSION,
-  } satisfies Verdict);
+    category: question.qType,
+    narration: generateNarrations(
+      verdictKind,
+      question.qType,
+      moonSL,
+      moonSignifications as number[],
+      favorableHits,
+      denialHits
+    ),
+    reasoning,
+    timing: {
+      window: timingWindow,
+      range: { min: timingValue, max: timingValue + 1 },
+      activeDasha: dasha.mahadasha,
+      activeAntardasha: dasha.antardasha,
+      activePratyantardasha: dasha.pratyantardasha,
+    },
+    remedy: {
+      planet: moonSL,
+      ...REMEDY_DATA[moonSL],
+    },
+    computedAt: new Date().toISOString(),
+  };
+
+  return VerdictSchema.parse(finalVerdict);
+}
+
+/** Helpers */
+function getHouseOfPlanet(planet: PlanetName, chart: Chart): number {
+  const longitude = chart.planets[planet].longitude;
+  const cusps = [...chart.cusps].sort((a, b) => a.number - b.number);
+  for (let i = 0; i < 12; i++) {
+    const curr = cusps[i].longitude;
+    const next = cusps[(i + 1) % 12].longitude;
+    if (curr < next) {
+      if (longitude >= curr && longitude < next) return cusps[i].number;
+    } else if (longitude >= curr || longitude < next) {
+      return cusps[i].number;
+    }
+  }
+  return 1;
+}
+
+function generateReadingId(seed: string): string {
+  const h = hashText(seed);
+  const h2 = hashText(seed + "v2");
+  const full = (h + h2 + h + h2).padEnd(32, '0');
+  return `${full.slice(0, 8)}-${full.slice(8, 12)}-4${full.slice(13, 16)}-a${full.slice(17, 20)}-${full.slice(20, 32)}`;
+}
+
+function generateNarrations(
+  kind: VerdictKind,
+  cat: string,
+  planet: PlanetName,
+  sigs: number[],
+  favs: number[],
+  dens: number[]
+) {
+  const sigStr = sigs.join(', ');
+  let detailEn = `Moon's Sub-Lord ${planet} signifies houses ${sigStr}.`;
+  let detailUr = `چاند کا ذیلی حاکم ${planet} ان گھروں (${sigStr}) کی نشاندہی کرتا ہے۔`;
+  let detailHi = `चंद्रमा का उप-स्वामी ${planet} इन घरों (${sigStr}) का संकेत देता है।`;
+
+  if (favs.length > 0) {
+    detailEn += ` It supports favorable houses (${favs.join(', ')}).`;
+    detailUr += ` یہ سازگار گھروں (${favs.join(', ')}) کی حمایت کرتا ہے۔`;
+    detailHi += ` यह अनुकूल घरों (${favs.join(', ')}) का समर्थन करता है।`;
+  }
+  if (dens.length > 0) {
+    detailEn += ` It indicates denial via houses (${dens.join(', ')}).`;
+    detailUr += ` یہ انکار کے گھروں (${dens.join(', ')}) کی نشاندہی کرتا ہے۔`;
+    detailHi += ` यह नकारात्मक घरों (${dens.join(', ')}) का संकेत देता है।`;
+  }
+
+  return {
+    en: `Judgment for ${cat}: The stars indicate a ${kind} outcome. ${detailEn}`,
+    ur: `${cat} کے لیے فیصلہ: ستاروں کی چال ایک ${kind} نتیجہ ظاہر کرتی ہے۔ ${detailUr}`,
+    hi: `${cat} के लिए निर्णय: सितारों की स्थिति एक ${kind} परिणाम दर्शाती है। ${detailHi}`,
+  };
 }

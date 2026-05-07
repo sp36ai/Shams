@@ -380,7 +380,11 @@ export function classifyQuestion(text: string): QuestionType {
     } // catch-all, evaluated last by skip
     const keywords = QUESTION_KEYWORDS[type];
     for (const kw of keywords) {
-      if (normalized.includes(kw.toLocaleLowerCase())) {
+      const lowerKw = kw.toLocaleLowerCase();
+      // Match whole words/phrases using Unicode-aware boundaries.
+      // This prevents "work" from matching in "artwork".
+      const regex = new RegExp(`(?<=^|[^\\p{L}\\p{N}])${lowerKw}(?=[^\\p{L}\\p{N}]|$)`, 'u');
+      if (regex.test(normalized)) {
         return type;
       }
     }

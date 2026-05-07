@@ -12,6 +12,8 @@ import { useI18n, useTranslation } from '@i18n/I18nProvider';
 import { LANG_CODES, LANG_META, type LangCode } from '@i18n/types';
 import { useSettingsStore } from '@stores/settingsStore';
 import { useAuthStore, selectUserName, selectUserEmail } from '@stores/authStore';
+import { useReadingsStore, type VerdictKind } from '@stores/readingsStore';
+import { useQuotaStore, FREE_LIMIT, type PlanTier } from '@stores/quotaStore';
 import type { ThemeId } from '@theme/themes';
 
 const SettingsScreen: React.FC = () => {
@@ -29,6 +31,10 @@ const SettingsScreen: React.FC = () => {
   const userEmail = useAuthStore(selectUserEmail);
   const signOut = useAuthStore(s => s.signOut);
   const isLoading = useAuthStore(s => s.isLoading);
+
+  const readings = useReadingsStore(s => s.readings);
+  const plan = useQuotaStore(s => s.plan);
+  const usedThisWeek = useQuotaStore(s => s.usedThisWeek);
 
   const handleSignOut = useCallback(() => {
     Alert.alert(t('settings.signOutConfirm'), '', [
@@ -180,6 +186,19 @@ const SettingsScreen: React.FC = () => {
           </View>
         </Section>
 
+        <Section title="Subscription">
+          <SubscriptionCard
+            plan={plan}
+            usedThisWeek={usedThisWeek}
+            colors={colors}
+            typography={typography}
+          />
+        </Section>
+
+        <Section title="Reading Stats">
+          <ReadingStatsRow readings={readings} colors={colors} typography={typography} />
+        </Section>
+
         <Section title={t('settings.accountSection')}>
           <Pressable
             onPress={handleSignOut}
@@ -230,6 +249,119 @@ const SettingsScreen: React.FC = () => {
     </SafeAreaView>
   );
 };
+
+// ── SubscriptionCard ──────────────────────────────────────────────────────────
+
+function planLabel(plan: PlanTier): string {
+  switch (plan) {
+    case 'starter': return 'Starter';
+    case 'premium': return '✦ Premium';
+    case 'consultation': return '✦ Consultation';
+    default: return 'Free';
+  }
+}
+
+const UNLIMITED_PLAN_SET: readonly PlanTier[] = ['starter', 'premium', 'consultation'];
+
+const SubscriptionCard: React.FC<{
+  plan: PlanTier;
+  usedThisWeek: number;
+  colors: ReturnType<typeof useColors>;
+  typography: ReturnType<typeof useTypography>;
+}> = ({ plan, usedThisWeek, colors, typography }) => {
+  const isPaid = (UNLIMITED_PLAN_SET as PlanTier[]).includes(plan);
+  return (
+    <View
+      style={[
+        styles.subCard,
+        {
+          backgroundColor: colors.surface,
+          borderColor: isPaid ? colors.amber : colors.border,
+        },
+      ]}
+    >
+      <Text
+        style={[
+          typography('bodyEmphasis'),
+          { color: isPaid ? colors.amber : colors.textMuted },
+        ]}
+      >
+        {planLabel(plan)}
+      </Text>
+      {isPaid ? (
+        <Text style={[typography('caption'), { color: colors.textFaint, marginTop: 2 }]}>
+          Unlimited readings
+        </Text>
+      ) : (
+        <Text style={[typography('caption'), { color: colors.textFaint, marginTop: 2 }]}>
+          {usedThisWeek}/{FREE_LIMIT} questions used this week
+        </Text>
+      )}
+    </View>
+  );
+};
+
+// ── ReadingStatsRow ───────────────────────────────────────────────────────────
+
+function countVerdict(readings: readonly { verdict: VerdictKind }[], v: VerdictKind): number {
+  return readings.filter(r => r.verdict === v).length;
+}
+
+const ReadingStatsRow: React.FC<{
+  readings: readonly { verdict: VerdictKind }[];
+  colors: ReturnType<typeof useColors>;
+  typography: ReturnType<typeof useTypography>;
+}> = ({ readings, colors, typography }) => (
+  <View style={styles.statsRow}>
+    <StatCard
+      value={String(readings.length)}
+      label="Total"
+      color={colors.accent}
+      colors={colors}
+      typography={typography}
+    />
+    <StatCard
+      value={String(countVerdict(readings, 'YES'))}
+      label="YES"
+      color={colors.positive}
+      colors={colors}
+      typography={typography}
+    />
+    <StatCard
+      value={String(countVerdict(readings, 'NO'))}
+      label="NO"
+      color={colors.negative}
+      colors={colors}
+      typography={typography}
+    />
+    <StatCard
+      value={String(
+        countVerdict(readings, 'CONDITIONAL') + countVerdict(readings, 'DELAYED'),
+      )}
+      label="COND"
+      color={colors.caution}
+      colors={colors}
+      typography={typography}
+    />
+  </View>
+);
+
+const StatCard: React.FC<{
+  value: string;
+  label: string;
+  color: string;
+  colors: ReturnType<typeof useColors>;
+  typography: ReturnType<typeof useTypography>;
+}> = ({ value, label, color, colors, typography }) => (
+  <View style={[styles.statCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+    <Text style={[typography('heading'), { color, textAlign: 'center' }]}>{value}</Text>
+    <Text style={[typography('caption'), { color: colors.textFaint, textAlign: 'center', fontSize: 9 }]}>
+      {label}
+    </Text>
+  </View>
+);
+
+// ── Section ───────────────────────────────────────────────────────────────────
 
 interface SectionProps {
   title: string;
@@ -348,6 +480,25 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     borderWidth: StyleSheet.hairlineWidth,
     alignItems: 'center',
+  },
+  subCard: {
+    padding: 14,
+    borderRadius: 12,
+    borderWidth: StyleSheet.hairlineWidth,
+    gap: 2,
+  },
+  statsRow: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  statCard: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    borderRadius: 12,
+    borderWidth: StyleSheet.hairlineWidth,
+    gap: 4,
   },
 });
 

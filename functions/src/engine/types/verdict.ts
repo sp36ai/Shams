@@ -70,23 +70,25 @@ export interface QuestionCuspDetail {
 // ── Ruling planets snapshot ────────────────────────────────────────────────
 
 /**
- * RKP uses exactly 3 Ruling Planets at the moment of judgment:
- *   Day Lord   — the planet ruling the weekday
- *   Hora Lord  — the planetary hour ruler (Chaldean, sunrise-anchored)
- *   Minute Lord — which of the 9 Vimshottari planets rules the current
- *                 6m40s segment of the hora
+ * RKP uses 5 Ruling Planets for confidence:
+ *   1. Day Lord      — planet ruling the weekday
+ *   2. ASC Sign Lord — classical sign lord of the Ascendant
+ *   3. ASC Star Lord — nakshatra lord of the Ascendant
+ *   4. Moon Sign Lord — classical sign lord of Moon's sign
+ *   5. Moon Star Lord — nakshatra lord of Moon's position
  *
- * Each RP is scored +1 (favorable house) or −1 (denial house).
- * agreementScore = raw score (−3 to +3 from the three RPs alone).
+ * horaLord and minuteLord are retained from chart computation for traceability.
+ * agreementScore = count of 5 RPs that agree with the verdict direction (0–5).
  */
 export interface RulingPlanetsSnapshot {
   readonly dayLord: Planet;
-  readonly horaLord: Planet;
-  readonly minuteLord: Planet;
-  /**
-   * Raw RP contribution to the verdict score (sum of +1/−1 per RP).
-   * Range −3 to +3.
-   */
+  readonly horaLord?: Planet;
+  readonly minuteLord?: Planet;
+  readonly ascSignLord: Planet;
+  readonly ascStarLord: Planet;
+  readonly moonSignLord: Planet;
+  readonly moonStarLord: Planet;
+  /** Count of the 5 RPs that agree with the verdict direction (0–5). */
   readonly agreementScore: number;
 }
 

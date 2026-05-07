@@ -27,6 +27,7 @@ import type { CompositeScreenProps } from '@react-navigation/native';
 export type RootStackParamList = {
   Splash: undefined;
   Auth: undefined;
+  Onboarding: undefined; // New screen for initial app setup
   LocationPermission: undefined;
   /** Container for the bottom-tab navigator. */
   Main: undefined;

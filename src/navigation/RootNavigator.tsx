@@ -23,12 +23,14 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
 import SplashScreen from '@screens/SplashScreen';
 import AuthScreen from '@screens/AuthScreen';
+import OnboardingScreen from '@screens/OnboardingScreen';
 import LocationPermissionScreen from '@screens/LocationPermissionScreen';
 import PremiumScreen from '@screens/PremiumScreen';
 import MainTabs from './MainTabs';
 
 import { useAuthStore } from '@stores/authStore';
 import { useSettingsStore } from '@stores/settingsStore';
+import { MMKV } from 'react-native-mmkv';
 import { useTheme } from '@theme/ThemeProvider';
 
 import type { RootStackParamList } from './types';
@@ -37,13 +39,17 @@ const RootStack = createNativeStackNavigator<RootStackParamList>();
 
 const MIN_SPLASH_MS = 2500;
 
+const storage = new MMKV();
+// Set to true in dev to skip auth + onboarding and go straight to Main.
+const BYPASS_AUTH_FOR_TESTING = __DEV__ && true;
+
 const RootNavigator: React.FC = () => {
   const { theme } = useTheme();
 
   const user = useAuthStore(s => s.user);
   const isAuthLoading = useAuthStore(s => s.isLoading);
   const bootstrap = useAuthStore(s => s.bootstrap);
-  const onboardingPrompted = useSettingsStore(
+  const onboardingLocationPrompted = useSettingsStore(
     (s: ReturnType<typeof useSettingsStore.getState>) => s.onboardingLocationPrompted,
   );
 
@@ -60,7 +66,16 @@ const RootNavigator: React.FC = () => {
   useEffect(() => {
     bootstrap().finally(() => setAuthBootstrapped(true));
   }, [bootstrap]);
-
+  
+  // Check if onboarding has been seen from MMKV
+  const [hasSeenOnboarding, setHasSeenOnboarding] = useState(false);
+  useEffect(() => {
+    const seen = storage.getBoolean('shams_onboarding_seen') || false;
+    setHasSeenOnboarding(seen);
+    // No listener needed as onboarding is a one-time flow
+  }, []);
+  
+  
   const navTheme: NavTheme = {
     ...NavDarkTheme,
     dark: theme.isDark,
@@ -76,9 +91,10 @@ const RootNavigator: React.FC = () => {
   };
 
   // Keep showing splash until both the timer and auth bootstrap have resolved.
-  const splashStillShowing = !splashElapsed || !authBootstrapped || isAuthLoading;
-  const isAuthenticated = user !== null;
-  const needsOnboarding = !onboardingPrompted;
+  const splashStillShowing = !BYPASS_AUTH_FOR_TESTING && (!splashElapsed || !authBootstrapped || isAuthLoading);
+  const isAuthenticated = BYPASS_AUTH_FOR_TESTING || user !== null;
+  const needsOnboardingFlow = !BYPASS_AUTH_FOR_TESTING && isAuthenticated && !hasSeenOnboarding;
+  const needsLocationPermission = !BYPASS_AUTH_FOR_TESTING && isAuthenticated && hasSeenOnboarding && !onboardingLocationPrompted;
 
   return (
     <NavigationContainer theme={navTheme}>
@@ -94,8 +110,10 @@ const RootNavigator: React.FC = () => {
           <RootStack.Screen name="Splash" component={SplashScreen} />
         ) : !isAuthenticated ? (
           <RootStack.Screen name="Auth" component={AuthScreen} />
-        ) : needsOnboarding ? (
+        ) : needsOnboardingFlow ? (
           <RootStack.Screen name="LocationPermission" component={LocationPermissionScreen} />
+        ) : needsLocationPermission ? (
+          <RootStack.Screen name="Onboarding" component={OnboardingScreen} />
         ) : (
           <RootStack.Screen name="Main" component={MainTabs} />
         )}

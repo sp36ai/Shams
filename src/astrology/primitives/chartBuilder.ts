@@ -370,6 +370,8 @@ export function buildChart(iso8601: string, lat: number, lon: number): Chart {
   const rp = getRulingPlanets({
     momentUtc: new Date(iso8601),
     lonDeg: lon,
+    ascendantLon: houseObjects[0].siderealLongitude,
+    moonLon: planetsRecord.Moon.siderealLongitude,
   });
 
   // Step 9: Hora (sunrise-anchored)

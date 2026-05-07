@@ -6,6 +6,7 @@
 declare const process: {
   readonly env: {
     readonly NODE_ENV: 'development' | 'production' | 'test' | undefined;
+    readonly FIREBASE_APP_CHECK_DEBUG_TOKEN_ANDROID: string | undefined;
     readonly [key: string]: string | undefined;
   };
 };

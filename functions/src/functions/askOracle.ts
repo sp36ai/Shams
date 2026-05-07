@@ -26,6 +26,7 @@ import { verifyAuth } from '../middleware/auth';
 import { enforceRateLimit } from '../middleware/rateLimit';
 import { parse, AskOracleSchema } from '../middleware/validate';
 import { logger, hashText } from '../utils/logger';
+import { requestMetaFromCallable } from '../utils/requestMeta';
 import {
   FUNCTION_OPTS,
   UNLIMITED_PLANS,
@@ -125,6 +126,9 @@ export const askOracle = onCall(
     enforceAppCheck: process.env.NODE_ENV !== 'development',
   },
   async (request): Promise<OracleResponse> => {
+    const startedAt = Date.now();
+    const requestMeta = requestMetaFromCallable(request);
+
     // 1 + 2. App Check (enforced by runtime) + Auth
     const { userId } = verifyAuth(request);
 
@@ -187,9 +191,19 @@ export const askOracle = onCall(
         questionHash: hashText(input.question),
         verdict: verdict.verdict,
         plan,
+        source: requestMeta.source,
+        ipHash: requestMeta.ipHash,
+        userAgent: requestMeta.userAgent,
+        durationMs: Date.now() - startedAt,
       });
 
-      logger.info('oracle computed', { userId, verdict: verdict.verdict, plan });
+      logger.info('oracle computed', {
+        userId,
+        verdict: verdict.verdict,
+        plan,
+        durationMs: Date.now() - startedAt,
+        ipHash: requestMeta.ipHash,
+      });
 
       // 12. Return minimal response — no chart internals, no algorithm state
       return {
@@ -212,9 +226,18 @@ export const askOracle = onCall(
       logger.error('askOracle unexpected error', {
         userId,
         err: err instanceof Error ? err.message : String(err),
+        durationMs: Date.now() - startedAt,
+        ipHash: requestMeta.ipHash,
       });
 
-      await writeAuditLog({ userId, action: 'oracle_computed' });
+      await writeAuditLog({
+        userId,
+        action: 'oracle_computed',
+        source: requestMeta.source,
+        ipHash: requestMeta.ipHash,
+        userAgent: requestMeta.userAgent,
+        durationMs: Date.now() - startedAt,
+      });
       throw new HttpsError('internal', 'Calculation failed. Please try again.');
     }
   },

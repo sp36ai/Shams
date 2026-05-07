@@ -13,6 +13,11 @@
       ],
       "predeploy": [
         "npm --prefix \"$RESOURCE_DIR\" run build"
+      ],
+      "secrets": [
+        "RAZORPAY_WEBHOOK_SECRET",
+        "GOOGLE_PLAY_CLIENT_EMAIL",
+        "GOOGLE_PLAY_PRIVATE_KEY"
       ]
     }
   ],
@@ -21,11 +26,14 @@
     "indexes": "firestore.indexes.json"
   },
   "emulators": {
+    "auth": {
+      "port": 9099
+    },
     "functions": {
       "port": 5001
     },
     "firestore": {
-      "port": 8080
+      "port": 8282
     },
     "ui": {
       "enabled": true,

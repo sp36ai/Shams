@@ -25,6 +25,13 @@
 -keep public class com.facebook.react.bridge.** { *; }
 -keep public class com.facebook.react.modules.core.** { *; }
 -keep public class com.facebook.react.uimanager.** { *; }
+-keep public class com.facebook.react.uimanager.ViewManager { *; }
+-keep public class com.facebook.react.uimanager.ReactShadowNode { *; }
+-keep class * extends com.facebook.react.uimanager.ViewManager { *; }
+-keep class * extends com.facebook.react.uimanager.ReactShadowNode { *; }
+-keep class * implements com.facebook.react.uimanager.ViewManagerPropertyUpdater$ViewManagerSetter { *; }
+-keep class * implements com.facebook.react.uimanager.ViewManagerPropertyUpdater$ShadowNodeSetter { *; }
+
 -keep public class com.facebook.hermes.** { *; }
 -keep public class com.facebook.jni.** { *; }
 
@@ -40,18 +47,33 @@
 -keep class com.swmansion.reanimated.** { *; }
 -keep class com.facebook.react.turbomodule.** { *; }
 -keepclassmembers class com.swmansion.reanimated.** { *; }
+-keep class com.swmansion.reanimated.nativeProxy.** { *; }
+
+# ── Firebase / Google Services ──────────────────────────────────────
+-keep class com.google.firebase.** { *; }
+-keep class com.google.android.gms.** { *; }
+-dontwarn com.google.firebase.**
+-dontwarn com.google.android.gms.**
 
 # ── Gesture Handler ─────────────────────────────────────────────────
 -keep class com.swmansion.gesturehandler.** { *; }
 
 # ── MMKV ────────────────────────────────────────────────────────────
 -keep class com.tencent.mmkv.** { *; }
+-keep class com.tencent.mmkv.MMKV { *; }
 
 # ── react-native-svg ────────────────────────────────────────────────
 -keep class com.horcrux.svg.** { *; }
 
 # ── Safe Area Context ────────────────────────────────────────────────
 -keep class com.th3rdwave.safeareacontext.** { *; }
+
+# ── React Navigation native deps ─────────────────────────────────────
+-keep class com.swmansion.rnscreens.** { *; }
+-keep class com.reactnativegooglesignin.** { *; }
+
+# ── React Native Firebase bridge ─────────────────────────────────────
+-keep class io.invertase.firebase.** { *; }
 
 # ── Supabase / OkHttp / Kotlin ──────────────────────────────────────
 -dontwarn okhttp3.**
@@ -99,7 +121,7 @@
 }
 
 # ── Force DEBUG=false at compile time ────────────────────────────────
--assumenosideeffects class com.astrosarfaraz.shamsalasrar.BuildConfig {
+-assumevalues class com.astrosarfaraz.shamsalasrar.BuildConfig {
     public static final boolean DEBUG return false;
 }
 

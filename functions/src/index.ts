@@ -8,6 +8,7 @@
  *   deleteReading            — callable — delete a single reading (owner only)
  *   verifyGooglePlayPurchase — callable — verify IAP, upgrade plan + set custom claims
  *   razorpayWebhook          — HTTP    — Razorpay payment event handler
+ *   health                   — HTTP    — readiness/liveness check
  *
  * Auth model:
  *   All callable functions use Firebase Auth (request.auth populated by the SDK).
@@ -23,3 +24,4 @@ export { getQuota } from './functions/quota';
 export { syncReadings, deleteReading } from './functions/readings';
 export { verifyGooglePlayPurchase } from './functions/payments/googlePlay';
 export { razorpayWebhook } from './functions/payments/razorpay';
+export { health } from './functions/health';

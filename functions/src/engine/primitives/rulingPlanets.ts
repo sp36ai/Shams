@@ -1,17 +1,17 @@
 /**
- * RKP Ruling Planets — the 3 planets that rule the moment of judgment.
+ * RKP ruling planets for the question moment.
  * --------------------------------------------------------------------------
- * RKP (Ratan Kotamraju Paddhati) uses exactly THREE ruling planets:
+ * Standard RKP uses five ruling planets:
  *
- *   1. Day Lord   — planet ruling the weekday (Sun–Sat order)
- *   2. Hora Lord  — Chaldean planetary hour, sunrise-anchored (~6 AM local)
- *   3. Minute Lord — one of 9 Vimshottari planets ruling the current 6m40s
- *                    segment within the current hora
+ *   1. Day Lord
+ *   2. Ascendant Sign Lord
+ *   3. Ascendant Nakshatra Lord
+ *   4. Moon Sign Lord
+ *   5. Moon Nakshatra Lord
  *
- * These are the verification filter for the verdict (Step 4 in RKP judgment).
- * Each RP placed in a favorable house adds +1; in a denial house, −1.
- *
- * Reference: docs/RKP_RULES_FROM_SARFARAZ.md §4 (Step 4) and §7 (Section 7)
+ * The chart builder still computes hora separately for traceability, so
+ * `horaLordAtMoment()` remains exported. Minute-lord support is also retained
+ * as a utility, but neither belongs in the RKP ruling-planet set.
  */
 
 import type { Planet } from '../types/chart';
@@ -119,29 +119,91 @@ export interface RulingPlanetsInput {
   momentUtc: Date;
   /** Geographic longitude of the questioner (degrees, East positive). */
   lonDeg: number;
+  /** Sidereal ascendant longitude at question moment. */
+  ascendantLon: number;
+  /** Sidereal moon longitude at question moment. */
+  moonLon: number;
 }
 
 export interface RulingPlanetsResult {
   dayLord: Planet;
-  horaLord: Planet;
-  minuteLord: Planet;
+  ascSignLord: Planet;
+  ascStarLord: Planet;
+  moonSignLord: Planet;
+  moonStarLord: Planet;
   /**
-   * Array of the 3 RPs in order [dayLord, horaLord, minuteLord].
+   * Array of the 5 RPs in order:
+   * [dayLord, ascSignLord, ascStarLord, moonSignLord, moonStarLord].
    * Duplicates retained (same planet in two positions still scores twice).
    */
   set: readonly Planet[];
 }
 
+function getSignLord(longitude: number): Planet {
+  const SIGN_LORDS: Planet[] = [
+    'Mars',
+    'Venus',
+    'Mercury',
+    'Moon',
+    'Sun',
+    'Mercury',
+    'Venus',
+    'Mars',
+    'Jupiter',
+    'Saturn',
+    'Saturn',
+    'Jupiter',
+  ];
+  return SIGN_LORDS[Math.floor((((longitude % 360) + 360) % 360) / 30)] as Planet;
+}
+
+function getNakshatraLord(longitude: number): Planet {
+  const NAK_LORDS: Planet[] = [
+    'Ketu',
+    'Venus',
+    'Sun',
+    'Moon',
+    'Mars',
+    'Rahu',
+    'Jupiter',
+    'Saturn',
+    'Mercury',
+    'Ketu',
+    'Venus',
+    'Sun',
+    'Moon',
+    'Mars',
+    'Rahu',
+    'Jupiter',
+    'Saturn',
+    'Mercury',
+    'Ketu',
+    'Venus',
+    'Sun',
+    'Moon',
+    'Mars',
+    'Rahu',
+    'Jupiter',
+    'Saturn',
+    'Mercury',
+  ];
+  return NAK_LORDS[Math.floor((((longitude % 360) + 360) % 360) / 13.3333)] as Planet;
+}
+
 export function getRulingPlanets(input: RulingPlanetsInput): RulingPlanetsResult {
   const momentMs = input.momentUtc.getTime();
   const dayLord = dayLordAtMoment(momentMs, input.lonDeg);
-  const horaLord = horaLordAtMoment(momentMs, input.lonDeg);
-  const minuteLord = minuteLordAtMoment(momentMs, input.lonDeg);
+  const ascSignLord = getSignLord(input.ascendantLon);
+  const ascStarLord = getNakshatraLord(input.ascendantLon);
+  const moonSignLord = getSignLord(input.moonLon);
+  const moonStarLord = getNakshatraLord(input.moonLon);
 
   return {
     dayLord,
-    horaLord,
-    minuteLord,
-    set: Object.freeze([dayLord, horaLord, minuteLord]),
+    ascSignLord,
+    ascStarLord,
+    moonSignLord,
+    moonStarLord,
+    set: Object.freeze([dayLord, ascSignLord, ascStarLord, moonSignLord, moonStarLord]),
   };
 }

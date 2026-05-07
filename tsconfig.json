@@ -1,7 +1,7 @@
 {
   "extends": "@react-native/typescript-config/tsconfig.json",
   "compilerOptions": {
-    "ignoreDeprecations": "6.0",
+    "ignoreDeprecations": "5.0",
     "target": "ES2022",
     "module": "ESNext",
     "moduleResolution": "bundler",
@@ -27,20 +27,19 @@
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "allowJs": false,
-    "baseUrl": "./",
     "paths": {
-      "@/*": ["src/*"],
-      "@components/*": ["src/components/*"],
-      "@screens/*": ["src/screens/*"],
-      "@navigation/*": ["src/navigation/*"],
-      "@stores/*": ["src/stores/*"],
-      "@theme/*": ["src/theme/*"],
-      "@i18n/*": ["src/i18n/*"],
-      "@supabase/*": ["src/supabase/*"],
-      "@astrology/*": ["src/astrology/*"],
-      "@storage/*": ["src/storage/*"],
-      "@utils/*": ["src/utils/*"],
-      "@assets/*": ["assets/*"]
+      "@/*": ["./src/*"],
+      "@components/*": ["./src/components/*"],
+      "@screens/*": ["./src/screens/*"],
+      "@navigation/*": ["./src/navigation/*"],
+      "@stores/*": ["./src/stores/*"],
+      "@theme/*": ["./src/theme/*"],
+      "@i18n/*": ["./src/i18n/*"],
+      "@supabase/*": ["./src/supabase/*"],
+      "@astrology/*": ["./src/astrology/*"],
+      "@storage/*": ["./src/storage/*"],
+      "@utils/*": ["./src/utils/*"],
+      "@assets/*": ["./assets/*"]
     },
     "types": ["react-native", "jest"]
   },

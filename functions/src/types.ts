@@ -80,6 +80,10 @@ export interface AuditLogDoc {
   questionHash?: string; // FNV-1a of question text — never raw text
   verdict?: VerdictKind;
   plan?: PlanTier;
+  source?: 'callable' | 'http';
+  ipHash?: string; // SHA-256 hash prefix of caller IP, never raw IP
+  userAgent?: string;
+  durationMs?: number;
   ts: FirebaseFirestore.Timestamp;
 }
 

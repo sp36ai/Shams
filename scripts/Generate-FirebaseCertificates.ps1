@@ -217,9 +217,12 @@ if (-not (Test-Path $gitignorePath)) {
 # Private keys - NEVER commit
 *.key
 *.pem
+fingerprints.json
 
 # Generated files
 *.crt
+# Exclude certs directory from production builds
+! .gitignore
 
 # IDE
 .DS_Store

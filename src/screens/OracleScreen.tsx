@@ -32,10 +32,10 @@ import { useTranslation, useI18n } from '@i18n/I18nProvider';
 import { useReadingsStore, type Reading } from '@stores/readingsStore';
 import { useSettingsStore } from '@stores/settingsStore';
 import { useQuotaStore, selectQuestionsLeft, FREE_LIMIT } from '@stores/quotaStore';
-import { classifyQuestion } from '@astrology/kp/rules/questionKeywords';
-import { buildChart } from '@astrology/primitives/chartBuilder';
-import { judgeHorary } from '@astrology/kp/judgment/judgeHorary';
+import { askOracle as callOracleFunction } from '../firebase/oracle';
 import StarfieldBackground from '@components/StarfieldBackground';
+import AstroVerdictCard from '../components/oracle/AstroVerdictCard';
+import type { AstroVerdictResult } from '../types/verdict';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -49,30 +49,6 @@ interface ChatMessage {
   reading?: Reading;
   isUpgradeCta?: boolean;
   createdAt: string;
-}
-
-// ── Sign names ────────────────────────────────────────────────────────────────
-
-const SIGN_NAMES = [
-  'Aries',
-  'Taurus',
-  'Gemini',
-  'Cancer',
-  'Leo',
-  'Virgo',
-  'Libra',
-  'Scorpio',
-  'Sagittarius',
-  'Capricorn',
-  'Aquarius',
-  'Pisces',
-] as const;
-
-function signName(idx: number | undefined): string {
-  if (idx === undefined || idx < 1 || idx > 12) {
-    return '—';
-  }
-  return SIGN_NAMES[idx - 1] ?? '—';
 }
 
 // ── Verdict JSON shape helpers ────────────────────────────────────────────────
@@ -101,11 +77,6 @@ interface VjShape {
   rulingPlanets?: { dayLord?: string; horaLord?: string; minuteLord?: string };
 }
 
-interface CjShape {
-  ascendant?: { sign?: number; degreeInSign?: number };
-  planets?: { Moon?: { sign?: number } };
-}
-
 function asVj(raw: unknown): VjShape | null {
   if (typeof raw !== 'object' || raw === null) {
     return null;
@@ -113,11 +84,72 @@ function asVj(raw: unknown): VjShape | null {
   return raw as VjShape;
 }
 
-function asCj(raw: unknown): CjShape | null {
-  if (typeof raw !== 'object' || raw === null) {
-    return null;
+// ── Reading → AstroVerdictResult mapper ───────────────────────────────────────
+
+interface VjExtended extends VjShape {
+  moonSubLord?: {
+    planet?: string;
+    occupiedHouse?: number;
+    favHits?: number[];
+    denHits?: number[];
+  };
+  rulingPlanets?: { dayLord?: string; horaLord?: string; minuteLord?: string };
+  narration?: Partial<Record<'en' | 'ur' | 'hi', string>>;
+}
+
+function readingToAstroResult(reading: Reading): AstroVerdictResult {
+  const vj = reading.verdictJson as VjExtended | null;
+  const msl = vj?.moonSubLord;
+  const rp = vj?.rulingPlanets;
+
+  const houses: AstroVerdictResult['houses'] = [
+    ...(msl?.favHits ?? []).map(h => ({ house: h, label: 'Fav', favorable: true })),
+    ...(msl?.denHits ?? []).map(h => ({ house: h, label: 'Den', favorable: false })),
+  ];
+
+  const rulingPlanets: AstroVerdictResult['rulingPlanets'] = [];
+  if (rp?.dayLord) {
+    rulingPlanets.push({ planet: rp.dayLord, role: 'dayLord', matching: false });
   }
-  return raw as CjShape;
+  if (rp?.horaLord) {
+    rulingPlanets.push({ planet: rp.horaLord, role: 'horaLord', matching: false });
+  }
+  if (rp?.minuteLord) {
+    rulingPlanets.push({ planet: rp.minuteLord, role: 'minuteLord', matching: false });
+  }
+
+  const narrative =
+    vj?.narration?.[reading.questionLang] ?? vj?.narration?.en ?? '';
+
+  return {
+    mode: 'astro',
+    verdict: reading.verdict,
+    confidence: vj?.confidence ?? 0,
+    subLord: msl?.planet ?? '—',
+    subLordHouse: msl?.occupiedHouse ?? 0,
+    houses,
+    rulingPlanets,
+    timing: vj?.timing?.window
+      ? {
+          window: vj.timing.window,
+          range: { min: vj.timing.range?.min ?? 0, max: vj.timing.range?.max ?? 1 },
+          activeDasha: vj.timing.activeDasha,
+          activeAntardasha: vj.timing.activeAntardasha,
+        }
+      : undefined,
+    remedy: vj?.remedy?.action
+      ? {
+          planet: vj.remedy.planet ?? '—',
+          action: vj.remedy.action,
+          avoid: vj.remedy.avoid ?? '',
+          mantra: vj.remedy.mantra,
+          charity: vj.remedy.charity,
+        }
+      : undefined,
+    narrative,
+    createdAt: reading.createdAt,
+    category: reading.category,
+  };
 }
 
 // ── Chips per language ────────────────────────────────────────────────────────
@@ -325,21 +357,20 @@ async function runEngine(args: {
   locationRequiredText: string;
 }): Promise<Reading> {
   const now = new Date().toISOString();
-  const rawQType = classifyQuestion(args.question);
 
   if (args.lat === null || args.lon === null) {
     return {
       id: `r_${now}`,
       question: args.question,
       questionLang: args.questionLang,
-      category: rawQType,
+      category: 'general',
       verdict: 'UNCLEAR',
       createdAt: now,
       chartJson: { phase: 'no-location', moment: now },
       verdictJson: {
         verdict: 'UNCLEAR',
         confidence: 0,
-        reasoning: ['Location unavailable — cannot compute house cusps.'],
+        reasoning: [],
         narration: {
           en: args.locationRequiredText,
           ur: args.locationRequiredText,
@@ -349,27 +380,15 @@ async function runEngine(args: {
     };
   }
 
-  const classifiedQuestion = {
-    text: args.question,
-    lang: args.questionLang,
-    qType: rawQType,
-    confidence: rawQType === 'general' ? 0.5 : 1.0,
-    matchedKeywords: [] as string[],
-  };
-
-  const chart = buildChart(now, args.lat, args.lon);
-  const verdict = judgeHorary(chart, classifiedQuestion);
-
-  return {
-    id: verdict.id,
+  // Engine runs server-side only — zero algorithm code in the APK.
+  const { reading } = await callOracleFunction({
     question: args.question,
     questionLang: args.questionLang,
-    category: rawQType,
-    verdict: verdict.verdict,
-    createdAt: now,
-    chartJson: chart as unknown as Record<string, unknown>,
-    verdictJson: verdict as unknown as Record<string, unknown>,
-  };
+    lat: args.lat,
+    lon: args.lon,
+  });
+
+  return reading;
 }
 
 // ── OracleScreen ──────────────────────────────────────────────────────────────
@@ -748,7 +767,9 @@ const Bubble: React.FC<{ message: ChatMessage }> = ({ message }) => {
         ]}
       >
         {renderText(message.text)}
-        {message.reading !== undefined && <VerdictCard reading={message.reading} />}
+        {message.reading !== undefined && (
+          <AstroVerdictCard result={readingToAstroResult(message.reading)} onSwitchMode={() => {}} />
+        )}
         {message.isUpgradeCta === true && (
           <Pressable
             onPress={() => navigation.navigate('Premium')}
@@ -768,123 +789,6 @@ const Bubble: React.FC<{ message: ChatMessage }> = ({ message }) => {
     </View>
   );
 };
-
-// ── VerdictCard (enhanced) ────────────────────────────────────────────────────
-
-const VerdictCard: React.FC<{ reading: Reading }> = ({ reading }) => {
-  const colors = useColors();
-  const typography = useTypography();
-  const t = useTranslation();
-
-  const vj = asVj(reading.verdictJson);
-  const cj = asCj(reading.chartJson);
-
-  const verdictColor: string = (() => {
-    switch (reading.verdict) {
-      case 'YES':
-        return colors.positive;
-      case 'NO':
-        return colors.negative;
-      case 'CONDITIONAL':
-      case 'DELAYED':
-        return colors.caution;
-      default:
-        return colors.textMuted;
-    }
-  })();
-
-  const verdictLabel: string = (() => {
-    switch (reading.verdict) {
-      case 'YES':
-        return t('oracle.verdictYes');
-      case 'NO':
-        return t('oracle.verdictNo');
-      case 'CONDITIONAL':
-        return t('oracle.verdictConditional');
-      case 'DELAYED':
-        return t('oracle.verdictDelayed');
-      case 'UNCLEAR':
-        return t('oracle.verdictUnclear');
-      default:
-        return '…';
-    }
-  })();
-
-  // Timing
-  const timing = vj?.timing;
-  const timingStr = timing ? `${timing.range?.max ?? '?'} ${timing.window ?? 'weeks'}` : null;
-
-  // Remedy
-  const remedy = vj?.remedy;
-
-  // Chart strip values
-  const ascSign = signName(cj?.ascendant?.sign);
-  const moonSign = signName(cj?.planets?.Moon?.sign);
-  const subLord = vj?.moonSubLord?.planet ?? '—';
-  const confidence = vj?.confidence ?? 0;
-
-  return (
-    <View style={[styles.verdictCard, { borderColor: colors.borderAccent }]}>
-      {/* Header: category + verdict pill */}
-      <View style={styles.verdictHeader}>
-        <Text style={[typography('label'), { color: colors.textMuted }]}>
-          {reading.category.toUpperCase()}
-        </Text>
-        <View style={[styles.verdictPill, { borderColor: verdictColor }]}>
-          <Text style={[typography('button'), { color: verdictColor }]}>{verdictLabel}</Text>
-        </View>
-      </View>
-
-      {/* Chart moment */}
-      <Text style={[typography('caption'), { color: colors.textFaint, marginTop: 6 }]}>
-        {t('oracle.chartMomentLabel')}: {new Date(reading.createdAt).toLocaleString()}
-      </Text>
-
-      {/* Timing row */}
-      {timingStr !== null && (
-        <View style={[styles.timingRow, { borderTopColor: colors.border }]}>
-          <Text style={[typography('caption'), { color: colors.accent }]}>
-            ⊛ {t('oracle.timingLabel')}: within {timingStr}
-          </Text>
-        </View>
-      )}
-
-      {/* Remedy row */}
-      {remedy?.action !== undefined && (
-        <View style={[styles.remedyRow, { borderTopColor: colors.border }]}>
-          <Text style={[typography('caption'), { color: colors.amber, fontStyle: 'italic' }]}>
-            ◈ {t('oracle.remedyLabel')}: {remedy.action}
-          </Text>
-        </View>
-      )}
-
-      {/* Chart data strip */}
-      <View style={[styles.chartStrip, { borderTopColor: colors.border }]}>
-        <ChartPill label="Asc" value={ascSign} colors={colors} typography={typography} />
-        <ChartPill label="Moon" value={moonSign} colors={colors} typography={typography} />
-        <ChartPill label="Sub-Lord" value={subLord} colors={colors} typography={typography} />
-        <ChartPill
-          label={t('oracle.confidenceLabel')}
-          value={`${confidence}%`}
-          colors={colors}
-          typography={typography}
-        />
-      </View>
-    </View>
-  );
-};
-
-const ChartPill: React.FC<{
-  label: string;
-  value: string;
-  colors: ReturnType<typeof useColors>;
-  typography: ReturnType<typeof useTypography>;
-}> = ({ label, value, colors, typography }) => (
-  <View style={[styles.chartPill, { borderColor: colors.border }]}>
-    <Text style={[typography('caption'), { color: colors.textFaint, fontSize: 9 }]}>{label}</Text>
-    <Text style={[typography('label'), { color: colors.accent, fontSize: 11 }]}>{value}</Text>
-  </View>
-);
 
 // ── Styles ────────────────────────────────────────────────────────────────────
 
@@ -939,49 +843,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     borderRadius: 10,
     alignItems: 'center',
-  },
-  // VerdictCard
-  verdictCard: {
-    marginTop: 10,
-    paddingTop: 10,
-    borderTopWidth: 1,
-  },
-  verdictHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  verdictPill: {
-    borderWidth: StyleSheet.hairlineWidth,
-    borderRadius: 999,
-    paddingHorizontal: 10,
-    paddingVertical: 2,
-  },
-  timingRow: {
-    marginTop: 8,
-    paddingTop: 8,
-    borderTopWidth: StyleSheet.hairlineWidth,
-  },
-  remedyRow: {
-    marginTop: 6,
-    paddingTop: 6,
-    borderTopWidth: StyleSheet.hairlineWidth,
-  },
-  chartStrip: {
-    marginTop: 8,
-    paddingTop: 8,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    flexDirection: 'row',
-    gap: 6,
-    flexWrap: 'wrap',
-  },
-  chartPill: {
-    borderWidth: StyleSheet.hairlineWidth,
-    borderRadius: 8,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    alignItems: 'center',
-    minWidth: 60,
   },
   // Input area
   inputArea: {

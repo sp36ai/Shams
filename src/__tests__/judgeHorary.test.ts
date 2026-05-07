@@ -69,7 +69,7 @@ function makeChart(
   moonSubLord: Planet,
   planetHouses: Partial<Record<Planet, number>>,
   retrogrades: Partial<Record<Planet, boolean>> = {},
-  rulingPlanets: [Planet, Planet, Planet] = ['Sun', 'Mercury', 'Jupiter'],
+  rulingPlanets: [Planet, Planet, Planet, Planet, Planet] = ['Sun', 'Mercury', 'Jupiter', 'Moon', 'Venus'],
 ): Chart {
   const houseToLon = (h: number) => (h - 1) * 30 + 15;
 
