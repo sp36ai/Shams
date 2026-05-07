@@ -26,35 +26,28 @@ export interface CertificatePinConfig {
   failOnPinMismatch: boolean;
 }
 
-// PRODUCTION TODO: Replace with real SPKI pins.
-// To generate:
-//   openssl s_client -connect firestore.googleapis.com:443 \
-//     -servername firestore.googleapis.com < /dev/null 2>/dev/null \
-//     | openssl x509 -pubkey -noout \
-//     | openssl pkey -pubin -outform der \
-//     | openssl dgst -sha256 -binary \
-//     | openssl enc -base64
-// Do the same for:
-//   firebase.googleapis.com
-//   identitytoolkit.googleapis.com
-// Then replace the strings below with the output.
-const SPKI_PINS = [
-  'REPLACE_WITH_REAL_PIN_1',
-  'REPLACE_WITH_REAL_PIN_2',
-  'REPLACE_WITH_REAL_PIN_3',
-];
+// Captured 2026-05-07 via openssl s_client against live Google endpoints.
+// Refresh if TLS handshake failures appear after a Google cert rotation.
+//
+// Native OkHttp pinner (MainApplication.kt) should pin ALL three domains.
+// firebase.googleapis.com and identitytoolkit.googleapis.com share a leaf cert.
+export const PRODUCTION_SPKI_PINS: Readonly<Record<string, string>> = Object.freeze({
+  'firestore.googleapis.com':       'NHasLBXL7uS5JzodPAdAqd/YoGIy3AySHd7yyKRg5xo=',
+  'firebase.googleapis.com':        'oVK9AMvzuTJhavj8JKMULZqcgPvnTenud/VH/97y/XY=',
+  'identitytoolkit.googleapis.com': 'oVK9AMvzuTJhavj8JKMULZqcgPvnTenud/VH/97y/XY=',
+});
 
 export const CERTIFICATE_PINS: CertificatePinConfig = {
   production: {
-    domain: 'asia-south1-shams-app-4d0e7.cloudfunctions.net',
-    sha256: SPKI_PINS[0] as string,
+    domain: 'firestore.googleapis.com',
+    sha256: PRODUCTION_SPKI_PINS['firestore.googleapis.com']!,
   },
   development: {
     domain: 'localhost:5001',
-    sha256: 'REPLACE_WITH_DEVELOPMENT_SHA256',
+    sha256: 'bypass-localhost',
   },
-  enabled: true,         // Active
-  failOnPinMismatch: false, // Fail-open
+  enabled: true,
+  failOnPinMismatch: true,
 };
 
 /** Returns the pin appropriate for the current environment. */
