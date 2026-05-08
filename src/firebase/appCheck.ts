@@ -7,7 +7,7 @@ import appCheck from '@react-native-firebase/app-check';
  */
 export async function initializeAppCheck() {
   const provider = appCheck().newReactNativeFirebaseAppCheckProvider();
-  
+
   provider.configure({
     android: {
       // Use Play Integrity for production, Debug for emulators
@@ -19,8 +19,10 @@ export async function initializeAppCheck() {
     provider,
     isTokenAutoRefreshEnabled: true,
   });
-  
+
   if (__DEV__) {
-    console.log('[Shams][AppCheck] Debugging enabled. Ensure your debug token is registered in the Firebase Console.');
+    console.warn(
+      '[Shams][AppCheck] Debugging enabled. Ensure your debug token is registered in the Firebase Console.',
+    );
   }
 }

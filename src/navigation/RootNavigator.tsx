@@ -66,7 +66,7 @@ const RootNavigator: React.FC = () => {
   useEffect(() => {
     bootstrap().finally(() => setAuthBootstrapped(true));
   }, [bootstrap]);
-  
+
   // Check if onboarding has been seen from MMKV
   const [hasSeenOnboarding, setHasSeenOnboarding] = useState(false);
   useEffect(() => {
@@ -74,8 +74,7 @@ const RootNavigator: React.FC = () => {
     setHasSeenOnboarding(seen);
     // No listener needed as onboarding is a one-time flow
   }, []);
-  
-  
+
   const navTheme: NavTheme = {
     ...NavDarkTheme,
     dark: theme.isDark,
@@ -91,10 +90,12 @@ const RootNavigator: React.FC = () => {
   };
 
   // Keep showing splash until both the timer and auth bootstrap have resolved.
-  const splashStillShowing = !BYPASS_AUTH_FOR_TESTING && (!splashElapsed || !authBootstrapped || isAuthLoading);
+  const splashStillShowing =
+    !BYPASS_AUTH_FOR_TESTING && (!splashElapsed || !authBootstrapped || isAuthLoading);
   const isAuthenticated = BYPASS_AUTH_FOR_TESTING || user !== null;
   const needsOnboardingFlow = !BYPASS_AUTH_FOR_TESTING && isAuthenticated && !hasSeenOnboarding;
-  const needsLocationPermission = !BYPASS_AUTH_FOR_TESTING && isAuthenticated && hasSeenOnboarding && !onboardingLocationPrompted;
+  const needsLocationPermission =
+    !BYPASS_AUTH_FOR_TESTING && isAuthenticated && hasSeenOnboarding && !onboardingLocationPrompted;
 
   return (
     <NavigationContainer theme={navTheme}>

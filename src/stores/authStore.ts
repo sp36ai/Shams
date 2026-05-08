@@ -24,7 +24,8 @@ import { storage, KEYS } from '@storage/mmkv';
 import { useQuotaStore, type PlanTier } from './quotaStore';
 
 // Web client ID from Firebase Console → Authentication → Google → Web SDK configuration
-export const GOOGLE_WEB_CLIENT_ID = '347578830449-1uogokloffhn2c9nh060003rsvm1vu6n.apps.googleusercontent.com';
+export const GOOGLE_WEB_CLIENT_ID =
+  '347578830449-1uogokloffhn2c9nh060003rsvm1vu6n.apps.googleusercontent.com';
 
 /* -------------------------------------------------------------------------- */
 /*  Types                                                                     */
@@ -147,7 +148,7 @@ export const useAuthStore = create<AuthState>(set => ({
     try {
       await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
       const signInResult = await GoogleSignin.signIn();
-      const idToken = signInResult.data?.idToken ?? (signInResult as any).idToken;
+      const idToken = signInResult.data?.idToken ?? (signInResult as { idToken?: string }).idToken;
       if (!idToken) {
         throw new Error('Google sign-in returned no ID token');
       }

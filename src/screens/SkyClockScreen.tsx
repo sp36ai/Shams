@@ -12,13 +12,7 @@
  */
 
 import React, { useCallback, useMemo, useState } from 'react';
-import {
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -26,10 +20,7 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useColors, useTheme } from '@theme/ThemeProvider';
 import { useTypography } from '@theme/useTypography';
 import { useSettingsStore } from '@stores/settingsStore';
-import {
-  dayLordAtMoment,
-  horaLordAtMoment,
-} from '@astrology/primitives/rulingPlanets';
+import { dayLordAtMoment, horaLordAtMoment } from '@astrology/primitives/rulingPlanets';
 import StarfieldBackground from '@components/StarfieldBackground';
 import CosmicClock from '@components/home/CosmicClock';
 import type { RootStackParamList } from '@navigation/types';
@@ -37,34 +28,77 @@ import type { RootStackParamList } from '@navigation/types';
 // ── Sign / nakshatra helpers ──────────────────────────────────────────────────
 
 const SIGN_NAMES = [
-  'Aries', 'Taurus', 'Gemini', 'Cancer', 'Leo', 'Virgo',
-  'Libra', 'Scorpio', 'Sagittarius', 'Capricorn', 'Aquarius', 'Pisces',
+  'Aries',
+  'Taurus',
+  'Gemini',
+  'Cancer',
+  'Leo',
+  'Virgo',
+  'Libra',
+  'Scorpio',
+  'Sagittarius',
+  'Capricorn',
+  'Aquarius',
+  'Pisces',
 ] as const;
 
 const NAKSHATRAS: readonly string[] = [
-  'Ashwini', 'Bharani', 'Krittika', 'Rohini', 'Mrigashira', 'Ardra',
-  'Punarvasu', 'Pushya', 'Ashlesha', 'Magha', 'Purva Phalguni', 'Uttara Phalguni',
-  'Hasta', 'Chitra', 'Swati', 'Vishakha', 'Anuradha', 'Jyeshtha',
-  'Mula', 'Purva Ashadha', 'Uttara Ashadha', 'Shravana', 'Dhanishtha',
-  'Shatabhisha', 'Purva Bhadrapada', 'Uttara Bhadrapada', 'Revati',
+  'Ashwini',
+  'Bharani',
+  'Krittika',
+  'Rohini',
+  'Mrigashira',
+  'Ardra',
+  'Punarvasu',
+  'Pushya',
+  'Ashlesha',
+  'Magha',
+  'Purva Phalguni',
+  'Uttara Phalguni',
+  'Hasta',
+  'Chitra',
+  'Swati',
+  'Vishakha',
+  'Anuradha',
+  'Jyeshtha',
+  'Mula',
+  'Purva Ashadha',
+  'Uttara Ashadha',
+  'Shravana',
+  'Dhanishtha',
+  'Shatabhisha',
+  'Purva Bhadrapada',
+  'Uttara Bhadrapada',
+  'Revati',
 ];
 
-function mod360(x: number): number { return ((x % 360) + 360) % 360; }
+function mod360(x: number): number {
+  return ((x % 360) + 360) % 360;
+}
 
 const LAHIRI_AYANAMSA_2025 = 24.12;
 
 // Mean longitude elements (J2000.0) — display only, ±1–5° error.
 const J2K: Readonly<Record<string, { L0: number; Lr: number }>> = {
-  Sun:     { L0: 280.46646, Lr: 36000.76983 },
-  Moon:    { L0: 218.3165,  Lr: 481267.8813 },
-  Mercury: { L0: 252.2509,  Lr: 149472.6749 },
-  Venus:   { L0: 181.9798,  Lr: 58517.8156  },
-  Mars:    { L0: 355.4330,  Lr: 19140.2993  },
-  Jupiter: { L0: 34.3515,   Lr: 3034.9057   },
-  Saturn:  { L0: 50.0774,   Lr: 1222.1138   },
+  Sun: { L0: 280.46646, Lr: 36000.76983 },
+  Moon: { L0: 218.3165, Lr: 481267.8813 },
+  Mercury: { L0: 252.2509, Lr: 149472.6749 },
+  Venus: { L0: 181.9798, Lr: 58517.8156 },
+  Mars: { L0: 355.433, Lr: 19140.2993 },
+  Jupiter: { L0: 34.3515, Lr: 3034.9057 },
+  Saturn: { L0: 50.0774, Lr: 1222.1138 },
 };
 
-const PLANET_NAMES = ['Sun', 'Moon', 'Mercury', 'Venus', 'Mars', 'Jupiter', 'Saturn', 'Rahu'] as const;
+const PLANET_NAMES = [
+  'Sun',
+  'Moon',
+  'Mercury',
+  'Venus',
+  'Mars',
+  'Jupiter',
+  'Saturn',
+  'Rahu',
+] as const;
 type PlanetName = (typeof PLANET_NAMES)[number];
 
 function displayLonSidereal(name: PlanetName, nowMs: number): number {
@@ -83,10 +117,16 @@ function nakshatraName(lon: number): string {
 
 // ── Moon phase ────────────────────────────────────────────────────────────────
 
-const PHASE_ICONS = ['🌑','🌒','🌓','🌔','🌕','🌖','🌗','🌘'] as const;
+const PHASE_ICONS = ['🌑', '🌒', '🌓', '🌔', '🌕', '🌖', '🌗', '🌘'] as const;
 const PHASE_NAMES = [
-  'New Moon','Waxing Crescent','First Quarter','Waxing Gibbous',
-  'Full Moon','Waning Gibbous','Last Quarter','Waning Crescent',
+  'New Moon',
+  'Waxing Crescent',
+  'First Quarter',
+  'Waxing Gibbous',
+  'Full Moon',
+  'Waning Gibbous',
+  'Last Quarter',
+  'Waning Crescent',
 ] as const;
 
 function moonPhase(nowMs: number): string {
@@ -127,13 +167,13 @@ function computeTiming(lonDeg: number): TimingState {
   const moonLon = displayLonSidereal('Moon', now);
   const signIdx = Math.floor(moonLon / 30);
   return {
-    horaLord:      horaLordAtMoment(now, lonDeg),
-    dayLord:       dayLordAtMoment(now, lonDeg),
-    moonSign:      SIGN_NAMES[signIdx] ?? '—',
+    horaLord: horaLordAtMoment(now, lonDeg),
+    dayLord: dayLordAtMoment(now, lonDeg),
+    moonSign: SIGN_NAMES[signIdx] ?? '—',
     moonNakshatra: nakshatraName(moonLon),
     moonPhaseFull: moonPhase(now),
-    lst:           localSiderealTime(now, lonDeg),
-    timeLabel:     new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+    lst: localSiderealTime(now, lonDeg),
+    timeLabel: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
   };
 }
 
@@ -176,7 +216,8 @@ const SkyClockScreen: React.FC = () => {
       const nk = nakshatraName(lon);
       return { name, sign, nk };
     });
-  }, [focused]); // recompute on focus change (once per screen visit)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [focused]); // focused is an intentional trigger: recompute on each screen visit
 
   const clockRunning = focused && clockExpanded;
 
@@ -204,30 +245,56 @@ const SkyClockScreen: React.FC = () => {
         showsVerticalScrollIndicator={false}
       >
         {/* TimingBar */}
-        <View style={[styles.timingBar, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-          <TimingPill label="Hora" value={timing.horaLord} colors={colors} typography={typography} />
+        <View
+          style={[
+            styles.timingBar,
+            { backgroundColor: colors.surface, borderColor: colors.border },
+          ]}
+        >
+          <TimingPill
+            label="Hora"
+            value={timing.horaLord}
+            colors={colors}
+            typography={typography}
+          />
           <View style={[styles.divider, { backgroundColor: colors.border }]} />
           <TimingPill label="Day" value={timing.dayLord} colors={colors} typography={typography} />
           <View style={[styles.divider, { backgroundColor: colors.border }]} />
-          <TimingPill label="Moon" value={timing.moonSign} colors={colors} typography={typography} />
+          <TimingPill
+            label="Moon"
+            value={timing.moonSign}
+            colors={colors}
+            typography={typography}
+          />
           <View style={[styles.divider, { backgroundColor: colors.border }]} />
-          <TimingPill label="Nakshatra" value={timing.moonNakshatra} colors={colors} typography={typography} />
+          <TimingPill
+            label="Nakshatra"
+            value={timing.moonNakshatra}
+            colors={colors}
+            typography={typography}
+          />
           <View style={[styles.divider, { backgroundColor: colors.border }]} />
           <TimingPill label="LST" value={timing.lst} colors={colors} typography={typography} />
           <View style={[styles.divider, { backgroundColor: colors.border }]} />
-          <TimingPill label="Phase" value={timing.moonPhaseFull} colors={colors} typography={typography} />
+          <TimingPill
+            label="Phase"
+            value={timing.moonPhaseFull}
+            colors={colors}
+            typography={typography}
+          />
         </View>
 
         {/* CollapsibleCosmicClock */}
         <View style={[styles.clockSection, { borderColor: colors.border }]}>
           <Pressable
             onPress={() => setClockExpanded(v => !v)}
-            style={[styles.clockToggle, { borderBottomColor: clockExpanded ? colors.border : 'transparent' }]}
+            style={[
+              styles.clockToggle,
+              { borderBottomColor: clockExpanded ? colors.border : 'transparent' },
+            ]}
             accessibilityRole="button"
           >
-            <Text style={[typography('label'), { color: colors.text }]}>
-              Celestial Clock
-            </Text>
+            <Text style={[typography('label'), { color: colors.text }]}>Celestial Clock</Text>
             <Text style={[typography('caption'), { color: colors.textMuted }]}>
               {clockExpanded ? '▲ Collapse' : '▼ Expand'}
             </Text>
@@ -239,24 +306,33 @@ const SkyClockScreen: React.FC = () => {
         <View style={[styles.planetTable, { borderColor: colors.border }]}>
           <View style={[styles.tableHeader, { borderBottomColor: colors.border }]}>
             {(['PLANET', 'SIGN', 'NAKSHATRA'] as const).map(h => (
-              <Text key={h} style={[typography('label'), styles.col, { color: colors.textFaint, fontSize: 8 }]}>
+              <Text
+                key={h}
+                style={[typography('label'), styles.col, { color: colors.textFaint, fontSize: 8 }]}
+              >
                 {h}
               </Text>
             ))}
           </View>
           {planetRows.map(({ name, sign, nk }) => (
             <View key={name} style={[styles.tableRow, { borderBottomColor: colors.border }]}>
-              <Text style={[typography('caption'), styles.col, { color: colors.text }]}>{name}</Text>
-              <Text style={[typography('caption'), styles.col, { color: colors.accent }]}>{sign}</Text>
-              <Text style={[typography('caption'), styles.col, { color: colors.textMuted }]}>{nk}</Text>
+              <Text style={[typography('caption'), styles.col, { color: colors.text }]}>
+                {name}
+              </Text>
+              <Text style={[typography('caption'), styles.col, { color: colors.accent }]}>
+                {sign}
+              </Text>
+              <Text style={[typography('caption'), styles.col, { color: colors.textMuted }]}>
+                {nk}
+              </Text>
             </View>
           ))}
         </View>
 
         {/* Disclaimer */}
         <Text style={[typography('caption'), styles.disclaimer, { color: colors.textFaint }]}>
-          Sidereal positions are mean-longitude approximations (±1–5°) for display only.
-          Horary judgment uses the full KP engine on the server.
+          Sidereal positions are mean-longitude approximations (±1–5°) for display only. Horary
+          judgment uses the full KP engine on the server.
         </Text>
       </ScrollView>
     </SafeAreaView>
@@ -274,8 +350,12 @@ interface TimingPillProps {
 
 const TimingPill: React.FC<TimingPillProps> = ({ label, value, colors, typography }) => (
   <View style={styles.pill}>
-    <Text style={[typography('caption'), { color: colors.textMuted, fontSize: 8 }]}>{label.toUpperCase()}</Text>
-    <Text style={[typography('label'), { color: colors.accent, marginTop: 2, fontSize: 11 }]}>{value}</Text>
+    <Text style={[typography('caption'), { color: colors.textMuted, fontSize: 8 }]}>
+      {label.toUpperCase()}
+    </Text>
+    <Text style={[typography('label'), { color: colors.accent, marginTop: 2, fontSize: 11 }]}>
+      {value}
+    </Text>
   </View>
 );
 

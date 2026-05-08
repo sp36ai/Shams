@@ -132,8 +132,16 @@ const MainTabs: React.FC = () => {
       })}
     >
       <Tab.Screen name="Oracle" component={OracleScreen} options={{ tabBarLabel: labels.Oracle }} />
-      <Tab.Screen name="History" component={HistoryScreen} options={{ tabBarLabel: labels.History }} />
-      <Tab.Screen name="Settings" component={SettingsScreen} options={{ tabBarLabel: labels.Settings }} />
+      <Tab.Screen
+        name="History"
+        component={HistoryScreen}
+        options={{ tabBarLabel: labels.History }}
+      />
+      <Tab.Screen
+        name="Settings"
+        component={SettingsScreen}
+        options={{ tabBarLabel: labels.Settings }}
+      />
     </Tab.Navigator>
   );
 };

@@ -106,7 +106,7 @@ const PremiumScreen: React.FC = () => {
       try {
         const fn = functions().httpsCallable('verifyGooglePlayPurchase');
         const result = await fn({ purchaseToken: 'dummy_token', productId: plan });
-        const data = result.data as any;
+        const data = result.data as { success: boolean } | null;
         if (data && data.success) {
           setPlan(plan);
           navigation.goBack();

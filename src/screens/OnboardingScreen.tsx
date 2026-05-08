@@ -43,8 +43,9 @@ const OnboardingScreen: React.FC = () => {
     const result = await requestLocationPermission();
     setPermissionGranted(isLocationUsable(result.status));
     markLocationPrompted();
-    handleNext();
-  }, [markLocationPrompted, setPermissionGranted]);
+    scrollRef.current?.scrollTo({ x: (activeIndex + 1) * width, animated: true });
+    setActiveIndex(prev => prev + 1);
+  }, [markLocationPrompted, setPermissionGranted, activeIndex]);
 
   const onScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
     const index = Math.round(event.nativeEvent.contentOffset.x / width);
@@ -65,7 +66,9 @@ const OnboardingScreen: React.FC = () => {
         <View style={styles.slide}>
           <Text style={[styles.arabicTitle, { color: gold }]}>شمس الأسرار</Text>
           <Text style={[styles.subtitle, { color: colors.text }]}>The Oracle of Hidden Stars</Text>
-          <Text style={[styles.bodyText, { color: colors.textMuted }]}>Ancient wisdom. Astronomical precision.</Text>
+          <Text style={[styles.bodyText, { color: colors.textMuted }]}>
+            Ancient wisdom. Astronomical precision.
+          </Text>
           <Text style={[styles.star, { color: gold }]}>✦</Text>
         </View>
 
@@ -75,13 +78,17 @@ const OnboardingScreen: React.FC = () => {
             <View style={styles.modeHalf}>
               <Text style={styles.modeIcon}>⌚</Text>
               <Text style={[styles.modeTitle, { color: colors.text }]}>Digital Watch RKP</Text>
-              <Text style={[styles.modeText, { color: colors.textMuted }]}>Instant readings from the digits on your clock</Text>
+              <Text style={[styles.modeText, { color: colors.textMuted }]}>
+                Instant readings from the digits on your clock
+              </Text>
             </View>
             <View style={[styles.divider, { backgroundColor: colors.border }]} />
             <View style={styles.modeHalf}>
               <Text style={styles.modeIcon}>🔭</Text>
               <Text style={[styles.modeTitle, { color: colors.text }]}>Astronomical RKP</Text>
-              <Text style={[styles.modeText, { color: colors.textMuted }]}>Full sub-lord precision using Swiss Ephemeris math</Text>
+              <Text style={[styles.modeText, { color: colors.textMuted }]}>
+                Full sub-lord precision using Swiss Ephemeris math
+              </Text>
             </View>
           </View>
         </View>
@@ -91,9 +98,13 @@ const OnboardingScreen: React.FC = () => {
           <Text style={[styles.modeIcon, { color: gold }]}>◎</Text>
           <Text style={[styles.title, { color: gold }]}>Enable Location</Text>
           <Text style={[styles.bodyText, { color: colors.textMuted }]}>
-            Required for Planetary Hora — the GPS-based hora lord calculation that powers your Digital Watch readings.
+            Required for Planetary Hora — the GPS-based hora lord calculation that powers your
+            Digital Watch readings.
           </Text>
-          <TouchableOpacity style={[styles.ctaButton, { backgroundColor: gold }]} onPress={() => void handleRequestLocation()}>
+          <TouchableOpacity
+            style={[styles.ctaButton, { backgroundColor: gold }]}
+            onPress={() => void handleRequestLocation()}
+          >
             <Text style={[styles.ctaText, { color: colors.bg }]}>Allow Location</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.skipLink} onPress={handleNext}>
@@ -105,15 +116,20 @@ const OnboardingScreen: React.FC = () => {
         <View style={styles.slide}>
           <Text style={[styles.star, { color: gold }]}>✦</Text>
           <Text style={[styles.title, { color: gold }]}>Your oracle is ready.</Text>
-          <Text style={[styles.bodyText, { color: colors.textMuted }]}>Ask your first question.</Text>
-          <TouchableOpacity style={[styles.ctaButton, { backgroundColor: gold }]} onPress={handleFinish}>
+          <Text style={[styles.bodyText, { color: colors.textMuted }]}>
+            Ask your first question.
+          </Text>
+          <TouchableOpacity
+            style={[styles.ctaButton, { backgroundColor: gold }]}
+            onPress={handleFinish}
+          >
             <Text style={[styles.ctaText, { color: colors.bg }]}>Enter Shams-Al-Asrār</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>
 
       <View style={styles.pagination}>
-        {[0, 1, 2, 3].map((i) => (
+        {[0, 1, 2, 3].map(i => (
           <View key={i} style={[styles.dot, { backgroundColor: i === activeIndex ? gold : dim }]} />
         ))}
         {activeIndex < 3 && (
@@ -131,7 +147,13 @@ const styles = StyleSheet.create({
   slide: { width, justifyContent: 'center', alignItems: 'center', padding: 40 },
   arabicTitle: { fontSize: 36, fontFamily: 'Amiri-Regular', textAlign: 'center' },
   subtitle: { fontSize: 18, fontFamily: 'Cairo-Regular', marginTop: 12 },
-  bodyText: { fontSize: 16, fontFamily: 'Cairo-Regular', textAlign: 'center', marginTop: 16, lineHeight: 24 },
+  bodyText: {
+    fontSize: 16,
+    fontFamily: 'Cairo-Regular',
+    textAlign: 'center',
+    marginTop: 16,
+    lineHeight: 24,
+  },
   star: { fontSize: 40, marginTop: 40 },
   modesContainer: { flexDirection: 'row', alignItems: 'center' },
   modeHalf: { flex: 1, alignItems: 'center', padding: 10 },
