@@ -22,6 +22,7 @@ import { GoogleSignin } from '@react-native-google-signin/google-signin';
 
 import { storage, KEYS } from '@storage/mmkv';
 import { useQuotaStore, type PlanTier } from './quotaStore';
+import { useReadingsStore } from './readingsStore';
 
 // Web client ID from Firebase Console → Authentication → Google → Web SDK configuration
 export const GOOGLE_WEB_CLIENT_ID =
@@ -176,6 +177,7 @@ export const useAuthStore = create<AuthState>(set => ({
     await auth().signOut();
     cacheUserLocally(null);
     useQuotaStore.getState().reset();
+    useReadingsStore.getState().clearAll();
     set({ user: null, isLoading: false, error: null });
   },
 

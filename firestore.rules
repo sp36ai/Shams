@@ -13,17 +13,12 @@ rules_version = '2';
  *  4. No client writes to quota or plan fields: prevents privilege escalation.
  *
  * Auth model note:
- *  The mobile app uses Supabase Auth. Firebase Auth is used only for App Check.
- *  Because request.auth is the Firebase Auth context, and our users authenticate
- *  via Supabase (not Firebase), request.auth will be null for direct client reads.
+ *  The mobile app uses Firebase Auth (email/password + Google sign-in).
+ *  request.auth is populated by the Firebase Auth SDK on authenticated calls.
  *
- *  All sensitive reads/writes go through Cloud Functions (Admin SDK), which
- *  bypass these rules. The rules below protect against direct Firestore SDK
- *  access from rogue clients.
- *
- *  To enable direct client reads (e.g. history tab offline cache), integrate
- *  Firebase Anonymous Auth + Supabase → Firebase custom token exchange.
- *  Until then, all access is via Cloud Functions only.
+ *  All privileged writes (quota, plan, readings creation) go through Cloud
+ *  Functions (Admin SDK), which bypass these rules. The rules below protect
+ *  against direct Firestore SDK access from rogue clients.
  */
 
 service cloud.firestore {
