@@ -75,7 +75,7 @@
 # ── React Native Firebase bridge ─────────────────────────────────────
 -keep class io.invertase.firebase.** { *; }
 
-# ── Supabase / OkHttp / Kotlin ──────────────────────────────────────
+# ── OkHttp / Kotlin ─────────────────────────────────────────────────
 -dontwarn okhttp3.**
 -dontwarn okio.**
 -dontwarn javax.annotation.**
