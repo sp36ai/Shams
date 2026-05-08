@@ -27,6 +27,8 @@ export interface Coords {
 }
 
 export interface SettingsState {
+  /** True after the user completes the 4-slide onboarding flow. */
+  hasSeenOnboarding: boolean;
   /** True after user has seen the LocationPermission screen at least once. */
   onboardingLocationPrompted: boolean;
   /** True if the OS reported permission as granted last time we checked. */
@@ -34,6 +36,7 @@ export interface SettingsState {
   /** Last known device location, or null if never captured. */
   lastLocation: Coords | null;
 
+  markOnboardingComplete: () => void;
   markLocationPrompted: () => void;
   setPermissionGranted: (granted: boolean) => void;
   setLastLocation: (coords: Coords) => void;
@@ -70,9 +73,15 @@ function readLastLocation(): Coords | null {
 /* -------------------------------------------------------------------------- */
 
 export const useSettingsStore = create<SettingsState>(set => ({
+  hasSeenOnboarding: readBool(KEYS.ONBOARDING_SEEN, false),
   onboardingLocationPrompted: readBool(KEYS.ONBOARDING_LOCATION_PROMPTED, false),
   onboardingPermissionGranted: readBool(KEYS.ONBOARDING_PERMISSION_GRANTED, false),
   lastLocation: readLastLocation(),
+
+  markOnboardingComplete: (): void => {
+    storage.set(KEYS.ONBOARDING_SEEN, true);
+    set({ hasSeenOnboarding: true });
+  },
 
   markLocationPrompted: (): void => {
     storage.set(KEYS.ONBOARDING_LOCATION_PROMPTED, true);

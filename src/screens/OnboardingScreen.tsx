@@ -11,7 +11,6 @@ import {
   SafeAreaView,
 } from 'react-native';
 import { useColors } from '@theme/ThemeProvider';
-import { storage } from '@storage/mmkv';
 import { useSettingsStore } from '@stores/settingsStore';
 import { isLocationUsable, requestLocationPermission } from '@utils/permissions';
 
@@ -21,6 +20,7 @@ const OnboardingScreen: React.FC = () => {
   const colors = useColors();
   const [activeIndex, setActiveIndex] = useState(0);
   const scrollRef = useRef<ScrollView>(null);
+  const markOnboardingComplete = useSettingsStore(s => s.markOnboardingComplete);
   const markLocationPrompted = useSettingsStore(s => s.markLocationPrompted);
   const setPermissionGranted = useSettingsStore(s => s.setPermissionGranted);
 
@@ -35,8 +35,7 @@ const OnboardingScreen: React.FC = () => {
   };
 
   const handleFinish = () => {
-    storage.set('shams_onboarding_seen', true);
-    // Navigation to main app is handled by store listener in AppNavigator
+    markOnboardingComplete();
   };
 
   const handleRequestLocation = useCallback(async () => {

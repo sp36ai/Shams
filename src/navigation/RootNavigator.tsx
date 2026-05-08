@@ -31,7 +31,6 @@ import MainTabs from './MainTabs';
 
 import { useAuthStore } from '@stores/authStore';
 import { useSettingsStore } from '@stores/settingsStore';
-import { MMKV } from 'react-native-mmkv';
 import { useTheme } from '@theme/ThemeProvider';
 
 import type { RootStackParamList } from './types';
@@ -40,7 +39,6 @@ const RootStack = createNativeStackNavigator<RootStackParamList>();
 
 const MIN_SPLASH_MS = 2500;
 
-const storage = new MMKV();
 const BYPASS_AUTH_FOR_TESTING = false;
 
 const RootNavigator: React.FC = () => {
@@ -49,6 +47,9 @@ const RootNavigator: React.FC = () => {
   const user = useAuthStore(s => s.user);
   const isAuthLoading = useAuthStore(s => s.isLoading);
   const bootstrap = useAuthStore(s => s.bootstrap);
+  const hasSeenOnboarding = useSettingsStore(
+    (s: ReturnType<typeof useSettingsStore.getState>) => s.hasSeenOnboarding,
+  );
   const onboardingLocationPrompted = useSettingsStore(
     (s: ReturnType<typeof useSettingsStore.getState>) => s.onboardingLocationPrompted,
   );
@@ -67,13 +68,6 @@ const RootNavigator: React.FC = () => {
     bootstrap().finally(() => setAuthBootstrapped(true));
   }, [bootstrap]);
 
-  // Check if onboarding has been seen from MMKV
-  const [hasSeenOnboarding, setHasSeenOnboarding] = useState(false);
-  useEffect(() => {
-    const seen = storage.getBoolean('shams_onboarding_seen') || false;
-    setHasSeenOnboarding(seen);
-    // No listener needed as onboarding is a one-time flow
-  }, []);
 
   const navTheme: NavTheme = {
     ...NavDarkTheme,

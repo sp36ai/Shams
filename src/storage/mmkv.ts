@@ -36,6 +36,7 @@ export const KEYS = Object.freeze({
   READINGS_CACHE: 'readings.cache.v1',
 
   // Onboarding flags
+  ONBOARDING_SEEN: 'onboarding.seen.v1',
   ONBOARDING_LOCATION_PROMPTED: 'onboarding.locationPrompted.v1',
   ONBOARDING_PERMISSION_GRANTED: 'onboarding.permissionGranted.v1',
 
