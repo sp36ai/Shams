@@ -23,7 +23,11 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useNavigation } from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import {
+  dayLordAtMoment,
+  horaLordAtMoment,
+} from '@astrology/primitives/rulingPlanets';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '@navigation/types';
 
@@ -400,6 +404,7 @@ const OracleScreen: React.FC = () => {
   const typography = useTypography();
   const t = useTranslation();
   const { lang } = useI18n();
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
 
   const lastLocation = useSettingsStore(
     (s: ReturnType<typeof useSettingsStore.getState>) => s.lastLocation,
@@ -439,6 +444,24 @@ const OracleScreen: React.FC = () => {
   const [stage, setStage] = useState<ConvStage>('ready');
   const [lastReading, setLastReading] = useState<Reading | null>(null);
   const listRef = useRef<FlatList<ChatMessage> | null>(null);
+
+  // Timing strip — hora + day lord, refreshed every 60 s while focused.
+  const lonDegForTiming = lastLocation?.lon ?? 74.3587;
+  const [horaLord, setHoraLord] = useState(() => horaLordAtMoment(Date.now(), lonDegForTiming));
+  const [dayLord,  setDayLord]  = useState(() => dayLordAtMoment(Date.now(), lonDegForTiming));
+
+  useFocusEffect(
+    useCallback(() => {
+      const refresh = () => {
+        const now = Date.now();
+        setHoraLord(horaLordAtMoment(now, lonDegForTiming));
+        setDayLord(dayLordAtMoment(now, lonDegForTiming));
+      };
+      refresh();
+      const id = setInterval(refresh, 60_000);
+      return () => clearInterval(id);
+    }, [lonDegForTiming]),
+  );
 
   // Active chips depend on conversation stage
   const activeChips: readonly string[] =
@@ -638,6 +661,30 @@ const OracleScreen: React.FC = () => {
         </View>
       </View>
 
+      {/* Timing strip — hora + day lord; taps into Sky State */}
+      <Pressable
+        onPress={() => navigation.navigate('SkyState')}
+        style={[styles.timingStrip, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}
+        accessibilityRole="button"
+        accessibilityLabel="Open Sky State timing panel"
+      >
+        <Text style={[typography('caption'), { color: colors.textFaint, fontSize: 9 }]}>
+          HORA
+        </Text>
+        <Text style={[typography('label'), { color: colors.accent, marginLeft: 4, marginRight: 16 }]}>
+          {horaLord}
+        </Text>
+        <Text style={[typography('caption'), { color: colors.textFaint, fontSize: 9 }]}>
+          DAY
+        </Text>
+        <Text style={[typography('label'), { color: colors.accent, marginLeft: 4 }]}>
+          {dayLord}
+        </Text>
+        <Text style={[typography('caption'), { color: colors.textMuted, marginLeft: 'auto', fontSize: 10 }]}>
+          Sky State ›
+        </Text>
+      </Pressable>
+
       <KeyboardAvoidingView
         style={styles.flex}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -834,6 +881,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 4,
     maxWidth: '55%',
+  },
+  timingStrip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderBottomWidth: StyleSheet.hairlineWidth,
   },
   listContent: {
     paddingHorizontal: 16,

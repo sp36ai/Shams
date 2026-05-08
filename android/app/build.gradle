@@ -39,6 +39,13 @@ android {
 
         // Reduce APK by stripping unused locales (we only ship en, ur, hi)
         resourceConfigurations += ["en", "ur", "hi"]
+
+        // armeabi-v7a excluded: Windows MAX_PATH limit causes CMake object-file paths
+        // to exceed 260 chars during reanimated native build. All Android 7+ (API 24+)
+        // production devices are arm64-v8a. x86_64 retained for emulator testing.
+        ndk {
+            abiFilters "arm64-v8a", "x86_64"
+        }
     }
 
     splits {

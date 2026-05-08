@@ -1,11 +1,4 @@
-jest.mock('swisseph-wasm', () => {
-  return jest.fn().mockImplementation(() => {
-    return {
-      swe_calc_ut: jest.fn(() => ({ longitude: 0, latitude: 0, distance: 0 })),
-      swe_get_ayanamsa_ut: jest.fn(() => 24),
-    };
-  });
-});
+// swisseph-wasm is mapped to __mocks__/swisseph-wasm.js via moduleNameMapper.
 
 jest.mock('@react-native-firebase/functions', () => {
   return () => ({

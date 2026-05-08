@@ -33,7 +33,6 @@ import {
 import { Pressable } from 'react-native';
 
 import OracleScreen from '@screens/OracleScreen';
-import SkyClockScreen from '@screens/SkyClockScreen';
 import HistoryScreen from '@screens/HistoryScreen';
 import SettingsScreen from '@screens/SettingsScreen';
 
@@ -85,7 +84,6 @@ const MainTabs: React.FC = () => {
   const labels = useMemo<Record<keyof MainTabParamList, string>>(
     () => ({
       Oracle: t('oracle.headerTitle' as TKey),
-      SkyClock: t('skyClock.headerTitle' as TKey),
       History: t('history.headerTitle' as TKey),
       Settings: t('settings.headerTitle' as TKey),
     }),
@@ -94,7 +92,6 @@ const MainTabs: React.FC = () => {
 
   const iconNames: Record<keyof MainTabParamList, IconName> = {
     Oracle: 'oracle',
-    SkyClock: 'skyclock',
     History: 'history',
     Settings: 'settings',
   };
@@ -135,21 +132,8 @@ const MainTabs: React.FC = () => {
       })}
     >
       <Tab.Screen name="Oracle" component={OracleScreen} options={{ tabBarLabel: labels.Oracle }} />
-      <Tab.Screen
-        name="SkyClock"
-        component={SkyClockScreen}
-        options={{ tabBarLabel: labels.SkyClock }}
-      />
-      <Tab.Screen
-        name="History"
-        component={HistoryScreen}
-        options={{ tabBarLabel: labels.History }}
-      />
-      <Tab.Screen
-        name="Settings"
-        component={SettingsScreen}
-        options={{ tabBarLabel: labels.Settings }}
-      />
+      <Tab.Screen name="History" component={HistoryScreen} options={{ tabBarLabel: labels.History }} />
+      <Tab.Screen name="Settings" component={SettingsScreen} options={{ tabBarLabel: labels.Settings }} />
     </Tab.Navigator>
   );
 };

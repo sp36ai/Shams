@@ -11,12 +11,6 @@
     <!-- ═══ Phase 4: Google Play Billing (subscriptions) ═══ -->
     <uses-permission android:name="com.android.vending.BILLING" />
 
-    <!-- ═══ Phase 4: Save Sky Clock as wallpaper (4K PNG export) ═══ -->
-    <!-- API 33+: granular media perms; legacy storage perms removed for targetSdk 34 compliance -->
-    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES"
-        android:minSdkVersion="33" />
-    <uses-permission android:name="android.permission.SET_WALLPAPER" />
-
     <!-- ═══ Phase 5: Push notifications for planetary windows (Android 13+) ═══ -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 

@@ -127,5 +127,9 @@ logs/
 .tmp_syntax_check.js
 firebase-emulator.local.json
 
+# Android R8 build artifacts
+android/app/mapping.txt
+android/app/build/outputs/
+
 # Claude Code project settings
 .claude/

@@ -29,7 +29,10 @@ _rnfbProvider.configure({
   },
   web: { provider: 'reCaptchaV3', siteKey: 'unused' },
 });
-appCheck().activate(_rnfbProvider, true);
+// activate() only accepts strings; the provider-object API is initializeAppCheck.
+appCheck().initializeAppCheck({ provider: _rnfbProvider, isTokenAutoRefreshEnabled: true }).catch(
+  (e: unknown) => console.warn('[AppCheck] init error (non-fatal in dev):', e),
+);
 
 // Apply RTL layout direction synchronously before React tree mounts.
 const _initialLang = readPersistedLang();

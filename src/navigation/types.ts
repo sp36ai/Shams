@@ -27,12 +27,12 @@ import type { CompositeScreenProps } from '@react-navigation/native';
 export type RootStackParamList = {
   Splash: undefined;
   Auth: undefined;
-  Onboarding: undefined; // New screen for initial app setup
+  Onboarding: undefined;
   LocationPermission: undefined;
-  /** Container for the bottom-tab navigator. */
   Main: undefined;
-  /** Full-screen paywall modal — navigable from any tab via navigation.navigate('Premium'). */
   Premium: undefined;
+  /** Sky State — secondary timing/context screen, reachable from Oracle timing strip. */
+  SkyState: undefined;
 };
 
 export type RootStackScreenProps<RouteName extends keyof RootStackParamList> =
@@ -44,7 +44,6 @@ export type RootStackScreenProps<RouteName extends keyof RootStackParamList> =
 
 export type MainTabParamList = {
   Oracle: undefined;
-  SkyClock: undefined;
   History: undefined;
   Settings: undefined;
 };

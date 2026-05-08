@@ -82,8 +82,6 @@ const S = SIZE / 500; // scale from 500-unit design space
 const R_OUTER_BORDER = 242;
 const R_OUTER_TICKS  = 238;
 const R_INNER_TICKS  = 228;
-const R_HOUSE_OUTER  = 228;
-const R_HOUSE_INNER  = 186;
 const R_ZODIAC_OUTER = 186;
 const R_ZODIAC_INNER = 152;
 const R_PLANET       = 126;
@@ -259,36 +257,30 @@ function computeState(date: Date, sidereal: boolean): ClockState {
 
 // ── Component ──────────────────────────────────────────────────────────────────
 
-export default function CosmicClock(): React.ReactElement {
+interface CosmicClockProps { running: boolean; }
+
+export default function CosmicClock({ running }: CosmicClockProps): React.ReactElement {
   const colors = useColors();
 
   const [showSaturn,   setShowSaturn]   = useState(true);
   const [showNodes,    setShowNodes]    = useState(false);
   const [showLabels,   setShowLabels]   = useState(true);
   const [sidereal,     setSidereal]     = useState(false);
-  const [fast,         setFast]         = useState(false);
   const [tip,          setTip]          = useState<string | null>(null);
 
-  const fastRef     = useRef(false);
   const siderealRef = useRef(false);
-  const rafRef      = useRef<number | null>(null);
 
-  useEffect(() => { fastRef.current = fast; },         [fast]);
   useEffect(() => { siderealRef.current = sidereal; }, [sidereal]);
 
   const [clock, setClock] = useState<ClockState>(() => computeState(new Date(), false));
 
   useEffect(() => {
-    const tick = () => {
-      const now = fastRef.current ? new Date(Date.now() * 300) : new Date();
-      setClock(computeState(now, siderealRef.current));
-      rafRef.current = requestAnimationFrame(tick);
-    };
-    rafRef.current = requestAnimationFrame(tick);
-    return () => {
-      if (rafRef.current !== null) { cancelAnimationFrame(rafRef.current); }
-    };
-  }, []);
+    if (!running) { return; }
+    const id = setInterval(() => {
+      setClock(computeState(new Date(), siderealRef.current));
+    }, 1_000);
+    return () => clearInterval(id);
+  }, [running]);
 
   // ── Static rings (computed once — no per-frame cost) ────────────────────────
 
@@ -331,33 +323,6 @@ export default function CosmicClock(): React.ReactElement {
           fontFamily="Cairo-Regular"
           fontWeight={isMajor ? 'bold' : 'normal'}>
           {String(num)}
-        </SvgText>,
-      );
-    }
-    return elems;
-  }, []);
-
-  const houseBand = useMemo(() => {
-    const elems: React.ReactElement[] = [];
-    for (let h = 0; h < 12; h++) {
-      const start = h * 30;
-      const end   = start + 30;
-      const mid   = start + 15;
-      const fill  = h % 2 === 0
-        ? 'rgba(34,211,238,0.03)'
-        : 'rgba(251,191,36,0.025)';
-      const mp = polar(((R_HOUSE_OUTER + R_HOUSE_INNER) / 2) * S, mid);
-
-      elems.push(
-        <Path key={`hs${h}`}
-          d={sectorPath(R_HOUSE_OUTER * S, R_HOUSE_INNER * S, start, end)}
-          fill={fill} stroke="rgba(34,211,238,0.12)" strokeWidth={0.4} />,
-        <SvgText key={`hn${h}`}
-          x={mp.x} y={mp.y}
-          textAnchor="middle" alignmentBaseline="central"
-          fontSize={8 * S} fill="rgba(120,150,200,0.65)"
-          fontFamily="Cinzel-Regular">
-          {String(h + 1)}
         </SvgText>,
       );
     }
@@ -553,10 +518,7 @@ export default function CosmicClock(): React.ReactElement {
           {/* Ring 1: Degree ring */}
           {degreeRing}
 
-          {/* Ring 2: House band */}
-          {houseBand}
-
-          {/* Ring 3: Zodiac band */}
+          {/* Ring 2: Zodiac band */}
           {zodiacBand}
 
           {/* Planet track circle */}
@@ -600,10 +562,9 @@ export default function CosmicClock(): React.ReactElement {
       <View style={styles.cards}>
         {(
           [
-            { label: 'Julian Day',  value: clock.jd.toFixed(2) },
-            { label: 'Sun Long.',   value: dms(clock.sunLon)   },
-            { label: 'Moon Long.',  value: dms(clock.moonLon)  },
-            { label: 'Ayanamsa',    value: `${clock.ayanamsa.toFixed(3)}°` },
+            { label: 'Sun Long.',  value: dms(clock.sunLon)               },
+            { label: 'Moon Long.', value: dms(clock.moonLon)              },
+            { label: 'Ayanamsa',   value: `${clock.ayanamsa.toFixed(3)}°` },
           ] as const
         ).map(card => (
           <View key={card.label}
@@ -621,11 +582,10 @@ export default function CosmicClock(): React.ReactElement {
       <View style={styles.controls}>
         {(
           [
-            { label: 'Sat. Rings', active: showSaturn,  onPress: () => setShowSaturn(v  => !v) },
-            { label: 'Rahu/Ketu', active: showNodes,    onPress: () => setShowNodes(v    => !v) },
-            { label: 'Labels',     active: showLabels,  onPress: () => setShowLabels(v  => !v) },
-            { label: 'Sidereal',   active: sidereal,    onPress: () => setSidereal(v    => !v) },
-            { label: 'Fast ×300',  active: fast,        onPress: () => setFast(v        => !v) },
+            { label: 'Sat. Rings', active: showSaturn,  onPress: () => setShowSaturn(v => !v) },
+            { label: 'Rahu/Ketu', active: showNodes,   onPress: () => setShowNodes(v  => !v) },
+            { label: 'Labels',    active: showLabels,  onPress: () => setShowLabels(v => !v) },
+            { label: 'Sidereal',  active: sidereal,    onPress: () => setSidereal(v   => !v) },
           ] as const
         ).map(btn => (
           <TouchableOpacity

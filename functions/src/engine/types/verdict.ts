@@ -77,18 +77,17 @@ export interface QuestionCuspDetail {
  *   4. Moon Sign Lord — classical sign lord of Moon's sign
  *   5. Moon Star Lord — nakshatra lord of Moon's position
  *
- * horaLord and minuteLord are retained from chart computation for traceability.
- * agreementScore = count of 5 RPs that agree with the verdict direction (0–5).
+ * horaLord is retained from chart computation for traceability.
+ * agreementScore = count of 5 RPs that agree with the verdict direction.
  */
 export interface RulingPlanetsSnapshot {
   readonly dayLord: Planet;
   readonly horaLord?: Planet;
-  readonly minuteLord?: Planet;
   readonly ascSignLord: Planet;
   readonly ascStarLord: Planet;
   readonly moonSignLord: Planet;
   readonly moonStarLord: Planet;
-  /** Count of the 5 RPs that agree with the verdict direction (0–5). */
+  /** Count of the 5 RPs that agree with the verdict direction. */
   readonly agreementScore: number;
 }
 

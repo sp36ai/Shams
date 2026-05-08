@@ -26,6 +26,7 @@ import AuthScreen from '@screens/AuthScreen';
 import OnboardingScreen from '@screens/OnboardingScreen';
 import LocationPermissionScreen from '@screens/LocationPermissionScreen';
 import PremiumScreen from '@screens/PremiumScreen';
+import SkyClockScreen from '@screens/SkyClockScreen';
 import MainTabs from './MainTabs';
 
 import { useAuthStore } from '@stores/authStore';
@@ -40,8 +41,7 @@ const RootStack = createNativeStackNavigator<RootStackParamList>();
 const MIN_SPLASH_MS = 2500;
 
 const storage = new MMKV();
-// Set to true in dev to skip auth + onboarding and go straight to Main.
-const BYPASS_AUTH_FOR_TESTING = __DEV__ && true;
+const BYPASS_AUTH_FOR_TESTING = false;
 
 const RootNavigator: React.FC = () => {
   const { theme } = useTheme();
@@ -111,9 +111,9 @@ const RootNavigator: React.FC = () => {
         ) : !isAuthenticated ? (
           <RootStack.Screen name="Auth" component={AuthScreen} />
         ) : needsOnboardingFlow ? (
-          <RootStack.Screen name="LocationPermission" component={LocationPermissionScreen} />
-        ) : needsLocationPermission ? (
           <RootStack.Screen name="Onboarding" component={OnboardingScreen} />
+        ) : needsLocationPermission ? (
+          <RootStack.Screen name="LocationPermission" component={LocationPermissionScreen} />
         ) : (
           <RootStack.Screen name="Main" component={MainTabs} />
         )}
@@ -123,6 +123,12 @@ const RootNavigator: React.FC = () => {
           name="Premium"
           component={PremiumScreen}
           options={{ presentation: 'modal', animation: 'slide_from_bottom' }}
+        />
+        {/* Sky State — timing/context panel, secondary route from Oracle header */}
+        <RootStack.Screen
+          name="SkyState"
+          component={SkyClockScreen}
+          options={{ headerShown: false, animation: 'slide_from_right' }}
         />
       </RootStack.Navigator>
     </NavigationContainer>
