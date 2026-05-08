@@ -3,7 +3,7 @@
  *
  * Security pipeline (in order):
  *   1. Firebase App Check  — enforced by runtime (enforceAppCheck: true)
- *   2. Supabase JWT        — verified via HS256 + JWT secret (no network call)
+ *   2. Firebase Auth       — request.auth UID verified by Firebase Functions runtime
  *   3. Input validation    — Zod schema, strict
  *   4. Rate limit          — 10 req/min per user, Firestore transaction
  *   5. Quota check         — atomic Firestore transaction (Sunday-week rolling)
@@ -129,7 +129,7 @@ export const askOracle = onCall(
     const startedAt = Date.now();
     const requestMeta = requestMetaFromCallable(request);
 
-    // 1 + 2. App Check (enforced by runtime) + Auth
+    // 1. App Check (enforced by runtime) — 2. Firebase Auth
     const { userId } = verifyAuth(request);
 
     try {
