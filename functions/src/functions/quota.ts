@@ -7,6 +7,7 @@ import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import { db } from '../utils/admin';
 import { verifyAuth } from '../middleware/auth';
 import { FUNCTION_OPTS, UNLIMITED_PLANS, FREE_LIMIT, sundayWeekKey } from '../config';
+import { measure } from '../middleware/telemetry';
 import type { QuotaResponse, QuotaDoc } from '../types';
 
 export const getQuota = onCall(
@@ -14,7 +15,7 @@ export const getQuota = onCall(
   async (request): Promise<QuotaResponse> => {
     const { userId } = verifyAuth(request);
 
-    try {
+    return measure<QuotaResponse>('getQuota', userId, async () => {
       const snap = await db.collection('quotas').doc(userId).get();
 
       if (!snap.exists) {
@@ -46,11 +47,11 @@ export const getQuota = onCall(
       const remaining = unlimited ? null : Math.max(0, FREE_LIMIT - used);
 
       return { plan: effectivePlan, used, limit, remaining, weekKey: currentWeek, planExpiry };
-    } catch (err) {
+    }).catch(err => {
       if (err instanceof HttpsError) {
         throw err;
       }
       throw new HttpsError('internal', 'Failed to retrieve quota');
-    }
+    });
   },
 );

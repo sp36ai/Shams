@@ -14,11 +14,13 @@
     "lint": "eslint . --ext .ts,.tsx --max-warnings=0",
     "lint:fix": "eslint . --ext .ts,.tsx --fix",
     "typecheck": "tsc --noEmit",
-    "format": "prettier --write \"src/**/*.{ts,tsx,js,json}\"",
+    "format": "prettier --write .",
     "test": "jest --testPathIgnorePatterns=firestore.rules.test.ts",
     "test:watch": "jest --watch --testPathIgnorePatterns=firestore.rules.test.ts",
+    "test:web": "npx serve .",
     "test:coverage": "jest --coverage --testPathIgnorePatterns=firestore.rules.test.ts",
-    "test:rules": "jest firestore.rules.test.ts --testEnvironment node",
+    "test:rules": "firebase emulators:exec --config firebase.test.json --only firestore \"jest firestore.rules.test.ts --testEnvironment node --runInBand\"",
+    "check:orphans": "npx madge --extensions ts,tsx --ts-config tsconfig.json --orphans src",
     "validate:firebase:predeploy": "powershell -ExecutionPolicy Bypass -File scripts/Validate-FirebasePredeploy.ps1",
     "postinstall": "npx patch-package || echo \"No patches\""
   },
@@ -26,6 +28,7 @@
     "@react-native-firebase/app": "^19.3.0",
     "@react-native-firebase/app-check": "^19.3.0",
     "@react-native-firebase/auth": "^19.3.0",
+    "@react-native-firebase/firestore": "^19.3.0",
     "@react-native-firebase/functions": "^19.3.0",
     "@react-native-google-signin/google-signin": "^16.1.2",
     "@react-navigation/bottom-tabs": "^6.6.1",
@@ -70,11 +73,12 @@
   },
   "jest": {
     "preset": "react-native",
-    "setupFiles": ["<rootDir>/jest.setup.js"],
+    "setupFiles": [
+      "<rootDir>/jest.setup.js"
+    ],
     "testPathIgnorePatterns": [
       "<rootDir>/node_modules/",
-      "<rootDir>/functions/",
-      "<rootDir>/firestore.rules.test.ts"
+      "<rootDir>/functions/"
     ],
     "transformIgnorePatterns": [
       "node_modules/(?!(jest-)?react-native|@react-native|@react-navigation|react-native-mmkv|react-native-reanimated|react-native-svg)"
