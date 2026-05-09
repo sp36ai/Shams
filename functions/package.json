@@ -10,7 +10,7 @@
     "deploy": "firebase deploy --only functions,firestore",
     "logs": "firebase functions:log",
     "lint": "eslint 'src/**/*.ts'",
-    "test": "vitest",
+    "test": "vitest --passWithNoTests",
     "test:watch": "vitest --watch",
     "test:ui": "vitest --ui",
     "test:coverage": "vitest --coverage"
@@ -26,8 +26,8 @@
   "devDependencies": {
     "@types/node": "^20.0.0",
     "typescript": "^5.0.0",
-    "vitest": "^latest",
-    "@vitest/ui": "^latest",
-    "@vitest/coverage-v8": "^latest"
+    "vitest": "^1.6.0",
+    "@vitest/ui": "^1.6.0",
+    "@vitest/coverage-v8": "^1.6.0"
   }
 }

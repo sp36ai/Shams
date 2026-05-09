@@ -68,7 +68,6 @@ const RootNavigator: React.FC = () => {
     bootstrap().finally(() => setAuthBootstrapped(true));
   }, [bootstrap]);
 
-
   const navTheme: NavTheme = {
     ...NavDarkTheme,
     dark: theme.isDark,

@@ -21,11 +21,13 @@ Certificate (PEM/CRT)
 ## ⚡ 5-Minute Setup
 
 ### Step 1: Generate Test Certificates (Windows)
+
 ```powershell
 .\scripts\Generate-FirebaseCertificates.ps1
 ```
 
 **Output:**
+
 ```
 ✓ functions/certs/firebase-dev.key      (private)
 ✓ functions/certs/firebase-dev.crt
@@ -34,6 +36,7 @@ Certificate (PEM/CRT)
 ```
 
 ### Step 2: Get Firebase Production Fingerprint (macOS/Linux)
+
 ```bash
 # 1. Download certificate
 openssl s_client -connect us-central1-shams-al-asrar.cloudfunctions.net:443 \
@@ -45,23 +48,27 @@ openssl s_client -connect us-central1-shams-al-asrar.cloudfunctions.net:443 \
 ```
 
 **Output:**
+
 ```
 SHA256 Base64: kT1234567890abcdefghijklmno+/ABC1234567890=
 SHA1:          AB:CD:EF:12:34:56:78:90:AB:CD:EF:12:34:56:78:90:AB:CD:EF:12
 ```
 
 ### Step 3: Update Configuration
+
 **File: `functions/src/config.ts`**
+
 ```typescript
 export const CERTIFICATE_PINS = {
   production: {
     sha256: 'kT1234567890abcdefghijklmno+/ABC1234567890=',
-    sha1: 'AB:CD:EF:12:34:56:78:90:AB:CD:EF:12:34:56:78:90:AB:CD:EF:12'
-  }
+    sha1: 'AB:CD:EF:12:34:56:78:90:AB:CD:EF:12:34:56:78:90:AB:CD:EF:12',
+  },
 };
 ```
 
 ### Step 4: Deploy
+
 ```bash
 firebase deploy --only functions
 ```
@@ -70,15 +77,15 @@ firebase deploy --only functions
 
 ## 📊 File Reference
 
-| File | Purpose | Type |
-|------|---------|------|
-| `scripts/Generate-FirebaseCertificates.ps1` | Auto-generate test certs | PowerShell |
-| `scripts/extract-fingerprints.sh` | Extract SHA1/SHA256 from cert | Bash |
-| `src/utils/certificatePinning.ts` | App-side pinning logic | TypeScript |
-| `functions/src/config.ts` | Store fingerprints | TypeScript |
-| `docs/CERTIFICATE_PINNING_SETUP.md` | Detailed guide | Markdown |
-| `docs/CERTIFICATE_FINGERPRINTS_QUICK_REFERENCE.md` | Commands reference | Markdown |
-| `docs/CERTIFICATE_FINGERPRINTS_IMPLEMENTATION_SUMMARY.md` | Complete walkthrough | Markdown |
+| File                                                      | Purpose                       | Type       |
+| --------------------------------------------------------- | ----------------------------- | ---------- |
+| `scripts/Generate-FirebaseCertificates.ps1`               | Auto-generate test certs      | PowerShell |
+| `scripts/extract-fingerprints.sh`                         | Extract SHA1/SHA256 from cert | Bash       |
+| `src/utils/certificatePinning.ts`                         | App-side pinning logic        | TypeScript |
+| `functions/src/config.ts`                                 | Store fingerprints            | TypeScript |
+| `docs/CERTIFICATE_PINNING_SETUP.md`                       | Detailed guide                | Markdown   |
+| `docs/CERTIFICATE_FINGERPRINTS_QUICK_REFERENCE.md`        | Commands reference            | Markdown   |
+| `docs/CERTIFICATE_FINGERPRINTS_IMPLEMENTATION_SUMMARY.md` | Complete walkthrough          | Markdown   |
 
 ---
 
@@ -191,6 +198,7 @@ firebase deploy --only functions
 ## 🔍 Quick Verification
 
 ### Verify SHA256 matches certificate
+
 ```bash
 # Should output same base64 as in config
 openssl x509 -in cert.pem -pubkey -noout | \
@@ -200,12 +208,14 @@ openssl x509 -in cert.pem -pubkey -noout | \
 ```
 
 ### Verify certificate not expired
+
 ```bash
 # Should show future date
 openssl x509 -in cert.pem -noout -dates
 ```
 
 ### Verify pinning is active
+
 ```bash
 # Development: Should show "Certificate pinning enabled"
 firebase emulators:start &
@@ -244,27 +254,29 @@ shams-al-asrar/
 
 ## 🎓 Key Points
 
-| Point | Details |
-|-------|---------|
-| **SHA256** | Primary fingerprint, 256-bit security, Base64 format |
-| **SHA1** | Legacy fingerprint, 160-bit security, reference only |
-| **Base64** | Text format suitable for config files, `abc123+/==` |
-| **Hex** | Text format for debugging, `a1b2c3d4e5f6...` |
-| **Colon Format** | OpenSSL default output, `AB:CD:EF:12:...` |
-| **Private Key** | Secret - NEVER commit to Git |
-| **Fingerprint** | Public - safe to commit |
-| **Pinning** | Verification happens app-side before connecting |
+| Point            | Details                                              |
+| ---------------- | ---------------------------------------------------- |
+| **SHA256**       | Primary fingerprint, 256-bit security, Base64 format |
+| **SHA1**         | Legacy fingerprint, 160-bit security, reference only |
+| **Base64**       | Text format suitable for config files, `abc123+/==`  |
+| **Hex**          | Text format for debugging, `a1b2c3d4e5f6...`         |
+| **Colon Format** | OpenSSL default output, `AB:CD:EF:12:...`            |
+| **Private Key**  | Secret - NEVER commit to Git                         |
+| **Fingerprint**  | Public - safe to commit                              |
+| **Pinning**      | Verification happens app-side before connecting      |
 
 ---
 
 ## 🚨 Common Mistakes
 
 ❌ **WRONG**: Committing private keys
+
 ```bash
 git add functions/certs/firebase-dev.key  # NO!
 ```
 
 ✅ **RIGHT**: Ignore private keys
+
 ```bash
 echo "*.key" >> .gitignore
 git add .gitignore
@@ -273,24 +285,28 @@ git add .gitignore
 ---
 
 ❌ **WRONG**: Using wrong fingerprint format
+
 ```typescript
-sha256: 'AB:CD:EF:12...'  // This is SHA1 format!
+sha256: 'AB:CD:EF:12...'; // This is SHA1 format!
 ```
 
 ✅ **RIGHT**: Use Base64 for SHA256
+
 ```typescript
-sha256: 'kT1234567890abcdefghijklmno+/ABC1234567890='
+sha256: 'kT1234567890abcdefghijklmno+/ABC1234567890=';
 ```
 
 ---
 
 ❌ **WRONG**: Forgetting to update both config files
+
 ```typescript
 // functions/src/config.ts has new SHA256
 // But src/utils/certificatePinning.ts is missing it
 ```
 
 ✅ **RIGHT**: Update all references
+
 ```bash
 grep -r "CERTIFICATE_PINS" src/ functions/
 # Make sure all have same values
@@ -300,24 +316,24 @@ grep -r "CERTIFICATE_PINS" src/ functions/
 
 ## 📞 Need Help?
 
-| Issue | File |
-|-------|------|
-| General setup | `docs/CERTIFICATE_PINNING_SETUP.md` |
-| Quick commands | `docs/CERTIFICATE_FINGERPRINTS_QUICK_REFERENCE.md` |
+| Issue            | File                                                      |
+| ---------------- | --------------------------------------------------------- |
+| General setup    | `docs/CERTIFICATE_PINNING_SETUP.md`                       |
+| Quick commands   | `docs/CERTIFICATE_FINGERPRINTS_QUICK_REFERENCE.md`        |
 | Full walkthrough | `docs/CERTIFICATE_FINGERPRINTS_IMPLEMENTATION_SUMMARY.md` |
-| Implementation | `src/utils/certificatePinning.ts` |
+| Implementation   | `src/utils/certificatePinning.ts`                         |
 
 ---
 
 ## ⏱️ Estimated Times
 
-| Task | Time |
-|------|------|
-| Generate test certs | 5 min |
-| Extract production fingerprints | 2 min |
-| Update configuration | 5 min |
-| Deploy to production | 5 min |
-| **Total** | **17 minutes** |
+| Task                            | Time           |
+| ------------------------------- | -------------- |
+| Generate test certs             | 5 min          |
+| Extract production fingerprints | 2 min          |
+| Update configuration            | 5 min          |
+| Deploy to production            | 5 min          |
+| **Total**                       | **17 minutes** |
 
 ---
 

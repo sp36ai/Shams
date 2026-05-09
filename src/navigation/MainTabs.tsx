@@ -121,6 +121,21 @@ const MainTabs: React.FC = () => {
         },
         tabBarIcon: ({ focused, color }) => (
           <View style={styles.iconWrap}>
+            {/* Premium: glowing accent bar above the active icon */}
+            {focused && (
+              <View
+                style={[
+                  styles.activeBar,
+                  {
+                    backgroundColor: colors.accent,
+                    shadowColor: colors.accent,
+                    shadowRadius: 6,
+                    shadowOpacity: 0.9,
+                    shadowOffset: { width: 0, height: 0 },
+                  },
+                ]}
+              />
+            )}
             <TabIcon
               name={iconNames[route.name as keyof MainTabParamList]}
               color={color}
@@ -153,10 +168,18 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   iconWrap: {
-    height: 24,
-    width: 24,
+    height: 28,
+    width: 40,
     alignItems: 'center',
-    justifyContent: 'center',
+    justifyContent: 'flex-end',
+    paddingBottom: 2,
+  },
+  activeBar: {
+    position: 'absolute',
+    top: 0,
+    width: 24,
+    height: 2.5,
+    borderRadius: 2,
   },
 });
 

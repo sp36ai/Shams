@@ -44,6 +44,7 @@ Before running `firebase deploy`:
 ## 🔧 One-Time Setup
 
 ### 1. Create Firebase Project
+
 ```
 1. Go to https://console.firebase.google.com
 2. Click "Create a project"
@@ -53,6 +54,7 @@ Before running `firebase deploy`:
 ```
 
 ### 2. Configure Firestore
+
 ```
 1. In Firebase Console, go to "Firestore Database"
 2. Click "Create database"
@@ -62,13 +64,16 @@ Before running `firebase deploy`:
 ```
 
 ### 3. Enable Services
+
 In Firebase Console, under "Build":
+
 - [ ] Authentication → Enable
 - [ ] Firestore Database → Enabled (from step 2)
 - [ ] Cloud Functions → Enable
 - [ ] Realtime Database (optional)
 
 ### 4. Set Billing
+
 ```
 1. Go to Firebase Console → Project Settings → Billing
 2. Link a billing account (required for Cloud Functions)
@@ -121,18 +126,20 @@ Get your config from Firebase Console:
 5. Copy the `firebaseConfig` object
 
 Update `src/firebase/client.ts`:
+
 ```typescript
 const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "shams-al-asrar.firebaseapp.com",
-  projectId: "shams-al-asrar",
-  storageBucket: "shams-al-asrar.appspot.com",
-  messagingSenderId: "YOUR_SENDER_ID",
-  appId: "YOUR_APP_ID",
+  apiKey: 'YOUR_API_KEY',
+  authDomain: 'shams-al-asrar.firebaseapp.com',
+  projectId: 'shams-al-asrar',
+  storageBucket: 'shams-al-asrar.appspot.com',
+  messagingSenderId: 'YOUR_SENDER_ID',
+  appId: 'YOUR_APP_ID',
 };
 ```
 
 Or use environment variables (recommended):
+
 ```bash
 # .env file
 FIREBASE_API_KEY=xxx
@@ -148,26 +155,31 @@ FIREBASE_APP_ID=xxx
 ## 🚀 Deploy Commands
 
 ### Deploy Everything
+
 ```bash
 firebase deploy
 ```
 
 ### Deploy Only Cloud Functions
+
 ```bash
 firebase deploy --only functions
 ```
 
 ### Deploy Only Firestore Rules
+
 ```bash
 firebase deploy --only firestore:rules
 ```
 
 ### Deploy Only Firestore Indexes
+
 ```bash
 firebase deploy --only firestore:indexes
 ```
 
 ### Deploy with Specific Configuration
+
 ```bash
 firebase deploy --project shams-al-asrar
 ```
@@ -177,19 +189,23 @@ firebase deploy --project shams-al-asrar
 ## 🛠️ Local Development (Emulators)
 
 ### Start Emulators
+
 ```bash
 firebase emulators:start
 ```
 
 Then visit:
+
 - **Firestore Emulator UI**: http://localhost:4000
 - **Auth Emulator**: http://localhost:9099
 - **Functions**: http://localhost:5001
 
 ### Test with Emulator
+
 Functions automatically connect when `__DEV__` is true in `src/firebase/client.ts`.
 
 ### Useful Emulator Commands
+
 ```bash
 # Start specific emulator
 firebase emulators:start --only functions
@@ -207,6 +223,7 @@ firebase emulators:start --import ./export-data
 ## 📊 Monitor Deployment
 
 ### Check Function Status
+
 ```bash
 # List all functions
 firebase functions:list
@@ -219,13 +236,17 @@ firebase functions:log --tail
 ```
 
 ### Check Firestore
+
 Go to Firebase Console → Firestore Database:
+
 - View documents
 - Check database size
 - Monitor usage statistics
 
 ### Check Security Rules
+
 Go to Firebase Console → Firestore Database → Rules:
+
 - Review rules
 - Simulate rule enforcement
 - Test data access
@@ -235,12 +256,14 @@ Go to Firebase Console → Firestore Database → Rules:
 ## 🐛 Debugging Common Issues
 
 ### Issue: "Project not found"
+
 ```bash
 # Fix: Initialize Firebase in your project
 firebase init
 ```
 
 ### Issue: "Functions timeout"
+
 ```typescript
 // In functions/src/judgment/judgeHorary.ts
 .runWith({
@@ -249,6 +272,7 @@ firebase init
 ```
 
 ### Issue: "Firebase SDK not found in React Native"
+
 ```bash
 # Fix: Install missing dependencies
 npm install @react-native-firebase/app
@@ -258,6 +282,7 @@ npm install @react-native-firebase/functions
 ```
 
 ### Issue: "Firestore rules rejected write"
+
 ```bash
 # Check:
 1. User ID matches in write request
@@ -271,30 +296,37 @@ npm install @react-native-firebase/functions
 ## 📈 Post-Deployment
 
 ### 1. Verify Functions are Working
+
 ```bash
 # Test judgeHorary function
 firebase functions:call judgeHorary --data '{"chartData":"{...}","questionType":"career"}'
 ```
 
 ### 2. Check Firestore Rules
+
 Go to Firestore Console → Rules → Publish & Deployment:
+
 - Rules should show as deployed
 - Timestamps should be recent
 
 ### 3. Monitor Usage
+
 Firebase Console → Usage:
+
 - Cloud Functions invocations
 - Firestore read/write operations
 - Storage usage
 - Set up billing alerts
 
 ### 4. Test from App
+
 In React Native app, test:
+
 ```typescript
 import { submitHoraryQuestion } from '@/firebase/examples';
 
 // Try calling the function
-const result = await submitHoraryQuestion(chart, 'career', 28.6139, 77.2090);
+const result = await submitHoraryQuestion(chart, 'career', 28.6139, 77.209);
 console.log(result); // Should show verdict
 ```
 
@@ -316,6 +348,7 @@ console.log(result); // Should show verdict
 ## 💰 Cost Monitoring
 
 ### Expected Monthly Costs (MVP)
+
 ```
 Firestore reads: $0.06 per 100K = ~$5/month (1M reads)
 Firestore writes: $0.18 per 100K = ~$2/month (500K writes)
@@ -326,7 +359,9 @@ Total: ~$15-20/month
 ```
 
 ### Set Budget Alert
+
 Firebase Console → Billing:
+
 1. Click "Budget and alerts"
 2. Set alert at $50/month
 3. Email will alert if exceeded
@@ -336,6 +371,7 @@ Firebase Console → Billing:
 ## 🎯 Success Indicators
 
 ✅ All working when:
+
 1. `firebase deploy` completes without errors
 2. `firebase functions:list` shows all functions
 3. Cloud Functions logs show incoming requests

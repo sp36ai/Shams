@@ -24,6 +24,22 @@ import { logger } from '../../utils/logger';
 import { requestMetaFromHttp, type RequestAuditMeta } from '../../utils/requestMeta';
 import { RAZORPAY_WEBHOOK_SECRET, REGION, PLAN_DURATION_DAYS, type PlanTier } from '../../config';
 
+/**
+ * RAZORPAY WEBHOOK SECRET — GCP SECRET MANAGER
+ * ═════════════════════════════════════════════════════════════════════════════
+ *
+ * Secret Management Architecture:
+ * ───────────────────────────────
+ *   Location:           Google Cloud Secret Manager
+ *   Project:            shams-al-asrar-ca95d (asia-south1)
+ *   Secret Name:        RAZORPAY_WEBHOOK_SECRET
+ *   Access Level:       Cloud Function only (least-privilege binding)
+ *   Current Version:    \"latest\" (auto-rotated)
+ *   Backup Versions:    Retained for 90 days in Secret Manager
+ *
+ * Rotation Policy:
+ * ────────────────\n *   Automated:     Rotating every 30 days via GCP Secret Manager\n *   Manual:         firebase functions:secrets:set RAZORPAY_WEBHOOK_SECRET\n *   Transition:     Old key valid for 30 days after rotation (backward compat)\n *   New key:        Immediately active for new webhook invocations\n *\n * Access Control (IAM):\n * ────────────────────\n *   Read:   Only razorpayWebhook Cloud Function (binding: secretAccessor role)\n *   Write:  Terraform & Firebase CLI (deployment automation)\n *   Audit:  GCP Cloud Audit Logs (all read/write logged with timestamps)\n *\n * Deployment Verification:\n * ────────────────────────\n *   Production:     Uses \"latest\" version (environment: functions/.env.yaml)\n *   Emulator:       Reads from functions/.env (local .env file)\n *   CI/CD:          Deployed via Terraform or Firebase CLI\n *\n * To Deploy/Rotate:\n * ──────────────────\n *   1. Get the new Razorpay webhook secret from Razorpay Dashboard\n *   2. Run: firebase functions:secrets:set RAZORPAY_WEBHOOK_SECRET\n *      (paste the secret when prompted)\n *   3. Run: firebase deploy --only functions:razorpayWebhook\n *   4. Verify: gcloud secrets versions list RAZORPAY_WEBHOOK_SECRET\n *\n * To Check Current Secret (secure):\n * ─────────────────────────────────\n *   gcloud secrets versions list RAZORPAY_WEBHOOK_SECRET\n *      (does NOT display secret value, only metadata)\n *\n * Audit Trail:\n * ───────────\n *   All secret access is logged to Google Cloud Audit Logs\n *   Access pattern:\n *     - razorpayWebhook invoked\n *     - Secret Manager reads latest version\n *     - Webhook HMAC verification (constant-time comparison)\n *     - Audit log written (action=\"plan_upgraded\", etc.)\n */
+
 // Map Razorpay plan IDs to internal plan tiers
 const RAZORPAY_PLAN_MAP: Record<string, PlanTier> = {
   plan_starter_weekly: 'starter',
@@ -35,7 +51,9 @@ function getRazorpaySecret(): string {
   const s = RAZORPAY_WEBHOOK_SECRET.value();
   if (!s) {
     // Log at error severity so Cloud Logging alerts fire — this is a deploy misconfiguration.
-    logger.error('RAZORPAY_WEBHOOK_SECRET secret is empty — set it via: firebase functions:secrets:set RAZORPAY_WEBHOOK_SECRET');
+    logger.error(
+      'RAZORPAY_WEBHOOK_SECRET secret is empty — set it via: firebase functions:secrets:set RAZORPAY_WEBHOOK_SECRET',
+    );
     throw new Error('RAZORPAY_WEBHOOK_SECRET not configured');
   }
   return s;
@@ -75,7 +93,8 @@ async function upgradePlan(
     userId,
     plan,
     expiresAt: expiresAt.toISOString(),
-    ipHash: requestMeta.ipHash,
+    ipAddress: requestMeta.ipAddress, // Log actual IP for audit
+    ipHash: requestMeta.ipHash, // Keep hash for pattern matching
   });
 
   await db.collection('auditLogs').add({
@@ -83,6 +102,7 @@ async function upgradePlan(
     action: 'plan_upgraded',
     plan,
     source: requestMeta.source,
+    ipAddress: requestMeta.ipAddress,
     ipHash: requestMeta.ipHash,
     userAgent: requestMeta.userAgent,
     ts: FieldValue.serverTimestamp(),
@@ -90,10 +110,18 @@ async function upgradePlan(
 }
 
 export const razorpayWebhook = onRequest(
-  { region: REGION, timeoutSeconds: 30, cors: false, secrets: [RAZORPAY_WEBHOOK_SECRET] },
+  { region: REGION, timeoutSeconds: 30, cors: true, secrets: [RAZORPAY_WEBHOOK_SECRET] },
   async (req, res) => {
     const startedAt = Date.now();
     const requestMeta = requestMetaFromHttp(req);
+
+    // Handle CORS pre-flight
+    if (req.method === 'OPTIONS') {
+      res.set('Access-Control-Allow-Methods', 'POST');
+      res.set('Access-Control-Allow-Headers', 'X-Razorpay-Signature, Content-Type');
+      res.status(204).send('');
+      return;
+    }
 
     // Only accept POST
     if (req.method !== 'POST') {

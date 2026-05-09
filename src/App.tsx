@@ -1,38 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { StatusBar, StyleSheet, Text, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import appCheck from '@react-native-firebase/app-check';
-import type { FirebaseAppCheckTypes } from '@react-native-firebase/app-check';
 
 import { ThemeProvider, readPersistedThemeId } from '@theme/ThemeProvider';
 import { I18nProvider, readPersistedLang, applyLayoutDirection } from '@i18n/I18nProvider';
 import RootNavigator from '@navigation/RootNavigator';
 import { runSecurityChecks, INTEGRITY_FAIL_MESSAGE } from '@utils/security';
-
-// Initialise App Check before any Firebase service is used.
-// Debug token is optional and only read in __DEV__ builds.
-// Register debug tokens in Firebase Console → App Check → Manage debug tokens.
-const appCheckDebugToken =
-  __DEV__ && process.env.FIREBASE_APP_CHECK_DEBUG_TOKEN_ANDROID
-    ? process.env.FIREBASE_APP_CHECK_DEBUG_TOKEN_ANDROID.trim()
-    : undefined;
-
-const _rnfbProvider: FirebaseAppCheckTypes.ReactNativeFirebaseAppCheckProvider =
-  appCheck().newReactNativeFirebaseAppCheckProvider();
-_rnfbProvider.configure({
-  android: {
-    provider: __DEV__ ? 'debug' : 'playIntegrity',
-    debugToken: appCheckDebugToken,
-  },
-  apple: {
-    provider: __DEV__ ? 'debug' : 'appAttestWithDeviceCheckFallback',
-  },
-  web: { provider: 'reCaptchaV3', siteKey: 'unused' },
-});
-// activate() only accepts strings; the provider-object API is initializeAppCheck.
-appCheck().initializeAppCheck({ provider: _rnfbProvider, isTokenAutoRefreshEnabled: true }).catch(
-  (e: unknown) => console.warn('[AppCheck] init error (non-fatal in dev):', e),
-);
+import { initializeAppCheck } from './firebase/appCheck';
 
 // Apply RTL layout direction synchronously before React tree mounts.
 const _initialLang = readPersistedLang();
@@ -58,6 +32,12 @@ const styles = StyleSheet.create({
 
 export default function App(): React.ReactElement {
   const [securityPassed, setSecurityPassed] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    void initializeAppCheck().catch((e: unknown) => {
+      console.warn('[AppCheck] init error (non-fatal during bootstrap):', e);
+    });
+  }, []);
 
   useEffect(() => {
     const result = runSecurityChecks();

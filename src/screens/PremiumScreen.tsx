@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useState } from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
@@ -10,6 +10,9 @@ import { useTypography } from '@theme/useTypography';
 import { useTranslation } from '@i18n/I18nProvider';
 import { useQuotaStore, type PlanTier } from '@stores/quotaStore';
 import type { RootStackParamList } from '@navigation/types';
+import StarfieldBackground from '@components/StarfieldBackground';
+import { GlowView } from '@components/GlowView';
+import ShimmerOverlay from '@components/ShimmerOverlay';
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 
@@ -112,7 +115,6 @@ const PremiumScreen: React.FC = () => {
           navigation.goBack();
         }
       } catch (e) {
-        // show error inline, never throw to UI
         Alert.alert(t('common.error') ?? 'Error', 'Payment verification failed');
       }
     },
@@ -128,6 +130,14 @@ const PremiumScreen: React.FC = () => {
       style={[styles.root, { backgroundColor: theme.colors.bg }]}
       edges={['top', 'bottom']}
     >
+      {/* Deep-space backdrop */}
+      <StarfieldBackground
+        starColor={colors.starfield}
+        nebula1={colors.nebula1}
+        nebula2={colors.nebula2}
+        nebula3={colors.nebula3}
+      />
+
       {/* Header */}
       <View style={[styles.header, { borderColor: colors.border }]}>
         <Pressable
@@ -151,7 +161,7 @@ const PremiumScreen: React.FC = () => {
         <Text
           style={[
             typography('caption'),
-            { color: colors.textMuted, textAlign: 'center', marginBottom: 24 },
+            { color: colors.textMuted, textAlign: 'center', marginBottom: 24, letterSpacing: 0.5 },
           ]}
         >
           {t('premium.subheading')}
@@ -169,7 +179,6 @@ const PremiumScreen: React.FC = () => {
           />
         ))}
 
-        {/* Money-back promise */}
         <Text
           style={[
             typography('caption'),
@@ -179,7 +188,6 @@ const PremiumScreen: React.FC = () => {
           {t('premium.moneyBackPromise')}
         </Text>
 
-        {/* Restore */}
         <Pressable onPress={handleRestore} style={styles.restoreBtn} hitSlop={8}>
           <Text style={[typography('caption'), { color: colors.accent, textAlign: 'center' }]}>
             {t('premium.restorePurchase')}
@@ -211,6 +219,8 @@ const TierCard: React.FC<TierCardProps> = ({
   typography,
   t,
 }) => {
+  const [cardWidth, setCardWidth] = useState(0);
+
   const borderColor = tier.highlighted
     ? colors.accent
     : isCurrent
@@ -229,22 +239,29 @@ const TierCard: React.FC<TierCardProps> = ({
       ? colors.textOnPrimary
       : colors.accent;
 
-  return (
+  const cardContent = (
     <View
+      onLayout={e => setCardWidth(e.nativeEvent.layout.width)}
       style={[
         styles.card,
         {
           backgroundColor: colors.surface,
           borderColor,
           borderWidth: tier.highlighted || isCurrent ? 1.5 : StyleSheet.hairlineWidth,
+          // iOS colored shadow for all cards
+          shadowColor: tier.highlighted ? colors.accent : colors.border,
+          shadowRadius: tier.highlighted ? 0 : 4,
+          shadowOpacity: tier.highlighted ? 0 : 0.3,
+          shadowOffset: { width: 0, height: 2 },
+          elevation: tier.highlighted ? 0 : 2,
         },
       ]}
     >
       {/* Recommended badge */}
       {tier.highlighted && (
-        <View style={[styles.badge, { backgroundColor: colors.accent }]}>
-          <Text style={[typography('caption'), { color: colors.textOnPrimary }]}>
-            ★ Recommended
+        <View style={[styles.badge, { backgroundColor: colors.accent + 'EE' }]}>
+          <Text style={[typography('caption'), { color: colors.textOnPrimary, letterSpacing: 1 }]}>
+            ✦ RECOMMENDED
           </Text>
         </View>
       )}
@@ -255,7 +272,13 @@ const TierCard: React.FC<TierCardProps> = ({
       {/* Price row */}
       <View style={styles.priceRow}>
         <Text
-          style={[typography('title'), { color: tier.highlighted ? colors.accent : colors.text }]}
+          style={[
+            typography('title'),
+            {
+              color: tier.highlighted ? colors.accent : colors.text,
+              fontSize: tier.highlighted ? 34 : 28,
+            },
+          ]}
         >
           {t(tier.priceKey)}
         </Text>
@@ -278,8 +301,17 @@ const TierCard: React.FC<TierCardProps> = ({
       <View style={styles.features}>
         {tier.features.map(feat => (
           <View key={feat} style={styles.featureRow}>
-            <Text style={[typography('caption'), { color: colors.positive, marginRight: 8 }]}>
-              ✓
+            <Text
+              style={[
+                typography('caption'),
+                {
+                  color: tier.highlighted ? colors.accent : colors.positive,
+                  marginRight: 10,
+                  fontSize: tier.highlighted ? 13 : 12,
+                },
+              ]}
+            >
+              {tier.highlighted ? '✦' : '✓'}
             </Text>
             <Text style={[typography('caption'), { color: colors.text, flex: 1 }]}>
               {t(FEATURE_KEYS[feat] as Parameters<typeof t>[0])}
@@ -288,22 +320,54 @@ const TierCard: React.FC<TierCardProps> = ({
         ))}
       </View>
 
-      {/* CTA */}
-      <Pressable
-        onPress={() => onSelect(tier.plan)}
-        disabled={isCurrent}
-        style={({ pressed }) => [
-          styles.cta,
-          { backgroundColor: ctaBg, borderColor, borderWidth: isCurrent ? 0 : 1 },
-          pressed && { opacity: 0.8 },
-        ]}
-        accessibilityRole="button"
-        accessibilityLabel={`${ctaLabel} ${t(tier.titleKey)}`}
-      >
-        <Text style={[typography('button'), { color: ctaTextColor }]}>{ctaLabel}</Text>
-      </Pressable>
+      {/* CTA — shimmer on highlighted tier */}
+      <View style={[styles.ctaWrap, { overflow: 'hidden', borderRadius: 12 }]}>
+        <Pressable
+          onPress={() => onSelect(tier.plan)}
+          disabled={isCurrent}
+          style={({ pressed }) => [
+            styles.cta,
+            {
+              backgroundColor: ctaBg,
+              borderColor,
+              borderWidth: isCurrent ? 0 : 1,
+              transform: [{ scale: pressed ? 0.975 : 1 }],
+              shadowColor: tier.highlighted ? colors.accent : 'transparent',
+              shadowRadius: 8,
+              shadowOpacity: 0.5,
+              shadowOffset: { width: 0, height: 3 },
+              elevation: tier.highlighted ? 4 : 0,
+            },
+          ]}
+          accessibilityRole="button"
+          accessibilityLabel={`${ctaLabel} ${t(tier.titleKey)}`}
+        >
+          <Text style={[typography('button'), { color: ctaTextColor, letterSpacing: 0.5 }]}>
+            {ctaLabel}
+          </Text>
+        </Pressable>
+        {tier.highlighted && !isCurrent && (
+          <ShimmerOverlay width={cardWidth} periodMs={2800} color="rgba(255,255,255,0.12)" />
+        )}
+      </View>
     </View>
   );
+
+  if (tier.highlighted) {
+    return (
+      <GlowView
+        glowColor={colors.accent}
+        glowRadius={18}
+        borderRadius={16}
+        pulsing
+        style={styles.glowWrap}
+      >
+        {cardContent}
+      </GlowView>
+    );
+  }
+
+  return cardContent;
 };
 
 /* -------------------------------------------------------------------------- */
@@ -328,6 +392,9 @@ const styles = StyleSheet.create({
     paddingBottom: 40,
     gap: 16,
   },
+  glowWrap: {
+    marginHorizontal: 0,
+  },
   card: {
     borderRadius: 16,
     padding: 20,
@@ -337,8 +404,8 @@ const styles = StyleSheet.create({
   badge: {
     alignSelf: 'flex-start',
     borderRadius: 999,
-    paddingHorizontal: 10,
-    paddingVertical: 3,
+    paddingHorizontal: 12,
+    paddingVertical: 4,
     marginBottom: 4,
   },
   priceRow: {
@@ -347,16 +414,18 @@ const styles = StyleSheet.create({
     marginVertical: 4,
   },
   features: {
-    gap: 6,
+    gap: 8,
     marginBottom: 8,
   },
   featureRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
   },
-  cta: {
+  ctaWrap: {
     marginTop: 4,
-    paddingVertical: 13,
+  },
+  cta: {
+    paddingVertical: 14,
     borderRadius: 12,
     alignItems: 'center',
   },

@@ -8,12 +8,14 @@
 ## Overview
 
 The `judgeHorary()` function is a **pure deterministic function**:
+
 - **Input:** `Chart` (computed ephemeris + natal positions) + `ClassifiedQuestion` (text + type)
 - **Output:** `Verdict` (verdict kind, confidence, reasoning trace, remedy, timing, narration in 3 languages)
 - **Guarantee:** Same input → identical output, every time, forever
 - **No side effects:** No random numbers, no date.now(), no API calls
 
 This is **ideal for unit testing**. We must:
+
 1. Write test fixtures for 50+ scenarios
 2. Cover all 5 verdict kinds (YES, NO, CONDITIONAL, DELAYED, UNCLEAR)
 3. Test edge cases (retrograde planets, boundary house hits, Kotamraju filter logic)
@@ -24,14 +26,14 @@ This is **ideal for unit testing**. We must:
 
 ## Deliverables
 
-| Artifact | Path | Purpose |
-|---|---|---|
-| **Test Framework Setup** | `functions/vitest.config.ts` | Vitest config for functions folder |
-| **Test Suite** | `functions/src/engine/__tests__/judgeHorary.test.ts` | ~1,500 lines; 50+ test cases |
-| **Fixture Generator** | `functions/src/engine/__tests__/fixtures.ts` | Reusable chart + question builders |
-| **Test Data** | `functions/src/engine/__tests__/data/` | Sample charts, verdicts, edge cases |
-| **Snapshot File** | `functions/src/engine/__tests__/__snapshots__/` | Frozen outputs for regression |
-| **Coverage Report** | `functions/coverage/` | Must be 100% for `/engine/` folder |
+| Artifact                 | Path                                                 | Purpose                             |
+| ------------------------ | ---------------------------------------------------- | ----------------------------------- |
+| **Test Framework Setup** | `functions/vitest.config.ts`                         | Vitest config for functions folder  |
+| **Test Suite**           | `functions/src/engine/__tests__/judgeHorary.test.ts` | ~1,500 lines; 50+ test cases        |
+| **Fixture Generator**    | `functions/src/engine/__tests__/fixtures.ts`         | Reusable chart + question builders  |
+| **Test Data**            | `functions/src/engine/__tests__/data/`               | Sample charts, verdicts, edge cases |
+| **Snapshot File**        | `functions/src/engine/__tests__/__snapshots__/`      | Frozen outputs for regression       |
+| **Coverage Report**      | `functions/coverage/`                                | Must be 100% for `/engine/` folder  |
 
 ---
 
@@ -45,6 +47,7 @@ npm install --save-dev vitest @vitest/ui @types/vitest
 ```
 
 Update `functions/package.json` scripts:
+
 ```json
 {
   "scripts": {
@@ -59,6 +62,7 @@ Update `functions/package.json` scripts:
 ### **Step 2: Create Vitest Config** (10 min)
 
 Create `functions/vitest.config.ts`:
+
 ```typescript
 import { defineConfig } from 'vitest/config';
 import { resolve } from 'path';
@@ -217,12 +221,20 @@ function buildTestCusps(): readonly CuspDetail[] {
   for (let h = 1; h <= 12; h++) {
     cusps.push({
       house: h as HouseIndex,
-      sign: ((h - 1) % 12) + 1 as SignIndex,
+      sign: (((h - 1) % 12) + 1) as SignIndex,
       degreeInSign: 15 + h,
-      nakshatra: ((h - 1) % 27) + 1 as NakshatraIndex,
-      nakshatraLord: ['Sun', 'Moon', 'Mars', 'Mercury', 'Jupiter', 'Venus', 'Saturn', 'Rahu', 'Ketu'][
-        (h - 1) % 9
-      ] as Planet,
+      nakshatra: (((h - 1) % 27) + 1) as NakshatraIndex,
+      nakshatraLord: [
+        'Sun',
+        'Moon',
+        'Mars',
+        'Mercury',
+        'Jupiter',
+        'Venus',
+        'Saturn',
+        'Rahu',
+        'Ketu',
+      ][(h - 1) % 9] as Planet,
       subLord: ['Mercury', 'Venus', 'Mars', 'Jupiter', 'Saturn', 'Sun', 'Moon', 'Rahu', 'Ketu'][
         (h - 1) % 9
       ] as Planet,
@@ -289,16 +301,13 @@ import { buildTestChart, buildTestQuestion, TEST_SCENARIOS } from './fixtures';
 import type { VerdictKind } from '../types/verdict';
 
 describe('judgeHorary — RKP Judgment Engine', () => {
-  
   describe('Determinism (core contract)', () => {
     it('should produce identical output for identical inputs (10 iterations)', () => {
       const chart = buildTestChart();
       const question = buildTestQuestion('career', 'Will I succeed?');
-      
-      const results = Array.from({ length: 10 }, () =>
-        judgeHorary(chart, question)
-      );
-      
+
+      const results = Array.from({ length: 10 }, () => judgeHorary(chart, question));
+
       const firstResult = results[0];
       results.forEach((result, i) => {
         expect(result).toEqual(firstResult);
@@ -309,12 +318,14 @@ describe('judgeHorary — RKP Judgment Engine', () => {
     it('should produce consistent readingId (FNV-1a hash)', () => {
       const chart = buildTestChart();
       const q1 = buildTestQuestion('career', 'Will I succeed?');
-      
+
       const v1 = judgeHorary(chart, q1);
       const v2 = judgeHorary(chart, q1);
-      
+
       expect(v1.readingId).toBe(v2.readingId);
-      expect(v1.readingId).toMatch(/^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/i);
+      expect(v1.readingId).toMatch(
+        /^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/i,
+      );
     });
   });
 
@@ -322,11 +333,11 @@ describe('judgeHorary — RKP Judgment Engine', () => {
     TEST_SCENARIOS.forEach(scenario => {
       it(`scenario: ${scenario.name} — ${scenario.description}`, () => {
         const verdict = judgeHorary(scenario.chart, scenario.question);
-        
+
         if (scenario.expectedVerdictKind) {
           expect(verdict.verdict).toBe(scenario.expectedVerdictKind);
         }
-        
+
         expect(['YES', 'NO', 'CONDITIONAL', 'DELAYED', 'UNCLEAR']).toContain(verdict.verdict);
         expect(verdict.confidence).toBeGreaterThanOrEqual(0);
         expect(verdict.confidence).toBeLessThanOrEqual(100);
@@ -339,7 +350,7 @@ describe('judgeHorary — RKP Judgment Engine', () => {
       const chart = buildTestChart();
       const question = buildTestQuestion('career', 'Will I get promoted?');
       const verdict = judgeHorary(chart, question);
-      
+
       if (verdict.verdict === 'YES') {
         expect(verdict.confidence).toBeGreaterThanOrEqual(75);
         expect(verdict.confidence).toBeLessThanOrEqual(95);
@@ -353,7 +364,7 @@ describe('judgeHorary — RKP Judgment Engine', () => {
       });
       const question = buildTestQuestion('property', 'Should I buy the house?');
       const verdict = judgeHorary(chart, question);
-      
+
       if (verdict.verdict === 'CONDITIONAL') {
         expect(verdict.confidence).toBeGreaterThanOrEqual(45);
         expect(verdict.confidence).toBeLessThanOrEqual(60);
@@ -367,7 +378,7 @@ describe('judgeHorary — RKP Judgment Engine', () => {
       });
       const question = buildTestQuestion('love', 'Will they love me?');
       const verdict = judgeHorary(chart, question);
-      
+
       if (verdict.verdict === 'UNCLEAR') {
         expect(verdict.confidence).toBeLessThanOrEqual(25);
       }
@@ -379,7 +390,7 @@ describe('judgeHorary — RKP Judgment Engine', () => {
       const chart = buildTestChart();
       const question = buildTestQuestion('career', 'Will I succeed?');
       const verdict = judgeHorary(chart, question);
-      
+
       expect(verdict.narration.en).toBeTruthy();
       expect(verdict.narration.en).toContain(verdict.category);
       expect(verdict.narration.en.length).toBeGreaterThan(20);
@@ -389,7 +400,7 @@ describe('judgeHorary — RKP Judgment Engine', () => {
       const chart = buildTestChart();
       const question = buildTestQuestion('marriage', 'Should I marry?');
       const verdict = judgeHorary(chart, question);
-      
+
       expect(verdict.narration.ur).toBeTruthy();
       expect(verdict.narration.ur.length).toBeGreaterThan(20);
     });
@@ -398,19 +409,19 @@ describe('judgeHorary — RKP Judgment Engine', () => {
       const chart = buildTestChart();
       const question = buildTestQuestion('health', 'Will I recover?');
       const verdict = judgeHorary(chart, question);
-      
+
       expect(verdict.narration.hi).toBeTruthy();
       expect(verdict.narration.hi.length).toBeGreaterThan(20);
     });
 
     it('should include question category in narration', () => {
       const categories = ['career', 'marriage', 'property', 'legal', 'health', 'love', 'business'];
-      
+
       categories.forEach(category => {
         const chart = buildTestChart();
         const question = buildTestQuestion(category, 'Random question');
         const verdict = judgeHorary(chart, question);
-        
+
         expect(verdict.category).toBe(category);
         expect(verdict.narration.en).toContain(category);
       });
@@ -428,7 +439,7 @@ describe('judgeHorary — RKP Judgment Engine', () => {
       });
       const question = buildTestQuestion('career', 'Will I get promoted?');
       const verdict = judgeHorary(chart, question);
-      
+
       if (verdict.verdict === 'DELAYED') {
         expect(verdict.narration.en).toContain('delay');
       }
@@ -452,7 +463,7 @@ describe('judgeHorary — RKP Judgment Engine', () => {
       const chart = buildTestChart();
       const question = buildTestQuestion('career', 'Will I succeed?');
       const verdict = judgeHorary(chart, question);
-      
+
       const rpReasons = verdict.reasoning.filter(r => r.description.includes('Ruling Planet'));
       expect(rpReasons.length).toBeGreaterThan(0);
     });
@@ -468,7 +479,7 @@ describe('judgeHorary — RKP Judgment Engine', () => {
       const chart = buildTestChart();
       const question = buildTestQuestion('career', 'When will I get promoted?');
       const verdict = judgeHorary(chart, question);
-      
+
       expect(['days', 'weeks', 'months', 'years']).toContain(verdict.timing.window);
       expect(verdict.timing.range.min).toBeGreaterThan(0);
       expect(verdict.timing.range.max).toBeGreaterThanOrEqual(verdict.timing.range.min);
@@ -478,7 +489,7 @@ describe('judgeHorary — RKP Judgment Engine', () => {
       const chart = buildTestChart();
       const question = buildTestQuestion('love', 'When will I find love?');
       const verdict = judgeHorary(chart, question);
-      
+
       expect(verdict.timing.activeDasha).toBeTruthy();
       expect(verdict.timing.activeAntardasha).toBeTruthy();
       expect(verdict.timing.activePratyantardasha).toBeTruthy();
@@ -490,7 +501,7 @@ describe('judgeHorary — RKP Judgment Engine', () => {
       const chart = buildTestChart();
       const question = buildTestQuestion('career', 'Will I succeed?');
       const verdict = judgeHorary(chart, question);
-      
+
       if (verdict.remedy) {
         expect(verdict.remedy.planet).toBeTruthy();
         expect(verdict.remedy.action).toBeTruthy();
@@ -499,12 +510,22 @@ describe('judgeHorary — RKP Judgment Engine', () => {
     });
 
     it('remedy planet should be one of 9 planets', () => {
-      const validPlanets = ['Sun', 'Moon', 'Mars', 'Mercury', 'Jupiter', 'Venus', 'Saturn', 'Rahu', 'Ketu'];
-      
+      const validPlanets = [
+        'Sun',
+        'Moon',
+        'Mars',
+        'Mercury',
+        'Jupiter',
+        'Venus',
+        'Saturn',
+        'Rahu',
+        'Ketu',
+      ];
+
       const chart = buildTestChart();
       const question = buildTestQuestion('marriage', 'Should I marry?');
       const verdict = judgeHorary(chart, question);
-      
+
       if (verdict.remedy) {
         expect(validPlanets).toContain(verdict.remedy.planet);
       }
@@ -514,7 +535,7 @@ describe('judgeHorary — RKP Judgment Engine', () => {
       const chart = buildTestChart();
       const question = buildTestQuestion('health', 'Will I recover?');
       const verdict = judgeHorary(chart, question);
-      
+
       if (verdict.remedy?.mantra) {
         expect(verdict.remedy.mantra).toMatch(/Om|Namah/);
       }
@@ -524,7 +545,7 @@ describe('judgeHorary — RKP Judgment Engine', () => {
       const chart = buildTestChart();
       const question = buildTestQuestion('business', 'Will my business grow?');
       const verdict = judgeHorary(chart, question);
-      
+
       if (verdict.remedy?.charity) {
         expect(verdict.remedy.charity.length).toBeGreaterThan(0);
       }
@@ -536,11 +557,11 @@ describe('judgeHorary — RKP Judgment Engine', () => {
       const chart = buildTestChart();
       const question = buildTestQuestion('career', 'Will I get promoted?');
       const verdict = judgeHorary(chart, question);
-      
+
       const steps = verdict.reasoning.filter(r => r.ruleId.startsWith('STEP_'));
       expect(steps.length).toBeGreaterThanOrEqual(4);
       expect(steps.map(s => s.ruleId)).toEqual(
-        expect.arrayContaining(['STEP_1', 'STEP_2', 'STEP_4'])
+        expect.arrayContaining(['STEP_1', 'STEP_2', 'STEP_4']),
       );
     });
 
@@ -548,7 +569,7 @@ describe('judgeHorary — RKP Judgment Engine', () => {
       const chart = buildTestChart();
       const question = buildTestQuestion('legal', 'Will I win the case?');
       const verdict = judgeHorary(chart, question);
-      
+
       verdict.reasoning.forEach(reason => {
         expect(reason.weight).toBeGreaterThanOrEqual(0);
         expect(typeof reason.description).toBe('string');
@@ -559,7 +580,7 @@ describe('judgeHorary — RKP Judgment Engine', () => {
       const chart = buildTestChart();
       const question = buildTestQuestion('property', 'Should I sell the property?');
       const verdict = judgeHorary(chart, question);
-      
+
       verdict.reasoning.forEach(reason => {
         expect(reason.description).toMatch(/\[STEP|\w+/);
         expect(reason.description.length).toBeGreaterThan(5);
@@ -571,18 +592,31 @@ describe('judgeHorary — RKP Judgment Engine', () => {
     it('should handle question text with special chars (emoji, RTL)', () => {
       const chart = buildTestChart();
       const question = buildTestQuestion('career', 'کیا میں ترقی پاؤں گا؟');
-      
+
       expect(() => judgeHorary(chart, question)).not.toThrow();
     });
 
     it('should handle all 12 question types', () => {
-      const types = ['career', 'marriage', 'property', 'legal', 'health', 'love', 'business', 'travel', 'education', 'children', 'money', 'partnership'];
-      
+      const types = [
+        'career',
+        'marriage',
+        'property',
+        'legal',
+        'health',
+        'love',
+        'business',
+        'travel',
+        'education',
+        'children',
+        'money',
+        'partnership',
+      ];
+
       types.forEach(type => {
         const chart = buildTestChart();
         const question = buildTestQuestion(type, 'Sample question');
         const verdict = judgeHorary(chart, question);
-        
+
         expect(verdict.category).toBe(type);
       });
     });
@@ -590,14 +624,19 @@ describe('judgeHorary — RKP Judgment Engine', () => {
     it('should never throw for valid chart + question', () => {
       const charts = [
         buildTestChart(),
-        buildTestChart({ planets: { ...buildTestChart().planets, Sun: { ...buildTestChart().planets.Sun, isRetrograde: true } } }),
+        buildTestChart({
+          planets: {
+            ...buildTestChart().planets,
+            Sun: { ...buildTestChart().planets.Sun, isRetrograde: true },
+          },
+        }),
       ];
-      
+
       const questions = [
         buildTestQuestion('career', 'Will I succeed?'),
         buildTestQuestion('marriage', 'Should I marry?'),
       ];
-      
+
       charts.forEach(chart => {
         questions.forEach(question => {
           expect(() => judgeHorary(chart, question)).not.toThrow();
@@ -610,7 +649,7 @@ describe('judgeHorary — RKP Judgment Engine', () => {
         cusps: [] as any,
       });
       const question = buildTestQuestion('career', 'Will I succeed?');
-      
+
       expect(() => judgeHorary(badChart, question)).toThrow(RangeError);
     });
   });
@@ -620,7 +659,7 @@ describe('judgeHorary — RKP Judgment Engine', () => {
       const chart = buildTestChart();
       const question = buildTestQuestion('career', 'Will I get the job?');
       const verdict = judgeHorary(chart, question);
-      
+
       expect(verdict).toMatchSnapshot();
     });
 
@@ -629,7 +668,7 @@ describe('judgeHorary — RKP Judgment Engine', () => {
       const chart = buildTestChart();
       const question = buildTestQuestion('marriage', 'Should I marry now or wait?');
       const verdict = judgeHorary(chart, question);
-      
+
       expect(verdict).toMatchSnapshot();
     });
   });
@@ -655,16 +694,19 @@ Create `TEST_RESULTS.md`:
 # Phase 1 Test Results
 
 ## Summary
+
 - **Test Suites:** 1
 - **Tests:** 50+
 - **Coverage:** 100% (engine folder)
 - **Time:** ~50ms per test
 
 ## Determinism Verification ✅
+
 - All 10 iterations of identical input produce identical output
 - ReadingId is deterministic (FNV-1a hash)
 
 ## Verdict Kinds ✅
+
 - YES: 75–95 confidence
 - NO: 75–95 confidence
 - CONDITIONAL: 45–60 confidence
@@ -672,21 +714,25 @@ Create `TEST_RESULTS.md`:
 - UNCLEAR: ~20 confidence
 
 ## Multilingual Support ✅
+
 - English narrations: all verdict kinds
 - Urdu narrations: all verdict kinds
 - Hindi narrations: all verdict kinds
 
 ## Timing (Dasha) ✅
+
 - Vimshottari dasha periods calculated correctly
 - Window: days/weeks/months/years
 - MD/AD/PD active periods identified
 
 ## Remedy ✅
+
 - All 9 planets have remedy instructions
 - Mantras included (Sanskrit)
 - Charity suggestions included
 
 ## Edge Cases ✅
+
 - RTL text (Urdu/Hindi) handled
 - All 12 question types supported
 - Retrograde planets detected
@@ -703,20 +749,20 @@ Create `TEST_RESULTS.md`:
 ✅ **Determinism verified** (10 identical runs)  
 ✅ **All 5 verdict kinds** tested with confidence bounds  
 ✅ **All 3 languages** narration verified  
-✅ **Edge cases** tested (retrograde, all q-types, special chars)  
+✅ **Edge cases** tested (retrograde, all q-types, special chars)
 
 ---
 
 ## Timeline
 
-| Task | Time | Owner |
-|------|------|-------|
-| Install + Config Vitest | 25 min | You |
-| Build Fixture Generator | 45 min | You |
-| Write Test Suite | 2.5 h | You |
-| Run Coverage + Debug | 1 h | You |
-| Document Results | 15 min | You |
-| **TOTAL** | **~5 hours** | |
+| Task                    | Time         | Owner |
+| ----------------------- | ------------ | ----- |
+| Install + Config Vitest | 25 min       | You   |
+| Build Fixture Generator | 45 min       | You   |
+| Write Test Suite        | 2.5 h        | You   |
+| Run Coverage + Debug    | 1 h          | You   |
+| Document Results        | 15 min       | You   |
+| **TOTAL**               | **~5 hours** |       |
 
 ---
 
@@ -725,6 +771,7 @@ Create `TEST_RESULTS.md`:
 Once Phase 1 tests pass, we move to **Phase 2: API & Validation**.
 
 We'll implement **Zod schemas** to validate all inputs to `judgeHorary()`:
+
 - `ChartSchema` — validate ephemeris data
 - `ClassifiedQuestionSchema` — validate question text + type
 - `InputValidationMiddleware` — strip/reject malformed data before engine runs

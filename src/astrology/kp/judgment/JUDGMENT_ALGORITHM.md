@@ -93,11 +93,9 @@ Retrograde delay modifier:
 ```ts
 if (
   verdict === 'YES' &&
-  (
-    chart.planets[moonSubLord].isRetrograde ||
+  (chart.planets[moonSubLord].isRetrograde ||
     chart.planets['Jupiter'].isRetrograde ||
-    chart.planets['Venus'].isRetrograde
-  )
+    chart.planets['Venus'].isRetrograde)
 ) {
   verdict = 'DELAYED';
 }

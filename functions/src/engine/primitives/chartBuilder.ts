@@ -364,7 +364,7 @@ export function buildChart(iso8601: string, lat: number, lon: number): Chart {
     HouseCusp,
   ];
 
-  // Step 8: Ruling planets (Day Lord + Hora Lord + Minute Lord per RKP spec)
+  // Step 8: Ruling planets (5 Classical Witnesses per KP spec)
   const momentMs = new Date(iso8601).getTime();
 
   const rp = getRulingPlanets({

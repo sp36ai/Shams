@@ -7,6 +7,7 @@
 ## 📌 Overview
 
 This implementation provides:
+
 - ✅ SHA256 fingerprint generation (production-grade)
 - ✅ SHA1 fingerprint generation (legacy support)
 - ✅ Certificate pinning for Firebase Cloud Functions
@@ -33,6 +34,7 @@ This implementation provides:
 ```
 
 **What it creates:**
+
 ```json
 {
   "fingerprints": {
@@ -82,13 +84,13 @@ export const CERTIFICATE_PINS = {
   production: {
     domain: 'us-central1-shams-al-asrar.cloudfunctions.net',
     sha256: 'PASTE_FIREBASE_SHA256_HERE', // From Phase 2
-    sha1: 'PASTE_FIREBASE_SHA1_HERE'
+    sha1: 'PASTE_FIREBASE_SHA1_HERE',
   },
   development: {
     domain: 'localhost:5001',
     sha256: 'PASTE_DEV_SHA256_HERE', // From Phase 1
-    sha1: 'PASTE_DEV_SHA1_HERE'
-  }
+    sha1: 'PASTE_DEV_SHA1_HERE',
+  },
 };
 ```
 
@@ -111,13 +113,13 @@ export default function App() {
   useEffect(() => {
     // Display current certificate configuration
     displayCertificatePinInfo();
-    
+
     // Setup Firebase Cloud Functions client with certificate pinning
     const functionsClient = axios.create({
       baseURL: 'https://us-central1-shams-al-asrar.cloudfunctions.net'
     });
     setupCertificatePinning(functionsClient);
-    
+
     // Use this client for all Cloud Functions calls
     // Example: submitHoraryQuestion() from src/firebase/examples.ts
   }, []);
@@ -152,6 +154,7 @@ firebase deploy --only functions
 ## 📊 Fingerprint Format Reference
 
 ### SHA256 Base64 (Primary)
+
 ```
 kT1234567890abcdefghijklmno+/ABC1234567890=
 └─ 43-44 characters typically
@@ -160,6 +163,7 @@ kT1234567890abcdefghijklmno+/ABC1234567890=
 ```
 
 ### SHA256 Hex (Alternative)
+
 ```
 a13d34e794e3c19f5e8e2c3e1f0a9b8c7d6e5f4g3h2i1j0k9l8m7n6o5p4q3r2s1
 └─ 64 characters (256-bit / 4 bits per hex digit)
@@ -167,6 +171,7 @@ a13d34e794e3c19f5e8e2c3e1f0a9b8c7d6e5f4g3h2i1j0k9l8m7n6o5p4q3r2s1
 ```
 
 ### SHA1 Colon Format (Legacy)
+
 ```
 AB:CD:EF:12:34:56:78:90:AB:CD:EF:12:34:56:78:90:AB:CD:EF:12
 └─ 59 characters (40 hex digits + 19 colons)
@@ -204,6 +209,7 @@ AB:CD:EF:12:34:56:78:90:AB:CD:EF:12:34:56:78:90:AB:CD:EF:12
 ```
 
 **Security Layers:**
+
 1. ✅ HTTPS/TLS encryption in transit
 2. ✅ Certificate pinning (prevents MITM)
 3. ✅ Server-side validation
@@ -247,7 +253,7 @@ Before deploying to production:
 - [ ] **SHA1 fingerprints** captured (legacy reference)
 - [ ] `functions/src/config.ts` updated with both SHA256 and SHA1
 - [ ] `src/utils/certificatePinning.ts` configured with fingerprints
-- [ ] Private keys (*.key) added to `.gitignore`
+- [ ] Private keys (\*.key) added to `.gitignore`
 - [ ] `setupCertificatePinning()` called in app initialization
 - [ ] Test certificate generation script works
 - [ ] Firebase Emulator starts successfully
@@ -260,6 +266,7 @@ Before deploying to production:
 ## 🔧 Troubleshooting
 
 ### "OpenSSL not found"
+
 ```powershell
 # Install OpenSSL
 choco install openssl
@@ -268,6 +275,7 @@ choco install openssl
 ```
 
 ### "Certificate verification failed"
+
 ```bash
 # Verify SHA256 matches
 openssl x509 -in cert.pem -pubkey -noout | \
@@ -279,6 +287,7 @@ openssl x509 -in cert.pem -pubkey -noout | \
 ```
 
 ### "Connection refused on localhost:5001"
+
 ```bash
 # Start Firebase Emulator
 firebase emulators:start
@@ -291,6 +300,7 @@ firebase functions:log
 ```
 
 ### "Private key appears in Git"
+
 ```bash
 # 1. Immediately rotate all credentials
 # 2. Remove from history: git filter-branch
@@ -316,20 +326,23 @@ git commit -m "Prevent private key leaks"
 ## 🎓 Key Concepts
 
 ### Why Certificate Pinning?
+
 - **Prevents MITM attacks** - Even if attacker compromises CA
 - **Protects API keys** - Firebase credentials transmitted securely
 - **Protects algorithm** - Calculation engine communication encrypted
 - **Enterprise security** - Industry standard for sensitive apps
 
 ### SHA256 vs SHA1
-| Aspect | SHA256 | SHA1 |
-|--------|--------|------|
-| Bit Strength | 256-bit | 160-bit |
-| Status | Current Standard | Legacy |
-| Collision Risk | Theoretically secure | Found (deprecated) |
-| Recommendation | ✅ Use for production | ⚠️ Reference only |
+
+| Aspect         | SHA256                | SHA1               |
+| -------------- | --------------------- | ------------------ |
+| Bit Strength   | 256-bit               | 160-bit            |
+| Status         | Current Standard      | Legacy             |
+| Collision Risk | Theoretically secure  | Found (deprecated) |
+| Recommendation | ✅ Use for production | ⚠️ Reference only  |
 
 ### Certificate Rotation
+
 - Firebase auto-rotates annually
 - Update fingerprints when rotating
 - Monitor Firebase Console for expiry
@@ -351,6 +364,7 @@ git commit -m "Prevent private key leaks"
 ## 📞 Support
 
 For certificate issues:
+
 1. Check [CERTIFICATE_PINNING_SETUP.md](CERTIFICATE_PINNING_SETUP.md)
 2. Review console logs: `firebase functions:log`
 3. Test manually: OpenSSL commands in troubleshooting section

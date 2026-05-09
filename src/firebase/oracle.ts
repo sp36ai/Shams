@@ -37,7 +37,25 @@ export async function askOracle(args: AskOracleInput): Promise<AskOracleResult> 
     confidence: number;
     category: string;
     narration: Record<'en' | 'ur' | 'hi', string>;
-    timing: { window: string; range: { min: number; max: number } };
+    timing?: {
+      window: string;
+      range: { min: number; max: number };
+      activeDasha?: string;
+      activeAntardasha?: string;
+      activePratyantardasha?: string;
+    };
+    cuspSubLords?: Array<{ house: number; subLord: string; subLordHouse: number }>;
+    rulingPlanets?: {
+      dayLord: string;
+      ascSignLord: string;
+      ascStarLord: string;
+      moonSignLord: string;
+      moonStarLord: string;
+      horaLord?: string;
+    };
+    significators?: { favorable: string[]; denial: string[]; neutral: string[] };
+    confirmedSignificators?: string[];
+    deniedSignificators?: string[];
     remedy?: {
       planet: string;
       action: string;
@@ -48,6 +66,27 @@ export async function askOracle(args: AskOracleInput): Promise<AskOracleResult> 
     reasoning: Array<{ ruleId: string; description: string; weight: number }>;
     quotaRemaining: number | null;
     computedAt: string;
+    planetDegrees?: Record<string, number>;
+    cuspDegrees?: Record<number, number>;
+    cuspSigns?: Record<number, string>;
+    planetChain?: Record<string, { nakshatraLord: string; subLord: string; subSubLord: string }>;
+    oracle?: {
+      opening: string;
+      interpretation: string;
+      spiritual_layer: string;
+      hidden_influence: string;
+      timing: string;
+      warning?: string;
+      remedy: {
+        quran_verse?: string;
+        translation?: string;
+        name_of_allah?: string;
+        dua?: string;
+        zikr?: string;
+        charity?: string;
+      };
+      signature: string;
+    };
   };
 
   const reading: Reading = {
@@ -65,6 +104,16 @@ export async function askOracle(args: AskOracleInput): Promise<AskOracleResult> 
       timing: data.timing,
       remedy: data.remedy,
       reasoning: data.reasoning,
+      rulingPlanets: data.rulingPlanets,
+      significators: data.significators,
+      confirmedSignificators: data.confirmedSignificators,
+      deniedSignificators: data.deniedSignificators,
+      cuspSubLords: data.cuspSubLords,
+      planetDegrees: data.planetDegrees,
+      cuspDegrees: data.cuspDegrees,
+      cuspSigns: data.cuspSigns,
+      planetChain: data.planetChain,
+      oracle: data.oracle,
     },
   };
 

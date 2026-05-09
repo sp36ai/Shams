@@ -34,6 +34,7 @@ import { useTranslation } from '@i18n/I18nProvider';
 import { useAuthStore } from '@stores/authStore';
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
 import { GOOGLE_WEB_CLIENT_ID } from '@stores/authStore';
+import StarfieldBackground from '@components/StarfieldBackground';
 
 /* -------------------------------------------------------------------------- */
 /*  Form state machine                                                        */
@@ -208,7 +209,9 @@ const AuthScreen: React.FC = () => {
   }, [form, t, clearError, signIn, signUp]);
 
   const handleForgotPassword = useCallback(async () => {
-    if (!form.email) return dispatch({ type: 'SET_ERRORS', emailError: t('auth.invalidEmail') });
+    if (!form.email) {
+      return dispatch({ type: 'SET_ERRORS', emailError: t('auth.invalidEmail') });
+    }
     try {
       await auth().sendPasswordResetEmail(form.email.trim());
     } catch (error) {
@@ -227,6 +230,14 @@ const AuthScreen: React.FC = () => {
 
   return (
     <SafeAreaView style={[styles.root, { backgroundColor: theme.colors.bg }]}>
+      {/* Premium starfield backdrop */}
+      <StarfieldBackground
+        starColor={colors.starfield}
+        nebula1={colors.nebula1}
+        nebula2={colors.nebula2}
+        nebula3={colors.nebula3}
+      />
+
       <KeyboardAvoidingView
         style={styles.flex}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -237,21 +248,41 @@ const AuthScreen: React.FC = () => {
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          {/* App wordmark */}
+          {/* App wordmark — premium glow treatment */}
           <View style={styles.brand}>
-            <Text style={[typography('title'), { color: colors.accent, textAlign: 'center' }]}>
+            {/* Accent glow behind the wordmark */}
+            <View
+              pointerEvents="none"
+              style={[
+                styles.brandGlow,
+                {
+                  backgroundColor: colors.nebula1,
+                  shadowColor: colors.accent,
+                  shadowRadius: 40,
+                  shadowOpacity: 0.5,
+                  shadowOffset: { width: 0, height: 0 },
+                },
+              ]}
+            />
+            <Text
+              style={[
+                typography('title'),
+                { color: colors.accent, textAlign: 'center', letterSpacing: 1.5 },
+              ]}
+            >
               Shams al-Asrār
             </Text>
             <Text
               style={[
                 typography('caption'),
-                { color: colors.textMuted, textAlign: 'center', marginTop: 4 },
+                { color: colors.textMuted, textAlign: 'center', marginTop: 4, letterSpacing: 2.5 },
               ]}
             >
-              RKP Horary Oracle
+              {'✦  RKP HORARY ORACLE  ✦'}
             </Text>
           </View>
 
+          {/* Form glass card */}
           {/* Tab row */}
           <View style={[styles.tabRow, { borderColor: colors.border }]}>
             <TabButton
@@ -342,9 +373,7 @@ const AuthScreen: React.FC = () => {
 
             {successMsg.length > 0 && (
               <View style={[styles.successBox, { borderColor: colors.accent }]}>
-                <Text style={[typography('caption'), { color: colors.accent }]}>
-                  {successMsg}
-                </Text>
+                <Text style={[typography('caption'), { color: colors.accent }]}>{successMsg}</Text>
               </View>
             )}
 
@@ -353,8 +382,16 @@ const AuthScreen: React.FC = () => {
               disabled={isLoading}
               style={({ pressed }) => [
                 styles.submitBtn,
-                { backgroundColor: isLoading ? colors.surfaceElevated : colors.primary },
-                pressed && { opacity: 0.85 },
+                {
+                  backgroundColor: isLoading ? colors.surfaceElevated : colors.primary,
+                  // 3D press: colored shadow + slight scale
+                  shadowColor: colors.accent,
+                  shadowRadius: pressed ? 4 : 12,
+                  shadowOpacity: pressed ? 0.2 : 0.5,
+                  shadowOffset: { width: 0, height: pressed ? 1 : 4 },
+                  elevation: pressed ? 2 : 6,
+                  transform: [{ scale: pressed ? 0.975 : 1 }],
+                },
               ]}
               accessibilityRole="button"
               accessibilityLabel={submitLabel}
@@ -362,7 +399,9 @@ const AuthScreen: React.FC = () => {
               {isLoading ? (
                 <ActivityIndicator color={colors.textOnPrimary} />
               ) : (
-                <Text style={[typography('button'), { color: colors.textOnPrimary }]}>
+                <Text
+                  style={[typography('button'), { color: colors.textOnPrimary, letterSpacing: 1 }]}
+                >
                   {submitLabel}
                 </Text>
               )}
@@ -370,9 +409,11 @@ const AuthScreen: React.FC = () => {
 
             <View style={styles.toggleRow}>
               <Text style={[typography('caption'), { color: colors.textMuted }]}>
-                {isSignUp ? "Already have an account? " : "Don't have an account? "}
+                {isSignUp ? 'Already have an account? ' : "Don't have an account? "}
               </Text>
-              <TouchableOpacity onPress={() => dispatch({ type: 'SET_TAB', tab: isSignUp ? 'signIn' : 'signUp' })}>
+              <TouchableOpacity
+                onPress={() => dispatch({ type: 'SET_TAB', tab: isSignUp ? 'signIn' : 'signUp' })}
+              >
                 <Text style={[typography('caption'), { color: colors.accent, fontWeight: 'bold' }]}>
                   {isSignUp ? t('auth.signInTab') : t('auth.signUpTab')}
                 </Text>
@@ -381,7 +422,9 @@ const AuthScreen: React.FC = () => {
 
             {!isSignUp && (
               <TouchableOpacity onPress={handleForgotPassword} style={styles.forgotBtn}>
-                <Text style={[typography('caption'), { color: colors.textMuted, textAlign: 'center' }]}>
+                <Text
+                  style={[typography('caption'), { color: colors.textMuted, textAlign: 'center' }]}
+                >
                   {t('auth.forgotPassword')}
                 </Text>
               </TouchableOpacity>
@@ -391,7 +434,9 @@ const AuthScreen: React.FC = () => {
           {/* Social sign-in */}
           <View style={styles.dividerRow}>
             <View style={[styles.dividerLine, { backgroundColor: colors.border }]} />
-            <Text style={[typography('caption'), { color: colors.textMuted, marginHorizontal: 12 }]}>
+            <Text
+              style={[typography('caption'), { color: colors.textMuted, marginHorizontal: 12 }]}
+            >
               {t('auth.orContinueWith')}
             </Text>
             <View style={[styles.dividerLine, { backgroundColor: colors.border }]} />
@@ -599,6 +644,14 @@ const styles = StyleSheet.create({
     marginBottom: 32,
     marginTop: 16,
     alignItems: 'center',
+    position: 'relative',
+  },
+  brandGlow: {
+    position: 'absolute',
+    width: 200,
+    height: 80,
+    borderRadius: 40,
+    opacity: 0.6,
   },
   tabRow: {
     flexDirection: 'row',

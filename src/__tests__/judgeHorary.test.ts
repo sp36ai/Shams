@@ -15,7 +15,13 @@
  */
 
 import { judgeHorary } from '../astrology/kp/judgment/judgeHorary';
-import type { Chart, Planet, PlanetPosition, HouseCusp, HouseIndex } from '../astrology/types/chart';
+import type {
+  Chart,
+  Planet,
+  PlanetPosition,
+  HouseCusp,
+  HouseIndex,
+} from '../astrology/types/chart';
 import type { ClassifiedQuestion } from '../astrology/types/question';
 
 jest.setTimeout(15000);
@@ -62,29 +68,54 @@ function planet(
 }
 
 const EVEN_CUSPS = Array.from({ length: 12 }, (_, i) => cusp(i + 1, i * 30)) as [
-  HouseCusp, HouseCusp, HouseCusp, HouseCusp,
-  HouseCusp, HouseCusp, HouseCusp, HouseCusp,
-  HouseCusp, HouseCusp, HouseCusp, HouseCusp,
+  HouseCusp,
+  HouseCusp,
+  HouseCusp,
+  HouseCusp,
+  HouseCusp,
+  HouseCusp,
+  HouseCusp,
+  HouseCusp,
+  HouseCusp,
+  HouseCusp,
+  HouseCusp,
+  HouseCusp,
 ];
 
 function makeChart(
   moonSubLord: Planet,
   planetHouses: Partial<Record<Planet, number>>,
   retrogrades: Partial<Record<Planet, boolean>> = {},
-  rulingPlanets: [Planet, Planet, Planet, Planet, Planet] = ['Sun', 'Mercury', 'Jupiter', 'Moon', 'Venus'],
+  rulingPlanets: [Planet, Planet, Planet, Planet, Planet] = [
+    'Sun',
+    'Mercury',
+    'Jupiter',
+    'Moon',
+    'Venus',
+  ],
 ): Chart {
   const houseToLon = (h: number) => (h - 1) * 30 + 15;
 
   const planets: Record<Planet, PlanetPosition> = {
-    Sun:     planet('Sun',     houseToLon(planetHouses.Sun     ?? 1)),
-    Moon:    planet('Moon',    houseToLon(planetHouses.Moon    ?? 1), { subLord: moonSubLord }),
-    Mars:    planet('Mars',    houseToLon(planetHouses.Mars    ?? 3), { isRetrograde: retrogrades.Mars    ?? false }),
-    Mercury: planet('Mercury', houseToLon(planetHouses.Mercury ?? 2), { isRetrograde: retrogrades.Mercury ?? false }),
-    Jupiter: planet('Jupiter', houseToLon(planetHouses.Jupiter ?? 4), { isRetrograde: retrogrades.Jupiter ?? false }),
-    Venus:   planet('Venus',   houseToLon(planetHouses.Venus   ?? 5), { isRetrograde: retrogrades.Venus   ?? false }),
-    Saturn:  planet('Saturn',  houseToLon(planetHouses.Saturn  ?? 7), { isRetrograde: retrogrades.Saturn  ?? false }),
-    Rahu:    planet('Rahu',    houseToLon(planetHouses.Rahu    ?? 9)),
-    Ketu:    planet('Ketu',    houseToLon(planetHouses.Ketu    ?? 3)),
+    Sun: planet('Sun', houseToLon(planetHouses.Sun ?? 1)),
+    Moon: planet('Moon', houseToLon(planetHouses.Moon ?? 1), { subLord: moonSubLord }),
+    Mars: planet('Mars', houseToLon(planetHouses.Mars ?? 3), {
+      isRetrograde: retrogrades.Mars ?? false,
+    }),
+    Mercury: planet('Mercury', houseToLon(planetHouses.Mercury ?? 2), {
+      isRetrograde: retrogrades.Mercury ?? false,
+    }),
+    Jupiter: planet('Jupiter', houseToLon(planetHouses.Jupiter ?? 4), {
+      isRetrograde: retrogrades.Jupiter ?? false,
+    }),
+    Venus: planet('Venus', houseToLon(planetHouses.Venus ?? 5), {
+      isRetrograde: retrogrades.Venus ?? false,
+    }),
+    Saturn: planet('Saturn', houseToLon(planetHouses.Saturn ?? 7), {
+      isRetrograde: retrogrades.Saturn ?? false,
+    }),
+    Rahu: planet('Rahu', houseToLon(planetHouses.Rahu ?? 9)),
+    Ketu: planet('Ketu', houseToLon(planetHouses.Ketu ?? 3)),
   };
 
   return {
@@ -119,12 +150,11 @@ describe('judgeHorary — scoring and verdict', () => {
     // Moon Sub-Lord = Mars → house 10 (favorable for career) → +2
     // Day/Hora/Minute lords: Sun→6, Mercury→6, Jupiter→11  → +3
     // Total: +5 → YES, no retrogrades
-    const chart = makeChart(
-      'Mars',
-      { Moon: 1, Mars: 10, Sun: 6, Mercury: 6, Jupiter: 11 },
-      {},
-      ['Sun', 'Mercury', 'Jupiter'],
-    );
+    const chart = makeChart('Mars', { Moon: 1, Mars: 10, Sun: 6, Mercury: 6, Jupiter: 11 }, {}, [
+      'Sun',
+      'Mercury',
+      'Jupiter',
+    ]);
     const verdict = judgeHorary(chart, CAREER_Q);
     expect(verdict.verdict).toBe('YES');
   });
@@ -133,12 +163,11 @@ describe('judgeHorary — scoring and verdict', () => {
     // Moon Sub-Lord = Venus → house 12 (denial for career) → -2
     // Day/Hora/Minute lords: Sun→5, Mercury→8, Jupiter→12 → -3
     // Total: -5 → NO
-    const chart = makeChart(
-      'Venus',
-      { Moon: 1, Venus: 12, Sun: 5, Mercury: 8, Jupiter: 12 },
-      {},
-      ['Sun', 'Mercury', 'Jupiter'],
-    );
+    const chart = makeChart('Venus', { Moon: 1, Venus: 12, Sun: 5, Mercury: 8, Jupiter: 12 }, {}, [
+      'Sun',
+      'Mercury',
+      'Jupiter',
+    ]);
     const verdict = judgeHorary(chart, CAREER_Q);
     expect(verdict.verdict).toBe('NO');
   });
@@ -147,12 +176,11 @@ describe('judgeHorary — scoring and verdict', () => {
     // Moon Sub-Lord = Saturn → house 7 (neutral for career) → 0
     // Day lord Sun→6 (+1), Hora lord Mercury→3 (neutral, 0), Minute lord Jupiter→5 (denial, -1)
     // Total: 0 → CONDITIONAL
-    const chart = makeChart(
-      'Saturn',
-      { Moon: 1, Saturn: 7, Sun: 6, Mercury: 3, Jupiter: 5 },
-      {},
-      ['Sun', 'Mercury', 'Jupiter'],
-    );
+    const chart = makeChart('Saturn', { Moon: 1, Saturn: 7, Sun: 6, Mercury: 3, Jupiter: 5 }, {}, [
+      'Sun',
+      'Mercury',
+      'Jupiter',
+    ]);
     const verdict = judgeHorary(chart, CAREER_Q);
     expect(verdict.verdict).toBe('CONDITIONAL');
   });
@@ -229,8 +257,14 @@ describe('judgeHorary — determinism', () => {
 
 describe('judgeHorary — house matrix coverage', () => {
   const qTypes: Array<ClassifiedQuestion['qType']> = [
-    'marriage', 'finance', 'health', 'property',
-    'travel', 'legal', 'education', 'business',
+    'marriage',
+    'finance',
+    'health',
+    'property',
+    'travel',
+    'legal',
+    'education',
+    'business',
   ];
 
   test.each(qTypes)('produces a valid verdict for %s questions', qType => {

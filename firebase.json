@@ -4,21 +4,9 @@
     {
       "source": "functions",
       "codebase": "default",
-      "ignore": [
-        "node_modules",
-        ".git",
-        "firebase-debug.log",
-        "firebase-debug.*.log",
-        "scripts"
-      ],
-      "predeploy": [
-        "npm --prefix \"$RESOURCE_DIR\" run build"
-      ],
-      "secrets": [
-        "RAZORPAY_WEBHOOK_SECRET",
-        "GOOGLE_PLAY_CLIENT_EMAIL",
-        "GOOGLE_PLAY_PRIVATE_KEY"
-      ]
+      "ignore": ["node_modules", ".git", "firebase-debug.log", "firebase-debug.*.log", "scripts"],
+      "predeploy": ["npm --prefix \"$RESOURCE_DIR\" run build"],
+      "secrets": ["RAZORPAY_WEBHOOK_SECRET", "GOOGLE_PLAY_CLIENT_EMAIL", "GOOGLE_PLAY_PRIVATE_KEY"]
     }
   ],
   "firestore": {

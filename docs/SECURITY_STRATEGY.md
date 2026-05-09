@@ -9,6 +9,7 @@
 ## Executive Summary
 
 This document outlines a multi-layered security architecture to protect:
+
 1. Proprietary KP astrology judgment algorithms
 2. Intellectual property (formulas, calculation logic)
 3. User data and readings history
@@ -34,26 +35,26 @@ This document outlines a multi-layered security architecture to protect:
 
 ### Critical Assets to Protect
 
-| Asset | Current State | Risk Level | Protection Priority |
-|-------|---------------|------------|---------------------|
-| **Judgment Algorithm** (`judgeHorary()`) | Client-side TypeScript | CRITICAL | P0 |
-| **Dasha Calculations** | Client-side TypeScript | CRITICAL | P0 |
-| **House Matrix Rules** | Client-side constants | HIGH | P1 |
-| **Nakshatra Significations** | Client-side data | HIGH | P1 |
-| **User Readings Data** | Supabase (some encryption) | HIGH | P1 |
-| **Authentication Tokens** | MMKV storage | MEDIUM | P2 |
-| **API Keys/Secrets** | Environment variables | MEDIUM | P2 |
-| **UI/UX Components** | Public code | LOW | P3 |
+| Asset                                    | Current State              | Risk Level | Protection Priority |
+| ---------------------------------------- | -------------------------- | ---------- | ------------------- |
+| **Judgment Algorithm** (`judgeHorary()`) | Client-side TypeScript     | CRITICAL   | P0                  |
+| **Dasha Calculations**                   | Client-side TypeScript     | CRITICAL   | P0                  |
+| **House Matrix Rules**                   | Client-side constants      | HIGH       | P1                  |
+| **Nakshatra Significations**             | Client-side data           | HIGH       | P1                  |
+| **User Readings Data**                   | Supabase (some encryption) | HIGH       | P1                  |
+| **Authentication Tokens**                | MMKV storage               | MEDIUM     | P2                  |
+| **API Keys/Secrets**                     | Environment variables      | MEDIUM     | P2                  |
+| **UI/UX Components**                     | Public code                | LOW        | P3                  |
 
 ### Threat Actors & Attack Vectors
 
-| Threat Actor | Attack Vector | Impact | Likelihood |
-|--------------|----------------|--------|------------|
-| **Competitors** | Reverse-engineer formula from JS bundle | IP theft, market competition | HIGH |
-| **Tech-savvy Users** | Decompile APK, inspect network traffic | Free access to premium, unauthorized use | HIGH |
-| **Hackers** | Exploit API vulnerabilities, data exfiltration | User data breach, system compromise | MEDIUM |
-| **Unauthorized Developers** | Clone proprietary algorithm for other apps | IP theft, brand dilution | MEDIUM |
-| **Bot Networks** | Abuse API for bulk free calculations | Resource exhaustion, DoS | MEDIUM |
+| Threat Actor                | Attack Vector                                  | Impact                                   | Likelihood |
+| --------------------------- | ---------------------------------------------- | ---------------------------------------- | ---------- |
+| **Competitors**             | Reverse-engineer formula from JS bundle        | IP theft, market competition             | HIGH       |
+| **Tech-savvy Users**        | Decompile APK, inspect network traffic         | Free access to premium, unauthorized use | HIGH       |
+| **Hackers**                 | Exploit API vulnerabilities, data exfiltration | User data breach, system compromise      | MEDIUM     |
+| **Unauthorized Developers** | Clone proprietary algorithm for other apps     | IP theft, brand dilution                 | MEDIUM     |
+| **Bot Networks**            | Abuse API for bulk free calculations           | Resource exhaustion, DoS                 | MEDIUM     |
 
 ---
 
@@ -62,6 +63,7 @@ This document outlines a multi-layered security architecture to protect:
 ### Current Vulnerability Assessment
 
 **Problem**: All astrology calculation logic is currently in client-side TypeScript:
+
 ```
 src/astrology/kp/
 ├── judgment/judgeHorary.ts      ← EXPOSED
@@ -72,6 +74,7 @@ src/astrology/kp/
 ```
 
 **Why This Is Risky**:
+
 1. React Native app bundles can be decompiled
 2. TypeScript compiles to readable JavaScript
 3. Constants and formulas are visible in source maps (if not stripped)
@@ -81,9 +84,11 @@ src/astrology/kp/
 ### Protection Strategy Options
 
 #### Option A: Backend-Driven Calculation (RECOMMENDED)
+
 **Architecture**: All calculation logic moved to secure backend
 
 **Implementation**:
+
 ```
 Client                           Backend
 ├─ Question data      ──POST──→ ├─ Validate request
@@ -95,6 +100,7 @@ Client                           Backend
 ```
 
 **Advantages**:
+
 - ✅ Algorithm completely hidden from users
 - ✅ Easy to update algorithm without app update
 - ✅ Can implement licensing/quota enforcement server-side
@@ -102,6 +108,7 @@ Client                           Backend
 - ✅ Premium tier can restrict calculation volume
 
 **Disadvantages**:
+
 - ❌ Requires backend infrastructure
 - ❌ Slightly higher latency (network round-trip)
 - ❌ No offline capability without caching
@@ -111,9 +118,11 @@ Client                           Backend
 ---
 
 #### Option B: Hybrid Approach (BALANCED)
+
 **Architecture**: UI logic client-side, core calculations backend
 
 **Implementation**:
+
 ```
 Client-side:
 - Question UI (collection)
@@ -129,6 +138,7 @@ Backend-side:
 ```
 
 **API Endpoint**:
+
 ```
 POST /api/v1/judge-horary
 Content-Type: application/json
@@ -153,12 +163,14 @@ Response:
 ```
 
 **Advantages**:
+
 - ✅ Strong protection without complete redesign
 - ✅ Better UX (responsive UI)
 - ✅ Offline mode possible with cached results
 - ✅ Gradual migration path
 
 **Disadvantages**:
+
 - ⚠️ Still requires some backend changes
 - ⚠️ More complex to maintain two calculation paths
 
@@ -167,9 +179,11 @@ Response:
 ---
 
 #### Option C: Native Module Wrapping
+
 **Architecture**: Compile core logic to native Android/iOS modules
 
 **Implementation**:
+
 ```
 React Native
 ├─ UI Layer (TypeScript)
@@ -178,18 +192,21 @@ React Native
 ```
 
 **Build Process**:
+
 1. Write core algorithm in Rust or C++
 2. Compile to `.so` (Android) / `.framework` (iOS)
 3. Call native methods from TypeScript via React Native bridge
 4. Algorithm logic is in binary form (much harder to reverse-engineer)
 
 **Advantages**:
+
 - ✅ Keeps app self-contained (no backend needed)
 - ✅ Binary format very hard to reverse-engineer
 - ✅ Works offline
 - ✅ Faster execution
 
 **Disadvantages**:
+
 - ❌ Requires learning Rust/C++
 - ❌ Complex build pipeline
 - ❌ Cannot update algorithm without app update
@@ -201,7 +218,9 @@ React Native
 ---
 
 #### **RECOMMENDATION**: Hybrid (Option B)
+
 **Rationale**:
+
 - Best balance of security, maintainability, and user experience
 - Keeps critical logic server-side without complete redesign
 - Allows future premium tier differentiation
@@ -216,6 +235,7 @@ React Native
 #### Layer 1: Bundle Protection
 
 **Obfuscation**:
+
 ```bash
 # In metro.config.js / webpack config for release builds
 {
@@ -229,6 +249,7 @@ React Native
 ```
 
 **Changes Required**:
+
 - ✅ Strip console logs in production
 - ✅ Remove React DevTools integration
 - ✅ Disable network inspection in release builds
@@ -241,6 +262,7 @@ React Native
 #### Layer 2: API Security
 
 **Certificate Pinning** (Android/iOS):
+
 ```
 Network Request Flow:
 1. Client generates certificate signature
@@ -250,11 +272,13 @@ Network Request Flow:
 ```
 
 **Implementation**:
+
 - Android: Use Network Security Configuration
 - iOS: Use URLSession pinning
 - NPM Package: `react-native-cert-pinner` or native implementation
 
 **Encrypted Requests**:
+
 ```
 Before: POST /api/judge
   {
@@ -273,6 +297,7 @@ After: POST /api/judge
 #### Layer 3: Runtime Integrity Checks
 
 **Jailbreak/Root Detection**:
+
 ```typescript
 // On app startup
 const isDeviceCompromised = await checkIfJailbroken();
@@ -285,12 +310,13 @@ if (isDeviceCompromised) {
 **NPM Package**: `rn-detect-jailbreak`
 
 **API Response Validation**:
+
 ```typescript
 // Verify response hasn't been tampered with
 const isValid = verifyResponseSignature(apiResponse, serverPublicKey);
 if (!isValid) {
   // Discard response, retry with different server
-  throw new Error("Response integrity check failed");
+  throw new Error('Response integrity check failed');
 }
 ```
 
@@ -299,16 +325,18 @@ if (!isValid) {
 #### Layer 4: Storage Protection
 
 **Encrypted Local Storage** (MMKV):
+
 ```typescript
 // Current setup in src/storage/mmkv.ts
 // Ensure AES encryption is enabled
 const mmkv = new MMKV({
-  id: "shams-al-asrar",
-  encryptionKey: "your-strong-key-from-keychain"
+  id: 'shams-al-asrar',
+  encryptionKey: 'your-strong-key-from-keychain',
 });
 ```
 
 **Sensitive Data Handling**:
+
 - JWT tokens → Encrypted in Keychain (iOS) / Keystore (Android)
 - API keys → Never stored client-side (only backend)
 - User readings → Encrypted at rest, server-side encryption key
@@ -318,6 +346,7 @@ const mmkv = new MMKV({
 #### Layer 5: Code Signing & Verification
 
 **App Signing Chain**:
+
 ```
 Developer Keystore → APK/IPA Signing → Google Play/App Store → User Device
      ↓
@@ -325,10 +354,11 @@ Developer Keystore → APK/IPA Signing → Google Play/App Store → User Device
 ```
 
 **In-App Verification**:
+
 ```typescript
 // On app launch
 const signatureHash = getAppSignature();
-const expectedHash = "abc123..."; // from docs
+const expectedHash = 'abc123...'; // from docs
 
 if (signatureHash !== expectedHash) {
   // App has been tampered with or is unofficial build
@@ -343,6 +373,7 @@ if (signatureHash !== expectedHash) {
 ### Backend Architecture Requirements
 
 #### 1. API Gateway & Request Validation
+
 ```
 ┌─────────────────┐
 │  Client         │
@@ -363,6 +394,7 @@ if (signatureHash !== expectedHash) {
 ```
 
 #### 2. Authentication & Authorization
+
 ```
 JWT Flow:
 Client Login → Backend validates → Issues JWT (15 min expiry)
@@ -379,12 +411,14 @@ User must re-authenticate
 ```
 
 **Security Measures**:
+
 - JWT secret stored securely (environment variable)
 - Tokens signed with RS256 (asymmetric) for better security
 - Refresh tokens stored in httpOnly cookies (not accessible to JS)
 - Token rotation on critical operations
 
 #### 3. Input Validation & Sanitization
+
 ```typescript
 // Every endpoint must validate:
 
@@ -400,6 +434,7 @@ POST /api/judge-horary
 ```
 
 **OWASP Top 10 Protections**:
+
 - ✅ Input validation (whitelist approach)
 - ✅ SQL injection prevention (parameterized queries)
 - ✅ XSS prevention (output encoding)
@@ -407,6 +442,7 @@ POST /api/judge-horary
 - ✅ Secrets management (no hardcoding)
 
 #### 4. Logging & Monitoring
+
 ```
 Audit Trail Requirements:
 - Every calculation: WHO, WHEN, WHAT, RESULT
@@ -428,6 +464,7 @@ Log Retention:
 #### 5. Data Protection
 
 **At Rest** (in database):
+
 ```
 Encryption algorithm: AES-256
 Key management: AWS KMS or similar
@@ -435,6 +472,7 @@ PII fields: Always encrypted
 ```
 
 **In Transit** (network):
+
 ```
 HTTPS: TLS 1.3 (minimum)
 Certificate: Valid, from trusted CA
@@ -442,6 +480,7 @@ HSTS: Enabled (force HTTPS)
 ```
 
 **Column-Level Encryption** (for sensitive data):
+
 ```
 users table:
 ├─ email (encrypted)
@@ -459,6 +498,7 @@ readings table:
 ### Client-Side Security Requirements
 
 #### 1. Secure Storage
+
 ```typescript
 // Store sensitive data securely
 
@@ -472,6 +512,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 ```
 
 #### 2. Certificate Pinning
+
 ```
 Network requests MUST verify certificate:
 ├─ Pin certificate hash
@@ -485,12 +526,14 @@ Reject if:
 ```
 
 #### 3. Transport Security (TLS)
+
 ```
 Minimum TLS 1.3
 Cipher suites: Modern, strong
 ```
 
 #### 4. Device Integrity
+
 ```typescript
 // Check if device is compromised
 const isRooted = await detectJailbreak();
@@ -499,7 +542,7 @@ const hasMITMProxy = detectMITMProxy();
 
 if (isRooted || hasDebugger) {
   // Warn user or disable features
-  showWarning("Device compromised - premium features disabled");
+  showWarning('Device compromised - premium features disabled');
   disablePremiumFeatures();
 }
 ```
@@ -509,6 +552,7 @@ if (isRooted || hasDebugger) {
 ### Database Security (Supabase)
 
 #### Row-Level Security (RLS)
+
 ```sql
 -- Only users can see their own readings
 CREATE POLICY "Users can view own readings"
@@ -522,6 +566,7 @@ WITH CHECK (auth.uid() = user_id);
 ```
 
 #### Encryption
+
 ```
 Supabase settings:
 ✅ Enable transparent data encryption
@@ -530,6 +575,7 @@ Supabase settings:
 ```
 
 #### Backup Strategy
+
 ```
 Frequency: Daily automated backups
 Retention: 30 days
@@ -546,6 +592,7 @@ Testing: Monthly restore test
 #### Backend (Choose One)
 
 **Option 1: Node.js (TypeScript)** - RECOMMENDED
+
 ```
 Pros:
 - Share types with frontend
@@ -563,6 +610,7 @@ Stack:
 ```
 
 **Option 2: Python (FastAPI)**
+
 ```
 Pros:
 - Excellent scientific computation
@@ -576,6 +624,7 @@ Stack:
 ```
 
 **Option 3: Rust (Axum/Actix-web)**
+
 ```
 Pros:
 - Maximum performance
@@ -775,17 +824,17 @@ Security Layers:
 
 ### Key Strategic Decisions Required
 
-| Decision | Options | Impact | Recommendation |
-|----------|---------|--------|-----------------|
-| **Backend Stack** | Node.js / Python / Rust | Development speed, maintainability | **Node.js** (TypeScript reuse) |
-| **Backend Hosting** | AWS / GCP / DigitalOcean / Heroku | Cost, scalability, reliability | **AWS** (most reliable) or **DigitalOcean** (cost-effective) |
-| **API Architecture** | Monolithic / Microservices | Scalability, complexity | **Monolithic** (start here, scale later) |
-| **Authentication** | JWT / OAuth2 / API Keys | User experience, security | **JWT + Refresh Tokens** |
-| **Database Encryption** | Application-level / Database-level / Both | Performance, security | **Both** (defense in depth) |
-| **Offline Mode** | Yes / No | UX, security complexity | **No** (for now) |
-| **Native Modules** | Yes / No | Security, development effort | **No** (not needed with backend) |
-| **Security Audit** | Internal / Third-party | Risk, cost | **Third-party** (mandatory before launch) |
-| **Premium Monetization** | Quota-based / Subscription / Freemium | Revenue model | **Quota-based + Subscription** |
+| Decision                 | Options                                   | Impact                             | Recommendation                                               |
+| ------------------------ | ----------------------------------------- | ---------------------------------- | ------------------------------------------------------------ |
+| **Backend Stack**        | Node.js / Python / Rust                   | Development speed, maintainability | **Node.js** (TypeScript reuse)                               |
+| **Backend Hosting**      | AWS / GCP / DigitalOcean / Heroku         | Cost, scalability, reliability     | **AWS** (most reliable) or **DigitalOcean** (cost-effective) |
+| **API Architecture**     | Monolithic / Microservices                | Scalability, complexity            | **Monolithic** (start here, scale later)                     |
+| **Authentication**       | JWT / OAuth2 / API Keys                   | User experience, security          | **JWT + Refresh Tokens**                                     |
+| **Database Encryption**  | Application-level / Database-level / Both | Performance, security              | **Both** (defense in depth)                                  |
+| **Offline Mode**         | Yes / No                                  | UX, security complexity            | **No** (for now)                                             |
+| **Native Modules**       | Yes / No                                  | Security, development effort       | **No** (not needed with backend)                             |
+| **Security Audit**       | Internal / Third-party                    | Risk, cost                         | **Third-party** (mandatory before launch)                    |
+| **Premium Monetization** | Quota-based / Subscription / Freemium     | Revenue model                      | **Quota-based + Subscription**                               |
 
 ---
 
@@ -842,18 +891,21 @@ Security Layers:
 ## Ongoing Security Maintenance
 
 ### Monthly Tasks
+
 - [ ] Review audit logs for suspicious activity
 - [ ] Verify backups are working
 - [ ] Update dependencies (security patches)
 - [ ] Check certificate expiration dates
 
 ### Quarterly Tasks
+
 - [ ] Run vulnerability scan (OWASP ZAP / Burp Suite)
 - [ ] Review access logs
 - [ ] Audit user permissions
 - [ ] Penetration testing (if resources allow)
 
 ### Annually
+
 - [ ] Full security audit
 - [ ] Compliance review (GDPR, etc.)
 - [ ] Disaster recovery drill
@@ -864,11 +916,13 @@ Security Layers:
 ## References & Resources
 
 ### Security Standards
+
 - OWASP Top 10: https://owasp.org/www-project-top-ten/
 - NIST Cybersecurity Framework: https://www.nist.gov/cyberframework
 - CWE/CVSS: https://cwe.mitre.org/
 
 ### Tools & Libraries
+
 - **Code Obfuscation**: Terser, Uglify-js
 - **Certificate Pinning**: react-native-cert-pinner
 - **Jailbreak Detection**: rn-detect-jailbreak
@@ -878,6 +932,7 @@ Security Layers:
 - **Monitoring**: Datadog, New Relic, CloudWatch
 
 ### Recommended Reading
+
 - "The Web Application Hacker's Handbook"
 - OWASP Mobile Security Testing Guide
 - OWASP Secure Coding Practices
@@ -904,6 +959,7 @@ Security Layers:
 **Document End**
 
 Next steps: Please review and provide feedback on:
+
 1. Which backend technology do you prefer?
 2. What is your timeline for Phase 2 implementation?
 3. Do you want to proceed with Hybrid approach (Option B)?

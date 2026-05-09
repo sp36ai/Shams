@@ -1,7 +1,7 @@
 # RKP Rules - Source of Truth from Astro Sarfaraz
 
 > Status: aligned to the current runtime engine
-> Origin: Astro Sarfaraz's rule intake plus the exact 5-step formula update
+> Origin: Astro Sarfaraz's rule intake plus Phase 2 Forensic Audit updates (Promise + 5 RP)
 > Owner: Astro Sarfaraz
 
 ---
@@ -10,7 +10,7 @@
 
 This engine now uses the 5-step Moon-Sub-Lord RKP flow.
 
-It does not use the older cusp-sub-lord / 4-source CSL signification model for verdicts.
+It uses Cusp Sub-Lords as a primary "Promise Layer" gatekeeper (Step 0) and 4-tier Significator Ranking (Phase B/D) for the scoring pass.
 
 Deterministic inputs:
 
@@ -82,11 +82,14 @@ Code:
 
 ## 4. Ruling Planets
 
-RKP uses exactly three ruling planets in this engine:
+The engine uses 5 Classical KP Witnesses plus 1 Confirmatory RKP Lord:
 
-1. Day Lord
-2. Hora Lord
-3. Minute Lord
+1. Day Lord (at Sunrise transition)
+2. Ascendant Sign Lord
+3. Ascendant Star (Nakshatra) Lord
+4. Moon Sign Lord
+5. Moon Star (Nakshatra) Lord
+6. Hora Lord (Confirmatory)
 
 Local-time basis:
 
@@ -123,11 +126,15 @@ Code: `src/astrology/primitives/rulingPlanets.ts`
 ```text
 function judgeHorary(chart, question):
 
+  STEP 0 - Promise Layer (Cusp Sub-Lord)
+    { favorable, denial, primary } = HOUSE_MATRIX[qType]
+    primaryCuspSubLord = chart.cusps[primary].subLord
+    cslHouse = houseOfPlanet(primaryCuspSubLord, chart)
+    
+    if cslHouse in denial: return DENIED (Matter not promised in this chart)
+
   STEP 1 - Read Moon's sidereal nakshatra and sub-lord
     moonSubLord = chart.planets['Moon'].subLord
-
-  STEP 2 - Load the question's favorable and denial houses
-    { favorable, denial, primary, secondary } = HOUSE_MATRIX[qType]
 
   STEP 3 - Check the house occupied by Moon's sub-lord
     moonSubLordHouse = houseOfPlanet(moonSubLord, chart)
@@ -136,10 +143,10 @@ function judgeHorary(chart, question):
     else: 0
 
   STEP 4 - Verify with ruling planets
-    for each of [dayLord, horaLord, minuteLord]:
-      rpHouse = houseOfPlanet(rp, chart)
-      if rpHouse in favorable: +1
-      else if rpHouse in denial: -1
+    witnesses = [Day, AscSign, AscStar, MoonSign, MoonStar, Hora]
+    for each rp in witnesses:
+      if rp in favorable_significators: +1
+      else if rp in denial_significators: -1
       else: 0
 
   STEP 5 - Convert score to verdict

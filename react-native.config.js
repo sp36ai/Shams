@@ -1,4 +1,4 @@
-                                                                                     /**
+/**
  * React Native CLI configuration.
  *
  * - Tells the CLI where to find native projects (we don't ship iOS folder).

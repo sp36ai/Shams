@@ -11,7 +11,7 @@
 ```
 ✓ scripts/Generate-FirebaseCertificates.ps1  (PowerShell)
   └─ Generates test certificates + SHA1 & SHA256 fingerprints
-  
+
 ✓ scripts/extract-fingerprints.sh  (Bash)
   └─ Extracts SHA1 & SHA256 from certificate files
 ```
@@ -117,8 +117,8 @@ firebase deploy --only functions
 ```typescript
 CERTIFICATE_PINS = {
   production: {
-    sha256: 'kT1234567890abcdefghijklmno+/ABC1234567890='
-  }
+    sha256: 'kT1234567890abcdefghijklmno+/ABC1234567890=',
+  },
 };
 ```
 
@@ -133,8 +133,8 @@ CERTIFICATE_PINS = {
 ```typescript
 CERTIFICATE_PINS = {
   development: {
-    sha1: 'AB:CD:EF:12:34:56:78:90:AB:CD:EF:12:34:56:78:90:AB:CD:EF:12'
-  }
+    sha1: 'AB:CD:EF:12:34:56:78:90:AB:CD:EF:12:34:56:78:90:AB:CD:EF:12',
+  },
 };
 ```
 
@@ -222,7 +222,7 @@ shams-al-asrar/
 ✅ **Data Isolation** - User data encrypted at rest  
 ✅ **Tampering Detection** - App signature verification  
 ✅ **Quota Enforcement** - Server-side quota checks  
-✅ **Audit Trail** - All calculations logged  
+✅ **Audit Trail** - All calculations logged
 
 ### Implementation Layers
 
@@ -282,30 +282,34 @@ Deployment:
 
 ## 📞 Quick Help
 
-| Need | File | Time |
-|------|------|------|
-| Quick overview | CERTIFICATE_FINGERPRINTS_QUICK_START.md | 5 min |
-| See examples | CERTIFICATE_FINGERPRINTS_EXAMPLES.md | 10 min |
-| Detailed setup | CERTIFICATE_PINNING_SETUP.md | 30 min |
-| Command reference | CERTIFICATE_FINGERPRINTS_QUICK_REFERENCE.md | 5 min |
-| Full walkthrough | CERTIFICATE_FINGERPRINTS_IMPLEMENTATION_SUMMARY.md | 20 min |
-| All files index | CERTIFICATE_FINGERPRINTS_PACKAGE_OVERVIEW.md | 10 min |
+| Need              | File                                               | Time   |
+| ----------------- | -------------------------------------------------- | ------ |
+| Quick overview    | CERTIFICATE_FINGERPRINTS_QUICK_START.md            | 5 min  |
+| See examples      | CERTIFICATE_FINGERPRINTS_EXAMPLES.md               | 10 min |
+| Detailed setup    | CERTIFICATE_PINNING_SETUP.md                       | 30 min |
+| Command reference | CERTIFICATE_FINGERPRINTS_QUICK_REFERENCE.md        | 5 min  |
+| Full walkthrough  | CERTIFICATE_FINGERPRINTS_IMPLEMENTATION_SUMMARY.md | 20 min |
+| All files index   | CERTIFICATE_FINGERPRINTS_PACKAGE_OVERVIEW.md       | 10 min |
 
 ---
 
 ## 🎓 Key Concepts
 
 ### Certificate Fingerprint
+
 A unique hash (SHA1 or SHA256) of a certificate's public key. Used to verify the server's identity.
 
 ### Certificate Pinning
+
 App stores the expected fingerprint and verifies it before connecting. Prevents MITM attacks even if CA is compromised.
 
 ### Why Both SHA1 & SHA256?
+
 - **SHA256**: Modern, cryptographically secure (use for production)
 - **SHA1**: Legacy support for older systems (reference only)
 
 ### Automatic Rotation
+
 Firebase auto-rotates certificates annually. Update fingerprints when they rotate. Monitor Firebase Console.
 
 ---
@@ -315,10 +319,11 @@ Firebase auto-rotates certificates annually. Update fingerprints when they rotat
 1. **Choose your path** above (Express, Detailed, or Learn First)
 
 2. **Start here**:
+
    ```bash
    # Windows users
    .\scripts\Generate-FirebaseCertificates.ps1
-   
+
    # macOS/Linux users
    cat docs/CERTIFICATE_FINGERPRINTS_QUICK_START.md
    ```
@@ -380,7 +385,7 @@ Firebase auto-rotates certificates annually. Update fingerprints when they rotat
 ✅ **Trust** - Verified secure connection  
 ✅ **Protection** - Algorithm hidden from users  
 ✅ **Monetization** - Premium features protected  
-✅ **Audit** - All access logged and verified  
+✅ **Audit** - All access logged and verified
 
 ---
 
@@ -395,7 +400,7 @@ Your implementation is complete when:
 ✅ Local Firebase Emulator works with pinning  
 ✅ Production deployment succeeds  
 ✅ App connects to production Cloud Functions  
-✅ Console logs show "Certificate pinning enabled"  
+✅ Console logs show "Certificate pinning enabled"
 
 ---
 
@@ -409,7 +414,8 @@ Your implementation is complete when:
 
 ## 🔗 Start Your Journey
 
-👉 **Next Action**: 
+👉 **Next Action**:
+
 ```powershell
 # Windows
 .\scripts\Generate-FirebaseCertificates.ps1

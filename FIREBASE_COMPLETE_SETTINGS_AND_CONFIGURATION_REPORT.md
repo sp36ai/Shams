@@ -1,4 +1,5 @@
 # 🔥 Firebase Complete Settings & Configuration Report
+
 ## Shams al-Asrar Project
 
 **Generated**: May 1, 2026  
@@ -30,27 +31,30 @@
 ## 📱 Project Overview & IDs
 
 ### Firebase Project Details
-| Property | Value |
-|----------|-------|
-| **Project Name** | Shams al-Asrār |
-| **Project ID** | `shams-app-4d0e7` |
-| **Project Number** | `347578830449` |
-| **Region** | `asia-south1` (Mumbai - Primary) |
-| **Secondary Region** | `asia-southeast1` (Singapore) |
+
+| Property             | Value                            |
+| -------------------- | -------------------------------- |
+| **Project Name**     | Shams al-Asrār                   |
+| **Project ID**       | `shams-app-4d0e7`                |
+| **Project Number**   | `347578830449`                   |
+| **Region**           | `asia-south1` (Mumbai - Primary) |
+| **Secondary Region** | `asia-southeast1` (Singapore)    |
 
 ### Firebase URLs
-| Service | URL |
-|---------|-----|
-| **Realtime Database** | `https://shams-app-4d0e7-default-rtdb.asia-southeast1.firebasedatabase.app` |
-| **Storage Bucket** | `shams-app-4d0e7.firebasestorage.app` |
-| **Firebase Console** | `https://console.firebase.google.com/project/shams-app-4d0e7` |
-| **Authentication Domain** | `shams-app-4d0e7.firebaseapp.com` |
+
+| Service                   | URL                                                                         |
+| ------------------------- | --------------------------------------------------------------------------- |
+| **Realtime Database**     | `https://shams-app-4d0e7-default-rtdb.asia-southeast1.firebasedatabase.app` |
+| **Storage Bucket**        | `shams-app-4d0e7.firebasestorage.app`                                       |
+| **Firebase Console**      | `https://console.firebase.google.com/project/shams-app-4d0e7`               |
+| **Authentication Domain** | `shams-app-4d0e7.firebaseapp.com`                                           |
 
 ---
 
 ## 🔐 API Keys & Authentication
 
 ### Web/Mobile API Key
+
 ```
 API Key: AIzaSyAfSP-bBQdAmMlHWKeB0dhxyIJ_zv8mSQg
 ```
@@ -58,18 +62,21 @@ API Key: AIzaSyAfSP-bBQdAmMlHWKeB0dhxyIJ_zv8mSQg
 **Security Note**: This key is restrictive and intended for client-side use in mobile apps. It has API restrictions configured in Google Cloud Console.
 
 ### OAuth 2.0 Client ID (Android)
+
 ```
 Client ID: 347578830449-1uogokloffhn2c9nh060003rsvm1vu6n.apps.googleusercontent.com
 Client Type: Android (type 3)
 ```
 
 ### Mobile SDK App ID (Android)
-| Client | Mobile SDK ID | Package Name |
-|--------|---------------|--------------|
-| **Production** | `1:347578830449:android:8f47007a2e5e4e0a1c95d0` | `com.astrosarfaraz.shamsalasrar` |
-| **Debug** | `1:347578830449:android:8f47007a2e5e4e0a1c95d0` | `com.astrosarfaraz.shamsalasrar.debug` |
+
+| Client         | Mobile SDK ID                                   | Package Name                           |
+| -------------- | ----------------------------------------------- | -------------------------------------- |
+| **Production** | `1:347578830449:android:8f47007a2e5e4e0a1c95d0` | `com.astrosarfaraz.shamsalasrar`       |
+| **Debug**      | `1:347578830449:android:8f47007a2e5e4e0a1c95d0` | `com.astrosarfaraz.shamsalasrar.debug` |
 
 ### Sender ID (Cloud Messaging)
+
 ```
 Messaging Sender ID: 347578830449
 ```
@@ -80,26 +87,28 @@ Messaging Sender ID: 347578830449
 
 ### Enabled Services
 
-| Service | Status | Purpose |
-|---------|--------|---------|
-| **Firestore Database** | ✅ Enabled | Primary data store (users, readings, quotas, audit logs) |
-| **Cloud Functions** | ✅ Enabled | Backend logic (horary calculations, payment verification) |
-| **Authentication** | ✅ Enabled | Firebase Auth + App Check |
-| **Realtime Database** | ⚠️ Optional | Not currently used (Firestore primary) |
-| **Cloud Storage** | ✅ Available | For future file storage needs |
-| **Cloud Messaging** | ✅ Available | For push notifications |
-| **Remote Config** | ✅ Available | Feature flags management |
-| **Hosting** | ✅ Available | For web dashboard (future) |
+| Service                | Status       | Purpose                                                   |
+| ---------------------- | ------------ | --------------------------------------------------------- |
+| **Firestore Database** | ✅ Enabled   | Primary data store (users, readings, quotas, audit logs)  |
+| **Cloud Functions**    | ✅ Enabled   | Backend logic (horary calculations, payment verification) |
+| **Authentication**     | ✅ Enabled   | Firebase Auth + App Check                                 |
+| **Realtime Database**  | ⚠️ Optional  | Not currently used (Firestore primary)                    |
+| **Cloud Storage**      | ✅ Available | For future file storage needs                             |
+| **Cloud Messaging**    | ✅ Available | For push notifications                                    |
+| **Remote Config**      | ✅ Available | Feature flags management                                  |
+| **Hosting**            | ✅ Available | For web dashboard (future)                                |
 
 ### Service Configuration
 
 #### Firestore Database
+
 - **Mode**: Production
 - **Location**: `us-central1` (primary) / `asia-southeast1` (secondary)
 - **Backup**: Enabled (daily automated backups)
 - **Indexing**: Custom indexes configured
 
 #### Cloud Functions
+
 - **Runtime**: Node.js 22
 - **Region**: `asia-south1` (Mumbai)
 - **Memory per Function**: 512MB
@@ -113,6 +122,7 @@ Messaging Sender ID: 347578830449
 ### Exported Functions
 
 #### 1. **askOracle** (Callable)
+
 ```typescript
 Function Type: Callable Cloud Function
 Access Level: Authenticated Users
@@ -147,6 +157,7 @@ Security Features:
 ```
 
 #### 2. **getQuota** (Callable)
+
 ```typescript
 Function Type: Callable Cloud Function
 Access Level: Authenticated Users
@@ -167,6 +178,7 @@ Security:
 ```
 
 #### 3. **syncReadings** (Callable)
+
 ```typescript
 Function Type: Callable Cloud Function
 Access Level: Authenticated Users
@@ -180,6 +192,7 @@ Security:
 ```
 
 #### 4. **deleteReading** (Callable)
+
 ```typescript
 Function Type: Callable Cloud Function
 Access Level: Authenticated Users
@@ -193,12 +206,13 @@ Security:
 ```
 
 #### 5. **verifyGooglePlayPurchase** (Callable)
+
 ```typescript
 Function Type: Callable Cloud Function
 Access Level: Authenticated Users
 
 Purpose: Verify in-app purchase and upgrade plan
-Input: 
+Input:
 - purchaseToken: string
 - productId: string (product ID from Play Store)
 - packageName: string
@@ -217,6 +231,7 @@ Security Features:
 ```
 
 #### 6. **razorpayWebhook** (HTTP)
+
 ```typescript
 Function Type: HTTP Cloud Function
 Access Level: Razorpay servers (webhook endpoint)
@@ -242,31 +257,31 @@ Security Features:
 // From functions/src/config.ts
 
 // Plan Types & Quotas
-FREE_LIMIT = 3                                    // questions per rolling week
-UNLIMITED_PLANS = ['starter', 'premium', 'consultation']
+FREE_LIMIT = 3; // questions per rolling week
+UNLIMITED_PLANS = ['starter', 'premium', 'consultation'];
 
 // Plan Duration
 PLAN_DURATION_DAYS = {
-  free: 0,                                        // never expires
-  starter: 7,                                     // weekly subscription
-  premium: 31,                                    // monthly subscription
-  consultation: 31                                // monthly (personal consultation)
-}
+  free: 0, // never expires
+  starter: 7, // weekly subscription
+  premium: 31, // monthly subscription
+  consultation: 31, // monthly (personal consultation)
+};
 
 // Google Play Product Mapping
 PLAY_PRODUCT_MAP = {
   shams_starter_weekly: 'starter',
   shams_premium_monthly: 'premium',
-  shams_consultation_monthly: 'consultation'
-}
+  shams_consultation_monthly: 'consultation',
+};
 
 // Execution Configuration
-REGION = 'asia-south1'                           // Mumbai
+REGION = 'asia-south1'; // Mumbai
 FUNCTION_OPTS = {
   region: 'asia-south1',
   timeoutSeconds: 30,
-  memory: '512MiB'
-}
+  memory: '512MiB',
+};
 ```
 
 ### Environment Variables (Cloud Functions)
@@ -288,13 +303,14 @@ FIREBASE_DATABASE_URL=https://shams-app-4d0e7-default-rtdb.asia-southeast1.fireb
 ## 🗄️ Firestore Database Configuration
 
 ### Database Settings
-| Setting | Value |
-|---------|-------|
-| **Database ID** | `(default)` |
-| **Location** | Multi-region (us-central1 + asia-southeast1) |
-| **Database Type** | Native Firestore |
-| **Backup Status** | Enabled (daily) |
-| **TTL Support** | Enabled |
+
+| Setting           | Value                                        |
+| ----------------- | -------------------------------------------- |
+| **Database ID**   | `(default)`                                  |
+| **Location**      | Multi-region (us-central1 + asia-southeast1) |
+| **Database Type** | Native Firestore                             |
+| **Backup Status** | Enabled (daily)                              |
+| **TTL Support**   | Enabled                                      |
 
 ### Collection Structure
 
@@ -359,13 +375,14 @@ firestore/
 ```
 
 ### Document Counts (Estimated)
-| Collection | Typical Size | Growth Rate |
-|------------|-------------|------------|
-| users | 1K - 10K | 50-100/month |
-| readings | 50K - 500K | 500-5K/month |
-| quotas | 1K - 10K | Growth with users |
-| auditLogs | 100K+ | 5K-50K/month |
-| rateLimits | 1K-10K (TTL purged) | Transient |
+
+| Collection | Typical Size        | Growth Rate       |
+| ---------- | ------------------- | ----------------- |
+| users      | 1K - 10K            | 50-100/month      |
+| readings   | 50K - 500K          | 500-5K/month      |
+| quotas     | 1K - 10K            | Growth with users |
+| auditLogs  | 100K+               | 5K-50K/month      |
+| rateLimits | 1K-10K (TTL purged) | Transient         |
 
 ---
 
@@ -380,55 +397,63 @@ firestore/
 #### Rule Categories
 
 1. **Authentication State**
+
    ```javascript
    function isSignedIn() {
      return request.auth != null;
    }
    ```
+
    - Used to verify user is authenticated
    - Note: In current setup, request.auth is Firebase Auth (not Supabase)
 
 2. **Ownership Verification**
+
    ```javascript
    function isOwner(uid) {
      return isSignedIn() && request.auth.uid == uid;
    }
    ```
+
    - Ensures users can only access their own data
    - Prevents cross-user data leakage
 
 3. **Admin Access**
+
    ```javascript
    function isAdmin() {
      return isSignedIn() && request.auth.token.get('admin', false) == true;
    }
    ```
+
    - Checked via custom claims in Firebase Auth
    - Only Admins can access audit logs, security events, and system config
 
 4. **Privilege Escalation Prevention**
+
    ```javascript
    function hasNoPrivilegedFields() {
-     return !request.resource.data.keys().hasAny([
-       'plan', 'planExpiry', 'monthlyQuota', 'isPremium', 'admin', 'used'
-     ]);
+     return !request.resource.data
+       .keys()
+       .hasAny(['plan', 'planExpiry', 'monthlyQuota', 'isPremium', 'admin', 'used']);
    }
    ```
+
    - Prevents users from setting premium status or quota values
    - These can only be modified by Cloud Functions (Admin SDK)
 
 ### Collection-Level Rules
 
-| Collection | Read | Create | Update | Delete | Notes |
-|------------|------|--------|--------|--------|-------|
-| **users/{userId}** | Owner or Admin | Owner (no privileged fields) | Owner (no privileged fields) | Owner or Admin | Profile only |
-| **quotas/{userId}** | Owner or Admin | ❌ | ❌ | ❌ | Admin SDK only |
-| **readings/{readingId}** | Owner or Admin | ❌ | ❌ | Owner or Admin | Cloud Functions only create |
-| **rateLimits/\*\*/** | ❌ | ❌ | ❌ | ❌ | Admin SDK only |
-| **auditLogs/\*\*/** | Admin only | ❌ | ❌ | ❌ | Admin read-only |
-| **securityEvents/\*\*/** | Admin only | ❌ | ❌ | ❌ | Admin read-only |
-| **_system/\*\*/** | Admin only | Admin only | Admin only | Admin only | Internal config |
-| **\*\*/\*\*/** | ❌ (default) | ❌ | ❌ | ❌ | Catch-all deny |
+| Collection               | Read           | Create                       | Update                       | Delete         | Notes                       |
+| ------------------------ | -------------- | ---------------------------- | ---------------------------- | -------------- | --------------------------- |
+| **users/{userId}**       | Owner or Admin | Owner (no privileged fields) | Owner (no privileged fields) | Owner or Admin | Profile only                |
+| **quotas/{userId}**      | Owner or Admin | ❌                           | ❌                           | ❌             | Admin SDK only              |
+| **readings/{readingId}** | Owner or Admin | ❌                           | ❌                           | Owner or Admin | Cloud Functions only create |
+| **rateLimits/\*\*/**     | ❌             | ❌                           | ❌                           | ❌             | Admin SDK only              |
+| **auditLogs/\*\*/**      | Admin only     | ❌                           | ❌                           | ❌             | Admin read-only             |
+| **securityEvents/\*\*/** | Admin only     | ❌                           | ❌                           | ❌             | Admin read-only             |
+| **\_system/\*\*/**       | Admin only     | Admin only                   | Admin only                   | Admin only     | Internal config             |
+| **\*\*/\*\*/**           | ❌ (default)   | ❌                           | ❌                           | ❌             | Catch-all deny              |
 
 ### API Key Restrictions (Google Cloud Console)
 
@@ -452,11 +477,13 @@ Application Restrictions:
 ## 📊 Database Indexes
 
 ### Auto-Generated Indexes
+
 Firestore automatically creates single-field indexes for all fields.
 
 ### Custom Composite Indexes
 
 **Index 1: Readings by User (Time-Ordered)**
+
 ```
 Collection: readings
 Query Scope: COLLECTION
@@ -467,6 +494,7 @@ Purpose: Fetch user's recent readings
 ```
 
 **Index 2: Readings by User, Verdict (Time-Ordered)**
+
 ```
 Collection: readings
 Query Scope: COLLECTION
@@ -478,6 +506,7 @@ Purpose: Filter readings by verdict, most recent first
 ```
 
 **Index 3: Readings by User, Category (Time-Ordered)**
+
 ```
 Collection: readings
 Query Scope: COLLECTION
@@ -489,6 +518,7 @@ Purpose: Filter readings by category, most recent first
 ```
 
 **Index 4: Audit Logs by User (Time-Ordered)**
+
 ```
 Collection: auditLogs
 Query Scope: COLLECTION
@@ -499,6 +529,7 @@ Purpose: View user's audit trail
 ```
 
 **Index 5: Audit Logs by Action (Time-Ordered)**
+
 ```
 Collection: auditLogs
 Query Scope: COLLECTION
@@ -511,11 +542,13 @@ Purpose: Filter audit events by action type
 ### TTL (Time-To-Live) Configuration
 
 **Field**: `rateLimits` collection → `expiresAt` field
+
 - **TTL Enabled**: Yes
 - **Purpose**: Auto-delete rate limit documents after expiration
 - **Retention Period**: Typically 1 hour (configurable)
 
 ### Index Status
+
 ```
 Total Composite Indexes: 5
 Status: ✅ All indexes deployed
@@ -580,6 +613,7 @@ connectFunctionsEmulator(functions, 'localhost', 5001);
 ```
 
 ### Emulator UI
+
 - **URL**: http://localhost:4000
 - **Features**:
   - View/edit Firestore data
@@ -589,6 +623,7 @@ connectFunctionsEmulator(functions, 'localhost', 5001);
   - Export/import data
 
 ### Data Persistence
+
 ```
 Location: ~/.config/firebase/emulators/
 Files:
@@ -638,6 +673,7 @@ GOOGLE_PLAY_PRIVATE_KEY_KEY              latest
 ```
 
 **Access Pattern (Cloud Functions)**:
+
 ```typescript
 import { SecretManagerServiceClient } from '@google-cloud/secret-manager';
 
@@ -681,12 +717,14 @@ npm-debug.log
 
 ### Razorpay Integration
 
-**Webhook URL**: 
+**Webhook URL**:
+
 ```
 https://asia-south1-shams-app-4d0e7.cloudfunctions.net/razorpayWebhook
 ```
 
 **Configuration Required**:
+
 1. Razorpay Account Dashboard → Webhooks
 2. Add webhook URL
 3. Subscribe to events:
@@ -696,11 +734,13 @@ https://asia-south1-shams-app-4d0e7.cloudfunctions.net/razorpayWebhook
    - `subscription.halted`
 
 **Secret Key Management**:
+
 - Webhook Secret stored in: Google Cloud Secret Manager
 - Retrieved at runtime by Cloud Functions
 - HMAC signature verified on every webhook call
 
 **Payment Flow**:
+
 ```
 Mobile App
     ↓
@@ -720,6 +760,7 @@ Audit log recorded
 ### Google Play Billing Integration
 
 **Configuration Required**:
+
 1. Google Play Console → Your app → Monetization setup
 2. Create subscription products:
    - `shams_starter_weekly` → Plan: starter (7 days)
@@ -727,11 +768,13 @@ Audit log recorded
    - `shams_consultation_monthly` → Plan: consultation (31 days)
 
 **OAuth Credentials**:
+
 - Service Account Email: Stored in GCP Secret Manager
 - Private Key: Stored in GCP Secret Manager
 - Used by `verifyGooglePlayPurchase` function
 
 **Verification Flow**:
+
 ```
 Mobile App (with Play Billing Library)
     ↓
@@ -785,7 +828,7 @@ Audit log recorded
 // From client: Only Firebase App Check
 initializeAppCheck(app, {
   provider: new ReCaptchaV3Provider('RECAPTCHA_KEY'),
-  isTokenAutoRefreshEnabled: true
+  isTokenAutoRefreshEnabled: true,
 });
 
 // All user reads/writes go through Cloud Functions (no direct Firestore access)
@@ -814,18 +857,18 @@ await signInWithCustomToken(auth, firebaseCustomToken);
 
 ```typescript
 interface UserDoc {
-  userId: string;              // Document ID (from Supabase Auth)
-  email: string;               // User's email
-  displayName: string;         // Profile display name
-  avatar: string;              // Avatar URL (optional)
+  userId: string; // Document ID (from Supabase Auth)
+  email: string; // User's email
+  displayName: string; // Profile display name
+  avatar: string; // Avatar URL (optional)
   preferences: {
     language: 'en' | 'ur' | 'hi';
     theme: 'light' | 'dark' | 'auto';
     notifications: boolean;
-    timezone: string;          // e.g., "Asia/Kolkata"
+    timezone: string; // e.g., "Asia/Kolkata"
   };
-  createdAt: Timestamp;        // Account creation date
-  updatedAt: Timestamp;        // Last profile update
+  createdAt: Timestamp; // Account creation date
+  updatedAt: Timestamp; // Last profile update
 }
 ```
 
@@ -833,17 +876,18 @@ interface UserDoc {
 
 ```typescript
 interface QuotaDoc {
-  userId: string;              // User ID (document ID)
-  plan: PlanTier;              // Current plan tier
-  weekKey: string;             // YYYY-MM-DD (Sunday anchor)
-  used: number;                // Questions used this week
-  limit: number | null;        // null for unlimited plans
+  userId: string; // User ID (document ID)
+  plan: PlanTier; // Current plan tier
+  weekKey: string; // YYYY-MM-DD (Sunday anchor)
+  used: number; // Questions used this week
+  limit: number | null; // null for unlimited plans
   planExpiry: Timestamp | null;
-  updatedAt: Timestamp;        // Last quota update
+  updatedAt: Timestamp; // Last quota update
 }
 ```
 
 **Plan Limits**:
+
 - `free`: 3 questions/week, never expires
 - `starter`: Unlimited, expires in 7 days
 - `premium`: Unlimited, expires in 31 days
@@ -853,36 +897,36 @@ interface QuotaDoc {
 
 ```typescript
 interface ReadingDoc {
-  readingId: string;                    // Document ID (UUID v4)
-  userId: string;                       // Foreign key to users
-  question: string;                     // Encrypted question text
+  readingId: string; // Document ID (UUID v4)
+  userId: string; // Foreign key to users
+  question: string; // Encrypted question text
   questionLang: 'en' | 'ur' | 'hi';
-  category: string;                     // e.g., "career", "health", "relationships"
-  verdict: VerdictKind;                 // YES | NO | CONDITIONAL | DELAYED | UNCLEAR | PENDING
-  confidence: number;                   // 0-100
+  category: string; // e.g., "career", "health", "relationships"
+  verdict: VerdictKind; // YES | NO | CONDITIONAL | DELAYED | UNCLEAR | PENDING
+  confidence: number; // 0-100
   narration: {
-    en: string;                         // English explanation
-    ur: string;                         // Urdu explanation
-    hi: string;                         // Hindi explanation
+    en: string; // English explanation
+    ur: string; // Urdu explanation
+    hi: string; // Hindi explanation
   };
   timing: {
     window: 'days' | 'weeks' | 'months' | 'years';
-    range: { min: number; max: number };  // e.g., { min: 3, max: 7 } days
+    range: { min: number; max: number }; // e.g., { min: 3, max: 7 } days
   };
   remedy?: {
-    planet: string;                     // e.g., "Venus", "Mars"
-    action: string;                     // Recommended action
-    avoid: string;                      // Things to avoid
-    mantra?: string;                    // Optional mantra
-    charity?: string;                   // Charitable action
+    planet: string; // e.g., "Venus", "Mars"
+    action: string; // Recommended action
+    avoid: string; // Things to avoid
+    mantra?: string; // Optional mantra
+    charity?: string; // Charitable action
   };
   reasoning: Array<{
-    ruleId: string;                     // Engine rule ID
+    ruleId: string; // Engine rule ID
     description: string;
-    weight: number;                     // Contribution to verdict (0-1)
+    weight: number; // Contribution to verdict (0-1)
   }>;
-  createdAt: Timestamp;                 // Reading creation time
-  computedAt: Timestamp;                // When verdict was calculated
+  createdAt: Timestamp; // Reading creation time
+  computedAt: Timestamp; // When verdict was calculated
 }
 ```
 
@@ -890,10 +934,10 @@ interface ReadingDoc {
 
 ```typescript
 interface RateLimitDoc {
-  userId: string;              // Parent
-  minuteKey: string;           // Minute anchor (YYYY-MM-DD HH:MM)
-  requests: number;            // Requests in this minute
-  expiresAt: Timestamp;        // TTL - auto-delete after 1 hour
+  userId: string; // Parent
+  minuteKey: string; // Minute anchor (YYYY-MM-DD HH:MM)
+  requests: number; // Requests in this minute
+  expiresAt: Timestamp; // TTL - auto-delete after 1 hour
   lastUpdated: Timestamp;
 }
 ```
@@ -906,22 +950,23 @@ interface RateLimitDoc {
 
 ```typescript
 interface AuditLogDoc {
-  logId: string;              // Document ID
-  userId: string;             // User who triggered event
-  action: AuditAction;        // Action performed
-  questionHash: string;       // FNV-1a hash of question (privacy)
-  verdict?: VerdictKind;      // If applicable
-  plan?: PlanTier;            // Plan at time of action
+  logId: string; // Document ID
+  userId: string; // User who triggered event
+  action: AuditAction; // Action performed
+  questionHash: string; // FNV-1a hash of question (privacy)
+  verdict?: VerdictKind; // If applicable
+  plan?: PlanTier; // Plan at time of action
   metadata?: {
     ipAddress?: string;
     userAgent?: string;
-    error?: string;           // If action failed
+    error?: string; // If action failed
   };
-  ts: Timestamp;              // Event timestamp
+  ts: Timestamp; // Event timestamp
 }
 ```
 
 **Audit Actions Tracked**:
+
 - `oracle_computed` - Horary calculation performed
 - `quota_exhausted` - User hit quota limit
 - `rate_limited` - Rate limit triggered
@@ -938,15 +983,15 @@ interface AuditLogDoc {
 
 ```typescript
 interface SecurityEventDoc {
-  eventId: string;            // Document ID
-  type: string;               // Event type (e.g., "suspicious_activity")
-  userId?: string;            // Associated user (optional)
+  eventId: string; // Document ID
+  type: string; // Event type (e.g., "suspicious_activity")
+  userId?: string; // Associated user (optional)
   severity: 'low' | 'medium' | 'high';
   details: {
     reason: string;
-    action: string;           // Action taken (e.g., "ip_blocked")
+    action: string; // Action taken (e.g., "ip_blocked")
   };
-  ts: Timestamp;              // Event timestamp
+  ts: Timestamp; // Event timestamp
 }
 ```
 
@@ -960,23 +1005,23 @@ interface SystemConfigDoc {
     enableCustomTokenAuth: boolean;
     maintenanceMode: boolean;
   };
-  
+
   // App Signatures (for security verification)
   appSignatures: Array<{
     packageName: string;
     hashType: 'SHA256';
     hash: string;
   }>;
-  
+
   // Rate Limiting Config
   rateLimitConfig: {
     requestsPerMinute: number;
     requestsPerHour: number;
   };
-  
+
   // Suspended Users
   suspendedUsers: string[];
-  
+
   // Last Update
   lastUpdated: Timestamp;
 }
@@ -989,12 +1034,14 @@ interface SystemConfigDoc {
 ### Pre-Deployment Requirements
 
 #### 1. Firebase Project Setup
+
 - [ ] Firebase project created at console.firebase.google.com
 - [ ] Project ID: `shams-app-4d0e7` confirmed
 - [ ] Billing account linked (required for Cloud Functions)
 - [ ] Budget alerts configured
 
 #### 2. Firebase Services Enabled
+
 - [ ] Firestore Database (Production mode, us-central1)
 - [ ] Authentication
 - [ ] Cloud Functions
@@ -1002,12 +1049,14 @@ interface SystemConfigDoc {
 - [ ] App Check
 
 #### 3. API Keys & Credentials
+
 - [ ] API key created and restricted (Firestore API only)
 - [ ] API key restrictions applied (Android package + SHA fingerprints)
 - [ ] OAuth 2.0 client ID configured
 - [ ] Service account created (for Admin SDK)
 
 #### 4. Cloud Functions
+
 - [ ] Node.js 22 runtime selected
 - [ ] Region set to `asia-south1` (Mumbai)
 - [ ] Memory set to 512MB per function
@@ -1015,18 +1064,21 @@ interface SystemConfigDoc {
 - [ ] All dependencies in `functions/package.json`
 
 #### 5. Firestore Configuration
+
 - [ ] Indexes deployed (5 composite indexes)
 - [ ] TTL configured for rateLimits collection
 - [ ] Backup enabled (daily)
 - [ ] Security rules deployed from `firestore.rules`
 
 #### 6. External Integrations
+
 - [ ] Razorpay account connected
 - [ ] Razorpay webhook secret stored in GCP Secret Manager
 - [ ] Google Play Console app configured
 - [ ] Google Play service account JSON stored in Secret Manager
 
 #### 7. Secrets Management
+
 - [ ] GCP Cloud Secret Manager enabled
 - [ ] All secrets created:
   - `RAZORPAY_WEBHOOK_SECRET_KEY`
@@ -1035,6 +1087,7 @@ interface SystemConfigDoc {
 - [ ] Cloud Functions have Secret Accessor IAM role
 
 #### 8. Security & Compliance
+
 - [ ] Security rules reviewed and tested
 - [ ] App Check enforcement enabled
 - [ ] Certificate pinning configured (if needed)
@@ -1042,12 +1095,14 @@ interface SystemConfigDoc {
 - [ ] CORS properly configured
 
 #### 9. Monitoring & Logging
+
 - [ ] Cloud Logging enabled
 - [ ] Error reporting configured
 - [ ] Performance monitoring enabled
 - [ ] Alert policies created
 
 #### 10. Testing
+
 - [ ] All functions tested locally with emulator
 - [ ] Firestore rules tested with emulator
 - [ ] Payment integration tested
@@ -1101,56 +1156,66 @@ firebase functions:log --follow
 ### Critical Security Features
 
 #### 1. **Deny-by-Default Security Model**
+
 ✅ All Firestore paths start with deny  
 ✅ Only explicitly allowed paths are accessible  
 ✅ No implicit grants
 
 #### 2. **User Data Isolation**
+
 ✅ Users can only access their own documents  
 ✅ Enforced via `isOwner(uid)` predicate  
 ✅ Cross-user reads impossible
 
 #### 3. **Privilege Escalation Prevention**
+
 ✅ Sensitive fields (plan, quota, admin) cannot be written by clients  
 ✅ Can only be modified by Cloud Functions (Admin SDK)  
 ✅ Prevents users from upgrading themselves
 
 #### 4. **Proprietary Algorithm Protection**
+
 ✅ Core calculation logic runs server-side only  
 ✅ Never sent to client  
 ✅ Only verdict and explanation returned  
 ✅ Algorithm internals completely hidden
 
 #### 5. **Rate Limiting**
+
 ✅ Per-minute rate limiting enforced  
 ✅ Tracked in `rateLimits` collection  
 ✅ Cloud Functions check before processing  
 ✅ TTL auto-cleanup after 1 hour
 
 #### 6. **Audit Logging**
+
 ✅ Every significant action logged  
 ✅ Logs stored in `auditLogs` collection  
 ✅ Admins only can read logs  
 ✅ Question text never stored (FNV-1a hash instead)
 
 #### 7. **App Integrity Verification**
+
 ✅ App Check enabled (SafetyNet/Play Integrity on Android)  
 ✅ API key restricted to known packages/fingerprints  
 ✅ Certificate pinning recommended
 
 #### 8. **Payment Security**
+
 ✅ Razorpay webhook signature verification (HMAC)  
 ✅ Google Play purchase verification (server-side)  
 ✅ Custom claims updated atomically  
 ✅ No client-side payment manipulation
 
 #### 9. **Authentication**
+
 ✅ Firebase Auth for backend service authentication  
 ✅ Supabase Auth for user authentication (separate)  
 ✅ Custom token exchange planned for future  
 ✅ No sensitive tokens in client code
 
 #### 10. **Transport Security**
+
 ✅ HTTPS enforced  
 ✅ TLS 1.2+ required  
 ✅ Certificate pinning recommended  
@@ -1159,6 +1224,7 @@ firebase functions:log --follow
 ### Recommended Security Hardening
 
 #### Additional Measures
+
 1. **Enable VPC Service Controls** (if enterprise plan)
    - Restrict firestore.googleapis.com access
    - Prevent data exfiltration
@@ -1185,35 +1251,38 @@ firebase functions:log --follow
 
 ### Compliance & Certifications
 
-| Standard | Status | Notes |
-|----------|--------|-------|
-| SOC 2 Type II | ✅ Firebase | Google Cloud compliance |
-| GDPR | ✅ Ready | Privacy policy required |
-| HIPAA | ⚠️ Optional | Requires additional setup |
-| ISO 27001 | ✅ Firebase | Google Cloud certification |
-| Data Residency | ✅ Configurable | asia-southeast1 available |
+| Standard       | Status          | Notes                      |
+| -------------- | --------------- | -------------------------- |
+| SOC 2 Type II  | ✅ Firebase     | Google Cloud compliance    |
+| GDPR           | ✅ Ready        | Privacy policy required    |
+| HIPAA          | ⚠️ Optional     | Requires additional setup  |
+| ISO 27001      | ✅ Firebase     | Google Cloud certification |
+| Data Residency | ✅ Configurable | asia-southeast1 available  |
 
 ---
 
 ## 📞 Support & Resources
 
 ### Firebase Documentation
+
 - [Firebase Console](https://console.firebase.google.com/project/shams-app-4d0e7)
 - [Cloud Functions Documentation](https://cloud.google.com/functions/docs)
 - [Firestore Security Rules](https://firebase.google.com/docs/firestore/security/get-started)
 - [Firebase Authentication](https://firebase.google.com/docs/auth)
 
 ### External Services
+
 - [Razorpay Dashboard](https://dashboard.razorpay.com)
 - [Google Play Console](https://play.google.com/console)
 - [Google Cloud Console](https://console.cloud.google.com/project/shams-app-4d0e7)
 
 ### Emergency Contacts
-| Role | Action |
-|------|--------|
-| **Production Issue** | Check [Firebase Status](https://status.firebase.google.com) |
-| **Billing Issue** | [GCP Billing Support](https://cloud.google.com/support) |
-| **Security Incident** | Disable API key immediately + audit logs |
+
+| Role                  | Action                                                      |
+| --------------------- | ----------------------------------------------------------- |
+| **Production Issue**  | Check [Firebase Status](https://status.firebase.google.com) |
+| **Billing Issue**     | [GCP Billing Support](https://cloud.google.com/support)     |
+| **Security Incident** | Disable API key immediately + audit logs                    |
 
 ---
 
@@ -1228,16 +1297,8 @@ firebase functions:log --follow
     {
       "source": "functions",
       "codebase": "default",
-      "ignore": [
-        "node_modules",
-        ".git",
-        "firebase-debug.log",
-        "firebase-debug.*.log",
-        "scripts"
-      ],
-      "predeploy": [
-        "npm --prefix \"$RESOURCE_DIR\" run build"
-      ]
+      "ignore": ["node_modules", ".git", "firebase-debug.log", "firebase-debug.*.log", "scripts"],
+      "predeploy": ["npm --prefix \"$RESOURCE_DIR\" run build"]
     }
   ],
   "firestore": {
@@ -1266,6 +1327,7 @@ firebase functions:log --follow
 ### B. Key Environment Variables Summary
 
 **Production (GCP Secret Manager)**:
+
 ```
 RAZORPAY_WEBHOOK_SECRET_KEY
 GOOGLE_PLAY_CLIENT_EMAIL_KEY
@@ -1273,6 +1335,7 @@ GOOGLE_PLAY_PRIVATE_KEY_KEY
 ```
 
 **Development (.env)**:
+
 ```
 FIREBASE_API_KEY=AIzaSyAfSP-bBQdAmMlHWKeB0dhxyIJ_zv8mSQg
 FIREBASE_AUTH_DOMAIN=shams-app-4d0e7.firebaseapp.com
@@ -1286,20 +1349,20 @@ FIREBASE_APP_ID=1:347578830449:android:8f47007a2e5e4e0a1c95d0
 
 ## 🎯 Quick Reference Card
 
-| Item | Value |
-|------|-------|
-| **Project ID** | `shams-app-4d0e7` |
-| **Project Number** | `347578830449` |
-| **API Key** | `AIzaSyAfSP-bBQdAmMlHWKeB0dhxyIJ_zv8mSQg` |
-| **Region** | `asia-south1` (Mumbai) |
-| **Database URL** | https://shams-app-4d0e7-default-rtdb.asia-southeast1.firebasedatabase.app |
-| **Storage Bucket** | shams-app-4d0e7.firebasestorage.app |
-| **Functions Runtime** | Node.js 22, 512MB, 30s timeout |
-| **Firestore Indexes** | 5 custom composite indexes |
-| **Collections** | 7 (users, quotas, readings, rateLimits, auditLogs, securityEvents, _system) |
-| **Emulator UI Port** | http://localhost:4000 |
-| **Free Quota** | 3 questions/week |
-| **Supported Plans** | free, starter (7d), premium (31d), consultation (31d) |
+| Item                  | Value                                                                        |
+| --------------------- | ---------------------------------------------------------------------------- |
+| **Project ID**        | `shams-app-4d0e7`                                                            |
+| **Project Number**    | `347578830449`                                                               |
+| **API Key**           | `AIzaSyAfSP-bBQdAmMlHWKeB0dhxyIJ_zv8mSQg`                                    |
+| **Region**            | `asia-south1` (Mumbai)                                                       |
+| **Database URL**      | https://shams-app-4d0e7-default-rtdb.asia-southeast1.firebasedatabase.app    |
+| **Storage Bucket**    | shams-app-4d0e7.firebasestorage.app                                          |
+| **Functions Runtime** | Node.js 22, 512MB, 30s timeout                                               |
+| **Firestore Indexes** | 5 custom composite indexes                                                   |
+| **Collections**       | 7 (users, quotas, readings, rateLimits, auditLogs, securityEvents, \_system) |
+| **Emulator UI Port**  | http://localhost:4000                                                        |
+| **Free Quota**        | 3 questions/week                                                             |
+| **Supported Plans**   | free, starter (7d), premium (31d), consultation (31d)                        |
 
 ---
 

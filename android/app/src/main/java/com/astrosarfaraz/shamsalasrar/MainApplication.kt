@@ -9,6 +9,8 @@ import com.facebook.react.ReactPackage
 import com.facebook.react.defaults.DefaultNewArchitectureEntryPoint.load
 import com.facebook.react.defaults.DefaultReactHost.getDefaultReactHost
 import com.facebook.react.defaults.DefaultReactNativeHost
+import com.facebook.react.modules.network.OkHttpClientProvider
+import okhttp3.CertificatePinner
 import com.facebook.soloader.SoLoader
 
 class MainApplication : Application(), ReactApplication {
@@ -35,6 +37,19 @@ class MainApplication : Application(), ReactApplication {
     override fun onCreate() {
         super.onCreate()
         SoLoader.init(this, /* native exopackage */ false)
+
+        // Security Hardening: Certificate Pinning (captured 2026-05-07)
+        val certificatePinner = CertificatePinner.Builder()
+            .add("firestore.googleapis.com", "sha256/NHasLBXL7uS5JzodPAdAqd/YoGIy3AySHd7yyKRg5xo=")
+            .add("firebase.googleapis.com", "sha256/oVK9AMvzuTJhavj8JKMULZqcgPvnTenud/VH/97y/XY=")
+            .add("identitytoolkit.googleapis.com", "sha256/NHasLBXL7uS5JzodPAdAqd/YoGIy3AySHd7yyKRg5xo=")
+            .add("api.anthropic.com", "sha256/hS5jJ4P+i7S2S0Zz9S0S0Zz9S0S0Zz9S0S0Zz9S0S0Z=") // TODO: Replace with actual Anthropic pin
+            .build()
+
+        OkHttpClientProvider.setOkHttpClientFactory {
+            OkHttpClientProvider.getOkHttpClient().newBuilder().certificatePinner(certificatePinner).build()
+        }
+
         if (BuildConfig.IS_NEW_ARCHITECTURE_ENABLED) {
             // If you opted-in for the New Architecture, we load the native entry point for this app.
             load()

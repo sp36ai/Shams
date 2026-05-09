@@ -1,145 +1,110 @@
 /**
- * RKP ruling planets for the question moment.
+ * rulingPlanets — Planetary day and hour lords for KP/RKP.
  * --------------------------------------------------------------------------
- * Standard RKP uses five ruling planets:
- *
- *   1. Day Lord
- *   2. Ascendant Sign Lord
- *   3. Ascendant Nakshatra Lord
- *   4. Moon Sign Lord
- *   5. Moon Nakshatra Lord
- *
- * The chart builder still computes hora separately for traceability, so
- * `horaLordAtMoment()` remains exported. Minute-lord support is also retained
- * as a utility, but neither belongs in the RKP ruling-planet set.
+ * Implements the sunrise-to-sunrise rule for Day Lords and the
+ * Chaldean order for Hora Lords.
  */
 
 import type { Planet } from '../types/chart';
-import { DASHA_SEQUENCE } from '../kp/rules/vimshottari';
 
-// ── Day lordship ──────────────────────────────────────────────────────────────
+const DAY_LORDS: Planet[] = [
+  'Sun', // 0: Sunday
+  'Moon', // 1: Monday
+  'Mars', // 2: Tuesday
+  'Mercury', // 3: Wednesday
+  'Jupiter', // 4: Thursday
+  'Venus', // 5: Friday
+  'Saturn', // 6: Saturday
+];
 
-/** Weekday 0=Sunday … 6=Saturday → ruling planet. */
-export const DAY_LORDS: readonly Planet[] = Object.freeze([
-  'Sun', // 0 Sunday
-  'Moon', // 1 Monday
-  'Mars', // 2 Tuesday
-  'Mercury', // 3 Wednesday
-  'Jupiter', // 4 Thursday
-  'Venus', // 5 Friday
-  'Saturn', // 6 Saturday
-]);
-
-const MS_PER_HOUR = 60 * 60 * 1000;
-
-function localSolarDate(momentMs: number, lonDeg: number): Date {
-  return new Date(momentMs + (lonDeg / 15) * MS_PER_HOUR);
-}
-
-export function dayLordAtMoment(momentMs: number, lonDeg: number): Planet {
-  return DAY_LORDS[localSolarDate(momentMs, lonDeg).getUTCDay()] as Planet;
-}
-
-// ── Hora lordship ─────────────────────────────────────────────────────────────
+const HORA_SEQUENCE: Planet[] = ['Sun', 'Venus', 'Mercury', 'Moon', 'Saturn', 'Jupiter', 'Mars'];
 
 /**
- * Chaldean hora sequence: Sun → Venus → Mercury → Moon → Saturn → Jupiter → Mars
- * This is the cyclic sequence for planetary hours (documented in RKP rules §4).
- */
-const HORA_SEQUENCE: readonly Planet[] = Object.freeze([
-  'Sun',
-  'Venus',
-  'Mercury',
-  'Moon',
-  'Saturn',
-  'Jupiter',
-  'Mars',
-]);
-
-/**
- * Which planet starts the FIRST hora of each weekday.
- * Sunday = Sun, Monday = Moon, Tuesday = Mars … (same as DAY_LORDS).
- */
-const DAY_HORA_START: readonly Planet[] = DAY_LORDS;
-
-/**
- * Returns the hora (planetary hour) lord.
+ * Calculates the Day Lord (Vara Lord) respecting the sunrise-to-sunrise rule.
+ * RKP Rule: Sunrise is approximated at 6:00 AM local solar time.
  *
- * RKP anchors horas to sunrise, approximated as 6:00 AM local solar time.
- * All three ruling planets are derived from the same local-solar basis so the
- * day, hora, and minute rulers cannot drift across time frames.
- *
- * @param momentMs  Unix epoch milliseconds of the question moment
- * @param lonDeg    Geographic longitude, East positive
+ * @param jdUtc Julian Day in UTC
+ * @param lon Longitude in decimal degrees (East positive)
  */
-export function horaLordAtMoment(momentMs: number, lonDeg: number): Planet {
-  const local = localSolarDate(momentMs, lonDeg);
-  const localH = local.getUTCHours() + local.getUTCMinutes() / 60 + local.getUTCSeconds() / 3600;
-
-  // Hours elapsed since ~6 AM (approximate sunrise)
-  const hoursSinceSunrise = (((localH - 6) % 24) + 24) % 24;
-  const horaIndex = Math.floor(hoursSinceSunrise) % 24;
-
-  // Which weekday is it in local solar time?
-  // If before 6 AM local → still the previous day's hora sequence
-  const localDay = localH >= 6 ? local.getUTCDay() : (local.getUTCDay() + 6) % 7; // previous day
-
-  const dayStartPlanet = DAY_HORA_START[localDay] as Planet;
-  const startIdx = HORA_SEQUENCE.indexOf(dayStartPlanet);
-  return HORA_SEQUENCE[(startIdx + horaIndex) % 7] as Planet;
-}
-
-// ── Minute lordship ───────────────────────────────────────────────────────────
-
-/**
- * Minute lord: the hora is divided into 9 equal segments of 6m40s each.
- * Sequence = Vimshottari DASHA_SEQUENCE (Ketu → Mercury).
- *
- * Segment boundaries (minutes within the current local-solar hour):
- *   0–6:39  → Ketu
- *   6:40–13:19 → Venus
- *   13:20–19:59 → Sun
- *   20:00–26:39 → Moon
- *   26:40–33:19 → Mars
- *   33:20–39:59 → Rahu
- *   40:00–46:39 → Jupiter
- *   46:40–53:19 → Saturn
- *   53:20–59:59 → Mercury
- */
-export function minuteLordAtMoment(momentMs: number, lonDeg: number): Planet {
-  const local = localSolarDate(momentMs, lonDeg);
-  const minuteOfHour = local.getUTCMinutes() + local.getUTCSeconds() / 60;
-  const segmentIndex = Math.min(8, Math.floor(minuteOfHour / (60 / 9)));
-  return DASHA_SEQUENCE[segmentIndex] as Planet;
-}
-
-// ── Public API ────────────────────────────────────────────────────────────────
-
-export interface RulingPlanetsInput {
-  momentUtc: Date;
-  /** Geographic longitude of the questioner (degrees, East positive). */
-  lonDeg: number;
-  /** Sidereal ascendant longitude at question moment. */
-  ascendantLon: number;
-  /** Sidereal moon longitude at question moment. */
-  moonLon: number;
-}
-
-export interface RulingPlanetsResult {
-  dayLord: Planet;
-  ascSignLord: Planet;
-  ascStarLord: Planet;
-  moonSignLord: Planet;
-  moonStarLord: Planet;
+export function calculateDayLord(jdUtc: number, lon: number): Planet {
   /**
-   * Array of the 5 RPs in order:
-   * [dayLord, ascSignLord, ascStarLord, moonSignLord, moonStarLord].
-   * Duplicates retained (same planet in two positions still scores twice).
+   * 1. Calculate Local Solar Time (LST)
+   * Longitude offset: 15 degrees = 1 hour.
    */
-  set: readonly Planet[];
+  const lstOffsetDays = lon / 360;
+  const jdLst = jdUtc + lstOffsetDays;
+
+  /**
+   * 2. Determine the standard weekday from JD.
+   * JD 2451545.0 (Jan 1, 2000 12:00 UTC) was a Saturday (6).
+   * The formula floor(jd + 1.5) % 7 yields 0 for Sunday, 1 for Monday, etc.
+   */
+  const weekdayAtMoment = Math.floor(jdLst + 1.5) % 7;
+
+  /**
+   * 3. Calculate hours since local solar midnight.
+   * In Julian Days, .5 is midnight. Adding .5 and taking the fraction
+   * gives the time elapsed since the start of the calendar day (midnight).
+   */
+  const dayFraction = (jdLst + 0.5) % 1;
+  const lstHours = dayFraction * 24;
+
+  /**
+   * 4. Apply Sunrise Gatekeeper (6:00 AM Local Solar Time).
+   * If the current time is before 6 AM, it is still the previous planetary day.
+   */
+  let varaIndex = weekdayAtMoment;
+  if (lstHours < 6) {
+    // Move back to previous day
+    varaIndex = (weekdayAtMoment + 6) % 7;
+  }
+
+  return DAY_LORDS[varaIndex] as Planet;
 }
 
-function getSignLord(longitude: number): Planet {
+/** Wrapper for UI consumption using millisecond timestamps. */
+export function dayLordAtMoment(momentMs: number, lonDeg: number): Planet {
+  return calculateDayLord(momentMs / 86400000 + 2440587.5, lonDeg);
+}
+
+/** Wrapper for UI consumption using millisecond timestamps. */
+export function horaLordAtMoment(momentMs: number, lonDeg: number): Planet {
+  return calculateHoraLord(momentMs / 86400000 + 2440587.5, lonDeg);
+}
+
+/**
+ * Calculates the Hora Lord based on the Chaldean order.
+ * Each hora is 1 local solar hour. Sunrise is at 6:00 AM.
+ *
+ * @param jdUtc Julian Day in UTC
+ * @param lon Longitude in decimal degrees (East positive)
+ */
+export function calculateHoraLord(jdUtc: number, lon: number): Planet {
+  // 1. Calculate Local Solar Time (LST) hours since midnight
+  const lstOffsetDays = lon / 360;
+  const jdLst = jdUtc + lstOffsetDays;
+  const dayFraction = (jdLst + 0.5) % 1;
+  const lstHours = dayFraction * 24;
+
+  // 2. Determine hours since sunrise of the current planetary day
+  // Sunrise is at 6:00 AM.
+  let hoursSinceSunrise = lstHours - 6;
+  if (hoursSinceSunrise < 0) {
+    hoursSinceSunrise += 24;
+  }
+
+  // The hora number is the floor of hours since sunrise (0-23)
+  const horaNumber = Math.floor(hoursSinceSunrise);
+
+  // 3. Get the Day Lord (already respects sunrise)
+  const dayLord = calculateDayLord(jdUtc, lon);
+
+  // 4. Find starting index in Chaldean sequence and calculate current Hora Lord
+  const startIdx = HORA_SEQUENCE.indexOf(dayLord);
+  return HORA_SEQUENCE[(startIdx + horaNumber) % 7] as Planet;
+}
+
+export function getSignLordByLongitude(longitude: number): Planet {
   const SIGN_LORDS: Planet[] = [
     'Mars',
     'Venus',
@@ -187,23 +152,28 @@ function getNakshatraLord(longitude: number): Planet {
     'Saturn',
     'Mercury',
   ];
-  return NAK_LORDS[Math.floor((((longitude % 360) + 360) % 360) / 13.3333)] as Planet;
+  return NAK_LORDS[Math.floor((((longitude % 360) + 360) % 360) / (40 / 3))] as Planet;
 }
 
-export function getRulingPlanets(input: RulingPlanetsInput): RulingPlanetsResult {
-  const momentMs = input.momentUtc.getTime();
-  const dayLord = dayLordAtMoment(momentMs, input.lonDeg);
-  const ascSignLord = getSignLord(input.ascendantLon);
+export interface RulingPlanetsInput {
+  momentUtc: Date;
+  lonDeg: number;
+  ascendantLon: number;
+  moonLon: number;
+}
+
+export function getRulingPlanets(input: RulingPlanetsInput): {
+  set: [Planet, Planet, Planet, Planet, Planet];
+} {
+  // Use the Unix-to-JD constant for epoch conversion
+  const jdUtc = input.momentUtc.getTime() / 86400000 + 2440587.5;
+  const dayLord = calculateDayLord(jdUtc, input.lonDeg);
+  const ascSignLord = getSignLordByLongitude(input.ascendantLon);
   const ascStarLord = getNakshatraLord(input.ascendantLon);
-  const moonSignLord = getSignLord(input.moonLon);
+  const moonSignLord = getSignLordByLongitude(input.moonLon);
   const moonStarLord = getNakshatraLord(input.moonLon);
 
   return {
-    dayLord,
-    ascSignLord,
-    ascStarLord,
-    moonSignLord,
-    moonStarLord,
-    set: Object.freeze([dayLord, ascSignLord, ascStarLord, moonSignLord, moonStarLord]),
+    set: [dayLord, ascSignLord, ascStarLord, moonSignLord, moonStarLord],
   };
 }

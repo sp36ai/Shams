@@ -1,4 +1,5 @@
 # 🔍 Firebase Configuration Issues & Fixes Report
+
 ## Shams al-Asrar Project
 
 **Generated**: May 1, 2026  
@@ -11,12 +12,12 @@
 
 Your Firebase configuration has **several security and configuration issues** that need immediate attention before production deployment:
 
-| Severity | Count | Status |
-|----------|-------|--------|
-| 🔴 **CRITICAL** | 4 | Must fix before deployment |
-| 🟡 **HIGH** | 5 | Should fix before deployment |
-| 🟠 **MEDIUM** | 6 | Should fix soon |
-| 🟢 **LOW** | 3 | Nice to have |
+| Severity        | Count | Status                       |
+| --------------- | ----- | ---------------------------- |
+| 🔴 **CRITICAL** | 4     | Must fix before deployment   |
+| 🟡 **HIGH**     | 5     | Should fix before deployment |
+| 🟠 **MEDIUM**   | 6     | Should fix soon              |
+| 🟢 **LOW**      | 3     | Nice to have                 |
 
 **Total Issues**: 18  
 **Estimated Fix Time**: 2-4 hours
@@ -30,6 +31,7 @@ Your Firebase configuration has **several security and configuration issues** th
 **Severity**: 🔴 CRITICAL  
 **Location**: `android/app/google-services.json`  
 **Problem**:
+
 ```
 "api_key": [
   {
@@ -41,6 +43,7 @@ Your Firebase configuration has **several security and configuration issues** th
 The API key is visible in a file that gets committed to git (even though it should be restricted).
 
 **Risks**:
+
 - ❌ If git history is exposed, anyone can use this key
 - ❌ Even though restricted to Firestore API, still a security concern
 - ❌ Key rotation difficult if exposed
@@ -48,6 +51,7 @@ The API key is visible in a file that gets committed to git (even though it shou
 **Fix Steps**:
 
 1. **Immediately rotate the API key** (Google Cloud Console):
+
    ```
    1. Go to: https://console.cloud.google.com/apis/credentials
    2. Find: AIzaSyAfSP-bBQdAmMlHWKeB0dhxyIJ_zv8mSQg
@@ -57,13 +61,14 @@ The API key is visible in a file that gets committed to git (even though it shou
    ```
 
 2. **Add API key restrictions**:
+
    ```
    API Restrictions:
    - Cloud Firestore API ONLY
    - NO admin APIs
    - NO Cloud Storage
    - NO Realtime Database
-   
+
    Application Restrictions:
    - Android applications
    - Package: com.astrosarfaraz.shamsalasrar
@@ -72,6 +77,7 @@ The API key is visible in a file that gets committed to git (even though it shou
    ```
 
 3. **Generate new google-services.json** from Firebase Console:
+
    ```
    Firebase Console → Project Settings → Your Apps → Download google-services.json
    ```
@@ -90,7 +96,7 @@ The API key is visible in a file that gets committed to git (even though it shou
 
 **Severity**: 🔴 CRITICAL  
 **Location**: Cloud Functions environment  
-**Problem**: 
+**Problem**:
 
 Three critical secrets are referenced in code but NOT configured:
 
@@ -104,10 +110,12 @@ const privateKey = process.env.GOOGLE_PLAY_PRIVATE_KEY;
 ```
 
 If these are not set in production, functions will **CRASH**:
+
 - ❌ `razorpayWebhook` will throw: "RAZORPAY_WEBHOOK_SECRET not configured"
 - ❌ `verifyGooglePlayPurchase` will throw: "Play Store credentials not configured"
 
 **Risks**:
+
 - ❌ Payment webhooks will fail silently (user upgrades not processed)
 - ❌ Google Play purchases won't verify (users lose access)
 - ❌ Revenue loss + user frustration
@@ -119,21 +127,21 @@ If these are not set in production, functions will **CRASH**:
    ```bash
    # Get your Razorpay webhook secret from:
    # Dashboard → Settings → Webhooks → Copy Secret
-   
+
    gcloud secrets create RAZORPAY_WEBHOOK_SECRET \
      --data-file=- <<EOF
    [your-razorpay-webhook-secret]
    EOF
-   
+
    # Get your Google Play service account from:
    # Google Cloud Console → Service Accounts → Select account → Keys
    # Download JSON, extract fields:
-   
+
    gcloud secrets create GOOGLE_PLAY_CLIENT_EMAIL \
      --data-file=- <<EOF
    your-service-account@project.iam.gserviceaccount.com
    EOF
-   
+
    gcloud secrets create GOOGLE_PLAY_PRIVATE_KEY \
      --data-file=- <<EOF
    -----BEGIN PRIVATE KEY-----
@@ -150,7 +158,7 @@ If these are not set in production, functions will **CRASH**:
    SA_EMAIL=$(gcloud iam service-accounts list \
      --filter="displayName:Firebase Functions" \
      --format="value(email)")
-   
+
    # Grant secretAccessor role
    for SECRET in RAZORPAY_WEBHOOK_SECRET GOOGLE_PLAY_CLIENT_EMAIL GOOGLE_PLAY_PRIVATE_KEY; do
      gcloud secrets add-iam-policy-binding $SECRET \
@@ -186,7 +194,7 @@ If these are not set in production, functions will **CRASH**:
    RAZORPAY_WEBHOOK_SECRET=test-secret
    GOOGLE_PLAY_CLIENT_EMAIL=test@example.com
    GOOGLE_PLAY_PRIVATE_KEY="test-key"
-   
+
    # Run emulator
    firebase emulators:start --only functions
    ```
@@ -202,16 +210,19 @@ If these are not set in production, functions will **CRASH**:
 **Problem**:
 
 App Check is enforced in Cloud Functions:
+
 ```typescript
-enforceAppCheck: process.env.NODE_ENV !== 'development'  // ← true in production
+enforceAppCheck: process.env.NODE_ENV !== 'development'; // ← true in production
 ```
 
 But **App Check is NOT initialized in the client**. This means:
+
 - ❌ In production, all Cloud Function calls will be **REJECTED**
 - ❌ App won't work at all after deployment
 - ❌ All users get: "Error: App Check token is missing"
 
 **Risks**:
+
 - 🚨 **COMPLETE APP FAILURE IN PRODUCTION**
 - ❌ All readings, quota checks, payments will fail
 - ❌ Users cannot use the app
@@ -219,6 +230,7 @@ But **App Check is NOT initialized in the client**. This means:
 **Fix Steps**:
 
 1. **Enable App Check in Firebase Console**:
+
    ```
    Firebase Console → Project Settings → App Check
    → Click "Enable" on your app
@@ -228,10 +240,11 @@ But **App Check is NOT initialized in the client**. This means:
 2. **Add App Check initialization to React Native**:
 
    Create or update `src/firebase/appCheck.ts`:
+
    ```typescript
    import { initializeAppCheck, ReCaptchaV3Provider } from 'firebase/app-check';
    import { app } from './client';
-   
+
    export function initializeAppCheckService() {
      if (Platform.OS === 'android') {
        // Use Play Integrity (recommended for production)
@@ -244,7 +257,7 @@ But **App Check is NOT initialized in the client**. This means:
        if (__DEV__) {
          window.FIREBASE_APPCHECK_DEBUG_TOKEN = 'YOUR_DEBUG_TOKEN';
        }
-       
+
        initializeAppCheck(app, {
          provider: new ReCaptchaV3Provider('YOUR_RECAPTCHA_KEY'),
          isTokenAutoRefreshEnabled: true,
@@ -254,19 +267,21 @@ But **App Check is NOT initialized in the client**. This means:
    ```
 
 3. **Import in your main app** (`src/App.tsx`):
+
    ```typescript
    import { initializeAppCheckService } from './firebase/appCheck';
-   
+
    export default function App() {
      useEffect(() => {
        initializeAppCheckService();
      }, []);
-     
+
      return (/* your app */)
    }
    ```
 
 4. **Get Play Integrity token**:
+
    ```
    1. Google Play Console → Your App → Setup → App Integrity
    2. Copy your Play Integrity token
@@ -291,16 +306,19 @@ But **App Check is NOT initialized in the client**. This means:
 **Problem**:
 
 The webhook endpoint exists in code but is NOT configured in Razorpay:
+
 ```typescript
 export const razorpayWebhook = onRequest({ region: REGION, timeoutSeconds: 30 }, ...)
 ```
 
 This means:
+
 - ❌ When users pay via Razorpay, **plans are NOT updated**
 - ❌ Payments succeed but quotas remain unchanged
 - ❌ Revenue loss (users think they paid but can't use premium)
 
 **Risks**:
+
 - 🚨 **PAYMENT PROCESSING BROKEN**
 - ❌ Users pay but don't get access
 - ❌ Support tickets + refund requests
@@ -309,15 +327,17 @@ This means:
 **Fix Steps**:
 
 1. **Find your webhook URL**:
+
    ```bash
    # After deploying functions to Firebase
    firebase deploy --only functions
-   
+
    # Find razorpayWebhook URL in output:
    # Function URL (razorpayWebhook): https://asia-south1-shams-app-4d0e7.cloudfunctions.net/razorpayWebhook
    ```
 
 2. **Configure in Razorpay Dashboard**:
+
    ```
    1. Go to: https://dashboard.razorpay.com/settings/webhooks
    2. Click "Add New Webhook"
@@ -333,6 +353,7 @@ This means:
    ```
 
 3. **Save webhook secret**:
+
    ```bash
    # Add to GCP Secret Manager
    gcloud secrets create RAZORPAY_WEBHOOK_SECRET \
@@ -342,13 +363,14 @@ This means:
    ```
 
 4. **Test webhook**:
+
    ```bash
    # From Razorpay dashboard, click "Test"
    # Or make a test payment
-   
+
    # Verify logs
    firebase functions:log
-   
+
    # Look for: "razorpay webhook received" in logs
    ```
 
@@ -365,6 +387,7 @@ This means:
 **Problem**:
 
 Google Play purchase verification won't work:
+
 ```typescript
 if (!clientEmail || !privateKey) {
   throw new HttpsError('internal', 'Play Store credentials not configured');
@@ -372,6 +395,7 @@ if (!clientEmail || !privateKey) {
 ```
 
 **Impact**:
+
 - ❌ Google Play purchases fail to verify
 - ❌ Users can't upgrade plans via Play Store
 - ❌ Premium revenue completely blocked (on Android)
@@ -379,6 +403,7 @@ if (!clientEmail || !privateKey) {
 **Fix Steps**:
 
 1. **Create service account in Google Cloud**:
+
    ```
    Google Cloud Console → Service Accounts
    → Create Service Account
@@ -388,6 +413,7 @@ if (!clientEmail || !privateKey) {
    ```
 
 2. **Create and download private key**:
+
    ```
    → Click "Keys" tab
    → "Add Key" → "Create new key"
@@ -396,6 +422,7 @@ if (!clientEmail || !privateKey) {
    ```
 
 3. **Link to Google Play**:
+
    ```
    Google Play Console → Settings → Developer Account
    → Linked Google Cloud Projects
@@ -415,11 +442,13 @@ if (!clientEmail || !privateKey) {
 **Problem**:
 
 Developers are confused about which `.env` variables are required:
+
 - `functions/.env` - Cloud Functions secrets (local emulator only)
 - `.env` - App configuration (client + server)
 - `.env.example` - Template (incomplete)
 
 **Confusion**:
+
 ```
 Which env file goes where?
 What's required vs optional?
@@ -439,23 +468,27 @@ Which secrets go in Secret Manager?
 **Problem**:
 
 Cloud Functions requires Cloud Billing to be enabled:
+
 - ❌ Functions may be disabled if billing lapses
 - ❌ No alerts configured
 - ❌ Budget limits not set
 
 **Risk**:
+
 - 🚨 App stops working if billing disabled
 - ❌ Unexpected charges if scaling happens
 
 **Fix Steps**:
 
 1. **Enable billing**:
+
    ```
    Google Cloud Console → Billing
    → Link billing account to project
    ```
 
 2. **Set budget alerts**:
+
    ```
    → Budgets & alerts
    → Create budget
@@ -480,11 +513,13 @@ Cloud Functions requires Cloud Billing to be enabled:
 **Problem**:
 
 Rules look good but NOT verified:
+
 - ❌ No automated tests for security rules
 - ❌ No test coverage for edge cases
 - ❌ Rules could have logic errors in production
 
 **Risk**:
+
 - 🚨 Data leakage if rules are wrong
 - ❌ Users see each other's data
 - ❌ Privilege escalation possible
@@ -492,12 +527,18 @@ Rules look good but NOT verified:
 **Fix Steps**:
 
 1. **Create test file** `firestore.rules.test.ts`:
+
    ```typescript
-   import { assertFails, assertSucceeds, initializeTestEnvironment, RulesTestEnvironment } from '@firebase/rules-unit-testing';
-   
+   import {
+     assertFails,
+     assertSucceeds,
+     initializeTestEnvironment,
+     RulesTestEnvironment,
+   } from '@firebase/rules-unit-testing';
+
    describe('Firestore Security Rules', () => {
      let testEnv: RulesTestEnvironment;
-     
+
      beforeAll(async () => {
        testEnv = await initializeTestEnvironment({
          projectId: 'shams-app-4d0e7',
@@ -506,29 +547,28 @@ Rules look good but NOT verified:
          },
        });
      });
-     
+
      it('users can read own /users/{userId}', async () => {
        const db = testEnv.authenticatedContext('user123').firestore();
        await assertSucceeds(db.collection('users').doc('user123').get());
      });
-     
+
      it('users CANNOT read /quotas/{userId}', async () => {
        const db = testEnv.authenticatedContext('user456').firestore();
        await assertFails(db.collection('quotas').doc('user123').get());
      });
-     
+
      it('users CANNOT write privileged fields', async () => {
        const db = testEnv.authenticatedContext('user123').firestore();
-       await assertFails(
-         db.collection('users').doc('user123').set({ plan: 'premium' })
-       );
+       await assertFails(db.collection('users').doc('user123').set({ plan: 'premium' }));
      });
-     
+
      // ... more tests
    });
    ```
 
 2. **Run tests**:
+
    ```bash
    npm test -- firestore.rules.test.ts
    ```
@@ -549,6 +589,7 @@ Rules look good but NOT verified:
 **Problem**:
 
 If secret retrieval fails, error is not user-friendly:
+
 ```typescript
 if (!s) {
   throw new Error('RAZORPAY_WEBHOOK_SECRET not configured');
@@ -574,6 +615,7 @@ This shows developers the issue, but users get a 500 error with no explanation.
 **Problem**:
 
 To test App Check locally without Play Integrity, you need a debug token:
+
 - ❌ Not documented in .env.example
 - ❌ Not initialized in app
 - ❌ Developer doesn't know where to get it
@@ -581,6 +623,7 @@ To test App Check locally without Play Integrity, you need a debug token:
 **Fix Steps**:
 
 1. **Get debug token**:
+
    ```
    Firebase Console → App Check
    → Manage Apps → Click your app
@@ -589,6 +632,7 @@ To test App Check locally without Play Integrity, you need a debug token:
    ```
 
 2. **Add to .env.example**:
+
    ```bash
    FIREBASE_APPCHECK_DEBUG_TOKEN=your-debug-token
    ```
@@ -615,11 +659,13 @@ To test App Check locally without Play Integrity, you need a debug token:
 **Problem**:
 
 Rate limiting is hardcoded, can't be changed without code changes:
+
 ```typescript
-const REQUESTS_PER_MINUTE = 10;  // ← hardcoded
+const REQUESTS_PER_MINUTE = 10; // ← hardcoded
 ```
 
 **Issue**:
+
 - ❌ Can't adjust if bots attack
 - ❌ Can't tighten for free tier
 - ❌ Can't loosen for power users
@@ -643,6 +689,7 @@ const REQUESTS_PER_MINUTE = sysConfig.data()?.requestsPerMinute ?? 10;
 **Problem**:
 
 No IP logging for security events:
+
 ```typescript
 await db.collection('auditLogs').add({
   userId,
@@ -653,6 +700,7 @@ await db.collection('auditLogs').add({
 ```
 
 **Risk**:
+
 - ❌ Can't detect attack patterns
 - ❌ Can't trace suspicious activity
 - ❌ Limited forensics for security incidents
@@ -661,9 +709,11 @@ await db.collection('auditLogs').add({
 
 ```typescript
 function getClientIP(req: CallableRequest): string {
-  return req.rawRequest?.headers['x-forwarded-for'] 
-    || req.rawRequest?.connection.remoteAddress 
-    || 'unknown';
+  return (
+    req.rawRequest?.headers['x-forwarded-for'] ||
+    req.rawRequest?.connection.remoteAddress ||
+    'unknown'
+  );
 }
 
 await db.collection('auditLogs').add({
@@ -687,6 +737,7 @@ await db.collection('auditLogs').add({
 **Problem**:
 
 Direct HTTPS calls to Google APIs without certificate pinning:
+
 ```typescript
 const req = https.request({
   hostname: 'www.googleapis.com',
@@ -696,6 +747,7 @@ const req = https.request({
 ```
 
 **Risk**:
+
 - ⚠️ Vulnerable to MITM attacks (low probability but high impact)
 - ❌ No verification that we're talking to real Google
 
@@ -705,7 +757,7 @@ const req = https.request({
 import tls from 'tls';
 
 const options = {
-  ca: fs.readFileSync('certs/google-root-ca.pem'),  // Pin Google's CA
+  ca: fs.readFileSync('certs/google-root-ca.pem'), // Pin Google's CA
   hostname: 'www.googleapis.com',
 };
 
@@ -723,6 +775,7 @@ const req = https.request(options, callback);
 **Problem**:
 
 No clear step-by-step guide for:
+
 - Where to get each secret
 - How to set up Cloud Functions
 - How to test locally
@@ -730,6 +783,7 @@ No clear step-by-step guide for:
 - What to do after deployment
 
 **Risk**:
+
 - ❌ Deployment errors
 - ❌ Misconfiguration
 - ❌ Downtime for users
@@ -745,6 +799,7 @@ No clear step-by-step guide for:
 **Problem**:
 
 No way to verify Cloud Functions are working:
+
 ```typescript
 // Only exported: actual functions
 export { askOracle, getQuota, ... };
@@ -752,6 +807,7 @@ export { askOracle, getQuota, ... };
 ```
 
 **Risk**:
+
 - ❌ Can't monitor if functions are up
 - ❌ Can't detect deployment failures
 - ❌ Downtime not detected
@@ -759,16 +815,13 @@ export { askOracle, getQuota, ... };
 **Fix**: Add health check function:
 
 ```typescript
-export const healthCheck = onRequest(
-  { region: REGION },
-  async (req, res) => {
-    res.json({
-      status: 'ok',
-      timestamp: new Date().toISOString(),
-      projectId: 'shams-app-4d0e7',
-    });
-  }
-);
+export const healthCheck = onRequest({ region: REGION }, async (req, res) => {
+  res.json({
+    status: 'ok',
+    timestamp: new Date().toISOString(),
+    projectId: 'shams-app-4d0e7',
+  });
+});
 ```
 
 **Status**: ⏳ PENDING - No health check endpoint
@@ -784,6 +837,7 @@ export const healthCheck = onRequest(
 **Problem**:
 
 Error responses vary between functions:
+
 ```typescript
 // Some functions throw HttpsError
 throw new HttpsError('resource-exhausted', 'message');
@@ -793,6 +847,7 @@ throw new Error('message');
 ```
 
 **Issue**:
+
 - ⚠️ Inconsistent error format
 - ⚠️ Some errors leak internals
 - ⚠️ Client can't standardize error handling
@@ -819,6 +874,7 @@ export class AppError extends HttpsError {
 **Problem**:
 
 No performance tracking:
+
 - ❌ Don't know if askOracle is slow
 - ❌ Can't detect performance regressions
 - ❌ Can't optimize
@@ -848,6 +904,7 @@ logger.info('function_duration', {
 **Problem**:
 
 Webhook might receive CORS pre-flight requests:
+
 ```typescript
 if (req.method !== 'POST') {
   res.status(405).send('Method Not Allowed');
@@ -858,18 +915,15 @@ if (req.method !== 'POST') {
 **Fix**: Handle CORS:
 
 ```typescript
-export const razorpayWebhook = onRequest(
-  { region: REGION, cors: true },
-  async (req, res) => {
-    if (req.method === 'OPTIONS') {
-      res.set('Access-Control-Allow-Methods', 'POST');
-      res.set('Access-Control-Allow-Headers', 'X-Razorpay-Signature');
-      res.status(204).send('');
-      return;
-    }
-    // ... rest of function
+export const razorpayWebhook = onRequest({ region: REGION, cors: true }, async (req, res) => {
+  if (req.method === 'OPTIONS') {
+    res.set('Access-Control-Allow-Methods', 'POST');
+    res.set('Access-Control-Allow-Headers', 'X-Razorpay-Signature');
+    res.status(204).send('');
+    return;
   }
-);
+  // ... rest of function
+});
 ```
 
 **Status**: ⏳ PENDING - CORS not configured
@@ -888,7 +942,7 @@ Before we focus on fixes, here are the things configured correctly:
 ✅ **Rate Limiting** - Per-minute rate limits implemented  
 ✅ **Audit Logging** - All actions logged  
 ✅ **Plan Tiers** - Free/Starter/Premium/Consultation configured  
-✅ **Error Handling** - Custom error types used  
+✅ **Error Handling** - Custom error types used
 
 ---
 
@@ -897,6 +951,7 @@ Before we focus on fixes, here are the things configured correctly:
 To deploy safely, fix in this order:
 
 ### Phase 1: BLOCKING ISSUES (Must fix before ANY deployment)
+
 1. ✋ **Issue #1**: Rotate API key
 2. ✋ **Issue #3**: Initialize App Check in client
 3. ✋ **Issue #2**: Configure Cloud Functions secrets in Secret Manager
@@ -906,6 +961,7 @@ To deploy safely, fix in this order:
 **Risk if skipped**: App won't work in production
 
 ### Phase 2: CRITICAL ISSUES (Fix before production launch)
+
 5. ✋ **Issue #5**: Configure Google Play service account
 6. ✋ **Issue #7**: Enable billing and set alerts
 7. ✋ **Issue #8**: Create Firestore security rule tests
@@ -914,6 +970,7 @@ To deploy safely, fix in this order:
 **Risk if skipped**: Payment revenue lost, rules could have bugs
 
 ### Phase 3: IMPORTANT ISSUES (Fix within first month)
+
 8. ⚠️ **Issue #6**: Improve environment variable documentation
 9. ⚠️ **Issue #14**: Create deployment guide
 10. ⚠️ **Issue #15**: Add health check endpoint
@@ -922,6 +979,7 @@ To deploy safely, fix in this order:
 **Risk if skipped**: Maintenance and debugging harder
 
 ### Phase 4: NICE-TO-HAVE (Backlog)
+
 11. 💡 **Issue #10**: Add debug token support
 12. 💡 **Issue #11**: Externalize rate limit config
 13. 💡 **Issue #12**: Add IP logging
@@ -999,30 +1057,35 @@ To deploy safely, fix in this order:
 If you encounter errors:
 
 ### Error: "App Check token is missing"
+
 ```
 Cause: Issue #3 not fixed
 Fix: Initialize App Check in client (see Issue #3)
 ```
 
 ### Error: "RAZORPAY_WEBHOOK_SECRET not configured"
+
 ```
 Cause: Issue #2 not fixed
 Fix: Create secret in GCP Secret Manager (see Issue #2)
 ```
 
 ### Error: "Play Store credentials not configured"
+
 ```
 Cause: Issue #5 not fixed (Google Play service account)
 Fix: Configure service account credentials (see Issue #5)
 ```
 
 ### Razorpay payments not processed
+
 ```
 Cause: Issue #4 not fixed (webhook not configured)
 Fix: Configure webhook in Razorpay Dashboard (see Issue #4)
 ```
 
 ### API key errors
+
 ```
 Cause: Issue #1 not fixed (API key not rotated/restricted)
 Fix: Rotate key and add restrictions (see Issue #1)
@@ -1078,18 +1141,18 @@ After fixing critical issues, implement:
 
 ## Appendix: Quick Reference
 
-| Issue | Severity | Fix Time | File to Update |
-|-------|----------|----------|-----------------|
-| API Key Exposed | 🔴 | 30 min | `android/app/google-services.json` |
-| Missing Secrets | 🔴 | 45 min | GCP Secret Manager |
-| App Check Not Initialized | 🔴 | 30 min | `src/firebase/appCheck.ts` |
-| Razorpay Webhook Missing | 🔴 | 15 min | Razorpay Dashboard |
-| Google Play Not Configured | 🟡 | 20 min | GCP Service Accounts |
-| Billing Not Enabled | 🟡 | 10 min | GCP Console |
-| Rules Not Tested | 🟡 | 60 min | `firestore.rules.test.ts` |
-| Env Docs Missing | 🟡 | 30 min | `.env.example` + README |
-| Health Check Missing | 🟠 | 15 min | `functions/src/index.ts` |
-| Performance Metrics | 🟢 | 30 min | `functions/src/utils/logger.ts` |
+| Issue                      | Severity | Fix Time | File to Update                     |
+| -------------------------- | -------- | -------- | ---------------------------------- |
+| API Key Exposed            | 🔴       | 30 min   | `android/app/google-services.json` |
+| Missing Secrets            | 🔴       | 45 min   | GCP Secret Manager                 |
+| App Check Not Initialized  | 🔴       | 30 min   | `src/firebase/appCheck.ts`         |
+| Razorpay Webhook Missing   | 🔴       | 15 min   | Razorpay Dashboard                 |
+| Google Play Not Configured | 🟡       | 20 min   | GCP Service Accounts               |
+| Billing Not Enabled        | 🟡       | 10 min   | GCP Console                        |
+| Rules Not Tested           | 🟡       | 60 min   | `firestore.rules.test.ts`          |
+| Env Docs Missing           | 🟡       | 30 min   | `.env.example` + README            |
+| Health Check Missing       | 🟠       | 15 min   | `functions/src/index.ts`           |
+| Performance Metrics        | 🟢       | 30 min   | `functions/src/utils/logger.ts`    |
 
 ---
 

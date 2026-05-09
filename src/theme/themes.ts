@@ -81,6 +81,10 @@ export interface Theme {
   id: ThemeId;
   /** Localized display label is resolved via i18n; this is the i18n key */
   labelKey: string;
+  /** Short display name shown in the in-app theme picker card */
+  name: string;
+  /** Two-word palette subtitle shown under the name card */
+  subtitle: string;
   /** Whether RN should compute light or dark contrast defaults */
   isDark: boolean;
   colors: ThemeColors;
@@ -92,6 +96,8 @@ export interface Theme {
 const teal: Theme = {
   id: 'teal',
   labelKey: 'theme.teal',
+  name: 'Teal Oracle',
+  subtitle: 'Aqua · Deep Sea',
   isDark: true,
   colors: {
     bg: '#030E10',
@@ -133,6 +139,8 @@ const teal: Theme = {
 const midnightGold: Theme = {
   id: 'midnightGold',
   labelKey: 'theme.midnightGold',
+  name: 'Midnight Gold',
+  subtitle: 'Obsidian · Gold',
   isDark: true,
   colors: {
     bg: '#0A0814',
@@ -174,6 +182,8 @@ const midnightGold: Theme = {
 const royalViolet: Theme = {
   id: 'royalViolet',
   labelKey: 'theme.royalViolet',
+  name: 'Royal Violet',
+  subtitle: 'Midnight · Violet',
   isDark: true,
   colors: {
     bg: '#0E0820',
@@ -215,6 +225,8 @@ const royalViolet: Theme = {
 const crimsonDusk: Theme = {
   id: 'crimsonDusk',
   labelKey: 'theme.crimsonDusk',
+  name: 'Crimson Dusk',
+  subtitle: 'Dark Rose · Amber',
   isDark: true,
   colors: {
     bg: '#160A0E',
@@ -256,6 +268,8 @@ const crimsonDusk: Theme = {
 const arcticSilver: Theme = {
   id: 'arcticSilver',
   labelKey: 'theme.arcticSilver',
+  name: 'Arctic Silver',
+  subtitle: 'Charcoal · Steel',
   isDark: true,
   colors: {
     bg: '#0C1014',

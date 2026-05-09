@@ -139,8 +139,11 @@ const LocationPermissionScreen: React.FC = () => {
   const isDenied = status === 'denied' || status === 'blocked';
   const isLoading = status === 'requesting';
 
-  const titleText = isDenied ? t('permission.deniedTitle') : t('permission.locationTitle');
-  const bodyText = isDenied ? t('permission.deniedBody') : t('permission.locationRationale');
+  // Google Play Compliance: Prominent disclosure must be shown before the system prompt.
+  const titleText = isDenied ? t('permission.deniedTitle') : 'Location Access Required';
+  const bodyText = isDenied
+    ? t('permission.deniedBody')
+    : 'Shams al-Asrār uses your precise location to calculate accurate house cusps (Placidus system) for your specific coordinates. This is essential for the RKP horary engine to provide an authentic and reliable verdict.';
 
   return (
     <SafeAreaView

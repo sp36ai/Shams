@@ -10,6 +10,7 @@
 You've chosen a **Firebase serverless architecture** for your astrology app. This document integrates Firebase into the complete security strategy for production-grade protection.
 
 ### Your Final Architecture
+
 ```
 React Native Client (iOS + Android)
         ↓ (HTTPS + Certificate Pinning)
@@ -25,17 +26,20 @@ Security: RLS, Audit Logging, Encryption
 ## Phase 1: Immediate Security Hardening (Week 1)
 
 ### 1.1 Client-Side Hardening
+
 - [ ] Enable code obfuscation (Terser in metro.config.js)
 - [ ] Strip console logs from release builds
 - [ ] Remove source maps from APK/IPA
 - [ ] Implement app signature verification
 
 **Files to Update**:
+
 - `metro.config.js` - Add obfuscation
 - `android/app/build.gradle` - Disable debugging in release
 - `ios/Podfile` - Production build settings
 
 ### 1.2 Firebase Project Setup
+
 - [ ] Create Firebase project at https://console.firebase.google.com
 - [ ] Enable Authentication (Email/Password, Google Sign-In)
 - [ ] Create Firestore database (Production mode)
@@ -52,6 +56,7 @@ Security: RLS, Audit Logging, Encryption
 ### 2.1 Cloud Functions Deployment
 
 **Function 1**: `judgeHorary()` - Main calculation engine
+
 ```
 Location: functions/src/judgment/judgeHorary.ts
 Security: Proprietary logic hidden from client
@@ -61,6 +66,7 @@ Logging: Full audit trail in Firestore
 ```
 
 **Function 2**: `getUserQuota()` - Quota management
+
 ```
 Location: functions/src/quotas/quotas.ts
 Purpose: Check remaining calculations
@@ -69,6 +75,7 @@ Enforcement: Server-side quota blocking
 ```
 
 **Function 3**: `submitReading()` - Save calculation results
+
 ```
 Location: functions/src/readings/readings.ts
 Security: Only user can submit for own user ID
@@ -81,6 +88,7 @@ Validation: Prevent quota manipulation
 ### 2.2 React Native App Updates
 
 **Update Authentication**:
+
 ```typescript
 // Replace Supabase auth with Firebase Auth
 OLD: import { useSupabaseAuth } from '@supabase/supabase-js';
@@ -88,6 +96,7 @@ NEW: import { useAuth } from '@react-native-firebase/auth';
 ```
 
 **Add Firebase SDK**:
+
 ```bash
 npm install @react-native-firebase/app
 npm install @react-native-firebase/auth
@@ -96,14 +105,12 @@ npm install @react-native-firebase/functions
 ```
 
 **Call Cloud Functions**:
+
 ```typescript
 // Example: Submit horary question
 import { getFunctions, httpsCallable } from '@react-native-firebase/functions';
 
-const judgeHorary = httpsCallable(
-  getFunctions(),
-  'judgeHorary'
-);
+const judgeHorary = httpsCallable(getFunctions(), 'judgeHorary');
 
 const result = await judgeHorary({
   chartData: JSON.stringify(chart),
@@ -121,24 +128,25 @@ const result = await judgeHorary({
 ### 2.3 Database Security Rules
 
 Deploy Firestore rules:
+
 ```javascript
 // firestore.rules
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    
+
     // Users can only access their own data
     match /users/{userId} {
       allow read: if request.auth.uid == userId;
       allow write: if request.auth.uid == userId;
     }
-    
+
     // Users can only see their own readings
     match /readings/{readingId} {
       allow read: if resource.data.userId == request.auth.uid;
       allow create: if request.auth.uid != null;
     }
-    
+
     // Audit logs: admin only
     match /auditLogs/{logId} {
       allow read: if request.auth.token.admin == true;
@@ -157,6 +165,7 @@ service cloud.firestore {
 ### 3.1 Network Security
 
 **Certificate Pinning** (Android):
+
 ```xml
 <!-- android/app/src/main/res/xml/network_security_config.xml -->
 <domain-config cleartextTrafficPermitted="false">
@@ -168,6 +177,7 @@ service cloud.firestore {
 ```
 
 **Certificate Pinning** (iOS):
+
 ```swift
 // ios/Podfile
 pod 'TrustKit'  # or native URLSession pinning
@@ -178,18 +188,20 @@ pod 'TrustKit'  # or native URLSession pinning
 ### 3.2 Data Encryption
 
 **Firestore Encryption** (Automatic):
+
 - ✅ Encryption at rest: Enabled by default
 - ✅ Encryption in transit: TLS 1.3
 - ✅ Key rotation: Google managed
 
 **Optional: End-to-End Encryption** (for premium tier):
+
 ```typescript
 // For highly sensitive data
 import crypto from 'crypto-js';
 
 const encryptedPayload = crypto.AES.encrypt(
   JSON.stringify(chartData),
-  userEncryptionKey
+  userEncryptionKey,
 ).toString();
 ```
 
@@ -201,7 +213,7 @@ const encryptedPayload = crypto.AES.encrypt(
 // Check for jailbreak/root before premium features
 import { isJailbroken, isRooted } from 'react-native-jailbreak-detect';
 
-if (await isJailbroken() || await isRooted()) {
+if ((await isJailbroken()) || (await isRooted())) {
   disablePremiumFeatures();
   showWarning('Device appears compromised');
 }
@@ -212,6 +224,7 @@ if (await isJailbroken() || await isRooted()) {
 ### 3.4 Monitoring & Alerting
 
 Set up Firebase monitoring:
+
 - [ ] Enable Cloud Logging
 - [ ] Set up error alerts (Sentry integration)
 - [ ] Monitor function execution times
@@ -227,6 +240,7 @@ Set up Firebase monitoring:
 ### 4.1 Security Audit
 
 **Hire External Auditor**:
+
 - [ ] Code review (Cloud Functions + React Native)
 - [ ] APK/IPA decompilation analysis
 - [ ] API penetration testing
@@ -273,24 +287,25 @@ Testing:
 
 ## Security Comparison: Before vs After
 
-| Aspect | Before (Current) | After (Firebase) |
-|--------|------------------|-----------------|
-| **Calculation Logic** | Client-side (EXPOSED) | Server-side (HIDDEN) |
-| **Authentication** | Supabase | Firebase Auth |
-| **Database** | Supabase PostgreSQL | Firestore + PostgreSQL |
-| **API Calls** | Direct to Supabase | Cloud Functions |
-| **Audit Logging** | Manual | Automatic (Firebase) |
-| **Encryption** | Basic | TLS 1.3 + Certificate Pinning |
-| **Quota Enforcement** | Client-side (Bypassable) | Server-side (Secure) |
-| **Data Access** | No RLS | Firestore RLS Rules |
-| **Reverse Engineering Risk** | CRITICAL | MINIMAL |
-| **Premium Features** | Can't enforce | Fully enforced |
+| Aspect                       | Before (Current)         | After (Firebase)              |
+| ---------------------------- | ------------------------ | ----------------------------- |
+| **Calculation Logic**        | Client-side (EXPOSED)    | Server-side (HIDDEN)          |
+| **Authentication**           | Supabase                 | Firebase Auth                 |
+| **Database**                 | Supabase PostgreSQL      | Firestore + PostgreSQL        |
+| **API Calls**                | Direct to Supabase       | Cloud Functions               |
+| **Audit Logging**            | Manual                   | Automatic (Firebase)          |
+| **Encryption**               | Basic                    | TLS 1.3 + Certificate Pinning |
+| **Quota Enforcement**        | Client-side (Bypassable) | Server-side (Secure)          |
+| **Data Access**              | No RLS                   | Firestore RLS Rules           |
+| **Reverse Engineering Risk** | CRITICAL                 | MINIMAL                       |
+| **Premium Features**         | Can't enforce            | Fully enforced                |
 
 ---
 
 ## Financial Impact
 
 ### Development Costs
+
 ```
 Phase 1 (Week 1): 40-60 hours @ $50-100/hr = $2-6K
 Phase 2 (Week 2-3): 50-70 hours @ $50-100/hr = $2.5-7K
@@ -301,6 +316,7 @@ TOTAL DEVELOPMENT: $13K-37K
 ```
 
 ### Hosting Costs (Monthly)
+
 ```
 Before (Supabase): $25-50/month
 After (Firebase + PostgreSQL): $15-25/month
@@ -309,6 +325,7 @@ SAVINGS: $10-25/month
 ```
 
 ### Premium Revenue Potential
+
 ```
 Free Tier: 10 calculations/month
 Premium Tier: $9.99/month → Unlimited
@@ -322,24 +339,28 @@ With 1000 users (10% premium conversion):
 ## Implementation Priority
 
 ### P0 (CRITICAL - Do First)
+
 1. Firebase project setup
 2. Cloud Functions deployment
 3. App authentication update
 4. Certificate pinning
 
 ### P1 (HIGH - Do in Phase 2)
+
 1. Firestore security rules
 2. Audit logging
 3. Data migration
 4. Quota enforcement
 
 ### P2 (MEDIUM - Do in Phase 3)
+
 1. Device integrity checks
 2. Enhanced monitoring
 3. End-to-end encryption (optional)
 4. Performance optimization
 
 ### P3 (LOW - Nice to Have)
+
 1. Advanced threat detection
 2. ML-based fraud detection
 3. DDoS protection upgrade
@@ -350,26 +371,34 @@ With 1000 users (10% premium conversion):
 ## Risk Mitigation
 
 ### Risk 1: Data Migration Failure
+
 **Mitigation**:
+
 - [ ] Backup all Supabase data
 - [ ] Test migration in staging first
 - [ ] Keep Supabase running as fallback
 - [ ] Implement rollback procedure
 
 ### Risk 2: Cloud Functions Cold Start
+
 **Mitigation**:
+
 - [ ] Keep function warm with periodic invocations
 - [ ] Upgrade to 2nd gen functions (faster startup)
 - [ ] Cache results in MMKV for common questions
 
 ### Risk 3: Firebase Outage
+
 **Mitigation**:
+
 - [ ] Show offline mode with cached results
 - [ ] Implement retry logic with exponential backoff
 - [ ] Monitor Firebase status page
 
 ### Risk 4: Unexpected Costs
+
 **Mitigation**:
+
 - [ ] Set up Firebase billing alerts
 - [ ] Implement function rate limiting
 - [ ] Monitor Firestore read/write volume
@@ -406,14 +435,14 @@ Compliance Metrics:
 
 ## Updated Decision Summary
 
-| Decision | Your Choice | Impact |
-|----------|-------------|--------|
-| **Backend** | Firebase Cloud Functions | ✅ Fastest serverless setup |
-| **Database** | Firestore + PostgreSQL | ✅ Hybrid approach |
-| **Authentication** | Firebase Auth | ✅ Built-in security |
-| **Calculation Engine** | Cloud Functions | ✅ Hidden from users |
-| **Premium Model** | Quota-based + Subscription | ✅ Server-side enforcement |
-| **Timeline** | 6-8 weeks | ✅ Realistic with team |
+| Decision               | Your Choice                | Impact                      |
+| ---------------------- | -------------------------- | --------------------------- |
+| **Backend**            | Firebase Cloud Functions   | ✅ Fastest serverless setup |
+| **Database**           | Firestore + PostgreSQL     | ✅ Hybrid approach          |
+| **Authentication**     | Firebase Auth              | ✅ Built-in security        |
+| **Calculation Engine** | Cloud Functions            | ✅ Hidden from users        |
+| **Premium Model**      | Quota-based + Subscription | ✅ Server-side enforcement  |
+| **Timeline**           | 6-8 weeks                  | ✅ Realistic with team      |
 
 ---
 
@@ -455,6 +484,7 @@ Compliance Metrics:
 ✅ **Proceed with Firebase approach**
 
 **Rationale**:
+
 - Fastest path to production-grade security
 - Lowest ongoing infrastructure costs
 - Easiest to scale as user base grows

@@ -11,11 +11,12 @@ This implementation includes **6 new files + 1 new directory** for complete cert
 ### 🛠️ Tools & Scripts
 
 #### 1. **PowerShell Certificate Generator** (Windows)
+
 📁 `scripts/Generate-FirebaseCertificates.ps1`
 
 - **Purpose**: Generate self-signed test certificates with SHA1 & SHA256 fingerprints
 - **Runtime**: 5 minutes
-- **Output**: 
+- **Output**:
   - `functions/certs/firebase-dev.key` (private key)
   - `functions/certs/firebase-dev.crt` (certificate)
   - `functions/certs/firebase-dev.pem` (PEM format)
@@ -27,6 +28,7 @@ This implementation includes **6 new files + 1 new directory** for complete cert
 - **Requirements**: OpenSSL installed
 
 #### 2. **Bash Fingerprint Extractor** (macOS/Linux)
+
 📁 `scripts/extract-fingerprints.sh`
 
 - **Purpose**: Extract SHA1 & SHA256 from existing certificate files
@@ -43,9 +45,11 @@ This implementation includes **6 new files + 1 new directory** for complete cert
 ### 📝 Documentation
 
 #### 3. **Setup Guide** (Detailed)
+
 📁 `docs/CERTIFICATE_PINNING_SETUP.md`
 
 **480+ lines**
+
 - Complete step-by-step setup instructions
 - OpenSSL command references
 - Development & production certificate generation
@@ -56,9 +60,11 @@ This implementation includes **6 new files + 1 new directory** for complete cert
 **When to use**: Detailed reference during setup
 
 #### 4. **Quick Reference** (Commands)
+
 📁 `docs/CERTIFICATE_FINGERPRINTS_QUICK_REFERENCE.md`
 
 **250+ lines**
+
 - Quick command reference
 - File locations
 - Configuration updates
@@ -68,9 +74,11 @@ This implementation includes **6 new files + 1 new directory** for complete cert
 **When to use**: Quick lookup for specific commands
 
 #### 5. **Implementation Summary** (Walkthrough)
+
 📁 `docs/CERTIFICATE_FINGERPRINTS_IMPLEMENTATION_SUMMARY.md`
 
 **300+ lines**
+
 - 5-phase implementation plan
 - Time estimates for each phase
 - Security architecture diagram
@@ -80,9 +88,11 @@ This implementation includes **6 new files + 1 new directory** for complete cert
 **When to use**: End-to-end walkthrough of entire implementation
 
 #### 6. **Quick Start** (Visual)
+
 📁 `docs/CERTIFICATE_FINGERPRINTS_QUICK_START.md`
 
 **200+ lines**
+
 - Visual diagrams and flowcharts
 - 5-minute setup process
 - File reference table
@@ -92,9 +102,11 @@ This implementation includes **6 new files + 1 new directory** for complete cert
 **When to use**: Quick visual overview, getting started fast
 
 #### 7. **Examples** (Real Data)
+
 📁 `docs/CERTIFICATE_FINGERPRINTS_EXAMPLES.md`
 
 **250+ lines**
+
 - Real example fingerprints (SHA1 & SHA256)
 - Format explanations
 - Conversion examples
@@ -108,9 +120,11 @@ This implementation includes **6 new files + 1 new directory** for complete cert
 ### 💻 Implementation Code
 
 #### 8. **Certificate Pinning Logic** (TypeScript)
+
 📁 `src/utils/certificatePinning.ts`
 
 **200+ lines**
+
 - Certificate pin configuration
 - Verification functions
 - Axios interceptor setup
@@ -118,6 +132,7 @@ This implementation includes **6 new files + 1 new directory** for complete cert
 - Type definitions
 
 **Key exports**:
+
 ```typescript
 export const CERTIFICATE_PINS: CertificatePinConfig;
 export function verifyCertificatePin(): Promise<boolean>;
@@ -127,6 +142,7 @@ export function displayCertificatePinInfo(): void;
 ```
 
 **Integration**:
+
 ```typescript
 // In App.tsx
 import { setupCertificatePinning } from '@utils/certificatePinning';
@@ -142,9 +158,11 @@ useEffect(() => {
 ### 📁 Data Directory
 
 #### 9. **Certificate Storage**
+
 📁 `functions/certs/` (New directory)
 
 **Files created by `Generate-FirebaseCertificates.ps1`**:
+
 - `firebase-dev.key` - Private key (⚠️ DO NOT COMMIT)
 - `firebase-dev.crt` - Self-signed certificate
 - `firebase-dev.pem` - PEM format
@@ -152,6 +170,7 @@ useEffect(() => {
 - `fingerprints.example.json` - Template example
 
 **Git configuration**:
+
 ```bash
 # Add to .gitignore
 echo "*.key" >> .gitignore
@@ -163,17 +182,17 @@ echo "*.key" >> .gitignore
 
 ### I want to...
 
-| Goal | File | Time |
-|------|------|------|
-| **Get started quickly** | CERTIFICATE_FINGERPRINTS_QUICK_START.md | 5 min |
-| **See visual overview** | CERTIFICATE_FINGERPRINTS_QUICK_START.md | 5 min |
-| **Understand formats** | CERTIFICATE_FINGERPRINTS_EXAMPLES.md | 10 min |
-| **Get detailed setup** | CERTIFICATE_PINNING_SETUP.md | 30 min |
-| **Find specific commands** | CERTIFICATE_FINGERPRINTS_QUICK_REFERENCE.md | 5 min |
-| **See complete walkthrough** | CERTIFICATE_FINGERPRINTS_IMPLEMENTATION_SUMMARY.md | 20 min |
-| **Generate test certificates** | scripts/Generate-FirebaseCertificates.ps1 | 5 min |
-| **Extract fingerprints** | scripts/extract-fingerprints.sh | 1 min |
-| **Implement in React Native** | src/utils/certificatePinning.ts | 5 min |
+| Goal                           | File                                               | Time   |
+| ------------------------------ | -------------------------------------------------- | ------ |
+| **Get started quickly**        | CERTIFICATE_FINGERPRINTS_QUICK_START.md            | 5 min  |
+| **See visual overview**        | CERTIFICATE_FINGERPRINTS_QUICK_START.md            | 5 min  |
+| **Understand formats**         | CERTIFICATE_FINGERPRINTS_EXAMPLES.md               | 10 min |
+| **Get detailed setup**         | CERTIFICATE_PINNING_SETUP.md                       | 30 min |
+| **Find specific commands**     | CERTIFICATE_FINGERPRINTS_QUICK_REFERENCE.md        | 5 min  |
+| **See complete walkthrough**   | CERTIFICATE_FINGERPRINTS_IMPLEMENTATION_SUMMARY.md | 20 min |
+| **Generate test certificates** | scripts/Generate-FirebaseCertificates.ps1          | 5 min  |
+| **Extract fingerprints**       | scripts/extract-fingerprints.sh                    | 1 min  |
+| **Implement in React Native**  | src/utils/certificatePinning.ts                    | 5 min  |
 
 ---
 
@@ -287,11 +306,11 @@ docs/
 
 ## 🛠️ Tools Provided
 
-| Tool | File | Language | Purpose |
-|------|------|----------|---------|
-| Cert Generator | `scripts/Generate-FirebaseCertificates.ps1` | PowerShell | Windows - generate test certs |
-| Fingerprint Extractor | `scripts/extract-fingerprints.sh` | Bash | macOS/Linux - extract SHA1/SHA256 |
-| Pinning Logic | `src/utils/certificatePinning.ts` | TypeScript | React Native - implement pinning |
+| Tool                  | File                                        | Language   | Purpose                           |
+| --------------------- | ------------------------------------------- | ---------- | --------------------------------- |
+| Cert Generator        | `scripts/Generate-FirebaseCertificates.ps1` | PowerShell | Windows - generate test certs     |
+| Fingerprint Extractor | `scripts/extract-fingerprints.sh`           | Bash       | macOS/Linux - extract SHA1/SHA256 |
+| Pinning Logic         | `src/utils/certificatePinning.ts`           | TypeScript | React Native - implement pinning  |
 
 ---
 
@@ -331,7 +350,7 @@ docs/
 ✅ **TypeScript Implementation** - Production-ready code  
 ✅ **Examples Included** - Real fingerprint examples  
 ✅ **Security Hardened** - Private key protection, pinning logic  
-✅ **Firebase Ready** - Works with Cloud Functions & Firestore  
+✅ **Firebase Ready** - Works with Cloud Functions & Firestore
 
 ---
 
@@ -369,6 +388,7 @@ docs/
 👉 **Start with**: `docs/CERTIFICATE_FINGERPRINTS_QUICK_START.md`
 
 Or run immediately:
+
 ```powershell
 .\scripts\Generate-FirebaseCertificates.ps1
 ```

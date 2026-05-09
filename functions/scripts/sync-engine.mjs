@@ -14,7 +14,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const SRC  = path.resolve(__dirname, '../../src/astrology');
+const SRC = path.resolve(__dirname, '../../src/astrology');
 const DEST = path.resolve(__dirname, '../src/engine');
 
 let copied = 0;
@@ -34,21 +34,23 @@ function relativeToShims(destFilePath) {
 
 function transformContent(raw, destFilePath) {
   const engineRoot = relativeToEngine(destFilePath);
-  const shimsRoot  = relativeToShims(destFilePath);
-  return raw
-    // @astrology/ → relative path inside engine/
-    .replace(/'@astrology\/([^']+)'/g, `'${engineRoot}/$1'`)
-    .replace(/"@astrology\/([^"]+)"/g, `"${engineRoot}/$1"`)
-    // @i18n/types → local shim (only exports LangCode which is 'en'|'ur'|'hi')
-    .replace(/'@i18n\/types'/g, `'${shimsRoot}/i18nTypes'`)
-    .replace(/"@i18n\/types"/g, `"${shimsRoot}/i18nTypes"`);
+  const shimsRoot = relativeToShims(destFilePath);
+  return (
+    raw
+      // @astrology/ → relative path inside engine/
+      .replace(/'@astrology\/([^']+)'/g, `'${engineRoot}/$1'`)
+      .replace(/"@astrology\/([^"]+)"/g, `"${engineRoot}/$1"`)
+      // @i18n/types → local shim (only exports LangCode which is 'en'|'ur'|'hi')
+      .replace(/'@i18n\/types'/g, `'${shimsRoot}/i18nTypes'`)
+      .replace(/"@i18n\/types"/g, `"${shimsRoot}/i18nTypes"`)
+  );
 }
 
 function syncDir(src, dest) {
   fs.mkdirSync(dest, { recursive: true });
 
   for (const entry of fs.readdirSync(src, { withFileTypes: true })) {
-    const srcPath  = path.join(src, entry.name);
+    const srcPath = path.join(src, entry.name);
     const destPath = path.join(dest, entry.name);
 
     if (entry.isDirectory()) {
@@ -61,7 +63,7 @@ function syncDir(src, dest) {
       continue;
     }
 
-    const raw         = fs.readFileSync(srcPath, 'utf8');
+    const raw = fs.readFileSync(srcPath, 'utf8');
     const transformed = transformContent(raw, destPath);
 
     // Skip write if content unchanged (avoids unnecessary tsc recompilation)
@@ -75,6 +77,26 @@ function syncDir(src, dest) {
   }
 }
 
+/** Recursively removes files in dest that do not exist in src. */
+function pruneDir(src, dest) {
+  if (!fs.existsSync(dest)) return;
+  for (const entry of fs.readdirSync(dest, { withFileTypes: true })) {
+    const srcPath = path.join(src, entry.name);
+    const destPath = path.join(dest, entry.name);
+
+    if (entry.isDirectory()) {
+      pruneDir(srcPath, destPath);
+      // Remove empty directories
+      if (fs.readdirSync(destPath).length === 0) {
+        fs.rmdirSync(destPath);
+      }
+    } else if (!fs.existsSync(srcPath)) {
+      fs.unlinkSync(destPath);
+      console.log(`[sync-engine] Pruned stale file: ${entry.name}`);
+    }
+  }
+}
+
 // ── Main ──────────────────────────────────────────────────────────────────────
 
 if (!fs.existsSync(SRC)) {
@@ -84,4 +106,5 @@ if (!fs.existsSync(SRC)) {
 
 console.log(`[sync-engine] Syncing ${SRC} → ${DEST} ...`);
 syncDir(SRC, DEST);
+pruneDir(SRC, DEST);
 console.log(`[sync-engine] Done. copied=${copied} skipped=${skipped}`);

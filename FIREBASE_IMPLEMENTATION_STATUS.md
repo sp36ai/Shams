@@ -8,6 +8,7 @@
 ## ✅ What Was Created
 
 ### 1. Cloud Functions Backend (`functions/src/`)
+
 ```
 functions/
 ├── src/
@@ -27,6 +28,7 @@ functions/
 ```
 
 ### 2. Firestore Configuration
+
 ```
 ├── firestore.rules              ✅ Security rules (RLS) - admin only
 ├── firestore.indexes.json       ✅ Database indexes for performance
@@ -35,6 +37,7 @@ functions/
 ```
 
 ### 3. React Native Integration
+
 ```
 src/
 ├── firebase/
@@ -47,6 +50,7 @@ src/
 ## 🔐 Security Features Implemented
 
 ### Cloud Functions (`judgeHorary.ts`)
+
 - ✅ **Authentication Check**: Only authenticated users can call
 - ✅ **Input Validation**: All parameters validated server-side
 - ✅ **Quota Enforcement**: Monthly limits enforced server-side (can't bypass)
@@ -56,6 +60,7 @@ src/
 - ✅ **Timeout Protection**: Functions timeout after 30 seconds
 
 ### Firestore Rules (`firestore.rules`)
+
 - ✅ **User Data Isolation**: Users can only see their own data
 - ✅ **Privilege Escalation Prevention**: Users can't set premium status
 - ✅ **Admin Only Access**: Audit logs visible to admins only
@@ -64,6 +69,7 @@ src/
 - ✅ **Field-Level Security**: monthlyUsed, isPremium protected from client writes
 
 ### App Integration (`client.ts`)
+
 - ✅ **Configuration**: All Firebase config externalized
 - ✅ **Offline Support**: Firestore persistence enabled
 - ✅ **Emulator Mode**: Local development testing
@@ -74,31 +80,37 @@ src/
 ## 📊 Cloud Functions Summary
 
 ### Function 1: `judgeHorary()` (Main Engine)
+
 **Type**: Callable Cloud Function  
 **Access**: Authenticated users only  
 **Purpose**: Calculate horary judgment  
 **Input**: Chart data, question type, timestamp, location  
 **Output**: Verdict, confidence, timing, reasoning (NOT algorithm)  
 **Security**:
+
 - Input validation
 - Quota check
 - Audit logging
 - Error masking
 
 ### Function 2: `getUserQuota()`
+
 **Type**: Callable Cloud Function  
 **Purpose**: Check remaining calculations  
 **Returns**: Total quota, used, remaining, premium status  
 **Security**: User can only check own quota
 
 ### Function 3: `submitReading()`
+
 **Type**: Callable Cloud Function  
 **Purpose**: Save calculation to history  
-**Security**: 
+**Security**:
+
 - Only for own user ID
 - Prevents privilege escalation
 
 ### Function 4: `verifyAppSignature()`
+
 **Type**: Callable Cloud Function  
 **Purpose**: Detect tampered/unofficial app builds  
 **Security**: Compares app signature hash against expected values
@@ -108,6 +120,7 @@ src/
 ## 🚀 Next Steps to Deploy
 
 ### Step 1: Set Up Firebase Project
+
 ```bash
 cd c:\Users\Sarfaraz\Desktop\shams-al-asrar
 
@@ -120,6 +133,7 @@ firebase init
 ```
 
 ### Step 2: Install Dependencies
+
 ```bash
 # Install Cloud Functions dependencies
 cd functions
@@ -130,6 +144,7 @@ npm run build
 ```
 
 ### Step 3: Deploy
+
 ```bash
 # Deploy everything
 firebase deploy
@@ -141,6 +156,7 @@ firebase deploy --only firestore:indexes
 ```
 
 ### Step 4: Update React Native App
+
 ```bash
 # Install Firebase SDK
 npm install @react-native-firebase/app
@@ -150,6 +166,7 @@ npm install @react-native-firebase/functions
 ```
 
 ### Step 5: Test
+
 ```bash
 # Start local emulator
 firebase emulators:start
@@ -162,7 +179,9 @@ firebase emulators:start
 ## 📋 Key Implementation Details
 
 ### Judgment Engine Algorithm
+
 The algorithm in `judgeHorary.ts` implements:
+
 1. **STEP 1**: Read Moon's sub-lord
 2. **STEP 2**: Load question-specific house matrix
 3. **STEP 3**: Score Moon's sub-lord house (+2/-2 points)
@@ -174,6 +193,7 @@ The algorithm in `judgeHorary.ts` implements:
    - If YES + retrograde → DELAYED
 
 ### Database Schema
+
 ```
 Firestore Collections:
 - users/{userId}
@@ -239,12 +259,14 @@ Located in `functions/src/config.ts`:
 ## ⚠️ Important Notes
 
 ### For Production
+
 1. **Replace Firebase Config** in `src/firebase/client.ts` with your actual credentials
 2. **Update Firestore Rules** to match your database schema
 3. **Set Environment Variables**: API keys should be in `.env` file
 4. **Enable Billing**: Cloud Functions require Firebase billing plan
 
 ### For Security
+
 1. **Don't commit credentials** to git (use `.env` files)
 2. **Test RLS Rules** thoroughly before production
 3. **Enable Audit Logging** for compliance
@@ -252,6 +274,7 @@ Located in `functions/src/config.ts`:
 5. **Verify App Signatures** regularly
 
 ### For Development
+
 1. Use **Firebase Emulators** for local testing
 2. Test **Firestore Rules** with emulator
 3. Debug **Cloud Functions** locally before deploying
@@ -262,6 +285,7 @@ Located in `functions/src/config.ts`:
 ## 📈 Monitoring & Maintenance
 
 ### Monitor Cloud Functions
+
 ```bash
 # View function logs
 firebase functions:log
@@ -274,11 +298,13 @@ firebase functions:describe judgeHorary
 ```
 
 ### Monitor Firestore
+
 - Firebase Console → Firestore → Usage statistics
 - Check read/write quotas
 - Monitor storage usage
 
 ### Alerts to Set Up
+
 - High error rate in Cloud Functions
 - Quota usage approaching limits
 - Unusual Firestore access patterns
@@ -289,6 +315,7 @@ firebase functions:describe judgeHorary
 ## 🎯 Success Criteria
 
 When everything is working:
+
 - [ ] Cloud Functions deployed and responding
 - [ ] Firestore security rules enforced
 - [ ] React Native app calls functions successfully

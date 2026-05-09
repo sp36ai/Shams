@@ -1,9 +1,6 @@
 module.exports = {
   root: true,
-  extends: [
-    '@react-native',
-    'eslint-config-prettier',
-  ],
+  extends: ['@react-native', 'eslint-config-prettier'],
   parser: '@typescript-eslint/parser',
   plugins: ['prettier'],
   rules: {
@@ -18,8 +15,8 @@ module.exports = {
     'react/no-unstable-nested-components': ['warn', { allowAsProps: true }],
     'no-shadow': 'off',
     '@typescript-eslint/no-shadow': 'error',
-    'curly': ['error', 'all'],
-    'eqeqeq': ['error', 'always'],
+    curly: ['error', 'all'],
+    eqeqeq: ['error', 'always'],
   },
   env: {
     'react-native/react-native': true,

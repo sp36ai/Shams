@@ -8,6 +8,7 @@
  *   deleteReading            — callable — delete a single reading (owner only)
  *   verifyGooglePlayPurchase — callable — verify IAP, upgrade plan + set custom claims
  *   razorpayWebhook          — HTTP    — Razorpay payment event handler
+ *   setAdminClaim            — callable — manage administrative privileges
  *   health                   — HTTP    — readiness/liveness check
  *
  * Auth model:
@@ -25,3 +26,4 @@ export { syncReadings, deleteReading } from './functions/readings';
 export { verifyGooglePlayPurchase } from './functions/payments/googlePlay';
 export { razorpayWebhook } from './functions/payments/razorpay';
 export { health } from './functions/health';
+export { setAdminClaim } from './functions/admin';

@@ -125,13 +125,13 @@ export const CERTIFICATE_PINS = {
   production: {
     domain: 'us-central1-shams-al-asrar.cloudfunctions.net',
     sha256: 'YOUR_SHA256_HERE', // Get from Part 1
-    sha1: 'YOUR_SHA1_HERE'
+    sha1: 'YOUR_SHA1_HERE',
   },
   development: {
     domain: 'localhost:5001',
     sha256: 'YOUR_DEV_SHA256_HERE', // Get from Part 2
-    sha1: 'YOUR_DEV_SHA1_HERE'
-  }
+    sha1: 'YOUR_DEV_SHA1_HERE',
+  },
 };
 ```
 
@@ -167,29 +167,32 @@ curl -v --cacert firebase-dev.pem https://localhost:5001/
 
 ## Security Notes
 
-| Aspect | Notes |
-|--------|-------|
-| **SHA256** | ✅ Use for production - cryptographically secure |
-| **SHA1** | ⚠️ Legacy - included for reference only, not recommended |
-| **Private Key** | 🔒 NEVER commit to Git (`functions/certs/*.key` in .gitignore) |
+| Aspect          | Notes                                                            |
+| --------------- | ---------------------------------------------------------------- |
+| **SHA256**      | ✅ Use for production - cryptographically secure                 |
+| **SHA1**        | ⚠️ Legacy - included for reference only, not recommended         |
+| **Private Key** | 🔒 NEVER commit to Git (`functions/certs/*.key` in .gitignore)   |
 | **Pin Updates** | Update when certificates rotate (Firebase auto-rotates annually) |
-| **Fallback** | System Certificate Authority validates if pin fails |
+| **Fallback**    | System Certificate Authority validates if pin fails              |
 
 ---
 
 ## Troubleshooting
 
 ### "Certificate verification failed"
+
 - Verify SHA256 matches certificate
 - Check domain name is correct
 - Ensure certificate is not expired
 
 ### "Fingerprint mismatch"
+
 - Regenerate fingerprint from certificate
 - Check you're using public key hash (not certificate hash)
 - Verify using `openssl` commands from Part 3
 
 ### "Connection refused"
+
 - Check Firebase Emulator is running: `firebase emulators:start`
 - Verify port 5001 is accessible
 - Check firewall rules

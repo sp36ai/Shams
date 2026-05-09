@@ -99,35 +99,62 @@ const SettingsScreen: React.FC = () => {
 
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         <Section title={t('settings.appearanceSection')}>
-          <Row label={t('settings.themeLabel')} colors={colors} typography={typography}>
-            <View style={styles.swatchRow}>
-              {availableThemes.map(th => {
-                const selected = th.id === themeId;
-                return (
-                  <Pressable
-                    key={th.id}
-                    onPress={() => handleThemeChange(th.id)}
-                    accessibilityRole="button"
-                    accessibilityLabel={t(`theme.${th.id}` as 'theme.teal')}
-                    accessibilityState={{ selected }}
-                    style={({ pressed }) => [
-                      styles.swatch,
-                      {
-                        backgroundColor: th.colors.accent,
-                        borderColor: selected ? colors.text : 'transparent',
-                        borderWidth: selected ? 2.5 : 0,
-                        opacity: pressed ? 0.7 : 1,
-                      },
-                    ]}
+          <Text
+            style={[
+              typography('label'),
+              { color: colors.textMuted, marginBottom: 8, letterSpacing: 1, fontSize: 10 },
+            ]}
+          >
+            {t('settings.themeLabel').toUpperCase()}
+          </Text>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.themeCardRow}
+          >
+            {availableThemes.map(th => {
+              const selected = th.id === themeId;
+              return (
+                <Pressable
+                  key={th.id}
+                  onPress={() => handleThemeChange(th.id)}
+                  accessibilityRole="button"
+                  accessibilityLabel={th.name}
+                  accessibilityState={{ selected }}
+                  style={({ pressed }) => [
+                    styles.themeCard,
+                    {
+                      backgroundColor: th.colors.bg,
+                      borderColor: selected ? th.colors.accent : th.colors.border,
+                      borderWidth: selected ? 1.5 : StyleSheet.hairlineWidth,
+                      opacity: pressed ? 0.8 : 1,
+                    },
+                  ]}
+                >
+                  {/* Accent dot */}
+                  <View style={[styles.themeCardDot, { backgroundColor: th.colors.accent }]} />
+                  {/* Name */}
+                  <Text
+                    style={[styles.themeCardName, { color: th.colors.accent }]}
+                    numberOfLines={2}
                   >
-                    {selected && (
-                      <Text style={{ color: th.colors.textOnPrimary, fontSize: 14 }}>✓</Text>
-                    )}
-                  </Pressable>
-                );
-              })}
-            </View>
-          </Row>
+                    {th.name}
+                  </Text>
+                  {/* Subtitle */}
+                  <Text
+                    style={[styles.themeCardSub, { color: th.colors.textFaint }]}
+                    numberOfLines={2}
+                  >
+                    {th.subtitle}
+                  </Text>
+                  {/* Active indicator bar */}
+                  {selected && (
+                    <View style={[styles.themeCardBar, { backgroundColor: th.colors.accent }]} />
+                  )}
+                </Pressable>
+              );
+            })}
+          </ScrollView>
 
           <Row label={t('settings.languageLabel')} colors={colors} typography={typography}>
             <View style={styles.langRow}>
@@ -254,10 +281,14 @@ const SettingsScreen: React.FC = () => {
 
 function planLabel(plan: PlanTier): string {
   switch (plan) {
-    case 'starter': return 'Starter';
-    case 'premium': return '✦ Premium';
-    case 'consultation': return '✦ Consultation';
-    default: return 'Free';
+    case 'starter':
+      return 'Starter';
+    case 'premium':
+      return '✦ Premium';
+    case 'consultation':
+      return '✦ Consultation';
+    default:
+      return 'Free';
   }
 }
 
@@ -281,10 +312,7 @@ const SubscriptionCard: React.FC<{
       ]}
     >
       <Text
-        style={[
-          typography('bodyEmphasis'),
-          { color: isPaid ? colors.amber : colors.textMuted },
-        ]}
+        style={[typography('bodyEmphasis'), { color: isPaid ? colors.amber : colors.textMuted }]}
       >
         {planLabel(plan)}
       </Text>
@@ -335,9 +363,7 @@ const ReadingStatsRow: React.FC<{
       typography={typography}
     />
     <StatCard
-      value={String(
-        countVerdict(readings, 'CONDITIONAL') + countVerdict(readings, 'DELAYED'),
-      )}
+      value={String(countVerdict(readings, 'CONDITIONAL') + countVerdict(readings, 'DELAYED'))}
       label="COND"
       color={colors.caution}
       colors={colors}
@@ -355,7 +381,9 @@ const StatCard: React.FC<{
 }> = ({ value, label, color, colors, typography }) => (
   <View style={[styles.statCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
     <Text style={[typography('heading'), { color, textAlign: 'center' }]}>{value}</Text>
-    <Text style={[typography('caption'), { color: colors.textFaint, textAlign: 'center', fontSize: 9 }]}>
+    <Text
+      style={[typography('caption'), { color: colors.textFaint, textAlign: 'center', fontSize: 9 }]}
+    >
       {label}
     </Text>
   </View>
@@ -431,18 +459,41 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     borderWidth: StyleSheet.hairlineWidth,
   },
-  swatchRow: {
-    flexDirection: 'row',
+  themeCardRow: {
     gap: 10,
-    flexWrap: 'wrap',
-    justifyContent: 'flex-end',
+    paddingBottom: 4,
   },
-  swatch: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
+  themeCard: {
+    width: 90,
+    height: 110,
+    borderRadius: 10,
+    padding: 10,
+    justifyContent: 'flex-start',
+    overflow: 'hidden',
+  },
+  themeCardDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    marginBottom: 8,
+  },
+  themeCardName: {
+    fontSize: 9,
+    fontWeight: '700',
+    letterSpacing: 0.5,
+    lineHeight: 13,
+  },
+  themeCardSub: {
+    fontSize: 7,
+    marginTop: 3,
+    lineHeight: 11,
+  },
+  themeCardBar: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: 2,
   },
   langRow: {
     flexDirection: 'row',

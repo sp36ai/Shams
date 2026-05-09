@@ -32,12 +32,9 @@ describe('selectIsUnlimited', () => {
     expect(selectIsUnlimited(makeState('free', 0))).toBe(false);
   });
 
-  test.each<PlanTier>(['starter', 'premium', 'consultation'])(
-    '%s plan IS unlimited',
-    plan => {
-      expect(selectIsUnlimited(makeState(plan, 0))).toBe(true);
-    },
-  );
+  test.each<PlanTier>(['starter', 'premium', 'consultation'])('%s plan IS unlimited', plan => {
+    expect(selectIsUnlimited(makeState(plan, 0))).toBe(true);
+  });
 });
 
 describe('selectQuestionsLeft', () => {

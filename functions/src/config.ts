@@ -35,6 +35,7 @@ export const FUNCTION_OPTS = {
 export const RAZORPAY_WEBHOOK_SECRET = defineSecret('RAZORPAY_WEBHOOK_SECRET');
 export const GOOGLE_PLAY_CLIENT_EMAIL = defineSecret('GOOGLE_PLAY_CLIENT_EMAIL');
 export const GOOGLE_PLAY_PRIVATE_KEY = defineSecret('GOOGLE_PLAY_PRIVATE_KEY');
+export const ANTHROPIC_API_KEY = defineSecret('ANTHROPIC_API_KEY');
 
 /**
  * Configurable callable rate limit (requests per user per minute).

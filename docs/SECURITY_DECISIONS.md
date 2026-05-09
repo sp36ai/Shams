@@ -9,6 +9,7 @@
 ## CRITICAL DECISIONS (Answer These First)
 
 ### 1. Backend Technology Choice
+
 **Question**: Which technology should we use for the backend service?
 
 ```
@@ -28,11 +29,12 @@ Option C: Rust + Actix-web
 └─ Best for: Ultra-high security & performance
 ```
 
-**Your Choice**: _______________________
+**Your Choice**: ****\*\*****\_\_\_****\*\*****
 
 ---
 
 ### 2. Backend Hosting Platform
+
 **Question**: Where should we host the backend service?
 
 ```
@@ -61,11 +63,12 @@ Option D: Keep all on Supabase (No separate backend)
 └─ Best for: If we use edge functions securely
 ```
 
-**Your Choice**: _______________________
+**Your Choice**: ****\*\*****\_\_\_****\*\*****
 
 ---
 
 ### 3. Calculation Logic Location (MOST IMPORTANT)
+
 **Question**: Where should the astrology judgment algorithm live?
 
 ```
@@ -97,11 +100,12 @@ Option C: Current (Client-side TypeScript)
 └─ Recommendation: ❌ NOT ACCEPTABLE for production
 ```
 
-**Your Choice**: _______________________
+**Your Choice**: ****\*\*****\_\_\_****\*\*****
 
 ---
 
 ### 4. Offline Mode Requirement
+
 **Question**: Must the app work without internet?
 
 ```
@@ -118,11 +122,12 @@ Option B: Online-Only (Recommended)
 └─ Timeline Impact: None
 ```
 
-**Your Choice**: _______________________
+**Your Choice**: ****\*\*****\_\_\_****\*\*****
 
 ---
 
 ### 5. Premium Tier Revenue Model
+
 **Question**: How should premium users be differentiated?
 
 ```
@@ -145,11 +150,12 @@ Option C: Hybrid (Both)
 └─ Monetization: $9.99/month subscription
 ```
 
-**Your Choice**: _______________________
+**Your Choice**: ****\*\*****\_\_\_****\*\*****
 
 ---
 
 ### 6. Third-Party Security Audit
+
 **Question**: Should we hire external security firm for review?
 
 ```
@@ -158,7 +164,7 @@ Option A: Yes (STRONGLY RECOMMENDED)
 ├─ Timeline: 2-4 weeks
 ├─ Value: Catches blind spots, validates design
 ├─ Before: Phase 3 (end of Week 8)
-├─ Providers: 
+├─ Providers:
 │  - HackerOne (via bug bounty)
 │  - Synack
 │  - Pentester + Code Reviewer duo
@@ -172,11 +178,12 @@ Option B: Internal Review Only
 └─ Recommendation: NOT RECOMMENDED
 ```
 
-**Your Choice**: _______________________
+**Your Choice**: ****\*\*****\_\_\_****\*\*****
 
 ---
 
 ### 7. Timeline & Resource Commitment
+
 **Question**: What's your timeline for each phase?
 
 ```
@@ -189,17 +196,17 @@ Phase 1 (Immediate): Week 1-2
 Phase 2 (Short-term): Week 3-4
 ├─ Effort: 100-150 hours
 ├─ Cost: $5-15K (backend hosting)
-├─ Your availability: _____% 
+├─ Your availability: _____%
 └─ Developer availability: _____ developers for _____ weeks
 
 Phase 3 (Medium-term): Week 5-8
 ├─ Effort: 150-200 hours
 ├─ Cost: $15-30K (security audit)
-├─ Your availability: _____% 
+├─ Your availability: _____%
 └─ Developer availability: _____ developers for _____ weeks
 ```
 
-**Timeline Preference**: _______________________
+**Timeline Preference**: ****\*\*****\_\_\_****\*\*****
 
 ---
 
@@ -224,7 +231,7 @@ Option C: No Pinning (Current)
 ├─ Recommended: ❌ Not acceptable
 ```
 
-**Your Choice**: _______________________
+**Your Choice**: ****\*\*****\_\_\_****\*\*****
 
 ---
 
@@ -250,7 +257,7 @@ Option C: Hybrid
 └─ Complexity: Medium
 ```
 
-**Your Choice**: _______________________
+**Your Choice**: ****\*\*****\_\_\_****\*\*****
 
 ---
 
@@ -275,13 +282,14 @@ Option C: None
 └─ Recommended: ❌ Not for production
 ```
 
-**Your Choice**: _______________________
+**Your Choice**: ****\*\*****\_\_\_****\*\*****
 
 ---
 
 ## IMPLEMENTATION ROADMAP (Based on Your Answers)
 
 Once you provide the above answers, I will create a detailed implementation plan with:
+
 - Exact tech stack recommendations
 - Week-by-week milestones
 - Specific code changes needed
@@ -292,15 +300,15 @@ Once you provide the above answers, I will create a detailed implementation plan
 
 ## Quick Summary Table
 
-| Decision | Your Choice | Implication |
-|----------|-------------|-------------|
-| Backend Tech | _________ | Affects development speed & cost |
-| Backend Hosting | _________ | Affects monthly operating cost |
-| Calculation Location | _________ | **CRITICAL** - affects security model |
-| Offline Mode | _________ | Affects complexity & timeline |
-| Premium Model | _________ | Affects revenue & enforcement |
-| Security Audit | _________ | Affects confidence & launch date |
-| Timeline | _________ | Affects resource planning |
+| Decision             | Your Choice    | Implication                           |
+| -------------------- | -------------- | ------------------------------------- |
+| Backend Tech         | \***\*\_\*\*** | Affects development speed & cost      |
+| Backend Hosting      | \***\*\_\*\*** | Affects monthly operating cost        |
+| Calculation Location | \***\*\_\*\*** | **CRITICAL** - affects security model |
+| Offline Mode         | \***\*\_\*\*** | Affects complexity & timeline         |
+| Premium Model        | \***\*\_\*\*** | Affects revenue & enforcement         |
+| Security Audit       | \***\*\_\*\*** | Affects confidence & launch date      |
+| Timeline             | \***\*\_\*\*** | Affects resource planning             |
 
 ---
 

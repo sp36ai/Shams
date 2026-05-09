@@ -1,4 +1,5 @@
 # Shams al-Asrār — Architecture & Flow Diagrams Report
+
 **Generated: April 29, 2026**
 
 ---
@@ -543,7 +544,7 @@ SOURCE CODE
     ├─ TypeScript source (src/**/*.ts)
     ├─ Jest tests (__tests__/**/*)
     └─ Configuration files
-    
+
     ▼
 ┌──────────────────────────────┐
 │ Run Tests & Lint             │

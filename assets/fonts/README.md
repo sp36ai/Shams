@@ -8,17 +8,17 @@ declares `assets: ['./assets/fonts/']` (already configured in this repo).
 
 Place these EXACT filenames in this directory before running `npx react-native run-android`:
 
-| Filename | Family / Weight | License | Source |
-|---|---|---|---|
-| `Cinzel-Regular.ttf` | Cinzel 400 | SIL OFL 1.1 | https://fonts.google.com/specimen/Cinzel |
-| `Cinzel-Bold.ttf` | Cinzel 700 | SIL OFL 1.1 | https://fonts.google.com/specimen/Cinzel |
-| `CormorantGaramond-Regular.ttf` | Cormorant Garamond 400 | SIL OFL 1.1 | https://fonts.google.com/specimen/Cormorant+Garamond |
-| `CormorantGaramond-Italic.ttf` | Cormorant Garamond 400 italic | SIL OFL 1.1 | https://fonts.google.com/specimen/Cormorant+Garamond |
-| `CormorantGaramond-SemiBold.ttf` | Cormorant Garamond 600 | SIL OFL 1.1 | https://fonts.google.com/specimen/Cormorant+Garamond |
-| `NotoNastaliqUrdu-Regular.ttf` | Noto Nastaliq Urdu 400 | SIL OFL 1.1 | https://fonts.google.com/noto/specimen/Noto+Nastaliq+Urdu |
-| `NotoNastaliqUrdu-Bold.ttf` | Noto Nastaliq Urdu 700 | SIL OFL 1.1 | https://fonts.google.com/noto/specimen/Noto+Nastaliq+Urdu |
-| `NotoSansDevanagari-Regular.ttf` | Noto Sans Devanagari 400 | SIL OFL 1.1 | https://fonts.google.com/noto/specimen/Noto+Sans+Devanagari |
-| `NotoSansDevanagari-Bold.ttf` | Noto Sans Devanagari 700 | SIL OFL 1.1 | https://fonts.google.com/noto/specimen/Noto+Sans+Devanagari |
+| Filename                         | Family / Weight               | License     | Source                                                      |
+| -------------------------------- | ----------------------------- | ----------- | ----------------------------------------------------------- |
+| `Cinzel-Regular.ttf`             | Cinzel 400                    | SIL OFL 1.1 | https://fonts.google.com/specimen/Cinzel                    |
+| `Cinzel-Bold.ttf`                | Cinzel 700                    | SIL OFL 1.1 | https://fonts.google.com/specimen/Cinzel                    |
+| `CormorantGaramond-Regular.ttf`  | Cormorant Garamond 400        | SIL OFL 1.1 | https://fonts.google.com/specimen/Cormorant+Garamond        |
+| `CormorantGaramond-Italic.ttf`   | Cormorant Garamond 400 italic | SIL OFL 1.1 | https://fonts.google.com/specimen/Cormorant+Garamond        |
+| `CormorantGaramond-SemiBold.ttf` | Cormorant Garamond 600        | SIL OFL 1.1 | https://fonts.google.com/specimen/Cormorant+Garamond        |
+| `NotoNastaliqUrdu-Regular.ttf`   | Noto Nastaliq Urdu 400        | SIL OFL 1.1 | https://fonts.google.com/noto/specimen/Noto+Nastaliq+Urdu   |
+| `NotoNastaliqUrdu-Bold.ttf`      | Noto Nastaliq Urdu 700        | SIL OFL 1.1 | https://fonts.google.com/noto/specimen/Noto+Nastaliq+Urdu   |
+| `NotoSansDevanagari-Regular.ttf` | Noto Sans Devanagari 400      | SIL OFL 1.1 | https://fonts.google.com/noto/specimen/Noto+Sans+Devanagari |
+| `NotoSansDevanagari-Bold.ttf`    | Noto Sans Devanagari 700      | SIL OFL 1.1 | https://fonts.google.com/noto/specimen/Noto+Sans+Devanagari |
 
 ## Why these specific files?
 
@@ -69,7 +69,7 @@ In code, reference fonts by their Postscript name (already done in
 `src/theme/typography.ts`):
 
 ```ts
-fontFamily: 'CormorantGaramond-Regular'
+fontFamily: 'CormorantGaramond-Regular';
 ```
 
 ## License compliance

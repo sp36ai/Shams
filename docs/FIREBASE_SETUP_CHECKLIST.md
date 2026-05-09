@@ -18,6 +18,7 @@
 ## Step 1: Create Firebase Project
 
 ### 1.1 Go to Firebase Console
+
 ```
 1. Visit: https://console.firebase.google.com
 2. Click "Create a project"
@@ -30,6 +31,7 @@
 ### 1.2 Enable Required Services
 
 In Firebase Console, under "Build":
+
 - [ ] **Authentication**
   - Click "Authentication"
   - Click "Get started"
@@ -192,42 +194,42 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    
+
     // Allow reads/writes only to authenticated users
     function isAuth() {
       return request.auth != null;
     }
-    
+
     function isOwner(userId) {
       return isAuth() && request.auth.uid == userId;
     }
-    
+
     // Users collection
     match /users/{userId} {
       allow read: if isOwner(userId);
       allow create: if isOwner(userId) && !('isPremium' in request.resource.data);
-      allow update: if isOwner(userId) && 
+      allow update: if isOwner(userId) &&
                        !request.resource.data.diff(resource.data).affectedKeys()
                        .hasAny(['isPremium', 'monthlyQuota', 'admin']);
       allow delete: if isOwner(userId);
     }
-    
+
     // Readings collection (indexed for performance)
     match /readings/{readingId} {
       allow read: if isOwner(resource.data.userId);
-      allow create: if isAuth() && 
+      allow create: if isAuth() &&
                        request.resource.data.userId == request.auth.uid &&
                        request.resource.data.createdAt == request.time;
       allow update: if isOwner(resource.data.userId);
       allow delete: if isOwner(resource.data.userId);
     }
-    
+
     // Quotas (read-only for users, write-only for functions)
     match /quotas/{userId} {
       allow read: if isOwner(userId);
       allow write: if false;
     }
-    
+
     // Audit logs (admin only)
     match /auditLogs/{logId} {
       allow read: if request.auth.token.admin == true;
@@ -262,47 +264,31 @@ export const judgeHorary = functions
     memory: '256MB',
   })
   .https.onCall(async (data, context) => {
-    
     // Authentication check
     if (!context.auth) {
-      throw new functions.https.HttpsError(
-        'unauthenticated',
-        'User must be authenticated'
-      );
+      throw new functions.https.HttpsError('unauthenticated', 'User must be authenticated');
     }
 
     const userId = context.auth.uid;
-    
+
     try {
       // Input validation
       const { chartData, questionType, timestamp, latitude, longitude } = data;
-      
+
       if (!chartData || !questionType) {
-        throw new functions.https.HttpsError(
-          'invalid-argument',
-          'Missing required parameters'
-        );
+        throw new functions.https.HttpsError('invalid-argument', 'Missing required parameters');
       }
 
       // Validate coordinates
       if (latitude < -90 || latitude > 90 || longitude < -180 || longitude > 180) {
-        throw new functions.https.HttpsError(
-          'invalid-argument',
-          'Invalid coordinates'
-        );
+        throw new functions.https.HttpsError('invalid-argument', 'Invalid coordinates');
       }
 
       // Check user quota
-      const userDoc = await admin.firestore()
-        .collection('users')
-        .doc(userId)
-        .get();
+      const userDoc = await admin.firestore().collection('users').doc(userId).get();
 
       if (!userDoc.exists) {
-        throw new functions.https.HttpsError(
-          'not-found',
-          'User document not found'
-        );
+        throw new functions.https.HttpsError('not-found', 'User document not found');
       }
 
       const userData = userDoc.data();
@@ -312,7 +298,7 @@ export const judgeHorary = functions
       if (monthlyUsed >= monthlyQuota) {
         throw new functions.https.HttpsError(
           'resource-exhausted',
-          'Monthly quota exceeded. Upgrade to premium to continue.'
+          'Monthly quota exceeded. Upgrade to premium to continue.',
         );
       }
 
@@ -331,12 +317,11 @@ export const judgeHorary = functions
         region: context.region,
       };
 
-      await admin.firestore()
-        .collection('auditLogs')
-        .add(auditData);
+      await admin.firestore().collection('auditLogs').add(auditData);
 
       // Increment monthly usage
-      await admin.firestore()
+      await admin
+        .firestore()
         .collection('users')
         .doc(userId)
         .update({
@@ -353,33 +338,29 @@ export const judgeHorary = functions
         calculatedAt: new Date().toISOString(),
         quotaRemaining: monthlyQuota - (monthlyUsed + 1),
       };
-
     } catch (error) {
       console.error('Judgment calculation error:', error);
-      
+
       // Don't expose internal error details
       if (error instanceof functions.https.HttpsError) {
         throw error;
       }
-      
+
       throw new functions.https.HttpsError(
         'internal',
-        'Calculation failed. Please try again later.'
+        'Calculation failed. Please try again later.',
       );
     }
   });
 
 // Internal function - NOT exported, NEVER callable from client
-function performJudgmentCalculation(
-  chartData: string,
-  questionType: string
-): any {
+function performJudgmentCalculation(chartData: string, questionType: string): any {
   // Parse chart
   const chart = JSON.parse(chartData);
-  
+
   // YOUR PROPRIETARY ALGORITHM HERE
   // (Copy from src/astrology/kp/judgment/judgeHorary.ts)
-  
+
   // For now, placeholder
   return {
     verdict: 'YES',
@@ -398,33 +379,27 @@ function performJudgmentCalculation(
 import * as functions from 'firebase-functions';
 import * as admin from 'firebase-admin';
 
-export const getUserQuota = functions
-  .region('us-central1')
-  .https.onCall(async (data, context) => {
-    
-    if (!context.auth) {
-      throw new functions.https.HttpsError('unauthenticated', 'Not authenticated');
-    }
+export const getUserQuota = functions.region('us-central1').https.onCall(async (data, context) => {
+  if (!context.auth) {
+    throw new functions.https.HttpsError('unauthenticated', 'Not authenticated');
+  }
 
-    const userDoc = await admin.firestore()
-      .collection('users')
-      .doc(context.auth.uid)
-      .get();
+  const userDoc = await admin.firestore().collection('users').doc(context.auth.uid).get();
 
-    if (!userDoc.exists) {
-      throw new functions.https.HttpsError('not-found', 'User not found');
-    }
+  if (!userDoc.exists) {
+    throw new functions.https.HttpsError('not-found', 'User not found');
+  }
 
-    const userData = userDoc.data();
+  const userData = userDoc.data();
 
-    return {
-      totalQuota: userData?.monthlyQuota || 10,
-      used: userData?.monthlyUsed || 0,
-      remaining: (userData?.monthlyQuota || 10) - (userData?.monthlyUsed || 0),
-      isPremium: userData?.isPremium || false,
-      upgradeUrl: 'https://your-app.com/upgrade',
-    };
-  });
+  return {
+    totalQuota: userData?.monthlyQuota || 10,
+    used: userData?.monthlyUsed || 0,
+    remaining: (userData?.monthlyQuota || 10) - (userData?.monthlyUsed || 0),
+    isPremium: userData?.isPremium || false,
+    upgradeUrl: 'https://your-app.com/upgrade',
+  };
+});
 ```
 
 ---
@@ -509,12 +484,11 @@ const submitQuestion = async (chartData: string, questionType: string) => {
       questionType,
       timestamp: new Date().toISOString(),
       latitude: 28.6139,
-      longitude: 77.2090,
+      longitude: 77.209,
     });
 
     console.log('Verdict:', result.data);
     // Handle result.data.verdict, result.data.confidence, etc.
-    
   } catch (error) {
     console.error('Error calling function:', error);
     // Handle error
@@ -543,19 +517,15 @@ import * as admin from 'firebase-admin';
 import { createClient } from '@supabase/supabase-js';
 
 export const migrateReadingsData = async () => {
-  const supabase = createClient(
-    process.env.SUPABASE_URL!,
-    process.env.SUPABASE_KEY!
-  );
+  const supabase = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_KEY!);
 
   // Get all readings from Supabase
-  const { data: readings } = await supabase
-    .from('readings')
-    .select('*');
+  const { data: readings } = await supabase.from('readings').select('*');
 
   // Write to Firestore
   for (const reading of readings || []) {
-    await admin.firestore()
+    await admin
+      .firestore()
       .collection('readings')
       .add({
         userId: reading.user_id,
@@ -618,13 +588,13 @@ firebase billing
 
 ## Common Issues & Solutions
 
-| Issue | Solution |
-|-------|----------|
-| Functions timeout | Increase timeoutSeconds to 60 |
-| Firestore rules rejected writes | Check RLS rules match data structure |
-| Firebase SDK not importing | Run: `npm install --save @react-native-firebase/*` |
-| Functions 404 error | Ensure function deployed: `firebase deploy --only functions` |
-| Auth not persisting | Add persistence config in initializeApp |
+| Issue                           | Solution                                                     |
+| ------------------------------- | ------------------------------------------------------------ |
+| Functions timeout               | Increase timeoutSeconds to 60                                |
+| Firestore rules rejected writes | Check RLS rules match data structure                         |
+| Firebase SDK not importing      | Run: `npm install --save @react-native-firebase/*`           |
+| Functions 404 error             | Ensure function deployed: `firebase deploy --only functions` |
+| Auth not persisting             | Add persistence config in initializeApp                      |
 
 ---
 

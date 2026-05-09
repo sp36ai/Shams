@@ -4,8 +4,8 @@
  * Run:
  *   npx jest firestore.rules.test.ts
  *
- * Requires the Firestore emulator running on port 8282 (as configured in firebase.json).
- * Start it with: firebase emulators:start --only firestore
+ * Uses FIRESTORE_EMULATOR_HOST when available (set automatically by
+ * `firebase emulators:exec`).
  *
  * Install dev deps if missing:
  *   npm install --save-dev @firebase/rules-unit-testing firebase
@@ -22,6 +22,9 @@ import {
 
 const PROJECT_ID = 'shams-app-4d0e7';
 const RULES_PATH = path.resolve(__dirname, 'firestore.rules');
+const EMULATOR_HOST = process.env.FIRESTORE_EMULATOR_HOST ?? '127.0.0.1:8181';
+const [EMULATOR_ADDR, EMULATOR_PORT_STR] = EMULATOR_HOST.split(':');
+const EMULATOR_PORT = Number(EMULATOR_PORT_STR ?? '8181');
 
 let testEnv: RulesTestEnvironment;
 
@@ -29,8 +32,8 @@ beforeAll(async () => {
   testEnv = await initializeTestEnvironment({
     projectId: PROJECT_ID,
     firestore: {
-      host: 'localhost',
-      port: 8282,
+      host: EMULATOR_ADDR || '127.0.0.1',
+      port: Number.isFinite(EMULATOR_PORT) ? EMULATOR_PORT : 8181,
       rules: fs.readFileSync(RULES_PATH, 'utf8'),
     },
   });
@@ -55,7 +58,7 @@ describe('/users/{userId}', () => {
     await assertSucceeds(db.collection('users').doc('alice').get());
   });
 
-  it('other user CANNOT read someone else\'s doc', async () => {
+  it("other user CANNOT read someone else's doc", async () => {
     await testEnv.withSecurityRulesDisabled(async ctx => {
       await ctx.firestore().collection('users').doc('alice').set({ displayName: 'Alice' });
     });
@@ -120,6 +123,11 @@ describe('/quotas/{userId}', () => {
     await assertFails(db.collection('quotas').doc('alice').get());
   });
 
+  it('admin can read any quota doc', async () => {
+    const db = testEnv.authenticatedContext('admin', { admin: true }).firestore();
+    await assertSucceeds(db.collection('quotas').doc('alice').get());
+  });
+
   it('owner CANNOT write quota (Admin SDK only)', async () => {
     const db = testEnv.authenticatedContext('alice').firestore();
     await assertFails(db.collection('quotas').doc('alice').set({ plan: 'premium', used: 0 }));
@@ -177,7 +185,7 @@ describe('/readings/{readingId}', () => {
     await assertSucceeds(db.collection('readings').doc('r3').delete());
   });
 
-  it('other user CANNOT delete someone else\'s reading', async () => {
+  it("other user CANNOT delete someone else's reading", async () => {
     await testEnv.withSecurityRulesDisabled(async ctx => {
       await ctx
         .firestore()
@@ -218,7 +226,11 @@ describe('/rateLimits', () => {
 describe('/auditLogs', () => {
   it('regular user CANNOT read audit logs', async () => {
     await testEnv.withSecurityRulesDisabled(async ctx => {
-      await ctx.firestore().collection('auditLogs').doc('log1').set({ userId: 'alice', action: 'oracle_computed' });
+      await ctx
+        .firestore()
+        .collection('auditLogs')
+        .doc('log1')
+        .set({ userId: 'alice', action: 'oracle_computed' });
     });
     const db = testEnv.authenticatedContext('alice').firestore();
     await assertFails(db.collection('auditLogs').doc('log1').get());
@@ -226,17 +238,50 @@ describe('/auditLogs', () => {
 
   it('admin user can read audit logs', async () => {
     await testEnv.withSecurityRulesDisabled(async ctx => {
-      await ctx.firestore().collection('auditLogs').doc('log1').set({ userId: 'alice', action: 'oracle_computed' });
+      await ctx
+        .firestore()
+        .collection('auditLogs')
+        .doc('log1')
+        .set({ userId: 'alice', action: 'oracle_computed' });
     });
-    const db = testEnv.authenticatedContext('admin1', { token: { admin: true } }).firestore();
+    const db = testEnv.authenticatedContext('admin1', { admin: true }).firestore();
     await assertSucceeds(db.collection('auditLogs').doc('log1').get());
   });
 
   it('even admin CANNOT write audit logs directly', async () => {
-    const db = testEnv.authenticatedContext('admin1', { token: { admin: true } }).firestore();
+    const db = testEnv.authenticatedContext('admin1', { admin: true }).firestore();
+    await assertFails(db.collection('auditLogs').doc('log2').set({ action: 'oracle_computed' }));
+  });
+
+  it('owner CANNOT update doc with privileged field "monthlyQuota"', async () => {
+    await testEnv.withSecurityRulesDisabled(async ctx => {
+      await ctx.firestore().collection('users').doc('alice').set({ displayName: 'Alice' });
+    });
+    const db = testEnv.authenticatedContext('alice').firestore();
+    await assertFails(db.collection('users').doc('alice').update({ monthlyQuota: 100 }));
+  });
+
+  it('owner CANNOT update doc with privileged field "planExpiry"', async () => {
+    await testEnv.withSecurityRulesDisabled(async ctx => {
+      await ctx.firestore().collection('users').doc('alice').set({ displayName: 'Alice' });
+    });
+    const db = testEnv.authenticatedContext('alice').firestore();
     await assertFails(
-      db.collection('auditLogs').doc('log2').set({ action: 'oracle_computed' }),
+      db.collection('users').doc('alice').update({ planExpiry: '2027-01-01T00:00:00Z' }),
     );
+  });
+
+  it('owner CANNOT update doc with privileged field "used"', async () => {
+    await testEnv.withSecurityRulesDisabled(async ctx => {
+      await ctx.firestore().collection('users').doc('alice').set({ displayName: 'Alice' });
+    });
+    const db = testEnv.authenticatedContext('alice').firestore();
+    await assertFails(db.collection('users').doc('alice').update({ used: 999 }));
+  });
+
+  it('admin can read any user doc', async () => {
+    const db = testEnv.authenticatedContext('admin', { admin: true }).firestore();
+    await assertSucceeds(db.collection('users').doc('alice').get());
   });
 });
 
@@ -255,7 +300,7 @@ describe('/securityEvents', () => {
     await testEnv.withSecurityRulesDisabled(async ctx => {
       await ctx.firestore().collection('securityEvents').doc('ev1').set({ type: 'test' });
     });
-    const db = testEnv.authenticatedContext('admin1', { token: { admin: true } }).firestore();
+    const db = testEnv.authenticatedContext('admin1', { admin: true }).firestore();
     await assertSucceeds(db.collection('securityEvents').doc('ev1').get());
   });
 });
@@ -272,7 +317,7 @@ describe('/_system', () => {
   });
 
   it('admin can read and write _system config', async () => {
-    const db = testEnv.authenticatedContext('admin1', { token: { admin: true } }).firestore();
+    const db = testEnv.authenticatedContext('admin1', { admin: true }).firestore();
     await assertSucceeds(db.collection('_system').doc('config').set({ maintenanceMode: false }));
     await assertSucceeds(db.collection('_system').doc('config').get());
   });

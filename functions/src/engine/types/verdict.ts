@@ -13,6 +13,7 @@
 
 import type { Chart, HouseIndex, Planet, Pada, NakshatraIndex, SignIndex } from './chart';
 import type { ClassifiedQuestion, QuestionType } from './question';
+import type { SignificatorSets } from '../kp/judgment/significators';
 import type { LangCode } from '../../shims/i18nTypes';
 
 // ── Verdict enum ───────────────────────────────────────────────────────────
@@ -22,7 +23,7 @@ import type { LangCode } from '../../shims/i18nTypes';
  * (no "MAYBE", no "WAIT-AND-SEE"). If the chain is unreadable, return
  * UNCLEAR — the user must rephrase or wait for a clearer planetary moment.
  */
-export type VerdictKind = 'YES' | 'NO' | 'CONDITIONAL' | 'DELAYED' | 'UNCLEAR';
+export type VerdictKind = 'YES' | 'NO' | 'CONDITIONAL' | 'DELAYED' | 'UNCLEAR' | 'DENIED';
 
 // ── Significator chain ─────────────────────────────────────────────────────
 
@@ -36,6 +37,12 @@ export interface MoonSubLordSnapshot {
 
   /** Nakshatra lord of the Moon's sub-lord, used for timing. */
   readonly nakshatraLord: Planet;
+
+  /** The sub-lord of the Moon's sub-lord (proportional division). */
+  readonly subLord: Planet;
+
+  /** The sub-sub-lord for precision timing. */
+  readonly subSubLord: Planet;
 
   /** Placidus house occupied by the Moon's sub-lord. */
   readonly occupiedHouse: HouseIndex;
@@ -214,14 +221,23 @@ export interface Verdict {
   /** Ordered trace of rules that produced the verdict. */
   readonly reasoning: readonly ReasoningStep[];
 
-  /** Timing information — when (if YES/CONDITIONAL/DELAYED). */
-  readonly timing: VerdictTiming;
+  /** Timing information — when (if YES/CONDITIONAL/DELAYED). Absent for DENIED. */
+  readonly timing?: VerdictTiming;
 
   /** Remedy guidance (optional — see VerdictRemedy doc). */
   readonly remedy?: VerdictRemedy;
 
   /** Per-language narration. Always all three present. */
   readonly narration: VerdictNarration;
+
+  /** KP significator sets for this question (Phase B). */
+  readonly significators?: SignificatorSets;
+
+  /** Ruling planets that are also favorable significators — decisive witnesses. */
+  readonly confirmedSignificators?: readonly Planet[];
+
+  /** Ruling planets that are also denial significators — opposing witnesses. */
+  readonly deniedSignificators?: readonly Planet[];
 
   /** Planets currently retrograde at chart moment. */
   readonly retrogradeFlags: readonly Planet[];

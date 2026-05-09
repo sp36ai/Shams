@@ -26,7 +26,14 @@ import { storage, KEYS } from '@storage/mmkv';
 export type QuestionCategory = QuestionType;
 
 /** Mirrors Verdict.verdict from the master-prompt output contract. */
-export type VerdictKind = 'YES' | 'NO' | 'CONDITIONAL' | 'DELAYED' | 'UNCLEAR' | 'PENDING';
+export type VerdictKind =
+  | 'YES'
+  | 'NO'
+  | 'CONDITIONAL'
+  | 'DELAYED'
+  | 'UNCLEAR'
+  | 'PENDING'
+  | 'DENIED';
 
 export interface Reading {
   /** Stable local id, derived at creation time. */

@@ -34,8 +34,8 @@ export const CERTIFICATE_PINS = {
   development: {
     domain: 'localhost:5001',
     sha256: 'kT1234567890abcdefghijklmno+/ABC1234567890=',
-    sha1: 'AB:CD:EF:12:34:56:78:90:AB:CD:EF:12:34:56:78:90:AB:CD:EF:12'
-  }
+    sha1: 'AB:CD:EF:12:34:56:78:90:AB:CD:EF:12:34:56:78:90:AB:CD:EF:12',
+  },
 };
 
 // src/utils/certificatePinning.ts
@@ -74,8 +74,8 @@ export const CERTIFICATE_PINS = {
   production: {
     domain: 'us-central1-shams-al-asrar.cloudfunctions.net',
     sha256: 'zK9876543210ZYXWVUTSRQPONMLKJIHGFEDCBAxyz=',
-    sha1: 'AA:BB:CC:DD:EE:FF:00:11:22:33:44:55:66:77:88:99:AA:BB:CC:DD'
-  }
+    sha1: 'AA:BB:CC:DD:EE:FF:00:11:22:33:44:55:66:77:88:99:AA:BB:CC:DD',
+  },
 };
 ```
 
@@ -84,6 +84,7 @@ export const CERTIFICATE_PINS = {
 ## 📊 Fingerprint Format Comparison
 
 ### Format: Base64 (SHA256)
+
 ```
 kT1234567890abcdefghijklmno+/ABC1234567890=
 
@@ -96,6 +97,7 @@ Structure:
 ```
 
 ### Format: Hex (SHA256)
+
 ```
 a13d34e794e3c19f5e8e2c3e1f0a9b8c7d6e5f4g3h2i1j0k9l8m7n6o5p4q3r2s1
 
@@ -107,6 +109,7 @@ Structure:
 ```
 
 ### Format: Colon (SHA1)
+
 ```
 AB:CD:EF:12:34:56:78:90:AB:CD:EF:12:34:56:78:90:AB:CD:EF:12
 
@@ -177,6 +180,7 @@ Certificate:
 For testing purposes, here are example values you might encounter:
 
 ### Development Environment
+
 ```json
 {
   "environment": "development",
@@ -196,6 +200,7 @@ For testing purposes, here are example values you might encounter:
 ```
 
 ### Production Environment
+
 ```json
 {
   "environment": "production",
@@ -255,6 +260,7 @@ if (certificateSha256 !== configSha256) {
 ## 📖 How to Read a Fingerprint
 
 ### SHA256 Base64 Example
+
 ```
 kT1234567890abcdefghijklmno+/ABC1234567890=
 │││ ││││││ ││││ ││││ ││││ ││││ ││ ││││
@@ -266,6 +272,7 @@ kT1234567890abcdefghijklmno+/ABC1234567890=
 ```
 
 **Characteristics:**
+
 - Always starts with a letter
 - Mix of uppercase and lowercase
 - Contains digits 0-9
@@ -274,6 +281,7 @@ kT1234567890abcdefghijklmno+/ABC1234567890=
 - Total: 43-44 characters
 
 ### SHA1 Colon Format Example
+
 ```
 AB:CD:EF:12:34:56:78:90:AB:CD:EF:12:34:56:78:90:AB:CD:EF:12
 ││ ││ ││ ││ │  │  │  │  │  │  │  │  │  │  │  │  │
@@ -281,6 +289,7 @@ AB:CD:EF:12:34:56:78:90:AB:CD:EF:12:34:56:78:90:AB:CD:EF:12
 ```
 
 **Characteristics:**
+
 - Always uppercase hex digits
 - 20 pairs of hex (40 hex digits)
 - 19 colons as separators
@@ -317,17 +326,17 @@ AB:CD:EF:12:34:56:78:90:AB:CD:EF:12:34:56:78:90:AB:CD:EF:12
 
 ## 📊 Reference Table
 
-| Property | SHA256 | SHA1 |
-|----------|--------|------|
-| **Format** | Base64 or Hex | Colon-separated |
-| **Length (Base64)** | 43-44 chars | N/A |
-| **Length (Hex)** | 64 chars | 40 chars |
-| **Bit Strength** | 256-bit | 160-bit |
-| **Status** | Current | Legacy |
-| **Example (Base64)** | `kT1234567890...=` | N/A |
-| **Example (Hex)** | `a13d34e794e3c...` | `AB:CD:EF:12:...` |
-| **Use in Pinning** | ✅ YES | ⚠️ Reference |
-| **OpenSSL Command** | `dgst -sha256` | `fingerprint -sha1` |
+| Property             | SHA256             | SHA1                |
+| -------------------- | ------------------ | ------------------- |
+| **Format**           | Base64 or Hex      | Colon-separated     |
+| **Length (Base64)**  | 43-44 chars        | N/A                 |
+| **Length (Hex)**     | 64 chars           | 40 chars            |
+| **Bit Strength**     | 256-bit            | 160-bit             |
+| **Status**           | Current            | Legacy              |
+| **Example (Base64)** | `kT1234567890...=` | N/A                 |
+| **Example (Hex)**    | `a13d34e794e3c...` | `AB:CD:EF:12:...`   |
+| **Use in Pinning**   | ✅ YES             | ⚠️ Reference        |
+| **OpenSSL Command**  | `dgst -sha256`     | `fingerprint -sha1` |
 
 ---
 

@@ -1,37 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!--
-  Release network security policy — Shams al-Asrār
-  ─────────────────────────────────────────────────
-  Guarantees:
-    1. No cleartext (HTTP) traffic — HTTPS only.
-    2. User-installed CAs are NOT trusted. This blocks MITM proxy attacks
-       (Burp Suite, Charles, mitmproxy) even if the attacker installs their
-       own root CA on the device. Only factory-installed system CAs accepted.
-    3. Certificate pinning scaffold for Firebase/Google APIs is in the
-       commented block below. Activate in Phase 5 after verifying SPKI pins
-       from certificatePinning.ts against the live Google endpoints.
-
-  Debug builds use debug/res/xml/network_security_config.xml which re-allows
-  localhost (Metro bundler) and developer-installed CAs.
--->
 <network-security-config>
-    <base-config cleartextTrafficPermitted="false">
-        <trust-anchors>
-            <!-- System (factory) CAs only — user-installed CAs NOT trusted -->
-            <certificates src="system" />
-        </trust-anchors>
-    </base-config>
-
-    <!--
-    PHASE 5 — Certificate pinning for Google / Firebase endpoints.
-    SPKI pins are defined in src/utils/certificatePinning.ts.
-    Set expiration ≥ 1 year from deploy date; always include a backup pin.
-
     <domain-config cleartextTrafficPermitted="false">
         <domain includeSubdomains="true">firestore.googleapis.com</domain>
         <domain includeSubdomains="true">firebase.googleapis.com</domain>
         <domain includeSubdomains="true">identitytoolkit.googleapis.com</domain>
-        <pin-set expiration="2027-06-01">
+        <pin-set expiration="2027-05-01">
+            <!-- Pins for Google/Firebase Endpoints captured 2026-05-07 -->
             <pin digest="SHA-256">NHasLBXL7uS5JzodPAdAqd/YoGIy3AySHd7yyKRg5xo=</pin>
             <pin digest="SHA-256">oVK9AMvzuTJhavj8JKMULZqcgPvnTenud/VH/97y/XY=</pin>
         </pin-set>
@@ -39,5 +13,4 @@
             <certificates src="system" />
         </trust-anchors>
     </domain-config>
-    -->
 </network-security-config>

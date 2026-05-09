@@ -95,8 +95,39 @@ interface VjExtended extends VjShape {
     favHits?: number[];
     denHits?: number[];
   };
-  rulingPlanets?: { dayLord?: string; horaLord?: string; minuteLord?: string };
+  rulingPlanets?: {
+    dayLord?: string;
+    horaLord?: string;
+    ascSignLord?: string;
+    ascStarLord?: string;
+    moonSignLord?: string;
+    moonStarLord?: string;
+  };
   narration?: Partial<Record<'en' | 'ur' | 'hi', string>>;
+  significators?: { favorable: string[]; denial: string[]; neutral: string[] };
+  confirmedSignificators?: string[];
+  deniedSignificators?: string[];
+  planetDegrees?: Record<string, number>;
+  cuspDegrees?: Record<number, number>;
+  cuspSigns?: Record<number, string>;
+  planetChain?: Record<string, { nakshatraLord: string; subLord: string; subSubLord: string }>;
+  oracle?: {
+    opening: string;
+    interpretation: string;
+    spiritual_layer: string;
+    hidden_influence: string;
+    timing: string;
+    warning?: string;
+    remedy: {
+      quran_verse?: string;
+      translation?: string;
+      name_of_allah?: string;
+      dua?: string;
+      zikr?: string;
+      charity?: string;
+    };
+    signature: string;
+  };
 }
 
 function readingToAstroResult(reading: Reading): AstroVerdictResult {
@@ -116,8 +147,17 @@ function readingToAstroResult(reading: Reading): AstroVerdictResult {
   if (rp?.horaLord) {
     rulingPlanets.push({ planet: rp.horaLord, role: 'horaLord', matching: false });
   }
-  if (rp?.minuteLord) {
-    rulingPlanets.push({ planet: rp.minuteLord, role: 'minuteLord', matching: false });
+  if (rp?.ascSignLord) {
+    rulingPlanets.push({ planet: rp.ascSignLord, role: 'ascSignLord', matching: false });
+  }
+  if (rp?.ascStarLord) {
+    rulingPlanets.push({ planet: rp.ascStarLord, role: 'ascStarLord', matching: false });
+  }
+  if (rp?.moonSignLord) {
+    rulingPlanets.push({ planet: rp.moonSignLord, role: 'moonSignLord', matching: false });
+  }
+  if (rp?.moonStarLord) {
+    rulingPlanets.push({ planet: rp.moonStarLord, role: 'moonStarLord', matching: false });
   }
 
   const narrative = vj?.narration?.[reading.questionLang] ?? vj?.narration?.en ?? '';
@@ -150,6 +190,14 @@ function readingToAstroResult(reading: Reading): AstroVerdictResult {
     narrative,
     createdAt: reading.createdAt,
     category: reading.category,
+    significators: vj?.significators,
+    confirmedSignificators: vj?.confirmedSignificators,
+    deniedSignificators: vj?.deniedSignificators,
+    planetDegrees: vj?.planetDegrees,
+    cuspDegrees: vj?.cuspDegrees,
+    cuspSigns: vj?.cuspSigns,
+    planetChain: vj?.planetChain,
+    oracle: vj?.oracle,
   };
 }
 

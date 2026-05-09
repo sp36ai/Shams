@@ -2,7 +2,7 @@
 
 jest.mock('@react-native-firebase/functions', () => {
   return () => ({
-    httpsCallable: jest.fn(() => () => Promise.resolve({ data: {} }))
+    httpsCallable: jest.fn(() => () => Promise.resolve({ data: {} })),
   });
 });
 

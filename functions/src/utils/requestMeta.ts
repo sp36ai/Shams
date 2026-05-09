@@ -3,6 +3,7 @@ import type { CallableRequest, Request } from 'firebase-functions/v2/https';
 
 export interface RequestAuditMeta {
   source: 'callable' | 'http';
+  ipAddress?: string;
   ipHash?: string;
   userAgent?: string;
 }
@@ -37,6 +38,7 @@ export function requestMetaFromHttp(req: Request): RequestAuditMeta {
   const userAgent = normalizeHeader(req.headers['user-agent'] as string | string[] | undefined);
   return {
     source: 'http',
+    ipAddress: ip,
     ipHash: ip ? hashIp(ip) : undefined,
     userAgent: userAgent ? userAgent.slice(0, 256) : undefined,
   };

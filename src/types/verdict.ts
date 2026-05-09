@@ -8,6 +8,28 @@
 
 import type { VerdictKind } from '@stores/readingsStore';
 
+// ── Oracle voice fields (Claude synthesis layer) ───────────────────────────
+
+export interface OracleRemedy {
+  quran_verse?: string;
+  translation?: string;
+  name_of_allah?: string;
+  dua?: string;
+  zikr?: string;
+  charity?: string;
+}
+
+export interface OracleVoice {
+  opening: string;
+  interpretation: string;
+  spiritual_layer: string;
+  hidden_influence: string;
+  timing: string;
+  warning?: string;
+  remedy: OracleRemedy;
+  signature: string;
+}
+
 export type { VerdictKind };
 
 export interface HousePill {
@@ -19,7 +41,7 @@ export interface HousePill {
 
 export interface RulingPlanetEntry {
   planet: string;
-  role: 'dayLord' | 'horaLord' | 'minuteLord';
+  role: 'dayLord' | 'horaLord' | 'ascSignLord' | 'ascStarLord' | 'moonSignLord' | 'moonStarLord';
   /** true if this planet also appears in the sub-lord chain (highlighting) */
   matching: boolean;
 }
@@ -59,4 +81,16 @@ export interface AstroVerdictResult {
   category: string;
   /** Optional: switch to numerological watch analysis. */
   onSwitchMode?: () => void;
+
+  // ── Chart wheel display data (absent for UNCLEAR / old readings) ──────────
+  planetDegrees?: Record<string, number>;
+  cuspDegrees?: Record<number, number>;
+  cuspSigns?: Record<number, string>;
+  planetChain?: Record<string, { nakshatraLord: string; subLord: string; subSubLord: string }>;
+  significators?: { favorable: string[]; denial: string[]; neutral: string[] };
+  confirmedSignificators?: string[];
+  deniedSignificators?: string[];
+
+  // ── Oracle voice (Claude synthesis) — absent for old readings / synthesis failure ──
+  oracle?: OracleVoice;
 }

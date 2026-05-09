@@ -1,0 +1,207 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Shams al-Asrar | Oracle Test Harness</title>
+    <script src="https://www.gstatic.com/firebasejs/10.14.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.14.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.14.0/firebase-functions-compat.js"></script>
+    <style>
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        background: #0a0a1a;
+        color: #e0e0e0;
+        padding: 20px;
+        line-height: 1.6;
+      }
+      .container {
+        max-width: 800px;
+        margin: 0 auto;
+        background: #16162a;
+        padding: 30px;
+        border-radius: 12px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        border: 1px solid #2a2a4a;
+      }
+      h1 {
+        color: #f0c040;
+        text-align: center;
+        margin-bottom: 5px;
+      }
+      .input-group {
+        margin-bottom: 20px;
+      }
+      label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: bold;
+        color: #b0b0d0;
+      }
+      input,
+      select,
+      textarea {
+        width: 100%;
+        padding: 12px;
+        background: #0a0a1a;
+        border: 1px solid #3a3a5a;
+        border-radius: 6px;
+        color: #fff;
+        box-sizing: border-box;
+        font-size: 16px;
+      }
+      button {
+        width: 100%;
+        padding: 15px;
+        background: #5040f0;
+        border: none;
+        border-radius: 6px;
+        color: #fff;
+        font-weight: bold;
+        cursor: pointer;
+        font-size: 18px;
+        margin-top: 10px;
+      }
+      button:hover {
+        background: #6050ff;
+      }
+      button:disabled {
+        background: #3a3a5a;
+        cursor: not-allowed;
+      }
+      #results {
+        margin-top: 30px;
+        padding: 20px;
+        background: #0a0a1a;
+        border-radius: 8px;
+        border-left: 4px solid #f0c040;
+        display: none;
+      }
+      .verdict-YES {
+        color: #40f080;
+      }
+      .verdict-NO {
+        color: #f04060;
+      }
+      .verdict-DENIED {
+        color: #f0a040;
+      }
+      .reasoning-step {
+        margin-bottom: 10px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid #222;
+        font-size: 14px;
+      }
+      .meta {
+        font-size: 12px;
+        color: #888;
+        text-align: center;
+        margin-top: 20px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>✨ Shams al-Asrār</h1>
+      <p style="text-align: center; color: #888; margin-bottom: 30px">
+        Oracle Test Harness (v2.0.0-moshier)
+      </p>
+      <div id="auth-section">
+        <button id="btn-login">Sign in Anonymously for Test</button>
+      </div>
+      <div id="test-section" style="display: none">
+        <div class="input-group">
+          <label>Your Question</label>
+          <textarea id="question" rows="2">Will I get the promotion this year?</textarea>
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px">
+          <div class="input-group">
+            <label>Latitude</label>
+            <input type="number" id="lat" value="24.8607" step="0.0001" />
+          </div>
+          <div class="input-group">
+            <label>Longitude</label>
+            <input type="number" id="lon" value="67.0011" step="0.0001" />
+          </div>
+        </div>
+        <div class="input-group">
+          <label>Language</label>
+          <select id="lang">
+            <option value="en">English</option>
+            <option value="ur">Urdu</option>
+            <option value="hi">Hindi</option>
+          </select>
+        </div>
+        <button id="btn-ask">Consult the Oracle</button>
+      </div>
+      <div id="results">
+        <h3>Verdict: <span id="res-verdict"></span> (<span id="res-conf"></span>%)</h3>
+        <p id="res-narration" style="font-style: italic"></p>
+        <div id="res-reasoning"></div>
+      </div>
+      <div class="meta" id="status-msg">Initializing...</div>
+    </div>
+    <script>
+      const firebaseConfig = {
+        projectId: 'shams-app-4d0e7',
+        authDomain: 'shams-app-4d0e7.firebaseapp.com',
+      };
+      firebase.initializeApp(firebaseConfig);
+      const auth = firebase.auth();
+      const functions = firebase.app().functions('asia-south1');
+      const btnLogin = document.getElementById('btn-login');
+      const btnAsk = document.getElementById('btn-ask');
+      const testSection = document.getElementById('test-section');
+      const authSection = document.getElementById('auth-section');
+      const statusMsg = document.getElementById('status-msg');
+
+      auth.onAuthStateChanged(user => {
+        if (user) {
+          authSection.style.display = 'none';
+          testSection.style.display = 'block';
+          statusMsg.innerText = `Auth Active: ${user.uid}`;
+        } else {
+          authSection.style.display = 'block';
+          testSection.style.display = 'none';
+        }
+      });
+
+      btnLogin.onclick = () => auth.signInAnonymously();
+      btnAsk.onclick = async () => {
+        btnAsk.disabled = true;
+        statusMsg.innerText = 'Consulting the heavens...';
+        document.getElementById('results').style.display = 'none';
+        try {
+          const askOracle = functions.httpsCallable('askOracle');
+          const result = await askOracle({
+            question: document.getElementById('question').value,
+            lat: parseFloat(document.getElementById('lat').value),
+            lon: parseFloat(document.getElementById('lon').value),
+            questionLang: document.getElementById('lang').value,
+          });
+          const data = result.data.reading;
+          document.getElementById('res-verdict').innerText = data.verdict;
+          document.getElementById('res-verdict').className = `verdict-${data.verdict}`;
+          document.getElementById('res-conf').innerText = data.verdictJson.confidence;
+          document.getElementById('res-narration').innerText =
+            data.narration[document.getElementById('lang').value];
+          const reasoningDiv = document.getElementById('res-reasoning');
+          reasoningDiv.innerHTML = '<h4>Reasoning Trace (Engine Audit)</h4>';
+          data.verdictJson.reasoning.forEach(step => {
+            const div = document.createElement('div');
+            div.className = 'reasoning-step';
+            div.innerHTML = `<strong>${step.ruleId}</strong> (${step.weight})<br>${step.description}`;
+            reasoningDiv.appendChild(div);
+          });
+          document.getElementById('results').style.display = 'block';
+          statusMsg.innerText = 'Success.';
+        } catch (err) {
+          alert('Error: ' + err.message);
+          statusMsg.innerText = 'Error.';
+        } finally {
+          btnAsk.disabled = false;
+        }
+      };
+    </script>
+  </body>
+</html>
