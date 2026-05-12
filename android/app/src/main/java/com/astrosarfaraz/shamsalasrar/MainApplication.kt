@@ -43,7 +43,6 @@ class MainApplication : Application(), ReactApplication {
             .add("firestore.googleapis.com", "sha256/NHasLBXL7uS5JzodPAdAqd/YoGIy3AySHd7yyKRg5xo=")
             .add("firebase.googleapis.com", "sha256/oVK9AMvzuTJhavj8JKMULZqcgPvnTenud/VH/97y/XY=")
             .add("identitytoolkit.googleapis.com", "sha256/NHasLBXL7uS5JzodPAdAqd/YoGIy3AySHd7yyKRg5xo=")
-            .add("api.anthropic.com", "sha256/hS5jJ4P+i7S2S0Zz9S0S0Zz9S0S0Zz9S0S0Zz9S0S0Z=") // TODO: Replace with actual Anthropic pin
             .build()
 
         OkHttpClientProvider.setOkHttpClientFactory {
