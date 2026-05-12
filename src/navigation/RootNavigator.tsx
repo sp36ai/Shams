@@ -85,7 +85,8 @@ const RootNavigator: React.FC = () => {
   // Keep showing splash until both the timer and auth bootstrap have resolved.
   const splashStillShowing =
     !BYPASS_AUTH_FOR_TESTING && (!splashElapsed || !authBootstrapped || isAuthLoading);
-  const isAuthenticated = BYPASS_AUTH_FOR_TESTING || user !== null;
+
+  const isAuthenticated = BYPASS_AUTH_FOR_TESTING || (user !== null && !isAuthLoading);
   const needsOnboardingFlow = !BYPASS_AUTH_FOR_TESTING && isAuthenticated && !hasSeenOnboarding;
   const needsLocationPermission =
     !BYPASS_AUTH_FOR_TESTING && isAuthenticated && hasSeenOnboarding && !onboardingLocationPrompted;

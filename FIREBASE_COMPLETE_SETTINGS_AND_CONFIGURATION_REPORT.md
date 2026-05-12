@@ -37,6 +37,8 @@
 | **Project Name**     | Shams al-Asrār                   |
 | **Project ID**       | `shams-app-4d0e7`                |
 | **Project Number**   | `347578830449`                   |
+| **Public Name**      | `project-347578830449`           |
+| **Support Email**    | `sp500026e@gmail.com`            |
 | **Region**           | `asia-south1` (Mumbai - Primary) |
 | **Secondary Region** | `asia-southeast1` (Singapore)    |
 

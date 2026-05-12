@@ -182,7 +182,7 @@ npm run typecheck
 npm run build --prefix functions
 
 # 2. Deploy
-firebase deploy --project=shams-al-asrar-ca95d
+firebase deploy --project=shams-app-4d0e7
 
 # 3. Verify
 firebase functions logs read razorpayWebhook --region=asia-south1 --limit=10
@@ -304,4 +304,4 @@ firebase functions logs read razorpayWebhook --region=asia-south1 --limit=10
 
 **Approved by:** GitHub Copilot  
 **Date:** May 9, 2026  
-**Environment:** shams-al-asrar-ca95d (asia-south1)
+**Environment:** shams-app-4d0e7 (asia-south1)

@@ -130,9 +130,9 @@ Update `src/firebase/client.ts`:
 ```typescript
 const firebaseConfig = {
   apiKey: 'YOUR_API_KEY',
-  authDomain: 'shams-al-asrar.firebaseapp.com',
-  projectId: 'shams-al-asrar',
-  storageBucket: 'shams-al-asrar.appspot.com',
+  authDomain: 'shams-app-4d0e7.firebaseapp.com',
+  projectId: 'shams-app-4d0e7',
+  storageBucket: 'shams-app-4d0e7.firebasestorage.app',
   messagingSenderId: 'YOUR_SENDER_ID',
   appId: 'YOUR_APP_ID',
 };
@@ -181,7 +181,7 @@ firebase deploy --only firestore:indexes
 ### Deploy with Specific Configuration
 
 ```bash
-firebase deploy --project shams-al-asrar
+firebase deploy --project shams-app-4d0e7
 ```
 
 ---
