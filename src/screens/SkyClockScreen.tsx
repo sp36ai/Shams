@@ -7,11 +7,11 @@
  *      Refreshes every 60 s; timer runs only while screen is focused.
  *   3. CollapsibleCosmicClock — collapsed by default.
  *      CosmicClock's setInterval runs only when focused AND expanded.
- *   4. PlanetTable — Planet | Sign | Nakshatra, no DMS.
+ *   4. PlanetTable — Planet | Sign | Degree | Status
  *      Disclaimer: approximate display only, not used for horary judgment.
  */
 
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
@@ -80,30 +80,28 @@ const LAHIRI_AYANAMSA_2025 = 24.12;
 
 // Mean longitude elements (J2000.0) — display only, ±1–5° error.
 const J2K: Readonly<Record<string, { L0: number; Lr: number }>> = {
-  Sun: { L0: 280.46646, Lr: 36000.76983 },
-  Moon: { L0: 218.3165, Lr: 481267.8813 },
-  Mercury: { L0: 252.2509, Lr: 149472.6749 },
-  Venus: { L0: 181.9798, Lr: 58517.8156 },
-  Mars: { L0: 355.433, Lr: 19140.2993 },
-  Jupiter: { L0: 34.3515, Lr: 3034.9057 },
-  Saturn: { L0: 50.0774, Lr: 1222.1138 },
+  Sun:     { L0: 280.46646, Lr: 36000.76983 },
+  Moon:    { L0: 218.3165,  Lr: 481267.8813 },
+  Mercury: { L0: 252.2509,  Lr: 149472.6749 },
+  Venus:   { L0: 181.9798,  Lr: 58517.8156  },
+  Mars:    { L0: 355.433,   Lr: 19140.2993  },
+  Jupiter: { L0: 34.3515,   Lr: 3034.9057   },
+  Saturn:  { L0: 50.0774,   Lr: 1222.1138   },
 };
 
-const PLANET_NAMES = [
-  'Sun',
-  'Moon',
-  'Mercury',
-  'Venus',
-  'Mars',
-  'Jupiter',
-  'Saturn',
-  'Rahu',
+// Spec order for the 9 Jyotish grahas
+const TABLE_PLANET_ORDER = [
+  'Sun', 'Moon', 'Mars', 'Mercury', 'Jupiter', 'Venus', 'Saturn', 'Rahu', 'Ketu',
 ] as const;
-type PlanetName = (typeof PLANET_NAMES)[number];
+type PlanetName = (typeof TABLE_PLANET_ORDER)[number];
 
 function displayLonSidereal(name: PlanetName, nowMs: number): number {
   const jd = nowMs / 86400000 + 2440587.5;
   const T = (jd - 2451545.0) / 36525;
+  if (name === 'Ketu') {
+    const rahuTropical = mod360(125.0445 - 1934.136 * T);
+    return mod360(rahuTropical + 180 - LAHIRI_AYANAMSA_2025);
+  }
   const tropical =
     name === 'Rahu'
       ? mod360(125.0445 - 1934.136 * T)
@@ -177,6 +175,66 @@ function computeTiming(lonDeg: number): TimingState {
   };
 }
 
+// ── Planet table ──────────────────────────────────────────────────────────────
+
+const PLANET_GLYPHS: Record<PlanetName, string> = {
+  Sun: '☉', Moon: '☽', Mars: '♂', Mercury: '☿', Jupiter: '♃',
+  Venus: '♀', Saturn: '♄', Rahu: '☊', Ketu: '☋',
+};
+
+// Mean daily motion (°/day) from J2K Lr constants (°/century ÷ 36525).
+// Rahu/Ketu have negative Lr → retrograde mean motion.
+const PLANET_DAILY_SPEED: Record<PlanetName, number> = {
+  Sun:     36000.76983 / 36525,
+  Moon:    481267.8813 / 36525,
+  Mars:    19140.2993  / 36525,
+  Mercury: 149472.6749 / 36525,
+  Jupiter: 3034.9057   / 36525,
+  Venus:   58517.8156  / 36525,
+  Saturn:  1222.1138   / 36525,
+  Rahu:   -1934.136    / 36525,
+  Ketu:   -1934.136    / 36525,
+};
+
+const STATUS_RETROGRADE = '#F44336';
+const STATUS_COMBUST    = '#FF9800';
+
+interface PlanetRow {
+  name: PlanetName;
+  glyph: string;
+  sign: string;
+  degreeStr: string;
+  status: 'Retrograde' | 'Combust' | 'Direct';
+}
+
+function computePlanetRows(nowMs: number): PlanetRow[] {
+  const sunLon = displayLonSidereal('Sun', nowMs);
+  return TABLE_PLANET_ORDER.map(name => {
+    const lon = displayLonSidereal(name, nowMs);
+    const signIdx = Math.floor(lon / 30);
+    const sign = SIGN_NAMES[signIdx] ?? '—';
+    const degInSign = lon % 30;
+    const deg = Math.floor(degInSign);
+    const arcMin = Math.floor((degInSign - deg) * 60);
+    const degreeStr = `${deg}°${String(arcMin).padStart(2, '0')}'`;
+
+    const speed = PLANET_DAILY_SPEED[name];
+    const angDiff = mod360(lon - sunLon);
+    const isCombust = name !== 'Sun' && (angDiff < 6 || angDiff > 354);
+
+    let status: PlanetRow['status'];
+    if (name === 'Rahu' || name === 'Ketu' || speed < 0) {
+      status = 'Retrograde';
+    } else if (isCombust) {
+      status = 'Combust';
+    } else {
+      status = 'Direct';
+    }
+
+    return { name, glyph: PLANET_GLYPHS[name], sign, degreeStr, status };
+  });
+}
+
 // ── Screen ────────────────────────────────────────────────────────────────────
 
 const SkyClockScreen: React.FC = () => {
@@ -193,31 +251,24 @@ const SkyClockScreen: React.FC = () => {
   const [timing, setTiming] = useState<TimingState>(() => computeTiming(lonDeg));
   const [focused, setFocused] = useState(false);
   const [clockExpanded, setClockExpanded] = useState(false);
+  const [planetRows, setPlanetRows] = useState<PlanetRow[]>(() => computePlanetRows(Date.now()));
 
-  // Refresh timing every 60 s, only while screen is focused.
+  // Refresh timing + planet rows every 60 s, only while screen is focused.
   useFocusEffect(
     useCallback(() => {
       setFocused(true);
       setTiming(computeTiming(lonDeg));
-      const id = setInterval(() => setTiming(computeTiming(lonDeg)), 60_000);
+      setPlanetRows(computePlanetRows(Date.now()));
+      const id = setInterval(() => {
+        setTiming(computeTiming(lonDeg));
+        setPlanetRows(computePlanetRows(Date.now()));
+      }, 60_000);
       return () => {
         setFocused(false);
         clearInterval(id);
       };
     }, [lonDeg]),
   );
-
-  // Planet table rows — stable, no per-render Date.now() drift between rows.
-  const planetRows = useMemo(() => {
-    const now = Date.now();
-    return PLANET_NAMES.map(name => {
-      const lon = displayLonSidereal(name, now);
-      const sign = SIGN_NAMES[Math.floor(lon / 30)] ?? '—';
-      const nk = nakshatraName(lon);
-      return { name, sign, nk };
-    });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [focused]); // focused is an intentional trigger: recompute on each screen visit
 
   const clockRunning = focused && clockExpanded;
 
@@ -251,21 +302,11 @@ const SkyClockScreen: React.FC = () => {
             { backgroundColor: colors.surface, borderColor: colors.border },
           ]}
         >
-          <TimingPill
-            label="Hora"
-            value={timing.horaLord}
-            colors={colors}
-            typography={typography}
-          />
+          <TimingPill label="Hora" value={timing.horaLord} colors={colors} typography={typography} />
           <View style={[styles.divider, { backgroundColor: colors.border }]} />
           <TimingPill label="Day" value={timing.dayLord} colors={colors} typography={typography} />
           <View style={[styles.divider, { backgroundColor: colors.border }]} />
-          <TimingPill
-            label="Moon"
-            value={timing.moonSign}
-            colors={colors}
-            typography={typography}
-          />
+          <TimingPill label="Moon" value={timing.moonSign} colors={colors} typography={typography} />
           <View style={[styles.divider, { backgroundColor: colors.border }]} />
           <TimingPill
             label="Nakshatra"
@@ -303,30 +344,76 @@ const SkyClockScreen: React.FC = () => {
         </View>
 
         {/* Planet table */}
-        <View style={[styles.planetTable, { borderColor: colors.border }]}>
-          <View style={[styles.tableHeader, { borderBottomColor: colors.border }]}>
-            {(['PLANET', 'SIGN', 'NAKSHATRA'] as const).map(h => (
-              <Text
-                key={h}
-                style={[typography('label'), styles.col, { color: colors.textFaint, fontSize: 8 }]}
+        <View style={styles.planetSection}>
+          <Text style={[typography('caption'), styles.sectionLabel, { color: colors.textMuted }]}>
+            Current Sky  ·  Sidereal (Lahiri)
+          </Text>
+          <View
+            style={[
+              styles.planetTable,
+              { backgroundColor: colors.surface, borderColor: colors.border },
+            ]}
+          >
+            {/* Header row */}
+            <View
+              style={[
+                styles.tableHeader,
+                { backgroundColor: colors.surfaceElevated, borderBottomColor: colors.border },
+              ]}
+            >
+              {(['PLANET', 'SIGN', 'DEGREE', 'STATUS'] as const).map(h => (
+                <Text
+                  key={h}
+                  style={[
+                    typography('label'),
+                    h === 'PLANET' ? styles.colPlanet : styles.colData,
+                    { color: colors.textFaint, fontSize: 8 },
+                  ]}
+                >
+                  {h}
+                </Text>
+              ))}
+            </View>
+            {/* Data rows */}
+            {planetRows.map(({ name, glyph, sign, degreeStr, status }, i) => (
+              <View
+                key={name}
+                style={[
+                  styles.tableRow,
+                  {
+                    borderBottomColor: colors.border,
+                    backgroundColor: i % 2 === 1 ? colors.surfaceElevated : 'transparent',
+                  },
+                ]}
               >
-                {h}
-              </Text>
+                <Text style={[typography('caption'), styles.colPlanet, { color: colors.text }]}>
+                  {glyph} {name}
+                </Text>
+                <Text style={[typography('caption'), styles.colData, { color: colors.accent }]}>
+                  {sign}
+                </Text>
+                <Text style={[typography('caption'), styles.colData, { color: colors.textMuted }]}>
+                  {degreeStr}
+                </Text>
+                <Text
+                  style={[
+                    typography('caption'),
+                    styles.colData,
+                    {
+                      color:
+                        status === 'Retrograde'
+                          ? STATUS_RETROGRADE
+                          : status === 'Combust'
+                            ? STATUS_COMBUST
+                            : colors.textMuted,
+                    },
+                  ]}
+                >
+                  {status}
+                </Text>
+              </View>
             ))}
           </View>
-          {planetRows.map(({ name, sign, nk }) => (
-            <View key={name} style={[styles.tableRow, { borderBottomColor: colors.border }]}>
-              <Text style={[typography('caption'), styles.col, { color: colors.text }]}>
-                {name}
-              </Text>
-              <Text style={[typography('caption'), styles.col, { color: colors.accent }]}>
-                {sign}
-              </Text>
-              <Text style={[typography('caption'), styles.col, { color: colors.textMuted }]}>
-                {nk}
-              </Text>
-            </View>
-          ))}
         </View>
 
         {/* Disclaimer */}
@@ -413,8 +500,16 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderBottomWidth: StyleSheet.hairlineWidth,
   },
-  planetTable: {
+  planetSection: {
     marginHorizontal: 12,
+    marginBottom: 8,
+  },
+  sectionLabel: {
+    marginBottom: 6,
+    marginLeft: 2,
+    fontSize: 11,
+  },
+  planetTable: {
     borderRadius: 10,
     borderWidth: StyleSheet.hairlineWidth,
     overflow: 'hidden',
@@ -431,8 +526,11 @@ const styles = StyleSheet.create({
     paddingVertical: 7,
     borderBottomWidth: StyleSheet.hairlineWidth,
   },
-  col: {
-    flex: 1,
+  colPlanet: {
+    flex: 2,
+  },
+  colData: {
+    flex: 1.5,
   },
   disclaimer: {
     marginHorizontal: 16,
