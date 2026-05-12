@@ -37,6 +37,7 @@ import { useTimingStrip } from '@hooks/useTimingStrip';
 import { askOracle as callOracleFunction } from '../firebase/oracle';
 import StarfieldBackground from '@components/StarfieldBackground';
 import AstroVerdictCard from '../components/oracle/AstroVerdictCard';
+import WatchVerdictCard from '../components/oracle/WatchVerdictCard';
 import type { AstroVerdictResult } from '../types/verdict';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -807,6 +808,7 @@ const Bubble: React.FC<{ message: ChatMessage }> = ({ message }) => {
   const t = useTranslation();
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const isUser = message.sender === 'user';
+  const [showWatch, setShowWatch] = useState(false);
 
   const accentColor = isUser ? colors.chatUserBorder : colors.chatShamsBorder;
   const bubbleBg = isUser ? colors.chatUserBg : colors.chatShamsBg;
@@ -849,10 +851,17 @@ const Bubble: React.FC<{ message: ChatMessage }> = ({ message }) => {
       >
         {renderText(message.text)}
         {message.reading !== undefined && (
-          <AstroVerdictCard
-            result={readingToAstroResult(message.reading)}
-            onSwitchMode={() => {}}
-          />
+          showWatch ? (
+            <WatchVerdictCard
+              result={readingToAstroResult(message.reading)}
+              onSwitchMode={() => setShowWatch(false)}
+            />
+          ) : (
+            <AstroVerdictCard
+              result={readingToAstroResult(message.reading)}
+              onSwitchMode={() => setShowWatch(true)}
+            />
+          )
         )}
         {message.isUpgradeCta === true && (
           <Pressable
