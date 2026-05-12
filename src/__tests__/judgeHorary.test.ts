@@ -130,7 +130,7 @@ function makeChart(
     ascendant: EVEN_CUSPS[0],
     midheaven: EVEN_CUSPS[9],
     rulingPlanets,
-    horaLord: rulingPlanets[1],
+    horaLord: rulingPlanets[1], // This will be removed from Chart object in chartBuilder.ts
     engineVersion: '2.0.0',
   };
 }
@@ -149,11 +149,13 @@ describe('judgeHorary — scoring and verdict', () => {
   test('YES: Moon Sub-Lord in favorable house + all RPs in favorable houses', () => {
     // Moon Sub-Lord = Mars → house 10 (favorable for career) → +2
     // Day/Hora/Minute lords: Sun→6, Mercury→6, Jupiter→11  → +3
-    // Total: +5 → YES, no retrogrades
+    // Total: +5 (MSL) + 6 (RPs) = +8 → YES, no retrogrades
     const chart = makeChart('Mars', { Moon: 1, Mars: 10, Sun: 6, Mercury: 6, Jupiter: 11 }, {}, [
       'Sun',
       'Mercury',
       'Jupiter',
+      'Moon',
+      'Venus',
     ]);
     const verdict = judgeHorary(chart, CAREER_Q);
     expect(verdict.verdict).toBe('YES');
@@ -162,11 +164,13 @@ describe('judgeHorary — scoring and verdict', () => {
   test('NO: Moon Sub-Lord in denial house + RPs in denial houses', () => {
     // Moon Sub-Lord = Venus → house 12 (denial for career) → -2
     // Day/Hora/Minute lords: Sun→5, Mercury→8, Jupiter→12 → -3
-    // Total: -5 → NO
+    // Total: -5 (MSL) - 6 (RPs) = -8 → NO
     const chart = makeChart('Venus', { Moon: 1, Venus: 12, Sun: 5, Mercury: 8, Jupiter: 12 }, {}, [
       'Sun',
       'Mercury',
       'Jupiter',
+      'Moon',
+      'Venus',
     ]);
     const verdict = judgeHorary(chart, CAREER_Q);
     expect(verdict.verdict).toBe('NO');
@@ -175,11 +179,13 @@ describe('judgeHorary — scoring and verdict', () => {
   test('CONDITIONAL: neutral Moon Sub-Lord + mixed RPs → score in [-1,+2]', () => {
     // Moon Sub-Lord = Saturn → house 7 (neutral for career) → 0
     // Day lord Sun→6 (+1), Hora lord Mercury→3 (neutral, 0), Minute lord Jupiter→5 (denial, -1)
-    // Total: 0 → CONDITIONAL
+    // Total: 0 (MSL) + 0 (RPs) = 0 → CONDITIONAL
     const chart = makeChart('Saturn', { Moon: 1, Saturn: 7, Sun: 6, Mercury: 3, Jupiter: 5 }, {}, [
       'Sun',
       'Mercury',
       'Jupiter',
+      'Moon',
+      'Saturn',
     ]);
     const verdict = judgeHorary(chart, CAREER_Q);
     expect(verdict.verdict).toBe('CONDITIONAL');
@@ -191,7 +197,7 @@ describe('judgeHorary — scoring and verdict', () => {
       'Mars',
       { Moon: 1, Mars: 10, Sun: 6, Mercury: 6, Jupiter: 11 },
       { Jupiter: true },
-      ['Sun', 'Mercury', 'Jupiter'],
+      ['Sun', 'Mercury', 'Jupiter', 'Moon', 'Venus'],
     );
     const verdict = judgeHorary(chart, CAREER_Q);
     expect(verdict.verdict).toBe('DELAYED');
@@ -202,7 +208,7 @@ describe('judgeHorary — scoring and verdict', () => {
       'Mars',
       { Moon: 1, Mars: 10, Sun: 6, Mercury: 6, Jupiter: 11 },
       { Mars: true },
-      ['Sun', 'Mercury', 'Jupiter'],
+      ['Sun', 'Mercury', 'Jupiter', 'Moon', 'Venus'],
     );
     const verdict = judgeHorary(chart, CAREER_Q);
     expect(verdict.verdict).toBe('DELAYED');
@@ -213,7 +219,7 @@ describe('judgeHorary — scoring and verdict', () => {
       'Venus',
       { Moon: 1, Venus: 12, Sun: 5, Mercury: 8, Jupiter: 12 },
       { Jupiter: true, Venus: true },
-      ['Sun', 'Mercury', 'Jupiter'],
+      ['Sun', 'Mercury', 'Jupiter', 'Moon', 'Venus'],
     );
     const verdict = judgeHorary(chart, CAREER_Q);
     expect(verdict.verdict).toBe('NO');
@@ -237,9 +243,9 @@ describe('judgeHorary — output shape', () => {
   test('reasoning steps are numbered 1–5 in order', () => {
     const chart = makeChart('Mars', { Mars: 10, Sun: 6, Mercury: 11 });
     const verdict = judgeHorary(chart, CAREER_Q);
-    const stepNums = verdict.reasoning
-      .filter(r => /^\[STEP \d\]/.test(r.description))
-      .map(r => parseInt(r.description.match(/\[STEP (\d)\]/)![1], 10));
+    const stepNums = (verdict.reasoning as import('../astrology/types/verdict').ReasoningStep[])
+      .filter((r) => /^\[STEP \d\]/.test(r.description))
+      .map((r) => parseInt(r.description.match(/\[STEP (\d)\]/)![1], 10));
     expect(stepNums[0]).toBe(1);
     expect(Math.max(...stepNums)).toBeGreaterThanOrEqual(5);
   });

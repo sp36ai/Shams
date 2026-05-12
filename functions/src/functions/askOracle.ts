@@ -442,15 +442,15 @@ export const askOracle = onCall(
       const apiKey = ANTHROPIC_API_KEY.value();
       const oracle = apiKey
         ? await synthesiseOracleVoice({
-            category: verdict.qType,
-            verdict: verdict.verdict,
-            confidence: verdict.confidence,
-            confirmedSignificators: (verdict.confirmedSignificators ?? []) as string[],
-            deniedSignificators: (verdict.deniedSignificators ?? []) as string[],
-            timingWindow: verdict.timing?.window,
-            timingRange: verdict.timing?.range,
-            apiKey,
-          })
+          category: verdict.qType,
+          verdict: verdict.verdict,
+          confidence: verdict.confidence,
+          confirmedSignificators: (verdict.confirmedSignificators ?? []) as string[],
+          deniedSignificators: (verdict.deniedSignificators ?? []) as string[],
+          timingWindow: verdict.timing?.window,
+          timingRange: verdict.timing?.range,
+          apiKey,
+        })
         : ORACLE_FALLBACK;
 
       // 13. Return minimal response — no chart internals, no algorithm state
@@ -474,10 +474,10 @@ export const askOracle = onCall(
         },
         significators: verdict.significators
           ? {
-              favorable: verdict.significators.favorable as string[],
-              denial: verdict.significators.denial as string[],
-              neutral: verdict.significators.neutral as string[],
-            }
+            favorable: verdict.significators.favorable as string[],
+            denial: verdict.significators.denial as string[],
+            neutral: verdict.significators.neutral as string[],
+          }
           : undefined,
         confirmedSignificators: verdict.confirmedSignificators as string[] | undefined,
         deniedSignificators: verdict.deniedSignificators as string[] | undefined,
