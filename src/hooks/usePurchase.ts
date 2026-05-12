@@ -10,10 +10,10 @@ export type PurchasePlan =
   | 'khass_annual';
 
 const PRODUCT_ID_MAP: Record<PurchasePlan, string> = {
-  mureed_monthly: 'com.shamsalasrar.mureed.monthly',
-  mureed_annual: 'com.shamsalasrar.mureed.annual',
-  khass_monthly: 'com.shamsalasrar.khass.monthly',
-  khass_annual: 'com.shamsalasrar.khass.annual',
+  mureed_monthly: 'mureed_monthly',
+  mureed_annual:  'mureed_annual',
+  khass_monthly:  'khass_monthly',
+  khass_annual:   'khass_annual',
 };
 
 function tierFromPlan(plan: PurchasePlan): PlanTier {
