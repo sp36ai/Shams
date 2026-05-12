@@ -8,8 +8,7 @@
  *   - Animated StarfieldBackground
  */
 
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import functions from '@react-native-firebase/functions';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
@@ -23,8 +22,7 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useFocusEffect, useNavigation } from '@react-navigation/native';
-import { dayLordAtMoment, horaLordAtMoment } from '@astrology/primitives/rulingPlanets';
+import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '@navigation/types';
 
@@ -33,7 +31,9 @@ import { useTypography } from '@theme/useTypography';
 import { useTranslation, useI18n } from '@i18n/I18nProvider';
 import { useReadingsStore, type Reading } from '@stores/readingsStore';
 import { useSettingsStore } from '@stores/settingsStore';
-import { useQuotaStore, selectQuestionsLeft, FREE_LIMIT } from '@stores/quotaStore';
+import { FREE_LIMIT } from '@stores/quotaStore';
+import { useQuota } from '@hooks/useQuota';
+import { useTimingStrip } from '@hooks/useTimingStrip';
 import { askOracle as callOracleFunction } from '../firebase/oracle';
 import StarfieldBackground from '@components/StarfieldBackground';
 import AstroVerdictCard from '../components/oracle/AstroVerdictCard';
@@ -456,22 +456,7 @@ const OracleScreen: React.FC = () => {
   const addReading = useReadingsStore(
     (s: ReturnType<typeof useReadingsStore.getState>) => s.addReading,
   );
-  const storeCanAsk = useQuotaStore(s => s.canAsk());
-  const consumeOne = useQuotaStore(s => s.consumeOne);
-  const questionsLeft = useQuotaStore(selectQuestionsLeft);
-  const currentPlan = useQuotaStore(s => s.plan);
-
-  const [quotaRemaining, setQuotaRemaining] = useState<number | null>(null);
-
-  useEffect(() => {
-    functions()
-      .httpsCallable('getQuota')({})
-      .then(r => setQuotaRemaining((r.data as { remaining: number }).remaining))
-      .catch(() => setQuotaRemaining(null)); // null = don't enforce
-  }, []);
-
-  const isPremium = currentPlan !== 'free';
-  const canAsk = storeCanAsk && (isPremium || quotaRemaining === null || quotaRemaining > 0);
+  const { canAsk, consumeOne, questionsLeft } = useQuota();
 
   const initialGreeting: ChatMessage = useMemo(
     () => ({
@@ -490,23 +475,8 @@ const OracleScreen: React.FC = () => {
   const [lastReading, setLastReading] = useState<Reading | null>(null);
   const listRef = useRef<FlatList<ChatMessage> | null>(null);
 
-  // Timing strip — hora + day lord, refreshed every 60 s while focused.
   const lonDegForTiming = lastLocation?.lon ?? 74.3587;
-  const [horaLord, setHoraLord] = useState(() => horaLordAtMoment(Date.now(), lonDegForTiming));
-  const [dayLord, setDayLord] = useState(() => dayLordAtMoment(Date.now(), lonDegForTiming));
-
-  useFocusEffect(
-    useCallback(() => {
-      const refresh = () => {
-        const now = Date.now();
-        setHoraLord(horaLordAtMoment(now, lonDegForTiming));
-        setDayLord(dayLordAtMoment(now, lonDegForTiming));
-      };
-      refresh();
-      const id = setInterval(refresh, 60_000);
-      return () => clearInterval(id);
-    }, [lonDegForTiming]),
-  );
+  const { horaLord, dayLord } = useTimingStrip(lonDegForTiming);
 
   // Active chips depend on conversation stage
   const activeChips: readonly string[] =

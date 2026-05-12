@@ -135,15 +135,7 @@ export function createLogger(scope: string) {
      * In DEV, it logs to console. In PROD, it buffers for Sentry.
      */
     breadcrumb(message: string, category: string, data?: LogPayload): void {
-      const breadcrumb = {
-        message,
-        category: `${scope}:${category}`,
-        data,
-        level: 'info' as LogLevel,
-        timestamp: Date.now() / 1000,
-      };
-
-      // Placeholder for Phase 5: Sentry.addBreadcrumb(breadcrumb);
+      // Phase 5: Sentry.addBreadcrumb({ message, category: `${scope}:${category}`, data, level: 'info', timestamp: Date.now() / 1000 });
       if (isDev) {
         this.debug(`[Breadcrumb] ${category}: ${message}`, data);
       }

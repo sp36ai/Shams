@@ -6,7 +6,7 @@
  * talks to it. The APK contains zero engine logic.
  */
 
-import functions from '@react-native-firebase/functions';
+import { firebase } from '@react-native-firebase/functions';
 import type { Reading } from '@stores/readingsStore';
 
 export interface AskOracleInput {
@@ -22,7 +22,7 @@ export interface AskOracleResult {
 }
 
 export async function askOracle(args: AskOracleInput): Promise<AskOracleResult> {
-  const fn = functions('asia-south1').httpsCallable('askOracle');
+  const fn = firebase.app().functions('asia-south1').httpsCallable('askOracle');
 
   const result = await fn({
     question: args.question,

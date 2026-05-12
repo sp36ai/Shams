@@ -284,11 +284,11 @@ function buildRpSnapshot(chart: Chart, rpScore: number): RulingPlanetsSnapshot {
   const rps = chart.rulingPlanets;
   return {
     dayLord: rps[0] as Planet,
-    ascSignLord: rps[1] as Planet,
-    ascStarLord: rps[2] as Planet,
-    moonSignLord: rps[3] as Planet,
-    moonStarLord: rps[4] as Planet,
-    horaLord: chart.horaLord,
+    horaLord: rps[1] as Planet,
+    ascSignLord: rps[2] as Planet,
+    ascStarLord: rps[3] as Planet,
+    moonSignLord: rps[4] as Planet,
+    moonStarLord: rps[5] as Planet,
     agreementScore: rpScore,
   };
 }
@@ -360,7 +360,7 @@ export function judgeHorary(chart: Chart, question: ClassifiedQuestion): Verdict
     step(
       1,
       `Moon at ${moonPos.siderealLongitude.toFixed(2)}° sidereal` +
-        ` (nakshatra lord: ${moonPos.nakshatraLord}, sub-lord: ${moonSubLord})`,
+      ` (nakshatra lord: ${moonPos.nakshatraLord}, sub-lord: ${moonSubLord})`,
     ),
   );
 
@@ -380,7 +380,7 @@ export function judgeHorary(chart: Chart, question: ClassifiedQuestion): Verdict
       step(
         1,
         `Promise FAILED: cusp ${promise.cuspHouse} sub-lord = ${promise.cuspSubLord}` +
-          ` occupies house ${promise.cuspSubLordHouse} ∈ denial [${denial.join(',')}] → DENIED`,
+        ` occupies house ${promise.cuspSubLordHouse} ∈ denial [${denial.join(',')}] → DENIED`,
         -3,
       ),
     ];
@@ -453,9 +453,7 @@ export function judgeHorary(chart: Chart, question: ClassifiedQuestion): Verdict
   );
 
   // ── STEP 4: Ruling Planets × Significator intersection (Phase D) ─────────
-  const allWitnesses = [...(chart.rulingPlanets as Planet[]), chart.horaLord as Planet].filter(
-    Boolean,
-  );
+  const allWitnesses = (chart.rulingPlanets as Planet[]).filter(Boolean);
 
   const filteredRulingPlanets = applyKotamrajuFilter(allWitnesses, favorable, denial, chart);
 
@@ -520,7 +518,8 @@ export function judgeHorary(chart: Chart, question: ClassifiedQuestion): Verdict
   );
 
   // ── Confidence ────────────────────────────────────────────────────────────
-  const maxScore = 7;
+  // MSL Placement (2) + 6 Ruling Planet Witnesses (6) = 8
+  const maxScore = 8;
   const confidence = Math.round(
     Math.min(100, Math.max(10, ((score + maxScore) / (2 * maxScore)) * 100)),
   );

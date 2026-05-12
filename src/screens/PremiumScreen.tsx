@@ -3,12 +3,11 @@ import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-nati
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import functions from '@react-native-firebase/functions';
-
 import { useColors, useTheme } from '@theme/ThemeProvider';
 import { useTypography } from '@theme/useTypography';
 import { useTranslation } from '@i18n/I18nProvider';
 import { useQuotaStore, type PlanTier } from '@stores/quotaStore';
+import { usePurchase } from '@hooks/usePurchase';
 import type { RootStackParamList } from '@navigation/types';
 import StarfieldBackground from '@components/StarfieldBackground';
 import { GlowView } from '@components/GlowView';
@@ -99,31 +98,26 @@ const PremiumScreen: React.FC = () => {
   const t = useTranslation();
 
   const currentPlan = useQuotaStore(s => s.plan);
-  const setPlan = useQuotaStore(s => s.setPlan);
+  const { purchase, restore } = usePurchase();
 
   const handleSelect = useCallback(
     async (plan: PlanTier) => {
-      if (plan === currentPlan) {
-        return;
-      }
-      try {
-        const fn = functions().httpsCallable('verifyGooglePlayPurchase');
-        const result = await fn({ purchaseToken: 'dummy_token', productId: plan });
-        const data = result.data as { success: boolean } | null;
-        if (data && data.success) {
-          setPlan(plan);
-          navigation.goBack();
-        }
-      } catch (e) {
+      const result = await purchase(plan);
+      if (result.success) {
+        navigation.goBack();
+      } else if (result.reason !== 'already_active') {
         Alert.alert(t('common.error') ?? 'Error', 'Payment verification failed');
       }
     },
-    [currentPlan, setPlan, navigation, t],
+    [purchase, navigation, t],
   );
 
-  const handleRestore = useCallback(() => {
-    Alert.alert(t('premium.restorePurchase'), '', [{ text: t('common.ok') }]);
-  }, [t]);
+  const handleRestore = useCallback(async () => {
+    const result = await restore();
+    if (!result.success) {
+      Alert.alert(t('premium.restorePurchase'), '', [{ text: t('common.ok') }]);
+    }
+  }, [restore, t]);
 
   return (
     <SafeAreaView

@@ -12,6 +12,7 @@ module.exports = {
           '@screens': './src/screens',
           '@navigation': './src/navigation',
           '@stores': './src/stores',
+          '@hooks': './src/hooks',
           '@theme': './src/theme',
           '@i18n': './src/i18n',
           '@astrology': './src/astrology',
