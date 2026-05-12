@@ -3,13 +3,30 @@ import { firebase } from '@react-native-firebase/functions';
 import { useQuotaStore } from '@stores/quotaStore';
 import type { PlanTier } from '@stores/quotaStore';
 
+export type PurchasePlan =
+  | 'mureed_monthly'
+  | 'mureed_annual'
+  | 'khass_monthly'
+  | 'khass_annual';
+
+const PRODUCT_ID_MAP: Record<PurchasePlan, string> = {
+  mureed_monthly: 'com.shamsalasrar.mureed.monthly',
+  mureed_annual: 'com.shamsalasrar.mureed.annual',
+  khass_monthly: 'com.shamsalasrar.khass.monthly',
+  khass_annual: 'com.shamsalasrar.khass.annual',
+};
+
+function tierFromPlan(plan: PurchasePlan): PlanTier {
+  return plan.startsWith('mureed') ? 'mureed' : 'khass';
+}
+
 export type PurchaseResult =
   | { success: true }
   | { success: false; reason: 'already_active' | 'verification_failed' | 'network_error' | 'not_implemented'; error?: unknown };
 
 export interface PurchaseState {
   purchasing: boolean;
-  purchase: (plan: PlanTier) => Promise<PurchaseResult>;
+  purchase: (plan: PurchasePlan) => Promise<PurchaseResult>;
   restore: () => Promise<PurchaseResult>;
 }
 
@@ -19,8 +36,9 @@ export function usePurchase(): PurchaseState {
   const [purchasing, setPurchasing] = useState(false);
 
   const purchase = useCallback(
-    async (plan: PlanTier): Promise<PurchaseResult> => {
-      if (plan === currentPlan) {
+    async (plan: PurchasePlan): Promise<PurchaseResult> => {
+      const tier = tierFromPlan(plan);
+      if (tier === currentPlan) {
         return { success: false, reason: 'already_active' };
       }
 
@@ -40,11 +58,11 @@ export function usePurchase(): PurchaseState {
         // purchase token is provided.
         // ─────────────────────────────────────────────────────────────────────
         const fn = firebase.app().functions('asia-south1').httpsCallable('verifyGooglePlayPurchase');
-        const result = await fn({ purchaseToken: 'iap_pending', productId: plan });
+        const result = await fn({ purchaseToken: 'iap_pending', productId: PRODUCT_ID_MAP[plan] });
         const data = result.data as { success: boolean } | null;
 
         if (data?.success) {
-          setPlan(plan);
+          setPlan(tier);
           return { success: true };
         }
         return { success: false, reason: 'verification_failed' };

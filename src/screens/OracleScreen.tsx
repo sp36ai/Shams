@@ -13,6 +13,7 @@ import {
   ActivityIndicator,
   FlatList,
   KeyboardAvoidingView,
+  Modal,
   Platform,
   Pressable,
   ScrollView,
@@ -31,7 +32,7 @@ import { useTypography } from '@theme/useTypography';
 import { useTranslation, useI18n } from '@i18n/I18nProvider';
 import { useReadingsStore, type Reading } from '@stores/readingsStore';
 import { useSettingsStore } from '@stores/settingsStore';
-import { FREE_LIMIT } from '@stores/quotaStore';
+import { useQuotaStore, FREE_DAILY_LIMIT, TRIAL_DAILY_LIMIT } from '@stores/quotaStore';
 import { useQuota } from '@hooks/useQuota';
 import { useTimingStrip } from '@hooks/useTimingStrip';
 import { askOracle as callOracleFunction } from '../firebase/oracle';
@@ -459,6 +460,14 @@ const OracleScreen: React.FC = () => {
   );
   const { canAsk, consumeOne, questionsLeft } = useQuota();
 
+  const plan = useQuotaStore(s => s.plan);
+  const trialActive = useQuotaStore(s => s.trialActive);
+  const trialExpired = useQuotaStore(s => s.trialExpired);
+  const questionsToday = useQuotaStore(s => s.questionsToday);
+  const startTrial = useQuotaStore(s => s.startTrial);
+
+  const [showQuotaModal, setShowQuotaModal] = useState(false);
+
   const initialGreeting: ChatMessage = useMemo(
     () => ({
       id: 'greet',
@@ -536,17 +545,19 @@ const OracleScreen: React.FC = () => {
         // intent === 'none' while answered: treat as new question — fall through
       }
 
-      // ── Engine path ────────────────────────────────────────────────────────
-      if (!canAsk) {
-        const quotaMsg: ChatMessage = {
-          id: `quota_${Date.now()}`,
-          sender: 'shams',
-          text: t('oracle.quotaExhausted'),
-          isUpgradeCta: true,
-          createdAt: new Date().toISOString(),
-        };
-        setMessages(prev => [quotaMsg, ...prev]);
-        return;
+      // ── Engine path — paywall gate ──────────────────────────────────────────
+      if (plan === 'free') {
+        if (trialExpired) {
+          navigation.navigate('Premium');
+          return;
+        }
+        if (!trialActive) {
+          startTrial();
+        }
+        if (questionsToday >= (trialActive ? TRIAL_DAILY_LIMIT : FREE_DAILY_LIMIT)) {
+          setShowQuotaModal(true);
+          return;
+        }
       }
 
       const now = new Date().toISOString();
@@ -608,7 +619,8 @@ const OracleScreen: React.FC = () => {
         setSending(false);
       }
     },
-    [addReading, canAsk, consumeOne, lang, lastLocation, lastReading, sending, stage, t],
+    [addReading, canAsk, consumeOne, lang, lastLocation, lastReading, navigation, plan,
+     questionsToday, sending, stage, startTrial, t, trialActive, trialExpired],
   );
 
   const handleSend = useCallback(async () => {
@@ -665,7 +677,7 @@ const OracleScreen: React.FC = () => {
                   },
                 ]}
               >
-                {questionsLeft}/{FREE_LIMIT}
+                {questionsLeft}/{FREE_DAILY_LIMIT}
               </Text>
             </View>
           )}
@@ -796,6 +808,63 @@ const OracleScreen: React.FC = () => {
           </View>
         </View>
       </KeyboardAvoidingView>
+
+      {/* Quota modal — soft wall for daily limit */}
+      <Modal
+        transparent
+        animationType="fade"
+        visible={showQuotaModal}
+        onRequestClose={() => setShowQuotaModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View
+            style={[
+              styles.modalCard,
+              { backgroundColor: colors.surface, borderColor: colors.border },
+            ]}
+          >
+            <Text
+              style={[typography('subheading'), { color: colors.text, marginBottom: 8 }]}
+            >
+              {"Today's questions used"}
+            </Text>
+            <Text
+              style={[
+                typography('body'),
+                { color: colors.textMuted, marginBottom: 24 },
+              ]}
+            >
+              {'Come back tomorrow, or unlock unlimited access.'}
+            </Text>
+            <View style={styles.modalActions}>
+              <Pressable
+                onPress={() => setShowQuotaModal(false)}
+                style={[
+                  styles.modalBtn,
+                  { borderColor: colors.border, borderWidth: StyleSheet.hairlineWidth },
+                ]}
+                accessibilityRole="button"
+              >
+                <Text style={[typography('button'), { color: colors.text }]}>
+                  Tomorrow
+                </Text>
+              </Pressable>
+              <Pressable
+                onPress={() => {
+                  setShowQuotaModal(false);
+                  navigation.navigate('Premium');
+                }}
+                style={[styles.modalBtn, { backgroundColor: colors.primary }]}
+                accessibilityRole="button"
+              >
+                <Text style={[typography('button'), { color: colors.textOnPrimary }]}>
+                  Unlock Now
+                </Text>
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 };
@@ -984,6 +1053,29 @@ const styles = StyleSheet.create({
     minWidth: 64,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 32,
+  },
+  modalCard: {
+    borderRadius: 16,
+    padding: 24,
+    borderWidth: StyleSheet.hairlineWidth,
+    width: '100%',
+  },
+  modalActions: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  modalBtn: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 10,
+    alignItems: 'center',
   },
 });
 

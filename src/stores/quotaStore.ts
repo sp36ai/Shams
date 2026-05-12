@@ -1,15 +1,13 @@
 /**
- * quotaStore — free-tier question quota.
+ * quotaStore — question quota and trial management.
  * --------------------------------------------------------------------------
- * Free plan: 3 questions per rolling week (Sun 00:00 local → Sat 23:59).
- * Paid plans: unlimited (quota check is bypassed at the call site).
+ * Free plan:    3 questions per UTC day.
+ * Trial:        5 questions per UTC day during a 7-day window.
+ * Paid plans:   unlimited (quota check is bypassed at the call site).
  *
- * Week identity: "YYYY-WNN" ISO week string derived from the local Sunday-
- * anchored week. We use Sunday (day 0) as the week start because that is
- * culturally common in the South Asian / MENA target market.
+ * Day identity: UTC date string "YYYY-MM-DD".
  *
  * Persistence: MMKV synchronous writes — zero async latency on the ask path.
- * The quota check in OracleScreen is therefore synchronous: no spinner needed.
  */
 
 import { create } from 'zustand';
@@ -19,28 +17,21 @@ import { storage, KEYS } from '@storage/mmkv';
 /*  Plan tiers                                                                */
 /* -------------------------------------------------------------------------- */
 
-export type PlanTier = 'free' | 'starter' | 'premium' | 'consultation';
+export type PlanTier = 'free' | 'mureed' | 'khass';
 
-export const FREE_LIMIT = 3;
+export const FREE_DAILY_LIMIT = 3;
+export const TRIAL_DAILY_LIMIT = 5;
+export const TRIAL_DURATION_DAYS = 7;
 
 /** Plans that get unlimited questions. */
-const UNLIMITED_PLANS: readonly PlanTier[] = ['starter', 'premium', 'consultation'];
+const UNLIMITED_PLANS: readonly PlanTier[] = ['mureed', 'khass'];
 
 /* -------------------------------------------------------------------------- */
-/*  Week key — Sunday-anchored ISO-style "YYYY-SWnn"                          */
+/*  Day key — UTC "YYYY-MM-DD"                                               */
 /* -------------------------------------------------------------------------- */
 
-function sundayWeekKey(now = Date.now()): string {
-  const d = new Date(now);
-  // Day of week: 0=Sun … 6=Sat. Subtract days back to most recent Sunday.
-  const dayOfWeek = d.getDay();
-  const sunday = new Date(d);
-  sunday.setDate(d.getDate() - dayOfWeek);
-  // Format YYYY-SWnn  (SW = Sunday-week to distinguish from ISO Monday-weeks)
-  const y = sunday.getFullYear();
-  const m = String(sunday.getMonth() + 1).padStart(2, '0');
-  const day = String(sunday.getDate()).padStart(2, '0');
-  return `${y}-${m}-${day}`;
+function todayKey(now = Date.now()): string {
+  return new Date(now).toISOString().slice(0, 10);
 }
 
 /* -------------------------------------------------------------------------- */
@@ -49,18 +40,17 @@ function sundayWeekKey(now = Date.now()): string {
 
 function readPlan(): PlanTier {
   const raw = storage.getString(KEYS.QUOTA_PLAN);
-  if (raw === 'starter' || raw === 'premium' || raw === 'consultation') {
+  if (raw === 'mureed' || raw === 'khass') {
     return raw;
   }
   return 'free';
 }
 
 function readCount(): number {
-  const storedWeek = storage.getString(KEYS.QUOTA_WEEK);
-  const currentWeek = sundayWeekKey();
-  if (storedWeek !== currentWeek) {
-    // New week — reset counter, update week key
-    storage.set(KEYS.QUOTA_WEEK, currentWeek);
+  const storedDay = storage.getString(KEYS.QUOTA_WEEK);
+  const currentDay = todayKey();
+  if (storedDay !== currentDay) {
+    storage.set(KEYS.QUOTA_WEEK, currentDay);
     storage.set(KEYS.QUOTA_COUNT, 0);
     return 0;
   }
@@ -68,14 +58,45 @@ function readCount(): number {
 }
 
 /* -------------------------------------------------------------------------- */
+/*  Trial helpers                                                             */
+/* -------------------------------------------------------------------------- */
+
+function readTrialStart(): string | null {
+  return storage.getString(KEYS.TRIAL_START) ?? null;
+}
+
+function computeTrialState(trialStartDate: string | null): {
+  trialActive: boolean;
+  trialExpired: boolean;
+} {
+  if (!trialStartDate) {
+    return { trialActive: false, trialExpired: false };
+  }
+  const startMs = new Date(trialStartDate).getTime();
+  const elapsed = Math.floor((Date.now() - startMs) / 86_400_000);
+  if (elapsed < TRIAL_DURATION_DAYS) {
+    return { trialActive: true, trialExpired: false };
+  }
+  return { trialActive: false, trialExpired: true };
+}
+
+/* -------------------------------------------------------------------------- */
 /*  Store interface                                                           */
 /* -------------------------------------------------------------------------- */
 
 export interface QuotaState {
-  /** Questions asked so far this week (free plan only; unused for paid). */
-  usedThisWeek: number;
+  /** Questions asked today (free/trial only; unused for paid). */
+  questionsToday: number;
   /** Current plan tier. */
   plan: PlanTier;
+  /** ISO date string of trial start, or null if never started. */
+  trialStartDate: string | null;
+  /** True while 7-day trial window is open. */
+  trialActive: boolean;
+  /** True if trial was started but has now expired. */
+  trialExpired: boolean;
+  /** Per-day free limit (exposed for OracleScreen gate). */
+  FREE_DAILY_LIMIT: number;
 
   /** True when the user may ask another question right now. */
   canAsk: () => boolean;
@@ -83,6 +104,10 @@ export interface QuotaState {
   consumeOne: () => boolean;
   /** Upgrade plan (called after successful purchase). */
   setPlan: (plan: PlanTier) => void;
+  /** Start the 7-day trial (no-op if already started). */
+  startTrial: () => void;
+  /** Read current trial status. */
+  checkTrial: () => { active: boolean; daysRemaining: number; expired: boolean };
   /** Reset quota to 0 for testing / sign-out. */
   reset: () => void;
 }
@@ -91,30 +116,39 @@ export interface QuotaState {
 /*  Store factory                                                             */
 /* -------------------------------------------------------------------------- */
 
+const _initTrialStart = readTrialStart();
+const _initTrialState = computeTrialState(_initTrialStart);
+
 export const useQuotaStore = create<QuotaState>((set, get) => ({
-  usedThisWeek: readCount(),
+  questionsToday: readCount(),
   plan: readPlan(),
+  trialStartDate: _initTrialStart,
+  trialActive: _initTrialState.trialActive,
+  trialExpired: _initTrialState.trialExpired,
+  FREE_DAILY_LIMIT,
 
   canAsk(): boolean {
-    const { plan, usedThisWeek } = get();
+    const { plan, questionsToday, trialActive } = get();
     if ((UNLIMITED_PLANS as PlanTier[]).includes(plan)) {
       return true;
     }
-    return usedThisWeek < FREE_LIMIT;
+    const limit = trialActive ? TRIAL_DAILY_LIMIT : FREE_DAILY_LIMIT;
+    return questionsToday < limit;
   },
 
   consumeOne(): boolean {
-    const { plan, usedThisWeek } = get();
+    const { plan, questionsToday, trialActive } = get();
     if ((UNLIMITED_PLANS as PlanTier[]).includes(plan)) {
       return true;
     }
-    if (usedThisWeek >= FREE_LIMIT) {
+    const limit = trialActive ? TRIAL_DAILY_LIMIT : FREE_DAILY_LIMIT;
+    if (questionsToday >= limit) {
       return false;
     }
-    const next = usedThisWeek + 1;
+    const next = questionsToday + 1;
     storage.set(KEYS.QUOTA_COUNT, next);
-    storage.set(KEYS.QUOTA_WEEK, sundayWeekKey());
-    set({ usedThisWeek: next });
+    storage.set(KEYS.QUOTA_WEEK, todayKey());
+    set({ questionsToday: next });
     return true;
   },
 
@@ -123,11 +157,35 @@ export const useQuotaStore = create<QuotaState>((set, get) => ({
     set({ plan });
   },
 
+  startTrial(): void {
+    const { trialStartDate } = get();
+    if (trialStartDate !== null) {
+      return;
+    }
+    const today = todayKey();
+    storage.set(KEYS.TRIAL_START, today);
+    set({ trialStartDate: today, trialActive: true, trialExpired: false });
+  },
+
+  checkTrial(): { active: boolean; daysRemaining: number; expired: boolean } {
+    const { trialStartDate } = get();
+    if (!trialStartDate) {
+      return { active: false, daysRemaining: 0, expired: false };
+    }
+    const startMs = new Date(trialStartDate).getTime();
+    const elapsed = Math.floor((Date.now() - startMs) / 86_400_000);
+    const remaining = TRIAL_DURATION_DAYS - elapsed;
+    if (remaining > 0) {
+      return { active: true, daysRemaining: remaining, expired: false };
+    }
+    return { active: false, daysRemaining: 0, expired: true };
+  },
+
   reset(): void {
     storage.set(KEYS.QUOTA_COUNT, 0);
-    storage.set(KEYS.QUOTA_WEEK, sundayWeekKey());
+    storage.set(KEYS.QUOTA_WEEK, todayKey());
     storage.set(KEYS.QUOTA_PLAN, 'free');
-    set({ usedThisWeek: 0, plan: 'free' });
+    set({ questionsToday: 0, plan: 'free' });
   },
 }));
 
@@ -139,7 +197,8 @@ export const selectQuestionsLeft = (s: QuotaState): number => {
   if ((UNLIMITED_PLANS as PlanTier[]).includes(s.plan)) {
     return Infinity;
   }
-  return Math.max(0, FREE_LIMIT - s.usedThisWeek);
+  const limit = s.trialActive ? TRIAL_DAILY_LIMIT : FREE_DAILY_LIMIT;
+  return Math.max(0, limit - s.questionsToday);
 };
 
 export const selectIsUnlimited = (s: QuotaState): boolean =>

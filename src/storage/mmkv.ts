@@ -51,6 +51,7 @@ export const KEYS = Object.freeze({
   QUOTA_COUNT: 'quota.count.v1',
   QUOTA_PLAN: 'quota.plan.v1',
   QUOTA_PLAN_EXPIRY: 'quota.planExpiry.v1',
+  TRIAL_START: 'shams_trial_start',
 
   // Auth domain
   AUTH_USER_ID: 'auth.userId.v1',

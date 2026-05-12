@@ -5,126 +5,112 @@ import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useColors, useTheme } from '@theme/ThemeProvider';
 import { useTypography } from '@theme/useTypography';
-import { useTranslation } from '@i18n/I18nProvider';
-import { useQuotaStore, type PlanTier } from '@stores/quotaStore';
-import { usePurchase } from '@hooks/usePurchase';
+import { useQuotaStore } from '@stores/quotaStore';
+import { usePurchase, type PurchasePlan } from '@hooks/usePurchase';
 import type { RootStackParamList } from '@navigation/types';
 import StarfieldBackground from '@components/StarfieldBackground';
-import { GlowView } from '@components/GlowView';
-import ShimmerOverlay from '@components/ShimmerOverlay';
+
+const KHASS_GOLD = '#B8952A';
+
+type PlanKey = 'mureed' | 'khass';
+type BillingPeriod = 'monthly' | 'annual';
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 
-/* -------------------------------------------------------------------------- */
-/*  Tier definitions                                                           */
-/* -------------------------------------------------------------------------- */
-
-type Feature =
-  | 'unlimited_questions'
-  | 'full_history'
-  | 'remedies'
-  | 'pdf_export'
-  | 'priority_windows'
-  | 'strategic_sessions';
-
-interface TierDef {
-  plan: PlanTier;
-  titleKey: 'premium.tierStarter' | 'premium.tierPremium' | 'premium.tierConsultation';
-  priceKey: 'premium.starterPrice' | 'premium.premiumPrice' | 'premium.consultationPrice';
-  periodKey: 'premium.starterPeriod' | 'premium.premiumPeriod' | 'premium.consultationPeriod';
-  descKey:
-    | 'premium.starterDescription'
-    | 'premium.premiumDescription'
-    | 'premium.consultationDescription';
-  features: Feature[];
-  highlighted: boolean;
+interface PlanCard {
+  key: PlanKey;
+  title: string;
+  subtitle: string;
+  monthlyPrice: string;
+  annualPrice: string;
+  annualNote: string;
+  features: string[];
+  badge?: string;
 }
 
-const TIERS: TierDef[] = [
+const PLANS: PlanCard[] = [
   {
-    plan: 'starter',
-    titleKey: 'premium.tierStarter',
-    priceKey: 'premium.starterPrice',
-    periodKey: 'premium.starterPeriod',
-    descKey: 'premium.starterDescription',
-    features: ['unlimited_questions'],
-    highlighted: false,
-  },
-  {
-    plan: 'premium',
-    titleKey: 'premium.tierPremium',
-    priceKey: 'premium.premiumPrice',
-    periodKey: 'premium.premiumPeriod',
-    descKey: 'premium.premiumDescription',
-    features: ['unlimited_questions', 'full_history', 'remedies'],
-    highlighted: true,
-  },
-  {
-    plan: 'consultation',
-    titleKey: 'premium.tierConsultation',
-    priceKey: 'premium.consultationPrice',
-    periodKey: 'premium.consultationPeriod',
-    descKey: 'premium.consultationDescription',
+    key: 'mureed',
+    title: 'MUREED',
+    subtitle: 'Disciple',
+    monthlyPrice: '₹249/month',
+    annualPrice: '₹2,490/year',
+    annualNote: 'save 2 months',
     features: [
-      'unlimited_questions',
-      'full_history',
-      'remedies',
-      'pdf_export',
-      'priority_windows',
-      'strategic_sessions',
+      '3 questions/day',
+      'Astronomical mode',
+      'Full history',
+      'Timing windows',
+      'Remedies',
     ],
-    highlighted: false,
+  },
+  {
+    key: 'khass',
+    title: 'KHASS',
+    subtitle: 'The Chosen',
+    monthlyPrice: '₹699/month',
+    annualPrice: '₹6,990/year',
+    annualNote: 'save 2 months',
+    features: [
+      'Unlimited',
+      'Both oracle modes',
+      'Confidence detail',
+      'PDF reports',
+      'Priority synthesis',
+    ],
+    badge: '★',
   },
 ];
-
-const FEATURE_KEYS: Record<Feature, string> = {
-  unlimited_questions: 'premium.feature_unlimited_questions',
-  full_history: 'premium.feature_full_history',
-  remedies: 'premium.feature_remedies',
-  pdf_export: 'premium.feature_pdf_export',
-  priority_windows: 'premium.feature_priority_windows',
-  strategic_sessions: 'premium.feature_strategic_sessions',
-};
-
-/* -------------------------------------------------------------------------- */
-/*  Screen                                                                    */
-/* -------------------------------------------------------------------------- */
 
 const PremiumScreen: React.FC = () => {
   const navigation = useNavigation<Nav>();
   const { theme } = useTheme();
   const colors = useColors();
   const typography = useTypography();
-  const t = useTranslation();
 
-  const currentPlan = useQuotaStore(s => s.plan);
-  const { purchase, restore } = usePurchase();
+  const trialExpired = useQuotaStore(s => s.trialExpired);
+  const { purchase, restore, purchasing } = usePurchase();
 
-  const handleSelect = useCallback(
-    async (plan: PlanTier) => {
-      const result = await purchase(plan);
-      if (result.success) {
-        navigation.goBack();
-      } else if (result.reason !== 'already_active') {
-        Alert.alert(t('common.error') ?? 'Error', 'Payment verification failed');
-      }
-    },
-    [purchase, navigation, t],
-  );
+  const [selectedPlan, setSelectedPlan] = useState<PlanKey>('mureed');
+  const [billing, setBilling] = useState<Record<PlanKey, BillingPeriod>>({
+    mureed: 'monthly',
+    khass: 'monthly',
+  });
+
+  const handleBillingToggle = useCallback((plan: PlanKey, period: BillingPeriod) => {
+    setBilling(prev => ({ ...prev, [plan]: period }));
+  }, []);
+
+  const handleCta = useCallback(async () => {
+    const planKey: PurchasePlan = `${selectedPlan}_${billing[selectedPlan]}`;
+    const result = await purchase(planKey);
+    if (result.success) {
+      navigation.goBack();
+    } else if (result.reason !== 'already_active') {
+      Alert.alert('Error', 'Payment verification failed. Please try again.');
+    }
+  }, [purchase, navigation, selectedPlan, billing]);
 
   const handleRestore = useCallback(async () => {
-    const result = await restore();
-    if (!result.success) {
-      Alert.alert(t('premium.restorePurchase'), '', [{ text: t('common.ok') }]);
-    }
-  }, [restore, t]);
+    await restore();
+    Alert.alert('Restore', 'No active purchases found on this account.');
+  }, [restore]);
+
+  const headerTitle = trialExpired
+    ? 'Your 7-day journey has ended.'
+    : 'Choose Your Path';
+  const headerSubtitle = trialExpired
+    ? 'The stars are still watching. Continue receiving their guidance.'
+    : "Unlock the full depth of the Oracle's wisdom.";
+
+  const ctaLabel =
+    selectedPlan === 'mureed' ? 'Begin with Mureed' : 'Begin with Khass';
 
   return (
     <SafeAreaView
       style={[styles.root, { backgroundColor: theme.colors.bg }]}
       edges={['top', 'bottom']}
     >
-      {/* Deep-space backdrop */}
       <StarfieldBackground
         starColor={colors.starfield}
         nebula1={colors.nebula1}
@@ -143,48 +129,201 @@ const PremiumScreen: React.FC = () => {
         >
           <Text style={[typography('body'), { color: colors.accent }]}>{'←'}</Text>
         </Pressable>
-        <Text
-          style={[typography('subheading'), { color: colors.text, flex: 1, textAlign: 'center' }]}
-        >
-          {t('premium.headerTitle')}
-        </Text>
+        <View style={styles.headerTextWrap}>
+          <Text style={[typography('subheading'), { color: colors.text, textAlign: 'center' }]}>
+            {headerTitle}
+          </Text>
+          <Text
+            style={[
+              typography('caption'),
+              { color: colors.textMuted, textAlign: 'center', marginTop: 4 },
+            ]}
+          >
+            {headerSubtitle}
+          </Text>
+        </View>
         <View style={styles.backBtn} />
       </View>
 
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
-        <Text
-          style={[
-            typography('caption'),
-            { color: colors.textMuted, textAlign: 'center', marginBottom: 24, letterSpacing: 0.5 },
+        {/* Plan cards row */}
+        <View style={styles.cardsRow}>
+          {PLANS.map(plan => {
+            const isSelected = selectedPlan === plan.key;
+            const isKhass = plan.key === 'khass';
+            const borderColor = isKhass ? KHASS_GOLD : isSelected ? colors.accent : colors.border;
+            const borderWidth = isSelected || isKhass ? 1.5 : StyleSheet.hairlineWidth;
+            const currentBilling = billing[plan.key];
+            const priceLabel =
+              currentBilling === 'monthly' ? plan.monthlyPrice : plan.annualPrice;
+
+            return (
+              <Pressable
+                key={plan.key}
+                onPress={() => setSelectedPlan(plan.key)}
+                style={[
+                  styles.card,
+                  {
+                    backgroundColor: colors.surface,
+                    borderColor,
+                    borderWidth,
+                    shadowColor: isKhass ? KHASS_GOLD : colors.border,
+                    shadowOpacity: isKhass ? 0.3 : 0.1,
+                    shadowRadius: isKhass ? 8 : 4,
+                    shadowOffset: { width: 0, height: 2 },
+                    elevation: isKhass ? 4 : 1,
+                  },
+                ]}
+                accessibilityRole="button"
+                accessibilityLabel={`Select ${plan.title} plan`}
+              >
+                {/* Title row */}
+                <View style={styles.titleRow}>
+                  <Text
+                    style={[
+                      typography('heading'),
+                      { color: isKhass ? KHASS_GOLD : colors.text },
+                    ]}
+                  >
+                    {plan.title}
+                  </Text>
+                  {plan.badge !== undefined && (
+                    <Text
+                      style={[
+                        typography('body'),
+                        { color: KHASS_GOLD, marginLeft: 6 },
+                      ]}
+                    >
+                      {plan.badge}
+                    </Text>
+                  )}
+                </View>
+                <Text style={[typography('caption'), { color: colors.textMuted, marginBottom: 8 }]}>
+                  {plan.subtitle}
+                </Text>
+
+                {/* Price */}
+                <Text
+                  style={[
+                    typography('title'),
+                    {
+                      color: isKhass ? KHASS_GOLD : colors.text,
+                      fontSize: 20,
+                      marginBottom: 2,
+                    },
+                  ]}
+                >
+                  {priceLabel}
+                </Text>
+                {currentBilling === 'annual' && (
+                  <Text
+                    style={[
+                      typography('caption'),
+                      { color: colors.textMuted, marginBottom: 8 },
+                    ]}
+                  >
+                    ({plan.annualNote})
+                  </Text>
+                )}
+
+                {/* Billing toggle */}
+                <View style={styles.billingRow}>
+                  {(['monthly', 'annual'] as BillingPeriod[]).map(period => {
+                    const active = currentBilling === period;
+                    return (
+                      <Pressable
+                        key={period}
+                        onPress={() => handleBillingToggle(plan.key, period)}
+                        style={[
+                          styles.billingPill,
+                          {
+                            backgroundColor: active
+                              ? isKhass ? KHASS_GOLD : colors.primary
+                              : colors.bg,
+                            borderColor: isKhass ? KHASS_GOLD : colors.border,
+                          },
+                        ]}
+                        accessibilityRole="button"
+                        accessibilityLabel={`${period} billing for ${plan.title}`}
+                      >
+                        <Text
+                          style={[
+                            typography('caption'),
+                            {
+                              color: active ? colors.textOnPrimary : colors.textMuted,
+                              fontSize: 11,
+                            },
+                          ]}
+                        >
+                          {period === 'monthly' ? 'Monthly' : 'Annual'}
+                        </Text>
+                      </Pressable>
+                    );
+                  })}
+                </View>
+
+                {/* Feature list */}
+                <View style={styles.features}>
+                  {plan.features.map(feat => (
+                    <View key={feat} style={styles.featureRow}>
+                      <Text
+                        style={[
+                          typography('caption'),
+                          {
+                            color: isKhass ? KHASS_GOLD : colors.positive,
+                            marginRight: 6,
+                            fontSize: 11,
+                          },
+                        ]}
+                      >
+                        ✓
+                      </Text>
+                      <Text
+                        style={[typography('caption'), { color: colors.text, flex: 1, fontSize: 12 }]}
+                      >
+                        {feat}
+                      </Text>
+                    </View>
+                  ))}
+                </View>
+
+                {/* Selection indicator */}
+                {isSelected && (
+                  <View
+                    style={[
+                      styles.selectedDot,
+                      { backgroundColor: isKhass ? KHASS_GOLD : colors.accent },
+                    ]}
+                  />
+                )}
+              </Pressable>
+            );
+          })}
+        </View>
+
+        {/* CTA */}
+        <Pressable
+          onPress={handleCta}
+          disabled={purchasing}
+          style={({ pressed }) => [
+            styles.cta,
+            {
+              backgroundColor: selectedPlan === 'khass' ? KHASS_GOLD : colors.primary,
+              opacity: pressed || purchasing ? 0.8 : 1,
+            },
           ]}
+          accessibilityRole="button"
+          accessibilityLabel={ctaLabel}
         >
-          {t('premium.subheading')}
-        </Text>
+          <Text style={[typography('button'), { color: colors.textOnPrimary }]}>
+            {purchasing ? 'Processing…' : ctaLabel}
+          </Text>
+        </Pressable>
 
-        {TIERS.map(tier => (
-          <TierCard
-            key={tier.plan}
-            tier={tier}
-            isCurrent={tier.plan === currentPlan}
-            onSelect={handleSelect}
-            colors={colors}
-            typography={typography}
-            t={t}
-          />
-        ))}
-
-        <Text
-          style={[
-            typography('caption'),
-            { color: colors.textFaint, textAlign: 'center', marginTop: 8 },
-          ]}
-        >
-          {t('premium.moneyBackPromise')}
-        </Text>
-
+        {/* Restore */}
         <Pressable onPress={handleRestore} style={styles.restoreBtn} hitSlop={8}>
-          <Text style={[typography('caption'), { color: colors.accent, textAlign: 'center' }]}>
-            {t('premium.restorePurchase')}
+          <Text style={[typography('caption'), { color: colors.textFaint, textAlign: 'center' }]}>
+            Restore previous purchase
           </Text>
         </Pressable>
       </ScrollView>
@@ -192,239 +331,71 @@ const PremiumScreen: React.FC = () => {
   );
 };
 
-/* -------------------------------------------------------------------------- */
-/*  TierCard                                                                  */
-/* -------------------------------------------------------------------------- */
-
-interface TierCardProps {
-  tier: TierDef;
-  isCurrent: boolean;
-  onSelect: (plan: PlanTier) => void;
-  colors: ReturnType<typeof useColors>;
-  typography: ReturnType<typeof useTypography>;
-  t: ReturnType<typeof useTranslation>;
-}
-
-const TierCard: React.FC<TierCardProps> = ({
-  tier,
-  isCurrent,
-  onSelect,
-  colors,
-  typography,
-  t,
-}) => {
-  const [cardWidth, setCardWidth] = useState(0);
-
-  const borderColor = tier.highlighted
-    ? colors.accent
-    : isCurrent
-      ? colors.positive
-      : colors.border;
-
-  const ctaLabel = isCurrent ? t('premium.currentPlan') : t('premium.selectPlan');
-  const ctaBg = isCurrent
-    ? colors.surfaceElevated
-    : tier.highlighted
-      ? colors.primary
-      : colors.surface;
-  const ctaTextColor = isCurrent
-    ? colors.textMuted
-    : tier.highlighted
-      ? colors.textOnPrimary
-      : colors.accent;
-
-  const cardContent = (
-    <View
-      onLayout={e => setCardWidth(e.nativeEvent.layout.width)}
-      style={[
-        styles.card,
-        {
-          backgroundColor: colors.surface,
-          borderColor,
-          borderWidth: tier.highlighted || isCurrent ? 1.5 : StyleSheet.hairlineWidth,
-          // iOS colored shadow for all cards
-          shadowColor: tier.highlighted ? colors.accent : colors.border,
-          shadowRadius: tier.highlighted ? 0 : 4,
-          shadowOpacity: tier.highlighted ? 0 : 0.3,
-          shadowOffset: { width: 0, height: 2 },
-          elevation: tier.highlighted ? 0 : 2,
-        },
-      ]}
-    >
-      {/* Recommended badge */}
-      {tier.highlighted && (
-        <View style={[styles.badge, { backgroundColor: colors.accent + 'EE' }]}>
-          <Text style={[typography('caption'), { color: colors.textOnPrimary, letterSpacing: 1 }]}>
-            ✦ RECOMMENDED
-          </Text>
-        </View>
-      )}
-
-      {/* Tier name */}
-      <Text style={[typography('heading'), { color: colors.text }]}>{t(tier.titleKey)}</Text>
-
-      {/* Price row */}
-      <View style={styles.priceRow}>
-        <Text
-          style={[
-            typography('title'),
-            {
-              color: tier.highlighted ? colors.accent : colors.text,
-              fontSize: tier.highlighted ? 34 : 28,
-            },
-          ]}
-        >
-          {t(tier.priceKey)}
-        </Text>
-        <Text
-          style={[
-            typography('caption'),
-            { color: colors.textMuted, marginLeft: 6, alignSelf: 'flex-end', marginBottom: 4 },
-          ]}
-        >
-          {t(tier.periodKey)}
-        </Text>
-      </View>
-
-      {/* Description */}
-      <Text style={[typography('body'), { color: colors.textMuted, marginBottom: 16 }]}>
-        {t(tier.descKey)}
-      </Text>
-
-      {/* Feature list */}
-      <View style={styles.features}>
-        {tier.features.map(feat => (
-          <View key={feat} style={styles.featureRow}>
-            <Text
-              style={[
-                typography('caption'),
-                {
-                  color: tier.highlighted ? colors.accent : colors.positive,
-                  marginRight: 10,
-                  fontSize: tier.highlighted ? 13 : 12,
-                },
-              ]}
-            >
-              {tier.highlighted ? '✦' : '✓'}
-            </Text>
-            <Text style={[typography('caption'), { color: colors.text, flex: 1 }]}>
-              {t(FEATURE_KEYS[feat] as Parameters<typeof t>[0])}
-            </Text>
-          </View>
-        ))}
-      </View>
-
-      {/* CTA — shimmer on highlighted tier */}
-      <View style={[styles.ctaWrap, { overflow: 'hidden', borderRadius: 12 }]}>
-        <Pressable
-          onPress={() => onSelect(tier.plan)}
-          disabled={isCurrent}
-          style={({ pressed }) => [
-            styles.cta,
-            {
-              backgroundColor: ctaBg,
-              borderColor,
-              borderWidth: isCurrent ? 0 : 1,
-              transform: [{ scale: pressed ? 0.975 : 1 }],
-              shadowColor: tier.highlighted ? colors.accent : 'transparent',
-              shadowRadius: 8,
-              shadowOpacity: 0.5,
-              shadowOffset: { width: 0, height: 3 },
-              elevation: tier.highlighted ? 4 : 0,
-            },
-          ]}
-          accessibilityRole="button"
-          accessibilityLabel={`${ctaLabel} ${t(tier.titleKey)}`}
-        >
-          <Text style={[typography('button'), { color: ctaTextColor, letterSpacing: 0.5 }]}>
-            {ctaLabel}
-          </Text>
-        </Pressable>
-        {tier.highlighted && !isCurrent && (
-          <ShimmerOverlay width={cardWidth} periodMs={2800} color="rgba(255,255,255,0.12)" />
-        )}
-      </View>
-    </View>
-  );
-
-  if (tier.highlighted) {
-    return (
-      <GlowView
-        glowColor={colors.accent}
-        glowRadius={18}
-        borderRadius={16}
-        pulsing
-        style={styles.glowWrap}
-      >
-        {cardContent}
-      </GlowView>
-    );
-  }
-
-  return cardContent;
-};
-
-/* -------------------------------------------------------------------------- */
-/*  Styles                                                                    */
-/* -------------------------------------------------------------------------- */
-
 const styles = StyleSheet.create({
   root: { flex: 1 },
   header: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderBottomWidth: StyleSheet.hairlineWidth,
   },
-  backBtn: {
-    width: 40,
-    alignItems: 'flex-start',
-  },
+  backBtn: { width: 40 },
+  headerTextWrap: { flex: 1, paddingHorizontal: 8 },
   scroll: {
-    padding: 20,
+    padding: 16,
     paddingBottom: 40,
     gap: 16,
   },
-  glowWrap: {
-    marginHorizontal: 0,
+  cardsRow: {
+    flexDirection: 'row',
+    gap: 12,
   },
   card: {
-    borderRadius: 16,
-    padding: 20,
-    gap: 8,
+    flex: 1,
+    borderRadius: 14,
+    padding: 14,
+    gap: 0,
     overflow: 'hidden',
   },
-  badge: {
-    alignSelf: 'flex-start',
-    borderRadius: 999,
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    marginBottom: 4,
-  },
-  priceRow: {
+  titleRow: {
     flexDirection: 'row',
-    alignItems: 'baseline',
-    marginVertical: 4,
+    alignItems: 'center',
+    marginBottom: 2,
+  },
+  billingRow: {
+    flexDirection: 'row',
+    gap: 6,
+    marginBottom: 12,
+  },
+  billingPill: {
+    flex: 1,
+    paddingVertical: 5,
+    alignItems: 'center',
+    borderRadius: 999,
+    borderWidth: StyleSheet.hairlineWidth,
   },
   features: {
-    gap: 8,
-    marginBottom: 8,
+    gap: 5,
+    marginTop: 4,
   },
   featureRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
   },
-  ctaWrap: {
-    marginTop: 4,
+  selectedDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    alignSelf: 'center',
+    marginTop: 10,
   },
   cta: {
-    paddingVertical: 14,
-    borderRadius: 12,
+    paddingVertical: 16,
+    borderRadius: 14,
     alignItems: 'center',
   },
   restoreBtn: {
-    marginTop: 4,
     paddingVertical: 8,
     alignItems: 'center',
   },

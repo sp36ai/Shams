@@ -13,7 +13,7 @@ import { LANG_CODES, LANG_META, type LangCode } from '@i18n/types';
 import { useSettingsStore } from '@stores/settingsStore';
 import { useAuthStore, selectUserName, selectUserEmail } from '@stores/authStore';
 import { useReadingsStore, type VerdictKind } from '@stores/readingsStore';
-import { useQuotaStore, FREE_LIMIT, type PlanTier } from '@stores/quotaStore';
+import { useQuotaStore, FREE_DAILY_LIMIT, type PlanTier } from '@stores/quotaStore';
 import type { ThemeId } from '@theme/themes';
 
 const SettingsScreen: React.FC = () => {
@@ -32,7 +32,7 @@ const SettingsScreen: React.FC = () => {
 
   const readings = useReadingsStore(s => s.readings);
   const plan = useQuotaStore(s => s.plan);
-  const usedThisWeek = useQuotaStore(s => s.usedThisWeek);
+  const questionsToday = useQuotaStore(s => s.questionsToday);
 
   const handleSignOut = useCallback(() => {
     Alert.alert(t('settings.signOutConfirm'), '', [
@@ -214,7 +214,7 @@ const SettingsScreen: React.FC = () => {
         <Section title="Subscription">
           <SubscriptionCard
             plan={plan}
-            usedThisWeek={usedThisWeek}
+            questionsToday={questionsToday}
             colors={colors}
             typography={typography}
           />
@@ -279,25 +279,23 @@ const SettingsScreen: React.FC = () => {
 
 function planLabel(plan: PlanTier): string {
   switch (plan) {
-    case 'starter':
-      return 'Starter';
-    case 'premium':
-      return '✦ Premium';
-    case 'consultation':
-      return '✦ Consultation';
+    case 'mureed':
+      return '✦ Mureed';
+    case 'khass':
+      return '✦ Khass';
     default:
       return 'Free';
   }
 }
 
-const UNLIMITED_PLAN_SET: readonly PlanTier[] = ['starter', 'premium', 'consultation'];
+const UNLIMITED_PLAN_SET: readonly PlanTier[] = ['mureed', 'khass'];
 
 const SubscriptionCard: React.FC<{
   plan: PlanTier;
-  usedThisWeek: number;
+  questionsToday: number;
   colors: ReturnType<typeof useColors>;
   typography: ReturnType<typeof useTypography>;
-}> = ({ plan, usedThisWeek, colors, typography }) => {
+}> = ({ plan, questionsToday, colors, typography }) => {
   const isPaid = (UNLIMITED_PLAN_SET as PlanTier[]).includes(plan);
   return (
     <View
@@ -320,7 +318,7 @@ const SubscriptionCard: React.FC<{
         </Text>
       ) : (
         <Text style={[typography('caption'), { color: colors.textFaint, marginTop: 2 }]}>
-          {usedThisWeek}/{FREE_LIMIT} questions used this week
+          {questionsToday}/{FREE_DAILY_LIMIT} questions used today
         </Text>
       )}
     </View>
