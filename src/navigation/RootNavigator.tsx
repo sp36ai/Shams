@@ -13,14 +13,14 @@
  * on every cold start via authStore.bootstrap().
  */
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import {
   NavigationContainer,
   type Theme as NavTheme,
+  DefaultTheme as NavDefaultTheme,
   DarkTheme as NavDarkTheme,
 } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-
 import SplashScreen from '@screens/SplashScreen';
 import AuthScreen from '@screens/AuthScreen';
 import OnboardingScreen from '@screens/OnboardingScreen';
@@ -39,7 +39,7 @@ const RootStack = createNativeStackNavigator<RootStackParamList>();
 
 const MIN_SPLASH_MS = 2500;
 
-const BYPASS_AUTH_FOR_TESTING = false;
+const BYPASS_AUTH_FOR_TESTING = __DEV__;
 
 const RootNavigator: React.FC = () => {
   const { theme } = useTheme();
@@ -47,40 +47,40 @@ const RootNavigator: React.FC = () => {
   const user = useAuthStore(s => s.user);
   const isAuthLoading = useAuthStore(s => s.isLoading);
   const bootstrap = useAuthStore(s => s.bootstrap);
-  const hasSeenOnboarding = useSettingsStore(
-    (s: ReturnType<typeof useSettingsStore.getState>) => s.hasSeenOnboarding,
-  );
-  const onboardingLocationPrompted = useSettingsStore(
-    (s: ReturnType<typeof useSettingsStore.getState>) => s.onboardingLocationPrompted,
-  );
+  const hasSeenOnboarding = useSettingsStore(s => s.hasSeenOnboarding);
+  const onboardingLocationPrompted = useSettingsStore(s => s.onboardingLocationPrompted);
 
   const [splashElapsed, setSplashElapsed] = useState(false);
   const [authBootstrapped, setAuthBootstrapped] = useState(false);
 
-  // Enforce minimum splash duration — brand moment must not be skipped.
+  // Enforce minimum splash duration — brand moment must not be skipped
   useEffect(() => {
     const timer = setTimeout(() => setSplashElapsed(true), MIN_SPLASH_MS);
     return () => clearTimeout(timer);
   }, []);
 
-  // Bootstrap Firebase Auth — resolves on first onAuthStateChanged emission.
+  // Bootstrap Firebase Auth — resolves on first onAuthStateChanged emission
   useEffect(() => {
     bootstrap().finally(() => setAuthBootstrapped(true));
   }, [bootstrap]);
 
-  const navTheme: NavTheme = {
-    ...NavDarkTheme,
-    dark: theme.isDark,
-    colors: {
-      ...NavDarkTheme.colors,
-      primary: theme.colors.accent,
-      background: theme.colors.bg,
-      card: theme.colors.surface,
-      text: theme.colors.text,
-      border: theme.colors.border,
-      notification: theme.colors.accent,
-    },
-  };
+  // Memoize theme to prevent unnecessary re-renders of the NavigationContainer
+  const navTheme = useMemo<NavTheme>(() => {
+    const baseTheme = theme.isDark ? NavDarkTheme : NavDefaultTheme;
+    return {
+      ...baseTheme,
+      dark: theme.isDark,
+      colors: {
+        ...baseTheme.colors,
+        primary: theme.colors.accent,
+        background: theme.colors.bg,
+        card: theme.colors.surface,
+        text: theme.colors.text,
+        border: theme.colors.border,
+        notification: theme.colors.accent,
+      },
+    };
+  }, [theme]);
 
   // Keep showing splash until both the timer and auth bootstrap have resolved.
   const splashStillShowing =

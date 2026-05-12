@@ -47,7 +47,7 @@ class MainApplication : Application(), ReactApplication {
             .build()
 
         OkHttpClientProvider.setOkHttpClientFactory {
-            OkHttpClientProvider.getOkHttpClient().newBuilder().certificatePinner(certificatePinner).build()
+            OkHttpClientProvider.createClientBuilder().certificatePinner(certificatePinner).build()
         }
 
         if (BuildConfig.IS_NEW_ARCHITECTURE_ENABLED) {

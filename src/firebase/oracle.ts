@@ -22,7 +22,7 @@ export interface AskOracleResult {
 }
 
 export async function askOracle(args: AskOracleInput): Promise<AskOracleResult> {
-  const fn = functions().httpsCallable('askOracle');
+  const fn = functions('asia-south1').httpsCallable('askOracle');
 
   const result = await fn({
     question: args.question,

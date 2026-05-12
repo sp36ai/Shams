@@ -161,12 +161,17 @@ function checkNotRooted(): SecurityCheckResult {
  * or PASS if all pass. Call once at app start, before mounting screens.
  */
 export function runSecurityChecks(): SecurityCheckResult {
-  const checks = [checkHermes, checkNotDebugging, checkNotEmulator, checkNotRooted];
+  const checks = [
+    { fn: checkHermes, name: 'Hermes' },
+    { fn: checkNotDebugging, name: 'Debugger' },
+    { fn: checkNotEmulator, name: 'Emulator' },
+    { fn: checkNotRooted, name: 'Root/Frida' },
+  ];
 
-  for (const check of checks) {
-    const result = check();
+  for (const { fn, name } of checks) {
+    const result = fn();
     if (!result.passed) {
-      log.error(`Security check failed: ${result.reason}`);
+      log.error(`Security check [${name}] failed: ${result.reason}`);
       return result;
     }
   }

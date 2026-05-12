@@ -12,19 +12,21 @@
  *
  *  STEP 2  Map question to house matrix (favorable + denial houses).
  *
- *  STEP 3  Check which house Moon's Sub-Lord OCCUPIES.
+ *  STEP 0  Promise Layer (Cusp Sub-Lord): The sub-lord of the PRIMARY cusp must NOT
+ *          occupy a denial house. If it does, the chart itself cannot deliver an answer
+ *          regardless of planetary positions — return DENIED before any scoring.
+ *
+ *  STEP 1  Moon's Sub-Lord: Check which house Moon's Sub-Lord OCCUPIES.
  *          This is the primary RKP signal:
  *            In favorable house → +2 to score
  *            In denial house    → −2 to score
  *
- *  STEP 4  Verify with 5 Ruling Planets (Witnesses):
- *          (Day Lord, Asc Sign Lord, Asc Star Lord, Moon Sign Lord, Moon Star Lord).
- *          Minute Lord is retained as an RKP-specific confirmatory signal.
- *          For each RP, check which house it occupies:
- *            Favorable house → +1
- *            Denial house    → −1
+ *  STEP 2  Significator Verification (Phase B/D): Use 5 Classical Witnesses
+ *          (Day Lord, Asc Sign Lord, Asc Star Lord, Moon Sign Lord, Moon Star Lord)
+ *          plus the Hora Lord as a confirmatory signal. For each witness, if it is
+ *          a favorable significator, +1 to score; if a denial significator, -1.
  *
- *  STEP 5  Total score → verdict:
+ *  STEP 3  Total score → verdict:
  *            ≥ +3  → YES (favorable)
  *            ≤ −2  → NO (unfavorable)
  *            −1 to +2 → CONDITIONAL (mixed)
@@ -363,7 +365,7 @@ export function judgeHorary(chart: Chart, question: ClassifiedQuestion): Verdict
   );
 
   // ── STEP 2: House matrix for question type ────────────────────────────────
-  const qType = question.qType;
+  const qType = question.qType; // Renamed from STEP 2 to STEP 0
   const matrix = HOUSE_MATRIX[qType];
   const { favorable, denial, primary } = matrix;
 
@@ -416,18 +418,6 @@ export function judgeHorary(chart: Chart, question: ClassifiedQuestion): Verdict
       combustFlags: Object.freeze([] as Planet[]),
       engineVersion: ENGINE_VERSION,
     } satisfies Verdict);
-  }
-
-  const kotamrajuMoon = applyKotamrajuFilter([moonSubLord], favorable, denial, chart);
-  if (kotamrajuMoon.length === 0) {
-    score -= 2;
-    reasoning.push(
-      step(
-        3,
-        `Kotamraju filter rejected Moon's Sub-Lord ${moonSubLord} (sub-lord linked to denial houses) -> -2`,
-        -2,
-      ),
-    );
   }
 
   reasoning.push(

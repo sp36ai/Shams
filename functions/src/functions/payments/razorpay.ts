@@ -31,7 +31,7 @@ import { RAZORPAY_WEBHOOK_SECRET, REGION, PLAN_DURATION_DAYS, type PlanTier } fr
  * Secret Management Architecture:
  * ───────────────────────────────
  *   Location:           Google Cloud Secret Manager
- *   Project:            shams-al-asrar-ca95d (asia-south1)
+ *   Project:            shams-app-4d0e7 (asia-south1)
  *   Secret Name:        RAZORPAY_WEBHOOK_SECRET
  *   Access Level:       Cloud Function only (least-privilege binding)
  *   Current Version:    \"latest\" (auto-rotated)

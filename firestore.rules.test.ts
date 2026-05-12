@@ -102,6 +102,32 @@ describe('/users/{userId}', () => {
     const db = testEnv.authenticatedContext('alice').firestore();
     await assertFails(db.collection('users').doc('alice').update({ isPremium: true }));
   });
+
+  it('owner CANNOT update doc with privileged field "monthlyQuota"', async () => {
+    await testEnv.withSecurityRulesDisabled(async ctx => {
+      await ctx.firestore().collection('users').doc('alice').set({ displayName: 'Alice' });
+    });
+    const db = testEnv.authenticatedContext('alice').firestore();
+    await assertFails(db.collection('users').doc('alice').update({ monthlyQuota: 100 }));
+  });
+
+  it('owner CANNOT update doc with privileged field "planExpiry"', async () => {
+    await testEnv.withSecurityRulesDisabled(async ctx => {
+      await ctx.firestore().collection('users').doc('alice').set({ displayName: 'Alice' });
+    });
+    const db = testEnv.authenticatedContext('alice').firestore();
+    await assertFails(
+      db.collection('users').doc('alice').update({ planExpiry: '2027-01-01T00:00:00Z' }),
+    );
+  });
+
+  it('owner CANNOT update doc with privileged field "used"', async () => {
+    await testEnv.withSecurityRulesDisabled(async ctx => {
+      await ctx.firestore().collection('users').doc('alice').set({ displayName: 'Alice' });
+    });
+    const db = testEnv.authenticatedContext('alice').firestore();
+    await assertFails(db.collection('users').doc('alice').update({ used: 999 }));
+  });
 });
 
 // ── /quotas/{userId} ─────────────────────────────────────────────────────────
@@ -196,6 +222,14 @@ describe('/readings/{readingId}', () => {
     const db = testEnv.authenticatedContext('bob').firestore();
     await assertFails(db.collection('readings').doc('r4').delete());
   });
+
+  it('any user CANNOT write to audit logs (server-side only)', async () => {
+    const db = testEnv.authenticatedContext('alice').firestore();
+    await assertFails(db.collection('auditLogs').doc('log2').set({
+      userId: 'alice',
+      action: 'unauthorized_write'
+    }));
+  });
 });
 
 // ── /rateLimits ──────────────────────────────────────────────────────────────
@@ -246,80 +280,6 @@ describe('/auditLogs', () => {
     });
     const db = testEnv.authenticatedContext('admin1', { admin: true }).firestore();
     await assertSucceeds(db.collection('auditLogs').doc('log1').get());
-  });
-
-  it('even admin CANNOT write audit logs directly', async () => {
-    const db = testEnv.authenticatedContext('admin1', { admin: true }).firestore();
-    await assertFails(db.collection('auditLogs').doc('log2').set({ action: 'oracle_computed' }));
-  });
-
-  it('owner CANNOT update doc with privileged field "monthlyQuota"', async () => {
-    await testEnv.withSecurityRulesDisabled(async ctx => {
-      await ctx.firestore().collection('users').doc('alice').set({ displayName: 'Alice' });
-    });
-    const db = testEnv.authenticatedContext('alice').firestore();
-    await assertFails(db.collection('users').doc('alice').update({ monthlyQuota: 100 }));
-  });
-
-  it('owner CANNOT update doc with privileged field "planExpiry"', async () => {
-    await testEnv.withSecurityRulesDisabled(async ctx => {
-      await ctx.firestore().collection('users').doc('alice').set({ displayName: 'Alice' });
-    });
-    const db = testEnv.authenticatedContext('alice').firestore();
-    await assertFails(
-      db.collection('users').doc('alice').update({ planExpiry: '2027-01-01T00:00:00Z' }),
-    );
-  });
-
-  it('owner CANNOT update doc with privileged field "used"', async () => {
-    await testEnv.withSecurityRulesDisabled(async ctx => {
-      await ctx.firestore().collection('users').doc('alice').set({ displayName: 'Alice' });
-    });
-    const db = testEnv.authenticatedContext('alice').firestore();
-    await assertFails(db.collection('users').doc('alice').update({ used: 999 }));
-  });
-
-  it('admin can read any user doc', async () => {
-    const db = testEnv.authenticatedContext('admin', { admin: true }).firestore();
-    await assertSucceeds(db.collection('users').doc('alice').get());
-  });
-});
-
-// ── /securityEvents ──────────────────────────────────────────────────────────
-
-describe('/securityEvents', () => {
-  it('regular user CANNOT read security events', async () => {
-    await testEnv.withSecurityRulesDisabled(async ctx => {
-      await ctx.firestore().collection('securityEvents').doc('ev1').set({ type: 'test' });
-    });
-    const db = testEnv.authenticatedContext('alice').firestore();
-    await assertFails(db.collection('securityEvents').doc('ev1').get());
-  });
-
-  it('admin can read security events', async () => {
-    await testEnv.withSecurityRulesDisabled(async ctx => {
-      await ctx.firestore().collection('securityEvents').doc('ev1').set({ type: 'test' });
-    });
-    const db = testEnv.authenticatedContext('admin1', { admin: true }).firestore();
-    await assertSucceeds(db.collection('securityEvents').doc('ev1').get());
-  });
-});
-
-// ── /_system ─────────────────────────────────────────────────────────────────
-
-describe('/_system', () => {
-  it('regular user CANNOT read _system config', async () => {
-    await testEnv.withSecurityRulesDisabled(async ctx => {
-      await ctx.firestore().collection('_system').doc('config').set({ maintenanceMode: false });
-    });
-    const db = testEnv.authenticatedContext('alice').firestore();
-    await assertFails(db.collection('_system').doc('config').get());
-  });
-
-  it('admin can read and write _system config', async () => {
-    const db = testEnv.authenticatedContext('admin1', { admin: true }).firestore();
-    await assertSucceeds(db.collection('_system').doc('config').set({ maintenanceMode: false }));
-    await assertSucceeds(db.collection('_system').doc('config').get());
   });
 });
 

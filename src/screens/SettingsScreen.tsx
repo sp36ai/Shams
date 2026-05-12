@@ -23,9 +23,7 @@ const SettingsScreen: React.FC = () => {
   const t = useTranslation();
   const { lang, switchLanguage } = useI18n();
 
-  const lastLocation = useSettingsStore(
-    (s: ReturnType<typeof useSettingsStore.getState>) => s.lastLocation,
-  );
+  const lastLocation = useSettingsStore(s => s.lastLocation);
 
   const userName = useAuthStore(selectUserName);
   const userEmail = useAuthStore(selectUserEmail);

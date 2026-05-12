@@ -2,7 +2,7 @@ name: Firestore Rules Testing
 
 on:
   push:
-    branches: [main, master]
+    branches: [main]
     paths:
       - "firestore.rules"
       - "firestore.rules.test.ts"
@@ -10,7 +10,7 @@ on:
       - "package.json"
       - ".github/workflows/firestore-rules-tests.yml"
   pull_request:
-    branches: [main, master]
+    branches: [main]
     paths:
       - "firestore.rules"
       - "firestore.rules.test.ts"

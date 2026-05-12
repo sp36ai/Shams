@@ -35,7 +35,7 @@ $ErrorActionPreference = 'Stop'
 $VerbosePreference = if ($Verbose) { 'Continue' } else { 'SilentlyContinue' }
 
 # Configuration
-$PROJECT_ID = 'shams-al-asrar-ca95d'
+$PROJECT_ID = 'shams-app-4d0e7'
 $REGION = 'asia-south1'
 
 # Helper Functions

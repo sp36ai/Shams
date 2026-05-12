@@ -66,15 +66,9 @@ const LocationPermissionScreen: React.FC = () => {
   const typography = useTypography();
   const t = useTranslation();
 
-  const setLastLocation = useSettingsStore(
-    (s: ReturnType<typeof useSettingsStore.getState>) => s.setLastLocation,
-  );
-  const markLocationPrompted = useSettingsStore(
-    (s: ReturnType<typeof useSettingsStore.getState>) => s.markLocationPrompted,
-  );
-  const setPermissionGranted = useSettingsStore(
-    (s: ReturnType<typeof useSettingsStore.getState>) => s.setPermissionGranted,
-  );
+  const setLastLocation = useSettingsStore(s => s.setLastLocation);
+  const markLocationPrompted = useSettingsStore(s => s.markLocationPrompted);
+  const setPermissionGranted = useSettingsStore(s => s.setPermissionGranted);
 
   const [status, setStatus] = useState<ScreenStatus>('idle');
 

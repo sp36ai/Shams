@@ -59,7 +59,8 @@ function shouldEmit(level: LogLevel): boolean {
 }
 
 function format(scope: string, message: string): string {
-  return `[Shams][${scope}] ${message}`;
+  const timestamp = isDev ? `[${new Date().toLocaleTimeString()}]` : '';
+  return `[Shams]${timestamp}[${scope}] ${message}`;
 }
 
 /**
@@ -127,6 +128,25 @@ export function createLogger(scope: string) {
       }
 
       console.error(format(scope, message), out);
+    },
+
+    /**
+     * Records a breadcrumb for Phase 5 Telemetry.
+     * In DEV, it logs to console. In PROD, it buffers for Sentry.
+     */
+    breadcrumb(message: string, category: string, data?: LogPayload): void {
+      const breadcrumb = {
+        message,
+        category: `${scope}:${category}`,
+        data,
+        level: 'info' as LogLevel,
+        timestamp: Date.now() / 1000,
+      };
+
+      // Placeholder for Phase 5: Sentry.addBreadcrumb(breadcrumb);
+      if (isDev) {
+        this.debug(`[Breadcrumb] ${category}: ${message}`, data);
+      }
     },
   };
 }

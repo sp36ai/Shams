@@ -135,3 +135,21 @@ export function computeSignificatorSets(
     neutral: Object.freeze(PLANETS.filter(p => neutralSet.has(p))),
   });
 }
+
+/**
+ * STEP 0: Promise Layer Check.
+ * Checks if the Cusp Sub-Lord of a specific house is connected to favorable houses.
+ * If the Sub-Lord of the primary house is in a denial house, the matter is NOT promised.
+ */
+export function isHousePromised(
+  chart: Chart,
+  house: HouseIndex,
+  favorableHouses: readonly number[],
+): boolean {
+  const cusp = chart.cusps[house - 1];
+  if (!cusp) return false;
+
+  const subLord = (cusp as any).subLord as Planet;
+  const subLordHouse = houseOfPlanet(subLord, chart);
+  return favorableHouses.includes(subLordHouse);
+}

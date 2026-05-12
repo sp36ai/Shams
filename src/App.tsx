@@ -1,76 +1,83 @@
 import React, { useEffect, useState } from 'react';
-import { StatusBar, StyleSheet, Text, View } from 'react-native';
-import { GestureHandlerRootView } from 'react-native-gesture-handler';
-
-import { ThemeProvider, readPersistedThemeId } from '@theme/ThemeProvider';
-import { I18nProvider, readPersistedLang, applyLayoutDirection } from '@i18n/I18nProvider';
-import RootNavigator from '@navigation/RootNavigator';
+import { View, Text, StyleSheet, StatusBar } from 'react-native';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { runSecurityChecks, INTEGRITY_FAIL_MESSAGE } from '@utils/security';
-import { initializeAppCheck } from './firebase/appCheck';
+import { initializeAppCheckService } from './firebase/appCheck';
+import { ThemeProvider } from '@theme/ThemeProvider';
+import RootNavigator from './navigation/RootNavigator';
 
-// Apply RTL layout direction synchronously before React tree mounts.
-const _initialLang = readPersistedLang();
-applyLayoutDirection(_initialLang);
-const _initialThemeId = readPersistedThemeId();
+/**
+ * Entry point for Shams Al-Asrar.
+ * Handles critical boot-time security and environment setup:
+ * 1. Device integrity/security checks (Root/Jailbreak/Tampering)
+ * 2. Firebase App Check initialization for backend enforcement
+ */
+const App: React.FC = () => {
+  const [securityPassed, setSecurityPassed] = useState(true);
 
-const styles = StyleSheet.create({
-  root: { flex: 1 },
-  failRoot: {
-    flex: 1,
-    backgroundColor: '#000',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 32,
-  },
-  failText: {
-    color: '#aaa',
-    fontSize: 15,
-    textAlign: 'center',
-    lineHeight: 22,
-  },
-});
-
-export default function App(): React.ReactElement {
-  const [securityPassed, setSecurityPassed] = useState<boolean | null>(null);
-
-  useEffect(() => {
-    void initializeAppCheck().catch((e: unknown) => {
-      console.warn('[AppCheck] init error (non-fatal during bootstrap):', e);
-    });
-  }, []);
-
+  // 1. Immediate Integrity Check
+  // This runs before the navigation tree mounts to prevent unauthorized access
+  // or UI flickering on compromised devices.
   useEffect(() => {
     const result = runSecurityChecks();
-    setSecurityPassed(result.passed);
+    if (!result.passed) {
+      console.error('Security Integrity Check Failed:', result.reason);
+      setSecurityPassed(false);
+    }
   }, []);
 
-  // While checks run (synchronous, but deferred to after first paint), show nothing.
-  if (securityPassed === null) {
-    return (
-      <View style={styles.failRoot}>
-        <StatusBar translucent backgroundColor="transparent" barStyle="light-content" />
-      </View>
-    );
-  }
+  // 2. Initialize Firebase App Check
+  // Required to satisfy backend enforcement for Cloud Functions (e.g., askOracle).
+  useEffect(() => {
+    try {
+      initializeAppCheckService();
+    } catch (e) {
+      console.error('App Check Initialization Failed:', e);
+    }
+  }, []);
 
-  // Hard-fail: blank screen with generic message. Never name the check.
+  // Terminal Safety Gate: If integrity fails, we show a non-bypassable error view.
   if (!securityPassed) {
     return (
-      <View style={styles.failRoot}>
-        <StatusBar translucent backgroundColor="transparent" barStyle="light-content" />
-        <Text style={styles.failText}>{INTEGRITY_FAIL_MESSAGE}</Text>
+      <View style={styles.errorContainer}>
+        <StatusBar barStyle="light-content" backgroundColor="#030E10" />
+        <Text style={styles.errorTitle}>Integrity Error</Text>
+        <Text style={styles.errorMessage}>
+          {INTEGRITY_FAIL_MESSAGE}
+        </Text>
       </View>
     );
   }
 
   return (
-    <GestureHandlerRootView style={styles.root}>
-      <ThemeProvider initialThemeId={_initialThemeId}>
-        <I18nProvider initialLang={_initialLang}>
-          <StatusBar translucent backgroundColor="transparent" barStyle="light-content" />
-          <RootNavigator />
-        </I18nProvider>
+    <SafeAreaProvider>
+      <ThemeProvider>
+        <RootNavigator />
       </ThemeProvider>
-    </GestureHandlerRootView>
+    </SafeAreaProvider>
   );
-}
+};
+
+const styles = StyleSheet.create({
+  errorContainer: {
+    flex: 1,
+    backgroundColor: '#030E10', // Matches theme.colors.bg
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 32,
+  },
+  errorTitle: {
+    color: '#FF4444',
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginBottom: 16,
+  },
+  errorMessage: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    textAlign: 'center',
+    lineHeight: 24,
+  },
+});
+
+export default App;
