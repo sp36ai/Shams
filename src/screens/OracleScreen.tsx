@@ -561,6 +561,21 @@ const OracleScreen: React.FC = () => {
       }
 
       const now = new Date().toISOString();
+
+      // ── Location gate — BEFORE consumeOne so quota is never burned ──────────
+      if (lastLocation === null || lastLocation.lat === null || lastLocation.lon === null) {
+        const userMsg: ChatMessage = { id: `u_${now}`, sender: 'user', text, createdAt: now };
+        const locationMsg: ChatMessage = {
+          id: `s_noloc_${now}`,
+          sender: 'shams',
+          text: t('errors.locationRequired'),
+          // no `reading` attached — AstroVerdictCard never mounts
+          createdAt: now,
+        };
+        setMessages(prev => [locationMsg, userMsg, ...prev]);
+        return; // quota untouched, engine never called
+      }
+
       const userMsg: ChatMessage = {
         id: `u_${now}`,
         sender: 'user',
@@ -587,8 +602,8 @@ const OracleScreen: React.FC = () => {
         const reading = await runEngine({
           question: text,
           questionLang: lang,
-          lat: lastLocation?.lat ?? null,
-          lon: lastLocation?.lon ?? null,
+          lat: lastLocation.lat,   // non-null guaranteed by gate above
+          lon: lastLocation.lon,
           locationRequiredText: t('errors.locationRequired'),
         });
 

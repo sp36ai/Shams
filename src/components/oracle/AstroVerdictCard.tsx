@@ -136,6 +136,11 @@ const AstroVerdictCard: React.FC<AstroVerdictCardProps> = ({ result, onSwitchMod
     remedy.charity ??
     false;
 
+  // UNCLEAR with H0 — location was missing when engine ran; render nothing
+  if (result.verdict === 'UNCLEAR' && result.subLordHouse === 0) {
+    return null;
+  }
+
   // DENIED: chart cannot address the question — render a distinct minimal card
   if (result.verdict === 'DENIED') {
     return (
@@ -242,7 +247,7 @@ const AstroVerdictCard: React.FC<AstroVerdictCardProps> = ({ result, onSwitchMod
         <View style={styles.subLordRow}>
           <Text style={[typography('heading'), { color: colors.accent }]}>{result.subLord}</Text>
           <Text style={[typography('caption'), { color: colors.textFaint, marginLeft: 6 }]}>
-            occupies H{result.subLordHouse}
+            {result.subLordHouse > 0 ? `occupies H${result.subLordHouse}` : '—'}
           </Text>
         </View>
       </View>
@@ -485,8 +490,8 @@ const AstroVerdictCard: React.FC<AstroVerdictCardProps> = ({ result, onSwitchMod
         </View>
       )}
 
-      {/* Narrative */}
-      {result.narrative.length > 0 && (
+      {/* Narrative — only show when verdict is meaningful */}
+      {result.narrative.length > 0 && result.verdict !== 'UNCLEAR' && (
         <Text
           style={[
             typography('bodyItalic'),
