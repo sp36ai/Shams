@@ -36,6 +36,7 @@ import {
   type ReadingFilter,
   type VerdictKind,
 } from '@stores/readingsStore';
+import StarfieldBackground from '@components/StarfieldBackground';
 
 /* -------------------------------------------------------------------------- */
 /*  Verdict types from the persisted verdictJson                              */
@@ -218,13 +219,17 @@ const HistoryScreen: React.FC = () => {
 
   return (
     <SafeAreaView style={[styles.root, { backgroundColor: theme.colors.bg }]} edges={['top']}>
+      <StarfieldBackground starColor={colors.starfield} nebula1={colors.nebula1} nebula2={colors.nebula2} nebula3={colors.nebula3} />
+
       <View style={[styles.header, { borderColor: colors.border, backgroundColor: colors.surface }]}>
-<Text style={[typography('subheading'), { color: colors.goldBright }]}> 
+        <Text style={[typography('caption'), { color: colors.goldBright, letterSpacing: 1.6, marginBottom: 4 }]}>
+          ARCHIVE
+        </Text>
+        <Text style={[typography('subheading'), { color: colors.text }]}>
           {t('history.headerTitle')}
         </Text>
-        <Text style={[typography('caption'), { color: colors.textMuted, lineHeight: 18, marginTop: 8 }]}> 
-          Sacred chronicle of past consultations, preserved in candlelit manuscript style.
-        </Text>
+        {/* Ornamental gold hairline divider */}
+        <View style={{ height: StyleSheet.hairlineWidth, backgroundColor: colors.borderAccent, marginTop: 10, opacity: 0.5 }} />
       </View>
 
       {isEmpty ? (
@@ -273,10 +278,11 @@ const ReadingRow: React.FC<{
 }> = ({ reading, onPress, onLongPress }) => {
   const colors = useColors();
   const typography = useTypography();
-  const t = useTranslation();
 
   const vColor = verdictColorFor(reading.verdict, colors);
-  const vLabel = verdictLabelFor(reading.verdict, t);
+  const badgeLabel = verdictBadgeFor(reading.verdict);
+  const vj = reading.verdictJson as { rulingPlanets?: { horaLord?: string } } | undefined;
+  const horaLord = vj?.rulingPlanets?.horaLord;
 
   return (
     <Pressable
@@ -288,6 +294,8 @@ const ReadingRow: React.FC<{
         {
           backgroundColor: pressed ? colors.surfaceElevated : colors.surface,
           borderColor: colors.border,
+          borderLeftWidth: 3,
+          borderLeftColor: vColor,
         },
       ]}
       accessibilityRole="button"
@@ -297,6 +305,14 @@ const ReadingRow: React.FC<{
           {reading.question}
         </Text>
         <View style={styles.rowMeta}>
+          {horaLord !== undefined && horaLord.length > 0 && (
+            <>
+              <Text style={[typography('caption'), { color: colors.goldBright, fontSize: 10 }]}>
+                {horaLord} Hora
+              </Text>
+              <Text style={[typography('caption'), { color: colors.textFaint }]}>·</Text>
+            </>
+          )}
           <Text style={[typography('caption'), { color: colors.textFaint }]}>
             {reading.category.toUpperCase()}
           </Text>
@@ -306,8 +322,10 @@ const ReadingRow: React.FC<{
           </Text>
         </View>
       </View>
-      <View style={[styles.verdictPill, { borderColor: vColor }]}>
-        <Text style={[typography('button'), { color: vColor }]}>{vLabel}</Text>
+      <View style={[styles.verdictPill, { borderColor: vColor, backgroundColor: vColor + '14' }]}>
+        <Text style={[typography('label'), { color: vColor, fontSize: 9, letterSpacing: 0.8 }]}>
+          {badgeLabel}
+        </Text>
       </View>
     </Pressable>
   );
@@ -331,6 +349,7 @@ const ReadingDetailModal: React.FC<{
   const v = extractVerdict(reading);
   const vColor = verdictColorFor(reading.verdict, colors);
   const vLabel = verdictLabelFor(reading.verdict, t);
+  const badgeLabel = verdictBadgeFor(reading.verdict);
   const narration = v.narration?.[lang] ?? v.narration?.en ?? '';
   const confidence = v.confidence ?? 0;
 
@@ -376,10 +395,15 @@ const ReadingDetailModal: React.FC<{
             <View
               style={[
                 styles.verdictBadge,
-                { borderColor: vColor, backgroundColor: colors.surface },
+                { borderColor: vColor, backgroundColor: vColor + '14' },
               ]}
             >
-              <Text style={[typography('title'), { color: vColor }]}>{vLabel}</Text>
+              <Text style={[typography('heading'), { color: vColor, letterSpacing: 1.2 }]}>
+                {badgeLabel}
+              </Text>
+              <Text style={[typography('caption'), { color: vColor, opacity: 0.7, marginTop: 2 }]}>
+                {vLabel}
+              </Text>
             </View>
             <View style={styles.confidenceBlock}>
               <View style={styles.confRow}>
@@ -629,6 +653,18 @@ function verdictLabelFor(v: VerdictKind, t: ReturnType<typeof useTranslation>): 
       return t('oracle.verdictUnclear');
     default:
       return '…';
+  }
+}
+
+// Manuscript verdict badge — uses Arabic/sacred terms per the design brief
+function verdictBadgeFor(v: VerdictKind): string {
+  switch (v) {
+    case 'YES':    return 'MAQBOOL';
+    case 'NO':     return 'MARDOOD';
+    case 'CONDITIONAL': return 'MASHROOT';
+    case 'DELAYED':     return 'TA\'KHEER';
+    case 'DENIED':      return 'MARDOOD';
+    default:            return 'GHAYR WAZEH';
   }
 }
 

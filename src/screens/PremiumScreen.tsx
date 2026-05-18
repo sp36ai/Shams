@@ -104,10 +104,10 @@ const PremiumScreen: React.FC = () => {
 
   const headerTitle = trialExpired
     ? 'Your 7-day journey has ended.'
-    : 'Choose Your Path';
+    : 'Unlock Deeper Access';
   const headerSubtitle = trialExpired
     ? 'The stars are still watching. Continue receiving their guidance.'
-    : "Unlock the full depth of the Oracle's wisdom.";
+    : 'Choose your path of guidance.';
 
   const ctaLabel =
     selectedPlan === 'mureed' ? 'Begin with Mureed' : 'Begin with Khass';
@@ -152,6 +152,34 @@ const PremiumScreen: React.FC = () => {
       </View>
 
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+        {/* 7-day trial banner */}
+        {!trialExpired && (
+          <View
+            style={[
+              styles.trialBanner,
+              {
+                backgroundColor: colors.manuscriptFog,
+                borderColor: colors.borderAccent,
+              },
+            ]}
+          >
+            <Text style={[typography('caption'), { color: colors.textFaint, letterSpacing: 1 }]}>
+              ✦
+            </Text>
+            <Text
+              style={[
+                typography('label'),
+                { color: colors.goldBright, letterSpacing: 1.2, marginHorizontal: 8 },
+              ]}
+            >
+              BEGIN WITH 7 DAYS FREE
+            </Text>
+            <Text style={[typography('caption'), { color: colors.textFaint, letterSpacing: 1 }]}>
+              ✦
+            </Text>
+          </View>
+        )}
+
         {/* Plan cards row */}
         <View style={styles.cardsRow}>
           {PLANS.map(plan => {
@@ -169,15 +197,16 @@ const PremiumScreen: React.FC = () => {
                 onPress={() => setSelectedPlan(plan.key)}
                 style={[
                   styles.card,
+                  isKhass && styles.cardKhass,
                   {
-                    backgroundColor: colors.surface,
+                    backgroundColor: isKhass ? colors.surfaceElevated : colors.surface,
                     borderColor,
                     borderWidth,
                     shadowColor: isKhass ? KHASS_GOLD : colors.border,
-                    shadowOpacity: isKhass ? 0.3 : 0.1,
-                    shadowRadius: isKhass ? 8 : 4,
-                    shadowOffset: { width: 0, height: 2 },
-                    elevation: isKhass ? 4 : 1,
+                    shadowOpacity: isKhass ? 0.45 : 0.1,
+                    shadowRadius: isKhass ? 14 : 4,
+                    shadowOffset: { width: 0, height: isKhass ? 6 : 2 },
+                    elevation: isKhass ? 8 : 1,
                   },
                 ]}
                 accessibilityRole="button"
@@ -362,6 +391,15 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 12,
   },
+  trialBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    borderWidth: StyleSheet.hairlineWidth,
+  },
   card: {
     flex: 1,
     borderRadius: 22,
@@ -373,6 +411,11 @@ const styles = StyleSheet.create({
     shadowRadius: 16,
     shadowOffset: { width: 0, height: 8 },
     elevation: 3,
+  },
+  cardKhass: {
+    paddingTop: 24,
+    paddingBottom: 22,
+    flex: 1.05,
   },
   titleRow: {
     flexDirection: 'row',

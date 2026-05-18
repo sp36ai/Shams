@@ -196,8 +196,9 @@ const PLANET_DAILY_SPEED: Record<PlanetName, number> = {
   Ketu:   -1934.136    / 36525,
 };
 
-const STATUS_RETROGRADE = '#F44336';
-const STATUS_COMBUST    = '#FF9800';
+// Manuscript-toned status colors — no harsh red/orange in the sacred observatory
+const STATUS_RETROGRADE = '#8C7A9A'; // muted violet — retrograde motion restrained
+const STATUS_COMBUST    = '#B8952A'; // aged brass — combustion, closeness to the Sun
 
 interface PlanetRow {
   name: PlanetName;
@@ -250,7 +251,7 @@ const SkyClockScreen: React.FC = () => {
 
   const [timing, setTiming] = useState<TimingState>(() => computeTiming(lonDeg));
   const [focused, setFocused] = useState(false);
-  const [clockExpanded, setClockExpanded] = useState(false);
+  const [clockExpanded, setClockExpanded] = useState(true);
   const [planetRows, setPlanetRows] = useState<PlanetRow[]>(() => computePlanetRows(Date.now()));
 
   // Refresh timing + planet rows every 60 s, only while screen is focused.
@@ -287,10 +288,10 @@ const SkyClockScreen: React.FC = () => {
           <Text style={[typography('label'), { color: colors.accent, fontSize: 20 }]}>‹</Text>
         </Pressable>
         <View style={{ alignItems: 'center' }}>
-          <Text style={[typography('caption'), { color: colors.goldBright, letterSpacing: 1.4 }]}>SKY STATE</Text>
+          <Text style={[typography('caption'), { color: colors.goldBright, letterSpacing: 1.6 }]}>AL-FALAK</Text>
           <Text style={[typography('subheading'), { color: colors.text, marginTop: 2 }]}>{timing.timeLabel}</Text>
         </View>
-        <Text style={[typography('caption'), { color: colors.textMuted, textAlign: 'right' }]}>Celestial timing</Text>
+        <Text style={[typography('caption'), { color: colors.textMuted, textAlign: 'right', fontStyle: 'italic' }]}>Live Sky Clock</Text>
       </View>
 
       <ScrollView
@@ -338,9 +339,9 @@ const SkyClockScreen: React.FC = () => {
             ]}
             accessibilityRole="button"
           >
-            <Text style={[typography('label'), { color: colors.text }]}>Celestial Clock</Text>
-            <Text style={[typography('caption'), { color: colors.textMuted }]}>
-              {clockExpanded ? '▲ Collapse' : '▼ Expand'}
+            <Text style={[typography('label'), { color: colors.goldBright, letterSpacing: 1 }]}>CELESTIAL CLOCK</Text>
+            <Text style={[typography('caption'), { color: colors.textMuted, fontStyle: 'italic' }]}>
+              {clockExpanded ? 'Collapse ▲' : 'Expand ▼'}
             </Text>
           </Pressable>
           {clockExpanded && <CosmicClock running={clockRunning} />}
@@ -348,8 +349,8 @@ const SkyClockScreen: React.FC = () => {
 
         {/* Planet table */}
         <View style={styles.planetSection}>
-          <Text style={[typography('caption'), styles.sectionLabel, { color: colors.textMuted }]}>
-            Current Sky  ·  Sidereal (Lahiri)
+          <Text style={[typography('label'), styles.sectionLabel, { color: colors.goldBright, letterSpacing: 1.2 }]}>
+            CURRENT SKY · SIDEREAL (LAHIRI)
           </Text>
           <View
             style={[

@@ -516,6 +516,7 @@ const OracleScreen: React.FC = () => {
 
   const [messages, setMessages] = useState<ChatMessage[]>([initialGreeting]);
   const [input, setInput] = useState('');
+  const [inputFocused, setInputFocused] = useState(false);
   const [sending, setSending] = useState(false);
   const [stage, setStage] = useState<ConvStage>('ready');
   const [lastReading, setLastReading] = useState<Reading | null>(null);
@@ -806,7 +807,7 @@ const OracleScreen: React.FC = () => {
         </View>
       </View>
 
-      <View style={[styles.dashboardRow, { borderColor: colors.border, backgroundColor: colors.surface }]}> 
+      <View style={[styles.dashboardRow, { borderColor: colors.borderAccent + '44', backgroundColor: colors.surface }]}>
         <View style={[styles.statCard, { borderColor: colors.borderAccent }]}> 
           <Text style={[typography('caption'), { color: colors.textMuted }]}>HORA</Text>
           <Text style={[typography('label'), { color: colors.goldBright, marginTop: 4 }]}>{horaLord}</Text>
@@ -844,10 +845,10 @@ const OracleScreen: React.FC = () => {
         <Text
           style={[
             typography('caption'),
-            { color: colors.textMuted, marginLeft: 'auto', fontSize: 10 },
+            { color: colors.goldBright, marginLeft: 'auto', fontSize: 10, letterSpacing: 0.8 },
           ]}
         >
-          Sky State ›
+          Al-Falak ›
         </Text>
       </Pressable>
 
@@ -907,12 +908,22 @@ const OracleScreen: React.FC = () => {
               onChangeText={setInput}
               placeholder={t('oracle.placeholder')}
               placeholderTextColor={colors.textFaint}
-              style={[styles.composerInput, typography('body'), { color: colors.text }]}
+              style={[
+                styles.composerInput,
+                typography('body'),
+                {
+                  color: colors.text,
+                  borderColor: inputFocused ? colors.borderAccent : colors.border,
+                  borderWidth: inputFocused ? 1 : StyleSheet.hairlineWidth,
+                },
+              ]}
               multiline
               editable={!sending}
               returnKeyType="send"
               blurOnSubmit
               onSubmitEditing={handleSend}
+              onFocus={() => setInputFocused(true)}
+              onBlur={() => setInputFocused(false)}
               underlineColorAndroid="transparent"
             />
             <Pressable
@@ -943,9 +954,46 @@ const OracleScreen: React.FC = () => {
 
       {sending && (
         <View style={styles.loadingOverlay} pointerEvents="none">
-          <View style={[styles.loadingPanel, { backgroundColor: colors.surfaceElevated, borderColor: colors.borderAccent }]}> 
-            <Text style={[typography('button'), { color: colors.goldBright, marginBottom: 6 }]}>Invoking the oracle</Text>
-            <Text style={[typography('caption'), { color: colors.textMuted, textAlign: 'center' }]}>A sacred chart is being cast. Please hold while the verdict arrives.</Text>
+          <View
+            style={[
+              styles.loadingPanel,
+              {
+                backgroundColor: colors.surfaceElevated,
+                borderColor: colors.borderAccent,
+                shadowColor: colors.accent,
+                shadowOpacity: 0.22,
+                shadowRadius: 24,
+              },
+            ]}
+          >
+            {/* Breathing gold medallion dot */}
+            <View
+              style={{
+                width: 36, height: 36, borderRadius: 18,
+                backgroundColor: colors.manuscriptFog,
+                borderWidth: 1, borderColor: colors.borderAccent,
+                alignSelf: 'center', marginBottom: 14,
+                justifyContent: 'center', alignItems: 'center',
+              }}
+            >
+              <Text style={{ color: colors.goldBright, fontSize: 16 }}>✦</Text>
+            </View>
+            <Text
+              style={[
+                typography('label'),
+                { color: colors.goldBright, textAlign: 'center', marginBottom: 6, letterSpacing: 1.4 },
+              ]}
+            >
+              CASTING THE SACRED CHART
+            </Text>
+            <Text
+              style={[
+                typography('caption'),
+                { color: colors.textMuted, textAlign: 'center', fontStyle: 'italic' },
+              ]}
+            >
+              The heavens are speaking…
+            </Text>
           </View>
         </View>
       )}
@@ -1258,7 +1306,6 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderRadius: 18,
     backgroundColor: '#FFFFFF06',
-    borderWidth: StyleSheet.hairlineWidth,
   },
   sendBtn: {
     paddingHorizontal: 16,
@@ -1283,7 +1330,8 @@ const styles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth,
     borderRadius: 22,
     marginHorizontal: 16,
-    marginBottom: 12,
+    marginTop: 10,
+    marginBottom: 10,
     shadowColor: '#000',
     shadowOpacity: 0.06,
     shadowRadius: 14,
