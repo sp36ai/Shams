@@ -5,6 +5,7 @@
 import React, { useCallback } from 'react';
 import { Alert, Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import StarfieldBackground from '@components/StarfieldBackground';
 
 import { useColors, useTheme } from '@theme/ThemeProvider';
 import { useTypography } from '@theme/useTypography';
@@ -89,12 +90,23 @@ const SettingsScreen: React.FC = () => {
 
   return (
     <SafeAreaView style={[styles.root, { backgroundColor: theme.colors.bg }]} edges={['top']}>
-<View style={[styles.header, { borderColor: colors.border, backgroundColor: colors.surface }]}> 
-        <Text style={[typography('subheading'), { color: colors.goldBright, marginBottom: 6 }]}> 
-          {t('settings.headerTitle')}
+      <StarfieldBackground
+        starColor={colors.starfield}
+        nebula1={colors.nebula1}
+        nebula2={colors.nebula2}
+        nebula3={colors.nebula3}
+      />
+      <View style={[styles.header, { borderColor: colors.border, backgroundColor: colors.surfaceElevated }]}>
+        <Text style={[typography('caption'), { color: colors.textFaint, letterSpacing: 2.5, marginBottom: 4 }]}>
+          {'AL-DAFTAR'}
         </Text>
-        <Text style={[typography('caption'), { color: colors.textMuted, lineHeight: 18 }]}> 
-          Customize the manuscript palette, language, and oracle tools.
+        <View style={styles.headerDivider}>
+          <View style={[styles.headerLine, { backgroundColor: colors.goldBright }]} />
+          <Text style={[{ color: colors.goldBright, fontSize: 9, marginHorizontal: 8, opacity: 0.5 }]}>{'✦'}</Text>
+          <View style={[styles.headerLine, { backgroundColor: colors.goldBright }]} />
+        </View>
+        <Text style={[typography('subheading'), { color: colors.goldBright, marginTop: 6 }]}>
+          {t('settings.headerTitle')}
         </Text>
       </View>
 
@@ -400,19 +412,22 @@ const Section: React.FC<SectionProps> = ({ title, children }) => {
   const typography = useTypography();
   return (
     <View style={styles.section}>
-      <Text
-        style={[
-          typography('label'),
-          {
-            color: colors.textMuted,
-            textTransform: 'uppercase',
-            letterSpacing: 1,
-            marginBottom: 8,
-          },
-        ]}
-      >
-        {title}
-      </Text>
+      <View style={styles.sectionHeader}>
+        <Text
+          style={[
+            typography('label'),
+            {
+              color: colors.goldBright,
+              textTransform: 'uppercase',
+              letterSpacing: 1.8,
+              fontSize: 10,
+            },
+          ]}
+        >
+          {title}
+        </Text>
+        <View style={[styles.sectionLine, { backgroundColor: colors.goldBright }]} />
+      </View>
       {children}
     </View>
   );
@@ -438,7 +453,7 @@ const styles = StyleSheet.create({
   root: { flex: 1 },
   header: {
     paddingHorizontal: 20,
-    paddingVertical: 12,
+    paddingVertical: 14,
     borderBottomWidth: StyleSheet.hairlineWidth,
     shadowColor: '#000',
     shadowOpacity: 0.08,
@@ -446,13 +461,35 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 4 },
     elevation: 2,
   },
+  headerDivider: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    width: '100%',
+    marginVertical: 2,
+  },
+  headerLine: {
+    flex: 1,
+    height: StyleSheet.hairlineWidth,
+    opacity: 0.3,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 10,
+  },
+  sectionLine: {
+    flex: 1,
+    height: StyleSheet.hairlineWidth,
+    opacity: 0.2,
+  },
   scrollContent: {
     padding: 16,
     paddingBottom: 32,
     gap: 8,
   },
   section: {
-    marginTop: 16,
+    marginTop: 20,
     gap: 8,
   },
   row: {

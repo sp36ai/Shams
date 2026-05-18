@@ -266,19 +266,19 @@ const AuthScreen: React.FC = () => {
             />
             <Text
               style={[
-                typography('title'),
-                { color: colors.accent, textAlign: 'center', letterSpacing: 1.5 },
+                typography('hero'),
+                { color: colors.goldBright, textAlign: 'center', letterSpacing: 1.2, textTransform: 'uppercase' },
               ]}
             >
-              Shams al-Asrār
+              {'SHAMS AL-ASRĀR'}
             </Text>
             <Text
               style={[
                 typography('caption'),
-                { color: colors.textMuted, textAlign: 'center', marginTop: 4, letterSpacing: 2.5 },
+                { color: colors.textFaint, textAlign: 'center', marginTop: 4, letterSpacing: 2.5 },
               ]}
             >
-              {'✦  RKP HORARY ORACLE  ✦'}
+              {'✦  KP HORARY ORACLE  ✦'}
             </Text>
           </View>
 
@@ -435,9 +435,9 @@ const AuthScreen: React.FC = () => {
           <View style={styles.dividerRow}>
             <View style={[styles.dividerLine, { backgroundColor: colors.border }]} />
             <Text
-              style={[typography('caption'), { color: colors.textMuted, marginHorizontal: 12 }]}
+              style={[typography('caption'), { color: colors.textFaint, marginHorizontal: 12, letterSpacing: 1.5 }]}
             >
-              {t('auth.orContinueWith')}
+              {'✦  ' + t('auth.orContinueWith') + '  ✦'}
             </Text>
             <View style={[styles.dividerLine, { backgroundColor: colors.border }]} />
           </View>
@@ -497,11 +497,11 @@ interface TabButtonProps {
 const TabButton: React.FC<TabButtonProps> = ({ label, active, onPress, colors, typography }) => (
   <Pressable
     onPress={onPress}
-    style={[styles.tabBtn, active && { borderBottomColor: colors.accent, borderBottomWidth: 2 }]}
+    style={[styles.tabBtn, active && { borderBottomColor: colors.goldBright, borderBottomWidth: 2 }]}
     accessibilityRole="tab"
     accessibilityState={{ selected: active }}
   >
-    <Text style={[typography('label'), { color: active ? colors.accent : colors.textMuted }]}>
+    <Text style={[typography('label'), { color: active ? colors.goldBright : colors.textMuted, letterSpacing: 1.2 }]}>
       {label}
     </Text>
   </Pressable>
@@ -545,7 +545,7 @@ const Field = React.forwardRef<TextInput, FieldProps>(
     ref,
   ) => (
     <View style={styles.fieldWrap}>
-      <Text style={[typography('label'), { color: colors.textMuted, marginBottom: 6 }]}>
+      <Text style={[typography('label'), { color: colors.goldBright, marginBottom: 6, letterSpacing: 1, fontSize: 10, opacity: 0.8 }]}>
         {label}
       </Text>
       <View

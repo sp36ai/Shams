@@ -377,8 +377,32 @@ const SplashScreen: React.FC = () => {
         </Animated2.View>
       </View>
 
+      {/* Corner ornaments */}
+      {(['topLeft', 'topRight', 'bottomLeft', 'bottomRight'] as const).map(pos => (
+        <View
+          key={pos}
+          pointerEvents="none"
+          style={[
+            styles.cornerOrnament,
+            pos === 'topLeft' && { top: 48, left: 20 },
+            pos === 'topRight' && { top: 48, right: 20 },
+            pos === 'bottomLeft' && { bottom: 48, left: 20 },
+            pos === 'bottomRight' && { bottom: 48, right: 20 },
+          ]}
+        >
+          <Text style={{ color: colors.accent, fontSize: 18, opacity: 0.3 }}>{'✦'}</Text>
+        </View>
+      ))}
+
       {/* Brand block — fades in */}
       <Animated.View style={[styles.brandBlock, { opacity: brandAnim }]}>
+        {/* Ornamental header rule */}
+        <View style={styles.ornamentRow}>
+          <View style={[styles.ornamentLine, { backgroundColor: colors.goldBright, opacity: 0.3 }]} />
+          <Text style={[{ color: colors.goldBright, fontSize: 10, marginHorizontal: 8, opacity: 0.5 }]}>{'✦'}</Text>
+          <View style={[styles.ornamentLine, { backgroundColor: colors.goldBright, opacity: 0.3 }]} />
+        </View>
+
         <Text
           style={[
             typography('hero'),
@@ -387,6 +411,7 @@ const SplashScreen: React.FC = () => {
               textAlign: 'center',
               letterSpacing: 1.2,
               textTransform: 'uppercase',
+              marginTop: 10,
             },
           ]}
         >
@@ -406,7 +431,14 @@ const SplashScreen: React.FC = () => {
         >
           {t('app.tagline')}
         </Text>
-        <View style={[styles.divider, { backgroundColor: colors.goldBright }]} />
+
+        {/* Ornamental divider with triple dot */}
+        <View style={styles.ornamentRow}>
+          <View style={[styles.ornamentLine, { backgroundColor: colors.goldBright, opacity: 0.25 }]} />
+          <Text style={[{ color: colors.goldBright, fontSize: 9, marginHorizontal: 10, letterSpacing: 6, opacity: 0.45 }]}>{'✦  ✦  ✦'}</Text>
+          <View style={[styles.ornamentLine, { backgroundColor: colors.goldBright, opacity: 0.25 }]} />
+        </View>
+
         <Text
           style={[
             typography('caption'),
@@ -425,7 +457,7 @@ const SplashScreen: React.FC = () => {
             {
               color: colors.textFaint,
               textAlign: 'center',
-              marginTop: 26,
+              marginTop: 18,
               letterSpacing: 0.5,
               lineHeight: 20,
             },
@@ -472,18 +504,27 @@ const styles = StyleSheet.create({
   },
   brandBlock: {
     alignItems: 'center',
-    paddingHorizontal: 18,
-    paddingVertical: 18,
+    paddingHorizontal: 22,
+    paddingVertical: 20,
     borderRadius: 24,
     borderWidth: 1,
     borderColor: 'rgba(201,169,97,0.24)',
     backgroundColor: 'rgba(18,18,26,0.42)',
+    gap: 4,
   },
-  divider: {
-    width: 52,
+  ornamentRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    width: '100%',
+    marginVertical: 2,
+  },
+  ornamentLine: {
+    flex: 1,
     height: 1,
-    marginVertical: 14,
-    opacity: 0.45,
+  },
+  cornerOrnament: {
+    position: 'absolute',
+    fontSize: 18,
   },
 });
 
