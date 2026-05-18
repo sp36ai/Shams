@@ -6,8 +6,13 @@
  * talks to it. The APK contains zero engine logic.
  */
 
-import { firebase } from '@react-native-firebase/functions';
+import functions, { type FirebaseFunctionsTypes } from '@react-native-firebase/functions';
 import type { Reading } from '@stores/readingsStore';
+
+// RNFB v19 types omit .region() on the Module — it exists at runtime.
+type FunctionsWithRegion = FirebaseFunctionsTypes.Module & {
+  region(r: string): FirebaseFunctionsTypes.Module;
+};
 
 export interface AskOracleInput {
   question: string;
@@ -22,7 +27,15 @@ export interface AskOracleResult {
 }
 
 export async function askOracle(args: AskOracleInput): Promise<AskOracleResult> {
-  const fn = firebase.app().functions('asia-south1').httpsCallable('askOracle');
+  const functionsInstance = (functions() as FunctionsWithRegion).region('asia-south1');
+  
+  // Emulator disabled — pointing at deployed production function
+  // if (__DEV__) {
+  //   functionsInstance.useFunctionsEmulator('http://127.0.0.1:5001');
+  //   console.log('[Oracle] Using Firebase Functions Emulator at http://127.0.0.1:5001');
+  // }
+  
+  const fn = functionsInstance.httpsCallable('askOracle');
 
   const result = await fn({
     question: args.question,
@@ -69,21 +82,28 @@ export async function askOracle(args: AskOracleInput): Promise<AskOracleResult> 
     planetDegrees?: Record<string, number>;
     cuspDegrees?: Record<number, number>;
     cuspSigns?: Record<number, string>;
-    planetChain?: Record<string, { nakshatraLord: string; subLord: string; subSubLord: string }>;
+    planetChain?: Record<string, { manzilLord: string; subLord: string; subSubLord: string }>;
+    manzila?: {
+      number: number;
+      name: string;
+      arabic: string;
+      nature: 'benefic' | 'malefic' | 'mixed';
+      element: 'fire' | 'earth' | 'air' | 'water';
+      oracleDescriptor: string;
+    };
     oracle?: {
       opening: string;
       interpretation: string;
       spiritual_layer: string;
       hidden_influence: string;
-      timing: string;
+      timing?: string | null;
       warning?: string;
       remedy: {
         quran_verse?: string;
-        translation?: string;
-        name_of_allah?: string;
+        asma?: string;
         dua?: string;
         zikr?: string;
-        charity?: string;
+        sadaqah?: string;
       };
       signature: string;
     };
@@ -113,6 +133,7 @@ export async function askOracle(args: AskOracleInput): Promise<AskOracleResult> 
       cuspDegrees: data.cuspDegrees,
       cuspSigns: data.cuspSigns,
       planetChain: data.planetChain,
+      manzila: data.manzila,
       oracle: data.oracle,
     },
   };

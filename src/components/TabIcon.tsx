@@ -102,9 +102,13 @@ const PATHS: Record<IconName, IconShape> = {
 const TabIcon: React.FC<TabIconProps> = ({ name, color, size = 24, focused = false }) => {
   const shape = PATHS[name];
   const strokeWidth = focused ? 2.0 : 1.6;
+  const haloFill = focused && /^#([0-9A-F]{6}|[0-9A-F]{3})$/i.test(color) ? `${color}22` : 'none';
 
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      {focused && (
+        <Circle cx={12} cy={12} r={10} fill={haloFill} />
+      )}
       {shape.paths.map((d, i) => (
         <Path
           key={`p${i}`}
@@ -113,6 +117,7 @@ const TabIcon: React.FC<TabIconProps> = ({ name, color, size = 24, focused = fal
           strokeWidth={strokeWidth}
           strokeLinecap="round"
           strokeLinejoin="round"
+          strokeOpacity={focused ? 1 : 0.78}
         />
       ))}
       {shape.circles?.map((c, i) => (
@@ -123,7 +128,8 @@ const TabIcon: React.FC<TabIconProps> = ({ name, color, size = 24, focused = fal
           r={c.r}
           stroke={color}
           strokeWidth={strokeWidth}
-          fill={c.fill ?? 'none'}
+          fill={c.fill ?? (focused ? haloFill : 'none')}
+          fillOpacity={focused && c.fill === undefined ? 0.16 : 1}
         />
       ))}
     </Svg>

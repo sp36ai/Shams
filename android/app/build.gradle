@@ -37,6 +37,10 @@ android {
         versionCode 1
         versionName "0.1.0"
 
+        // react-native-iap v12 has amazon/play product flavors;
+        // select "play" so the app builds without adding its own flavor dimension.
+        missingDimensionStrategy "store", "play"
+
         // Reduce APK by stripping unused locales (we only ship en, ur, hi)
         resourceConfigurations += ["en", "ur", "hi"]
 
@@ -81,7 +85,6 @@ android {
     buildTypes {
         debug {
             signingConfig signingConfigs.debug
-            applicationIdSuffix ".debug"
             versionNameSuffix "-debug"
         }
         release {

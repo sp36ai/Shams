@@ -1,29 +1,26 @@
 /**
  * Centralised configuration — aligned with the mobile client's models.
  *
- * Quota model: Sunday-anchored rolling week (matches quotaStore.ts on client).
- * Plan tiers:  free | starter | premium | consultation (matches PlanTier type).
+ * Quota model: UTC day rolling (matches quotaStore.ts on client).
+ * Plan tiers:  free | mureed | khass (matches PlanTier type).
  */
 import { defineInt, defineSecret } from 'firebase-functions/params';
 
-export type PlanTier = 'free' | 'starter' | 'premium' | 'consultation';
+export type PlanTier = 'free' | 'mureed' | 'khass';
 
-export const UNLIMITED_PLANS: PlanTier[] = ['starter', 'premium', 'consultation'];
-export const FREE_LIMIT = 3; // questions per rolling week
+export const UNLIMITED_PLANS: PlanTier[] = ['mureed', 'khass'];
+export const FREE_LIMIT = 100; // questions per UTC day
 
-/** Return the ISO date string (YYYY-MM-DD) of the most recent Sunday (UTC). */
-export function sundayWeekKey(now = Date.now()): string {
-  const d = new Date(now);
-  d.setUTCHours(0, 0, 0, 0);
-  d.setUTCDate(d.getUTCDate() - d.getUTCDay()); // back to Sunday
-  return d.toISOString().slice(0, 10);
+/** Return the ISO date string (YYYY-MM-DD) for the current UTC day. */
+export function todayKey(now = Date.now()): string {
+  return new Date(now).toISOString().slice(0, 10);
 }
 
 export const REGION = 'asia-south1'; // Mumbai — closest to primary user base
 
 export const FUNCTION_OPTS = {
   region: REGION,
-  timeoutSeconds: 30,
+  timeoutSeconds: 60,
   memory: '512MiB' as const,
   // enforceAppCheck is set per-function — see individual function files.
 } as const;
@@ -46,17 +43,20 @@ export const RATE_LIMIT_PER_MINUTE = defineInt('RATE_LIMIT_PER_MINUTE', {
   description: 'Maximum callable requests per user per minute',
 });
 
-/** Google Play product IDs mapped to plan tiers. */
+/**
+ * Google Play product IDs mapped to plan tiers.
+ * Create these exact SKU strings in Google Play Console → Subscriptions.
+ */
 export const PLAY_PRODUCT_MAP: Record<string, PlanTier> = {
-  shams_starter_weekly: 'starter',
-  shams_premium_monthly: 'premium',
-  shams_consultation_monthly: 'consultation',
+  mureed_monthly: 'mureed',
+  mureed_annual:  'mureed',
+  khass_monthly:  'khass',
+  khass_annual:   'khass',
 };
 
 /** Plan durations in days (for expiry calculation). */
 export const PLAN_DURATION_DAYS: Record<PlanTier, number> = {
-  free: 0, // never expires
-  starter: 7,
-  premium: 31,
-  consultation: 31,
+  free:   0,  // never expires
+  mureed: 31, // monthly billing cycle
+  khass:  31, // monthly billing cycle (annual handled by Play Store)
 };

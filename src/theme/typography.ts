@@ -1,20 +1,27 @@
 /**
- * Typography tokens — Shams al-Asrār
+ * Typography tokens — Dār al-Shams
  * --------------------------------------------------------------------------
- * Three script families per master prompt:
- *   - Latin (EN)        : Cinzel (display) + Cormorant Garamond (body)
- *   - Urdu (UR, RTL)    : Noto Nastaliq Urdu (everything; Cinzel fallback)
- *   - Devanagari (HI)   : Noto Sans Devanagari (everything; Cinzel fallback)
+ * SACRED MANUSCRIPT TYPOGRAPHY SYSTEM
+ * 
+ * The app must feel like an illuminated manuscript vault.
+ * Typography must be: engraved, ceremonial, archival.
+ * 
+ * Three script families:
+ *   - Latin (EN)        : Cinzel (engraved headings) + Spectral (manuscript body)
+ *   - Arabic (UR, RTL)  : Amiri (Quranic, stable, reverent, highly legible)
+ *   - Devanagari (HI)   : Noto Sans Devanagari
  *
- * Fonts are bundled via assets/fonts/ + react-native.config.js.
- *
- * Resolution rule (consumed by useTypography hook):
- *   if lang === 'ur' → use urdu set with elevated lineHeight (2.1)
+ * CRITICAL RULES:
+ * - Arabic must feel Quranic, not decorative
+ * - RTL blocks need increased line-height, centered alignment
+ * - Headings must feel engraved and ceremonial
+ * - Body text must be readable manuscript prose
+ * - Never use decorative Arabic fonts everywhere
+ * 
+ * Resolution rule:
+ *   if lang === 'ur' → use arabic set with elevated lineHeight (2.1)
  *   if lang === 'hi' → use devanagari set
  *   else             → use latin set
- *
- * NEVER hardcode fontFamily strings in screens. Always go through the hook
- * so language changes re-style everything in one frame.
  */
 
 import type { TextStyle } from 'react-native';
@@ -27,19 +34,18 @@ export const FONT_FAMILIES = Object.freeze({
   latin: {
     display: 'Cinzel-SemiBold',
     displayBold: 'Cinzel-Bold',
-    body: 'CormorantGaramond-Regular',
-    bodyMedium: 'CormorantGaramond-Medium',
-    bodySemiBold: 'CormorantGaramond-SemiBold',
-    bodyItalic: 'CormorantGaramond-Italic',
+    body: 'Spectral-Regular',
+    bodyMedium: 'Spectral-Medium',
+    bodySemiBold: 'Spectral-SemiBold',
+    bodyItalic: 'Spectral-Italic',
   },
   urdu: {
-    display: 'NotoNastaliqUrdu-Bold',
-    displayBold: 'NotoNastaliqUrdu-Bold',
-    body: 'NotoNastaliqUrdu-Regular',
-    bodyMedium: 'NotoNastaliqUrdu-Medium',
-    bodySemiBold: 'NotoNastaliqUrdu-SemiBold',
-    // Nastaliq has no native italic; fall back to regular for type safety
-    bodyItalic: 'NotoNastaliqUrdu-Regular',
+    display: 'Amiri-Bold',
+    displayBold: 'Amiri-Bold',
+    body: 'Amiri-Regular',
+    bodyMedium: 'Amiri-Regular',
+    bodySemiBold: 'Amiri-Bold',
+    bodyItalic: 'Amiri-Regular',
   },
   devanagari: {
     display: 'NotoSansDevanagari-Bold',
@@ -47,7 +53,6 @@ export const FONT_FAMILIES = Object.freeze({
     body: 'NotoSansDevanagari-Regular',
     bodyMedium: 'NotoSansDevanagari-Medium',
     bodySemiBold: 'NotoSansDevanagari-SemiBold',
-    // No italic shipped; fall back to regular
     bodyItalic: 'NotoSansDevanagari-Regular',
   },
 });
@@ -75,57 +80,56 @@ export interface TypographyVariant {
   role: FontRole;
 }
 
-// Variant scale — tuned for Cinzel display + Cormorant body at @1x dp.
-// Nastaliq sizes are bumped +2dp at runtime in useTypography() because
-// Nastaliq optical size reads smaller than Latin at the same point size.
+// Variant scale — tuned for Cinzel display + Spectral body
+// Arabic (Amiri) sizes are bumped +2dp at runtime for optical balance
 export const TYPOGRAPHY_VARIANTS = Object.freeze({
-  /** Splash brand wordmark, hero verdict word ("YES" / "NO") */
-  hero: { fontSize: 48, letterSpacing: 1.5, weight: '700' as const, role: 'displayBold' as const },
-  /** Screen titles ("The Oracle Speaks", "Sky Clock") */
-  title: { fontSize: 28, letterSpacing: 1.0, weight: '600' as const, role: 'display' as const },
-  /** Section headers within a screen ("Your Question", "Reasoning") */
+  /** Splash brand wordmark, verdict seal */
+  hero: { fontSize: 52, letterSpacing: 2.0, weight: '700' as const, role: 'displayBold' as const },
+  /** Screen titles */
+  title: { fontSize: 30, letterSpacing: 1.2, weight: '600' as const, role: 'display' as const },
+  /** Section headers */
   heading: {
-    fontSize: 20,
-    letterSpacing: 0.6,
+    fontSize: 22,
+    letterSpacing: 0.8,
     weight: '600' as const,
     role: 'displayBold' as const,
   },
   /** Subheading / card title */
   subheading: {
-    fontSize: 17,
-    letterSpacing: 0.4,
+    fontSize: 18,
+    letterSpacing: 0.5,
     weight: '600' as const,
     role: 'bodySemiBold' as const,
   },
-  /** Standard body — chat messages, descriptions */
-  body: { fontSize: 16, letterSpacing: 0.2, weight: '400' as const, role: 'body' as const },
+  /** Standard manuscript body */
+  body: { fontSize: 17, letterSpacing: 0.3, weight: '400' as const, role: 'body' as const },
   /** Emphasis within body */
   bodyEmphasis: {
-    fontSize: 16,
-    letterSpacing: 0.2,
+    fontSize: 17,
+    letterSpacing: 0.3,
     weight: '500' as const,
     role: 'bodyMedium' as const,
   },
-  /** Italic body — used for Sanskrit terms inline */
+  /** Italic body */
   bodyItalic: {
-    fontSize: 16,
-    letterSpacing: 0.2,
+    fontSize: 17,
+    letterSpacing: 0.3,
     weight: '400' as const,
     role: 'bodyItalic' as const,
   },
-  /** Secondary / caption text — timestamps, hints */
-  caption: { fontSize: 13, letterSpacing: 0.3, weight: '400' as const, role: 'body' as const },
-  /** Small label — chip text, badges */
+  /** Secondary text */
+  caption: { fontSize: 14, letterSpacing: 0.4, weight: '400' as const, role: 'body' as const },
+  /** Small label */
   label: {
-    fontSize: 12,
-    letterSpacing: 1.0,
+    fontSize: 13,
+    letterSpacing: 1.2,
     weight: '600' as const,
     role: 'bodySemiBold' as const,
   },
   /** Button text */
   button: {
-    fontSize: 16,
-    letterSpacing: 1.2,
+    fontSize: 17,
+    letterSpacing: 1.4,
     weight: '600' as const,
     role: 'displayBold' as const,
   },

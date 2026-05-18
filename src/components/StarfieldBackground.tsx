@@ -10,7 +10,7 @@
  */
 
 import React, { useEffect, useMemo, useRef } from 'react';
-import { Animated, Dimensions, Easing, StyleSheet, View } from 'react-native';
+import { Animated, Dimensions, Easing, Platform, StyleSheet, View } from 'react-native';
 
 const { width: W, height: H } = Dimensions.get('window');
 
@@ -199,9 +199,13 @@ const StarfieldBackground: React.FC<StarfieldBackgroundProps> = ({
             height: n.size,
             borderRadius: n.size / 2,
             backgroundColor: n.color,
+            opacity: 0.92,
           }}
         />
       ))}
+
+      {/* Subtle vellum haze */}
+      <View style={styles.vellumOverlay} />
 
       {/* Stars */}
       {stars.map((s, i) => (
@@ -216,6 +220,10 @@ const StarfieldBackground: React.FC<StarfieldBackgroundProps> = ({
             borderRadius: s.size / 2,
             backgroundColor: starColor,
             opacity: s.opacity,
+            shadowColor: starColor,
+            shadowRadius: Math.max(2, s.size * 1.5),
+            shadowOpacity: 0.28,
+            shadowOffset: { width: 0, height: 0 },
           }}
         />
       ))}
@@ -265,5 +273,15 @@ const StarfieldBackground: React.FC<StarfieldBackgroundProps> = ({
     </View>
   );
 };
+
+const styles = StyleSheet.create({
+  vellumOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    // Subtle warm-parchment haze over the starfield — iOS only; Android skips
+    // because semi-transparent overlays on top of many Animated.Views cause
+    // overdraw spikes on Hermes/Skia on lower-end devices.
+    backgroundColor: Platform.OS === 'ios' ? 'rgba(244, 239, 227, 0.025)' : 'transparent',
+  },
+});
 
 export default StarfieldBackground;

@@ -108,6 +108,12 @@ export interface TransitTrigger {
   readonly date: string;
 }
 
+export interface DoubleTransitSignal {
+  readonly active: boolean;
+  readonly planets: readonly Planet[];
+  readonly detail: string;
+}
+
 export interface VerdictTiming {
   readonly window: TimingWindow;
   /** Inclusive range of `window` units until the event. */
@@ -117,6 +123,7 @@ export interface VerdictTiming {
   readonly activePratyantardasha: Planet;
   /** Up to 3 transit windows that activate the significators. */
   readonly transitTriggers: readonly TransitTrigger[];
+  readonly doubleTransitSignal?: DoubleTransitSignal;
 }
 
 // ── Remedy ─────────────────────────────────────────────────────────────────
@@ -129,11 +136,11 @@ export interface VerdictTiming {
 export interface VerdictRemedy {
   /** Planet whose energy is to be supported (favorable significator). */
   readonly planet: Planet;
-  /** Cultural-action recommendation (offering, charity, ritual). */
+  /** Islamic action recommendation (recitation, sadaqah, dua). */
   readonly action: string;
-  /** Cultural-action contraindication (foods/days to avoid). */
+  /** What to avoid or be mindful of. */
   readonly avoid: string;
-  readonly mantra?: string;
+  readonly zikr?: string;
   readonly charity?: string;
 }
 
@@ -217,6 +224,9 @@ export interface Verdict {
 
   /** Confidence in the verdict, [0, 100]. */
   readonly confidence: number;
+
+  /** Stage of evaluation that produced the verdict. */
+  readonly stage: 'promise_failed' | 'fructification';
 
   /** Ordered trace of rules that produced the verdict. */
   readonly reasoning: readonly ReasoningStep[];

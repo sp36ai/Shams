@@ -86,15 +86,21 @@ const PremiumScreen: React.FC = () => {
     const result = await purchase(planKey);
     if (result.success) {
       navigation.goBack();
-    } else if (result.reason !== 'already_active') {
+    } else if (result.reason === 'already_active') {
+      navigation.goBack();
+    } else if (result.reason !== 'user_cancelled') {
       Alert.alert('Error', 'Payment verification failed. Please try again.');
     }
   }, [purchase, navigation, selectedPlan, billing]);
 
   const handleRestore = useCallback(async () => {
-    await restore();
-    Alert.alert('Restore', 'No active purchases found on this account.');
-  }, [restore]);
+    const result = await restore();
+    if (result.success) {
+      navigation.goBack();
+    } else {
+      Alert.alert('Restore', 'No active purchases found on this account.');
+    }
+  }, [restore, navigation]);
 
   const headerTitle = trialExpired
     ? 'Your 7-day journey has ended.'
@@ -119,7 +125,7 @@ const PremiumScreen: React.FC = () => {
       />
 
       {/* Header */}
-      <View style={[styles.header, { borderColor: colors.border }]}>
+<View style={[styles.header, { borderColor: colors.border, backgroundColor: colors.surfaceElevated }]}> 
         <Pressable
           onPress={() => navigation.goBack()}
           style={styles.backBtn}
@@ -130,7 +136,7 @@ const PremiumScreen: React.FC = () => {
           <Text style={[typography('body'), { color: colors.accent }]}>{'←'}</Text>
         </Pressable>
         <View style={styles.headerTextWrap}>
-          <Text style={[typography('subheading'), { color: colors.text, textAlign: 'center' }]}>
+          <Text style={[typography('subheading'), { color: colors.goldBright, textAlign: 'center' }]}> 
             {headerTitle}
           </Text>
           <Text
@@ -339,6 +345,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderBottomWidth: StyleSheet.hairlineWidth,
+    shadowColor: '#000',
+    shadowOpacity: 0.08,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 2,
   },
   backBtn: { width: 40 },
   headerTextWrap: { flex: 1, paddingHorizontal: 8 },
@@ -353,31 +364,37 @@ const styles = StyleSheet.create({
   },
   card: {
     flex: 1,
-    borderRadius: 14,
-    padding: 14,
+    borderRadius: 22,
+    padding: 18,
     gap: 0,
     overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOpacity: 0.08,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 3,
   },
   titleRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 2,
+    marginBottom: 4,
   },
   billingRow: {
     flexDirection: 'row',
-    gap: 6,
-    marginBottom: 12,
+    gap: 8,
+    marginBottom: 14,
   },
   billingPill: {
     flex: 1,
-    paddingVertical: 5,
+    paddingVertical: 10,
     alignItems: 'center',
     borderRadius: 999,
     borderWidth: StyleSheet.hairlineWidth,
+    backgroundColor: '#FFFFFF06',
   },
   features: {
-    gap: 5,
-    marginTop: 4,
+    gap: 6,
+    marginTop: 6,
   },
   featureRow: {
     flexDirection: 'row',
@@ -392,8 +409,13 @@ const styles = StyleSheet.create({
   },
   cta: {
     paddingVertical: 16,
-    borderRadius: 14,
+    borderRadius: 16,
     alignItems: 'center',
+    shadowColor: '#000',
+    shadowOpacity: 0.12,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 3,
   },
   restoreBtn: {
     paddingVertical: 8,

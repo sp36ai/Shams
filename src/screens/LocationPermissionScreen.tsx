@@ -119,13 +119,6 @@ const LocationPermissionScreen: React.FC = () => {
     }
   }, [setLastLocation, setPermissionGranted, markLocationPrompted]);
 
-  const handleSkip = useCallback(() => {
-    // Don't capture location, but mark the prompt as shown so we don't
-    // loop the user back here. Oracle screen will request on first ask.
-    markLocationPrompted();
-    setPermissionGranted(false);
-  }, [markLocationPrompted, setPermissionGranted]);
-
   const handleOpenSettings = useCallback(() => {
     void Linking.openSettings();
   }, []);
@@ -134,10 +127,10 @@ const LocationPermissionScreen: React.FC = () => {
   const isLoading = status === 'requesting';
 
   // Google Play Compliance: Prominent disclosure must be shown before the system prompt.
-  const titleText = isDenied ? t('permission.deniedTitle') : 'Location Access Required';
+  const titleText = isDenied ? t('permission.deniedTitle') : 'Location Required to Continue';
   const bodyText = isDenied
     ? t('permission.deniedBody')
-    : 'Shams al-Asrār uses your precise location to calculate accurate house cusps (Placidus system) for your specific coordinates. This is essential for the RKP horary engine to provide an authentic and reliable verdict.';
+    : 'Shams al-Asrār requires your precise location to calculate accurate house cusps (Placidus system) for your specific coordinates. This is essential for the RKP horary engine to provide an authentic and reliable verdict.\n\nWithout location access, the app cannot function.';
 
   return (
     <SafeAreaView
@@ -149,13 +142,14 @@ const LocationPermissionScreen: React.FC = () => {
         showsVerticalScrollIndicator={false}
         bounces={false}
       >
-        <View style={styles.illustrationWrap}>
-          <CompassPinIllustration accent={colors.accent} muted={colors.textFaint} />
-        </View>
+        <View style={[styles.card, { backgroundColor: colors.surfaceElevated, borderColor: colors.border }]}> 
+          <View style={styles.illustrationWrap}>
+            <CompassPinIllustration accent={colors.accent} muted={colors.textFaint} />
+          </View>
 
-        <Text style={[typography('title'), styles.title, { color: colors.text }]}>{titleText}</Text>
+          <Text style={[typography('title'), styles.title, { color: colors.text }]}>{titleText}</Text>
 
-        <Text style={[typography('body'), styles.body, { color: colors.textMuted }]}>
+          <Text style={[typography('body'), styles.body, { color: colors.textMuted }]}>
           {bodyText}
         </Text>
 
@@ -182,22 +176,9 @@ const LocationPermissionScreen: React.FC = () => {
             )}
           </Pressable>
 
-          <Pressable
-            onPress={handleSkip}
-            disabled={isLoading}
-            style={({ pressed }) => [
-              styles.secondaryButton,
-              {
-                borderColor: colors.border,
-                opacity: pressed ? 0.7 : 1,
-              },
-            ]}
-          >
-            <Text style={[typography('button'), { color: colors.textMuted, textAlign: 'center' }]}>
-              {t('permission.notNow')}
-            </Text>
-          </Pressable>
+          {/* Skip button removed — location is now MANDATORY */}
         </View>
+      </View>
 
         {/* Privacy reassurance — engineered, not generic */}
         <Text
@@ -266,18 +247,31 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     paddingVertical: 32,
     justifyContent: 'center',
+    gap: 24,
   },
   illustrationWrap: {
     alignItems: 'center',
     marginBottom: 32,
   },
+  card: {
+    borderRadius: 24,
+    borderWidth: StyleSheet.hairlineWidth,
+    padding: 24,
+    shadowColor: '#000',
+    shadowOpacity: 0.08,
+    shadowRadius: 18,
+    shadowOffset: { width: 0, height: 10 },
+    elevation: 3,
+  },
   title: {
     textAlign: 'center',
     marginBottom: 16,
+    letterSpacing: 0.8,
   },
   body: {
     textAlign: 'center',
     marginBottom: 32,
+    lineHeight: 24,
   },
   actions: {
     gap: 12,
@@ -285,10 +279,15 @@ const styles = StyleSheet.create({
   primaryButton: {
     paddingVertical: 16,
     paddingHorizontal: 24,
-    borderRadius: 12,
+    borderRadius: 20,
     alignItems: 'center',
     justifyContent: 'center',
-    minHeight: 52,
+    minHeight: 56,
+    shadowColor: '#000',
+    shadowOpacity: 0.15,
+    shadowRadius: 18,
+    shadowOffset: { width: 0, height: 10 },
+    elevation: 4,
   },
   secondaryButton: {
     paddingVertical: 16,

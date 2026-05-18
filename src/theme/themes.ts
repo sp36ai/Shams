@@ -1,79 +1,112 @@
 /**
- * Shams al-Asrār — Theme tokens
+ * Shams al-Asrār — DĀR AL-SHAMS Master Theme System
+ * "The House of the Hidden Sun"
  * --------------------------------------------------------------------------
- * 5 live-switchable themes per master prompt. Token shape is locked here;
- * every screen / component MUST consume tokens through useTheme(), never
- * import a theme object directly.
- *
- * Color sources:
- *   - Teal (default)   : derived from existing HTML prototype anchors
- *                        (#030E10 base, #14D4C4 accent, #0FA89A primary)
- *   - Midnight Gold    : Sky Clock palette (#B8952A against deep midnight)
- *   - Royal Violet     : premium tier visual variant
- *   - Crimson Dusk     : warm/sunset variant
- *   - Arctic Silver    : light-leaning monochrome variant (still dark-base
- *                        because spiritual product reads better on dark;
- *                        no true light mode in v1 — confirmed by prompt)
- *
- * Mirror anchors live in android/app/src/main/res/values/colors.xml so the
- * native splash matches the JS theme on first paint.
+ * A living manuscript chamber. Sacred observatory aesthetic.
+ * 
+ * VISUAL PHILOSOPHY:
+ * - Obsidian manuscript black (not true black)
+ * - Illuminated gold (Quranic manuscript edging, brass astrolabe)
+ * - Vellum grain texture energy
+ * - Candlelight/lantern glow lighting
+ * - Ceremonial silence, weight, gravity, ritual
+ * 
+ * The app is physically interpreted as:
+ * - An illuminated Islamic manuscript
+ * - An astronomical observatory  
+ * - A sacred oracle engine
+ * 
+ * NOT: modern-minimal startup, neon cyberpunk, fantasy game UI, generic astrology app
+ * 
+ * Single canonical theme. No theme switching in v1.
  */
 
-export type ThemeId = 'teal' | 'midnightGold' | 'royalViolet' | 'crimsonDusk' | 'arcticSilver';
+export type ThemeId = 'darAlShams';
 
 export interface ThemeColors {
-  /** Deepest background — full-screen base */
+  /** Obsidian manuscript black — deepest background */
   bg: string;
-  /** Elevated surface (cards, sheets) */
+  /** Elevated manuscript surface (cards, parchment strips) */
   surface: string;
-  /** Highest elevation (modals, popovers) */
+  /** Highest elevation (modals, sealed verdicts) */
   surfaceElevated: string;
-  /** Hairline dividers */
+  /** Manuscript ruling lines, geometric separators */
   border: string;
-  /** Border with brand emphasis (focus, selected) */
+  /** Illuminated gold border (sacred seals, focus states) */
   borderAccent: string;
 
-  /** Primary brand action color (CTAs, primary buttons) */
-  primary: string;
-  /** Brighter accent — glows, highlights, link text */
-  accent: string;
-  /** Warm secondary — user chat bubble accent, premium badges */
-  amber: string;
-  /** Verdict YES (positive resolution) */
-  positive: string;
-  /** Verdict NO (negative resolution) */
-  negative: string;
-  /** Verdict CONDITIONAL / DELAYED / UNCLEAR */
+  /** Illuminated gold — primary sacred accent */
+  gold: string;
+  /** Brighter gold glow — active hora, divine names */
+  goldBright: string;
+  /** Aged brass — astrolabe metal, subdued gold */
+  brass: string;
+  
+  /** MAQBOOL state — warm amber acceptance */
+  maqbool: string;
+  /** MAQBOOL atmosphere — soft golden diffusion */
+  maqboolGlow: string;
+  /** MARDOOD state — cool restrained moonlight */
+  mardood: string;
+  /** MARDOOD atmosphere — blue-black shadow */
+  mardoodGlow: string;
+  
+  /** Caution / conditional verdict */
   caution: string;
 
-  /** Primary text on dark backgrounds */
+  /** Primary text — manuscript ink on vellum */
   text: string;
-  /** Secondary / muted text */
+  /** Secondary text — aged ink, muted */
   textMuted: string;
-  /** Tertiary / disabled / placeholder */
+  /** Tertiary text — faint inscription */
   textFaint: string;
-  /** Text used on top of primary-colored surfaces (buttons) */
+  /** Text on gold surfaces */
+  textOnGold: string;
+
+  /** Celestial dust — starfield particles */
+  celestialDust: string;
+  /** Vellum texture overlay */
+  vellumOverlay: string;
+  /** Manuscript fog — atmospheric haze */
+  manuscriptFog: string;
+  
+  /** Sacred glow color (breathing pulse on medallions) */
+  sacredGlow: string;
+  /** Lunar reflection — moon mansion markers */
+  lunarReflection: string;
+  /** Candlelight warm — ambient lighting */
+  candlelight: string;
+
+  /** Primary interactive accent — semantic alias for gold */
+  accent: string;
+  /** Warm highlight / orbital glow — semantic alias for goldBright */
+  amber: string;
+
+  /** Primary CTA button fill — semantic alias for gold */
+  primary: string;
+  /** Text on primary-colored surfaces — semantic alias for textOnGold */
   textOnPrimary: string;
 
-  /** Shams chat bubble bg (left) */
-  chatShamsBg: string;
-  /** Shams chat bubble border-glow */
-  chatShamsBorder: string;
-  /** User chat bubble bg (right) */
-  chatUserBg: string;
-  /** User chat bubble border-glow */
-  chatUserBorder: string;
+  /** Positive / favorable verdict state — semantic alias for maqbool */
+  positive: string;
+  /** Negative / denied verdict state — semantic alias for mardood */
+  negative: string;
 
-  /** Starfield star color (cool aqua tones for teal; warm for gold) */
+  /** Starfield particle color — semantic alias for celestialDust */
   starfield: string;
-  /** Nebula tint anchors (3 colors blended) */
+  /** Nebula cloud colors — atmospheric foggy blobs behind the starfield */
   nebula1: string;
   nebula2: string;
   nebula3: string;
 
-  /** Status bar tint (used by RN StatusBar) */
+  /** Oracle chat bubble colors */
+  chatUserBg: string;
+  chatUserBorder: string;
+  chatShamsBg: string;
+  chatShamsBorder: string;
+
+  /** Status bar */
   statusBar: string;
-  /** Status bar style — light (white icons) or dark (black icons) */
   statusBarStyle: 'light-content' | 'dark-content';
 }
 
@@ -91,240 +124,92 @@ export interface Theme {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Theme: Teal (default)
+// DĀR AL-SHAMS — The House of the Hidden Sun
 // ─────────────────────────────────────────────────────────────────────────────
-const teal: Theme = {
-  id: 'teal',
-  labelKey: 'theme.teal',
-  name: 'Teal Oracle',
-  subtitle: 'Aqua · Deep Sea',
+const darAlShams: Theme = {
+  id: 'darAlShams',
+  labelKey: 'theme.darAlShams',
+  name: 'Dār al-Shams',
+  subtitle: 'Obsidian · Illuminated Gold',
   isDark: true,
   colors: {
-    bg: '#030E10',
-    surface: '#0A1A1D',
-    surfaceElevated: '#11272B',
-    border: '#1C3A3F',
-    borderAccent: '#14D4C4',
+    // OBSIDIAN MANUSCRIPT BLACK
+    // Not true black — charcoal-black, soot-black, deep blue-black, aged ink-black
+    bg: '#0A0A0F',              // Deep blue-black void
+    surface: '#12121A',          // Elevated manuscript page
+    surfaceElevated: '#1A1A26',  // Sealed verdict container
+    border: '#2A2A38',           // Manuscript ruling lines
+    borderAccent: '#C9A961',     // Illuminated gold edging
 
-    primary: '#0FA89A',
-    accent: '#14D4C4',
-    amber: '#E8B547',
-    positive: '#22C77B',
-    negative: '#E5484D',
-    caution: '#F5A524',
+    // ILLUMINATED GOLD
+    // Quranic manuscript edging, brass astrolabe reflections, aged coin metal
+    gold: '#C9A961',             // Primary sacred gold
+    goldBright: '#E8C77D',       // Active glow state
+    brass: '#9A8350',            // Subdued aged brass
+    
+    // VERDICT STATES
+    // MAQBOOL: warm gold atmosphere, soft amber diffusion, light descending
+    maqbool: '#D4A855',          // Warm acceptance gold
+    maqboolGlow: 'rgba(212, 168, 85, 0.25)',  // Soft golden atmosphere
+    
+    // MARDOOD: cool restrained darkness, muted bronze, moonlight blue-black
+    mardood: '#6B7C8C',          // Cool moonlight blue-gray
+    mardoodGlow: 'rgba(107, 124, 140, 0.15)', // Blue-black shadow
+    
+    caution: '#D4A855',          // Conditional verdict (same as maqbool)
 
-    text: '#E6FBF8',
-    textMuted: '#8FB5B0',
-    textFaint: '#4D7370',
-    textOnPrimary: '#03171A',
+    // MANUSCRIPT INK
+    text: '#F4EFE3',             // Cream manuscript ink
+    textMuted: '#A89F8C',        // Aged ink, faded
+    textFaint: '#5A5548',        // Barely visible inscription
+    textOnGold: '#1A1308',       // Dark text on gold surfaces
 
-    chatShamsBg: 'rgba(15, 168, 154, 0.10)',
-    chatShamsBorder: '#14D4C4',
-    chatUserBg: 'rgba(232, 181, 71, 0.10)',
-    chatUserBorder: '#E8B547',
+    // ATMOSPHERIC ELEMENTS
+    celestialDust: '#E8C77D',    // Golden starfield particles
+    vellumOverlay: 'rgba(244, 239, 227, 0.03)', // Subtle vellum grain
+    manuscriptFog: 'rgba(201, 169, 97, 0.08)',  // Low-opacity celestial fog
+    
+    sacredGlow: '#C9A961',       // Breathing pulse on medallions (6-10s cycle)
+    lunarReflection: '#8FA3B8',  // Moon mansion markers
+    candlelight: '#E8C77D',      // Warm ambient glow
 
-    starfield: '#A0F2EA',
-    nebula1: 'rgba(20, 212, 196, 0.18)',
-    nebula2: 'rgba(15, 168, 154, 0.14)',
-    nebula3: 'rgba(232, 181, 71, 0.08)',
+    // SEMANTIC ALIASES — keep in sync with palette values above
+    accent: '#C9A961',            // Primary interactive color (= gold)
+    amber: '#E8C77D',             // Warm orbital glow (= goldBright)
+    primary: '#C9A961',           // CTA button fill (= gold)
+    textOnPrimary: '#1A1308',     // Text on gold buttons (= textOnGold)
+    positive: '#D4A855',          // Favorable verdict (= maqbool)
+    negative: '#6B7C8C',          // Denied verdict / form errors (= mardood)
 
-    statusBar: '#030E10',
+    // STARFIELD ATMOSPHERE
+    starfield: '#E8C77D',                       // Golden star particles (= goldBright)
+    nebula1: 'rgba(201, 169, 97, 0.08)',        // Primary gold nebula cloud
+    nebula2: 'rgba(201, 169, 97, 0.05)',        // Secondary dimmer nebula
+    nebula3: 'rgba(232, 199, 125, 0.03)',       // Amber wash nebula
+
+    // ORACLE CHAT BUBBLES
+    chatUserBg: '#1A1A26',                      // User bubble — surfaceElevated
+    chatUserBorder: '#2A2A38',                  // User bubble border — border
+    chatShamsBg: 'rgba(201, 169, 97, 0.07)',    // Shams bubble — faint gold wash
+    chatShamsBorder: '#C9A961',                 // Shams bubble border — gold accent
+
+    statusBar: '#0A0A0F',
     statusBarStyle: 'light-content',
   },
 };
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Theme: Midnight Gold (Sky Clock palette)
-// ─────────────────────────────────────────────────────────────────────────────
-const midnightGold: Theme = {
-  id: 'midnightGold',
-  labelKey: 'theme.midnightGold',
-  name: 'Midnight Gold',
-  subtitle: 'Obsidian · Gold',
-  isDark: true,
-  colors: {
-    bg: '#0A0814',
-    surface: '#15112B',
-    surfaceElevated: '#1F1A3A',
-    border: '#2E2654',
-    borderAccent: '#B8952A',
 
-    primary: '#B8952A',
-    accent: '#E8C667',
-    amber: '#E8C667',
-    positive: '#7BC97B',
-    negative: '#D14747',
-    caution: '#F0A830',
-
-    text: '#F4ECD8',
-    textMuted: '#A89F86',
-    textFaint: '#5C5544',
-    textOnPrimary: '#1A1308',
-
-    chatShamsBg: 'rgba(184, 149, 42, 0.10)',
-    chatShamsBorder: '#E8C667',
-    chatUserBg: 'rgba(232, 198, 103, 0.10)',
-    chatUserBorder: '#E8C667',
-
-    starfield: '#F4ECD8',
-    nebula1: 'rgba(184, 149, 42, 0.18)',
-    nebula2: 'rgba(232, 198, 103, 0.10)',
-    nebula3: 'rgba(120, 90, 200, 0.10)',
-
-    statusBar: '#0A0814',
-    statusBarStyle: 'light-content',
-  },
-};
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Theme: Royal Violet
-// ─────────────────────────────────────────────────────────────────────────────
-const royalViolet: Theme = {
-  id: 'royalViolet',
-  labelKey: 'theme.royalViolet',
-  name: 'Royal Violet',
-  subtitle: 'Midnight · Violet',
-  isDark: true,
-  colors: {
-    bg: '#0E0820',
-    surface: '#1A1238',
-    surfaceElevated: '#251A4F',
-    border: '#3A2A6B',
-    borderAccent: '#9D7AFF',
-
-    primary: '#7C5CFF',
-    accent: '#9D7AFF',
-    amber: '#F2C84A',
-    positive: '#5DD39E',
-    negative: '#FF6B6B',
-    caution: '#FFB144',
-
-    text: '#EDE6FF',
-    textMuted: '#A095C7',
-    textFaint: '#5C5380',
-    textOnPrimary: '#0A0518',
-
-    chatShamsBg: 'rgba(124, 92, 255, 0.10)',
-    chatShamsBorder: '#9D7AFF',
-    chatUserBg: 'rgba(242, 200, 74, 0.10)',
-    chatUserBorder: '#F2C84A',
-
-    starfield: '#D4C8FF',
-    nebula1: 'rgba(124, 92, 255, 0.18)',
-    nebula2: 'rgba(157, 122, 255, 0.12)',
-    nebula3: 'rgba(242, 200, 74, 0.08)',
-
-    statusBar: '#0E0820',
-    statusBarStyle: 'light-content',
-  },
-};
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Theme: Crimson Dusk
-// ─────────────────────────────────────────────────────────────────────────────
-const crimsonDusk: Theme = {
-  id: 'crimsonDusk',
-  labelKey: 'theme.crimsonDusk',
-  name: 'Crimson Dusk',
-  subtitle: 'Dark Rose · Amber',
-  isDark: true,
-  colors: {
-    bg: '#160A0E',
-    surface: '#26111A',
-    surfaceElevated: '#3A1A26',
-    border: '#5A2638',
-    borderAccent: '#E5566A',
-
-    primary: '#C73E5C',
-    accent: '#E5566A',
-    amber: '#F2A341',
-    positive: '#6BCF8F',
-    negative: '#FF5A5A',
-    caution: '#F2A341',
-
-    text: '#FFE6EC',
-    textMuted: '#C49AA7',
-    textFaint: '#7A5562',
-    textOnPrimary: '#1A0307',
-
-    chatShamsBg: 'rgba(199, 62, 92, 0.10)',
-    chatShamsBorder: '#E5566A',
-    chatUserBg: 'rgba(242, 163, 65, 0.10)',
-    chatUserBorder: '#F2A341',
-
-    starfield: '#FFD8E0',
-    nebula1: 'rgba(199, 62, 92, 0.18)',
-    nebula2: 'rgba(229, 86, 106, 0.12)',
-    nebula3: 'rgba(242, 163, 65, 0.10)',
-
-    statusBar: '#160A0E',
-    statusBarStyle: 'light-content',
-  },
-};
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Theme: Arctic Silver
-// ─────────────────────────────────────────────────────────────────────────────
-const arcticSilver: Theme = {
-  id: 'arcticSilver',
-  labelKey: 'theme.arcticSilver',
-  name: 'Arctic Silver',
-  subtitle: 'Charcoal · Steel',
-  isDark: true,
-  colors: {
-    bg: '#0C1014',
-    surface: '#161B21',
-    surfaceElevated: '#222A33',
-    border: '#36404C',
-    borderAccent: '#B8C4D1',
-
-    primary: '#7C8FA3',
-    accent: '#B8C4D1',
-    amber: '#E0CFA4',
-    positive: '#8FCFA8',
-    negative: '#D67878',
-    caution: '#E0B878',
-
-    text: '#ECF1F7',
-    textMuted: '#9CA8B6',
-    textFaint: '#5A6470',
-    textOnPrimary: '#0A0E12',
-
-    chatShamsBg: 'rgba(184, 196, 209, 0.08)',
-    chatShamsBorder: '#B8C4D1',
-    chatUserBg: 'rgba(224, 207, 164, 0.10)',
-    chatUserBorder: '#E0CFA4',
-
-    starfield: '#ECF1F7',
-    nebula1: 'rgba(184, 196, 209, 0.14)',
-    nebula2: 'rgba(124, 143, 163, 0.12)',
-    nebula3: 'rgba(224, 207, 164, 0.08)',
-
-    statusBar: '#0C1014',
-    statusBarStyle: 'light-content',
-  },
-};
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Registry
+// Registry — Single canonical theme
 // ─────────────────────────────────────────────────────────────────────────────
 export const THEMES: Readonly<Record<ThemeId, Theme>> = Object.freeze({
-  teal,
-  midnightGold,
-  royalViolet,
-  crimsonDusk,
-  arcticSilver,
+  darAlShams,
 });
 
-export const THEME_IDS: readonly ThemeId[] = [
-  'teal',
-  'midnightGold',
-  'royalViolet',
-  'crimsonDusk',
-  'arcticSilver',
-];
+export const THEME_IDS: readonly ThemeId[] = ['darAlShams'];
 
-export const DEFAULT_THEME_ID: ThemeId = 'teal';
+export const DEFAULT_THEME_ID: ThemeId = 'darAlShams';
 
 export function getTheme(id: ThemeId): Theme {
   return THEMES[id];
@@ -373,9 +258,9 @@ export const ELEVATION = Object.freeze({
     shadowOffset: { width: 0, height: 6 },
     elevation: 8,
   },
-  /** Glow used on accent borders (Shams bubble) */
+  /** Glow used on accent borders (gold seal, active cards) */
   glow: {
-    shadowColor: '#14D4C4',
+    shadowColor: '#C9A961',
     shadowOpacity: 0.35,
     shadowRadius: 12,
     shadowOffset: { width: 0, height: 0 },
@@ -384,12 +269,14 @@ export const ELEVATION = Object.freeze({
 });
 
 export const MOTION = Object.freeze({
-  /** Microinteractions (button press) */
-  fast: 120,
-  /** Standard transitions (theme swap, modal) */
-  base: 220,
-  /** Hero / screen-level transitions */
-  slow: 380,
-  /** Splash mandala spin */
-  splash: 2500,
+  /** Microinteractions — seal press, subtle resonance */
+  fast: 180,
+  /** Standard transitions — fade, drift, breathing */
+  base: 320,
+  /** Hero transitions — orbital motion, celestial rotation */
+  slow: 480,
+  /** Splash ritual awakening — gold dust emergence */
+  splash: 3200,
+  /** Sacred breathing pulse — medallion glow cycle */
+  breathe: 8000,
 });

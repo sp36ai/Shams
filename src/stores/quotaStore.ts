@@ -19,7 +19,7 @@ import { storage, KEYS } from '@storage/mmkv';
 
 export type PlanTier = 'free' | 'mureed' | 'khass';
 
-export const FREE_DAILY_LIMIT = 3;
+export const FREE_DAILY_LIMIT = 100;
 export const TRIAL_DAILY_LIMIT = 5;
 export const TRIAL_DURATION_DAYS = 7;
 
@@ -39,11 +39,8 @@ function todayKey(now = Date.now()): string {
 /* -------------------------------------------------------------------------- */
 
 function readPlan(): PlanTier {
-  const raw = storage.getString(KEYS.QUOTA_PLAN);
-  if (raw === 'mureed' || raw === 'khass') {
-    return raw;
-  }
-  return 'free';
+  // HARDCODED FOR TESTING: Always return unlimited plan
+  return 'mureed';
 }
 
 function readCount(): number {
@@ -65,19 +62,12 @@ function readTrialStart(): string | null {
   return storage.getString(KEYS.TRIAL_START) ?? null;
 }
 
-function computeTrialState(trialStartDate: string | null): {
+function computeTrialState(_trialStartDate: string | null): {
   trialActive: boolean;
   trialExpired: boolean;
 } {
-  if (!trialStartDate) {
-    return { trialActive: false, trialExpired: false };
-  }
-  const startMs = new Date(trialStartDate).getTime();
-  const elapsed = Math.floor((Date.now() - startMs) / 86_400_000);
-  if (elapsed < TRIAL_DURATION_DAYS) {
-    return { trialActive: true, trialExpired: false };
-  }
-  return { trialActive: false, trialExpired: true };
+  // HARDCODED FOR TESTING: Always return no trial
+  return { trialActive: false, trialExpired: false };
 }
 
 /* -------------------------------------------------------------------------- */

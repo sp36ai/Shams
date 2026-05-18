@@ -20,6 +20,7 @@ import {
   DefaultTheme as NavDefaultTheme,
   DarkTheme as NavDarkTheme,
 } from '@react-navigation/native';
+import { StatusBar } from 'react-native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import SplashScreen from '@screens/SplashScreen';
 import AuthScreen from '@screens/AuthScreen';
@@ -87,12 +88,14 @@ const RootNavigator: React.FC = () => {
     !BYPASS_AUTH_FOR_TESTING && (!splashElapsed || !authBootstrapped || isAuthLoading);
 
   const isAuthenticated = BYPASS_AUTH_FOR_TESTING || (user !== null && !isAuthLoading);
-  const needsOnboardingFlow = !BYPASS_AUTH_FOR_TESTING && isAuthenticated && !hasSeenOnboarding;
+  // Location permission is now MANDATORY — must be granted before onboarding or main tabs
   const needsLocationPermission =
-    !BYPASS_AUTH_FOR_TESTING && isAuthenticated && hasSeenOnboarding && !onboardingLocationPrompted;
+    !BYPASS_AUTH_FOR_TESTING && isAuthenticated && !onboardingLocationPrompted;
+  const needsOnboardingFlow = !BYPASS_AUTH_FOR_TESTING && isAuthenticated && onboardingLocationPrompted && !hasSeenOnboarding;
 
   return (
     <NavigationContainer theme={navTheme}>
+      <StatusBar barStyle={theme.colors.statusBarStyle} backgroundColor={theme.colors.bg} />
       <RootStack.Navigator
         screenOptions={{
           headerShown: false,
@@ -105,10 +108,10 @@ const RootNavigator: React.FC = () => {
           <RootStack.Screen name="Splash" component={SplashScreen} />
         ) : !isAuthenticated ? (
           <RootStack.Screen name="Auth" component={AuthScreen} />
-        ) : needsOnboardingFlow ? (
-          <RootStack.Screen name="Onboarding" component={OnboardingScreen} />
         ) : needsLocationPermission ? (
           <RootStack.Screen name="LocationPermission" component={LocationPermissionScreen} />
+        ) : needsOnboardingFlow ? (
+          <RootStack.Screen name="Onboarding" component={OnboardingScreen} />
         ) : (
           <RootStack.Screen name="Main" component={MainTabs} />
         )}

@@ -277,7 +277,7 @@ const SkyClockScreen: React.FC = () => {
       <StarfieldBackground starColor={colors.starfield} />
 
       {/* Header */}
-      <View style={[styles.header, { borderBottomColor: colors.border }]}>
+<View style={[styles.header, { borderBottomColor: colors.border, backgroundColor: colors.surface }]}> 
         <Pressable
           onPress={() => navigation.goBack()}
           style={styles.backBtn}
@@ -286,8 +286,11 @@ const SkyClockScreen: React.FC = () => {
         >
           <Text style={[typography('label'), { color: colors.accent, fontSize: 20 }]}>‹</Text>
         </Pressable>
-        <Text style={[typography('subheading'), { color: colors.text }]}>Sky State</Text>
-        <Text style={[typography('caption'), { color: colors.textMuted }]}>{timing.timeLabel}</Text>
+        <View style={{ alignItems: 'center' }}>
+          <Text style={[typography('caption'), { color: colors.goldBright, letterSpacing: 1.4 }]}>SKY STATE</Text>
+          <Text style={[typography('subheading'), { color: colors.text, marginTop: 2 }]}>{timing.timeLabel}</Text>
+        </View>
+        <Text style={[typography('caption'), { color: colors.textMuted, textAlign: 'right' }]}>Celestial timing</Text>
       </View>
 
       <ScrollView
@@ -459,6 +462,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderBottomWidth: StyleSheet.hairlineWidth,
+    shadowColor: '#000',
+    shadowOpacity: 0.08,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 2,
   },
   backBtn: {
     paddingRight: 8,
@@ -468,17 +476,25 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     margin: 12,
-    borderRadius: 12,
+    borderRadius: 18,
     borderWidth: StyleSheet.hairlineWidth,
-    paddingVertical: 10,
-    paddingHorizontal: 4,
+    paddingVertical: 12,
+    paddingHorizontal: 8,
+    shadowColor: '#000',
+    shadowOpacity: 0.05,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 1,
   },
   pill: {
     flex: 1,
     minWidth: 60,
     alignItems: 'center',
-    paddingVertical: 4,
-    paddingHorizontal: 2,
+    paddingVertical: 8,
+    paddingHorizontal: 8,
+    borderRadius: 14,
+    backgroundColor: '#FFFFFF06',
+    marginHorizontal: 4,
   },
   divider: {
     width: StyleSheet.hairlineWidth,
@@ -488,9 +504,14 @@ const styles = StyleSheet.create({
   clockSection: {
     marginHorizontal: 12,
     marginBottom: 12,
-    borderRadius: 12,
+    borderRadius: 18,
     borderWidth: StyleSheet.hairlineWidth,
     overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOpacity: 0.06,
+    shadowRadius: 18,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 2,
   },
   clockToggle: {
     flexDirection: 'row',
@@ -510,20 +531,25 @@ const styles = StyleSheet.create({
     fontSize: 11,
   },
   planetTable: {
-    borderRadius: 10,
+    borderRadius: 16,
     borderWidth: StyleSheet.hairlineWidth,
     overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOpacity: 0.05,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 1,
   },
   tableHeader: {
     flexDirection: 'row',
-    paddingHorizontal: 10,
-    paddingVertical: 6,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
     borderBottomWidth: StyleSheet.hairlineWidth,
   },
   tableRow: {
     flexDirection: 'row',
-    paddingHorizontal: 10,
-    paddingVertical: 7,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
     borderBottomWidth: StyleSheet.hairlineWidth,
   },
   colPlanet: {

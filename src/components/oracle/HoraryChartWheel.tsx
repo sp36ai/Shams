@@ -175,7 +175,7 @@ interface HoraryChartWheelProps {
   planetDegrees: Record<string, number>;
   cuspDegrees: Record<number, number>;
   cuspSigns: Record<number, string>;
-  planetChain?: Record<string, { nakshatraLord: string; subLord: string; subSubLord: string }>;
+  planetChain?: Record<string, { manzilLord: string; subLord: string; subSubLord: string }>;
   significators?: { favorable: string[]; denial: string[]; neutral: string[] };
   confirmedSignificators?: string[];
   deniedSignificators?: string[];
@@ -556,12 +556,12 @@ const TabBar: React.FC<TabBarProps> = ({ active, onPress }) => (
 // ── Tab 1: Sub-lord chain ─────────────────────────────────────────────────────
 
 const SubLordTab: React.FC<{
-  planetChain?: Record<string, { nakshatraLord: string; subLord: string; subSubLord: string }>;
+  planetChain?: Record<string, { manzilLord: string; subLord: string; subSubLord: string }>;
   moonSubLord?: string;
 }> = ({ planetChain, moonSubLord }) => (
   <ScrollView style={tabStyles.panel} showsVerticalScrollIndicator={false}>
     <View style={tabStyles.tableHeader}>
-      {['Planet', 'Nak Lord', 'Sub Lord', 'Sub-Sub'].map(h => (
+      {['Planet', 'Manzil Lord', 'Sub Lord', 'Sub-Sub'].map(h => (
         <Text key={h} style={[tabStyles.colHead, { flex: h === 'Planet' ? 1.2 : 1 }]}>
           {h}
         </Text>
@@ -576,7 +576,7 @@ const SubLordTab: React.FC<{
             {PLANET_ABBR[p] ?? p} {p}
           </Text>
           <Text style={[tabStyles.cell, { flex: 1, color: '#4a7aaa' }]}>
-            {chain?.nakshatraLord ?? '—'}
+            {chain?.manzilLord ?? '—'}
           </Text>
           <Text style={[tabStyles.cell, { flex: 1, color: isMsl ? '#C8A0FF' : '#4a7aaa' }]}>
             {chain?.subLord ?? '—'}

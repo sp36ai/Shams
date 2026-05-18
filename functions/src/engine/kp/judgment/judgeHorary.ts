@@ -92,61 +92,61 @@ function step(n: number, msg: string, weight = 0): ReasoningStep {
 // ── Remedy ────────────────────────────────────────────────────────────────────
 
 const REMEDY_TABLE: Readonly<
-  Record<Planet, { action: string; avoid: string; mantra?: string; charity?: string }>
+  Record<Planet, { action: string; avoid: string; zikr?: string; charity?: string }>
 > = {
   Sun: {
-    action: 'Offer water to the rising Sun for 7 days',
-    avoid: 'Avoid conflicts on Sunday',
-    mantra: 'Om Hraam Hreem Hraum Sah Suryaya Namah',
-    charity: 'Donate wheat or copper on Sunday',
+    action: 'Recite Surah Ad-Duha (93) after Fajr for 7 days',
+    avoid: 'Avoid arrogance and heedlessness in speech',
+    zikr: 'Ya Nur × 100 daily',
+    charity: 'Give sadaqah to an orphan or the poor on Sunday',
   },
   Moon: {
-    action: 'Offer milk to Shiva on Monday',
-    avoid: 'Avoid starting new ventures on Monday night',
-    mantra: 'Om Shraam Shreem Shraum Sah Chandraya Namah',
-    charity: 'Donate rice or white cloth on Monday',
+    action: 'Recite Ayat al-Kursi (2:255) before sleeping',
+    avoid: 'Avoid emotional decisions at night',
+    zikr: 'Ya Quddus × 100 daily',
+    charity: 'Offer food or water to someone in need',
   },
   Mars: {
-    action: 'Light a red lamp on Tuesday',
-    avoid: 'Avoid anger on Tuesday',
-    mantra: 'Om Kraam Kreem Kraum Sah Bhaumaya Namah',
-    charity: 'Donate red lentils on Tuesday',
+    action: 'Recite Surah Al-Falaq (113) and Al-Nas (114) seven times',
+    avoid: 'Avoid anger, haste, and confrontation',
+    zikr: 'Ya Matin × 100 daily',
+    charity: 'Give sadaqah to protect against harm',
   },
   Mercury: {
-    action: 'Feed green fodder to cows on Wednesday',
-    avoid: 'Avoid dishonesty in communication',
-    mantra: 'Om Braam Breem Braum Sah Budhaya Namah',
-    charity: 'Donate green vegetables on Wednesday',
+    action: 'Recite Surah Al-Qalam (68:1) for clarity of mind and speech',
+    avoid: 'Avoid falsehood and idle talk',
+    zikr: 'Ya Alim × 100 daily',
+    charity: 'Donate books or support education',
   },
   Jupiter: {
-    action: 'Offer turmeric to Lord Vishnu on Thursday',
-    avoid: 'Avoid disrespecting elders and teachers',
-    mantra: 'Om Graam Greem Graum Sah Guruve Namah',
-    charity: 'Donate yellow items on Thursday',
+    action: 'Recite Surah Al-Fath (48:1) after Fajr',
+    avoid: 'Avoid disrespecting scholars and elders',
+    zikr: 'Ya Fattah × 70 daily',
+    charity: 'Give sadaqah to a student or one seeking knowledge',
   },
   Venus: {
-    action: 'Offer white flowers to the deity on Friday',
-    avoid: 'Avoid excess on Fridays',
-    mantra: 'Om Draam Dreem Draum Sah Shukraya Namah',
-    charity: 'Donate white sweets on Friday',
+    action: 'Recite Surah Al-Room (30:21) on Friday after Jumuah',
+    avoid: 'Avoid excess and heedlessness on Fridays',
+    zikr: 'Ya Wadud × 100 daily',
+    charity: 'Offer food or gifts to the needy on Friday',
   },
   Saturn: {
-    action: 'Light a sesame oil lamp on Saturday',
-    avoid: 'Avoid cutting trees or harming elderly',
-    mantra: 'Om Praam Preem Praum Sah Shanaischaraya Namah',
-    charity: 'Donate black sesame on Saturday',
+    action: 'Recite Surah Al-Inshirah (94) with patience each morning',
+    avoid: 'Avoid complaining and ingratitude',
+    zikr: 'Ya Sabur × 100 daily',
+    charity: 'Give sadaqah to the elderly or those in hardship',
   },
   Rahu: {
-    action: 'Offer blue flowers to Durga on Saturday',
-    avoid: 'Avoid impulsive decisions and travel at night',
-    mantra: 'Om Bhraam Bhreem Bhraum Sah Rahave Namah',
-    charity: 'Donate coal or blue cloth on Saturday',
+    action: 'Recite Surah Al-Ikhlas (112) forty times after Isha',
+    avoid: 'Avoid confusion, deception, and impulsive decisions',
+    zikr: 'Ya Ahad × 100 daily',
+    charity: 'Give sadaqah in secret to purify intention',
   },
   Ketu: {
-    action: 'Offer flowers at a Ganesh temple on Tuesday',
-    avoid: 'Avoid starting long journeys on Tuesday',
-    mantra: 'Om Sraam Sreem Sraum Sah Ketave Namah',
-    charity: 'Donate mixed grain on Tuesday',
+    action: 'Recite Surah Al-Kafirun (109) each morning for clarity of purpose',
+    avoid: 'Avoid doubt and spiritual neglect',
+    zikr: 'Ya Hadi × 100 daily',
+    charity: 'Give sadaqah to a traveller or wayfarer',
   },
 };
 
@@ -180,60 +180,77 @@ function buildNarration(
   return { en, ur, hi };
 }
 
+const ARABIC_PLANET: Readonly<Record<string, string>> = {
+  Sun: 'Shams',
+  Moon: 'al-Qamar',
+  Mars: 'al-Mirrikh',
+  Mercury: 'Utarid',
+  Jupiter: 'Mushtari',
+  Venus: 'Zuhra',
+  Saturn: 'Zuhal',
+  Rahu: "al-Ra's",
+  Ketu: 'al-Dhanab',
+};
+
+function toArabic(planet: string): string {
+  return ARABIC_PLANET[planet] ?? planet;
+}
+
 function buildEn(
   verdict: VerdictKind,
   qType: string,
   moonSubLord: Planet,
-  moonSubLordHouse: HouseIndex,
-  score: number,
+  _moonSubLordHouse: HouseIndex,
+  _score: number,
 ): string {
+  const witness = toArabic(moonSubLord);
   switch (verdict) {
     case 'YES':
-      return `The heavens are favorable for your ${qType} matter. Moon's Sub-Lord ${moonSubLord} occupies house ${moonSubLordHouse} — a favorable house. Score: +${score}. The stars indicate success.`;
+      return `The celestial decree for your ${qType} matter is favorable. ${witness} stands as a confirming witness — the gate of the matter opens. The testimony of the heavens is clear.`;
     case 'NO':
-      return `The planetary testimony does not support your ${qType} matter at this time. Moon's Sub-Lord ${moonSubLord} occupies house ${moonSubLordHouse} — a denial house. Score: ${score}.`;
+      return `The celestial testimony does not favor your ${qType} matter at this hour. ${witness} stands in a position of denial. The oracle counsels patience and redirection.`;
     case 'CONDITIONAL':
-      return `Your ${qType} matter shows mixed signals. Moon's Sub-Lord ${moonSubLord} occupies house ${moonSubLordHouse}. Score: ${score}. Success depends on addressing the planetary conditions.`;
+      return `Your ${qType} matter carries a conditional opening. ${witness} witnesses the matter with mixed testimony — the path exists but requires alignment of conditions before it fully opens.`;
     case 'DELAYED':
-      return `Your ${qType} matter will be fulfilled but with delay. Moon's Sub-Lord ${moonSubLord} is retrograde or afflicted. The result is positive but postponed.`;
+      return `Your ${qType} matter will be granted but the timing is deferred. ${witness} carries the promise forward, though the arrival requires patience.`;
     case 'UNCLEAR':
-      return `The planetary testimony for your ${qType} matter is unclear at this moment. Please rephrase your question or ask at a different time.`;
+      return `The celestial witnesses for your ${qType} matter have not reached agreement at this hour. Return when al-Qamar has moved through her current station.`;
     case 'DENIED':
-      return `The chart cannot address your ${qType} question at this time. The cusp sub-lord ${moonSubLord} occupies house ${moonSubLordHouse}, which falls in the denial zone for this matter. The chart lacks the promise to deliver an answer. Please ask again at a more auspicious moment.`;
+      return `The zaaiche cannot address your ${qType} question at this moment — the celestial witness holds no connection to the houses of fulfillment. Ask again when the hour has ripened.`;
   }
 }
 
 function buildUr(verdict: VerdictKind, qType: string): string {
   switch (verdict) {
     case 'YES':
-      return `آپ کے ${qType} کے معاملے میں ستاروں کی گواہی موافق ہے۔ کامیابی کے آثار نظر آ رہے ہیں۔`;
+      return `آپ کے ${qType} کے معاملے میں آسمانی گواہی موافق ہے۔ فلکی شہادت کامیابی کی طرف اشارہ کر رہی ہے۔`;
     case 'NO':
-      return `آپ کے ${qType} کے معاملے میں ابھی سیاروں کی حمایت حاصل نہیں ہے۔`;
+      return `آپ کے ${qType} کے معاملے میں اس وقت آسمانی گواہی ساز گار نہیں ہے۔ صبر اور توجہ کی رہنمائی ہے۔`;
     case 'CONDITIONAL':
-      return `آپ کے ${qType} کے معاملے کا نتیجہ مشروط ہے۔ اقدامات کی ضرورت ہے۔`;
+      return `آپ کے ${qType} کے معاملے میں مشروط روشنی ہے۔ راستہ موجود ہے لیکن کچھ شرائط پوری ہونا ضروری ہیں۔`;
     case 'DELAYED':
-      return `آپ کے ${qType} کے معاملے میں تاخیر ہو سکتی ہے لیکن نتیجہ موافق ہوگا۔`;
+      return `آپ کے ${qType} کے معاملے میں تاخیر ہے، لیکن فلکی شہادت بالآخر موافق ہے۔`;
     case 'UNCLEAR':
-      return `ابھی سیاروں کی گواہی واضح نہیں ہے۔ سوال دوبارہ پوچھیں۔`;
+      return `اس وقت فلکی گواہی واضح نہیں ہے۔ قمر کے اگلے منزل میں دوبارہ سوال کریں۔`;
     case 'DENIED':
-      return `اس وقت کنڈلی آپ کے ${qType} کے سوال کا جواب دینے سے قاصر ہے۔ کسپ سب لارڈ انکاری گھر میں واقع ہے۔ کسی مناسب وقت پر دوبارہ سوال کریں۔`;
+      return `اس وقت زائچہ آپ کے ${qType} کے سوال کا جواب دینے سے قاصر ہے۔ فلکی شاہد کا تعلق بابِ تکمیل سے نہیں ہے۔ کسی مناسب وقت پر دوبارہ رجوع کریں۔`;
   }
 }
 
 function buildHi(verdict: VerdictKind, qType: string): string {
   switch (verdict) {
     case 'YES':
-      return `आपके ${qType} विषय में ग्रहों की गवाही अनुकूल है। सफलता के संकेत हैं।`;
+      return `آپ کے ${qType} کے معاملے میں آسمانی گواہی موافق ہے۔ کامیابی کے آثار روشن ہیں۔`;
     case 'NO':
-      return `आपके ${qType} विषय में अभी ग्रहों की अनुकूलता नहीं है।`;
+      return `آپ کے ${qType} کے معاملے میں اس وقت آسمانی شہادت سازگار نہیں ہے۔`;
     case 'CONDITIONAL':
-      return `आपके ${qType} विषय का परिणाम सशर्त है। उपाय आवश्यक हैं।`;
+      return `آپ کے ${qType} کے معاملے میں مشروط رہنمائی ہے۔ کچھ شرائط درکار ہیں۔`;
     case 'DELAYED':
-      return `आपके ${qType} विषय में विलंब संभव है, परंतु परिणाम अनुकूल होगा।`;
+      return `آپ کے ${qType} کے معاملے میں تاخیر ممکن ہے، لیکن نتیجہ موافق ہوگا۔`;
     case 'UNCLEAR':
-      return `अभी ग्रहों की गवाही स्पष्ट नहीं है। कृपया प्रश्न पुनः पूछें।`;
+      return `اس وقت آسمانی گواہی واضح نہیں ہے۔ کسی اور وقت سوال کریں۔`;
     case 'DENIED':
-      return `इस समय कुंडली आपके ${qType} प्रश्न का उत्तर देने में असमर्थ है। कस्प सब-लॉर्ड अस्वीकृति भाव में स्थित है। किसी शुभ समय पर पुनः प्रश्न करें।`;
+      return `اس وقت زائچہ آپ کے ${qType} کے سوال کا جواب دینے کی صلاحیت نہیں رکھتا۔ مناسب وقت پر دوبارہ رجوع فرمائیں۔`;
   }
 }
 
@@ -284,11 +301,11 @@ function buildRpSnapshot(chart: Chart, rpScore: number): RulingPlanetsSnapshot {
   const rps = chart.rulingPlanets;
   return {
     dayLord: rps[0] as Planet,
-    ascSignLord: rps[1] as Planet,
-    ascStarLord: rps[2] as Planet,
-    moonSignLord: rps[3] as Planet,
-    moonStarLord: rps[4] as Planet,
-    horaLord: chart.horaLord,
+    horaLord: rps[1] as Planet,
+    ascSignLord: rps[2] as Planet,
+    ascStarLord: rps[3] as Planet,
+    moonSignLord: rps[4] as Planet,
+    moonStarLord: rps[5] as Planet,
     agreementScore: rpScore,
   };
 }
@@ -360,7 +377,7 @@ export function judgeHorary(chart: Chart, question: ClassifiedQuestion): Verdict
     step(
       1,
       `Moon at ${moonPos.siderealLongitude.toFixed(2)}° sidereal` +
-        ` (nakshatra lord: ${moonPos.nakshatraLord}, sub-lord: ${moonSubLord})`,
+      ` (manzil lord: ${moonPos.nakshatraLord}, sub-lord: ${moonSubLord})`,
     ),
   );
 
@@ -380,7 +397,7 @@ export function judgeHorary(chart: Chart, question: ClassifiedQuestion): Verdict
       step(
         1,
         `Promise FAILED: cusp ${promise.cuspHouse} sub-lord = ${promise.cuspSubLord}` +
-          ` occupies house ${promise.cuspSubLordHouse} ∈ denial [${denial.join(',')}] → DENIED`,
+        ` occupies house ${promise.cuspSubLordHouse} ∈ denial [${denial.join(',')}] → DENIED`,
         -3,
       ),
     ];
@@ -412,6 +429,7 @@ export function judgeHorary(chart: Chart, question: ClassifiedQuestion): Verdict
       rulingPlanets: buildRpSnapshot(chart, 0),
       verdict: 'DENIED' as VerdictKind,
       confidence: 0,
+      stage: 'promise_failed' as const,
       reasoning: Object.freeze(deniedReasoning),
       narration: deniedNarration,
       retrogradeFlags: Object.freeze([] as Planet[]),
@@ -453,9 +471,7 @@ export function judgeHorary(chart: Chart, question: ClassifiedQuestion): Verdict
   );
 
   // ── STEP 4: Ruling Planets × Significator intersection (Phase D) ─────────
-  const allWitnesses = [...(chart.rulingPlanets as Planet[]), chart.horaLord as Planet].filter(
-    Boolean,
-  );
+  const allWitnesses = (chart.rulingPlanets as Planet[]).filter(Boolean);
 
   const filteredRulingPlanets = applyKotamrajuFilter(allWitnesses, favorable, denial, chart);
 
@@ -520,7 +536,8 @@ export function judgeHorary(chart: Chart, question: ClassifiedQuestion): Verdict
   );
 
   // ── Confidence ────────────────────────────────────────────────────────────
-  const maxScore = 7;
+  // MSL Placement (2) + 6 Ruling Planet Witnesses (6) = 8
+  const maxScore = 8;
   const confidence = Math.round(
     Math.min(100, Math.max(10, ((score + maxScore) / (2 * maxScore)) * 100)),
   );
@@ -583,6 +600,7 @@ export function judgeHorary(chart: Chart, question: ClassifiedQuestion): Verdict
     rulingPlanets: rpSnapshot,
     verdict,
     confidence,
+    stage: 'fructification' as const,
     reasoning: Object.freeze(reasoning),
     significators,
     confirmedSignificators: Object.freeze(confirmedSignificators as Planet[]),

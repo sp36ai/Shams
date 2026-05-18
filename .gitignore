@@ -78,6 +78,8 @@ buck-out/
 .env.local
 .env.*.local
 !.env.example
+functions/.secret.local
+functions/.env.local
 
 # Editor
 .vscode/

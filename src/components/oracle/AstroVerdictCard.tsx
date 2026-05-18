@@ -18,10 +18,9 @@ const ORACLE_DEFAULT: OracleVoice = {
   interpretation: '',
   spiritual_layer: '',
   hidden_influence: '',
-  timing: '',
   remedy: {
     quran_verse: 'حَسْبُنَا اللَّهُ وَنِعْمَ الْوَكِيلُ — Al-Imran 3:173',
-    translation: 'Allah is sufficient for us, and He is the best Disposer of affairs.',
+    asma: 'Ya Wakil — يا وكيل — The Trustee of all affairs',
   },
   signature: 'Oracle of Shams al-Asrār (by Astro Sarfaraz)',
 };
@@ -131,9 +130,9 @@ const AstroVerdictCard: React.FC<AstroVerdictCardProps> = ({ result, onSwitchMod
   const hasRemedy =
     remedy.quran_verse ??
     remedy.dua ??
-    remedy.name_of_allah ??
+    remedy.asma ??
     remedy.zikr ??
-    remedy.charity ??
+    remedy.sadaqah ??
     false;
 
   // UNCLEAR with H0 — location was missing when engine ran; render nothing
@@ -217,7 +216,7 @@ const AstroVerdictCard: React.FC<AstroVerdictCardProps> = ({ result, onSwitchMod
       </View>
 
       {/* A) Opening — atmospheric first line */}
-      {oracle.opening.length > 0 && (
+      {(oracle.opening?.length ?? 0) > 0 && (
         <Text style={[typography('bodyItalic'), styles.opening, { color: colors.amber }]}>
           {oracle.opening}
         </Text>
@@ -240,6 +239,26 @@ const AstroVerdictCard: React.FC<AstroVerdictCardProps> = ({ result, onSwitchMod
             moonSubLord={result.subLord}
           />
         )}
+
+      {/* al-Qamar's manzila */}
+      {result.manzila !== undefined && (
+        <View style={[styles.manzilaBlock, { borderTopColor: colors.border }]}>
+          <Text style={[typography('caption'), { color: colors.textMuted }]}>
+            {'al-Qamar  ·  منازل القمر'}
+          </Text>
+          <View style={styles.manzilaRow}>
+            <Text style={[typography('heading'), { color: colors.accent }]}>
+              {result.manzila.arabic}
+            </Text>
+            <Text style={[typography('body'), { color: colors.text, marginLeft: 8 }]}>
+              {result.manzila.name}
+            </Text>
+          </View>
+          <Text style={[typography('caption'), { color: colors.textFaint, marginTop: 2 }]}>
+            {result.manzila.oracleDescriptor}
+          </Text>
+        </View>
+      )}
 
       {/* Sub-lord display */}
       <View style={[styles.subLordBlock, { borderTopColor: colors.border }]}>
@@ -281,16 +300,16 @@ const AstroVerdictCard: React.FC<AstroVerdictCardProps> = ({ result, onSwitchMod
       )}
 
       {/* B) Interpretation + spiritual_layer */}
-      {(oracle.interpretation.length > 0 || oracle.spiritual_layer.length > 0) && (
+      {((oracle.interpretation?.length ?? 0) > 0 || (oracle.spiritual_layer?.length ?? 0) > 0) && (
         <View style={[styles.narrativeBlock, { borderTopColor: colors.border }]}>
-          {oracle.interpretation.length > 0 && (
+          {(oracle.interpretation?.length ?? 0) > 0 && (
             <Text
               style={[typography('body'), { color: colors.text, fontSize: 14, lineHeight: 22 }]}
             >
               {oracle.interpretation}
             </Text>
           )}
-          {oracle.spiritual_layer.length > 0 && (
+          {(oracle.spiritual_layer?.length ?? 0) > 0 && (
             <View style={[styles.spiritualLayer, { borderLeftColor: colors.amber }]}>
               <Text style={[typography('bodyItalic'), { color: colors.textFaint, fontSize: 13 }]}>
                 {oracle.spiritual_layer}
@@ -298,7 +317,7 @@ const AstroVerdictCard: React.FC<AstroVerdictCardProps> = ({ result, onSwitchMod
             </View>
           )}
           {/* Astro card: hidden_influence uses centered dot separator (no left border) */}
-          {oracle.hidden_influence.length > 0 && (
+          {(oracle.hidden_influence?.length ?? 0) > 0 && (
             <>
               <Text
                 style={[
@@ -364,7 +383,7 @@ const AstroVerdictCard: React.FC<AstroVerdictCardProps> = ({ result, onSwitchMod
       </View>
 
       {/* D) Oracle timing */}
-      {oracle.timing.length > 0 && (
+      {(oracle.timing?.length ?? 0) > 0 && (
         <Text
           style={[
             typography('bodyItalic'),
@@ -409,21 +428,11 @@ const AstroVerdictCard: React.FC<AstroVerdictCardProps> = ({ result, onSwitchMod
             {remedy.quran_verse}
           </Text>
         )}
-        {remedy.translation !== undefined && (
-          <Text
-            style={[
-              typography('caption'),
-              { color: colors.textFaint, fontSize: 11, fontStyle: 'italic', marginBottom: 6 },
-            ]}
-          >
-            {remedy.translation}
-          </Text>
-        )}
-        {remedy.name_of_allah !== undefined && (
+        {remedy.asma !== undefined && (
           <Text
             style={[typography('label'), { color: colors.amber, fontSize: 12, marginBottom: 6 }]}
           >
-            {remedy.name_of_allah}
+            {remedy.asma}
           </Text>
         )}
         {remedy.dua !== undefined && (
@@ -441,9 +450,9 @@ const AstroVerdictCard: React.FC<AstroVerdictCardProps> = ({ result, onSwitchMod
             {remedy.zikr}
           </Text>
         )}
-        {remedy.charity !== undefined && (
+        {remedy.sadaqah !== undefined && (
           <Text style={[typography('bodyItalic'), { color: colors.textFaint, fontSize: 11 }]}>
-            {remedy.charity}
+            {remedy.sadaqah}
           </Text>
         )}
         {!hasRemedy && (
@@ -477,14 +486,14 @@ const AstroVerdictCard: React.FC<AstroVerdictCardProps> = ({ result, onSwitchMod
           <Text style={[typography('caption'), { color: colors.amber, fontStyle: 'italic' }]}>
             ◈ {result.remedy.planet}: {result.remedy.action}
           </Text>
-          {result.remedy.mantra !== undefined && (
+          {result.remedy.zikr !== undefined && (
             <Text
               style={[
                 typography('bodyItalic'),
                 { color: colors.textFaint, fontSize: 12, marginTop: 4 },
               ]}
             >
-              {result.remedy.mantra}
+              {result.remedy.zikr}
             </Text>
           )}
         </View>
@@ -527,22 +536,37 @@ const AstroVerdictCard: React.FC<AstroVerdictCardProps> = ({ result, onSwitchMod
 const styles = StyleSheet.create({
   card: {
     marginTop: 10,
-    borderRadius: 10,
+    borderRadius: 20,
     borderWidth: StyleSheet.hairlineWidth,
     overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOpacity: 0.08,
+    shadowRadius: 18,
+    shadowOffset: { width: 0, height: 10 },
+    elevation: 3,
   },
   modeRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
   },
   modeBadge: {
     borderWidth: StyleSheet.hairlineWidth,
-    borderRadius: 4,
-    paddingHorizontal: 7,
-    paddingVertical: 3,
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+  },
+  manzilaBlock: {
+    borderTopWidth: StyleSheet.hairlineWidth,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+  },
+  manzilaRow: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    marginTop: 4,
   },
   subLordBlock: {
     borderTopWidth: StyleSheet.hairlineWidth,
@@ -562,37 +586,37 @@ const styles = StyleSheet.create({
   pillsRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 6,
+    gap: 8,
   },
   housePill: {
     alignItems: 'center',
     borderWidth: StyleSheet.hairlineWidth,
-    borderRadius: 4,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    minWidth: 36,
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    minWidth: 40,
   },
   rpChip: {
     alignItems: 'center',
     borderWidth: StyleSheet.hairlineWidth,
-    borderRadius: 4,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    minWidth: 44,
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    minWidth: 48,
   },
   verdictBanner: {
     flexDirection: 'row',
     alignItems: 'center',
     borderTopWidth: 1,
     borderBottomWidth: 1,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
   },
   barTrack: {
-    height: 3,
+    height: 4,
     marginHorizontal: 12,
-    marginTop: 8,
-    borderRadius: 2,
+    marginTop: 10,
+    borderRadius: 3,
     overflow: 'hidden',
   },
   barFill: {

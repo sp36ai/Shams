@@ -89,9 +89,12 @@ const SettingsScreen: React.FC = () => {
 
   return (
     <SafeAreaView style={[styles.root, { backgroundColor: theme.colors.bg }]} edges={['top']}>
-      <View style={[styles.header, { borderColor: colors.border }]}>
-        <Text style={[typography('subheading'), { color: colors.text }]}>
+<View style={[styles.header, { borderColor: colors.border, backgroundColor: colors.surface }]}> 
+        <Text style={[typography('subheading'), { color: colors.goldBright, marginBottom: 6 }]}> 
           {t('settings.headerTitle')}
+        </Text>
+        <Text style={[typography('caption'), { color: colors.textMuted, lineHeight: 18 }]}> 
+          Customize the manuscript palette, language, and oracle tools.
         </Text>
       </View>
 
@@ -437,6 +440,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 12,
     borderBottomWidth: StyleSheet.hairlineWidth,
+    shadowColor: '#000',
+    shadowOpacity: 0.08,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 2,
   },
   scrollContent: {
     padding: 16,
@@ -452,26 +460,37 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 14,
     paddingHorizontal: 16,
-    borderRadius: 12,
+    borderRadius: 16,
     borderWidth: StyleSheet.hairlineWidth,
+    backgroundColor: '#FFFFFF06',
+    shadowColor: '#000',
+    shadowOpacity: 0.04,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 1,
   },
   themeCardRow: {
     gap: 10,
     paddingBottom: 4,
   },
   themeCard: {
-    width: 90,
-    height: 110,
-    borderRadius: 10,
-    padding: 10,
+    width: 96,
+    height: 118,
+    borderRadius: 20,
+    padding: 14,
     justifyContent: 'flex-start',
     overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 2,
   },
   themeCardDot: {
     width: 10,
     height: 10,
     borderRadius: 5,
-    marginBottom: 8,
+    marginBottom: 10,
   },
   themeCardName: {
     fontSize: 9,
@@ -505,8 +524,13 @@ const styles = StyleSheet.create({
   },
   profileCard: {
     padding: 16,
-    borderRadius: 12,
+    borderRadius: 16,
     borderWidth: StyleSheet.hairlineWidth,
+    shadowColor: '#000',
+    shadowOpacity: 0.04,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 1,
   },
   signOutBtn: {
     paddingVertical: 14,
@@ -517,16 +541,26 @@ const styles = StyleSheet.create({
   },
   locationCard: {
     padding: 16,
-    borderRadius: 12,
+    borderRadius: 16,
     borderWidth: StyleSheet.hairlineWidth,
     gap: 12,
+    shadowColor: '#000',
+    shadowOpacity: 0.04,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 1,
   },
   actionRow: {
     paddingVertical: 12,
     paddingHorizontal: 16,
-    borderRadius: 12,
+    borderRadius: 16,
     borderWidth: StyleSheet.hairlineWidth,
     alignItems: 'center',
+    shadowColor: '#000',
+    shadowOpacity: 0.04,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 1,
   },
   subCard: {
     padding: 14,

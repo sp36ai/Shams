@@ -9,24 +9,27 @@ import { firebase } from '@react-native-firebase/app-check';
 export const initializeAppCheckService = () => {
   const appCheck = firebase.appCheck();
 
-  // Enable automatic token refreshing. This is critical to ensure that
-  // Cloud Function calls always have a valid attestation token available.
   appCheck.setTokenAutoRefreshEnabled(true);
 
+  const provider = appCheck.newReactNativeFirebaseAppCheckProvider();
+
   if (__DEV__) {
-    // Support for local testing via debug token (Issue #10)
-    // The token is typically retrieved from the Firebase Console or Logcat.
-    // @ts-ignore - window.FIREBASE_APPCHECK_DEBUG_TOKEN is used by the underlying SDK
-    if (global.FIREBASE_APPCHECK_DEBUG_TOKEN) {
-      console.log('[App Check] Using provided debug token for development.');
-    }
-    // In development mode, the SDK looks for a debug token.
-    // Register the debug token found in the Android Logcat/logs in the 
-    // Firebase Console (App Check > Manage Debug Tokens).
-    console.log('[App Check] Service initialized in DEBUG mode.');
+    provider.configure({
+      android: { provider: 'debug' },
+      apple: { provider: 'debug' },
+      web: { provider: 'debug', siteKey: 'none' },
+    });
+    console.log('[App Check] Initialized with debug provider.');
   } else {
-    console.log('[App Check] Service initialized in PRODUCTION mode (Play Integrity).');
+    provider.configure({
+      android: { provider: 'playIntegrity' },
+      apple: { provider: 'appAttestWithDeviceCheckFallback' },
+      web: { provider: 'reCaptchaV3', siteKey: 'none' },
+    });
+    console.log('[App Check] Initialized with Play Integrity provider.');
   }
+
+  appCheck.initializeAppCheck({ provider, isTokenAutoRefreshEnabled: true });
 };
 
 /**

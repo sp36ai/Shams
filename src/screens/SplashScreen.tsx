@@ -379,27 +379,42 @@ const SplashScreen: React.FC = () => {
 
       {/* Brand block — fades in */}
       <Animated.View style={[styles.brandBlock, { opacity: brandAnim }]}>
-        <Text style={[typography('hero'), { color: colors.text, textAlign: 'center' }]}>
-          {t('app.name')}
+        <Text
+          style={[
+            typography('hero'),
+            {
+              color: colors.goldBright,
+              textAlign: 'center',
+              letterSpacing: 1.2,
+              textTransform: 'uppercase',
+            },
+          ]}
+        >
+          SHAMS AL-ASRĀR
         </Text>
         <Text
           style={[
             typography('subheading'),
             {
-              color: colors.accent,
+              color: colors.text,
               textAlign: 'center',
-              marginTop: 4,
-              letterSpacing: 1.5,
+              marginTop: 8,
+              letterSpacing: 1.6,
+              textTransform: 'uppercase',
             },
           ]}
         >
           {t('app.tagline')}
         </Text>
-        <View style={[styles.divider, { backgroundColor: colors.accent }]} />
+        <View style={[styles.divider, { backgroundColor: colors.goldBright }]} />
         <Text
           style={[
             typography('caption'),
-            { color: colors.textMuted, textAlign: 'center', letterSpacing: 2.0 },
+            {
+              color: colors.textMuted,
+              textAlign: 'center',
+              letterSpacing: 2.0,
+            },
           ]}
         >
           {t('app.poweredBy').toUpperCase()}
@@ -407,7 +422,13 @@ const SplashScreen: React.FC = () => {
         <Text
           style={[
             typography('bodyItalic'),
-            { color: colors.textFaint, textAlign: 'center', marginTop: 28, letterSpacing: 0.5 },
+            {
+              color: colors.textFaint,
+              textAlign: 'center',
+              marginTop: 26,
+              letterSpacing: 0.5,
+              lineHeight: 20,
+            },
           ]}
         >
           {t('splash.invocation')}
@@ -451,13 +472,18 @@ const styles = StyleSheet.create({
   },
   brandBlock: {
     alignItems: 'center',
-    paddingHorizontal: 16,
+    paddingHorizontal: 18,
+    paddingVertical: 18,
+    borderRadius: 24,
+    borderWidth: 1,
+    borderColor: 'rgba(201,169,97,0.24)',
+    backgroundColor: 'rgba(18,18,26,0.42)',
   },
   divider: {
-    width: 40,
+    width: 52,
     height: 1,
-    marginVertical: 10,
-    opacity: 0.5,
+    marginVertical: 14,
+    opacity: 0.45,
   },
 });
 

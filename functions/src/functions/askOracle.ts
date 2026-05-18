@@ -32,11 +32,12 @@ import {
   FUNCTION_OPTS,
   UNLIMITED_PLANS,
   FREE_LIMIT,
-  sundayWeekKey,
+  todayKey,
   ANTHROPIC_API_KEY,
   type PlanTier,
 } from '../config';
-import { ORACLE_SYNTHESIS_SYSTEM_PROMPT } from '../prompts/oracleSynthesis';
+import { ORACLE_SYNTHESIS_SYSTEM_PROMPT } from '../prompts/oracleSynthesisPrompt';
+import { getManzila, getManzilaOracleLine } from '../engine/manazil';
 import { houseForLongitude } from '../engine/primitives/chartBuilder';
 import { HOUSE_MATRIX } from '../engine/kp/rules/houseMatrix';
 import type { Planet } from '../engine/types/chart';
@@ -122,7 +123,13 @@ async function claimQuotaSlot(
       return; // No quota to decrement for paid plans
     }
 
-    const currentWeek = sundayWeekKey();
+    // Dev mode: skip quota enforcement (mirrors auth bypass)
+    if (process.env.NODE_ENV === 'development') {
+      remaining = null;
+      return;
+    }
+
+    const currentWeek = todayKey();
     const storedWeek = d.weekKey ?? '';
     const used = storedWeek === currentWeek ? (d.used ?? 0) : 0;
 
@@ -163,80 +170,64 @@ async function writeAuditLog(entry: Omit<AuditLogDoc, 'ts'>): Promise<void> {
 type OracleVoiceResult = OracleResponse['oracle'];
 
 const ORACLE_FALLBACK: NonNullable<OracleVoiceResult> = {
-  opening: 'The currents are veiled at this hour…',
-  interpretation: '',
-  spiritual_layer: '',
-  hidden_influence: '',
-  timing: '',
+  opening: 'The scrolls of this moment have not opened their seal to the oracle\'s eye.',
+  interpretation: 'In the sacred tradition of Shams al-Asrar, silence is not an absence of answer — it is an answer of a different kind. Return at the next appointed hour.',
+  spiritual_layer: 'And there is not a thing except that its treasures are with Us. (Al-Hijr 15:21)',
+  hidden_influence: 'The veil remains because the time for unveiling has not yet arrived.',
+  timing: 'Return when al-Qamar completes her current quarter.',
   remedy: {
     quran_verse: 'حَسْبُنَا اللَّهُ وَنِعْمَ الْوَكِيلُ — Al-Imran 3:173',
-    translation: 'Allah is sufficient for us, and He is the best Disposer of affairs.',
+    asma: 'Ya Hafiz — يا حفيظ — The Preserver. 99 times before sleep.',
+    dua: 'Allahumma ihdini fiman hadayt — O Allah, guide me among those You have guided.',
+    zikr: 'SubhanAllah 33 times after each prayer for three days.',
+    sadaqah: 'Give water to someone who is thirsty, or to a living creature.',
   },
-  signature: 'Oracle of Shams al-Asrār (by Astro Sarfaraz)',
+  signature: 'These words are unveiled under the banner of Shams al-Asrar, by Astro Sarfaraz.',
 };
 
 function buildOracleUserMessage(params: {
   verdict: string;
+  stage?: 'promise_failed' | 'fructification';
   confidence: number;
-  category: string;
-  confirmedSignificators: string[];
-  deniedSignificators: string[];
   timingWindow?: string;
   timingRange?: { min: number; max: number };
 }): string {
-  const {
-    verdict,
-    confidence,
-    category,
-    confirmedSignificators,
-    deniedSignificators,
-    timingWindow,
-    timingRange,
-  } = params;
+  const { verdict, stage, confidence, timingWindow, timingRange } = params;
 
-  const verdictWord =
-    verdict === 'YES'
-      ? 'GRANTED'
-      : verdict === 'NO'
-        ? 'DENIED'
-        : verdict === 'CONDITIONAL'
-          ? 'CONDITIONAL'
-          : verdict === 'DELAYED'
-            ? 'DELAYED'
-            : 'INCONCLUSIVE';
+  // Map verdict to CONFIRMED / DENIED
+  const verdictBinary =
+    verdict === 'YES' || verdict === 'CONDITIONAL' ? 'CONFIRMED' : 'DENIED';
 
-  const lines: string[] = [
-    `Celestial decree: ${verdictWord} (celestial strength ${confidence}/100)`,
-    `Realm of inquiry: ${category}`,
-  ];
+  // Map confidence to HIGH / MEDIUM / LOW
+  const confidenceLevel = confidence >= 75 ? 'HIGH' : confidence >= 50 ? 'MEDIUM' : 'LOW';
 
-  if (confirmedSignificators.length > 0) {
-    lines.push(`Witnesses in favour: ${confirmedSignificators.join(', ')}`);
-  }
-  if (deniedSignificators.length > 0) {
-    lines.push(`Witnesses in opposition: ${deniedSignificators.join(', ')}`);
-  }
-  if (timingWindow !== undefined && timingRange !== undefined) {
-    lines.push(`Celestial window: ${timingRange.min}–${timingRange.max} ${timingWindow}`);
+  // Build timing string
+  let timingStr = 'UNCLEAR';
+  if (stage === 'promise_failed') {
+    timingStr = 'UNCLEAR';
+  } else if (timingWindow !== undefined && timingRange !== undefined) {
+    timingStr = `${timingRange.min}–${timingRange.max} ${timingWindow}`;
   }
 
-  lines.push('', 'Speak now as the Oracle.');
-  return lines.join('\n');
+  return `VERDICT: ${verdictBinary}\nCONFIDENCE: ${confidenceLevel}\nTIMING: ${timingStr}`;
 }
 
 async function synthesiseOracleVoice(params: {
-  category: string;
   verdict: string;
+  stage?: 'promise_failed' | 'fructification';
   confidence: number;
-  confirmedSignificators: string[];
-  deniedSignificators: string[];
   timingWindow?: string;
   timingRange?: { min: number; max: number };
+  manzilaLine: string;
   apiKey: string;
 }): Promise<NonNullable<OracleVoiceResult>> {
   const userMessage = buildOracleUserMessage(params);
 
-  const timeoutMs = 9_000;
+  const systemPrompt =
+    ORACLE_SYNTHESIS_SYSTEM_PROMPT +
+    `\n\nMOON STATION TONIGHT:\n${params.manzilaLine}\n\nWeave al-Qamar's station naturally into the opening or spiritual_layer. Never state the mansion name as a label. Let it arrive as imagery.`;
+
+  const timeoutMs = 25_000;
   const controller = new AbortController();
   const timer = setTimeout(() => {
     controller.abort();
@@ -251,9 +242,9 @@ async function synthesiseOracleVoice(params: {
         'x-api-key': params.apiKey,
       },
       body: JSON.stringify({
-        model: 'claude-3-5-sonnet-latest',
-        max_tokens: 1024,
-        system: ORACLE_SYNTHESIS_SYSTEM_PROMPT,
+        model: 'claude-opus-4-7',
+        max_tokens: 4096,
+        system: systemPrompt,
         messages: [{ role: 'user', content: userMessage }],
       }),
       signal: controller.signal,
@@ -284,15 +275,14 @@ async function synthesiseOracleVoice(params: {
       interpretation: String(parsed.interpretation ?? ''),
       spiritual_layer: String(parsed.spiritual_layer ?? ''),
       hidden_influence: String(parsed.hidden_influence ?? ''),
-      timing: typeof parsed.timing === 'string' ? parsed.timing : '',
+      timing: typeof parsed.timing === 'string' ? parsed.timing : undefined,
       warning: typeof parsed.warning === 'string' ? parsed.warning : undefined,
       remedy: {
         quran_verse: typeof r.quran_verse === 'string' ? r.quran_verse : undefined,
-        translation: typeof r.translation === 'string' ? r.translation : undefined,
-        name_of_allah: typeof r.name_of_allah === 'string' ? r.name_of_allah : undefined,
+        asma: typeof r.asma === 'string' ? r.asma : undefined,
         dua: typeof r.dua === 'string' ? r.dua : undefined,
         zikr: typeof r.zikr === 'string' ? r.zikr : undefined,
-        charity: typeof r.charity === 'string' ? r.charity : undefined,
+        sadaqah: typeof r.sadaqah === 'string' ? r.sadaqah : undefined,
       },
       signature: String(parsed.signature ?? 'Oracle of Shams al-Asrār (by Astro Sarfaraz)'),
     };
@@ -358,7 +348,7 @@ export const askOracle = onCall(
           ? { window: verdict.timing.window, range: verdict.timing.range }
           : undefined,
         remedy: verdict.remedy ?? null,
-        reasoning: (verdict.reasoning as typeof verdict.reasoning).map(r => ({
+        reasoning: verdict.reasoning.map((r: { ruleId: string; description: string; weight: number }) => ({
           ruleId: r.ruleId,
           description: r.description,
           weight: r.weight,
@@ -386,6 +376,10 @@ export const askOracle = onCall(
       logger.info('oracle computed', {
         userId,
         verdict: verdict.verdict,
+        stage: (verdict as any).stage ?? 'unknown',
+        confidence: verdict.confidence,
+        confirmedSignificators: verdict.confirmedSignificators ?? [],
+        deniedSignificators: verdict.deniedSignificators ?? [],
         plan,
         durationMs: Date.now() - startedAt,
         ipHash: requestMeta.ipHash,
@@ -395,14 +389,14 @@ export const askOracle = onCall(
       const planetDegrees: Record<string, number> = {};
       const planetChain: Record<
         string,
-        { nakshatraLord: string; subLord: string; subSubLord: string }
+        { manzilLord: string; subLord: string; subSubLord: string }
       > = {};
       for (const p of DISPLAY_PLANETS) {
         const pos = chart.planets[p];
         if (pos !== undefined) {
           planetDegrees[p] = pos.siderealLongitude;
           planetChain[p] = {
-            nakshatraLord: String(pos.nakshatraLord),
+            manzilLord: String(pos.nakshatraLord),
             subLord: String(pos.subLord),
             subSubLord: String(pos.subSubLord),
           };
@@ -440,18 +434,25 @@ export const askOracle = onCall(
 
       // 12. Oracle synthesis — Claude adds voice layer (fire with timeout, fallback on error)
       const apiKey = ANTHROPIC_API_KEY.value();
+      const moonLongitude = chart.planets.Moon.siderealLongitude;
+      const manzila = getManzila(moonLongitude);
+      const verdictBinary =
+        verdict.verdict === 'YES' || verdict.verdict === 'CONDITIONAL' ? 'CONFIRMED' : 'DENIED';
+      const manzilaLine = getManzilaOracleLine(moonLongitude, verdictBinary);
+
       const oracle = apiKey
         ? await synthesiseOracleVoice({
-          category: verdict.qType,
           verdict: verdict.verdict,
+          stage: (verdict as any).stage,
           confidence: verdict.confidence,
-          confirmedSignificators: (verdict.confirmedSignificators ?? []) as string[],
-          deniedSignificators: (verdict.deniedSignificators ?? []) as string[],
           timingWindow: verdict.timing?.window,
           timingRange: verdict.timing?.range,
+          manzilaLine,
           apiKey,
         })
         : ORACLE_FALLBACK;
+
+      logger.info('oracle synthesis', { userId, oracle });
 
       // 13. Return minimal response — no chart internals, no algorithm state
       return {
@@ -489,6 +490,14 @@ export const askOracle = onCall(
         cuspDegrees,
         cuspSigns,
         planetChain,
+        manzila: {
+          number: manzila.number,
+          name: manzila.name,
+          arabic: manzila.arabic,
+          nature: manzila.nature,
+          element: manzila.element,
+          oracleDescriptor: manzila.oracleDescriptor,
+        },
         oracle,
       };
     }).catch(err => {

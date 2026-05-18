@@ -22,8 +22,8 @@ function makeState(plan: PlanTier, usedThisWeek: number): QuotaState {
 }
 
 describe('FREE_LIMIT', () => {
-  test('is 3', () => {
-    expect(FREE_LIMIT).toBe(3);
+  test('is 100', () => {
+    expect(FREE_LIMIT).toBe(100);
   });
 });
 

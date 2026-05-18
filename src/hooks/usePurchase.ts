@@ -1,7 +1,23 @@
-import { useCallback, useState } from 'react';
-import { firebase } from '@react-native-firebase/functions';
+import { useCallback, useEffect, useState } from 'react';
+import {
+  initConnection,
+  endConnection,
+  getSubscriptions,
+  requestSubscription,
+  getAvailablePurchases,
+  purchaseUpdatedListener,
+  purchaseErrorListener,
+  finishTransaction,
+  type SubscriptionPurchase,
+  type PurchaseError,
+} from 'react-native-iap';
+import functions, { type FirebaseFunctionsTypes } from '@react-native-firebase/functions';
 import { useQuotaStore } from '@stores/quotaStore';
 import type { PlanTier } from '@stores/quotaStore';
+
+type FunctionsWithRegion = FirebaseFunctionsTypes.Module & {
+  region(r: string): FirebaseFunctionsTypes.Module;
+};
 
 export type PurchasePlan =
   | 'mureed_monthly'
@@ -9,20 +25,28 @@ export type PurchasePlan =
   | 'khass_monthly'
   | 'khass_annual';
 
-const PRODUCT_ID_MAP: Record<PurchasePlan, string> = {
+export const SKU_MAP: Record<PurchasePlan, string> = {
   mureed_monthly: 'mureed_monthly',
   mureed_annual:  'mureed_annual',
   khass_monthly:  'khass_monthly',
   khass_annual:   'khass_annual',
 };
 
+const PACKAGE_NAME = 'com.astrosarfaraz.shamsalasrar';
+
 function tierFromPlan(plan: PurchasePlan): PlanTier {
   return plan.startsWith('mureed') ? 'mureed' : 'khass';
 }
 
+function tierFromSku(sku: string): PlanTier | null {
+  const entry = Object.entries(SKU_MAP).find(([, s]) => s === sku);
+  if (!entry) return null;
+  return tierFromPlan(entry[0] as PurchasePlan);
+}
+
 export type PurchaseResult =
   | { success: true }
-  | { success: false; reason: 'already_active' | 'verification_failed' | 'network_error' | 'not_implemented'; error?: unknown };
+  | { success: false; reason: 'already_active' | 'verification_failed' | 'network_error' | 'user_cancelled'; error?: unknown };
 
 export interface PurchaseState {
   purchasing: boolean;
@@ -35,6 +59,37 @@ export function usePurchase(): PurchaseState {
   const setPlan = useQuotaStore(s => s.setPlan);
   const [purchasing, setPurchasing] = useState(false);
 
+  useEffect(() => {
+    initConnection().catch(() => undefined);
+
+    // Listeners are required by react-native-iap to keep the purchase queue
+    // draining on Android. Actual results come through the requestSubscription promise.
+    const updateSub = purchaseUpdatedListener((_p: SubscriptionPurchase) => undefined);
+    const errorSub = purchaseErrorListener((_e: PurchaseError) => undefined);
+
+    return () => {
+      updateSub.remove();
+      errorSub.remove();
+      endConnection().catch(() => undefined);
+    };
+  }, []);
+
+  const verifyWithServer = useCallback(
+    async (purchaseToken: string, productId: string): Promise<boolean> => {
+      try {
+        const fn = (functions() as FunctionsWithRegion)
+          .region('asia-south1')
+          .httpsCallable('verifyGooglePlayPurchase');
+        const result = await fn({ purchaseToken, productId, packageName: PACKAGE_NAME });
+        const data = result.data as { plan?: string } | null;
+        return typeof data?.plan === 'string';
+      } catch {
+        return false;
+      }
+    },
+    [],
+  );
+
   const purchase = useCallback(
     async (plan: PurchasePlan): Promise<PurchaseResult> => {
       const tier = tierFromPlan(plan);
@@ -44,45 +99,68 @@ export function usePurchase(): PurchaseState {
 
       setPurchasing(true);
       try {
-        // ── Google Play Billing integration point ─────────────────────────────
-        // When react-native-iap (or @react-native-google-play/billing-client)
-        // is installed, replace this block with:
-        //
-        //   await RNIap.initConnection();
-        //   const purchase = await RNIap.requestPurchase({ skus: [PRODUCT_ID_MAP[plan]] });
-        //   const purchaseToken = purchase.purchaseToken;
-        //   await RNIap.finishTransaction({ purchase, isConsumable: false });
-        //
-        // For now we call the cloud function directly. In dev (enforceAppCheck=false)
-        // it may succeed; in production it will return success:false until a real
-        // purchase token is provided.
-        // ─────────────────────────────────────────────────────────────────────
-        const fn = firebase.app().functions('asia-south1').httpsCallable('verifyGooglePlayPurchase');
-        const result = await fn({ purchaseToken: 'iap_pending', productId: PRODUCT_ID_MAP[plan] });
-        const data = result.data as { success: boolean } | null;
+        const sku = SKU_MAP[plan];
 
-        if (data?.success) {
+        // Validate SKU is live on Play Console before launching the purchase sheet
+        await getSubscriptions({ skus: [sku] });
+
+        // Launch the Google Play subscription sheet
+        const result = await requestSubscription({ sku });
+
+        const p: SubscriptionPurchase | null = Array.isArray(result)
+          ? (result[0] ?? null)
+          : (result ?? null);
+
+        if (!p?.purchaseToken) {
+          return { success: false, reason: 'user_cancelled' };
+        }
+
+        const verified = await verifyWithServer(p.purchaseToken, p.productId);
+
+        if (verified) {
+          await finishTransaction({ purchase: p, isConsumable: false }).catch(() => undefined);
           setPlan(tier);
           return { success: true };
         }
+
         return { success: false, reason: 'verification_failed' };
-      } catch (error) {
+      } catch (error: unknown) {
+        const err = error as { code?: string };
+        if (err?.code === 'E_USER_CANCELLED') {
+          return { success: false, reason: 'user_cancelled' };
+        }
         return { success: false, reason: 'network_error', error };
       } finally {
         setPurchasing(false);
       }
     },
-    [currentPlan, setPlan],
+    [currentPlan, setPlan, verifyWithServer],
   );
 
   const restore = useCallback(async (): Promise<PurchaseResult> => {
-    // ── Restore purchases integration point ───────────────────────────────────
-    // When react-native-iap is installed:
-    //   const purchases = await RNIap.getAvailablePurchases();
-    //   for (const p of purchases) { verify p.purchaseToken against the server }
-    // ─────────────────────────────────────────────────────────────────────────
-    return { success: false, reason: 'not_implemented' };
-  }, []);
+    setPurchasing(true);
+    try {
+      const purchases = await getAvailablePurchases();
+
+      for (const p of purchases) {
+        if (!p.purchaseToken || !p.productId) continue;
+        const verified = await verifyWithServer(p.purchaseToken, p.productId);
+        if (verified) {
+          const tier = tierFromSku(p.productId);
+          if (tier) {
+            setPlan(tier);
+            return { success: true };
+          }
+        }
+      }
+
+      return { success: false, reason: 'verification_failed' };
+    } catch (error) {
+      return { success: false, reason: 'network_error', error };
+    } finally {
+      setPurchasing(false);
+    }
+  }, [setPlan, verifyWithServer]);
 
   return { purchasing, purchase, restore };
 }

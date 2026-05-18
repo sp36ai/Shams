@@ -302,7 +302,7 @@ const AuthScreen: React.FC = () => {
           </View>
 
           {/* Form */}
-          <View style={styles.form}>
+          <View style={[styles.form, { backgroundColor: colors.surfaceElevated, borderColor: colors.border }] }>
             {isSignUp && (
               <Field
                 label={t('auth.name')}
@@ -364,7 +364,7 @@ const AuthScreen: React.FC = () => {
             )}
 
             {serverError.length > 0 && (
-              <View style={[styles.serverError, { borderColor: colors.negative }]}>
+              <View style={[styles.serverError, { borderColor: colors.negative, backgroundColor: `${colors.negative}14` }]}>
                 <Text style={[typography('caption'), { color: colors.negative }]}>
                   {serverError}
                 </Text>
@@ -372,7 +372,7 @@ const AuthScreen: React.FC = () => {
             )}
 
             {successMsg.length > 0 && (
-              <View style={[styles.successBox, { borderColor: colors.accent }]}>
+              <View style={[styles.successBox, { borderColor: colors.accent, backgroundColor: `${colors.accent}12` }]}>
                 <Text style={[typography('caption'), { color: colors.accent }]}>{successMsg}</Text>
               </View>
             )}
@@ -664,7 +664,15 @@ const styles = StyleSheet.create({
     paddingBottom: 10,
   },
   form: {
-    gap: 16,
+    gap: 18,
+    borderRadius: 24,
+    borderWidth: StyleSheet.hairlineWidth,
+    padding: 24,
+    shadowColor: '#000',
+    shadowOpacity: 0.08,
+    shadowRadius: 20,
+    shadowOffset: { width: 0, height: 10 },
+    elevation: 3,
   },
   fieldWrap: {
     gap: 0,
@@ -673,9 +681,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     borderWidth: StyleSheet.hairlineWidth,
-    borderRadius: 10,
-    paddingHorizontal: 14,
-    minHeight: 50,
+    borderRadius: 16,
+    paddingHorizontal: 16,
+    minHeight: 52,
   },
   input: {
     paddingVertical: 12,
@@ -687,17 +695,15 @@ const styles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth,
     borderRadius: 8,
     padding: 12,
-    backgroundColor: '#301010',
   },
   successBox: {
     borderWidth: 1,
     borderRadius: 8,
     padding: 12,
-    backgroundColor: '#102010',
   },
   submitBtn: {
-    height: 52,
-    borderRadius: 12,
+    height: 56,
+    borderRadius: 18,
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: 4,
@@ -725,11 +731,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     height: 52,
-    borderRadius: 12,
+    borderRadius: 18,
     borderWidth: StyleSheet.hairlineWidth,
+    shadowColor: '#000',
+    shadowOpacity: 0.08,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 2,
   },
   googleG: {
-    fontSize: 20,
+    fontSize: 22,
     fontWeight: '700',
   },
 });

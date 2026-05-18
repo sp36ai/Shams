@@ -35,6 +35,7 @@ import { useSettingsStore } from '@stores/settingsStore';
 import { useQuotaStore, FREE_DAILY_LIMIT, TRIAL_DAILY_LIMIT } from '@stores/quotaStore';
 import { useQuota } from '@hooks/useQuota';
 import { useTimingStrip } from '@hooks/useTimingStrip';
+import { classifyIntent, type IntentResult } from '@hooks/useIntentClassifier';
 import { askOracle as callOracleFunction } from '../firebase/oracle';
 import StarfieldBackground from '@components/StarfieldBackground';
 import AstroVerdictCard from '../components/oracle/AstroVerdictCard';
@@ -69,7 +70,7 @@ interface VjRemedy {
   planet?: string;
   action?: string;
   avoid?: string;
-  mantra?: string;
+  zikr?: string;
   charity?: string;
 }
 
@@ -79,13 +80,6 @@ interface VjShape {
   remedy?: VjRemedy;
   moonSubLord?: { planet?: string; occupiedHouse?: number };
   rulingPlanets?: { dayLord?: string; horaLord?: string; minuteLord?: string };
-}
-
-function asVj(raw: unknown): VjShape | null {
-  if (typeof raw !== 'object' || raw === null) {
-    return null;
-  }
-  return raw as VjShape;
 }
 
 // ── Reading → AstroVerdictResult mapper ───────────────────────────────────────
@@ -112,21 +106,20 @@ interface VjExtended extends VjShape {
   planetDegrees?: Record<string, number>;
   cuspDegrees?: Record<number, number>;
   cuspSigns?: Record<number, string>;
-  planetChain?: Record<string, { nakshatraLord: string; subLord: string; subSubLord: string }>;
+  planetChain?: Record<string, { manzilLord: string; subLord: string; subSubLord: string }>;
   oracle?: {
     opening: string;
     interpretation: string;
     spiritual_layer: string;
     hidden_influence: string;
-    timing: string;
+    timing?: string | null;
     warning?: string;
     remedy: {
       quran_verse?: string;
-      translation?: string;
-      name_of_allah?: string;
+      asma?: string;
       dua?: string;
       zikr?: string;
-      charity?: string;
+      sadaqah?: string;
     };
     signature: string;
   };
@@ -174,20 +167,20 @@ function readingToAstroResult(reading: Reading): AstroVerdictResult {
     rulingPlanets,
     timing: vj?.timing?.window
       ? {
-          window: vj.timing.window,
-          range: { min: vj.timing.range?.min ?? 0, max: vj.timing.range?.max ?? 1 },
-          activeDasha: vj.timing.activeDasha,
-          activeAntardasha: vj.timing.activeAntardasha,
-        }
+        window: vj.timing.window,
+        range: { min: vj.timing.range?.min ?? 0, max: vj.timing.range?.max ?? 1 },
+        activeDasha: vj.timing.activeDasha,
+        activeAntardasha: vj.timing.activeAntardasha,
+      }
       : undefined,
     remedy: vj?.remedy?.action
       ? {
-          planet: vj.remedy.planet ?? '—',
-          action: vj.remedy.action,
-          avoid: vj.remedy.avoid ?? '',
-          mantra: vj.remedy.mantra,
-          charity: vj.remedy.charity,
-        }
+        planet: vj.remedy.planet ?? '—',
+        action: vj.remedy.action,
+        avoid: vj.remedy.avoid ?? '',
+        zikr: vj.remedy.zikr,
+        charity: vj.remedy.charity,
+      }
       : undefined,
     narrative,
     createdAt: reading.createdAt,
@@ -294,16 +287,31 @@ function detectIntent(text: string): FollowupIntent {
 
 // ── Followup response builders ────────────────────────────────────────────────
 
+const ARABIC_PLANET_NAME: Record<string, string> = {
+  Sun: 'Shams', Moon: 'al-Qamar', Mars: 'al-Mirrikh',
+  Mercury: 'Utarid', Jupiter: 'Mushtari', Venus: 'Zuhra',
+  Saturn: 'Zuhal', Rahu: "al-Ra's", Ketu: 'al-Dhanab',
+};
+
 function timingResponse(reading: Reading, lang: 'en' | 'ur' | 'hi'): string {
-  const vj = asVj(reading.verdictJson);
+  const vj = reading.verdictJson as VjExtended | null;
+
+  // Prefer oracle prose timing — already in oracle voice
+  const oracleTiming = vj?.oracle?.timing;
+  if (oracleTiming) {
+    return oracleTiming;
+  }
+
   const t = vj?.timing;
   if (!t) {
-    return 'The timing data is not available for this reading.';
+    return lang === 'ur'
+      ? 'اس زائچے میں وقت کا تعین ممکن نہیں۔ جب چاند اپنی موجودہ منزل سے گزرے تو دوبارہ پوچھیں۔'
+      : lang === 'hi'
+        ? 'اس زائچے میں وقت واضح نہیں ہے۔'
+        : 'The zaaiche does not name a day. Watch for the sign the celestial witnesses have described.';
   }
   const max = t.range?.max ?? 1;
   const win = t.window ?? 'weeks';
-  const md = t.activeDasha ?? '—';
-  const ad = t.activeAntardasha ?? '—';
   const winLabel: Record<string, Record<'en' | 'ur' | 'hi', string>> = {
     days: { en: 'days', ur: 'دن', hi: 'दिन' },
     weeks: { en: 'weeks', ur: 'ہفتے', hi: 'सप्ताह' },
@@ -312,77 +320,101 @@ function timingResponse(reading: Reading, lang: 'en' | 'ur' | 'hi'): string {
   };
   const wl = winLabel[win]?.[lang] ?? win;
   if (lang === 'ur') {
-    return `حرکت **${max} ${wl}** کے اندر متوقع ہے۔\n\nفعال مہادشا: **${md}** · انتردشا: **${ad}**\n\nستارے وقت کی کھڑکیاں دیتے ہیں، تقرریاں نہیں۔`;
+    return `آسمانی گواہ **${max} ${wl}** کی کھڑکی اشارہ کرتے ہیں۔\n\nستارے وقت کی کھڑکیاں دیتے ہیں، تقرریاں نہیں۔`;
   }
   if (lang === 'hi') {
-    return `**${max} ${wl}** के भीतर प्रगति अपेक्षित है।\n\nसक्रिय महादशा: **${md}** · अंतर्दशा: **${ad}**\n\nतारे खिड़कियाँ देते हैं, नियुक्तियाँ नहीं।`;
+    return `آسمانی گواہ **${max} ${wl}** کی کھڑکی اشارہ کرتے ہیں۔\n\nستارے وقت کی کھڑکیاں دیتے ہیں، تقرریاں نہیں۔`;
   }
-  return `Movement is expected within **${max} ${wl}**.\n\nActive Mahādashā: **${md}** · Antardashā: **${ad}**\n\nThe stars offer windows, not appointments.`;
+  return `The celestial witnesses point to a window of **${max} ${wl}**.\n\nThe stars offer windows, not appointments.`;
 }
 
 function whyResponse(reading: Reading, lang: 'en' | 'ur' | 'hi'): string {
-  const vj = asVj(reading.verdictJson);
+  const vj = reading.verdictJson as VjExtended | null;
+
+  // Oracle interpretation is the best "why" answer — already in oracle voice
+  const interpretation = vj?.oracle?.interpretation;
+  if (interpretation) {
+    return interpretation;
+  }
+
+  // Fallback: celestial witness description — no KP jargon
   const msl = vj?.moonSubLord;
-  const planet = msl?.planet ?? '—';
-  const house = msl?.occupiedHouse ?? '—';
+  const rawPlanet = msl?.planet ?? '';
+  const planet = (ARABIC_PLANET_NAME[rawPlanet] ?? (rawPlanet || '—'));
   const conf = vj?.confidence ?? 0;
   if (lang === 'ur') {
-    return `فیصلہ **چاند کے ذیلی مالک ${planet}** پر منحصر ہے جو گھر **${house}** میں ہے۔\n\nیقین: **${conf}%** · RKP کا پانچ مرحلہ الگورتھم استعمال کیا گیا۔`;
+    return `فیصلہ **آسمانی گواہ ${planet}** کی شہادت پر منحصر ہے۔\n\nیقین: **${conf}%**`;
   }
   if (lang === 'hi') {
-    return `यह निर्णय **चंद्र के उप-स्वामी ${planet}** पर निर्भर है जो घर **${house}** में स्थित है।\n\nविश्वास: **${conf}%** · RKP पांच-चरण एल्गोरिदम।`;
+    return `یہ فیصلہ **آسمانی گواہ ${planet}** کی گواہی پر منحصر ہے۔\n\nیقین: **${conf}%**`;
   }
-  return `The verdict rests on **Moon's Sub-Lord ${planet}**, which occupies house **${house}**.\n\nConfidence: **${conf}%** — derived from the RKP 5-step algorithm.`;
+  return `The verdict rests on the testimony of **${planet}**, the celestial witness appointed to this zaaiche.\n\nConfidence: **${conf}%**`;
 }
 
 function remedyResponse(reading: Reading, lang: 'en' | 'ur' | 'hi'): string {
-  const vj = asVj(reading.verdictJson);
-  const r = vj?.remedy;
-  if (!r) {
+  const vj = reading.verdictJson as VjExtended | null;
+  const oracleRemedy = vj?.oracle?.remedy;
+  const verdictRemedy = vj?.remedy;
+
+  if (!oracleRemedy && !verdictRemedy) {
     return lang === 'ur'
-      ? 'اس پڑھائی کے لیے کوئی مخصوص علاج نہیں ملا۔'
+      ? 'اس زائچے کے لیے کوئی مخصوص علاج نہیں ملا۔'
       : lang === 'hi'
-        ? 'इस पठन के लिए कोई विशिष्ट उपाय नहीं मिला।'
-        : 'No specific remedy found for this reading.';
+        ? 'اس زائچے کے لیے کوئی علاج نہیں ملا۔'
+        : 'No specific remedy was given for this zaaiche.';
   }
+
   const lines: string[] = [];
-  if (r.action) {
-    lines.push(`• ${r.action}`);
+
+  // Oracle remedy — primary (verse + asma + dua + zikr + sadaqah)
+  if (oracleRemedy?.quran_verse) {
+    lines.push(`📖 ${oracleRemedy.quran_verse}`);
   }
-  if (r.avoid) {
-    lines.push(
-      lang === 'ur'
-        ? `• پرہیز: ${r.avoid}`
-        : lang === 'hi'
-          ? `• परहेज: ${r.avoid}`
-          : `• Avoid: ${r.avoid}`,
-    );
+  if (oracleRemedy?.asma) {
+    lines.push(`• ${oracleRemedy.asma}`);
   }
-  if (r.mantra) {
-    lines.push(
-      lang === 'ur'
-        ? `• منتر: *${r.mantra}*`
-        : lang === 'hi'
-          ? `• मंत्र: *${r.mantra}*`
-          : `• Mantra: *${r.mantra}*`,
-    );
+  if (oracleRemedy?.dua) {
+    lines.push(`• ${oracleRemedy.dua}`);
   }
-  if (r.charity) {
-    lines.push(
-      lang === 'ur'
-        ? `• دان: ${r.charity}`
-        : lang === 'hi'
-          ? `• दान: ${r.charity}`
-          : `• Charity: ${r.charity}`,
-    );
+  if (oracleRemedy?.zikr) {
+    lines.push(lang === 'ur' ? `• ذکر: *${oracleRemedy.zikr}*` : `• Zikr: *${oracleRemedy.zikr}*`);
   }
-  const header =
-    lang === 'ur'
-      ? `**${r.planet ?? ''}** کے لیے علاج:`
-      : lang === 'hi'
-        ? `**${r.planet ?? ''}** के लिए उपाय:`
-        : `Remedy for **${r.planet ?? ''}**:`;
+  if (oracleRemedy?.sadaqah) {
+    lines.push(lang === 'ur' ? `• صدقہ: ${oracleRemedy.sadaqah}` : `• Sadaqah: ${oracleRemedy.sadaqah}`);
+  }
+
+  // Verdict remedy — supplementary (planet-specific action + avoid)
+  if (verdictRemedy?.action) {
+    lines.push(`• ${verdictRemedy.action}`);
+  }
+  if (verdictRemedy?.avoid) {
+    lines.push(lang === 'ur' ? `• پرہیز: ${verdictRemedy.avoid}` : `• Avoid: ${verdictRemedy.avoid}`);
+  }
+
+  const header = lang === 'ur' ? 'علاج اور عمل:' : lang === 'hi' ? 'علاج اور عمل:' : 'Remedy & practice:';
   return `${header}\n\n${lines.join('\n')}`;
+}
+
+function elaborationResponse(reading: Reading, lang: 'en' | 'ur' | 'hi'): string {
+  const vj = reading.verdictJson as VjExtended | null;
+  const oracle = vj?.oracle;
+
+  // spiritual_layer is the "deeper why" — designed for follow-up questions
+  if (oracle?.spiritual_layer) {
+    return oracle.spiritual_layer;
+  }
+  if (oracle?.hidden_influence) {
+    return oracle.hidden_influence;
+  }
+
+  return (
+    narrationForReading(reading) ||
+    (lang === 'ur'
+      ? 'اس زائچے کے بارے میں مزید تفصیل دستیاب نہیں۔'
+      : lang === 'hi'
+        ? 'اس زائچے کے بارے میں مزید جانکاری دستیاب نہیں۔'
+        : 'No additional detail is available for this zaaiche.')
+  );
 }
 
 // ── Narration extraction ──────────────────────────────────────────────────────
@@ -458,6 +490,9 @@ const OracleScreen: React.FC = () => {
   const addReading = useReadingsStore(
     (s: ReturnType<typeof useReadingsStore.getState>) => s.addReading,
   );
+  const readings = useReadingsStore(
+    (s: ReturnType<typeof useReadingsStore.getState>) => s.readings,
+  );
   const { canAsk, consumeOne, questionsLeft } = useQuota();
 
   const plan = useQuotaStore(s => s.plan);
@@ -467,6 +502,7 @@ const OracleScreen: React.FC = () => {
   const startTrial = useQuotaStore(s => s.startTrial);
 
   const [showQuotaModal, setShowQuotaModal] = useState(false);
+  const [showNewQuestionModal, setShowNewQuestionModal] = useState(false);
 
   const initialGreeting: ChatMessage = useMemo(
     () => ({
@@ -504,45 +540,71 @@ const OracleScreen: React.FC = () => {
 
       // Followup path — free, no quota
       if (stage === 'answered' && lastReading !== null) {
-        const intent = detectIntent(text);
-
-        if (intent === 'new') {
-          // Reset to ready; let new question fall through to engine below
-          setStage('ready');
-          setLastReading(null);
-          // Fall through to engine run below
-        } else if (intent !== 'none') {
-          const userMsg: ChatMessage = {
-            id: `u_${Date.now()}`,
-            sender: 'user',
-            text,
-            createdAt: new Date().toISOString(),
+        // Claude Haiku intent classifier — replaces basic string matching
+        // API key is optional; falls back to basic string matching if unavailable
+        const apiKey = process.env.ANTHROPIC_API_KEY || '';
+        const recentMessages = messages.slice(0, 3).map(m => m.text);
+        
+        let intent: IntentResult;
+        if (apiKey) {
+          intent = await classifyIntent({
+            userMessage: text,
+            lockedQuestion: lastReading.question,
+            verdictDirection: lastReading.verdict,
+            recentMessages,
+            apiKey,
+          });
+        } else {
+          // Fallback to basic detection if no API key
+          const basicIntent = detectIntent(text);
+          intent = {
+            class: basicIntent === 'new' ? 'NEW_QUESTION' : 
+                   basicIntent === 'timing' ? 'TIMING' :
+                   basicIntent === 'why' ? 'CLARIFY' :
+                   basicIntent === 'remedy' ? 'REMEDY' : 'UNKNOWN',
+            confidence: 'LOW',
+            reason: 'fallback to string matching',
           };
-          setMessages(prev => [userMsg, ...prev]);
+        }
 
-          setSending(true);
-          await new Promise<void>(resolve => setTimeout(() => resolve(), 700));
-
-          let responseText = '';
-          if (intent === 'timing') {
-            responseText = timingResponse(lastReading, lang);
-          } else if (intent === 'why') {
-            responseText = whyResponse(lastReading, lang);
-          } else if (intent === 'remedy') {
-            responseText = remedyResponse(lastReading, lang);
-          }
-
-          const shamsMsg: ChatMessage = {
-            id: `s_fu_${Date.now()}`,
-            sender: 'shams',
-            text: responseText,
-            createdAt: new Date().toISOString(),
-          };
-          setMessages(prev => [shamsMsg, ...prev]);
-          setSending(false);
+        // NEW_QUESTION with HIGH confidence → surface prompt, don't answer
+        if (intent.class === 'NEW_QUESTION' && intent.confidence === 'HIGH') {
+          setShowNewQuestionModal(true);
           return;
         }
-        // intent === 'none' while answered: treat as new question — fall through
+
+        // All other intents → elaboration with intent-aware routing
+        const userMsg: ChatMessage = {
+          id: `u_${Date.now()}`,
+          sender: 'user',
+          text,
+          createdAt: new Date().toISOString(),
+        };
+        setMessages(prev => [userMsg, ...prev]);
+
+        setSending(true);
+        await new Promise<void>(resolve => setTimeout(() => resolve(), 700));
+
+        let responseText = '';
+        if (intent.class === 'TIMING') {
+          responseText = timingResponse(lastReading, lang);
+        } else if (intent.class === 'CLARIFY') {
+          responseText = whyResponse(lastReading, lang);
+        } else if (intent.class === 'REMEDY') {
+          responseText = remedyResponse(lastReading, lang);
+        } else {
+          responseText = elaborationResponse(lastReading, lang);
+        }
+
+        const shamsMsg: ChatMessage = {
+          id: `s_fu_${Date.now()}`,
+          sender: 'shams',
+          text: responseText,
+          createdAt: new Date().toISOString(),
+        };
+        setMessages(prev => [shamsMsg, ...prev]);
+        setSending(false);
+        return;
       }
 
       // ── Engine path — paywall gate ──────────────────────────────────────────
@@ -598,6 +660,30 @@ const OracleScreen: React.FC = () => {
         return;
       }
 
+      // ── 60-second dedup guard — same question within one minute returns cache ──
+      const minuteBucket = Math.floor(Date.now() / 60000);
+      const dedupKey = `${text.trim().toLowerCase()}_${minuteBucket}`;
+      const cachedReading = readings.find(r => {
+        const rBucket = Math.floor(new Date(r.createdAt).getTime() / 60000);
+        return `${r.question.trim().toLowerCase()}_${rBucket}` === dedupKey;
+      });
+      if (cachedReading) {
+        setLastReading(cachedReading);
+        setStage('answered');
+        setMessages(prev => [
+          {
+            id: `s_cached_${Date.now()}`,
+            sender: 'shams',
+            text: narrationForReading(cachedReading) || t('errors.unknown'),
+            reading: cachedReading,
+            createdAt: new Date().toISOString(),
+          },
+          ...prev,
+        ]);
+        setSending(false);
+        return;
+      }
+
       try {
         const reading = await runEngine({
           question: text,
@@ -620,7 +706,22 @@ const OracleScreen: React.FC = () => {
         };
         setMessages(prev => [shamsMsg, ...prev]);
       } catch (err) {
-        const errText = err instanceof Error ? err.message : t('errors.unknown');
+        console.error('[OracleScreen] Engine error:', err);
+        let errText = t('errors.unknown');
+
+        if (err instanceof Error) {
+          errText = err.message;
+
+          // Specific error messages for common issues
+          if (err.message.includes('ECONNREFUSED') || err.message.includes('network')) {
+            errText = '⚠️ Cannot connect to server.\n\nFor local testing:\n1. Start Firebase emulators: firebase emulators:start\n2. Restart the app';
+          } else if (err.message.includes('unauthenticated')) {
+            errText = '⚠️ Authentication required. Please sign in.';
+          } else if (err.message.includes('app-check')) {
+            errText = '⚠️ App verification failed. Check Firebase App Check setup.';
+          }
+        }
+
         setMessages(prev => [
           {
             id: `s_err_${now}`,
@@ -635,7 +736,7 @@ const OracleScreen: React.FC = () => {
       }
     },
     [addReading, canAsk, consumeOne, lang, lastLocation, lastReading, navigation, plan,
-     questionsToday, sending, stage, startTrial, t, trialActive, trialExpired],
+      questionsToday, readings, sending, stage, startTrial, t, trialActive, trialExpired],
   );
 
   const handleSend = useCallback(async () => {
@@ -672,10 +773,11 @@ const OracleScreen: React.FC = () => {
       <StarfieldBackground starColor={colors.starfield} />
 
       {/* Header */}
-      <View style={[styles.header, { borderColor: colors.border }]}>
-        <Text style={[typography('subheading'), { color: colors.text }]}>
-          {t('oracle.headerTitle')}
-        </Text>
+      <View style={[styles.header, { borderColor: colors.border, backgroundColor: colors.surface }]}> 
+        <View>
+          <Text style={[typography('caption'), { color: colors.goldBright, letterSpacing: 1.5 }]}>ORACLE</Text>
+          <Text style={[typography('subheading'), { color: colors.text, marginTop: 2 }]}>SHAMS AL-ASRĀR</Text>
+        </View>
         <View style={styles.headerRight}>
           {questionsLeft !== Infinity && (
             <View
@@ -701,6 +803,21 @@ const OracleScreen: React.FC = () => {
               {locationLabel}
             </Text>
           </View>
+        </View>
+      </View>
+
+      <View style={[styles.dashboardRow, { borderColor: colors.border, backgroundColor: colors.surface }]}> 
+        <View style={[styles.statCard, { borderColor: colors.borderAccent }]}> 
+          <Text style={[typography('caption'), { color: colors.textMuted }]}>HORA</Text>
+          <Text style={[typography('label'), { color: colors.goldBright, marginTop: 4 }]}>{horaLord}</Text>
+        </View>
+        <View style={[styles.statCard, { borderColor: colors.borderAccent }]}> 
+          <Text style={[typography('caption'), { color: colors.textMuted }]}>DAY LORD</Text>
+          <Text style={[typography('label'), { color: colors.goldBright, marginTop: 4 }]}>{dayLord}</Text>
+        </View>
+        <View style={[styles.statCard, { borderColor: colors.borderAccent }]}> 
+          <Text style={[typography('caption'), { color: colors.textMuted }]}>QUESTIONS</Text>
+          <Text style={[typography('label'), { color: colors.goldBright, marginTop: 4 }]}>{questionsLeft === Infinity ? '∞' : questionsLeft}</Text>
         </View>
       </View>
 
@@ -824,6 +941,15 @@ const OracleScreen: React.FC = () => {
         </View>
       </KeyboardAvoidingView>
 
+      {sending && (
+        <View style={styles.loadingOverlay} pointerEvents="none">
+          <View style={[styles.loadingPanel, { backgroundColor: colors.surfaceElevated, borderColor: colors.borderAccent }]}> 
+            <Text style={[typography('button'), { color: colors.goldBright, marginBottom: 6 }]}>Invoking the oracle</Text>
+            <Text style={[typography('caption'), { color: colors.textMuted, textAlign: 'center' }]}>A sacred chart is being cast. Please hold while the verdict arrives.</Text>
+          </View>
+        </View>
+      )}
+
       {/* Quota modal — soft wall for daily limit */}
       <Modal
         transparent
@@ -874,6 +1000,64 @@ const OracleScreen: React.FC = () => {
               >
                 <Text style={[typography('button'), { color: colors.textOnPrimary }]}>
                   Unlock Now
+                </Text>
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* New question modal — verdict integrity protection */}
+      <Modal
+        transparent
+        animationType="fade"
+        visible={showNewQuestionModal}
+        onRequestClose={() => setShowNewQuestionModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View
+            style={[
+              styles.modalCard,
+              { backgroundColor: colors.surface, borderColor: colors.border },
+            ]}
+          >
+            <Text
+              style={[typography('subheading'), { color: colors.text, marginBottom: 8 }]}
+            >
+              {'New question detected'}
+            </Text>
+            <Text
+              style={[
+                typography('body'),
+                { color: colors.textMuted, marginBottom: 24 },
+              ]}
+            >
+              {'This sounds like a new horary question. Each question needs its own chart for an accurate verdict.'}
+            </Text>
+            <View style={styles.modalActions}>
+              <Pressable
+                onPress={() => setShowNewQuestionModal(false)}
+                style={[
+                  styles.modalBtn,
+                  { borderColor: colors.border, borderWidth: StyleSheet.hairlineWidth },
+                ]}
+                accessibilityRole="button"
+              >
+                <Text style={[typography('button'), { color: colors.text }]}>
+                  Cancel
+                </Text>
+              </Pressable>
+              <Pressable
+                onPress={() => {
+                  setShowNewQuestionModal(false);
+                  setStage('ready');
+                  setLastReading(null);
+                }}
+                style={[styles.modalBtn, { backgroundColor: colors.primary }]}
+                accessibilityRole="button"
+              >
+                <Text style={[typography('button'), { color: colors.textOnPrimary }]}>
+                  Ask New Question
                 </Text>
               </Pressable>
             </View>
@@ -980,6 +1164,11 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderBottomWidth: StyleSheet.hairlineWidth,
     gap: 12,
+    shadowColor: '#000',
+    shadowOpacity: 0.08,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 2,
   },
   headerRight: {
     flexDirection: 'row',
@@ -989,21 +1178,23 @@ const styles = StyleSheet.create({
   quotaBadge: {
     borderWidth: StyleSheet.hairlineWidth,
     borderRadius: 999,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    backgroundColor: '#FFFFFF0F',
   },
   locationChip: {
     borderWidth: StyleSheet.hairlineWidth,
     borderRadius: 999,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
+    paddingHorizontal: 12,
+    paddingVertical: 5,
     maxWidth: '55%',
+    backgroundColor: '#FFFFFF08',
   },
   timingStrip: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 16,
-    paddingVertical: 8,
+    paddingVertical: 10,
     borderBottomWidth: StyleSheet.hairlineWidth,
   },
   listContent: {
@@ -1023,10 +1214,15 @@ const styles = StyleSheet.create({
   },
   upgradeBtn: {
     marginTop: 12,
-    paddingVertical: 10,
+    paddingVertical: 12,
     paddingHorizontal: 20,
-    borderRadius: 10,
+    borderRadius: 14,
     alignItems: 'center',
+    shadowColor: '#000',
+    shadowOpacity: 0.12,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 2,
   },
   // Input area
   inputArea: {
@@ -1047,6 +1243,7 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     paddingHorizontal: 12,
     paddingVertical: 5,
+    backgroundColor: '#FFFFFF08',
   },
   composer: {
     flexDirection: 'row',
@@ -1057,17 +1254,67 @@ const styles = StyleSheet.create({
     flex: 1,
     minHeight: 40,
     maxHeight: 120,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 18,
+    backgroundColor: '#FFFFFF06',
+    borderWidth: StyleSheet.hairlineWidth,
   },
   sendBtn: {
     paddingHorizontal: 16,
     paddingVertical: 10,
-    borderRadius: 10,
+    borderRadius: 14,
     minHeight: 40,
     minWidth: 64,
     alignItems: 'center',
     justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOpacity: 0.12,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 2,
+  },
+  dashboardRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 10,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderRadius: 22,
+    marginHorizontal: 16,
+    marginBottom: 12,
+    shadowColor: '#000',
+    shadowOpacity: 0.06,
+    shadowRadius: 14,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 2,
+  },
+  statCard: {
+    flex: 1,
+    alignItems: 'flex-start',
+    padding: 14,
+    borderRadius: 18,
+    borderWidth: StyleSheet.hairlineWidth,
+    minWidth: 88,
+    backgroundColor: 'transparent',
+  },
+  loadingOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 10,
+  },
+  loadingPanel: {
+    width: '80%',
+    borderRadius: 18,
+    padding: 20,
+    borderWidth: 1,
+    shadowColor: '#000',
+    shadowOpacity: 0.25,
+    shadowRadius: 18,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 10,
   },
   modalOverlay: {
     flex: 1,
@@ -1081,6 +1328,11 @@ const styles = StyleSheet.create({
     padding: 24,
     borderWidth: StyleSheet.hairlineWidth,
     width: '100%',
+    shadowColor: '#000',
+    shadowOpacity: 0.18,
+    shadowRadius: 18,
+    shadowOffset: { width: 0, height: 10 },
+    elevation: 4,
   },
   modalActions: {
     flexDirection: 'row',

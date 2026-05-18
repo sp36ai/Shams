@@ -12,11 +12,10 @@ import type { VerdictKind } from '@stores/readingsStore';
 
 export interface OracleRemedy {
   quran_verse?: string;
-  translation?: string;
-  name_of_allah?: string;
+  asma?: string;
   dua?: string;
   zikr?: string;
-  charity?: string;
+  sadaqah?: string;
 }
 
 export interface OracleVoice {
@@ -24,7 +23,7 @@ export interface OracleVoice {
   interpretation: string;
   spiritual_layer: string;
   hidden_influence: string;
-  timing: string;
+  timing?: string | null;
   warning?: string;
   remedy: OracleRemedy;
   signature: string;
@@ -57,7 +56,7 @@ export interface AstroRemedy {
   planet: string;
   action: string;
   avoid: string;
-  mantra?: string;
+  zikr?: string;
   charity?: string;
 }
 
@@ -86,10 +85,20 @@ export interface AstroVerdictResult {
   planetDegrees?: Record<string, number>;
   cuspDegrees?: Record<number, number>;
   cuspSigns?: Record<number, string>;
-  planetChain?: Record<string, { nakshatraLord: string; subLord: string; subSubLord: string }>;
+  planetChain?: Record<string, { manzilLord: string; subLord: string; subSubLord: string }>;
   significators?: { favorable: string[]; denial: string[]; neutral: string[] };
   confirmedSignificators?: string[];
   deniedSignificators?: string[];
+
+  /** al-Qamar's Arabic lunar mansion at chart moment — display only. */
+  manzila?: {
+    number: number;
+    name: string;
+    arabic: string;
+    nature: 'benefic' | 'malefic' | 'mixed';
+    element: 'fire' | 'earth' | 'air' | 'water';
+    oracleDescriptor: string;
+  };
 
   // ── Oracle voice (Claude synthesis) — absent for old readings / synthesis failure ──
   oracle?: OracleVoice;

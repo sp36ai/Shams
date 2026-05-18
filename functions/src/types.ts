@@ -56,7 +56,7 @@ export interface OracleResponse {
     planet: string;
     action: string;
     avoid: string;
-    mantra?: string;
+    zikr?: string;
     charity?: string;
   };
   reasoning: Array<{
@@ -75,7 +75,16 @@ export interface OracleResponse {
   /** Zodiac sign name for each cusp (1-indexed) — display only. */
   cuspSigns?: Record<number, string>;
   /** Per-planet nakshatra-lord / sub-lord / sub-sub-lord chain — display only. */
-  planetChain?: Record<string, { nakshatraLord: string; subLord: string; subSubLord: string }>;
+  planetChain?: Record<string, { manzilLord: string; subLord: string; subSubLord: string }>;
+  /** al-Qamar's Arabic lunar mansion at the chart moment — display only. */
+  manzila?: {
+    number: number;
+    name: string;
+    arabic: string;
+    nature: 'benefic' | 'malefic' | 'mixed';
+    element: 'fire' | 'earth' | 'air' | 'water';
+    oracleDescriptor: string;
+  };
 
   // ── Oracle voice (Claude synthesis layer) ─────────────────────────────────
   oracle?: {
@@ -83,15 +92,14 @@ export interface OracleResponse {
     interpretation: string;
     spiritual_layer: string;
     hidden_influence: string;
-    timing: string;
+    timing?: string | null;
     warning?: string;
     remedy: {
       quran_verse?: string;
-      translation?: string;
-      name_of_allah?: string;
+      asma?: string;
       dua?: string;
       zikr?: string;
-      charity?: string;
+      sadaqah?: string;
     };
     signature: string;
   };
@@ -103,7 +111,7 @@ export interface QuotaResponse {
   used: number;
   limit: number | null; // null = unlimited
   remaining: number | null;
-  weekKey: string; // "YYYY-MM-DD" (Sunday)
+  weekKey: string; // "YYYY-MM-DD" (UTC day)
   planExpiry: string | null; // ISO 8601 or null for free/no expiry
 }
 

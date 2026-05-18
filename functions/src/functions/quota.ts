@@ -6,7 +6,7 @@
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import { db } from '../utils/admin';
 import { verifyAuth } from '../middleware/auth';
-import { FUNCTION_OPTS, UNLIMITED_PLANS, FREE_LIMIT, sundayWeekKey } from '../config';
+import { FUNCTION_OPTS, UNLIMITED_PLANS, FREE_LIMIT, todayKey } from '../config';
 import { measure } from '../middleware/telemetry';
 import type { QuotaResponse, QuotaDoc } from '../types';
 
@@ -24,14 +24,14 @@ export const getQuota = onCall(
           used: 0,
           limit: FREE_LIMIT,
           remaining: FREE_LIMIT,
-          weekKey: sundayWeekKey(),
+          weekKey: todayKey(),
           planExpiry: null,
         };
       }
 
       const d = snap.data() as Partial<QuotaDoc>;
       const plan = d.plan ?? 'free';
-      const currentWeek = sundayWeekKey();
+      const currentWeek = todayKey();
       const storedWeek = d.weekKey ?? '';
       const used = storedWeek === currentWeek ? (d.used ?? 0) : 0;
       const planExpiry = d.planExpiry ?? null;

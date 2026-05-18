@@ -75,7 +75,25 @@ const ShimmerOverlay: React.FC<ShimmerOverlayProps> = ({
           {
             width: stripeWidth,
             backgroundColor: color,
+            borderRadius: stripeWidth / 2,
+            shadowColor: '#FFFFFF',
+            shadowOpacity: 0.14,
+            shadowRadius: 14,
+            shadowOffset: { width: 0, height: 0 },
+            opacity: 0.92,
             transform: [{ translateX }, { skewX: '-18deg' }],
+          },
+        ]}
+      />
+      <Animated.View
+        style={[
+          styles.stripe,
+          {
+            width: stripeWidth * 0.6,
+            backgroundColor: color,
+            borderRadius: stripeWidth / 2,
+            opacity: 0.18,
+            transform: [{ translateX }, { skewX: '-18deg' }, { translateY: 12 }],
           },
         ]}
       />

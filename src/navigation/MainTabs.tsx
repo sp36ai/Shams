@@ -107,13 +107,16 @@ const MainTabs: React.FC = () => {
         tabBarInactiveTintColor: colors.textMuted,
         tabBarButton: TabButton,
         tabBarStyle: {
-          backgroundColor: colors.surface,
-          borderTopColor: colors.border,
-          borderTopWidth: StyleSheet.hairlineWidth,
+          backgroundColor: colors.surfaceElevated,
+          borderTopColor: 'transparent',
           height: Platform.select({ ios: 84, android: 64 }),
           paddingTop: 6,
           paddingBottom: Platform.select({ ios: 24, android: 8 }),
-          elevation: 0,
+          shadowColor: '#000',
+          shadowOpacity: 0.14,
+          shadowRadius: 24,
+          shadowOffset: { width: 0, height: -8 },
+          elevation: 10,
         },
         tabBarLabelStyle: {
           ...typography('caption'),
@@ -121,16 +124,29 @@ const MainTabs: React.FC = () => {
         },
         tabBarIcon: ({ focused, color }) => (
           <View style={styles.iconWrap}>
-            {/* Premium: glowing accent bar above the active icon */}
+            {focused && (
+              <View
+                style={[
+                  styles.activeHalo,
+                  {
+                    backgroundColor: `${colors.accent}33`,
+                    shadowColor: colors.accent,
+                    shadowRadius: 12,
+                    shadowOpacity: 0.35,
+                    shadowOffset: { width: 0, height: 0 },
+                  },
+                ]}
+              />
+            )}
             {focused && (
               <View
                 style={[
                   styles.activeBar,
                   {
-                    backgroundColor: colors.accent,
-                    shadowColor: colors.accent,
+                    backgroundColor: colors.goldBright,
+                    shadowColor: colors.goldBright,
                     shadowRadius: 6,
-                    shadowOpacity: 0.9,
+                    shadowOpacity: 0.85,
                     shadowOffset: { width: 0, height: 0 },
                   },
                 ]}
@@ -173,6 +189,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'flex-end',
     paddingBottom: 2,
+  },
+  activeHalo: {
+    position: 'absolute',
+    top: -6,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
   },
   activeBar: {
     position: 'absolute',

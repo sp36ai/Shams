@@ -57,7 +57,10 @@ export const GlowView: React.FC<GlowViewProps> = ({
     );
   }, [pulsing, glowOpacity]);
 
-  const glowStyle = useAnimatedStyle(() => ({ opacity: glowOpacity.value }));
+  const glowStyle = useAnimatedStyle(() => ({
+    opacity: glowOpacity.value,
+    transform: [{ scale: pulsing ? 1 + glowOpacity.value * 0.03 : 1 }],
+  }));
 
   const spread = glowRadius / 2;
 
@@ -75,11 +78,11 @@ export const GlowView: React.FC<GlowViewProps> = ({
             right: -spread,
             bottom: -spread,
             borderRadius: borderRadius + spread,
-            backgroundColor: glowColor + '1A', // ~10% alpha fill for Android
+            backgroundColor: glowColor + '22',
             // iOS colored shadow
             shadowColor: glowColor,
             shadowRadius: glowRadius,
-            shadowOpacity: 0.75,
+            shadowOpacity: pulsing ? 0.82 : 0.75,
             shadowOffset: { width: 0, height: 0 },
           },
         ]}
@@ -92,5 +95,6 @@ export const GlowView: React.FC<GlowViewProps> = ({
 const styles = StyleSheet.create({
   container: {
     position: 'relative',
+    overflow: 'visible',
   },
 });

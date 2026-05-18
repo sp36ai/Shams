@@ -1,5 +1,9 @@
 import { useCallback, useEffect, useState } from 'react';
-import { firebase } from '@react-native-firebase/functions';
+import functions, { type FirebaseFunctionsTypes } from '@react-native-firebase/functions';
+
+type FunctionsWithRegion = FirebaseFunctionsTypes.Module & {
+  region(r: string): FirebaseFunctionsTypes.Module;
+};
 import { useQuotaStore, selectQuestionsLeft } from '@stores/quotaStore';
 import type { PlanTier } from '@stores/quotaStore';
 
@@ -25,7 +29,7 @@ export function useQuota(): QuotaState {
 
   const refresh = useCallback(() => {
     setLoading(true);
-    firebase.app().functions('asia-south1').httpsCallable<object, { remaining: number }>('getQuota')({})
+    (functions() as FunctionsWithRegion).region('asia-south1').httpsCallable<object, { remaining: number }>('getQuota')({})
       .then(r => setServerRemaining(r.data.remaining))
       .catch(() => setServerRemaining(null))
       .finally(() => setLoading(false));

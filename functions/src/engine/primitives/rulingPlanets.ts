@@ -163,17 +163,19 @@ export interface RulingPlanetsInput {
 }
 
 export function getRulingPlanets(input: RulingPlanetsInput): {
-  set: [Planet, Planet, Planet, Planet, Planet];
+  set: [Planet, Planet, Planet, Planet, Planet, Planet];
 } {
   // Use the Unix-to-JD constant for epoch conversion
   const jdUtc = input.momentUtc.getTime() / 86400000 + 2440587.5;
   const dayLord = calculateDayLord(jdUtc, input.lonDeg);
+  const horaLord = calculateHoraLord(jdUtc, input.lonDeg);
   const ascSignLord = getSignLordByLongitude(input.ascendantLon);
   const ascStarLord = getNakshatraLord(input.ascendantLon);
   const moonSignLord = getSignLordByLongitude(input.moonLon);
   const moonStarLord = getNakshatraLord(input.moonLon);
 
   return {
-    set: [dayLord, ascSignLord, ascStarLord, moonSignLord, moonStarLord],
+    // RKP Sarfaraz Variant: Day, Hora, and Degree Lords are primary
+    set: [dayLord, horaLord, ascSignLord, ascStarLord, moonSignLord, moonStarLord],
   };
 }

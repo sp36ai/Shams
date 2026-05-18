@@ -218,9 +218,12 @@ const HistoryScreen: React.FC = () => {
 
   return (
     <SafeAreaView style={[styles.root, { backgroundColor: theme.colors.bg }]} edges={['top']}>
-      <View style={[styles.header, { borderColor: colors.border }]}>
-        <Text style={[typography('subheading'), { color: colors.text }]}>
+      <View style={[styles.header, { borderColor: colors.border, backgroundColor: colors.surface }]}>
+<Text style={[typography('subheading'), { color: colors.goldBright }]}> 
           {t('history.headerTitle')}
+        </Text>
+        <Text style={[typography('caption'), { color: colors.textMuted, lineHeight: 18, marginTop: 8 }]}> 
+          Sacred chronicle of past consultations, preserved in candlelit manuscript style.
         </Text>
       </View>
 
@@ -691,19 +694,27 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 14,
-    paddingVertical: 14,
-    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 16,
+    borderRadius: 16,
     borderWidth: StyleSheet.hairlineWidth,
     gap: 12,
+    shadowColor: '#000',
+    shadowOpacity: 0.06,
+    shadowRadius: 14,
+    shadowOffset: { width: 0, height: 5 },
+    elevation: 3,
   },
-  rowMain: { flex: 1, gap: 6 },
-  rowMeta: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  rowMain: { flex: 1, gap: 8 },
+  rowMeta: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   verdictPill: {
     borderWidth: StyleSheet.hairlineWidth,
     borderRadius: 999,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    minWidth: 84,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   emptyWrap: {
     flex: 1,

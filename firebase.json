@@ -1,5 +1,8 @@
 {
   "projectId": "shams-app-4d0e7",
+  "react-native": {
+    "android_bypass_emulator_url_remap": true
+  },
   "functions": [
     {
       "source": "functions",
@@ -15,13 +18,16 @@
   },
   "emulators": {
     "auth": {
-      "port": 9099
+      "port": 9099,
+      "host": "0.0.0.0"
     },
     "functions": {
-      "port": 5001
+      "port": 5001,
+      "host": "0.0.0.0"
     },
     "firestore": {
-      "port": 8282
+      "port": 8282,
+      "host": "0.0.0.0"
     },
     "ui": {
       "enabled": true,
