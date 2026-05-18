@@ -7,26 +7,27 @@ import {
   StyleSheet,
   ScrollView,
   Dimensions,
-  TouchableOpacity,
-  SafeAreaView,
+  Pressable,
 } from 'react-native';
-import { useColors } from '@theme/ThemeProvider';
+import { SafeAreaView } from 'react-native-safe-area-context';
+
+import { useColors, useTheme } from '@theme/ThemeProvider';
+import { useTypography } from '@theme/useTypography';
+import StarfieldBackground from '@components/StarfieldBackground';
 import { useSettingsStore } from '@stores/settingsStore';
 import { isLocationUsable, requestLocationPermission } from '@utils/permissions';
 
 const { width } = Dimensions.get('window');
 
 const OnboardingScreen: React.FC = () => {
+  const { theme } = useTheme();
   const colors = useColors();
+  const typography = useTypography();
   const [activeIndex, setActiveIndex] = useState(0);
   const scrollRef = useRef<ScrollView>(null);
   const markOnboardingComplete = useSettingsStore(s => s.markOnboardingComplete);
   const markLocationPrompted = useSettingsStore(s => s.markLocationPrompted);
   const setPermissionGranted = useSettingsStore(s => s.setPermissionGranted);
-
-  const gold = colors.accent;
-  const dim = colors.textMuted;
-  const slideStyle = { backgroundColor: colors.surfaceElevated, borderColor: colors.border };
 
   const handleNext = () => {
     if (activeIndex < 3) {
@@ -54,7 +55,17 @@ const OnboardingScreen: React.FC = () => {
   };
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.bg }]}>
+    <SafeAreaView
+      style={[styles.root, { backgroundColor: theme.colors.bg }]}
+      edges={['top', 'bottom']}
+    >
+      <StarfieldBackground
+        starColor={colors.starfield}
+        nebula1={colors.nebula1}
+        nebula2={colors.nebula2}
+        nebula3={colors.nebula3}
+      />
+
       <ScrollView
         ref={scrollRef}
         horizontal
@@ -62,176 +73,334 @@ const OnboardingScreen: React.FC = () => {
         showsHorizontalScrollIndicator={false}
         onScroll={onScroll}
         scrollEventThrottle={16}
+        style={styles.slider}
       >
-        {/* Slide 1: Welcome */}
-        <View style={[styles.slide, slideStyle]}>
-          <View style={[styles.slideMarker, { backgroundColor: colors.accent }]} />
-          <Text style={[styles.arabicTitle, { color: gold }]}>شمس الأسرار</Text>
-          <Text style={[styles.subtitle, { color: colors.text }]}>The Oracle of Hidden Stars</Text>
-          <Text style={[styles.bodyText, { color: colors.textMuted }]}>
-            Ancient wisdom. Astronomical precision.
+        {/* Slide 1 — Welcome */}
+        <View style={styles.slide}>
+          <Text
+            style={[
+              typography('caption'),
+              { color: colors.textFaint, letterSpacing: 2.5, marginBottom: 4 },
+            ]}
+          >
+            {'✦  BISMILLAH  ✦'}
           </Text>
-          <Text style={[styles.star, { color: gold }]}>✦</Text>
+          <Text
+            style={{
+              fontFamily: 'Amiri-Regular',
+              fontSize: 46,
+              color: colors.goldBright,
+              textAlign: 'center',
+              lineHeight: 58,
+            }}
+          >
+            {'شمس الأسرار'}
+          </Text>
+          <OrnamentRow colors={colors} />
+          <Text
+            style={[
+              typography('subheading'),
+              {
+                color: colors.text,
+                textAlign: 'center',
+                letterSpacing: 1.6,
+                textTransform: 'uppercase',
+              },
+            ]}
+          >
+            {'The Oracle of Hidden Stars'}
+          </Text>
+          <Text
+            style={[
+              typography('body'),
+              { color: colors.textMuted, textAlign: 'center', lineHeight: 26, marginTop: 4 },
+            ]}
+          >
+            {'Ancient KP horary wisdom.\nAstronomical precision.'}
+          </Text>
         </View>
 
-        {/* Slide 2: Two Modes */}
-        <View style={[styles.slide, slideStyle]}>
-          <View style={styles.slideMarker} />
-          <View style={styles.modesContainer}>
-            <View style={[styles.modeHalf, { borderColor: colors.border, backgroundColor: colors.surface }]}> 
-              <Text style={styles.modeIcon}>⌚</Text>
-              <Text style={[styles.modeTitle, { color: colors.text }]}>Digital Watch RKP</Text>
-              <Text style={[styles.modeText, { color: colors.textMuted }]}> 
-                Instant readings from the digits on your clock
+        {/* Slide 2 — Two Oracle Modes */}
+        <View style={styles.slide}>
+          <Text
+            style={[
+              typography('caption'),
+              { color: colors.textFaint, letterSpacing: 2.5, marginBottom: 20 },
+            ]}
+          >
+            {'TWO PATHS OF INQUIRY'}
+          </Text>
+          <View style={styles.modesRow}>
+            <View
+              style={[
+                styles.modeCard,
+                { backgroundColor: colors.surfaceElevated, borderColor: colors.border },
+              ]}
+            >
+              <Text style={styles.modeGlyph}>{'⌚'}</Text>
+              <Text
+                style={[
+                  typography('label'),
+                  {
+                    color: colors.goldBright,
+                    textAlign: 'center',
+                    letterSpacing: 1.4,
+                    marginBottom: 8,
+                  },
+                ]}
+              >
+                {'DIGITAL\nWATCH'}
+              </Text>
+              <Text
+                style={[
+                  typography('caption'),
+                  { color: colors.textMuted, textAlign: 'center', lineHeight: 18 },
+                ]}
+              >
+                {'Instant readings from the digits on your clock'}
               </Text>
             </View>
-            <View style={[styles.divider, { backgroundColor: colors.border }]} />
-            <View style={[styles.modeHalf, { borderColor: colors.border, backgroundColor: colors.surface }]}> 
-              <Text style={styles.modeIcon}>🔭</Text>
-              <Text style={[styles.modeTitle, { color: colors.text }]}>Astronomical RKP</Text>
-              <Text style={[styles.modeText, { color: colors.textMuted }]}>
-                Full sub-lord precision using Swiss Ephemeris math
+            <View style={[styles.modeDivider, { backgroundColor: colors.border }]} />
+            <View
+              style={[
+                styles.modeCard,
+                { backgroundColor: colors.surfaceElevated, borderColor: colors.border },
+              ]}
+            >
+              <Text style={styles.modeGlyph}>{'🔭'}</Text>
+              <Text
+                style={[
+                  typography('label'),
+                  {
+                    color: colors.goldBright,
+                    textAlign: 'center',
+                    letterSpacing: 1.4,
+                    marginBottom: 8,
+                  },
+                ]}
+              >
+                {'ASTRO-\nNOMICAL'}
+              </Text>
+              <Text
+                style={[
+                  typography('caption'),
+                  { color: colors.textMuted, textAlign: 'center', lineHeight: 18 },
+                ]}
+              >
+                {'Full sub-lord precision via Swiss Ephemeris'}
               </Text>
             </View>
           </View>
         </View>
 
-        {/* Slide 3: Location Permission */}
-        <View style={[styles.slide, slideStyle]}>
-          <View style={styles.slideMarker} />
-          <Text style={[styles.modeIcon, { color: gold }]}>◎</Text>
-          <Text style={[styles.title, { color: gold }]}>Enable Location</Text>
-          <Text style={[styles.bodyText, { color: colors.textMuted }]}>
-            Required for Planetary Hora — the GPS-based hora lord calculation that powers your
-            Digital Watch readings.
-          </Text>
-          <TouchableOpacity
-            style={[styles.ctaButton, { backgroundColor: gold }]}
-            onPress={() => void handleRequestLocation()}
+        {/* Slide 3 — Location */}
+        <View style={styles.slide}>
+          <Text style={[styles.bigGlyph, { color: colors.goldBright }]}>{'◎'}</Text>
+          <Text
+            style={[
+              typography('caption'),
+              { color: colors.textFaint, letterSpacing: 2.5, marginBottom: 4 },
+            ]}
           >
-            <Text style={[styles.ctaText, { color: colors.bg }]}>Allow Location</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.skipLink} onPress={handleNext}>
-            <Text style={[styles.skipText, { color: dim }]}>Skip for now</Text>
-          </TouchableOpacity>
+            {'AL-MAWQI — THE ANCHOR'}
+          </Text>
+          <Text
+            style={[
+              typography('subheading'),
+              { color: colors.goldBright, textAlign: 'center', letterSpacing: 1 },
+            ]}
+          >
+            {'Enable Location'}
+          </Text>
+          <Text
+            style={[
+              typography('body'),
+              { color: colors.textMuted, textAlign: 'center', lineHeight: 26, marginTop: 4 },
+            ]}
+          >
+            {'Required for Planetary Hora — the hora lord calculation that powers your readings.'}
+          </Text>
+          <Pressable
+            onPress={() => void handleRequestLocation()}
+            style={({ pressed }) => [
+              styles.cta,
+              { backgroundColor: colors.primary, opacity: pressed ? 0.85 : 1 },
+            ]}
+          >
+            <Text style={[typography('button'), { color: colors.textOnPrimary }]}>
+              {'Allow Location'}
+            </Text>
+          </Pressable>
+          <Pressable onPress={handleNext} style={styles.skipBtn} hitSlop={8}>
+            <Text style={[typography('caption'), { color: colors.textFaint, letterSpacing: 1 }]}>
+              {'Skip for now'}
+            </Text>
+          </Pressable>
         </View>
 
-        {/* Slide 4: Ready */}
-        <View style={[styles.slide, slideStyle]}>
-          <View style={styles.slideMarker} />
-          <Text style={[styles.star, { color: gold }]}>✦</Text>
-          <Text style={[styles.title, { color: gold }]}>Your oracle is ready.</Text>
-          <Text style={[styles.bodyText, { color: colors.textMuted }]}>
-            Ask your first question.
-          </Text>
-          <TouchableOpacity
-            style={[styles.ctaButton, { backgroundColor: gold }]}
-            onPress={handleFinish}
+        {/* Slide 4 — Ready */}
+        <View style={styles.slide}>
+          <Text style={[styles.bigGlyph, { color: colors.goldBright }]}>{'✦'}</Text>
+          <OrnamentRow colors={colors} />
+          <Text
+            style={[
+              typography('subheading'),
+              {
+                color: colors.goldBright,
+                textAlign: 'center',
+                letterSpacing: 1.6,
+                textTransform: 'uppercase',
+              },
+            ]}
           >
-            <Text style={[styles.ctaText, { color: colors.bg }]}>Enter Shams-Al-Asrār</Text>
-          </TouchableOpacity>
+            {'Your Oracle is Ready'}
+          </Text>
+          <Text
+            style={[
+              typography('body'),
+              { color: colors.textMuted, textAlign: 'center', marginTop: 4 },
+            ]}
+          >
+            {'Ask your first question.'}
+          </Text>
+          <Pressable
+            onPress={handleFinish}
+            style={({ pressed }) => [
+              styles.cta,
+              { backgroundColor: colors.primary, opacity: pressed ? 0.85 : 1 },
+            ]}
+          >
+            <Text style={[typography('button'), { color: colors.textOnPrimary }]}>
+              {'Enter Shams al-Asrār'}
+            </Text>
+          </Pressable>
         </View>
       </ScrollView>
 
+      {/* Pagination */}
       <View style={styles.pagination}>
-        {[0, 1, 2, 3].map(i => (
-          <View key={i} style={[styles.dot, { backgroundColor: i === activeIndex ? gold : dim }]} />
-        ))}
+        <View style={styles.dotsRow}>
+          {[0, 1, 2, 3].map(i => (
+            <View
+              key={i}
+              style={[
+                styles.dot,
+                {
+                  backgroundColor: i === activeIndex ? colors.goldBright : colors.textFaint,
+                  width: i === activeIndex ? 22 : 7,
+                },
+              ]}
+            />
+          ))}
+        </View>
         {activeIndex < 3 && (
-          <TouchableOpacity style={styles.nextArrow} onPress={handleNext}>
-            <Text style={[styles.nextText, { color: gold }]}>Next →</Text>
-          </TouchableOpacity>
+          <Pressable onPress={handleNext} style={styles.nextBtn} hitSlop={8}>
+            <Text
+              style={[
+                typography('label'),
+                { color: colors.goldBright, letterSpacing: 1.5, textTransform: 'uppercase' },
+              ]}
+            >
+              {'Next  →'}
+            </Text>
+          </Pressable>
         )}
       </View>
     </SafeAreaView>
   );
 };
 
+const OrnamentRow: React.FC<{ colors: ReturnType<typeof useColors> }> = ({ colors }) => (
+  <View style={ornStyles.row}>
+    <View style={[ornStyles.line, { backgroundColor: colors.goldBright }]} />
+    <Text style={{ color: colors.goldBright, fontSize: 9, marginHorizontal: 10, opacity: 0.5 }}>
+      {'✦  ✦  ✦'}
+    </Text>
+    <View style={[ornStyles.line, { backgroundColor: colors.goldBright }]} />
+  </View>
+);
+
+const ornStyles = StyleSheet.create({
+  row: { flexDirection: 'row', alignItems: 'center', width: '100%', marginVertical: 6 },
+  line: { flex: 1, height: 1, opacity: 0.25 },
+});
+
 const styles = StyleSheet.create({
-  container: { flex: 1, paddingBottom: 28 },
+  root: { flex: 1 },
+  slider: { flex: 1 },
   slide: {
     width,
+    flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 40,
-    paddingTop: 48,
-    gap: 18,
-    borderRadius: 32,
-    borderWidth: StyleSheet.hairlineWidth,
-    shadowColor: '#000',
-    shadowOpacity: 0.16,
-    shadowRadius: 28,
-    shadowOffset: { width: 0, height: 10 },
-    elevation: 6,
+    paddingHorizontal: 36,
+    paddingBottom: 96,
+    gap: 10,
   },
-  slideMarker: {
-    width: 48,
-    height: 4,
-    borderRadius: 2,
-    marginBottom: 16,
-    opacity: 0.85,
-  },
-  arabicTitle: {
-    fontSize: 38,
-    fontFamily: 'Amiri-Regular',
+  bigGlyph: {
+    fontSize: 48,
     textAlign: 'center',
-    letterSpacing: 1.2,
+    marginBottom: 4,
   },
-  subtitle: {
-    fontSize: 18,
-    fontFamily: 'Cairo-Regular',
-    marginTop: 10,
-    letterSpacing: 0.4,
+  modesRow: {
+    flexDirection: 'row',
+    alignItems: 'stretch',
+    width: '100%',
   },
-  bodyText: {
-    fontSize: 16,
-    fontFamily: 'Cairo-Regular',
-    textAlign: 'center',
-    marginTop: 18,
-    lineHeight: 26,
-    maxWidth: 320,
-  },
-  star: { fontSize: 40, marginTop: 40 },
-  modesContainer: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  modeHalf: {
+  modeCard: {
     flex: 1,
     alignItems: 'center',
     padding: 18,
-    borderRadius: 24,
+    borderRadius: 20,
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: '#ffffff22',
-    backgroundColor: '#ffffff08',
+    gap: 0,
   },
-  modeIcon: { fontSize: 36, marginBottom: 16 },
-  modeTitle: { fontSize: 14, fontFamily: 'Cairo-Bold', textAlign: 'center' },
-  modeText: { fontSize: 12, fontFamily: 'Cairo-Regular', textAlign: 'center', marginTop: 10, lineHeight: 18 },
-  divider: { width: 1, height: 100, backgroundColor: '#ffffff12' },
-  title: { fontSize: 26, fontFamily: 'Cinzel-Regular', textAlign: 'center', letterSpacing: 0.8 },
-  ctaButton: {
-    marginTop: 40,
+  modeGlyph: {
+    fontSize: 30,
+    textAlign: 'center',
+    marginBottom: 12,
+  },
+  modeDivider: {
+    width: StyleSheet.hairlineWidth,
+    marginHorizontal: 12,
+    alignSelf: 'stretch',
+    opacity: 0.4,
+  },
+  cta: {
+    marginTop: 24,
     paddingVertical: 16,
-    paddingHorizontal: 34,
-    borderRadius: 26,
+    paddingHorizontal: 40,
+    borderRadius: 20,
+    alignItems: 'center',
     shadowColor: '#000',
-    shadowOpacity: 0.16,
-    shadowRadius: 20,
+    shadowOpacity: 0.15,
+    shadowRadius: 18,
     shadowOffset: { width: 0, height: 10 },
     elevation: 4,
   },
-  ctaText: { fontSize: 16, fontFamily: 'Cairo-SemiBold', textTransform: 'uppercase', letterSpacing: 1 },
-  skipLink: { marginTop: 16 },
-  skipText: { fontSize: 12, fontFamily: 'Cairo-Regular', letterSpacing: 0.8 },
+  skipBtn: {
+    marginTop: 10,
+    paddingVertical: 8,
+  },
   pagination: {
     position: 'absolute',
-    bottom: 40,
+    bottom: 36,
     width: '100%',
-    flexDirection: 'row',
-    justifyContent: 'center',
     alignItems: 'center',
+    gap: 14,
   },
-  dot: { width: 9, height: 9, borderRadius: 4.5, marginHorizontal: 5 },
-  nextArrow: { position: 'absolute', right: 30 },
-  nextText: { fontSize: 14, fontFamily: 'Cairo-Regular', letterSpacing: 1 },
+  dotsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  dot: {
+    height: 5,
+    borderRadius: 3,
+  },
+  nextBtn: {
+    paddingVertical: 4,
+  },
 });
 
 export default OnboardingScreen;

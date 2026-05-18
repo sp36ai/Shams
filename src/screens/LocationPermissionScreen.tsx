@@ -51,6 +51,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Circle, G, Line, Path } from 'react-native-svg';
+import StarfieldBackground from '@components/StarfieldBackground';
 
 import { useColors, useTheme } from '@theme/ThemeProvider';
 import { useTypography } from '@theme/useTypography';
@@ -137,59 +138,95 @@ const LocationPermissionScreen: React.FC = () => {
       style={[styles.root, { backgroundColor: theme.colors.bg }]}
       edges={['top', 'bottom']}
     >
+      <StarfieldBackground
+        starColor={colors.starfield}
+        nebula1={colors.nebula1}
+        nebula2={colors.nebula2}
+        nebula3={colors.nebula3}
+      />
+
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
         bounces={false}
       >
-        <View style={[styles.card, { backgroundColor: colors.surfaceElevated, borderColor: colors.border }]}> 
+        {/* Supra-label */}
+        <View style={styles.supraWrap}>
+          <Text style={[typography('caption'), { color: colors.textFaint, letterSpacing: 2.5 }]}>
+            {'AL-MAWQI — THE ANCHOR'}
+          </Text>
+          <View style={styles.supraLine}>
+            <View style={[styles.supraHairline, { backgroundColor: colors.goldBright }]} />
+            <Text style={{ color: colors.goldBright, fontSize: 9, marginHorizontal: 10, opacity: 0.45 }}>{'✦'}</Text>
+            <View style={[styles.supraHairline, { backgroundColor: colors.goldBright }]} />
+          </View>
+        </View>
+
+        <View style={[styles.card, { backgroundColor: colors.surfaceElevated, borderColor: colors.borderAccent }]}>
           <View style={styles.illustrationWrap}>
-            <CompassPinIllustration accent={colors.accent} muted={colors.textFaint} />
+            <CompassPinIllustration accent={colors.accent} muted={colors.textFaint} amber={colors.amber} />
           </View>
 
-          <Text style={[typography('title'), styles.title, { color: colors.text }]}>{titleText}</Text>
-
-          <Text style={[typography('body'), styles.body, { color: colors.textMuted }]}>
-          {bodyText}
-        </Text>
-
-        <View style={styles.actions}>
-          <Pressable
-            onPress={isDenied && status === 'blocked' ? handleOpenSettings : handleGrant}
-            disabled={isLoading}
-            style={({ pressed }) => [
-              styles.primaryButton,
-              {
-                backgroundColor: colors.primary,
-                opacity: isLoading ? 0.7 : pressed ? 0.85 : 1,
-              },
+          <Text
+            style={[
+              typography('subheading'),
+              styles.title,
+              { color: colors.goldBright },
             ]}
           >
-            {isLoading ? (
-              <ActivityIndicator color={colors.textOnPrimary} />
-            ) : (
-              <Text
-                style={[typography('button'), { color: colors.textOnPrimary, textAlign: 'center' }]}
-              >
-                {status === 'blocked' ? t('permission.openSettings') : t('permission.grantAccess')}
-              </Text>
-            )}
-          </Pressable>
+            {titleText}
+          </Text>
 
-          {/* Skip button removed — location is now MANDATORY */}
+          <View style={styles.titleRule}>
+            <View style={[styles.ruleHairline, { backgroundColor: colors.goldBright }]} />
+          </View>
+
+          <Text style={[typography('body'), styles.body, { color: colors.textMuted }]}>
+            {bodyText}
+          </Text>
+
+          <View style={styles.actions}>
+            <Pressable
+              onPress={isDenied && status === 'blocked' ? handleOpenSettings : handleGrant}
+              disabled={isLoading}
+              style={({ pressed }) => [
+                styles.primaryButton,
+                {
+                  backgroundColor: colors.primary,
+                  shadowColor: colors.accent,
+                  shadowOpacity: pressed ? 0.2 : 0.45,
+                  shadowRadius: pressed ? 4 : 16,
+                  shadowOffset: { width: 0, height: pressed ? 1 : 6 },
+                  elevation: pressed ? 2 : 6,
+                  opacity: isLoading ? 0.7 : pressed ? 0.9 : 1,
+                },
+              ]}
+            >
+              {isLoading ? (
+                <ActivityIndicator color={colors.textOnPrimary} />
+              ) : (
+                <Text
+                  style={[typography('button'), { color: colors.textOnPrimary, textAlign: 'center' }]}
+                >
+                  {status === 'blocked' ? t('permission.openSettings') : t('permission.grantAccess')}
+                </Text>
+              )}
+            </Pressable>
+          </View>
         </View>
-      </View>
 
-        {/* Privacy reassurance — engineered, not generic */}
+        {/* Privacy notice */}
         <Text
           style={[
             typography('caption'),
-            { color: colors.textFaint, textAlign: 'center', marginTop: 24, paddingHorizontal: 16 },
+            { color: colors.textFaint, textAlign: 'center', paddingHorizontal: 16, lineHeight: 18 },
           ]}
         >
+          {'✦  '}
           {Platform.OS === 'android'
             ? 'Coordinates are captured at the moment of each question and stored on this device.'
             : 'Coordinates stay on this device.'}
+          {'  ✦'}
         </Text>
       </ScrollView>
     </SafeAreaView>
@@ -200,58 +237,103 @@ const LocationPermissionScreen: React.FC = () => {
 /*  Inline illustration — compass with location pin                           */
 /* -------------------------------------------------------------------------- */
 
-const CompassPinIllustration: React.FC<{ accent: string; muted: string }> = ({ accent, muted }) => {
-  const size = 180;
+const CompassPinIllustration: React.FC<{ accent: string; muted: string; amber: string }> = ({
+  accent,
+  muted,
+  amber,
+}) => {
+  const size = 200;
   const cx = size / 2;
   const cy = size / 2;
 
   return (
     <Svg width={size} height={size}>
-      {/* Outer compass ring */}
-      <Circle cx={cx} cy={cy} r={70} stroke={muted} strokeWidth={1} fill="none" opacity={0.5} />
-      <Circle cx={cx} cy={cy} r={58} stroke={muted} strokeWidth={1} fill="none" opacity={0.3} />
-      {/* Cardinal ticks (N, E, S, W) */}
+      {/* Outer zodiac tick ring */}
+      <Circle cx={cx} cy={cy} r={88} stroke={accent} strokeOpacity={0.12} strokeWidth={14} fill="none" />
+      <Circle cx={cx} cy={cy} r={88} stroke={accent} strokeOpacity={0.3} strokeWidth={1} fill="none" />
+      {Array.from({ length: 12 }).map((_, i) => {
+        const rad = (i * 30 - 90) * (Math.PI / 180);
+        const isMain = i % 3 === 0;
+        const r1 = 88;
+        const r2 = isMain ? 78 : 82;
+        return (
+          <Line
+            key={`tick-${i}`}
+            x1={cx + r1 * Math.cos(rad)}
+            y1={cy + r1 * Math.sin(rad)}
+            x2={cx + r2 * Math.cos(rad)}
+            y2={cy + r2 * Math.sin(rad)}
+            stroke={isMain ? amber : accent}
+            strokeWidth={isMain ? 2 : 1}
+            opacity={isMain ? 0.7 : 0.4}
+          />
+        );
+      })}
+
+      {/* Inner compass ring */}
+      <Circle cx={cx} cy={cy} r={68} stroke={muted} strokeWidth={1} fill="none" opacity={0.4} />
+      <Circle cx={cx} cy={cy} r={56} stroke={muted} strokeWidth={1} fill="none" opacity={0.2} />
+
+      {/* Cardinal ticks */}
       {[0, 90, 180, 270].map(deg => {
         const rad = (deg - 90) * (Math.PI / 180);
-        const x1 = cx + 70 * Math.cos(rad);
-        const y1 = cy + 70 * Math.sin(rad);
-        const x2 = cx + 60 * Math.cos(rad);
-        const y2 = cy + 60 * Math.sin(rad);
-        return <Line key={deg} x1={x1} y1={y1} x2={x2} y2={y2} stroke={accent} strokeWidth={2} />;
+        const isNorth = deg === 0;
+        return (
+          <Line
+            key={deg}
+            x1={cx + 68 * Math.cos(rad)}
+            y1={cy + 68 * Math.sin(rad)}
+            x2={cx + 56 * Math.cos(rad)}
+            y2={cy + 56 * Math.sin(rad)}
+            stroke={isNorth ? amber : accent}
+            strokeWidth={isNorth ? 2.5 : 1.5}
+          />
+        );
       })}
-      {/* North needle (filled triangle pointing up) */}
+
+      {/* Compass needle */}
       <G>
         <Path
-          d={`M ${cx} ${cy - 50} L ${cx - 8} ${cy + 4} L ${cx + 8} ${cy + 4} Z`}
-          fill={accent}
+          d={`M ${cx} ${cy - 48} L ${cx - 7} ${cy + 4} L ${cx + 7} ${cy + 4} Z`}
+          fill={amber}
+          opacity={0.95}
         />
         <Path
-          d={`M ${cx} ${cy + 50} L ${cx - 8} ${cy - 4} L ${cx + 8} ${cy - 4} Z`}
+          d={`M ${cx} ${cy + 48} L ${cx - 7} ${cy - 4} L ${cx + 7} ${cy - 4} Z`}
           fill={muted}
-          opacity={0.6}
+          opacity={0.5}
         />
       </G>
-      {/* Center pin head */}
-      <Circle cx={cx} cy={cy} r={6} fill={accent} />
-      <Circle cx={cx} cy={cy} r={3} fill={muted} opacity={0.9} />
+
+      {/* Center hub */}
+      <Circle cx={cx} cy={cy} r={7} fill={accent} />
+      <Circle cx={cx} cy={cy} r={3.5} fill={muted} opacity={0.9} />
     </Svg>
   );
 };
 
 const styles = StyleSheet.create({
-  root: {
-    flex: 1,
-  },
+  root: { flex: 1 },
   scrollContent: {
     flexGrow: 1,
     paddingHorizontal: 24,
     paddingVertical: 32,
     justifyContent: 'center',
-    gap: 24,
+    gap: 20,
   },
-  illustrationWrap: {
+  supraWrap: {
     alignItems: 'center',
-    marginBottom: 32,
+    gap: 8,
+  },
+  supraLine: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    width: '100%',
+  },
+  supraHairline: {
+    flex: 1,
+    height: StyleSheet.hairlineWidth,
+    opacity: 0.3,
   },
   card: {
     borderRadius: 24,
@@ -262,15 +344,28 @@ const styles = StyleSheet.create({
     shadowRadius: 18,
     shadowOffset: { width: 0, height: 10 },
     elevation: 3,
+    gap: 0,
+  },
+  illustrationWrap: {
+    alignItems: 'center',
+    marginBottom: 20,
   },
   title: {
     textAlign: 'center',
-    marginBottom: 16,
     letterSpacing: 0.8,
+  },
+  titleRule: {
+    alignItems: 'center',
+    marginVertical: 14,
+  },
+  ruleHairline: {
+    width: 48,
+    height: StyleSheet.hairlineWidth,
+    opacity: 0.3,
   },
   body: {
     textAlign: 'center',
-    marginBottom: 32,
+    marginBottom: 24,
     lineHeight: 24,
   },
   actions: {
@@ -283,20 +378,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     minHeight: 56,
-    shadowColor: '#000',
-    shadowOpacity: 0.15,
-    shadowRadius: 18,
-    shadowOffset: { width: 0, height: 10 },
-    elevation: 4,
-  },
-  secondaryButton: {
-    paddingVertical: 16,
-    paddingHorizontal: 24,
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: StyleSheet.hairlineWidth,
-    minHeight: 52,
   },
 });
 
