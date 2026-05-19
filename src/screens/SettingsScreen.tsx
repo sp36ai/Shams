@@ -6,6 +6,7 @@ import React, { useCallback } from 'react';
 import { Alert, Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import StarfieldBackground from '@components/StarfieldBackground';
+import { ThemeSwitcher } from '@components/ThemeSwitcher';
 
 import { useColors, useTheme } from '@theme/ThemeProvider';
 import { useTypography } from '@theme/useTypography';
@@ -15,10 +16,9 @@ import { useSettingsStore } from '@stores/settingsStore';
 import { useAuthStore, selectUserName, selectUserEmail } from '@stores/authStore';
 import { useReadingsStore, type VerdictKind } from '@stores/readingsStore';
 import { useQuotaStore, FREE_DAILY_LIMIT, type PlanTier } from '@stores/quotaStore';
-import type { ThemeId } from '@theme/themes';
 
 const SettingsScreen: React.FC = () => {
-  const { theme, themeId, setThemeId, availableThemes } = useTheme();
+  const { theme } = useTheme();
   const colors = useColors();
   const typography = useTypography();
   const t = useTranslation();
@@ -45,15 +45,6 @@ const SettingsScreen: React.FC = () => {
       },
     ]);
   }, [signOut, t]);
-
-  const handleThemeChange = useCallback(
-    (id: ThemeId) => {
-      if (id !== themeId) {
-        setThemeId(id);
-      }
-    },
-    [themeId, setThemeId],
-  );
 
   const handleLanguageChange = useCallback(
     (next: LangCode) => {
@@ -112,62 +103,7 @@ const SettingsScreen: React.FC = () => {
 
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         <Section title={t('settings.appearanceSection')}>
-          <Text
-            style={[
-              typography('label'),
-              { color: colors.textMuted, marginBottom: 8, letterSpacing: 1, fontSize: 10 },
-            ]}
-          >
-            {t('settings.themeLabel').toUpperCase()}
-          </Text>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.themeCardRow}
-          >
-            {availableThemes.map(th => {
-              const selected = th.id === themeId;
-              return (
-                <Pressable
-                  key={th.id}
-                  onPress={() => handleThemeChange(th.id)}
-                  accessibilityRole="button"
-                  accessibilityLabel={th.name}
-                  accessibilityState={{ selected }}
-                  style={({ pressed }) => [
-                    styles.themeCard,
-                    {
-                      backgroundColor: th.colors.bg,
-                      borderColor: selected ? th.colors.accent : th.colors.border,
-                      borderWidth: selected ? 1.5 : StyleSheet.hairlineWidth,
-                      opacity: pressed ? 0.8 : 1,
-                    },
-                  ]}
-                >
-                  {/* Accent dot */}
-                  <View style={[styles.themeCardDot, { backgroundColor: th.colors.accent }]} />
-                  {/* Name */}
-                  <Text
-                    style={[styles.themeCardName, { color: th.colors.accent }]}
-                    numberOfLines={2}
-                  >
-                    {th.name}
-                  </Text>
-                  {/* Subtitle */}
-                  <Text
-                    style={[styles.themeCardSub, { color: th.colors.textFaint }]}
-                    numberOfLines={2}
-                  >
-                    {th.subtitle}
-                  </Text>
-                  {/* Active indicator bar */}
-                  {selected && (
-                    <View style={[styles.themeCardBar, { backgroundColor: th.colors.accent }]} />
-                  )}
-                </Pressable>
-              );
-            })}
-          </ScrollView>
+          <ThemeSwitcher />
 
           <Row label={t('settings.languageLabel')} colors={colors} typography={typography}>
             <View style={styles.langRow}>
@@ -505,47 +441,6 @@ const styles = StyleSheet.create({
     shadowRadius: 10,
     shadowOffset: { width: 0, height: 4 },
     elevation: 1,
-  },
-  themeCardRow: {
-    gap: 10,
-    paddingBottom: 4,
-  },
-  themeCard: {
-    width: 96,
-    height: 118,
-    borderRadius: 20,
-    padding: 14,
-    justifyContent: 'flex-start',
-    overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 2,
-  },
-  themeCardDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    marginBottom: 10,
-  },
-  themeCardName: {
-    fontSize: 9,
-    fontWeight: '700',
-    letterSpacing: 0.5,
-    lineHeight: 13,
-  },
-  themeCardSub: {
-    fontSize: 7,
-    marginTop: 3,
-    lineHeight: 11,
-  },
-  themeCardBar: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    height: 2,
   },
   langRow: {
     flexDirection: 'row',

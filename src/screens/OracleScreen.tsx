@@ -8,7 +8,7 @@
  *   - Animated StarfieldBackground
  */
 
-import React, { useCallback, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
@@ -487,6 +487,7 @@ const OracleScreen: React.FC = () => {
   const lastLocation = useSettingsStore(
     (s: ReturnType<typeof useSettingsStore.getState>) => s.lastLocation,
   );
+
   const addReading = useReadingsStore(
     (s: ReturnType<typeof useReadingsStore.getState>) => s.addReading,
   );
@@ -522,6 +523,13 @@ const OracleScreen: React.FC = () => {
   const [lastReading, setLastReading] = useState<Reading | null>(null);
   const listRef = useRef<FlatList<ChatMessage> | null>(null);
 
+  // Step 6 — Verify it is working
+  const { themeId, theme: activeTheme } = useTheme();
+  console.log('=== THEME CHECK ===');
+  console.log('ID:', themeId);
+  console.log('BG:', activeTheme.colors.bg);
+  console.log('GOLD:', activeTheme.colors.gold);
+
   const lonDegForTiming = lastLocation?.lon ?? 74.3587;
   const { horaLord, dayLord } = useTimingStrip(lonDegForTiming);
 
@@ -530,6 +538,31 @@ const OracleScreen: React.FC = () => {
     stage === 'answered'
       ? (FOLLOWUP_CHIPS[lang] ?? FOLLOWUP_CHIPS.en)
       : (INITIAL_CHIPS[lang] ?? INITIAL_CHIPS.en);
+
+  // Auto-fetch GPS on mount when permission was granted but no fix is stored.
+  // Covers: fresh installs, DEV builds that bypass LocationPermissionScreen,
+  // and users whose GPS fix failed during onboarding.
+  useEffect(() => {
+    const s = useSettingsStore.getState();
+    if (s.lastLocation !== null) {
+      return;
+    }
+    if (!s.onboardingPermissionGranted && !__DEV__) {
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      pos => {
+        useSettingsStore.getState().setLastLocation({
+          lat: pos.coords.latitude,
+          lon: pos.coords.longitude,
+          label: null,
+          capturedAt: Date.now(),
+        });
+      },
+      () => { /* silent — user will see location chip as "required" */ },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 },
+    );
+  }, []); // run once on mount only
 
   // ── Core send logic ─────────────────────────────────────────────────────────
 
@@ -625,18 +658,38 @@ const OracleScreen: React.FC = () => {
 
       const now = new Date().toISOString();
 
-      // ── Location gate — BEFORE consumeOne so quota is never burned ──────────
-      if (lastLocation === null || lastLocation.lat === null || lastLocation.lon === null) {
-        const userMsg: ChatMessage = { id: `u_${now}`, sender: 'user', text, createdAt: now };
-        const locationMsg: ChatMessage = {
-          id: `s_noloc_${now}`,
-          sender: 'shams',
-          text: t('errors.locationRequired'),
-          // no `reading` attached — AstroVerdictCard never mounts
-          createdAt: now,
-        };
-        setMessages(prev => [locationMsg, userMsg, ...prev]);
-        return; // quota untouched, engine never called
+      // ── Resolve coordinates — BEFORE consumeOne so quota is never burned ────
+      // If no stored location, attempt a live GPS fix (covers first launch / DEV builds
+      // that bypass LocationPermissionScreen). We work with explicit lat/lon variables
+      // so the closure doesn't need to re-read the store after the async fix.
+      let resolvedLat: number | null = lastLocation?.lat ?? null;
+      let resolvedLon: number | null = lastLocation?.lon ?? null;
+
+      if (resolvedLat === null || resolvedLon === null) {
+        const liveCoords = await new Promise<{ lat: number; lon: number } | null>(resolve => {
+          navigator.geolocation.getCurrentPosition(
+            pos => resolve({ lat: pos.coords.latitude, lon: pos.coords.longitude }),
+            () => resolve(null),
+            { enableHighAccuracy: true, timeout: 8000, maximumAge: 30000 },
+          );
+        });
+
+        if (liveCoords === null) {
+          const userMsg: ChatMessage = { id: `u_${now}`, sender: 'user', text, createdAt: now };
+          const locationMsg: ChatMessage = {
+            id: `s_noloc_${now}`,
+            sender: 'shams',
+            text: t('errors.locationRequired'),
+            createdAt: now,
+          };
+          setMessages(prev => [locationMsg, userMsg, ...prev]);
+          return;
+        }
+
+        resolvedLat = liveCoords.lat;
+        resolvedLon = liveCoords.lon;
+        // Persist for subsequent questions — stable store action, safe outside deps array
+        useSettingsStore.getState().setLastLocation({ lat: resolvedLat, lon: resolvedLon, label: null, capturedAt: Date.now() });
       }
 
       const userMsg: ChatMessage = {
@@ -689,8 +742,8 @@ const OracleScreen: React.FC = () => {
         const reading = await runEngine({
           question: text,
           questionLang: lang,
-          lat: lastLocation.lat,   // non-null guaranteed by gate above
-          lon: lastLocation.lon,
+          lat: resolvedLat,   // guaranteed non-null by the gate above
+          lon: resolvedLon,
           locationRequiredText: t('errors.locationRequired'),
         });
 

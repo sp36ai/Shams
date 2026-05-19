@@ -91,13 +91,13 @@ const App: React.FC = () => {
   }
 
   return (
-    <SafeAreaProvider>
-      <ThemeProvider>
+    <ThemeProvider>
+      <SafeAreaProvider>
         <I18nProvider>
           <RootNavigator />
         </I18nProvider>
-      </ThemeProvider>
-    </SafeAreaProvider>
+      </SafeAreaProvider>
+    </ThemeProvider>
   );
 };
 

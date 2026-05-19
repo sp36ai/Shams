@@ -83,15 +83,15 @@ const RootNavigator: React.FC = () => {
     };
   }, [theme]);
 
-  // Keep showing splash until both the timer and auth bootstrap have resolved.
-  const splashStillShowing =
-    !BYPASS_AUTH_FOR_TESTING && (!splashElapsed || !authBootstrapped || isAuthLoading);
+  // Keep showing splash until timer elapses; in dev also wait for auth if needed.
+  const splashStillShowing = BYPASS_AUTH_FOR_TESTING
+    ? !splashElapsed
+    : !splashElapsed || !authBootstrapped || isAuthLoading;
 
   const isAuthenticated = BYPASS_AUTH_FOR_TESTING || (user !== null && !isAuthLoading);
-  // Location permission is now MANDATORY — must be granted before onboarding or main tabs
-  const needsLocationPermission =
-    !BYPASS_AUTH_FOR_TESTING && isAuthenticated && !onboardingLocationPrompted;
-  const needsOnboardingFlow = !BYPASS_AUTH_FOR_TESTING && isAuthenticated && onboardingLocationPrompted && !hasSeenOnboarding;
+  // Location permission is MANDATORY for all builds — bypass only skips auth, not location/onboarding
+  const needsLocationPermission = isAuthenticated && !onboardingLocationPrompted;
+  const needsOnboardingFlow = isAuthenticated && onboardingLocationPrompted && !hasSeenOnboarding;
 
   return (
     <NavigationContainer theme={navTheme}>

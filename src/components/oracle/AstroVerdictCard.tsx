@@ -10,6 +10,7 @@ import type {
   OracleVoice,
 } from '../../types/verdict';
 import HoraryChartWheel from './HoraryChartWheel';
+import { VerdictPill } from '../VerdictPill';
 
 // ── Oracle voice default (Ayat al-Kursi fallback) ─────────────────────────────
 
@@ -157,15 +158,8 @@ const AstroVerdictCard: React.FC<AstroVerdictCardProps> = ({ result, onSwitchMod
             {result.category.toUpperCase()}
           </Text>
         </View>
-        <View
-          style={[
-            styles.verdictBanner,
-            { borderColor: colors.border, backgroundColor: colors.surfaceElevated },
-          ]}
-        >
-          <Text style={[typography('button'), { color: colors.textMuted, letterSpacing: 2 }]}>
-            DENIED
-          </Text>
+        <View style={styles.verdictPillContainer}>
+          <VerdictPill kind="DENIED" confidence="HIGH" />
         </View>
         {result.narrative.length > 0 && (
           <Text

@@ -25,8 +25,9 @@ $metroProcess = Get-Process -Id (Get-NetTCPConnection -LocalPort 8081 -ErrorActi
 if ($metroProcess) {
     Write-Host "Metro already running. Skipping start." -ForegroundColor Yellow
 } else {
-    Write-Host "[2/4] Starting Metro Bundler in a new window..." -ForegroundColor Cyan
-    Start-Process powershell -ArgumentList "-NoExit", "-Command", "npm start" -WindowStyle Minimized
+    Write-Host "[2/4] Starting Metro Bundler with Cache Reset..." -ForegroundColor Cyan
+    # Step 5 — Kill Metro and clear ALL caches (automated)
+    Start-Process powershell -ArgumentList "-NoExit", "-Command", "npx react-native start --reset-cache" -WindowStyle Minimized
 }
 
 Write-Host "[*] Clearing Android logcat..." -ForegroundColor Gray
