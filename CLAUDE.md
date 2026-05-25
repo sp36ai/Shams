@@ -113,3 +113,63 @@ The judgment engine in `src/astrology/` is deterministic and well-documented. Th
 - **Firestore rules tests**: TypeScript, run with `npm run test:rules` from root.
 - Run a single Jest test file: `npx jest src/__tests__/judgeHorary.test.ts`
 - Run a single Vitest test file: `cd functions && npx vitest run src/__tests__/<file>`
+
+## Shams al-Asrār — Product Identity
+- App name: Shams al-Asrār | Brand: Astro Sarfaraz
+- App ID: com.astrosarfaraz.shamsalasrar
+- Target markets: India, Pakistan, Bangladesh (Urdu/Hindi speakers)
+- Positioning: symbolic destiny engine wrapped inside an Islamic mystical oracle experience
+- NOT a horoscope / zodiac / tarot / chatbot app
+- Soul pillars: hidden timing, destiny intersections, karmic echoes, celestial pressure waves, spiritual remedies
+
+## RKP Engine (NEVER surface to users)
+- Internal engine: RKP (Ratan Kotamraju Paddhati) — refined horary built on KP
+- Ephemeris: Moshier | Ayanamsa: Lahiri | Houses: Placidus
+- KP 4-level chain: sign lord → star lord → sub lord → sub-sub lord
+- Kotamraju filter: strips false significators whose own sub-lord points to denial houses
+- Sub-lord of primary cusp = verdict bearer
+- 5 Ruling Planets: day lord, Asc sign lord, Asc star lord, Moon sign lord, Moon star lord
+- horaLord is NOT a 6th RP — appended separately as extended witness at judgment time
+- NO Vimshottari Dasha, NO birth chart, NO natal native — horary only
+- Timing: 3-condition RP intersection, not confirmedSignificators[0] shortcut
+- Verdict kinds: CONFIRMED (HIGH/MEDIUM/LOW), DENIED (HIGH/MEDIUM/LOW)
+
+## Arabic Terminology Rules (Strict)
+- 28 lunar stations = Al-Manāzil al-Qamar → functions/src/engine/manazil.ts
+- Arabic-only celestial names in ALL user-facing output: Shams, al-Qamar, Zuhal, Mushtari, Zuhra, al-Mirrikh, Utarid
+- FORBIDDEN in user-facing text: Sanskrit planet names, nakshatra names, dasha terminology, house numbers, engine/mode names, formula values, raw sublord chains
+- Column header: Manzil Lord (NOT Nak Lord) in HoraryChartWheel.tsx
+
+## Oracle Modes
+- WatchVerdictCard: Digital Watch RKP mode
+- AstroVerdictCard: Astronomical RKP mode (HoraryChartWheel + KpChartGrid toggle)
+- Both route through OracleScreen with Zustand-backed useReadingHistory
+- Claude model: claude-opus-4-5 | max_tokens: 1024
+- Defensive JSON parse fallback: render Āyat al-Kursī on failure
+
+## Oracle Response Structure
+1. Cosmic introduction
+2. Unveiling / outcome
+3. Quranic verse
+4. Dua
+5. Asma al-Husna recommendation
+6. Practical remedy (Quranic verse → Asma al-Husna → Dua → Zikr → Sadaqah)
+7. Closing: "✨ These words are unveiled under the banner of Shams al-Asrār, by Astro Sarfaraz."
+
+## Monetization
+- Tiers: free | mureed | khass
+- Mureed: ₹249/month, ₹2490/year — 3 questions/day
+- Khass: ₹699/month, ₹6990/year — unlimited + both oracle modes + PDF reports
+- 7-day free trial, hard paywall on day 8 | Quota: daily (not weekly rolling)
+- SKUs: mureed_monthly, mureed_annual, khass_monthly, khass_annual
+
+## Design Tokens
+- Fonts: Cinzel-Regular, Cinzel-SemiBold, CormorantGaramond-Regular, CormorantGaramond-Italic
+- Confirmed: #4CAF82 | Denied: #E05A5A | Theme: deep-space SVG, gold/navy
+- All colors from src/theme/colors.ts — zero hardcoded hex in components
+
+## Current Blocker (Update after resolution)
+Play Console: SKUs not yet created (mureed_monthly, mureed_annual, khass_monthly, khass_annual)
+  → GCP: Confirm service account has Play Developer API access
+    → Claude Code: Install react-native-iap, wire usePurchase.ts, update PLAY_PRODUCT_MAP
+      → Firebase: Verify verifyGooglePlayPurchase function receives + writes correctly
