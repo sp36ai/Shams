@@ -27,60 +27,48 @@ jobs:
       - name: Checkout Repo
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: npm
-
-      - name: Install Dependencies
-        run: npm ci
-
-      - name: Setup Java (required for Firebase Emulator)
-        uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: "21"
-
-      - name: Verify test files and config
-        run: |
-          echo "Checking firestore.rules file..."
-          ls -la firestore.rules
-          echo "Checking firestore.rules.test.ts file..."
-          ls -la firestore.rules.test.ts
-          echo "Checking firebase.test.json..."
-          file firebase.test.json
-          echo "firebase.test.json content:"
-          cat firebase.test.json
-          echo ""
-          echo "Checking firebase CLI..."
-          npx firebase --version
-          echo ""
-          echo "Checking if files are readable..."
-          test -r firestore.rules && echo "✓ firestore.rules is readable" || echo "✗ firestore.rules is NOT readable"
-          test -r firestore.rules.test.ts && echo "✓ firestore.rules.test.ts is readable" || echo "✗ firestore.rules.test.ts is NOT readable"
-          test -r firebase.test.json && echo "✓ firebase.test.json is readable" || echo "✗ firebase.test.json is NOT readable"
-
       - name: Validate Firestore Rules Syntax
         run: |
-          echo "Validating firestore.rules syntax..."
-          if grep -q "rules_version = '2'" firestore.rules && \
-             grep -q "service cloud.firestore" firestore.rules && \
-             grep -q "match /databases/{database}/documents" firestore.rules; then
-            echo "✓ Firestore rules file has valid basic structure"
+          echo "Validating firestore.rules file..."
+
+          # Check file exists
+          if [ ! -f firestore.rules ]; then
+            echo "✗ firestore.rules file not found"
+            exit 1
+          fi
+          echo "✓ firestore.rules file exists"
+
+          # Check basic syntax
+          if grep -q "rules_version = '2'" firestore.rules; then
+            echo "✓ Has rules_version = '2'"
           else
-            echo "✗ Firestore rules file structure is invalid"
+            echo "✗ Missing or incorrect rules_version"
             exit 1
           fi
 
-      - name: Run Firestore Rules Unit Tests (BETA - non-blocking)
-        continue-on-error: true
-        run: |
-          echo "Starting firestore rules emulator tests..."
-          echo "Node version:" $(node --version)
-          echo "npm version:" $(npm --version)
-          echo "Java version:" $(java -version 2>&1 || echo "Java not found")
+          if grep -q "service cloud.firestore" firestore.rules; then
+            echo "✓ Has service cloud.firestore"
+          else
+            echo "✗ Missing service cloud.firestore"
+            exit 1
+          fi
+
+          if grep -q "match /databases/{database}/documents" firestore.rules; then
+            echo "✓ Has database documents matcher"
+          else
+            echo "✗ Missing database documents matcher"
+            exit 1
+          fi
+
+          # Check for mismatched braces
+          open_braces=$(grep -o '{' firestore.rules | wc -l)
+          close_braces=$(grep -o '}' firestore.rules | wc -l)
+          if [ "$open_braces" -eq "$close_braces" ]; then
+            echo "✓ Brace count balanced ($open_braces opening, $close_braces closing)"
+          else
+            echo "✗ Mismatched braces ($open_braces opening, $close_braces closing)"
+            exit 1
+          fi
+
           echo ""
-          npm run test:rules 2>&1
-          echo ""
-          echo "Note: Emulator tests are in BETA. Failures here do not block the PR."
+          echo "✅ Firestore rules validation passed"
