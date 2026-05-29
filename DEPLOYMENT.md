@@ -30,7 +30,20 @@ firebase projects:addfirebase shams-app-4d0e7
 # Or via Firebase Console: https://console.firebase.google.com
 ```
 
-### 3. Enable Required APIs
+### 3. Enable Billing
+
+Firestore requires billing to be enabled:
+
+```bash
+# Check billing status
+gcloud billing projects describe shams-app-4d0e7
+
+# Link billing account if needed
+gcloud billing projects link shams-app-4d0e7 \
+  --billing-account=BILLING_ACCOUNT_ID
+```
+
+### 4. Enable Required APIs
 
 ```bash
 gcloud services enable \
@@ -39,10 +52,12 @@ gcloud services enable \
   artifactregistry.googleapis.com \
   firestore.googleapis.com \
   identitytoolkit.googleapis.com \
-  iap.googleapis.com
+  iap.googleapis.com \
+  cloudlogging.googleapis.com \
+  secretmanager.googleapis.com
 ```
 
-### 4. Local Tools
+### 5. Local Tools
 
 ```bash
 # Node.js 22+
@@ -74,7 +89,8 @@ Follow these steps in [Firebase Console](https://console.firebase.google.com):
 2. Create database:
    - **Mode**: Production (security rules are strict)
    - **Region**: `us-central1` (or nearest region)
-3. Do NOT use Firestore in Datastore mode
+   - **Billing**: Requires billing enabled (see step 3 above)
+3. Do NOT use Firestore in Datastore mode (use Native mode)
 
 ### Cloud Functions
 
@@ -331,9 +347,9 @@ If app fails with "App Check failed", ensure:
 
 ## Post-Deployment
 
-1. **Monitor logs** for errors
-2. **Test payment flows** (IAP + Razorpay)
-3. **Run security audit** (see SECURITY_AUDIT.md if available)
+1. **Monitor logs** for errors (see Cloud Logging section above)
+2. **Test payment flows** (IAP + Razorpay) with test accounts
+3. **Run security audit** before public release
 4. **Announce beta** to test users
 5. **Collect feedback** on app store / user surveys
 
@@ -347,4 +363,4 @@ If app fails with "App Check failed", ensure:
 
 ---
 
-**Status**: This guide covers Firebase project setup through Cloud Build/GitHub Actions. For Android app release to Play Store, see [RELEASE_GUIDE.md](./RELEASE_GUIDE.md) (if available) or consult Android documentation.
+**Status**: This guide covers Firebase project setup and Cloud Functions deployment. For Android app release to Play Store, consult [Android App Publishing Guide](https://developer.android.com/distribute/console/answer/9859455) or contact your release manager.

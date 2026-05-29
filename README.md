@@ -36,7 +36,7 @@ Deterministic RKP horary oracle with Firebase backend and in-app subscriptions.
 
 ## Backend Endpoints
 
-### Public Callable Functions
+### User-Facing Callable Functions
 
 - **`askOracle`** — Horary judgment: validates input, enforces quota, builds chart, calls RKP engine, returns verdict
 - **`getQuota`** — Returns user's plan, daily usage, and remaining questions
@@ -45,8 +45,10 @@ Deterministic RKP horary oracle with Firebase backend and in-app subscriptions.
 - **`verifyGooglePlayPurchase`** — IAP verification: contacts Google Play API, updates user plan and custom claims
 - **`razorpayWebhook`** — HTTP endpoint for Razorpay subscription events (payment.captured, subscription.activated)
 
-### Health
-- **`health`** — Readiness/liveness check for uptime monitoring
+### Admin-Only Functions
+
+- **`setAdminClaim`** — Admin privilege management (admin-only, requires existing admin status)
+- **`health`** — Readiness/liveness check (public, no auth required)
 
 ## RKP Engine
 
