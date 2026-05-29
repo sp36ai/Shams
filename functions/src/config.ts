@@ -49,14 +49,14 @@ export const RATE_LIMIT_PER_MINUTE = defineInt('RATE_LIMIT_PER_MINUTE', {
  */
 export const PLAY_PRODUCT_MAP: Record<string, PlanTier> = {
   mureed_monthly: 'mureed',
-  mureed_annual:  'mureed',
-  khass_monthly:  'khass',
-  khass_annual:   'khass',
+  mureed_annual: 'mureed',
+  khass_monthly: 'khass',
+  khass_annual: 'khass',
 };
 
 /** Plan durations in days (for expiry calculation). */
 export const PLAN_DURATION_DAYS: Record<PlanTier, number> = {
-  free:   0,  // never expires
+  free: 0, // never expires
   mureed: 31, // monthly billing cycle
-  khass:  31, // monthly billing cycle (annual handled by Play Store)
+  khass: 31, // monthly billing cycle (annual handled by Play Store)
 };

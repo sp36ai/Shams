@@ -21,7 +21,7 @@ function normalizeHeader(v: string | string[] | undefined): string | undefined {
 }
 
 function getIp(req: Request): string | undefined {
-  const xff = normalizeHeader(req.headers['x-forwarded-for'] as string | string[] | undefined);
+  const xff = normalizeHeader(req.headers['x-forwarded-for']);
   if (xff) {
     const first = xff.split(',')[0]?.trim();
     if (first) {
