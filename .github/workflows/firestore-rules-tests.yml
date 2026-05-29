@@ -61,13 +61,26 @@ jobs:
           test -r firestore.rules.test.ts && echo "✓ firestore.rules.test.ts is readable" || echo "✗ firestore.rules.test.ts is NOT readable"
           test -r firebase.test.json && echo "✓ firebase.test.json is readable" || echo "✗ firebase.test.json is NOT readable"
 
-      - name: Run Firestore Rules Unit Tests (with debugging)
+      - name: Validate Firestore Rules Syntax
         run: |
-          echo "Starting firestore rules test..."
+          echo "Validating firestore.rules syntax..."
+          if grep -q "rules_version = '2'" firestore.rules && \
+             grep -q "service cloud.firestore" firestore.rules && \
+             grep -q "match /databases/{database}/documents" firestore.rules; then
+            echo "✓ Firestore rules file has valid basic structure"
+          else
+            echo "✗ Firestore rules file structure is invalid"
+            exit 1
+          fi
+
+      - name: Run Firestore Rules Unit Tests (BETA - non-blocking)
+        continue-on-error: true
+        run: |
+          echo "Starting firestore rules emulator tests..."
           echo "Node version:" $(node --version)
           echo "npm version:" $(npm --version)
           echo "Java version:" $(java -version 2>&1 || echo "Java not found")
           echo ""
-          npm run test:rules 2>&1 || true
+          npm run test:rules 2>&1
           echo ""
-          echo "Test completed with exit code: $?"
+          echo "Note: Emulator tests are in BETA. Failures here do not block the PR."
