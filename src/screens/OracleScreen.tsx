@@ -167,20 +167,20 @@ function readingToAstroResult(reading: Reading): AstroVerdictResult {
     rulingPlanets,
     timing: vj?.timing?.window
       ? {
-        window: vj.timing.window,
-        range: { min: vj.timing.range?.min ?? 0, max: vj.timing.range?.max ?? 1 },
-        activeDasha: vj.timing.activeDasha,
-        activeAntardasha: vj.timing.activeAntardasha,
-      }
+          window: vj.timing.window,
+          range: { min: vj.timing.range?.min ?? 0, max: vj.timing.range?.max ?? 1 },
+          activeDasha: vj.timing.activeDasha,
+          activeAntardasha: vj.timing.activeAntardasha,
+        }
       : undefined,
     remedy: vj?.remedy?.action
       ? {
-        planet: vj.remedy.planet ?? '—',
-        action: vj.remedy.action,
-        avoid: vj.remedy.avoid ?? '',
-        zikr: vj.remedy.zikr,
-        charity: vj.remedy.charity,
-      }
+          planet: vj.remedy.planet ?? '—',
+          action: vj.remedy.action,
+          avoid: vj.remedy.avoid ?? '',
+          zikr: vj.remedy.zikr,
+          charity: vj.remedy.charity,
+        }
       : undefined,
     narrative,
     createdAt: reading.createdAt,
@@ -288,9 +288,15 @@ function detectIntent(text: string): FollowupIntent {
 // ── Followup response builders ────────────────────────────────────────────────
 
 const ARABIC_PLANET_NAME: Record<string, string> = {
-  Sun: 'Shams', Moon: 'al-Qamar', Mars: 'al-Mirrikh',
-  Mercury: 'Utarid', Jupiter: 'Mushtari', Venus: 'Zuhra',
-  Saturn: 'Zuhal', Rahu: "al-Ra's", Ketu: 'al-Dhanab',
+  Sun: 'Shams',
+  Moon: 'al-Qamar',
+  Mars: 'al-Mirrikh',
+  Mercury: 'Utarid',
+  Jupiter: 'Mushtari',
+  Venus: 'Zuhra',
+  Saturn: 'Zuhal',
+  Rahu: "al-Ra's",
+  Ketu: 'al-Dhanab',
 };
 
 function timingResponse(reading: Reading, lang: 'en' | 'ur' | 'hi'): string {
@@ -340,7 +346,7 @@ function whyResponse(reading: Reading, lang: 'en' | 'ur' | 'hi'): string {
   // Fallback: celestial witness description — no KP jargon
   const msl = vj?.moonSubLord;
   const rawPlanet = msl?.planet ?? '';
-  const planet = (ARABIC_PLANET_NAME[rawPlanet] ?? (rawPlanet || '—'));
+  const planet = ARABIC_PLANET_NAME[rawPlanet] ?? (rawPlanet || '—');
   const conf = vj?.confidence ?? 0;
   if (lang === 'ur') {
     return `فیصلہ **آسمانی گواہ ${planet}** کی شہادت پر منحصر ہے۔\n\nیقین: **${conf}%**`;
@@ -380,7 +386,9 @@ function remedyResponse(reading: Reading, lang: 'en' | 'ur' | 'hi'): string {
     lines.push(lang === 'ur' ? `• ذکر: *${oracleRemedy.zikr}*` : `• Zikr: *${oracleRemedy.zikr}*`);
   }
   if (oracleRemedy?.sadaqah) {
-    lines.push(lang === 'ur' ? `• صدقہ: ${oracleRemedy.sadaqah}` : `• Sadaqah: ${oracleRemedy.sadaqah}`);
+    lines.push(
+      lang === 'ur' ? `• صدقہ: ${oracleRemedy.sadaqah}` : `• Sadaqah: ${oracleRemedy.sadaqah}`,
+    );
   }
 
   // Verdict remedy — supplementary (planet-specific action + avoid)
@@ -388,10 +396,13 @@ function remedyResponse(reading: Reading, lang: 'en' | 'ur' | 'hi'): string {
     lines.push(`• ${verdictRemedy.action}`);
   }
   if (verdictRemedy?.avoid) {
-    lines.push(lang === 'ur' ? `• پرہیز: ${verdictRemedy.avoid}` : `• Avoid: ${verdictRemedy.avoid}`);
+    lines.push(
+      lang === 'ur' ? `• پرہیز: ${verdictRemedy.avoid}` : `• Avoid: ${verdictRemedy.avoid}`,
+    );
   }
 
-  const header = lang === 'ur' ? 'علاج اور عمل:' : lang === 'hi' ? 'علاج اور عمل:' : 'Remedy & practice:';
+  const header =
+    lang === 'ur' ? 'علاج اور عمل:' : lang === 'hi' ? 'علاج اور عمل:' : 'Remedy & practice:';
   return `${header}\n\n${lines.join('\n')}`;
 }
 
@@ -523,13 +534,6 @@ const OracleScreen: React.FC = () => {
   const [lastReading, setLastReading] = useState<Reading | null>(null);
   const listRef = useRef<FlatList<ChatMessage> | null>(null);
 
-  // Step 6 — Verify it is working
-  const { themeId, theme: activeTheme } = useTheme();
-  console.log('=== THEME CHECK ===');
-  console.log('ID:', themeId);
-  console.log('BG:', activeTheme.colors.bg);
-  console.log('GOLD:', activeTheme.colors.gold);
-
   const lonDegForTiming = lastLocation?.lon ?? 74.3587;
   const { horaLord, dayLord } = useTimingStrip(lonDegForTiming);
 
@@ -559,7 +563,9 @@ const OracleScreen: React.FC = () => {
           capturedAt: Date.now(),
         });
       },
-      () => { /* silent — user will see location chip as "required" */ },
+      () => {
+        /* silent — user will see location chip as "required" */
+      },
       { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 },
     );
   }, []); // run once on mount only
@@ -578,7 +584,7 @@ const OracleScreen: React.FC = () => {
         // API key is optional; falls back to basic string matching if unavailable
         const apiKey = process.env.ANTHROPIC_API_KEY || '';
         const recentMessages = messages.slice(0, 3).map(m => m.text);
-        
+
         let intent: IntentResult;
         if (apiKey) {
           intent = await classifyIntent({
@@ -592,10 +598,16 @@ const OracleScreen: React.FC = () => {
           // Fallback to basic detection if no API key
           const basicIntent = detectIntent(text);
           intent = {
-            class: basicIntent === 'new' ? 'NEW_QUESTION' : 
-                   basicIntent === 'timing' ? 'TIMING' :
-                   basicIntent === 'why' ? 'CLARIFY' :
-                   basicIntent === 'remedy' ? 'REMEDY' : 'UNKNOWN',
+            class:
+              basicIntent === 'new'
+                ? 'NEW_QUESTION'
+                : basicIntent === 'timing'
+                  ? 'TIMING'
+                  : basicIntent === 'why'
+                    ? 'CLARIFY'
+                    : basicIntent === 'remedy'
+                      ? 'REMEDY'
+                      : 'UNKNOWN',
             confidence: 'LOW',
             reason: 'fallback to string matching',
           };
@@ -689,7 +701,12 @@ const OracleScreen: React.FC = () => {
         resolvedLat = liveCoords.lat;
         resolvedLon = liveCoords.lon;
         // Persist for subsequent questions — stable store action, safe outside deps array
-        useSettingsStore.getState().setLastLocation({ lat: resolvedLat, lon: resolvedLon, label: null, capturedAt: Date.now() });
+        useSettingsStore.getState().setLastLocation({
+          lat: resolvedLat,
+          lon: resolvedLon,
+          label: null,
+          capturedAt: Date.now(),
+        });
       }
 
       const userMsg: ChatMessage = {
@@ -742,7 +759,7 @@ const OracleScreen: React.FC = () => {
         const reading = await runEngine({
           question: text,
           questionLang: lang,
-          lat: resolvedLat,   // guaranteed non-null by the gate above
+          lat: resolvedLat, // guaranteed non-null by the gate above
           lon: resolvedLon,
           locationRequiredText: t('errors.locationRequired'),
         });
@@ -768,7 +785,8 @@ const OracleScreen: React.FC = () => {
 
           // Specific error messages for common issues
           if (err.message.includes('ECONNREFUSED') || err.message.includes('network')) {
-            errText = '⚠️ Cannot connect to server.\n\nFor local testing:\n1. Start Firebase emulators: firebase emulators:start\n2. Restart the app';
+            errText =
+              '⚠️ Cannot connect to server.\n\nFor local testing:\n1. Start Firebase emulators: firebase emulators:start\n2. Restart the app';
           } else if (err.message.includes('unauthenticated')) {
             errText = '⚠️ Authentication required. Please sign in.';
           } else if (err.message.includes('app-check')) {
@@ -789,8 +807,24 @@ const OracleScreen: React.FC = () => {
         setSending(false);
       }
     },
-    [addReading, canAsk, consumeOne, lang, lastLocation, lastReading, navigation, plan,
-      questionsToday, readings, sending, stage, startTrial, t, trialActive, trialExpired],
+    [
+      addReading,
+      consumeOne,
+      lang,
+      lastLocation,
+      lastReading,
+      messages,
+      navigation,
+      plan,
+      questionsToday,
+      readings,
+      sending,
+      stage,
+      startTrial,
+      t,
+      trialActive,
+      trialExpired,
+    ],
   );
 
   const handleSend = useCallback(async () => {
@@ -827,10 +861,16 @@ const OracleScreen: React.FC = () => {
       <StarfieldBackground starColor={colors.starfield} />
 
       {/* Header */}
-      <View style={[styles.header, { borderColor: colors.border, backgroundColor: colors.surface }]}> 
+      <View
+        style={[styles.header, { borderColor: colors.border, backgroundColor: colors.surface }]}
+      >
         <View>
-          <Text style={[typography('caption'), { color: colors.goldBright, letterSpacing: 1.5 }]}>ORACLE</Text>
-          <Text style={[typography('subheading'), { color: colors.text, marginTop: 2 }]}>SHAMS AL-ASRĀR</Text>
+          <Text style={[typography('caption'), { color: colors.goldBright, letterSpacing: 1.5 }]}>
+            ORACLE
+          </Text>
+          <Text style={[typography('subheading'), { color: colors.text, marginTop: 2 }]}>
+            SHAMS AL-ASRĀR
+          </Text>
         </View>
         <View style={styles.headerRight}>
           {questionsLeft !== Infinity && (
@@ -860,18 +900,29 @@ const OracleScreen: React.FC = () => {
         </View>
       </View>
 
-      <View style={[styles.dashboardRow, { borderColor: colors.borderAccent + '44', backgroundColor: colors.surface }]}>
-        <View style={[styles.statCard, { borderColor: colors.borderAccent }]}> 
+      <View
+        style={[
+          styles.dashboardRow,
+          { borderColor: colors.borderAccent + '44', backgroundColor: colors.surface },
+        ]}
+      >
+        <View style={[styles.statCard, { borderColor: colors.borderAccent }]}>
           <Text style={[typography('caption'), { color: colors.textMuted }]}>HORA</Text>
-          <Text style={[typography('label'), { color: colors.goldBright, marginTop: 4 }]}>{horaLord}</Text>
+          <Text style={[typography('label'), { color: colors.goldBright, marginTop: 4 }]}>
+            {horaLord}
+          </Text>
         </View>
-        <View style={[styles.statCard, { borderColor: colors.borderAccent }]}> 
+        <View style={[styles.statCard, { borderColor: colors.borderAccent }]}>
           <Text style={[typography('caption'), { color: colors.textMuted }]}>DAY LORD</Text>
-          <Text style={[typography('label'), { color: colors.goldBright, marginTop: 4 }]}>{dayLord}</Text>
+          <Text style={[typography('label'), { color: colors.goldBright, marginTop: 4 }]}>
+            {dayLord}
+          </Text>
         </View>
-        <View style={[styles.statCard, { borderColor: colors.borderAccent }]}> 
+        <View style={[styles.statCard, { borderColor: colors.borderAccent }]}>
           <Text style={[typography('caption'), { color: colors.textMuted }]}>QUESTIONS</Text>
-          <Text style={[typography('label'), { color: colors.goldBright, marginTop: 4 }]}>{questionsLeft === Infinity ? '∞' : questionsLeft}</Text>
+          <Text style={[typography('label'), { color: colors.goldBright, marginTop: 4 }]}>
+            {questionsLeft === Infinity ? '∞' : questionsLeft}
+          </Text>
         </View>
       </View>
 
@@ -1022,11 +1073,16 @@ const OracleScreen: React.FC = () => {
             {/* Breathing gold medallion dot */}
             <View
               style={{
-                width: 36, height: 36, borderRadius: 18,
+                width: 36,
+                height: 36,
+                borderRadius: 18,
                 backgroundColor: colors.manuscriptFog,
-                borderWidth: 1, borderColor: colors.borderAccent,
-                alignSelf: 'center', marginBottom: 14,
-                justifyContent: 'center', alignItems: 'center',
+                borderWidth: 1,
+                borderColor: colors.borderAccent,
+                alignSelf: 'center',
+                marginBottom: 14,
+                justifyContent: 'center',
+                alignItems: 'center',
               }}
             >
               <Text style={{ color: colors.goldBright, fontSize: 16 }}>✦</Text>
@@ -1034,7 +1090,12 @@ const OracleScreen: React.FC = () => {
             <Text
               style={[
                 typography('label'),
-                { color: colors.goldBright, textAlign: 'center', marginBottom: 6, letterSpacing: 1.4 },
+                {
+                  color: colors.goldBright,
+                  textAlign: 'center',
+                  marginBottom: 6,
+                  letterSpacing: 1.4,
+                },
               ]}
             >
               CASTING THE SACRED CHART
@@ -1065,17 +1126,10 @@ const OracleScreen: React.FC = () => {
               { backgroundColor: colors.surface, borderColor: colors.border },
             ]}
           >
-            <Text
-              style={[typography('subheading'), { color: colors.text, marginBottom: 8 }]}
-            >
+            <Text style={[typography('subheading'), { color: colors.text, marginBottom: 8 }]}>
               {"Today's questions used"}
             </Text>
-            <Text
-              style={[
-                typography('body'),
-                { color: colors.textMuted, marginBottom: 24 },
-              ]}
-            >
+            <Text style={[typography('body'), { color: colors.textMuted, marginBottom: 24 }]}>
               {'Come back tomorrow, or unlock unlimited access.'}
             </Text>
             <View style={styles.modalActions}>
@@ -1087,9 +1141,7 @@ const OracleScreen: React.FC = () => {
                 ]}
                 accessibilityRole="button"
               >
-                <Text style={[typography('button'), { color: colors.text }]}>
-                  Tomorrow
-                </Text>
+                <Text style={[typography('button'), { color: colors.text }]}>Tomorrow</Text>
               </Pressable>
               <Pressable
                 onPress={() => {
@@ -1122,18 +1174,13 @@ const OracleScreen: React.FC = () => {
               { backgroundColor: colors.surface, borderColor: colors.border },
             ]}
           >
-            <Text
-              style={[typography('subheading'), { color: colors.text, marginBottom: 8 }]}
-            >
+            <Text style={[typography('subheading'), { color: colors.text, marginBottom: 8 }]}>
               {'New question detected'}
             </Text>
-            <Text
-              style={[
-                typography('body'),
-                { color: colors.textMuted, marginBottom: 24 },
-              ]}
-            >
-              {'This sounds like a new horary question. Each question needs its own chart for an accurate verdict.'}
+            <Text style={[typography('body'), { color: colors.textMuted, marginBottom: 24 }]}>
+              {
+                'This sounds like a new horary question. Each question needs its own chart for an accurate verdict.'
+              }
             </Text>
             <View style={styles.modalActions}>
               <Pressable
@@ -1144,9 +1191,7 @@ const OracleScreen: React.FC = () => {
                 ]}
                 accessibilityRole="button"
               >
-                <Text style={[typography('button'), { color: colors.text }]}>
-                  Cancel
-                </Text>
+                <Text style={[typography('button'), { color: colors.text }]}>Cancel</Text>
               </Pressable>
               <Pressable
                 onPress={() => {
@@ -1219,8 +1264,8 @@ const Bubble: React.FC<{ message: ChatMessage }> = ({ message }) => {
         ]}
       >
         {renderText(message.text)}
-        {message.reading !== undefined && (
-          showWatch ? (
+        {message.reading !== undefined &&
+          (showWatch ? (
             <WatchVerdictCard
               result={readingToAstroResult(message.reading)}
               onSwitchMode={() => setShowWatch(false)}
@@ -1230,8 +1275,7 @@ const Bubble: React.FC<{ message: ChatMessage }> = ({ message }) => {
               result={readingToAstroResult(message.reading)}
               onSwitchMode={() => setShowWatch(true)}
             />
-          )
-        )}
+          ))}
         {message.isUpgradeCta === true && (
           <Pressable
             onPress={() => navigation.navigate('Premium')}

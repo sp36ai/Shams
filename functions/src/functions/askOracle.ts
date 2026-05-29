@@ -170,9 +170,11 @@ async function writeAuditLog(entry: Omit<AuditLogDoc, 'ts'>): Promise<void> {
 type OracleVoiceResult = OracleResponse['oracle'];
 
 const ORACLE_FALLBACK: NonNullable<OracleVoiceResult> = {
-  opening: 'The scrolls of this moment have not opened their seal to the oracle\'s eye.',
-  interpretation: 'In the sacred tradition of Shams al-Asrar, silence is not an absence of answer — it is an answer of a different kind. Return at the next appointed hour.',
-  spiritual_layer: 'And there is not a thing except that its treasures are with Us. (Al-Hijr 15:21)',
+  opening: "The scrolls of this moment have not opened their seal to the oracle's eye.",
+  interpretation:
+    'In the sacred tradition of Shams al-Asrar, silence is not an absence of answer — it is an answer of a different kind. Return at the next appointed hour.',
+  spiritual_layer:
+    'And there is not a thing except that its treasures are with Us. (Al-Hijr 15:21)',
   hidden_influence: 'The veil remains because the time for unveiling has not yet arrived.',
   timing: 'Return when al-Qamar completes her current quarter.',
   remedy: {
@@ -195,8 +197,7 @@ function buildOracleUserMessage(params: {
   const { verdict, stage, confidence, timingWindow, timingRange } = params;
 
   // Map verdict to CONFIRMED / DENIED
-  const verdictBinary =
-    verdict === 'YES' || verdict === 'CONDITIONAL' ? 'CONFIRMED' : 'DENIED';
+  const verdictBinary = verdict === 'YES' || verdict === 'CONDITIONAL' ? 'CONFIRMED' : 'DENIED';
 
   // Map confidence to HIGH / MEDIUM / LOW
   const confidenceLevel = confidence >= 75 ? 'HIGH' : confidence >= 50 ? 'MEDIUM' : 'LOW';
@@ -325,7 +326,7 @@ export const askOracle = onCall(
       // 7. Classify question
       const classified = {
         text: input.question,
-        lang: input.questionLang as 'en' | 'ur' | 'hi',
+        lang: input.questionLang,
         qType: classifyQuestion(input.question),
         confidence: 1.0,
         matchedKeywords: [] as string[],
@@ -348,11 +349,13 @@ export const askOracle = onCall(
           ? { window: verdict.timing.window, range: verdict.timing.range }
           : undefined,
         remedy: verdict.remedy ?? null,
-        reasoning: verdict.reasoning.map((r: { ruleId: string; description: string; weight: number }) => ({
-          ruleId: r.ruleId,
-          description: r.description,
-          weight: r.weight,
-        })),
+        reasoning: verdict.reasoning.map(
+          (r: { ruleId: string; description: string; weight: number }) => ({
+            ruleId: r.ruleId,
+            description: r.description,
+            weight: r.weight,
+          }),
+        ),
       };
 
       const batch = db.batch();
@@ -423,7 +426,7 @@ export const askOracle = onCall(
           if (cusp === undefined) {
             return null;
           }
-          const sl = cusp.subLord as Planet;
+          const sl = cusp.subLord;
           const slHouse = houseForLongitude(
             chart.planets[sl].siderealLongitude,
             cuspLons,
@@ -442,14 +445,14 @@ export const askOracle = onCall(
 
       const oracle = apiKey
         ? await synthesiseOracleVoice({
-          verdict: verdict.verdict,
-          stage: (verdict as any).stage,
-          confidence: verdict.confidence,
-          timingWindow: verdict.timing?.window,
-          timingRange: verdict.timing?.range,
-          manzilaLine,
-          apiKey,
-        })
+            verdict: verdict.verdict,
+            stage: (verdict as any).stage,
+            confidence: verdict.confidence,
+            timingWindow: verdict.timing?.window,
+            timingRange: verdict.timing?.range,
+            manzilaLine,
+            apiKey,
+          })
         : ORACLE_FALLBACK;
 
       logger.info('oracle synthesis', { userId, oracle });
@@ -475,10 +478,10 @@ export const askOracle = onCall(
         },
         significators: verdict.significators
           ? {
-            favorable: verdict.significators.favorable as string[],
-            denial: verdict.significators.denial as string[],
-            neutral: verdict.significators.neutral as string[],
-          }
+              favorable: verdict.significators.favorable as string[],
+              denial: verdict.significators.denial as string[],
+              neutral: verdict.significators.neutral as string[],
+            }
           : undefined,
         confirmedSignificators: verdict.confirmedSignificators as string[] | undefined,
         deniedSignificators: verdict.deniedSignificators as string[] | undefined,

@@ -157,23 +157,30 @@ const LocationPermissionScreen: React.FC = () => {
           </Text>
           <View style={styles.supraLine}>
             <View style={[styles.supraHairline, { backgroundColor: colors.goldBright }]} />
-            <Text style={{ color: colors.goldBright, fontSize: 9, marginHorizontal: 10, opacity: 0.45 }}>{'✦'}</Text>
+            <Text
+              style={{ color: colors.goldBright, fontSize: 9, marginHorizontal: 10, opacity: 0.45 }}
+            >
+              {'✦'}
+            </Text>
             <View style={[styles.supraHairline, { backgroundColor: colors.goldBright }]} />
           </View>
         </View>
 
-        <View style={[styles.card, { backgroundColor: colors.surfaceElevated, borderColor: colors.borderAccent }]}>
+        <View
+          style={[
+            styles.card,
+            { backgroundColor: colors.surfaceElevated, borderColor: colors.borderAccent },
+          ]}
+        >
           <View style={styles.illustrationWrap}>
-            <CompassPinIllustration accent={colors.accent} muted={colors.textFaint} amber={colors.amber} />
+            <CompassPinIllustration
+              accent={colors.accent}
+              muted={colors.textFaint}
+              amber={colors.amber}
+            />
           </View>
 
-          <Text
-            style={[
-              typography('subheading'),
-              styles.title,
-              { color: colors.goldBright },
-            ]}
-          >
+          <Text style={[typography('subheading'), styles.title, { color: colors.goldBright }]}>
             {titleText}
           </Text>
 
@@ -206,9 +213,14 @@ const LocationPermissionScreen: React.FC = () => {
                 <ActivityIndicator color={colors.textOnPrimary} />
               ) : (
                 <Text
-                  style={[typography('button'), { color: colors.textOnPrimary, textAlign: 'center' }]}
+                  style={[
+                    typography('button'),
+                    { color: colors.textOnPrimary, textAlign: 'center' },
+                  ]}
                 >
-                  {status === 'blocked' ? t('permission.openSettings') : t('permission.grantAccess')}
+                  {status === 'blocked'
+                    ? t('permission.openSettings')
+                    : t('permission.grantAccess')}
                 </Text>
               )}
             </Pressable>
@@ -249,8 +261,24 @@ const CompassPinIllustration: React.FC<{ accent: string; muted: string; amber: s
   return (
     <Svg width={size} height={size}>
       {/* Outer zodiac tick ring */}
-      <Circle cx={cx} cy={cy} r={88} stroke={accent} strokeOpacity={0.12} strokeWidth={14} fill="none" />
-      <Circle cx={cx} cy={cy} r={88} stroke={accent} strokeOpacity={0.3} strokeWidth={1} fill="none" />
+      <Circle
+        cx={cx}
+        cy={cy}
+        r={88}
+        stroke={accent}
+        strokeOpacity={0.12}
+        strokeWidth={14}
+        fill="none"
+      />
+      <Circle
+        cx={cx}
+        cy={cy}
+        r={88}
+        stroke={accent}
+        strokeOpacity={0.3}
+        strokeWidth={1}
+        fill="none"
+      />
       {Array.from({ length: 12 }).map((_, i) => {
         const rad = (i * 30 - 90) * (Math.PI / 180);
         const isMain = i % 3 === 0;

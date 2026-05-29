@@ -87,13 +87,27 @@ const SettingsScreen: React.FC = () => {
         nebula2={colors.nebula2}
         nebula3={colors.nebula3}
       />
-      <View style={[styles.header, { borderColor: colors.border, backgroundColor: colors.surfaceElevated }]}>
-        <Text style={[typography('caption'), { color: colors.textFaint, letterSpacing: 2.5, marginBottom: 4 }]}>
+      <View
+        style={[
+          styles.header,
+          { borderColor: colors.border, backgroundColor: colors.surfaceElevated },
+        ]}
+      >
+        <Text
+          style={[
+            typography('caption'),
+            { color: colors.textFaint, letterSpacing: 2.5, marginBottom: 4 },
+          ]}
+        >
           {'AL-DAFTAR'}
         </Text>
         <View style={styles.headerDivider}>
           <View style={[styles.headerLine, { backgroundColor: colors.goldBright }]} />
-          <Text style={[{ color: colors.goldBright, fontSize: 9, marginHorizontal: 8, opacity: 0.5 }]}>{'✦'}</Text>
+          <Text
+            style={[{ color: colors.goldBright, fontSize: 9, marginHorizontal: 8, opacity: 0.5 }]}
+          >
+            {'✦'}
+          </Text>
           <View style={[styles.headerLine, { backgroundColor: colors.goldBright }]} />
         </View>
         <Text style={[typography('subheading'), { color: colors.goldBright, marginTop: 6 }]}>

@@ -225,10 +225,12 @@ describe('/readings/{readingId}', () => {
 
   it('any user CANNOT write to audit logs (server-side only)', async () => {
     const db = testEnv.authenticatedContext('alice').firestore();
-    await assertFails(db.collection('auditLogs').doc('log2').set({
-      userId: 'alice',
-      action: 'unauthorized_write'
-    }));
+    await assertFails(
+      db.collection('auditLogs').doc('log2').set({
+        userId: 'alice',
+        action: 'unauthorized_write',
+      }),
+    );
   });
 });
 

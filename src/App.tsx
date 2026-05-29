@@ -48,21 +48,19 @@ const App: React.FC = () => {
     storage.delete(KEYS.QUOTA_PLAN);
     storage.delete(KEYS.QUOTA_PLAN_EXPIRY);
     storage.delete(KEYS.TRIAL_START);
-    
+
     // Set unlimited plan
     storage.set(KEYS.QUOTA_PLAN, 'mureed');
     storage.set(KEYS.QUOTA_COUNT, 0);
-    
+
     // Force store to re-read with unlimited plan and NO trial
-    useQuotaStore.setState({ 
+    useQuotaStore.setState({
       plan: 'mureed',
-      questionsToday: 0, 
-      trialActive: false, 
+      questionsToday: 0,
+      trialActive: false,
       trialExpired: false,
-      trialStartDate: null
+      trialStartDate: null,
     });
-    
-    console.log('DEV: AGGRESSIVE quota reset - unlimited mureed plan, no trial.');
   }, []);
 
   // Temporary: Capture location on startup for testing
@@ -70,11 +68,10 @@ const App: React.FC = () => {
     // HARDCODED coordinates for testing (New Delhi, India)
     useSettingsStore.getState().setLastLocation({
       lat: 28.6139,
-      lon: 77.2090,
+      lon: 77.209,
       label: 'Test Location',
       capturedAt: Date.now(),
     });
-    console.log('DEV: Hardcoded test location set: 28.6139, 77.2090');
   }, []);
 
   // Terminal Safety Gate: If integrity fails, we show a non-bypassable error view.
@@ -83,9 +80,7 @@ const App: React.FC = () => {
       <View style={styles.errorContainer}>
         <StatusBar barStyle="light-content" backgroundColor="#030E10" />
         <Text style={styles.errorTitle}>Integrity Error</Text>
-        <Text style={styles.errorMessage}>
-          {INTEGRITY_FAIL_MESSAGE}
-        </Text>
+        <Text style={styles.errorMessage}>{INTEGRITY_FAIL_MESSAGE}</Text>
       </View>
     );
   }

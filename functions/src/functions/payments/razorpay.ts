@@ -43,9 +43,9 @@ import { RAZORPAY_WEBHOOK_SECRET, REGION, PLAN_DURATION_DAYS, type PlanTier } fr
 // Map Razorpay plan IDs to internal plan tiers
 const RAZORPAY_PLAN_MAP: Record<string, PlanTier> = {
   plan_mureed_monthly: 'mureed',
-  plan_mureed_annual:  'mureed',
-  plan_khass_monthly:  'khass',
-  plan_khass_annual:   'khass',
+  plan_mureed_annual: 'mureed',
+  plan_khass_monthly: 'khass',
+  plan_khass_annual: 'khass',
 };
 
 function getRazorpaySecret(): string {

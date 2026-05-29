@@ -9,20 +9,17 @@
  */
 
 import React from 'react';
-import {
-  View, Text, TouchableOpacity, ScrollView,
-  StyleSheet, Platform,
-} from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, StyleSheet, Platform } from 'react-native';
 import { useTheme, useColors } from '@theme/ThemeProvider';
 import { THEME_IDS, getTheme, type ThemeId, RADIUS, SPACING } from '@theme/themes';
 
 // Dot preview colors per theme (the "sphere" swatch)
 const THEME_DOT_COLORS: Record<ThemeId, [string, string]> = {
-  darAlShams:     ['#F0C84A', '#3A2808'],
-  laylAlBahr:     ['#90C8E0', '#060810'],
-  narAlHadid:     ['#F09060', '#0C0806'],
-  subhAlWahy:     ['#C49020', '#F5EDD8'],
-  zaytunAlHikma:  ['#4A8840', '#EEF0E8'],
+  darAlShams: ['#F0C84A', '#3A2808'],
+  laylAlBahr: ['#90C8E0', '#060810'],
+  narAlHadid: ['#F09060', '#0C0806'],
+  subhAlWahy: ['#C49020', '#F5EDD8'],
+  zaytunAlHikma: ['#4A8840', '#EEF0E8'],
 };
 
 export function ThemeSwitcher() {
@@ -39,7 +36,7 @@ export function ThemeSwitcher() {
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.row}
       >
-        {THEME_IDS.map((id) => {
+        {THEME_IDS.map(id => {
           const t = getTheme(id);
           const isActive = id === themeId;
           const [dotTop, dotBot] = THEME_DOT_COLORS[id];
@@ -112,9 +109,7 @@ export function ThemeSwitcher() {
                 style={[
                   styles.badge,
                   {
-                    backgroundColor: t.isDark
-                      ? 'rgba(0,0,0,0.4)'
-                      : 'rgba(255,255,255,0.5)',
+                    backgroundColor: t.isDark ? 'rgba(0,0,0,0.4)' : 'rgba(255,255,255,0.5)',
                     borderColor: isActive ? t.colors.borderAccent : t.colors.border,
                   },
                 ]}
@@ -133,9 +128,7 @@ export function ThemeSwitcher() {
               </View>
 
               {/* Active indicator dot */}
-              {isActive && (
-                <View style={[styles.activeDot, { backgroundColor: t.colors.gold }]} />
-              )}
+              {isActive && <View style={[styles.activeDot, { backgroundColor: t.colors.gold }]} />}
             </TouchableOpacity>
           );
         })}

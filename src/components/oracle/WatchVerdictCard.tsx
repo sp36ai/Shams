@@ -14,8 +14,12 @@ function getSignalStatus(
   confirmedSignificators?: string[],
   deniedSignificators?: string[],
 ): SignalStatus {
-  if (confirmedSignificators?.includes(planet)) return 'confirmed';
-  if (deniedSignificators?.includes(planet)) return 'denied';
+  if (confirmedSignificators?.includes(planet)) {
+    return 'confirmed';
+  }
+  if (deniedSignificators?.includes(planet)) {
+    return 'denied';
+  }
   return 'neutral';
 }
 
@@ -30,14 +34,26 @@ function computeAgreement(
   const denied = rows.filter(r => r.status === 'denied').length;
 
   if (isPositive) {
-    if (confirmed >= 3) return 'STRONG';
-    if (confirmed === 2 && denied === 0) return 'MODERATE';
-    if (denied > confirmed) return 'CONFLICTED';
+    if (confirmed >= 3) {
+      return 'STRONG';
+    }
+    if (confirmed === 2 && denied === 0) {
+      return 'MODERATE';
+    }
+    if (denied > confirmed) {
+      return 'CONFLICTED';
+    }
     return 'WEAK';
   } else {
-    if (denied >= 3) return 'STRONG';
-    if (denied === 2 && confirmed === 0) return 'MODERATE';
-    if (confirmed > denied) return 'CONFLICTED';
+    if (denied >= 3) {
+      return 'STRONG';
+    }
+    if (denied === 2 && confirmed === 0) {
+      return 'MODERATE';
+    }
+    if (confirmed > denied) {
+      return 'CONFLICTED';
+    }
     return 'WEAK';
   }
 }
@@ -73,8 +89,13 @@ const FormulaRow: React.FC<FormulaRowProps> = ({ role, planet, status }) => {
   const typography = useTypography();
 
   const statusColor =
-    status === 'confirmed' ? colors.positive : status === 'denied' ? colors.negative : colors.textFaint;
-  const statusLabel = status === 'confirmed' ? '✓ confirms' : status === 'denied' ? '✗ denies' : '· neutral';
+    status === 'confirmed'
+      ? colors.positive
+      : status === 'denied'
+        ? colors.negative
+        : colors.textFaint;
+  const statusLabel =
+    status === 'confirmed' ? '✓ confirms' : status === 'denied' ? '✗ denies' : '· neutral';
 
   return (
     <View style={styles.formulaRow}>
@@ -83,11 +104,20 @@ const FormulaRow: React.FC<FormulaRowProps> = ({ role, planet, status }) => {
           {ROLE_LABELS[role]}
         </Text>
       </View>
-      <Text style={[typography('heading'), { color: colors.amber, marginHorizontal: 10, minWidth: 60 }]}>
+      <Text
+        style={[typography('heading'), { color: colors.amber, marginHorizontal: 10, minWidth: 60 }]}
+      >
         {planet}
       </Text>
-      <View style={[styles.statusBadge, { borderColor: statusColor, backgroundColor: statusColor + '18' }]}>
-        <Text style={[typography('label'), { color: statusColor, fontSize: 10 }]}>{statusLabel}</Text>
+      <View
+        style={[
+          styles.statusBadge,
+          { borderColor: statusColor, backgroundColor: statusColor + '18' },
+        ]}
+      >
+        <Text style={[typography('label'), { color: statusColor, fontSize: 10 }]}>
+          {statusLabel}
+        </Text>
       </View>
     </View>
   );
@@ -122,12 +152,20 @@ const WatchVerdictCard: React.FC<WatchVerdictCardProps> = ({ result, onSwitchMod
   // Build time-lord rows in display order
   const rows = TIME_LORD_ROLES.flatMap(role => {
     const entry = result.rulingPlanets.find(rp => rp.role === role);
-    if (!entry) return [];
-    return [{
-      role,
-      planet: entry.planet,
-      status: getSignalStatus(entry.planet, result.confirmedSignificators, result.deniedSignificators),
-    }];
+    if (!entry) {
+      return [];
+    }
+    return [
+      {
+        role,
+        planet: entry.planet,
+        status: getSignalStatus(
+          entry.planet,
+          result.confirmedSignificators,
+          result.deniedSignificators,
+        ),
+      },
+    ];
   });
 
   const agreement = computeAgreement(rows, result.verdict);
@@ -143,19 +181,30 @@ const WatchVerdictCard: React.FC<WatchVerdictCardProps> = ({ result, onSwitchMod
 
   const verdictColor: string = (() => {
     switch (result.verdict) {
-      case 'YES': return colors.positive;
-      case 'NO': return colors.negative;
+      case 'YES':
+        return colors.positive;
+      case 'NO':
+        return colors.negative;
       case 'CONDITIONAL':
-      case 'DELAYED': return colors.caution;
-      default: return colors.textMuted;
+      case 'DELAYED':
+        return colors.caution;
+      default:
+        return colors.textMuted;
     }
   })();
 
   return (
-    <View style={[styles.card, { borderColor: colors.amber + '55', backgroundColor: colors.surface }]}>
+    <View
+      style={[styles.card, { borderColor: colors.amber + '55', backgroundColor: colors.surface }]}
+    >
       {/* Mode badge */}
       <View style={styles.modeRow}>
-        <View style={[styles.modeBadge, { backgroundColor: colors.amber + '22', borderColor: colors.amber }]}>
+        <View
+          style={[
+            styles.modeBadge,
+            { backgroundColor: colors.amber + '22', borderColor: colors.amber },
+          ]}
+        >
           <Text style={[typography('label'), { color: colors.amber }]}>WATCH-TIME</Text>
         </View>
         <Text style={[typography('caption'), { color: colors.textFaint }]}>
@@ -187,7 +236,12 @@ const WatchVerdictCard: React.FC<WatchVerdictCardProps> = ({ result, onSwitchMod
           <Text style={[typography('caption'), { color: colors.textMuted, marginBottom: 6 }]}>
             TIME-SIGNAL AGREEMENT
           </Text>
-          <View style={[styles.agreementBadge, { borderColor: agreementColor, backgroundColor: agreementColor + '18' }]}>
+          <View
+            style={[
+              styles.agreementBadge,
+              { borderColor: agreementColor, backgroundColor: agreementColor + '18' },
+            ]}
+          >
             <Text style={[typography('button'), { color: agreementColor, letterSpacing: 2 }]}>
               {agreement}
             </Text>

@@ -1,0 +1,53 @@
+# Cloud Build pipeline — Firebase Functions + Firestore deployment
+#
+# For GCP setup prerequisites (IAM roles, API enablement, Secret Manager),
+# see DEPLOYMENT.md in the project root.
+#
+# Triggered automatically on push to main branch, or manually:
+#   gcloud builds submit --config=cloudbuild.yaml
+
+steps:
+  # ── Install functions dependencies ──────────────────────────────────────────
+  - name: 'node:22'
+    id: 'install-functions'
+    entrypoint: 'npm'
+    args: ['ci', '--prefer-offline']
+    dir: 'functions'
+
+  # ── TypeScript build ────────────────────────────────────────────────────────
+  - name: 'node:22'
+    id: 'build-functions'
+    entrypoint: 'npm'
+    args: ['run', 'build']
+    dir: 'functions'
+    waitFor: ['install-functions']
+
+  # ── Run functions unit tests ────────────────────────────────────────────────
+  - name: 'node:22'
+    id: 'test-functions'
+    entrypoint: 'npm'
+    args: ['test', '--', '--run', '--reporter=verbose']
+    dir: 'functions'
+    waitFor: ['build-functions']
+
+  # ── Deploy Functions + Firestore rules ──────────────────────────────────────
+  - name: 'node:22'
+    id: 'deploy'
+    entrypoint: 'npx'
+    args:
+      - '--yes'
+      - 'firebase-tools'
+      - 'deploy'
+      - '--only'
+      - 'functions,firestore'
+      - '--project'
+      - '$PROJECT_ID'
+      - '--non-interactive'
+    dir: '.'
+    waitFor: ['test-functions']
+
+timeout: '1800s'
+
+options:
+  logging: CLOUD_LOGGING_ONLY
+  machineType: 'E2_MEDIUM'

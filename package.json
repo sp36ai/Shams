@@ -24,6 +24,31 @@
     "validate:firebase:predeploy": "powershell -ExecutionPolicy Bypass -File scripts/Validate-FirebasePredeploy.ps1",
     "postinstall": "npx patch-package || echo \"No patches\""
   },
+  "jest": {
+    "preset": "react-native",
+    "setupFiles": [
+      "<rootDir>/jest.setup.js"
+    ],
+    "testPathIgnorePatterns": [
+      "<rootDir>/node_modules/",
+      "<rootDir>/functions/"
+    ],
+    "transformIgnorePatterns": [
+      "node_modules/(?!(jest-)?react-native|@react-native|@react-navigation|react-native-mmkv|react-native-reanimated|react-native-svg)"
+    ],
+    "moduleNameMapper": {
+      "react-native-mmkv": "<rootDir>/__mocks__/react-native-mmkv.js",
+      "swisseph-wasm": "<rootDir>/__mocks__/swisseph-wasm.js"
+    },
+    "moduleFileExtensions": [
+      "ts",
+      "tsx",
+      "js",
+      "jsx",
+      "json",
+      "node"
+    ]
+  },
   "dependencies": {
     "@react-native-firebase/app": "^19.3.0",
     "@react-native-firebase/app-check": "^19.3.0",
@@ -59,7 +84,7 @@
     "@types/react-test-renderer": "^18.0.0",
     "babel-jest": "^29.6.3",
     "babel-plugin-module-resolver": "^5.0.2",
-    "eslint": "^8.19.0",
+    "eslint": "8.57.0",
     "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-prettier": "^5.2.1",
     "firebase": "^10.14.0",
@@ -71,30 +96,5 @@
   },
   "engines": {
     "node": ">=18"
-  },
-  "jest": {
-    "preset": "react-native",
-    "setupFiles": [
-      "<rootDir>/jest.setup.js"
-    ],
-    "testPathIgnorePatterns": [
-      "<rootDir>/node_modules/",
-      "<rootDir>/functions/"
-    ],
-    "transformIgnorePatterns": [
-      "node_modules/(?!(jest-)?react-native|@react-native|@react-navigation|react-native-mmkv|react-native-reanimated|react-native-svg)"
-    ],
-    "moduleNameMapper": {
-      "react-native-mmkv": "<rootDir>/__mocks__/react-native-mmkv.js",
-      "swisseph-wasm": "<rootDir>/__mocks__/swisseph-wasm.js"
-    },
-    "moduleFileExtensions": [
-      "ts",
-      "tsx",
-      "js",
-      "jsx",
-      "json",
-      "node"
-    ]
   }
 }

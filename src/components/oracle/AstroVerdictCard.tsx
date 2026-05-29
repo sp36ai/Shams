@@ -129,12 +129,7 @@ const AstroVerdictCard: React.FC<AstroVerdictCardProps> = ({ result, onSwitchMod
   const oracle = result.oracle ?? ORACLE_DEFAULT;
   const remedy = oracle.remedy;
   const hasRemedy =
-    remedy.quran_verse ??
-    remedy.dua ??
-    remedy.asma ??
-    remedy.zikr ??
-    remedy.sadaqah ??
-    false;
+    remedy.quran_verse ?? remedy.dua ?? remedy.asma ?? remedy.zikr ?? remedy.sadaqah ?? false;
 
   // UNCLEAR with H0 — location was missing when engine ran; render nothing
   if (result.verdict === 'UNCLEAR' && result.subLordHouse === 0) {
@@ -667,6 +662,11 @@ const styles = StyleSheet.create({
     marginHorizontal: 12,
     marginBottom: 8,
     fontStyle: 'italic',
+  },
+  verdictPillContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
   },
 });
 
