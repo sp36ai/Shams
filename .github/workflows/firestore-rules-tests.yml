@@ -42,5 +42,16 @@ jobs:
           distribution: temurin
           java-version: "21"
 
+      - name: Verify test files and config
+        run: |
+          echo "Checking firestore.rules file..."
+          ls -la firestore.rules
+          echo "Checking firestore.rules.test.ts file..."
+          ls -la firestore.rules.test.ts
+          echo "Checking firebase.test.json..."
+          cat firebase.test.json
+          echo "Checking firebase CLI..."
+          npx firebase --version
+
       - name: Run Firestore Rules Unit Tests
         run: npm run test:rules
