@@ -1,13 +1,10 @@
 # Cloud Build pipeline — Firebase Functions + Firestore deployment
 #
-# Prerequisites (one-time GCP setup):
-#   1. Grant the Cloud Build service account these roles:
-#        - Firebase Admin (roles/firebase.admin)
-#        - Cloud Functions Developer (roles/cloudfunctions.developer)
-#        - Service Account User (roles/iam.serviceAccountUser)
-#   2. Enable APIs: cloudbuild, cloudfunctions, firebase
+# For GCP setup prerequisites (IAM roles, API enablement, Secret Manager),
+# see DEPLOYMENT.md in the project root.
 #
-# Trigger this build on pushes to main or via manual trigger in Cloud Console.
+# Triggered automatically on push to main branch, or manually:
+#   gcloud builds submit --config=cloudbuild.yaml
 
 steps:
   # ── Install functions dependencies ──────────────────────────────────────────
