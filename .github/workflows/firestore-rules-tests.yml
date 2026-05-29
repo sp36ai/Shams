@@ -50,12 +50,12 @@ jobs:
           ls -la firestore.rules.test.ts
           echo "Checking firebase.test.json..."
           file firebase.test.json
-          echo "First 10 bytes of firebase.test.json (hex):"
-          hexdump -C firebase.test.json | head -2
           echo "firebase.test.json content:"
           cat firebase.test.json
+          echo ""
           echo "Checking firebase CLI..."
           npx firebase --version
+          echo ""
           echo "Checking if files are readable..."
           test -r firestore.rules && echo "✓ firestore.rules is readable" || echo "✗ firestore.rules is NOT readable"
           test -r firestore.rules.test.ts && echo "✓ firestore.rules.test.ts is readable" || echo "✗ firestore.rules.test.ts is NOT readable"
