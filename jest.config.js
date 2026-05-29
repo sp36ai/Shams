@@ -4,6 +4,7 @@ module.exports = {
   testPathIgnorePatterns: [
     '<rootDir>/node_modules/',
     '<rootDir>/functions/',
+    '<rootDir>/firestore.rules.test.ts',
   ],
   transformIgnorePatterns: [
     'node_modules/(?!(jest-)?react-native|@react-native|@react-navigation|react-native-mmkv|react-native-reanimated|react-native-svg)',
@@ -19,18 +20,5 @@ module.exports = {
     'jsx',
     'json',
     'node',
-  ],
-  projects: [
-    {
-      displayName: 'app',
-      testMatch: ['<rootDir>/src/**/*.test.ts', '<rootDir>/src/**/*.test.tsx'],
-      setupFiles: ['<rootDir>/jest.setup.js'],
-    },
-    {
-      displayName: 'firestore',
-      testMatch: ['<rootDir>/firestore.rules.test.ts'],
-      testEnvironment: 'node',
-      setupFiles: [],
-    },
   ],
 };

@@ -19,7 +19,7 @@
     "test:watch": "jest --watch --testPathIgnorePatterns=firestore.rules.test.ts",
     "test:web": "npx serve .",
     "test:coverage": "jest --coverage --testPathIgnorePatterns=firestore.rules.test.ts",
-    "test:rules": "firebase emulators:exec --config firebase.test.json --only firestore \"jest firestore.rules.test.ts --testEnvironment node --runInBand\"",
+    "test:rules": "firebase emulators:exec --config firebase.test.json --only firestore \"jest --config jest.firestore.config.js --runInBand\"",
     "check:orphans": "npx madge --extensions ts,tsx --ts-config tsconfig.json --orphans src",
     "validate:firebase:predeploy": "powershell -ExecutionPolicy Bypass -File scripts/Validate-FirebasePredeploy.ps1",
     "postinstall": "npx patch-package || echo \"No patches\""
