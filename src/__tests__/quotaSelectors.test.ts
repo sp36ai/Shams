@@ -63,10 +63,7 @@ describe('selectQuestionsLeft', () => {
     expect(selectQuestionsLeft(makeState('free', FREE_DAILY_LIMIT + 50))).toBe(0);
   });
 
-  test.each<PlanTier>(['mureed', 'khass'])(
-    '%s plan → Infinity left regardless of usage',
-    plan => {
-      expect(selectQuestionsLeft(makeState(plan, 999))).toBe(Infinity);
-    },
-  );
+  test.each<PlanTier>(['mureed', 'khass'])('%s plan → Infinity left regardless of usage', plan => {
+    expect(selectQuestionsLeft(makeState(plan, 999))).toBe(Infinity);
+  });
 });

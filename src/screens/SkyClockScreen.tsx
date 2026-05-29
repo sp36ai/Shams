@@ -80,18 +80,26 @@ const LAHIRI_AYANAMSA_2025 = 24.12;
 
 // Mean longitude elements (J2000.0) — display only, ±1–5° error.
 const J2K: Readonly<Record<string, { L0: number; Lr: number }>> = {
-  Sun:     { L0: 280.46646, Lr: 36000.76983 },
-  Moon:    { L0: 218.3165,  Lr: 481267.8813 },
-  Mercury: { L0: 252.2509,  Lr: 149472.6749 },
-  Venus:   { L0: 181.9798,  Lr: 58517.8156  },
-  Mars:    { L0: 355.433,   Lr: 19140.2993  },
-  Jupiter: { L0: 34.3515,   Lr: 3034.9057   },
-  Saturn:  { L0: 50.0774,   Lr: 1222.1138   },
+  Sun: { L0: 280.46646, Lr: 36000.76983 },
+  Moon: { L0: 218.3165, Lr: 481267.8813 },
+  Mercury: { L0: 252.2509, Lr: 149472.6749 },
+  Venus: { L0: 181.9798, Lr: 58517.8156 },
+  Mars: { L0: 355.433, Lr: 19140.2993 },
+  Jupiter: { L0: 34.3515, Lr: 3034.9057 },
+  Saturn: { L0: 50.0774, Lr: 1222.1138 },
 };
 
 // Spec order for the 9 Jyotish grahas
 const TABLE_PLANET_ORDER = [
-  'Sun', 'Moon', 'Mars', 'Mercury', 'Jupiter', 'Venus', 'Saturn', 'Rahu', 'Ketu',
+  'Sun',
+  'Moon',
+  'Mars',
+  'Mercury',
+  'Jupiter',
+  'Venus',
+  'Saturn',
+  'Rahu',
+  'Ketu',
 ] as const;
 type PlanetName = (typeof TABLE_PLANET_ORDER)[number];
 
@@ -178,27 +186,34 @@ function computeTiming(lonDeg: number): TimingState {
 // ── Planet table ──────────────────────────────────────────────────────────────
 
 const PLANET_GLYPHS: Record<PlanetName, string> = {
-  Sun: '☉', Moon: '☽', Mars: '♂', Mercury: '☿', Jupiter: '♃',
-  Venus: '♀', Saturn: '♄', Rahu: '☊', Ketu: '☋',
+  Sun: '☉',
+  Moon: '☽',
+  Mars: '♂',
+  Mercury: '☿',
+  Jupiter: '♃',
+  Venus: '♀',
+  Saturn: '♄',
+  Rahu: '☊',
+  Ketu: '☋',
 };
 
 // Mean daily motion (°/day) from J2K Lr constants (°/century ÷ 36525).
 // Rahu/Ketu have negative Lr → retrograde mean motion.
 const PLANET_DAILY_SPEED: Record<PlanetName, number> = {
-  Sun:     36000.76983 / 36525,
-  Moon:    481267.8813 / 36525,
-  Mars:    19140.2993  / 36525,
+  Sun: 36000.76983 / 36525,
+  Moon: 481267.8813 / 36525,
+  Mars: 19140.2993 / 36525,
   Mercury: 149472.6749 / 36525,
-  Jupiter: 3034.9057   / 36525,
-  Venus:   58517.8156  / 36525,
-  Saturn:  1222.1138   / 36525,
-  Rahu:   -1934.136    / 36525,
-  Ketu:   -1934.136    / 36525,
+  Jupiter: 3034.9057 / 36525,
+  Venus: 58517.8156 / 36525,
+  Saturn: 1222.1138 / 36525,
+  Rahu: -1934.136 / 36525,
+  Ketu: -1934.136 / 36525,
 };
 
 // Manuscript-toned status colors — no harsh red/orange in the sacred observatory
 const STATUS_RETROGRADE = '#8C7A9A'; // muted violet — retrograde motion restrained
-const STATUS_COMBUST    = '#B8952A'; // aged brass — combustion, closeness to the Sun
+const STATUS_COMBUST = '#B8952A'; // aged brass — combustion, closeness to the Sun
 
 interface PlanetRow {
   name: PlanetName;
@@ -278,7 +293,12 @@ const SkyClockScreen: React.FC = () => {
       <StarfieldBackground starColor={colors.starfield} />
 
       {/* Header */}
-<View style={[styles.header, { borderBottomColor: colors.border, backgroundColor: colors.surface }]}> 
+      <View
+        style={[
+          styles.header,
+          { borderBottomColor: colors.border, backgroundColor: colors.surface },
+        ]}
+      >
         <Pressable
           onPress={() => navigation.goBack()}
           style={styles.backBtn}
@@ -288,10 +308,21 @@ const SkyClockScreen: React.FC = () => {
           <Text style={[typography('label'), { color: colors.accent, fontSize: 20 }]}>‹</Text>
         </Pressable>
         <View style={{ alignItems: 'center' }}>
-          <Text style={[typography('caption'), { color: colors.goldBright, letterSpacing: 1.6 }]}>AL-FALAK</Text>
-          <Text style={[typography('subheading'), { color: colors.text, marginTop: 2 }]}>{timing.timeLabel}</Text>
+          <Text style={[typography('caption'), { color: colors.goldBright, letterSpacing: 1.6 }]}>
+            AL-FALAK
+          </Text>
+          <Text style={[typography('subheading'), { color: colors.text, marginTop: 2 }]}>
+            {timing.timeLabel}
+          </Text>
         </View>
-        <Text style={[typography('caption'), { color: colors.textMuted, textAlign: 'right', fontStyle: 'italic' }]}>Live Sky Clock</Text>
+        <Text
+          style={[
+            typography('caption'),
+            { color: colors.textMuted, textAlign: 'right', fontStyle: 'italic' },
+          ]}
+        >
+          Live Sky Clock
+        </Text>
       </View>
 
       <ScrollView
@@ -306,11 +337,21 @@ const SkyClockScreen: React.FC = () => {
             { backgroundColor: colors.surface, borderColor: colors.border },
           ]}
         >
-          <TimingPill label="Hora" value={timing.horaLord} colors={colors} typography={typography} />
+          <TimingPill
+            label="Hora"
+            value={timing.horaLord}
+            colors={colors}
+            typography={typography}
+          />
           <View style={[styles.divider, { backgroundColor: colors.border }]} />
           <TimingPill label="Day" value={timing.dayLord} colors={colors} typography={typography} />
           <View style={[styles.divider, { backgroundColor: colors.border }]} />
-          <TimingPill label="Moon" value={timing.moonSign} colors={colors} typography={typography} />
+          <TimingPill
+            label="Moon"
+            value={timing.moonSign}
+            colors={colors}
+            typography={typography}
+          />
           <View style={[styles.divider, { backgroundColor: colors.border }]} />
           <TimingPill
             label="Nakshatra"
@@ -339,7 +380,9 @@ const SkyClockScreen: React.FC = () => {
             ]}
             accessibilityRole="button"
           >
-            <Text style={[typography('label'), { color: colors.goldBright, letterSpacing: 1 }]}>CELESTIAL CLOCK</Text>
+            <Text style={[typography('label'), { color: colors.goldBright, letterSpacing: 1 }]}>
+              CELESTIAL CLOCK
+            </Text>
             <Text style={[typography('caption'), { color: colors.textMuted, fontStyle: 'italic' }]}>
               {clockExpanded ? 'Collapse ▲' : 'Expand ▼'}
             </Text>
@@ -349,7 +392,13 @@ const SkyClockScreen: React.FC = () => {
 
         {/* Planet table */}
         <View style={styles.planetSection}>
-          <Text style={[typography('label'), styles.sectionLabel, { color: colors.goldBright, letterSpacing: 1.2 }]}>
+          <Text
+            style={[
+              typography('label'),
+              styles.sectionLabel,
+              { color: colors.goldBright, letterSpacing: 1.2 },
+            ]}
+          >
             CURRENT SKY · SIDEREAL (LAHIRI)
           </Text>
           <View

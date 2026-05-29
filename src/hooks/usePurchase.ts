@@ -19,17 +19,13 @@ type FunctionsWithRegion = FirebaseFunctionsTypes.Module & {
   region(r: string): FirebaseFunctionsTypes.Module;
 };
 
-export type PurchasePlan =
-  | 'mureed_monthly'
-  | 'mureed_annual'
-  | 'khass_monthly'
-  | 'khass_annual';
+export type PurchasePlan = 'mureed_monthly' | 'mureed_annual' | 'khass_monthly' | 'khass_annual';
 
 export const SKU_MAP: Record<PurchasePlan, string> = {
   mureed_monthly: 'mureed_monthly',
-  mureed_annual:  'mureed_annual',
-  khass_monthly:  'khass_monthly',
-  khass_annual:   'khass_annual',
+  mureed_annual: 'mureed_annual',
+  khass_monthly: 'khass_monthly',
+  khass_annual: 'khass_annual',
 };
 
 const PACKAGE_NAME = 'com.astrosarfaraz.shamsalasrar';
@@ -40,13 +36,19 @@ function tierFromPlan(plan: PurchasePlan): PlanTier {
 
 function tierFromSku(sku: string): PlanTier | null {
   const entry = Object.entries(SKU_MAP).find(([, s]) => s === sku);
-  if (!entry) return null;
+  if (!entry) {
+    return null;
+  }
   return tierFromPlan(entry[0] as PurchasePlan);
 }
 
 export type PurchaseResult =
   | { success: true }
-  | { success: false; reason: 'already_active' | 'verification_failed' | 'network_error' | 'user_cancelled'; error?: unknown };
+  | {
+      success: false;
+      reason: 'already_active' | 'verification_failed' | 'network_error' | 'user_cancelled';
+      error?: unknown;
+    };
 
 export interface PurchaseState {
   purchasing: boolean;
@@ -75,7 +77,10 @@ export function usePurchase(): PurchaseState {
   }, []);
 
   const verifyWithServer = useCallback(
-    async (purchaseToken: string, productId: string): Promise<{ verified: boolean; planExpiry?: string }> => {
+    async (
+      purchaseToken: string,
+      productId: string,
+    ): Promise<{ verified: boolean; planExpiry?: string }> => {
       try {
         const fn = (functions() as FunctionsWithRegion)
           .region('asia-south1')
@@ -146,7 +151,9 @@ export function usePurchase(): PurchaseState {
       const purchases = await getAvailablePurchases();
 
       for (const p of purchases) {
-        if (!p.purchaseToken || !p.productId) continue;
+        if (!p.purchaseToken || !p.productId) {
+          continue;
+        }
         const { verified, planExpiry } = await verifyWithServer(p.purchaseToken, p.productId);
         if (verified) {
           const tier = tierFromSku(p.productId);

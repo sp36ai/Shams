@@ -2,7 +2,7 @@ import { firebase } from '@react-native-firebase/app-check';
 
 /**
  * Initializes Firebase App Check for the native application.
- * 
+ *
  * This satisfies the 'enforceAppCheck' requirement in your Cloud Functions.
  * In production, this utilizes the Play Integrity provider on Android.
  */
@@ -19,14 +19,12 @@ export const initializeAppCheckService = () => {
       apple: { provider: 'debug' },
       web: { provider: 'debug', siteKey: 'none' },
     });
-    console.log('[App Check] Initialized with debug provider.');
   } else {
     provider.configure({
       android: { provider: 'playIntegrity' },
       apple: { provider: 'appAttestWithDeviceCheckFallback' },
       web: { provider: 'reCaptchaV3', siteKey: 'none' },
     });
-    console.log('[App Check] Initialized with Play Integrity provider.');
   }
 
   appCheck.initializeAppCheck({ provider, isTokenAutoRefreshEnabled: true });

@@ -40,7 +40,9 @@ function todayKey(now = Date.now()): string {
 
 function readPlan(): PlanTier {
   const stored = storage.getString(KEYS.QUOTA_PLAN);
-  if (stored === 'mureed' || stored === 'khass') return stored;
+  if (stored === 'mureed' || stored === 'khass') {
+    return stored;
+  }
   return 'free';
 }
 
@@ -67,9 +69,13 @@ function computeTrialState(trialStartDate: string | null): {
   trialActive: boolean;
   trialExpired: boolean;
 } {
-  if (!trialStartDate) return { trialActive: false, trialExpired: false };
+  if (!trialStartDate) {
+    return { trialActive: false, trialExpired: false };
+  }
   const elapsed = Math.floor((Date.now() - new Date(trialStartDate).getTime()) / 86_400_000);
-  if (TRIAL_DURATION_DAYS - elapsed > 0) return { trialActive: true, trialExpired: false };
+  if (TRIAL_DURATION_DAYS - elapsed > 0) {
+    return { trialActive: true, trialExpired: false };
+  }
   return { trialActive: false, trialExpired: true };
 }
 
@@ -130,16 +136,24 @@ export const useQuotaStore = create<QuotaState>((set, get) => ({
 
   canAsk(): boolean {
     const { plan, questionsToday, trialActive, devUnlock } = get();
-    if (devUnlock) return true;
-    if ((UNLIMITED_PLANS as PlanTier[]).includes(plan)) return true;
+    if (devUnlock) {
+      return true;
+    }
+    if ((UNLIMITED_PLANS as PlanTier[]).includes(plan)) {
+      return true;
+    }
     const limit = trialActive ? TRIAL_DAILY_LIMIT : FREE_DAILY_LIMIT;
     return questionsToday < limit;
   },
 
   consumeOne(): boolean {
     const { plan, questionsToday, trialActive, devUnlock } = get();
-    if (devUnlock) return true;
-    if ((UNLIMITED_PLANS as PlanTier[]).includes(plan)) return true;
+    if (devUnlock) {
+      return true;
+    }
+    if ((UNLIMITED_PLANS as PlanTier[]).includes(plan)) {
+      return true;
+    }
     const limit = trialActive ? TRIAL_DAILY_LIMIT : FREE_DAILY_LIMIT;
     if (questionsToday >= limit) {
       return false;
@@ -153,7 +167,9 @@ export const useQuotaStore = create<QuotaState>((set, get) => ({
 
   setPlan(plan: PlanTier, expiry?: string): void {
     storage.set(KEYS.QUOTA_PLAN, plan);
-    if (expiry) storage.set(KEYS.QUOTA_PLAN_EXPIRY, expiry);
+    if (expiry) {
+      storage.set(KEYS.QUOTA_PLAN_EXPIRY, expiry);
+    }
     set({ plan, ...(expiry ? { planExpiry: expiry } : {}) });
   },
 

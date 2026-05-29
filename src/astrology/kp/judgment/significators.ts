@@ -13,7 +13,7 @@
  * output is fully deterministic — no Set iteration ordering issues.
  */
 
-import type { Chart, Planet, HouseIndex } from '@astrology/types/chart';
+import type { Chart, Planet, HouseIndex, HouseCusp } from '@astrology/types/chart';
 import { PLANETS } from '@astrology/types/chart';
 import { houseOfPlanet } from './significations';
 import { getSignLordByLongitude } from '@astrology/primitives/rulingPlanets';
@@ -146,10 +146,12 @@ export function isHousePromised(
   house: HouseIndex,
   favorableHouses: readonly number[],
 ): boolean {
-  const cusp = chart.cusps[house - 1];
-  if (!cusp) return false;
+  const cusp: HouseCusp | undefined = chart.cusps[house - 1];
+  if (!cusp) {
+    return false;
+  }
 
-  const subLord = (cusp as any).subLord as Planet;
+  const subLord = cusp.subLord;
   const subLordHouse = houseOfPlanet(subLord, chart);
   return favorableHouses.includes(subLordHouse);
 }

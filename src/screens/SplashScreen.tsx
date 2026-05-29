@@ -398,9 +398,17 @@ const SplashScreen: React.FC = () => {
       <Animated.View style={[styles.brandBlock, { opacity: brandAnim }]}>
         {/* Ornamental header rule */}
         <View style={styles.ornamentRow}>
-          <View style={[styles.ornamentLine, { backgroundColor: colors.goldBright, opacity: 0.3 }]} />
-          <Text style={[{ color: colors.goldBright, fontSize: 10, marginHorizontal: 8, opacity: 0.5 }]}>{'✦'}</Text>
-          <View style={[styles.ornamentLine, { backgroundColor: colors.goldBright, opacity: 0.3 }]} />
+          <View
+            style={[styles.ornamentLine, { backgroundColor: colors.goldBright, opacity: 0.3 }]}
+          />
+          <Text
+            style={[{ color: colors.goldBright, fontSize: 10, marginHorizontal: 8, opacity: 0.5 }]}
+          >
+            {'✦'}
+          </Text>
+          <View
+            style={[styles.ornamentLine, { backgroundColor: colors.goldBright, opacity: 0.3 }]}
+          />
         </View>
 
         <Text
@@ -434,9 +442,25 @@ const SplashScreen: React.FC = () => {
 
         {/* Ornamental divider with triple dot */}
         <View style={styles.ornamentRow}>
-          <View style={[styles.ornamentLine, { backgroundColor: colors.goldBright, opacity: 0.25 }]} />
-          <Text style={[{ color: colors.goldBright, fontSize: 9, marginHorizontal: 10, letterSpacing: 6, opacity: 0.45 }]}>{'✦  ✦  ✦'}</Text>
-          <View style={[styles.ornamentLine, { backgroundColor: colors.goldBright, opacity: 0.25 }]} />
+          <View
+            style={[styles.ornamentLine, { backgroundColor: colors.goldBright, opacity: 0.25 }]}
+          />
+          <Text
+            style={[
+              {
+                color: colors.goldBright,
+                fontSize: 9,
+                marginHorizontal: 10,
+                letterSpacing: 6,
+                opacity: 0.45,
+              },
+            ]}
+          >
+            {'✦  ✦  ✦'}
+          </Text>
+          <View
+            style={[styles.ornamentLine, { backgroundColor: colors.goldBright, opacity: 0.25 }]}
+          />
         </View>
 
         <Text

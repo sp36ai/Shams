@@ -1,9 +1,6 @@
 import { useCallback, useState } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
-import {
-  horaLordAtMoment,
-  dayLordAtMoment,
-} from '@astrology/primitives/rulingPlanets';
+import { horaLordAtMoment, dayLordAtMoment } from '@astrology/primitives/rulingPlanets';
 import type { Planet } from '@astrology/types/chart';
 
 const REFRESH_MS = 60_000;

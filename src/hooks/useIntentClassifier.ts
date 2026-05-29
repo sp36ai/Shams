@@ -10,12 +10,12 @@
  */
 
 export type IntentClass =
-  | 'TIMING'        // "when", "kitne din", "how long"
-  | 'REMEDY'        // "kya karun", "what should I do", "remedy"
-  | 'CLARIFY'       // "why", "explain", "samjhao"
-  | 'REFORMAT'      // "say it differently", "in Urdu", "shorter"
-  | 'NEW_QUESTION'  // entirely new horary question
-  | 'UNKNOWN';      // genuine ambiguity — treat as ELABORATION
+  | 'TIMING' // "when", "kitne din", "how long"
+  | 'REMEDY' // "kya karun", "what should I do", "remedy"
+  | 'CLARIFY' // "why", "explain", "samjhao"
+  | 'REFORMAT' // "say it differently", "in Urdu", "shorter"
+  | 'NEW_QUESTION' // entirely new horary question
+  | 'UNKNOWN'; // genuine ambiguity — treat as ELABORATION
 
 export interface IntentResult {
   class: IntentClass;

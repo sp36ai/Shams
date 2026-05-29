@@ -28,13 +28,13 @@ export interface AskOracleResult {
 
 export async function askOracle(args: AskOracleInput): Promise<AskOracleResult> {
   const functionsInstance = (functions() as FunctionsWithRegion).region('asia-south1');
-  
+
   // Emulator disabled — pointing at deployed production function
   // if (__DEV__) {
   //   functionsInstance.useFunctionsEmulator('http://127.0.0.1:5001');
   //   console.log('[Oracle] Using Firebase Functions Emulator at http://127.0.0.1:5001');
   // }
-  
+
   const fn = functionsInstance.httpsCallable('askOracle');
 
   const result = await fn({
