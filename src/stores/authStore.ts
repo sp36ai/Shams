@@ -91,7 +91,8 @@ export const useAuthStore = create<AuthState>(set => ({
           try {
             const tokenResult = await fbUser.getIdTokenResult();
             const plan = (tokenResult.claims.plan as PlanTier | undefined) ?? 'free';
-            useQuotaStore.getState().setPlan(plan);
+            const expiry = tokenResult.claims.planExpiry as string | undefined;
+            useQuotaStore.getState().setPlan(plan, expiry);
           } catch {
             useQuotaStore.getState().setPlan('free');
           }
@@ -115,7 +116,8 @@ export const useAuthStore = create<AuthState>(set => ({
       const cred = await auth().signInWithEmailAndPassword(email, password);
       const tokenResult = await cred.user.getIdTokenResult();
       const plan = (tokenResult.claims.plan as PlanTier | undefined) ?? 'free';
-      useQuotaStore.getState().setPlan(plan);
+      const expiry = tokenResult.claims.planExpiry as string | undefined;
+      useQuotaStore.getState().setPlan(plan, expiry);
       cacheUserLocally(cred.user);
       set({ user: cred.user, isLoading: false });
       return null;
@@ -158,7 +160,8 @@ export const useAuthStore = create<AuthState>(set => ({
       try {
         const tokenResult = await cred.user.getIdTokenResult();
         const plan = (tokenResult.claims.plan as PlanTier | undefined) ?? 'free';
-        useQuotaStore.getState().setPlan(plan);
+        const expiry = tokenResult.claims.planExpiry as string | undefined;
+        useQuotaStore.getState().setPlan(plan, expiry);
       } catch {
         useQuotaStore.getState().setPlan('free');
       }

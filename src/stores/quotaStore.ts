@@ -186,7 +186,15 @@ export const useQuotaStore = create<QuotaState>((set, get) => ({
     storage.set(KEYS.QUOTA_WEEK, todayKey());
     storage.set(KEYS.QUOTA_PLAN, 'free');
     storage.delete(KEYS.QUOTA_PLAN_EXPIRY);
-    set({ questionsToday: 0, plan: 'free', planExpiry: null });
+    storage.delete(KEYS.TRIAL_START);
+    set({
+      questionsToday: 0,
+      plan: 'free',
+      planExpiry: null,
+      trialStartDate: null,
+      trialActive: false,
+      trialExpired: false,
+    });
   },
 }));
 

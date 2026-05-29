@@ -36,14 +36,16 @@ steps:
   # ── Deploy Functions + Firestore rules ──────────────────────────────────────
   - name: 'node:22'
     id: 'deploy'
-    entrypoint: 'bash'
+    entrypoint: 'npx'
     args:
-      - '-c'
-      - |
-        npm install -g firebase-tools --quiet
-        firebase deploy --only functions,firestore \
-          --project "$PROJECT_ID" \
-          --non-interactive
+      - '--yes'
+      - 'firebase-tools'
+      - 'deploy'
+      - '--only'
+      - 'functions,firestore'
+      - '--project'
+      - '$PROJECT_ID'
+      - '--non-interactive'
     dir: '.'
     waitFor: ['test-functions']
 
