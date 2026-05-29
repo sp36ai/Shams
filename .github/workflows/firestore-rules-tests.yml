@@ -62,4 +62,17 @@ jobs:
           test -r firebase.test.json && echo "✓ firebase.test.json is readable" || echo "✗ firebase.test.json is NOT readable"
 
       - name: Run Firestore Rules Unit Tests
-        run: npm run test:rules
+        run: npm run test:rules 2>&1 | tee test-output.log || TEST_FAILED=1
+
+      - name: Show test output if failed
+        if: failure()
+        run: |
+          echo "=== Full test output ==="
+          cat test-output.log || echo "No test output file found"
+          echo ""
+          echo "=== Environment info ==="
+          env | grep -i firebase || echo "No firebase env vars"
+          echo ""
+          echo "=== Node/NPM versions ==="
+          node --version
+          npm --version
