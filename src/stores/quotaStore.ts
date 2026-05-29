@@ -39,8 +39,9 @@ function todayKey(now = Date.now()): string {
 /* -------------------------------------------------------------------------- */
 
 function readPlan(): PlanTier {
-  // HARDCODED FOR TESTING: Always return unlimited plan
-  return 'mureed';
+  const stored = storage.getString(KEYS.QUOTA_PLAN);
+  if (stored === 'mureed' || stored === 'khass') return stored;
+  return 'free';
 }
 
 function readCount(): number {
@@ -62,12 +63,14 @@ function readTrialStart(): string | null {
   return storage.getString(KEYS.TRIAL_START) ?? null;
 }
 
-function computeTrialState(_trialStartDate: string | null): {
+function computeTrialState(trialStartDate: string | null): {
   trialActive: boolean;
   trialExpired: boolean;
 } {
-  // HARDCODED FOR TESTING: Always return no trial
-  return { trialActive: false, trialExpired: false };
+  if (!trialStartDate) return { trialActive: false, trialExpired: false };
+  const elapsed = Math.floor((Date.now() - new Date(trialStartDate).getTime()) / 86_400_000);
+  if (TRIAL_DURATION_DAYS - elapsed > 0) return { trialActive: true, trialExpired: false };
+  return { trialActive: false, trialExpired: true };
 }
 
 /* -------------------------------------------------------------------------- */
@@ -87,6 +90,8 @@ export interface QuotaState {
   trialExpired: boolean;
   /** Per-day free limit (exposed for OracleScreen gate). */
   FREE_DAILY_LIMIT: number;
+  /** ISO expiry date returned by the server after purchase verification. */
+  planExpiry: string | null;
   /** True in __DEV__ builds — bypasses quota entirely, false in release. */
   devUnlock: boolean;
   setDevUnlock: (val: boolean) => void;
@@ -95,8 +100,8 @@ export interface QuotaState {
   canAsk: () => boolean;
   /** Record one question asked. Returns false if quota is already exhausted. */
   consumeOne: () => boolean;
-  /** Upgrade plan (called after successful purchase). */
-  setPlan: (plan: PlanTier) => void;
+  /** Upgrade plan (called after successful purchase). Optional expiry is the ISO string from server. */
+  setPlan: (plan: PlanTier, expiry?: string) => void;
   /** Start the 7-day trial (no-op if already started). */
   startTrial: () => void;
   /** Read current trial status. */
@@ -115,6 +120,7 @@ const _initTrialState = computeTrialState(_initTrialStart);
 export const useQuotaStore = create<QuotaState>((set, get) => ({
   questionsToday: readCount(),
   plan: readPlan(),
+  planExpiry: storage.getString(KEYS.QUOTA_PLAN_EXPIRY) ?? null,
   trialStartDate: _initTrialStart,
   trialActive: _initTrialState.trialActive,
   trialExpired: _initTrialState.trialExpired,
@@ -145,9 +151,10 @@ export const useQuotaStore = create<QuotaState>((set, get) => ({
     return true;
   },
 
-  setPlan(plan: PlanTier): void {
+  setPlan(plan: PlanTier, expiry?: string): void {
     storage.set(KEYS.QUOTA_PLAN, plan);
-    set({ plan });
+    if (expiry) storage.set(KEYS.QUOTA_PLAN_EXPIRY, expiry);
+    set({ plan, ...(expiry ? { planExpiry: expiry } : {}) });
   },
 
   startTrial(): void {
@@ -178,7 +185,8 @@ export const useQuotaStore = create<QuotaState>((set, get) => ({
     storage.set(KEYS.QUOTA_COUNT, 0);
     storage.set(KEYS.QUOTA_WEEK, todayKey());
     storage.set(KEYS.QUOTA_PLAN, 'free');
-    set({ questionsToday: 0, plan: 'free' });
+    storage.delete(KEYS.QUOTA_PLAN_EXPIRY);
+    set({ questionsToday: 0, plan: 'free', planExpiry: null });
   },
 }));
 

@@ -1,0 +1,54 @@
+# Cloud Build pipeline — Firebase Functions + Firestore deployment
+#
+# Prerequisites (one-time GCP setup):
+#   1. Grant the Cloud Build service account these roles:
+#        - Firebase Admin (roles/firebase.admin)
+#        - Cloud Functions Developer (roles/cloudfunctions.developer)
+#        - Service Account User (roles/iam.serviceAccountUser)
+#   2. Enable APIs: cloudbuild, cloudfunctions, firebase
+#
+# Trigger this build on pushes to main or via manual trigger in Cloud Console.
+
+steps:
+  # ── Install functions dependencies ──────────────────────────────────────────
+  - name: 'node:22'
+    id: 'install-functions'
+    entrypoint: 'npm'
+    args: ['ci', '--prefer-offline']
+    dir: 'functions'
+
+  # ── TypeScript build ────────────────────────────────────────────────────────
+  - name: 'node:22'
+    id: 'build-functions'
+    entrypoint: 'npm'
+    args: ['run', 'build']
+    dir: 'functions'
+    waitFor: ['install-functions']
+
+  # ── Run functions unit tests ────────────────────────────────────────────────
+  - name: 'node:22'
+    id: 'test-functions'
+    entrypoint: 'npm'
+    args: ['test', '--', '--run', '--reporter=verbose']
+    dir: 'functions'
+    waitFor: ['build-functions']
+
+  # ── Deploy Functions + Firestore rules ──────────────────────────────────────
+  - name: 'node:22'
+    id: 'deploy'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        npm install -g firebase-tools --quiet
+        firebase deploy --only functions,firestore \
+          --project "$PROJECT_ID" \
+          --non-interactive
+    dir: '.'
+    waitFor: ['test-functions']
+
+timeout: '1800s'
+
+options:
+  logging: CLOUD_LOGGING_ONLY
+  machineType: 'E2_MEDIUM'

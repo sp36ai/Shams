@@ -75,16 +75,19 @@ export function usePurchase(): PurchaseState {
   }, []);
 
   const verifyWithServer = useCallback(
-    async (purchaseToken: string, productId: string): Promise<boolean> => {
+    async (purchaseToken: string, productId: string): Promise<{ verified: boolean; planExpiry?: string }> => {
       try {
         const fn = (functions() as FunctionsWithRegion)
           .region('asia-south1')
           .httpsCallable('verifyGooglePlayPurchase');
         const result = await fn({ purchaseToken, productId, packageName: PACKAGE_NAME });
-        const data = result.data as { plan?: string } | null;
-        return typeof data?.plan === 'string';
+        const data = result.data as { plan?: string; planExpiry?: string } | null;
+        if (typeof data?.plan === 'string') {
+          return { verified: true, planExpiry: data.planExpiry };
+        }
+        return { verified: false };
       } catch {
-        return false;
+        return { verified: false };
       }
     },
     [],
@@ -115,11 +118,11 @@ export function usePurchase(): PurchaseState {
           return { success: false, reason: 'user_cancelled' };
         }
 
-        const verified = await verifyWithServer(p.purchaseToken, p.productId);
+        const { verified, planExpiry } = await verifyWithServer(p.purchaseToken, p.productId);
 
         if (verified) {
           await finishTransaction({ purchase: p, isConsumable: false }).catch(() => undefined);
-          setPlan(tier);
+          setPlan(tier, planExpiry);
           return { success: true };
         }
 
@@ -144,11 +147,11 @@ export function usePurchase(): PurchaseState {
 
       for (const p of purchases) {
         if (!p.purchaseToken || !p.productId) continue;
-        const verified = await verifyWithServer(p.purchaseToken, p.productId);
+        const { verified, planExpiry } = await verifyWithServer(p.purchaseToken, p.productId);
         if (verified) {
           const tier = tierFromSku(p.productId);
           if (tier) {
-            setPlan(tier);
+            setPlan(tier, planExpiry);
             return { success: true };
           }
         }
