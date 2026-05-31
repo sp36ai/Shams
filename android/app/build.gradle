@@ -34,8 +34,8 @@ android {
         applicationId "com.astrosarfaraz.shamsalasrar"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 1
-        versionName "0.1.0"
+        versionCode 3
+        versionName "0.1.1"
 
         // react-native-iap v12 has amazon/play product flavors;
         // select "play" so the app builds without adding its own flavor dimension.
