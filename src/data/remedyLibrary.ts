@@ -1,441 +1,410 @@
+// ── Canonical tag vocabulary — 18 tags, derived bottom-up from the 38 remedies ──
+
+export type RemedyTag =
+  // Obstruction family
+  | 'OBSTRUCTION'
+  | 'DELAY'
+  | 'STAGNATION'
+  // Control family
+  | 'FORCING'
+  | 'ATTACHMENT'
+  | 'HASTE'
+  // Inner disorder family
+  | 'RESTLESSNESS'
+  | 'ANXIETY'
+  | 'DISTRACTION'
+  // Relational family
+  | 'CONFLICT'
+  | 'ESTRANGEMENT'
+  // Spiritual family
+  | 'SPIRITUAL_NEGLECT'
+  | 'DOUBT'
+  // Loss family
+  | 'GRIEF'
+  | 'SUPPRESSION'
+  // Ego family
+  | 'PRIDE'
+  // Material family
+  | 'MATERIAL_ANXIETY'
+  // Arrival family
+  | 'ABUNDANCE';
+
 export type RemedyCategory =
-  | 'reflection'
-  | 'prayer'
-  | 'gratitude'
+  | 'salawat'
+  | 'dua'
+  | 'istikhara'
+  | 'sadaqa'
+  | 'fasting'
+  | 'quran'
+  | 'dhikr'
   | 'charity'
-  | 'service'
-  | 'patience'
+  | 'night_prayer'
+  | 'silence'
+  | 'tawbah';
+
+export type EffectDimension =
+  | 'spiritual_clearing'
+  | 'calming'
+  | 'emotional_release'
+  | 'surrender'
+  | 'trust_building'
   | 'reconciliation'
-  | 'study'
-  | 'self_discipline';
+  | 'activation'
+  | 'grounding'
+  | 'clarity'
+  | 'opening'
+  | 'humility'
+  | 'comfort'
+  | 'patience'
+  | 'gratitude';
+
+export type RemedyIntensity = 'gentle' | 'moderate' | 'deep';
 
 export type SpiritualState =
   | 'restless'
-  | 'fearful'
-  | 'confused'
-  | 'discouraged'
   | 'hopeful'
   | 'remorseful'
-  | 'grateful'
-  | 'uncertain';
+  | 'uncertain'
+  | 'grieving'
+  | 'proud'
+  | 'anxious'
+  | 'grateful';
 
-export type EffectDimension = 'internal' | 'behavioral' | 'relational' | 'spiritual';
-
-export type RemedyDifficulty = 'easy' | 'moderate' | 'challenging';
-
-export interface Remedy {
+export interface TaggedRemedy {
   id: string;
-  title: string;
   category: RemedyCategory;
-  difficulty: RemedyDifficulty;
-  duration: string;
+  themeTags: RemedyTag[];
+  themeNotes: string[];
   effectDimension: EffectDimension;
-  themeAlignment: string[];
-  spiritualStateFit: SpiritualState[];
+  intensity: RemedyIntensity;
 }
 
-export const REMEDY_LIBRARY: Remedy[] = [
-  // ── REFLECTION ─────────────────────────────────────────────────────────────
+export const REMEDY_LIBRARY: TaggedRemedy[] = [
+  // ── SALAWAT ────────────────────────────────────────────────────────────────
   {
-    id: 'reflection_01',
-    title: 'A Practice of Deliberate Stillness',
-    category: 'reflection',
-    difficulty: 'easy',
-    duration: '10 minutes daily',
-    effectDimension: 'internal',
-    themeAlignment: ['patience', 'delay', 'obstruction', 'impatience'],
-    spiritualStateFit: ['restless', 'uncertain'],
+    id: 'salawat_01',
+    category: 'salawat',
+    themeTags: ['OBSTRUCTION', 'STAGNATION', 'SPIRITUAL_NEGLECT'],
+    themeNotes: ['blocked path', 'spiritual disconnection'],
+    effectDimension: 'spiritual_clearing',
+    intensity: 'gentle',
   },
   {
-    id: 'reflection_02',
-    title: 'Honest Self-Inventory',
-    category: 'reflection',
-    difficulty: 'moderate',
-    duration: '20 minutes, once this week',
-    effectDimension: 'internal',
-    themeAlignment: ['confusion', 'hidden obstacles', 'self-deception', 'indecision'],
-    spiritualStateFit: ['confused', 'uncertain', 'remorseful'],
+    id: 'salawat_02',
+    category: 'salawat',
+    themeTags: ['ANXIETY', 'RESTLESSNESS', 'DOUBT'],
+    themeNotes: ['inner noise', 'scattered energy'],
+    effectDimension: 'calming',
+    intensity: 'gentle',
   },
   {
-    id: 'reflection_03',
-    title: 'Writing What Cannot Be Spoken',
-    category: 'reflection',
-    difficulty: 'easy',
-    duration: '15 minutes daily for 3 days',
-    effectDimension: 'internal',
-    themeAlignment: ['emotional suppression', 'grief', 'unexpressed feeling', 'loss'],
-    spiritualStateFit: ['discouraged', 'fearful', 'confused'],
-  },
-  {
-    id: 'reflection_04',
-    title: 'Tracing the Pattern Backward',
-    category: 'reflection',
-    difficulty: 'moderate',
-    duration: 'One sitting, 30 minutes',
-    effectDimension: 'internal',
-    themeAlignment: ['repeating cycles', 'karmic delay', 'recurring obstruction'],
-    spiritualStateFit: ['discouraged', 'uncertain', 'confused'],
-  },
-  {
-    id: 'reflection_05',
-    title: 'Sitting With the Unknown',
-    category: 'reflection',
-    difficulty: 'challenging',
-    duration: '15 minutes daily',
-    effectDimension: 'internal',
-    themeAlignment: ['uncertainty', 'waiting', 'ambiguity', 'hidden outcome'],
-    spiritualStateFit: ['fearful', 'uncertain', 'restless'],
+    id: 'salawat_03',
+    category: 'salawat',
+    themeTags: ['GRIEF', 'SUPPRESSION', 'SPIRITUAL_NEGLECT'],
+    themeNotes: ['heavy heart', 'unexpressed feeling'],
+    effectDimension: 'emotional_release',
+    intensity: 'gentle',
   },
 
-  // ── PRAYER ─────────────────────────────────────────────────────────────────
+  // ── DUA ────────────────────────────────────────────────────────────────────
   {
-    id: 'prayer_01',
-    title: 'Salat al-Hajah — The Prayer of Need',
-    category: 'prayer',
-    difficulty: 'easy',
-    duration: 'Two rakats, whenever need is felt',
-    effectDimension: 'spiritual',
-    themeAlignment: ['unmet desire', 'longing', 'petition', 'hope deferred'],
-    spiritualStateFit: ['hopeful', 'uncertain', 'discouraged'],
+    id: 'dua_01',
+    category: 'dua',
+    themeTags: ['OBSTRUCTION', 'DELAY', 'FORCING'],
+    themeNotes: ['blocked progress', 'forcing outcomes'],
+    effectDimension: 'surrender',
+    intensity: 'moderate',
   },
   {
-    id: 'prayer_02',
-    title: 'Night Vigil — Tahajjud',
-    category: 'prayer',
-    difficulty: 'challenging',
-    duration: 'Last third of the night, 3 consecutive nights',
-    effectDimension: 'spiritual',
-    themeAlignment: ['crisis', 'urgent petition', 'despair', 'severe obstruction'],
-    spiritualStateFit: ['fearful', 'discouraged', 'remorseful'],
+    id: 'dua_02',
+    category: 'dua',
+    themeTags: ['ANXIETY', 'MATERIAL_ANXIETY', 'DOUBT'],
+    themeNotes: ['provision concern', 'scarcity fear'],
+    effectDimension: 'trust_building',
+    intensity: 'moderate',
   },
   {
-    id: 'prayer_03',
-    title: 'Istikharah — Seeking Divine Guidance',
-    category: 'prayer',
-    difficulty: 'easy',
-    duration: 'Two rakats before sleep',
-    effectDimension: 'spiritual',
-    themeAlignment: ['decision', 'crossroads', 'indecision', 'two paths'],
-    spiritualStateFit: ['confused', 'uncertain', 'hopeful'],
+    id: 'dua_03',
+    category: 'dua',
+    themeTags: ['CONFLICT', 'ESTRANGEMENT', 'PRIDE'],
+    themeNotes: ['relational rupture', 'ego in conflict'],
+    effectDimension: 'reconciliation',
+    intensity: 'moderate',
   },
   {
-    id: 'prayer_04',
-    title: 'Salawat as Daily Anchor',
-    category: 'prayer',
-    difficulty: 'easy',
-    duration: '100 repetitions daily',
-    effectDimension: 'spiritual',
-    themeAlignment: ['anxiety', 'worry', 'fear', 'inner noise'],
-    spiritualStateFit: ['restless', 'fearful', 'uncertain'],
+    id: 'dua_04',
+    category: 'dua',
+    themeTags: ['GRIEF', 'GRIEF', 'SUPPRESSION'], // source had LOSS — normalised to GRIEF (not in 18-tag vocab)
+    themeNotes: ['loss', 'emotional suppression'],
+    effectDimension: 'emotional_release',
+    intensity: 'gentle',
   },
   {
-    id: 'prayer_05',
-    title: 'Dua of Surrender',
-    category: 'prayer',
-    difficulty: 'moderate',
-    duration: 'After Fajr, 7 days',
-    effectDimension: 'spiritual',
-    themeAlignment: ['control', 'forcing outcomes', 'resistance', 'attachment'],
-    spiritualStateFit: ['restless', 'fearful', 'remorseful'],
+    id: 'dua_05',
+    category: 'dua',
+    themeTags: ['STAGNATION', 'DELAY', 'SPIRITUAL_NEGLECT'],
+    themeNotes: ['recurring obstruction', 'lack of movement'],
+    effectDimension: 'activation',
+    intensity: 'moderate',
   },
 
-  // ── GRATITUDE ──────────────────────────────────────────────────────────────
+  // ── ISTIKHARA ──────────────────────────────────────────────────────────────
   {
-    id: 'gratitude_01',
-    title: 'Gratitude for What Has Already Arrived',
-    category: 'gratitude',
-    difficulty: 'easy',
-    duration: 'Before sleep, 7 nights',
-    effectDimension: 'internal',
-    themeAlignment: ['impatience', 'ingratitude', 'delay', 'longing'],
-    spiritualStateFit: ['restless', 'discouraged', 'uncertain'],
+    id: 'istikhara_01',
+    category: 'istikhara',
+    themeTags: ['DOUBT', 'ATTACHMENT', 'FORCING'],
+    themeNotes: ['uncertainty', 'attachment to outcome'],
+    effectDimension: 'surrender',
+    intensity: 'deep',
   },
   {
-    id: 'gratitude_02',
-    title: 'Naming the Unseen Blessings',
-    category: 'gratitude',
-    difficulty: 'easy',
-    duration: '5 minutes after Fajr, 3 days',
-    effectDimension: 'internal',
-    themeAlignment: ['ingratitude', 'scarcity mindset', 'hidden blessing'],
-    spiritualStateFit: ['discouraged', 'fearful', 'uncertain'],
+    id: 'istikhara_02',
+    category: 'istikhara',
+    themeTags: ['DOUBT', 'RESTLESSNESS', 'DISTRACTION'],
+    themeNotes: ['scattered decision-making', 'inner noise'],
+    effectDimension: 'clarity',
+    intensity: 'deep',
+  },
+
+  // ── SADAQA ─────────────────────────────────────────────────────────────────
+  {
+    id: 'sadaqa_01',
+    category: 'sadaqa',
+    themeTags: ['OBSTRUCTION', 'MATERIAL_ANXIETY', 'STAGNATION'],
+    themeNotes: ['blocked provision', 'material concern'],
+    effectDimension: 'opening',
+    intensity: 'moderate',
   },
   {
-    id: 'gratitude_03',
-    title: 'Gratitude Expressed Aloud to Another',
-    category: 'gratitude',
-    difficulty: 'moderate',
-    duration: 'Once this week',
-    effectDimension: 'relational',
-    themeAlignment: ['isolation', 'pride', 'relational distance', 'unexpressed care'],
-    spiritualStateFit: ['remorseful', 'discouraged', 'hopeful'],
+    id: 'sadaqa_02',
+    category: 'sadaqa',
+    themeTags: ['GRIEF', 'ESTRANGEMENT', 'SUPPRESSION'],
+    themeNotes: ['loss of connection', 'unexpressed grief'],
+    effectDimension: 'emotional_release',
+    intensity: 'moderate',
+  },
+  {
+    id: 'sadaqa_03',
+    category: 'sadaqa',
+    themeTags: ['PRIDE', 'CONFLICT', 'FORCING'],
+    themeNotes: ['ego obstruction', 'forcing resolution'],
+    effectDimension: 'humility',
+    intensity: 'moderate',
+  },
+  {
+    id: 'sadaqa_04',
+    category: 'sadaqa',
+    themeTags: ['MATERIAL_ANXIETY', 'DELAY', 'DOUBT'],
+    themeNotes: ['scarcity fear', 'provision delay'],
+    effectDimension: 'trust_building',
+    intensity: 'gentle',
+  },
+
+  // ── FASTING ────────────────────────────────────────────────────────────────
+  {
+    id: 'fasting_01',
+    category: 'fasting',
+    themeTags: ['RESTLESSNESS', 'DISTRACTION', 'FORCING'],
+    themeNotes: ['scattered energy', 'haste'],
+    effectDimension: 'grounding',
+    intensity: 'deep',
+  },
+  {
+    id: 'fasting_02',
+    category: 'fasting',
+    themeTags: ['PRIDE', 'ATTACHMENT', 'SPIRITUAL_NEGLECT'],
+    themeNotes: ['ego', 'spiritual drift'],
+    effectDimension: 'humility',
+    intensity: 'deep',
+  },
+  {
+    id: 'fasting_03',
+    category: 'fasting',
+    themeTags: ['GRIEF', 'SUPPRESSION', 'DOUBT'],
+    themeNotes: ['heavy heart', 'spiritual doubt'],
+    effectDimension: 'emotional_release',
+    intensity: 'deep',
+  },
+
+  // ── QURAN ──────────────────────────────────────────────────────────────────
+  {
+    id: 'quran_01',
+    category: 'quran',
+    themeTags: ['ANXIETY', 'RESTLESSNESS', 'DOUBT'],
+    themeNotes: ['inner noise', 'worry'],
+    effectDimension: 'calming',
+    intensity: 'gentle',
+  },
+  {
+    id: 'quran_02',
+    category: 'quran',
+    themeTags: ['OBSTRUCTION', 'STAGNATION', 'SPIRITUAL_NEGLECT'],
+    themeNotes: ['blocked path', 'disconnection'],
+    effectDimension: 'spiritual_clearing',
+    intensity: 'gentle',
+  },
+  {
+    id: 'quran_03',
+    category: 'quran',
+    themeTags: ['GRIEF', 'GRIEF', 'ESTRANGEMENT'], // source had LOSS — normalised to GRIEF (not in 18-tag vocab)
+    themeNotes: ['loss', 'isolation'],
+    effectDimension: 'comfort',
+    intensity: 'gentle',
+  },
+  {
+    id: 'quran_04',
+    category: 'quran',
+    themeTags: ['MATERIAL_ANXIETY', 'DOUBT', 'DELAY'],
+    themeNotes: ['provision concern', 'waiting'],
+    effectDimension: 'trust_building',
+    intensity: 'gentle',
+  },
+
+  // ── DHIKR ──────────────────────────────────────────────────────────────────
+  {
+    id: 'dhikr_01',
+    category: 'dhikr',
+    themeTags: ['RESTLESSNESS', 'ANXIETY', 'DISTRACTION'],
+    themeNotes: ['scattered energy', 'inner noise'],
+    effectDimension: 'grounding',
+    intensity: 'gentle',
+  },
+  {
+    id: 'dhikr_02',
+    category: 'dhikr',
+    themeTags: ['GRIEF', 'SUPPRESSION', 'SPIRITUAL_NEGLECT'],
+    themeNotes: ['heavy heart', 'spiritual drift'],
+    effectDimension: 'comfort',
+    intensity: 'gentle',
+  },
+  {
+    id: 'dhikr_03',
+    category: 'dhikr',
+    themeTags: ['OBSTRUCTION', 'DELAY', 'DOUBT'],
+    themeNotes: ['blocked path', 'waiting period'],
+    effectDimension: 'patience',
+    intensity: 'gentle',
+  },
+  {
+    id: 'dhikr_04',
+    category: 'dhikr',
+    themeTags: ['ABUNDANCE', 'SPIRITUAL_NEGLECT'],
+    themeNotes: ['gratitude anchoring', 'arrival state'],
+    effectDimension: 'gratitude',
+    intensity: 'gentle',
   },
 
   // ── CHARITY ────────────────────────────────────────────────────────────────
   {
     id: 'charity_01',
-    title: 'Sadaqah as Opening',
     category: 'charity',
-    difficulty: 'easy',
-    duration: 'Any amount, given today',
-    effectDimension: 'behavioral',
-    themeAlignment: ['obstruction', 'blocked path', 'stagnation', 'material concern'],
-    spiritualStateFit: ['restless', 'uncertain', 'hopeful'],
+    themeTags: ['MATERIAL_ANXIETY', 'OBSTRUCTION', 'STAGNATION'],
+    themeNotes: ['provision blockage', 'material stagnation'],
+    effectDimension: 'opening',
+    intensity: 'moderate',
   },
   {
     id: 'charity_02',
-    title: 'Feeding Someone Who Is Hungry',
     category: 'charity',
-    difficulty: 'easy',
-    duration: 'Once this week',
-    effectDimension: 'behavioral',
-    themeAlignment: ['material anxiety', 'scarcity fear', 'provision', 'livelihood'],
-    spiritualStateFit: ['fearful', 'discouraged', 'uncertain'],
+    themeTags: ['PRIDE', 'ESTRANGEMENT', 'CONFLICT'],
+    themeNotes: ['ego softening', 'relational repair'],
+    effectDimension: 'humility',
+    intensity: 'moderate',
   },
   {
     id: 'charity_03',
-    title: 'Anonymous Giving',
     category: 'charity',
-    difficulty: 'moderate',
-    duration: 'Once, without disclosure',
-    effectDimension: 'behavioral',
-    themeAlignment: ['pride', 'reputation concern', 'ego', 'control'],
-    spiritualStateFit: ['remorseful', 'restless', 'hopeful'],
+    themeTags: ['GRIEF', 'GRIEF', 'SUPPRESSION'], // source had LOSS — normalised to GRIEF (not in 18-tag vocab)
+    themeNotes: ['grief in action', 'transforming loss'],
+    effectDimension: 'emotional_release',
+    intensity: 'moderate',
   },
-
-  // ── SERVICE ────────────────────────────────────────────────────────────────
-  {
-    id: 'service_01',
-    title: 'An Act of Service Without Expectation',
-    category: 'service',
-    difficulty: 'easy',
-    duration: 'Once this week',
-    effectDimension: 'behavioral',
-    themeAlignment: ['attachment to outcome', 'control', 'forcing', 'impatience'],
-    spiritualStateFit: ['restless', 'uncertain', 'hopeful'],
-  },
-  {
-    id: 'service_02',
-    title: 'Helping Someone Carry a Burden',
-    category: 'service',
-    difficulty: 'easy',
-    duration: 'Once this week, unprompted',
-    effectDimension: 'relational',
-    themeAlignment: ['isolation', 'self-focus', 'grief', 'heavy heart'],
-    spiritualStateFit: ['discouraged', 'confused', 'remorseful'],
-  },
-  {
-    id: 'service_03',
-    title: 'Visiting One Who Is Alone',
-    category: 'service',
-    difficulty: 'moderate',
-    duration: 'Once this week',
-    effectDimension: 'relational',
-    themeAlignment: ['isolation', 'loneliness', 'relational rupture', 'distance'],
-    spiritualStateFit: ['remorseful', 'discouraged', 'hopeful'],
-  },
-  {
-    id: 'service_04',
-    title: 'Teaching What You Know',
-    category: 'service',
-    difficulty: 'moderate',
-    duration: 'One hour, when opportunity arises',
-    effectDimension: 'relational',
-    themeAlignment: ['knowledge', 'purpose', 'contribution', 'meaning'],
-    spiritualStateFit: ['uncertain', 'hopeful', 'grateful'],
-  },
-
-  // ── PATIENCE ───────────────────────────────────────────────────────────────
-  {
-    id: 'patience_01',
-    title: 'Completing One Thing Before Moving to the Next',
-    category: 'patience',
-    difficulty: 'moderate',
-    duration: 'One full day',
-    effectDimension: 'behavioral',
-    themeAlignment: ['scattered energy', 'impatience', 'restlessness', 'distraction'],
-    spiritualStateFit: ['restless', 'confused', 'uncertain'],
-  },
-  {
-    id: 'patience_02',
-    title: 'Deliberate Slowing of Daily Movement',
-    category: 'patience',
-    difficulty: 'easy',
-    duration: 'One full day, practiced consciously',
-    effectDimension: 'behavioral',
-    themeAlignment: ['haste', 'forcing', 'rushing outcomes', 'impatience'],
-    spiritualStateFit: ['restless', 'fearful', 'uncertain'],
-  },
-  {
-    id: 'patience_03',
-    title: 'Holding the Tongue Before Responding',
-    category: 'patience',
-    difficulty: 'challenging',
-    duration: '3 days, in difficult conversations',
-    effectDimension: 'relational',
-    themeAlignment: ['conflict', 'anger', 'relational tension', 'hasty speech'],
-    spiritualStateFit: ['restless', 'remorseful', 'fearful'],
-  },
-  {
-    id: 'patience_04',
-    title: 'Fasting as a School of Restraint',
-    category: 'patience',
-    difficulty: 'challenging',
-    duration: 'One voluntary fast',
-    effectDimension: 'internal',
-    themeAlignment: ['desire', 'impulse', 'craving', 'attachment', 'self-control'],
-    spiritualStateFit: ['restless', 'remorseful', 'uncertain'],
-  },
-
-  // ── RECONCILIATION ─────────────────────────────────────────────────────────
-  {
-    id: 'reconciliation_01',
-    title: 'Sending Peace to One Who Has Wronged You',
-    category: 'reconciliation',
-    difficulty: 'challenging',
-    duration: 'Once, in private',
-    effectDimension: 'relational',
-    themeAlignment: ['resentment', 'estrangement', 'broken relationship', 'conflict'],
-    spiritualStateFit: ['remorseful', 'fearful', 'discouraged'],
-  },
-  {
-    id: 'reconciliation_02',
-    title: 'Offering an Apology Without Conditions',
-    category: 'reconciliation',
-    difficulty: 'challenging',
-    duration: 'When the time feels right',
-    effectDimension: 'relational',
-    themeAlignment: ['guilt', 'rupture', 'harm caused', 'unspoken wrong'],
-    spiritualStateFit: ['remorseful', 'fearful', 'discouraged'],
-  },
-  {
-    id: 'reconciliation_03',
-    title: 'Releasing a Grievance in Prayer',
-    category: 'reconciliation',
-    difficulty: 'moderate',
-    duration: 'Once, with sincerity',
-    effectDimension: 'spiritual',
-    themeAlignment: ['resentment', 'unforgiveness', 'bitterness', 'old wound'],
-    spiritualStateFit: ['remorseful', 'discouraged', 'fearful'],
-  },
-
-  // ── STUDY ──────────────────────────────────────────────────────────────────
-  {
-    id: 'study_01',
-    title: 'Reading One Page of Sacred Text Daily',
-    category: 'study',
-    difficulty: 'easy',
-    duration: '10 minutes daily',
-    effectDimension: 'spiritual',
-    themeAlignment: ['spiritual drift', 'disconnection', 'doubt', 'confusion'],
-    spiritualStateFit: ['confused', 'uncertain', 'discouraged'],
-  },
-  {
-    id: 'study_02',
-    title: 'Contemplating One Ayah for a Full Day',
-    category: 'study',
-    difficulty: 'moderate',
-    duration: 'One full day, returning to the verse',
-    effectDimension: 'spiritual',
-    themeAlignment: ['meaning', 'direction', 'purpose', 'guidance sought'],
-    spiritualStateFit: ['confused', 'uncertain', 'hopeful'],
-  },
-  {
-    id: 'study_03',
-    title: 'Seeking Knowledge From Someone Wiser',
-    category: 'study',
-    difficulty: 'moderate',
-    duration: 'One conversation, this week',
-    effectDimension: 'relational',
-    themeAlignment: ['pride', 'isolation', 'confusion', 'needing counsel'],
-    spiritualStateFit: ['confused', 'uncertain', 'remorseful'],
-  },
-  {
-    id: 'study_04',
-    title: 'Memorizing a Du\'a of Protection',
-    category: 'study',
-    difficulty: 'easy',
-    duration: '5 minutes daily until memorized',
-    effectDimension: 'spiritual',
-    themeAlignment: ['fear', 'anxiety', 'vulnerability', 'protection sought'],
-    spiritualStateFit: ['fearful', 'uncertain', 'restless'],
-  },
-
-  // ── SELF-DISCIPLINE ────────────────────────────────────────────────────────
-  {
-    id: 'self_discipline_01',
-    title: 'Rising for Fajr for Seven Consecutive Days',
-    category: 'self_discipline',
-    difficulty: 'challenging',
-    duration: '7 days',
-    effectDimension: 'behavioral',
-    themeAlignment: ['spiritual negligence', 'drift', 'disconnection', 'lack of structure'],
-    spiritualStateFit: ['discouraged', 'remorseful', 'uncertain'],
-  },
-  {
-    id: 'self_discipline_02',
-    title: 'One Day Without Complaint',
-    category: 'self_discipline',
-    difficulty: 'moderate',
-    duration: 'One full day',
-    effectDimension: 'behavioral',
-    themeAlignment: ['ingratitude', 'frustration', 'bitterness', 'resistance'],
-    spiritualStateFit: ['restless', 'discouraged', 'remorseful'],
-  },
-  {
-    id: 'self_discipline_03',
-    title: 'Removing One Distraction for One Week',
-    category: 'self_discipline',
-    difficulty: 'moderate',
-    duration: '7 days',
-    effectDimension: 'behavioral',
-    themeAlignment: ['scattered energy', 'distraction', 'avoidance', 'escapism'],
-    spiritualStateFit: ['confused', 'restless', 'uncertain'],
-  },
-  {
-    id: 'self_discipline_04',
-    title: 'Keeping a Promise Made to Yourself',
-    category: 'self_discipline',
-    difficulty: 'moderate',
-    duration: 'One commitment, followed through',
-    effectDimension: 'internal',
-    themeAlignment: ['broken intention', 'weak resolve', 'self-trust', 'integrity'],
-    spiritualStateFit: ['remorseful', 'discouraged', 'uncertain'],
-  },
-  {
-    id: 'self_discipline_05',
-    title: 'Eating With Intention for Three Days',
-    category: 'self_discipline',
-    difficulty: 'easy',
-    duration: '3 days',
-    effectDimension: 'behavioral',
-    themeAlignment: ['body neglect', 'heedlessness', 'self-care', 'discipline'],
-    spiritualStateFit: ['restless', 'discouraged', 'uncertain'],
-  },
-
-  // ── GRATEFUL STATE ANCHORS ─────────────────────────────────────────────────
-  // Grateful users need deepening practices, not corrective ones.
   {
     id: 'gratitude_04',
-    title: 'Sharing Your Good Fortune With Another',
     category: 'charity',
-    difficulty: 'easy',
-    duration: 'Once this week',
-    effectDimension: 'relational',
-    themeAlignment: ['abundance', 'blessing received', 'good news', 'arrival'],
-    spiritualStateFit: ['grateful', 'hopeful'],
+    themeTags: ['ABUNDANCE', 'SPIRITUAL_NEGLECT'],
+    themeNotes: ['answered prayer', 'gratitude for arrival'],
+    effectDimension: 'gratitude',
+    intensity: 'gentle',
+  },
+
+  // ── NIGHT PRAYER ───────────────────────────────────────────────────────────
+  {
+    id: 'night_prayer_01',
+    category: 'night_prayer',
+    themeTags: ['SPIRITUAL_NEGLECT', 'DOUBT', 'STAGNATION'],
+    themeNotes: ['spiritual drift', 'disconnection'],
+    effectDimension: 'spiritual_clearing',
+    intensity: 'deep',
   },
   {
-    id: 'study_05',
-    title: 'Deepening Into What Is Already Working',
-    category: 'study',
-    difficulty: 'moderate',
-    duration: '30 minutes of reflection',
-    effectDimension: 'internal',
-    themeAlignment: ['confirmation', 'success', 'answered prayer', 'forward movement'],
-    spiritualStateFit: ['grateful', 'hopeful'],
+    id: 'night_prayer_02',
+    category: 'night_prayer',
+    themeTags: ['ANXIETY', 'RESTLESSNESS', 'GRIEF'],
+    themeNotes: ['night worry', 'sleepless restlessness'],
+    effectDimension: 'calming',
+    intensity: 'deep',
+  },
+  {
+    id: 'night_prayer_03',
+    category: 'night_prayer',
+    themeTags: ['OBSTRUCTION', 'FORCING', 'ATTACHMENT'],
+    themeNotes: ['blocked outcome', 'forcing resolution'],
+    effectDimension: 'surrender',
+    intensity: 'deep',
+  },
+
+  // ── SILENCE ────────────────────────────────────────────────────────────────
+  {
+    id: 'silence_01',
+    category: 'silence',
+    themeTags: ['DISTRACTION', 'RESTLESSNESS', 'FORCING'],
+    themeNotes: ['inner noise', 'compulsive action'],
+    effectDimension: 'grounding',
+    intensity: 'moderate',
+  },
+  {
+    id: 'silence_02',
+    category: 'silence',
+    themeTags: ['CONFLICT', 'PRIDE', 'HASTE'],
+    themeNotes: ['reactive speech', 'ego in conflict'],
+    effectDimension: 'humility',
+    intensity: 'moderate',
+  },
+  {
+    id: 'silence_03',
+    category: 'silence',
+    themeTags: ['GRIEF', 'SUPPRESSION', 'ESTRANGEMENT'],
+    themeNotes: ['sitting with loss', 'unexpressed feeling'],
+    effectDimension: 'comfort',
+    intensity: 'moderate',
+  },
+
+  // ── TAWBAH ─────────────────────────────────────────────────────────────────
+  {
+    id: 'tawbah_01',
+    category: 'tawbah',
+    themeTags: ['PRIDE', 'SPIRITUAL_NEGLECT', 'OBSTRUCTION'],
+    themeNotes: ['ego blocking', 'spiritual negligence'],
+    effectDimension: 'spiritual_clearing',
+    intensity: 'deep',
+  },
+  {
+    id: 'tawbah_02',
+    category: 'tawbah',
+    themeTags: ['CONFLICT', 'ESTRANGEMENT', 'SUPPRESSION'],
+    themeNotes: ['relational rupture', 'unresolved wrong'],
+    effectDimension: 'reconciliation',
+    intensity: 'deep',
+  },
+  {
+    id: 'tawbah_03',
+    category: 'tawbah',
+    themeTags: ['DOUBT', 'GRIEF', 'SPIRITUAL_NEGLECT'],
+    themeNotes: ['spiritual doubt', 'disconnection from faith'],
+    effectDimension: 'trust_building',
+    intensity: 'deep',
   },
 ];
 
-/** Total remedy count — used in tests and analytics. */
 export const REMEDY_COUNT = REMEDY_LIBRARY.length;
