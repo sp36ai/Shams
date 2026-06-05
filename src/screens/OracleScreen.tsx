@@ -12,6 +12,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   Animated,
   ActivityIndicator,
+  AppState,
   Easing,
   FlatList,
   KeyboardAvoidingView,
@@ -38,6 +39,7 @@ import { useQuotaStore, FREE_DAILY_LIMIT, TRIAL_DAILY_LIMIT } from '@stores/quot
 import { useQuota } from '@hooks/useQuota';
 import { useTimingStrip } from '@hooks/useTimingStrip';
 import { classifyIntent, type IntentResult } from '@hooks/useIntentClassifier';
+import { storage, KEYS } from '@storage/mmkv';
 import { classifyQuestion } from '@hooks/useQuestionGate';
 import { askOracle as callOracleFunction } from '../firebase/oracle';
 import StarfieldBackground from '@components/StarfieldBackground';
@@ -576,6 +578,34 @@ const OracleScreen: React.FC = () => {
 
   // ── Quota exhaustion timestamp — upgrade CTA appears only after 6 h ─────────
   const quotaExhaustedAt = useRef<number>(0);
+
+  // ── Trial day banners — Day 6 passive strip, Day 7 once-per-day soft prompt ─
+  const [trialBannerKind, setTrialBannerKind] = useState<'day6' | 'day7' | null>(null);
+
+  const evaluateTrialBanner = useCallback(() => {
+    const { plan: currentPlan, checkTrial } = useQuotaStore.getState();
+    if (currentPlan !== 'free') return;
+    const { active, daysRemaining } = checkTrial();
+    if (!active) return;
+    if (daysRemaining === 2) {
+      setTrialBannerKind('day6');
+    } else if (daysRemaining === 1) {
+      const today = new Date().toDateString();
+      const shown = storage.getString(KEYS.DAY7_PROMPT_DATE);
+      if (shown !== today) {
+        storage.set(KEYS.DAY7_PROMPT_DATE, today);
+        setTrialBannerKind('day7');
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    evaluateTrialBanner();
+    const sub = AppState.addEventListener('change', nextState => {
+      if (nextState === 'active') evaluateTrialBanner();
+    });
+    return () => sub.remove();
+  }, [evaluateTrialBanner]);
 
   const initialGreeting: ChatMessage = useMemo(
     () => ({
@@ -1206,6 +1236,73 @@ const OracleScreen: React.FC = () => {
         </View>
       </KeyboardAvoidingView>
 
+      {/* Trial day banners — thin gold strip, max 44px, above tab bar */}
+      {trialBannerKind === 'day6' && (
+        <View
+          style={[
+            styles.trialBanner,
+            { backgroundColor: colors.surface, borderTopColor: colors.borderAccent },
+          ]}
+        >
+          <Text
+            style={[
+              typography('caption'),
+              {
+                color: colors.goldBright,
+                opacity: 0.6,
+                textAlign: 'center',
+                letterSpacing: 0.6,
+                fontSize: 12,
+              },
+            ]}
+          >
+            {'Your open doors close in 2 days.'}
+          </Text>
+        </View>
+      )}
+
+      {trialBannerKind === 'day7' && (
+        <Pressable
+          onPress={() => navigation.navigate('Premium')}
+          style={[
+            styles.trialBanner,
+            { backgroundColor: colors.surface, borderTopColor: colors.borderAccent },
+          ]}
+          accessibilityRole="button"
+          accessibilityLabel="Choose your path — navigate to subscription"
+        >
+          <Text
+            style={[
+              typography('caption'),
+              {
+                color: colors.goldBright,
+                opacity: 0.6,
+                textAlign: 'center',
+                letterSpacing: 0.6,
+                fontSize: 12,
+              },
+            ]}
+          >
+            {"The oracle's doors remain open through tonight. Walk your path forward."}
+          </Text>
+          <Text
+            style={[
+              typography('label'),
+              {
+                color: colors.goldBright,
+                opacity: 0.85,
+                textAlign: 'center',
+                letterSpacing: 1.2,
+                fontSize: 11,
+                marginTop: 2,
+              },
+            ]}
+          >
+            {'Choose Your Path ›'}
+          </Text>
+        </Pressable>
+      )}
+
       {sending && (
         <View style={styles.loadingOverlay} pointerEvents="none">
           <View
@@ -1636,6 +1733,13 @@ const styles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth,
     minWidth: 88,
     backgroundColor: 'transparent',
+  },
+  trialBanner: {
+    height: 44,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    borderTopWidth: StyleSheet.hairlineWidth,
   },
   loadingOverlay: {
     ...StyleSheet.absoluteFillObject,

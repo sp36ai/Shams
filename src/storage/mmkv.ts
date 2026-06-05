@@ -53,6 +53,9 @@ export const KEYS = Object.freeze({
   QUOTA_PLAN_EXPIRY: 'quota.planExpiry.v1',
   TRIAL_START: 'shams_trial_start',
 
+  // Trial banners — date string guards ("Mon Jun 06 2026" format)
+  DAY7_PROMPT_DATE: 'trial.day7PromptDate.v1',
+
   // Auth domain
   AUTH_USER_ID: 'auth.userId.v1',
   AUTH_USER_NAME: 'auth.userName.v1',
