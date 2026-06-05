@@ -38,6 +38,7 @@ import { useQuotaStore, FREE_DAILY_LIMIT, TRIAL_DAILY_LIMIT } from '@stores/quot
 import { useQuota } from '@hooks/useQuota';
 import { useTimingStrip } from '@hooks/useTimingStrip';
 import { classifyIntent, type IntentResult } from '@hooks/useIntentClassifier';
+import { classifyQuestion } from '@hooks/useQuestionGate';
 import { askOracle as callOracleFunction } from '../firebase/oracle';
 import StarfieldBackground from '@components/StarfieldBackground';
 import AstroVerdictCard from '../components/oracle/AstroVerdictCard';
@@ -517,6 +518,7 @@ const OracleScreen: React.FC = () => {
 
   const [showQuotaModal, setShowQuotaModal] = useState(false);
   const [showNewQuestionModal, setShowNewQuestionModal] = useState(false);
+  const [redirectMessage, setRedirectMessage] = useState<'conversational' | 'ambiguous' | null>(null);
 
   // ── Threshold overlay — sacred crossing animation ───────────────────────────
   const thresholdOpacity = useRef(new Animated.Value(0)).current;
@@ -711,6 +713,22 @@ const OracleScreen: React.FC = () => {
         setSending(false);
         return;
       }
+
+      // ── Layer 1 — Question Intent Gate (pre-quota) ─────────────────────────
+      // Runs before consumeOne(). CONVERSATIONAL and AMBIGUOUS return early with
+      // a soft inline redirect — no quota burn, no modal, no error state.
+      // API failure always defaults to VALID_HORARY so real questions are never blocked.
+      const questionClass = await classifyQuestion(text);
+      if (questionClass === 'CONVERSATIONAL') {
+        setRedirectMessage('conversational');
+        return;
+      }
+      if (questionClass === 'AMBIGUOUS') {
+        setRedirectMessage('ambiguous');
+        return;
+      }
+      // VALID_HORARY falls through — clear any previous redirect
+      setRedirectMessage(null);
 
       // ── Engine path — paywall gate ──────────────────────────────────────────
       if (plan === 'free') {
@@ -1115,11 +1133,33 @@ const OracleScreen: React.FC = () => {
             ))}
           </ScrollView>
 
+          {/* Layer 1 gate redirect — inline, no quota burn */}
+          {redirectMessage !== null && (
+            <Text
+              style={[
+                typography('bodyItalic'),
+                {
+                  color: colors.goldBright,
+                  fontSize: 12,
+                  lineHeight: 18,
+                  textAlign: 'center',
+                  paddingHorizontal: 16,
+                  paddingVertical: 8,
+                  opacity: 0.85,
+                },
+              ]}
+            >
+              {redirectMessage === 'conversational'
+                ? 'The oracle awaits a sincere question. What weighs on your heart?'
+                : 'The stars hear your intent — but need more. Who or what does your question concern?'}
+            </Text>
+          )}
+
           {/* Composer */}
           <View style={styles.composer}>
             <TextInput
               value={input}
-              onChangeText={setInput}
+              onChangeText={v => { setInput(v); if (redirectMessage !== null) setRedirectMessage(null); }}
               placeholder={t('oracle.placeholder')}
               placeholderTextColor={colors.textFaint}
               style={[
