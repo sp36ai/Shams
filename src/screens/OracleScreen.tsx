@@ -1283,22 +1283,7 @@ const OracleScreen: React.FC = () => {
               },
             ]}
           >
-            {"The oracle's doors remain open through tonight. Walk your path forward."}
-          </Text>
-          <Text
-            style={[
-              typography('label'),
-              {
-                color: colors.goldBright,
-                opacity: 0.85,
-                textAlign: 'center',
-                letterSpacing: 1.2,
-                fontSize: 11,
-                marginTop: 2,
-              },
-            ]}
-          >
-            {'Choose Your Path ›'}
+            {'Your open doors close tonight — Choose Your Path ›'}
           </Text>
         </Pressable>
       )}
