@@ -10,7 +10,9 @@
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
+  Animated,
   ActivityIndicator,
+  Easing,
   FlatList,
   KeyboardAvoidingView,
   Modal,
@@ -516,6 +518,63 @@ const OracleScreen: React.FC = () => {
   const [showQuotaModal, setShowQuotaModal] = useState(false);
   const [showNewQuestionModal, setShowNewQuestionModal] = useState(false);
 
+  // ── Threshold overlay — sacred crossing animation ───────────────────────────
+  const thresholdOpacity = useRef(new Animated.Value(0)).current;
+  const thresholdScale = useRef(new Animated.Value(1.1)).current;
+  const [thresholdVisible, setThresholdVisible] = useState(true);
+
+  const runThreshold = useCallback(() => {
+    setThresholdVisible(true);
+    thresholdOpacity.setValue(0);
+    thresholdScale.setValue(1.1);
+    Animated.sequence([
+      Animated.parallel([
+        Animated.timing(thresholdOpacity, {
+          toValue: 1,
+          duration: 500,
+          easing: Easing.out(Easing.cubic),
+          useNativeDriver: true,
+        }),
+        Animated.timing(thresholdScale, {
+          toValue: 1,
+          duration: 700,
+          easing: Easing.out(Easing.cubic),
+          useNativeDriver: true,
+        }),
+      ]),
+      Animated.delay(400),
+      Animated.timing(thresholdOpacity, {
+        toValue: 0,
+        duration: 400,
+        useNativeDriver: true,
+      }),
+    ]).start(() => setThresholdVisible(false));
+  }, [thresholdOpacity, thresholdScale]);
+
+  // Fire on mount
+  useEffect(() => { runThreshold(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ── Loading orb pulse at 0.8 Hz (1250 ms period) ───────────────────────────
+  const orbPulse = useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    if (!sending) {
+      orbPulse.setValue(1);
+      return;
+    }
+    const loop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(orbPulse, { toValue: 1.22, duration: 625, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
+        Animated.timing(orbPulse, { toValue: 1, duration: 625, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
+      ]),
+    );
+    loop.start();
+    return () => loop.stop();
+  }, [sending, orbPulse]);
+
+  // ── Quota exhaustion timestamp — upgrade CTA appears only after 6 h ─────────
+  const quotaExhaustedAt = useRef<number>(0);
+
   const initialGreeting: ChatMessage = useMemo(
     () => ({
       id: 'greet',
@@ -663,6 +722,9 @@ const OracleScreen: React.FC = () => {
           startTrial();
         }
         if (questionsToday >= (trialActive ? TRIAL_DAILY_LIMIT : FREE_DAILY_LIMIT)) {
+          if (quotaExhaustedAt.current === 0) {
+            quotaExhaustedAt.current = Date.now();
+          }
           setShowQuotaModal(true);
           return;
         }
@@ -719,14 +781,10 @@ const OracleScreen: React.FC = () => {
       setSending(true);
 
       if (!consumeOne()) {
-        const quotaMsg: ChatMessage = {
-          id: `quota_${Date.now()}`,
-          sender: 'shams',
-          text: t('oracle.quotaExhausted'),
-          isUpgradeCta: true,
-          createdAt: new Date().toISOString(),
-        };
-        setMessages(prev => [quotaMsg, ...prev]);
+        if (quotaExhaustedAt.current === 0) {
+          quotaExhaustedAt.current = Date.now();
+        }
+        setShowQuotaModal(true);
         setSending(false);
         return;
       }
@@ -857,6 +915,58 @@ const OracleScreen: React.FC = () => {
 
   return (
     <SafeAreaView style={[styles.root, { backgroundColor: theme.colors.bg }]} edges={['top']}>
+      {/* Threshold overlay — sacred crossing on oracle entry and new question */}
+      {thresholdVisible && (
+        <Animated.View
+          pointerEvents="none"
+          style={[
+            StyleSheet.absoluteFillObject,
+            {
+              zIndex: 100,
+              backgroundColor: theme.colors.bg,
+              opacity: thresholdOpacity,
+              transform: [{ scale: thresholdScale }],
+              justifyContent: 'center',
+              alignItems: 'center',
+            },
+          ]}
+        >
+          <Text
+            style={{
+              fontFamily: 'Amiri-Regular',
+              fontSize: 32,
+              color: colors.goldBright,
+              letterSpacing: 2,
+              marginBottom: 16,
+            }}
+          >
+            {'بِسْمِ اللَّهِ'}
+          </Text>
+          <View
+            style={{
+              width: 1,
+              height: 48,
+              backgroundColor: colors.borderAccent,
+              opacity: 0.6,
+            }}
+          />
+          <Text
+            style={[
+              typography('caption'),
+              {
+                color: colors.textFaint,
+                letterSpacing: 3,
+                marginTop: 14,
+                textTransform: 'uppercase',
+                fontSize: 9,
+              },
+            ]}
+          >
+            {'The oracle awaits'}
+          </Text>
+        </Animated.View>
+      )}
+
       {/* Animated starfield */}
       <StarfieldBackground starColor={colors.starfield} />
 
@@ -1070,49 +1180,70 @@ const OracleScreen: React.FC = () => {
               },
             ]}
           >
-            {/* Breathing gold medallion dot */}
-            <View
+            {/* Celestial orb — pulsing at 0.8 Hz */}
+            <Animated.View
               style={{
-                width: 36,
-                height: 36,
-                borderRadius: 18,
+                width: 52,
+                height: 52,
+                borderRadius: 26,
                 backgroundColor: colors.manuscriptFog,
                 borderWidth: 1,
                 borderColor: colors.borderAccent,
                 alignSelf: 'center',
-                marginBottom: 14,
+                marginBottom: 16,
                 justifyContent: 'center',
                 alignItems: 'center',
+                transform: [{ scale: orbPulse }],
+                shadowColor: colors.goldBright,
+                shadowOpacity: 0.4,
+                shadowRadius: 12,
+                shadowOffset: { width: 0, height: 0 },
               }}
             >
-              <Text style={{ color: colors.goldBright, fontSize: 16 }}>✦</Text>
-            </View>
+              <Text style={{ color: colors.goldBright, fontSize: 20 }}>✦</Text>
+            </Animated.View>
             <Text
               style={[
                 typography('label'),
                 {
                   color: colors.goldBright,
                   textAlign: 'center',
-                  marginBottom: 6,
+                  marginBottom: 10,
                   letterSpacing: 1.4,
                 },
               ]}
             >
               CASTING THE SACRED CHART
             </Text>
+            {/* Quran 16:12 — the celestial witness */}
             <Text
               style={[
                 typography('caption'),
-                { color: colors.textMuted, textAlign: 'center', fontStyle: 'italic' },
+                {
+                  color: colors.textMuted,
+                  textAlign: 'center',
+                  fontStyle: 'italic',
+                  fontSize: 11,
+                  lineHeight: 18,
+                  marginBottom: 4,
+                },
               ]}
             >
-              The heavens are speaking…
+              {"وَسَخَّرَ لَكُمُ ٱلَّيۡلَ وَٱلنَّهَارَ وَٱلشَّمۡسَ وَٱلۡقَمَرَ"}
+            </Text>
+            <Text
+              style={[
+                typography('caption'),
+                { color: colors.textFaint, textAlign: 'center', fontSize: 10, letterSpacing: 0.4 },
+              ]}
+            >
+              {"He subjected for you the night, the day, the sun, the moon — Quran 16:12"}
             </Text>
           </View>
         </View>
       )}
 
-      {/* Quota modal — soft wall for daily limit */}
+      {/* Quota modal — spiritual rest, no immediate paywall */}
       <Modal
         transparent
         animationType="fade"
@@ -1123,39 +1254,60 @@ const OracleScreen: React.FC = () => {
           <View
             style={[
               styles.modalCard,
-              { backgroundColor: colors.surface, borderColor: colors.border },
+              { backgroundColor: colors.surface, borderColor: colors.borderAccent },
             ]}
           >
-            <Text style={[typography('subheading'), { color: colors.text, marginBottom: 8 }]}>
-              {"Today's questions used"}
+            <Text
+              style={[
+                typography('caption'),
+                { color: colors.goldBright, textAlign: 'center', letterSpacing: 1.6, marginBottom: 6 },
+              ]}
+            >
+              الأفلاك ترتاح
             </Text>
-            <Text style={[typography('body'), { color: colors.textMuted, marginBottom: 24 }]}>
-              {'Come back tomorrow, or unlock unlimited access.'}
+            <Text
+              style={[typography('subheading'), { color: colors.text, textAlign: 'center', marginBottom: 10 }]}
+            >
+              The oracle rests
             </Text>
-            <View style={styles.modalActions}>
-              <Pressable
-                onPress={() => setShowQuotaModal(false)}
-                style={[
-                  styles.modalBtn,
-                  { borderColor: colors.border, borderWidth: StyleSheet.hairlineWidth },
-                ]}
-                accessibilityRole="button"
-              >
-                <Text style={[typography('button'), { color: colors.text }]}>Tomorrow</Text>
-              </Pressable>
-              <Pressable
-                onPress={() => {
-                  setShowQuotaModal(false);
-                  navigation.navigate('Premium');
-                }}
-                style={[styles.modalBtn, { backgroundColor: colors.primary }]}
-                accessibilityRole="button"
-              >
-                <Text style={[typography('button'), { color: colors.textOnPrimary }]}>
-                  Unlock Now
-                </Text>
-              </Pressable>
-            </View>
+            <Text
+              style={[
+                typography('bodyItalic'),
+                { color: colors.textMuted, textAlign: 'center', marginBottom: 24, lineHeight: 22 },
+              ]}
+            >
+              {'The heavens have answered as many questions as the day allows. Return at Fajr — the stars remember.'}
+            </Text>
+            <Pressable
+              onPress={() => setShowQuotaModal(false)}
+              style={[
+                styles.modalBtn,
+                { borderColor: colors.borderAccent, borderWidth: StyleSheet.hairlineWidth, marginBottom: 12 },
+              ]}
+              accessibilityRole="button"
+            >
+              <Text style={[typography('button'), { color: colors.text }]}>I understand</Text>
+            </Pressable>
+            {/* Upgrade link — shown only after 6 hours of exhaustion, never immediately */}
+            {quotaExhaustedAt.current > 0 &&
+              Date.now() - quotaExhaustedAt.current > 6 * 3600 * 1000 && (
+                <Pressable
+                  onPress={() => {
+                    setShowQuotaModal(false);
+                    navigation.navigate('Premium');
+                  }}
+                  accessibilityRole="button"
+                >
+                  <Text
+                    style={[
+                      typography('caption'),
+                      { color: colors.textFaint, textAlign: 'center', textDecorationLine: 'underline' },
+                    ]}
+                  >
+                    Unlock unlimited access
+                  </Text>
+                </Pressable>
+              )}
           </View>
         </View>
       </Modal>
@@ -1198,6 +1350,7 @@ const OracleScreen: React.FC = () => {
                   setShowNewQuestionModal(false);
                   setStage('ready');
                   setLastReading(null);
+                  runThreshold();
                 }}
                 style={[styles.modalBtn, { backgroundColor: colors.primary }]}
                 accessibilityRole="button"

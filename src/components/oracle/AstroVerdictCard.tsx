@@ -166,6 +166,33 @@ const AstroVerdictCard: React.FC<AstroVerdictCardProps> = ({ result, onSwitchMod
             {result.narrative}
           </Text>
         )}
+        {/* Comfort layer — 30–40 word spiritual reframe, visually separated */}
+        {(result.oracle?.hidden_influence?.length ?? 0) > 0 && (
+          <>
+            <View
+              style={{
+                marginHorizontal: 24,
+                height: StyleSheet.hairlineWidth,
+                backgroundColor: colors.borderAccent,
+                opacity: 0.6,
+              }}
+            />
+            <Text
+              style={[
+                typography('bodyItalic'),
+                {
+                  color: colors.textFaint,
+                  margin: 12,
+                  marginTop: 10,
+                  lineHeight: 20,
+                  fontSize: 12,
+                },
+              ]}
+            >
+              {result.oracle!.hidden_influence}
+            </Text>
+          </>
+        )}
         {handleSwitch !== undefined && (
           <Pressable
             onPress={handleSwitch}
