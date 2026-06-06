@@ -15,6 +15,7 @@ export interface RenderedRemedy {
   effectDimension: string;
   intensity: 'gentle' | 'moderate' | 'deep';
   themeTags: RemedyTag[];
+  description?: string; // absent = card falls back to EFFECT_LABEL
 }
 
 /** Look up remedy objects by ID, preserving selection order. */

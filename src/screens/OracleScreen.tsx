@@ -560,24 +560,6 @@ const OracleScreen: React.FC = () => {
   // Fire on mount
   useEffect(() => { runThreshold(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // ── Loading orb pulse at 0.8 Hz (1250 ms period) ───────────────────────────
-  const orbPulse = useRef(new Animated.Value(1)).current;
-
-  useEffect(() => {
-    if (!sending) {
-      orbPulse.setValue(1);
-      return;
-    }
-    const loop = Animated.loop(
-      Animated.sequence([
-        Animated.timing(orbPulse, { toValue: 1.22, duration: 625, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
-        Animated.timing(orbPulse, { toValue: 1, duration: 625, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
-      ]),
-    );
-    loop.start();
-    return () => loop.stop();
-  }, [sending, orbPulse]);
-
   // ── Quota exhaustion timestamp — upgrade CTA appears only after 6 h ─────────
   const quotaExhaustedAt = useRef<number>(0);
 
@@ -623,6 +605,25 @@ const OracleScreen: React.FC = () => {
   const [input, setInput] = useState('');
   const [inputFocused, setInputFocused] = useState(false);
   const [sending, setSending] = useState(false);
+
+  // ── Loading orb pulse at 0.8 Hz (1250 ms period) ───────────────────────────
+  const orbPulse = useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    if (!sending) {
+      orbPulse.setValue(1);
+      return;
+    }
+    const loop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(orbPulse, { toValue: 1.22, duration: 625, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
+        Animated.timing(orbPulse, { toValue: 1, duration: 625, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
+      ]),
+    );
+    loop.start();
+    return () => loop.stop();
+  }, [sending, orbPulse]);
+
   const [stage, setStage] = useState<ConvStage>('ready');
   const [lastReading, setLastReading] = useState<Reading | null>(null);
   const [selectedRemedies, setSelectedRemedies] = useState<RenderedRemedy[]>([]);
@@ -891,6 +892,7 @@ const OracleScreen: React.FC = () => {
             category: reading.category ?? 'general',
             severity,
             oracleSummary: narrationForReading(reading)?.slice(0, 200) ?? '',
+            questionText: text,
             apiKey: remedyApiKey,
           });
           selectRemedies(selCtx)

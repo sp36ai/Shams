@@ -37,6 +37,7 @@ export interface SelectionResult {
 export interface SelectionContext extends RankingContext {
   readingId: string;
   oracleSummary: string; // 1–2 sentences for the LLM, never shown to user
+  questionText: string;  // original question — used by Haiku description generator
   apiKey: string;
 }
 
@@ -103,6 +104,91 @@ function deriveSpiritualState(
   if (cat === 'spiritual') return 'uncertain';
   if (cat === 'marriage' || cat === 'children') return 'hopeful';
   return 'uncertain';
+}
+
+/**
+ * Haiku-generated 1–2 line sacred description for a single remedy.
+ * Personalised to the seeker's question, verdict, and spiritual state.
+ * Throws on any failure — caller must catch and fall back gracefully.
+ */
+async function generateRemedyDescription(
+  remedy: RenderedRemedy,
+  ctx: SelectionContext,
+): Promise<string> {
+  const prompt = `You are writing a 1–2 line sacred description for a spiritual remedy recommended to a seeker by an Islamic oracle.
+
+The seeker asked: "${ctx.questionText}"
+Oracle verdict: ${ctx.oracleClassification}
+Seeker's state: ${ctx.spiritualState}
+Remedy category: ${remedy.category}
+Remedy title: ${remedy.title}
+Effect: ${remedy.effectDimension}
+
+Write exactly 1–2 lines of guidance in a sacred, compassionate register.
+No bullet points. No headers. No Quranic citations (those appear elsewhere).
+Begin directly with the practice, not with "This remedy" or "You should".
+Maximum 30 words.`;
+
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 5000);
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'anthropic-version': '2023-06-01',
+        'content-type': 'application/json',
+        'x-api-key': ctx.apiKey,
+      },
+      body: JSON.stringify({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 80,
+        messages: [{ role: 'user', content: prompt }],
+      }),
+      signal: controller.signal,
+    });
+
+    clearTimeout(timer);
+
+    if (!res.ok) throw new Error(`haiku http ${res.status}`);
+
+    const data = (await res.json()) as {
+      content?: Array<{ type: string; text?: string }>;
+    };
+    const text = (data.content ?? [])
+      .filter(b => b.type === 'text')
+      .map(b => b.text ?? '')
+      .join('')
+      .trim();
+
+    if (text.length < 10) throw new Error('description too short');
+    return text;
+  } catch (err) {
+    clearTimeout(timer);
+    throw err;
+  }
+}
+
+/**
+ * Enriches an array of RenderedRemedy with Haiku-generated descriptions.
+ * All calls fire in parallel via Promise.all. Per-remedy failures are caught
+ * individually — a single Haiku timeout leaves the other remedies intact.
+ * Exported for unit testing with a mock generator.
+ */
+export async function enrichWithDescriptions(
+  remedies: RenderedRemedy[],
+  generate: (r: RenderedRemedy) => Promise<string>,
+): Promise<RenderedRemedy[]> {
+  return Promise.all(
+    remedies.map(async r => {
+      try {
+        const description = await generate(r);
+        return { ...r, description };
+      } catch {
+        return r; // description absent — card uses EFFECT_LABEL fallback
+      }
+    }),
+  );
 }
 
 /** Write selectionReason to Firestore — fire-and-forget, never awaited in render path. */
@@ -200,7 +286,12 @@ export async function selectRemedies(ctx: SelectionContext): Promise<SelectionRe
     // Fire-and-forget Firestore write — never awaited
     logSelectionReason(ctx.readingId, selectionReason);
 
-    return { selectedRemedies: renderRemedies(selectedIds), selectionReason };
+    const rendered = renderRemedies(selectedIds);
+    const withDescriptions = await enrichWithDescriptions(rendered, r =>
+      generateRemedyDescription(r, ctx),
+    );
+
+    return { selectedRemedies: withDescriptions, selectionReason };
   } catch {
     clearTimeout(timer);
     return fallbackFromCandidates(candidates, ctx.readingId, 'llm call failed');
@@ -230,6 +321,7 @@ export function contextFromReading(params: {
   category: string;
   severity: RankingContext['severity'];
   oracleSummary: string;
+  questionText: string;
   apiKey: string;
 }): SelectionContext {
   return {
@@ -239,6 +331,7 @@ export function contextFromReading(params: {
     spiritualState: deriveSpiritualState(params.verdict, params.category),
     severity: params.severity,
     oracleSummary: params.oracleSummary,
+    questionText: params.questionText,
     apiKey: params.apiKey,
   };
 }
