@@ -47,7 +47,7 @@ import AstroVerdictCard from '../components/oracle/AstroVerdictCard';
 import WatchVerdictCard from '../components/oracle/WatchVerdictCard';
 import type { AstroVerdictResult } from '../types/verdict';
 import { selectRemedies, contextFromReading } from '../data/remedySelector';
-import { renderRemedies, type RenderedRemedy } from '../data/remedyRenderer';
+import type { RenderedRemedy } from '../data/remedyRenderer';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -894,7 +894,7 @@ const OracleScreen: React.FC = () => {
             apiKey: remedyApiKey,
           });
           selectRemedies(selCtx)
-            .then(result => setSelectedRemedies(renderRemedies(result.selectedRemedies.map(r => r.id))))
+            .then(result => setSelectedRemedies(result.selectedRemedies))
             .catch(() => undefined);
         }
 

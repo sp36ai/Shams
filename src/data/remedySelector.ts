@@ -9,8 +9,9 @@
  */
 
 import firestore from '@react-native-firebase/firestore';
-import { REMEDY_LIBRARY, type TaggedRemedy } from './remedyLibrary';
+import { REMEDY_LIBRARY } from './remedyLibrary';
 import { getCandidates, type RankingContext } from './rankCandidates';
+import { renderRemedies, type RenderedRemedy } from './remedyRenderer';
 
 const SELECTION_PROMPT = `You are the remedy selection layer of a sacred Islamic oracle.
 
@@ -29,7 +30,7 @@ Return ONLY valid JSON in this exact structure:
 No markdown. No backticks. No preamble. Raw JSON only.`;
 
 export interface SelectionResult {
-  selectedRemedies: TaggedRemedy[];
+  selectedRemedies: RenderedRemedy[];
   selectionReason: string;
 }
 
@@ -125,8 +126,7 @@ export async function selectRemedies(ctx: SelectionContext): Promise<SelectionRe
 
   if (!ctx.apiKey) {
     // No API key — return top 3 from TypeScript ranking, no LLM call
-    const fallbackRemedies = candidates.slice(0, 3);
-    return { selectedRemedies: fallbackRemedies, selectionReason: 'fallback: no api key' };
+    return { selectedRemedies: renderRemedies(candidates.slice(0, 3).map(r => r.id)), selectionReason: 'fallback: no api key' };
   }
 
   const oracleContext = {
@@ -200,11 +200,7 @@ export async function selectRemedies(ctx: SelectionContext): Promise<SelectionRe
     // Fire-and-forget Firestore write — never awaited
     logSelectionReason(ctx.readingId, selectionReason);
 
-    const selectedRemedies = selectedIds
-      .map(id => REMEDY_LIBRARY.find(r => r.id === id))
-      .filter((r): r is TaggedRemedy => r !== undefined);
-
-    return { selectedRemedies, selectionReason };
+    return { selectedRemedies: renderRemedies(selectedIds), selectionReason };
   } catch {
     clearTimeout(timer);
     return fallbackFromCandidates(candidates, ctx.readingId, 'llm call failed');
@@ -212,13 +208,15 @@ export async function selectRemedies(ctx: SelectionContext): Promise<SelectionRe
 }
 
 function fallbackFromCandidates(
-  candidates: TaggedRemedy[],
+  candidates: ReturnType<typeof getCandidates>,
   readingId: string,
   reason: string,
 ): SelectionResult {
-  const selectedRemedies = candidates.slice(0, 3);
   logSelectionReason(readingId, `fallback: ${reason}`);
-  return { selectedRemedies, selectionReason: `fallback: ${reason}` };
+  return {
+    selectedRemedies: renderRemedies(candidates.slice(0, 3).map(r => r.id)),
+    selectionReason: `fallback: ${reason}`,
+  };
 }
 
 /**
