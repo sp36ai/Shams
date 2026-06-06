@@ -12,6 +12,7 @@ import firestore from '@react-native-firebase/firestore';
 import { REMEDY_LIBRARY } from './remedyLibrary';
 import { getCandidates, type RankingContext } from './rankCandidates';
 import { renderRemedies, type RenderedRemedy } from './remedyRenderer';
+import type { SeekerProfile } from '../stores/settingsStore';
 
 const SELECTION_PROMPT = `You are the remedy selection layer of a sacred Islamic oracle.
 
@@ -39,6 +40,7 @@ export interface SelectionContext extends RankingContext {
   oracleSummary: string; // 1–2 sentences for the LLM, never shown to user
   questionText: string;  // original question — used by Haiku description generator
   apiKey: string;
+  seekerProfile?: SeekerProfile | null;
 }
 
 function verdictToClassification(verdict: string): RankingContext['oracleClassification'] {
@@ -323,6 +325,7 @@ export function contextFromReading(params: {
   oracleSummary: string;
   questionText: string;
   apiKey: string;
+  seekerProfile?: SeekerProfile | null;
 }): SelectionContext {
   return {
     readingId: params.readingId,
@@ -333,5 +336,6 @@ export function contextFromReading(params: {
     oracleSummary: params.oracleSummary,
     questionText: params.questionText,
     apiKey: params.apiKey,
+    seekerProfile: params.seekerProfile ?? null,
   };
 }

@@ -1,58 +1,170 @@
 import React, { useCallback, useRef, useState } from 'react';
 import {
-  NativeScrollEvent,
-  NativeSyntheticEvent,
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  Dimensions,
+  ActivityIndicator,
   Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+  Dimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useColors, useTheme } from '@theme/ThemeProvider';
 import { useTypography } from '@theme/useTypography';
 import StarfieldBackground from '@components/StarfieldBackground';
-import { useSettingsStore } from '@stores/settingsStore';
-import { isLocationUsable, requestLocationPermission } from '@utils/permissions';
+import { useSettingsStore, type SeekerProfile } from '@stores/settingsStore';
 
 const { width } = Dimensions.get('window');
+
+// ── Question definitions ──────────────────────────────────────────────────────
+
+interface Choice {
+  label: string;
+  signal: SeekerProfile;
+}
+
+interface Question {
+  eyebrow: string;
+  text: string;
+  choices: Choice[];
+}
+
+const QUESTIONS: Question[] = [
+  {
+    eyebrow: 'QUESTION ONE — INTENT',
+    text: 'What brings you to the oracle?',
+    choices: [
+      { label: 'I face a decision and need clarity', signal: 'clarity' },
+      { label: 'I carry something heavy and need guidance', signal: 'comfort' },
+      { label: 'I am planning something and need direction', signal: 'action' },
+      { label: 'I seek to understand what Allah wills', signal: 'surrender' },
+    ],
+  },
+  {
+    eyebrow: 'QUESTION TWO — REGISTER',
+    text: 'How do you prefer the oracle to speak?',
+    choices: [
+      { label: 'Directly — I want clear answers', signal: 'clarity' },
+      { label: 'Gently — I am in a tender place', signal: 'comfort' },
+      { label: 'Practically — I need actionable guidance', signal: 'action' },
+      { label: 'Spiritually — I want depth over direction', signal: 'surrender' },
+    ],
+  },
+  {
+    eyebrow: 'QUESTION THREE — TIMING',
+    text: 'When do you most seek guidance?',
+    choices: [
+      { label: 'Before important choices', signal: 'clarity' },
+      { label: 'In moments of uncertainty or pain', signal: 'comfort' },
+      { label: 'When I am planning or building', signal: 'action' },
+      { label: 'In quiet moments of reflection', signal: 'surrender' },
+    ],
+  },
+];
+
+// ── Haiku inference ───────────────────────────────────────────────────────────
+
+const VALID_PROFILES = new Set<SeekerProfile>(['clarity', 'comfort', 'action', 'surrender']);
+
+async function inferProfile(
+  answers: [string, string, string],
+  apiKey: string,
+): Promise<SeekerProfile> {
+  const prompt = `A seeker answered three onboarding questions for an Islamic oracle app.
+
+Answer 1 (Intent): "${answers[0]}"
+Answer 2 (Register): "${answers[1]}"
+Answer 3 (Timing): "${answers[2]}"
+
+Based on these three answers, classify the seeker's primary spiritual orientation into exactly one of: clarity, comfort, action, surrender.
+
+Respond with ONLY the single classification word.
+No explanation. No punctuation.`;
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'anthropic-version': '2023-06-01',
+        'content-type': 'application/json',
+        'x-api-key': apiKey,
+      },
+      body: JSON.stringify({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 10,
+        messages: [{ role: 'user', content: prompt }],
+      }),
+    });
+
+    if (!res.ok) return 'clarity';
+
+    const data = (await res.json()) as {
+      content?: Array<{ type: string; text?: string }>;
+    };
+    const raw = (data.content ?? [])
+      .filter(b => b.type === 'text')
+      .map(b => b.text ?? '')
+      .join('')
+      .trim()
+      .toLowerCase() as SeekerProfile;
+
+    return VALID_PROFILES.has(raw) ? raw : 'clarity';
+  } catch {
+    return 'clarity';
+  }
+}
+
+// ── Component ─────────────────────────────────────────────────────────────────
 
 const OnboardingScreen: React.FC = () => {
   const { theme } = useTheme();
   const colors = useColors();
   const typography = useTypography();
-  const [activeIndex, setActiveIndex] = useState(0);
   const scrollRef = useRef<ScrollView>(null);
+
   const markOnboardingComplete = useSettingsStore(s => s.markOnboardingComplete);
-  const markLocationPrompted = useSettingsStore(s => s.markLocationPrompted);
-  const setPermissionGranted = useSettingsStore(s => s.setPermissionGranted);
+  const setSeekerProfile = useSettingsStore(s => s.setSeekerProfile);
 
-  const handleNext = () => {
-    if (activeIndex < 3) {
-      scrollRef.current?.scrollTo({ x: (activeIndex + 1) * width, animated: true });
-      setActiveIndex(activeIndex + 1);
-    }
-  };
+  const [activeIndex, setActiveIndex] = useState(0);
+  const [answers, setAnswers] = useState<string[]>([]);
+  const [inferring, setInferring] = useState(false);
+  const [profile, setProfile] = useState<SeekerProfile | null>(null);
 
-  const handleFinish = () => {
-    markOnboardingComplete();
-  };
+  const apiKey = (globalThis as Record<string, unknown>).ANTHROPIC_API_KEY as string | undefined ?? '';
 
-  const handleRequestLocation = useCallback(async () => {
-    const nextIndex = activeIndex + 1;
-    const result = await requestLocationPermission();
-    setPermissionGranted(isLocationUsable(result.status));
-    markLocationPrompted();
-    scrollRef.current?.scrollTo({ x: nextIndex * width, animated: true });
-    setActiveIndex(nextIndex);
-  }, [markLocationPrompted, setPermissionGranted, activeIndex]);
-
-  const onScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
-    const index = Math.round(event.nativeEvent.contentOffset.x / width);
+  const advanceTo = useCallback((index: number) => {
+    scrollRef.current?.scrollTo({ x: index * width, animated: true });
     setActiveIndex(index);
-  };
+  }, []);
+
+  const handleChoiceQ1Q2 = useCallback((choice: Choice, qIndex: number) => {
+    setAnswers(prev => {
+      const next = [...prev];
+      next[qIndex] = choice.label;
+      return next;
+    });
+    setTimeout(() => advanceTo(qIndex + 1), 220);
+  }, [advanceTo]);
+
+  const handleChoiceQ3 = useCallback(async (choice: Choice) => {
+    const finalAnswers: [string, string, string] = [
+      answers[0] ?? '',
+      answers[1] ?? '',
+      choice.label,
+    ];
+    setAnswers(prev => { const n = [...prev]; n[2] = choice.label; return n; });
+    setInferring(true);
+
+    const inferred = await inferProfile(finalAnswers, apiKey);
+    setSeekerProfile(inferred, finalAnswers);
+    setProfile(inferred);
+    setInferring(false);
+  }, [answers, apiKey, setSeekerProfile]);
+
+  const handleEnter = useCallback(() => {
+    markOnboardingComplete();
+  }, [markOnboardingComplete]);
 
   return (
     <SafeAreaView
@@ -71,216 +183,120 @@ const OnboardingScreen: React.FC = () => {
         horizontal
         pagingEnabled
         showsHorizontalScrollIndicator={false}
-        onScroll={onScroll}
+        scrollEnabled={false}
         scrollEventThrottle={16}
         style={styles.slider}
       >
-        {/* Slide 1 — Welcome */}
-        <View style={styles.slide}>
-          <Text
-            style={[
-              typography('caption'),
-              { color: colors.textFaint, letterSpacing: 2.5, marginBottom: 4 },
-            ]}
-          >
-            {'✦  BISMILLAH  ✦'}
-          </Text>
-          <Text
-            style={{
-              fontFamily: 'Amiri-Regular',
-              fontSize: 46,
-              color: colors.goldBright,
-              textAlign: 'center',
-              lineHeight: 58,
-            }}
-          >
-            {'شمس الأسرار'}
-          </Text>
-          <OrnamentRow colors={colors} />
-          <Text
-            style={[
-              typography('subheading'),
-              {
-                color: colors.text,
-                textAlign: 'center',
-                letterSpacing: 1.6,
-                textTransform: 'uppercase',
-              },
-            ]}
-          >
-            {'The Oracle of Hidden Stars'}
-          </Text>
-          <Text
-            style={[
-              typography('body'),
-              { color: colors.textMuted, textAlign: 'center', lineHeight: 26, marginTop: 4 },
-            ]}
-          >
-            {'Ancient KP horary wisdom.\nAstronomical precision.'}
-          </Text>
-        </View>
+        {QUESTIONS.map((q, qIndex) => (
+          <View key={qIndex} style={styles.slide}>
+            {/* Brand header on first question only */}
+            {qIndex === 0 && (
+              <>
+                <Text
+                  style={[
+                    typography('caption'),
+                    { color: colors.textFaint, letterSpacing: 2.5, marginBottom: 4 },
+                  ]}
+                >
+                  {'✦  BISMILLAH  ✦'}
+                </Text>
+                <Text
+                  style={{
+                    fontFamily: 'Amiri-Regular',
+                    fontSize: 38,
+                    color: colors.goldBright,
+                    textAlign: 'center',
+                    lineHeight: 48,
+                    marginBottom: 4,
+                  }}
+                >
+                  {'شمس الأسرار'}
+                </Text>
+                <OrnamentRow colors={colors} />
+              </>
+            )}
 
-        {/* Slide 2 — Two Oracle Modes */}
-        <View style={styles.slide}>
-          <Text
-            style={[
-              typography('caption'),
-              { color: colors.textFaint, letterSpacing: 2.5, marginBottom: 20 },
-            ]}
-          >
-            {'TWO PATHS OF INQUIRY'}
-          </Text>
-          <View style={styles.modesRow}>
-            <View
+            <Text
               style={[
-                styles.modeCard,
-                { backgroundColor: colors.surfaceElevated, borderColor: colors.border },
+                typography('caption'),
+                { color: colors.textFaint, letterSpacing: 2, marginBottom: 6, marginTop: qIndex === 0 ? 8 : 0 },
               ]}
             >
-              <Text style={styles.modeGlyph}>{'⌚'}</Text>
-              <Text
-                style={[
-                  typography('label'),
-                  {
-                    color: colors.goldBright,
-                    textAlign: 'center',
-                    letterSpacing: 1.4,
-                    marginBottom: 8,
-                  },
-                ]}
-              >
-                {'DIGITAL\nWATCH'}
-              </Text>
-              <Text
-                style={[
-                  typography('caption'),
-                  { color: colors.textMuted, textAlign: 'center', lineHeight: 18 },
-                ]}
-              >
-                {'Instant readings from the digits on your clock'}
-              </Text>
-            </View>
-            <View style={[styles.modeDivider, { backgroundColor: colors.border }]} />
-            <View
+              {q.eyebrow}
+            </Text>
+            <Text
               style={[
-                styles.modeCard,
-                { backgroundColor: colors.surfaceElevated, borderColor: colors.border },
+                typography('subheading'),
+                { color: colors.text, textAlign: 'center', letterSpacing: 0.4, marginBottom: 20 },
               ]}
             >
-              <Text style={styles.modeGlyph}>{'🔭'}</Text>
-              <Text
-                style={[
-                  typography('label'),
-                  {
-                    color: colors.goldBright,
-                    textAlign: 'center',
-                    letterSpacing: 1.4,
-                    marginBottom: 8,
-                  },
-                ]}
-              >
-                {'ASTRO-\nNOMICAL'}
-              </Text>
-              <Text
-                style={[
-                  typography('caption'),
-                  { color: colors.textMuted, textAlign: 'center', lineHeight: 18 },
-                ]}
-              >
-                {'Full sub-lord precision via Swiss Ephemeris'}
-              </Text>
+              {q.text}
+            </Text>
+
+            {/* Choice cards */}
+            <View style={styles.choicesContainer}>
+              {q.choices.map((choice, cIndex) => {
+                const isLast = qIndex === 2;
+                const onPress = isLast
+                  ? () => { void handleChoiceQ3(choice); }
+                  : () => handleChoiceQ1Q2(choice, qIndex);
+
+                return (
+                  <Pressable
+                    key={cIndex}
+                    onPress={onPress}
+                    disabled={inferring || profile !== null}
+                    style={({ pressed }) => [
+                      styles.choiceCard,
+                      {
+                        backgroundColor: colors.surfaceElevated,
+                        borderColor: colors.border,
+                        opacity: pressed ? 0.75 : 1,
+                      },
+                    ]}
+                  >
+                    <Text
+                      style={[
+                        typography('body'),
+                        { color: colors.text, textAlign: 'center', lineHeight: 22 },
+                      ]}
+                    >
+                      {choice.label}
+                    </Text>
+                  </Pressable>
+                );
+              })}
             </View>
+
+            {/* Q3 completion state */}
+            {qIndex === 2 && (
+              <View style={styles.completionArea}>
+                {inferring && (
+                  <ActivityIndicator color={colors.goldBright} size="small" />
+                )}
+                {!inferring && profile !== null && (
+                  <Pressable
+                    onPress={handleEnter}
+                    style={({ pressed }) => [
+                      styles.cta,
+                      { backgroundColor: colors.primary, opacity: pressed ? 0.85 : 1 },
+                    ]}
+                  >
+                    <Text style={[typography('button'), { color: colors.textOnPrimary }]}>
+                      {'Enter Shams al-Asrār'}
+                    </Text>
+                  </Pressable>
+                )}
+              </View>
+            )}
           </View>
-        </View>
-
-        {/* Slide 3 — Location */}
-        <View style={styles.slide}>
-          <Text style={[styles.bigGlyph, { color: colors.goldBright }]}>{'◎'}</Text>
-          <Text
-            style={[
-              typography('caption'),
-              { color: colors.textFaint, letterSpacing: 2.5, marginBottom: 4 },
-            ]}
-          >
-            {'AL-MAWQI — THE ANCHOR'}
-          </Text>
-          <Text
-            style={[
-              typography('subheading'),
-              { color: colors.goldBright, textAlign: 'center', letterSpacing: 1 },
-            ]}
-          >
-            {'Enable Location'}
-          </Text>
-          <Text
-            style={[
-              typography('body'),
-              { color: colors.textMuted, textAlign: 'center', lineHeight: 26, marginTop: 4 },
-            ]}
-          >
-            {'Required for Planetary Hora — the hora lord calculation that powers your readings.'}
-          </Text>
-          <Pressable
-            onPress={() => void handleRequestLocation()}
-            style={({ pressed }) => [
-              styles.cta,
-              { backgroundColor: colors.primary, opacity: pressed ? 0.85 : 1 },
-            ]}
-          >
-            <Text style={[typography('button'), { color: colors.textOnPrimary }]}>
-              {'Allow Location'}
-            </Text>
-          </Pressable>
-          <Pressable onPress={handleNext} style={styles.skipBtn} hitSlop={8}>
-            <Text style={[typography('caption'), { color: colors.textFaint, letterSpacing: 1 }]}>
-              {'Skip for now'}
-            </Text>
-          </Pressable>
-        </View>
-
-        {/* Slide 4 — Ready */}
-        <View style={styles.slide}>
-          <Text style={[styles.bigGlyph, { color: colors.goldBright }]}>{'✦'}</Text>
-          <OrnamentRow colors={colors} />
-          <Text
-            style={[
-              typography('subheading'),
-              {
-                color: colors.goldBright,
-                textAlign: 'center',
-                letterSpacing: 1.6,
-                textTransform: 'uppercase',
-              },
-            ]}
-          >
-            {'Your Oracle is Ready'}
-          </Text>
-          <Text
-            style={[
-              typography('body'),
-              { color: colors.textMuted, textAlign: 'center', marginTop: 4 },
-            ]}
-          >
-            {'Ask your first question.'}
-          </Text>
-          <Pressable
-            onPress={handleFinish}
-            style={({ pressed }) => [
-              styles.cta,
-              { backgroundColor: colors.primary, opacity: pressed ? 0.85 : 1 },
-            ]}
-          >
-            <Text style={[typography('button'), { color: colors.textOnPrimary }]}>
-              {'Enter Shams al-Asrār'}
-            </Text>
-          </Pressable>
-        </View>
+        ))}
       </ScrollView>
 
-      {/* Pagination */}
+      {/* Pagination dots */}
       <View style={styles.pagination}>
         <View style={styles.dotsRow}>
-          {[0, 1, 2, 3].map(i => (
+          {[0, 1, 2].map(i => (
             <View
               key={i}
               style={[
@@ -293,18 +309,6 @@ const OnboardingScreen: React.FC = () => {
             />
           ))}
         </View>
-        {activeIndex < 3 && (
-          <Pressable onPress={handleNext} style={styles.nextBtn} hitSlop={8}>
-            <Text
-              style={[
-                typography('label'),
-                { color: colors.goldBright, letterSpacing: 1.5, textTransform: 'uppercase' },
-              ]}
-            >
-              {'Next  →'}
-            </Text>
-          </Pressable>
-        )}
       </View>
     </SafeAreaView>
   );
@@ -333,41 +337,29 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: 36,
+    paddingHorizontal: 28,
     paddingBottom: 96,
-    gap: 10,
-  },
-  bigGlyph: {
-    fontSize: 48,
-    textAlign: 'center',
-    marginBottom: 4,
-  },
-  modesRow: {
-    flexDirection: 'row',
-    alignItems: 'stretch',
-    width: '100%',
-  },
-  modeCard: {
-    flex: 1,
-    alignItems: 'center',
-    padding: 18,
-    borderRadius: 20,
-    borderWidth: StyleSheet.hairlineWidth,
     gap: 0,
   },
-  modeGlyph: {
-    fontSize: 30,
-    textAlign: 'center',
-    marginBottom: 12,
+  choicesContainer: {
+    width: '100%',
+    gap: 10,
   },
-  modeDivider: {
-    width: StyleSheet.hairlineWidth,
-    marginHorizontal: 12,
-    alignSelf: 'stretch',
-    opacity: 0.4,
+  choiceCard: {
+    width: '100%',
+    paddingVertical: 14,
+    paddingHorizontal: 18,
+    borderRadius: 14,
+    borderWidth: StyleSheet.hairlineWidth,
+    alignItems: 'center',
+  },
+  completionArea: {
+    marginTop: 28,
+    alignItems: 'center',
+    minHeight: 56,
+    justifyContent: 'center',
   },
   cta: {
-    marginTop: 24,
     paddingVertical: 16,
     paddingHorizontal: 40,
     borderRadius: 20,
@@ -378,16 +370,11 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 10 },
     elevation: 4,
   },
-  skipBtn: {
-    marginTop: 10,
-    paddingVertical: 8,
-  },
   pagination: {
     position: 'absolute',
     bottom: 36,
     width: '100%',
     alignItems: 'center',
-    gap: 14,
   },
   dotsRow: {
     flexDirection: 'row',
@@ -397,9 +384,6 @@ const styles = StyleSheet.create({
   dot: {
     height: 5,
     borderRadius: 3,
-  },
-  nextBtn: {
-    paddingVertical: 4,
   },
 });
 

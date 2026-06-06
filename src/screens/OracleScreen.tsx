@@ -505,6 +505,9 @@ const OracleScreen: React.FC = () => {
   const lastLocation = useSettingsStore(
     (s: ReturnType<typeof useSettingsStore.getState>) => s.lastLocation,
   );
+  const seekerProfile = useSettingsStore(
+    (s: ReturnType<typeof useSettingsStore.getState>) => s.seekerProfile,
+  );
 
   const addReading = useReadingsStore(
     (s: ReturnType<typeof useReadingsStore.getState>) => s.addReading,
@@ -894,6 +897,7 @@ const OracleScreen: React.FC = () => {
             oracleSummary: narrationForReading(reading)?.slice(0, 200) ?? '',
             questionText: text,
             apiKey: remedyApiKey,
+            seekerProfile,
           });
           selectRemedies(selCtx)
             .then(result => setSelectedRemedies(result.selectedRemedies))

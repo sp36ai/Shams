@@ -56,6 +56,10 @@ export const KEYS = Object.freeze({
   // Trial banners — date string guards ("Mon Jun 06 2026" format)
   DAY7_PROMPT_DATE: 'trial.day7PromptDate.v1',
 
+  // Seeker profile — inferred once during onboarding via Haiku
+  ONBOARDING_SEEKER_PROFILE: 'onboarding.seekerProfile.v1',
+  ONBOARDING_ANSWERS: 'onboarding.answers.v1',
+
   // Auth domain
   AUTH_USER_ID: 'auth.userId.v1',
   AUTH_USER_NAME: 'auth.userName.v1',

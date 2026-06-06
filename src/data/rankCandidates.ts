@@ -1,4 +1,5 @@
 import { REMEDY_LIBRARY, type RemedyTag, type SpiritualState, type TaggedRemedy } from './remedyLibrary';
+import type { SeekerProfile } from '../stores/settingsStore';
 
 export type OracleClassification = 'CONFIRMED' | 'DENIED' | 'NEUTRAL';
 export type Severity = 'low' | 'moderate' | 'high';
@@ -8,6 +9,7 @@ export interface RankingContext {
   dominantThemes: RemedyTag[];
   spiritualState: SpiritualState;
   severity: Severity;
+  seekerProfile?: SeekerProfile | null;
 }
 
 interface ScoredRemedy {
@@ -35,6 +37,13 @@ const STATE_TAG_MAP: Record<SpiritualState, RemedyTag[]> = {
 
 const CONFIRMED_DIMENSIONS = new Set(['gratitude', 'opening', 'activation']);
 const DENIED_DIMENSIONS = new Set(['surrender', 'patience', 'trust_building', 'comfort']);
+
+const PROFILE_EFFECT_MAP: Record<SeekerProfile, string[]> = {
+  clarity:   ['clarity', 'activation', 'grounding'],
+  comfort:   ['comfort', 'emotional_release', 'calming'],
+  action:    ['opening', 'activation', 'trust_building'],
+  surrender: ['surrender', 'patience', 'spiritual_clearing'],
+};
 
 export function rankCandidates(
   context: RankingContext,
@@ -78,6 +87,14 @@ export function rankCandidates(
         CONFIRMED_DIMENSIONS.has(remedy.effectDimension)
       ) {
         score += 3;
+      }
+
+      // Quaternary: seeker profile nudge (+4 — below theme/state, above verdict)
+      if (context.seekerProfile) {
+        const preferred = PROFILE_EFFECT_MAP[context.seekerProfile];
+        if (preferred.includes(remedy.effectDimension)) {
+          score += 4;
+        }
       }
 
       return { remedy, score };
