@@ -37,11 +37,11 @@ const PLANS: PlanCard[] = [
     annualPrice: '₹2,490/year',
     annualNote: 'save 2 months',
     features: [
-      '3 questions/day',
-      'Astronomical mode',
-      'Full history',
-      'Timing windows',
-      'Remedies',
+      '3 consultations daily',
+      'Standard oracle voice',
+      'Sealed session history',
+      'Timing & auspice windows',
+      'Spiritual remedies',
     ],
   },
   {
@@ -52,10 +52,10 @@ const PLANS: PlanCard[] = [
     annualPrice: '₹6,990/year',
     annualNote: 'save 2 months',
     features: [
-      'Unlimited',
+      'Unlimited consultations',
       'Both oracle modes',
-      'Confidence detail',
-      'PDF reports',
+      'Full celestial confidence',
+      'Sacred session PDF',
       'Priority synthesis',
     ],
     badge: '★',
@@ -102,7 +102,9 @@ const PremiumScreen: React.FC = () => {
     }
   }, [restore, navigation]);
 
-  const headerTitle = trialExpired ? 'Your 7-day journey has ended.' : 'Unlock Deeper Access';
+  const headerTitle = trialExpired
+    ? 'Your 7-day journey has ended.'
+    : 'The sanctum opens its doors.';
   const headerSubtitle = trialExpired
     ? 'The stars are still watching. Continue receiving their guidance.'
     : 'Choose your path of guidance.';

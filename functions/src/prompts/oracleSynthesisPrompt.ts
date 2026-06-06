@@ -281,3 +281,29 @@ Output this exact JSON and nothing else:
   "signature": "✨ These words are unveiled under the banner of Shams al-Asrār, by Astro Sarfaraz."
 }
 `.trim();
+
+export const TONE_GUARDRAILS = `
+
+═══════════════════════════════════════════════════════
+TONE GUARDRAILS — hidden_influence and spiritual_layer only
+═══════════════════════════════════════════════════════
+
+For hidden_influence:
+- Phrase cautions as observations, not warnings
+- Prefer: "the symbols suggest", "the pattern indicates",
+  "one unseen current worth noting"
+- Avoid: "beware", "danger", "destroy", "punish", "harsh"
+- The caution should prompt reflection, not fear
+
+For spiritual_layer:
+- Phrase spiritual reframes as invitations, not corrections
+- Prefer: "this may be a season of", "the oracle points toward",
+  "the current pattern reflects"
+- Avoid: "punishment", "neglect", "failure", "you must",
+  "you have not"
+- The seeker should feel accompanied, not judged
+
+These rules apply regardless of verdict or confidence level.
+Do not soften the verdict itself — only the emotional register
+of these two fields.
+`.trimEnd();

@@ -17,6 +17,8 @@ import { create } from 'zustand';
 
 import { storage, KEYS } from '@storage/mmkv';
 
+export type SeekerProfile = 'clarity' | 'comfort' | 'action' | 'surrender';
+
 export interface Coords {
   lat: number;
   lon: number;
@@ -35,12 +37,18 @@ export interface SettingsState {
   onboardingPermissionGranted: boolean;
   /** Last known device location, or null if never captured. */
   lastLocation: Coords | null;
+  /** Haiku-inferred seeker profile. null until onboarding completes. */
+  seekerProfile: SeekerProfile | null;
+  /** Raw onboarding answers for audit. null until onboarding completes. */
+  onboardingAnswers: [string, string, string] | null;
 
   markOnboardingComplete: () => void;
   markLocationPrompted: () => void;
   setPermissionGranted: (granted: boolean) => void;
   setLastLocation: (coords: Coords) => void;
   clearLocation: () => void;
+  setSeekerProfile: (profile: SeekerProfile, answers: [string, string, string]) => void;
+  resetProfile: () => void;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -50,6 +58,30 @@ export interface SettingsState {
 function readBool(key: string, fallback: boolean): boolean {
   const v = storage.getBoolean(key);
   return v === undefined ? fallback : v;
+}
+
+function readSeekerProfile(): SeekerProfile | null {
+  const v = storage.getString(KEYS.ONBOARDING_SEEKER_PROFILE);
+  if (v === 'clarity' || v === 'comfort' || v === 'action' || v === 'surrender') {
+    return v;
+  }
+  return null;
+}
+
+function readOnboardingAnswers(): [string, string, string] | null {
+  const raw = storage.getString(KEYS.ONBOARDING_ANSWERS);
+  if (!raw) {
+    return null;
+  }
+  try {
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed) && parsed.length === 3) {
+      return parsed as [string, string, string];
+    }
+  } catch {
+    /* ignore */
+  }
+  return null;
 }
 
 function readLastLocation(): Coords | null {
@@ -77,6 +109,8 @@ export const useSettingsStore = create<SettingsState>(set => ({
   onboardingLocationPrompted: readBool(KEYS.ONBOARDING_LOCATION_PROMPTED, false),
   onboardingPermissionGranted: readBool(KEYS.ONBOARDING_PERMISSION_GRANTED, false),
   lastLocation: readLastLocation(),
+  seekerProfile: readSeekerProfile(),
+  onboardingAnswers: readOnboardingAnswers(),
 
   markOnboardingComplete: (): void => {
     storage.set(KEYS.ONBOARDING_SEEN, true);
@@ -103,6 +137,19 @@ export const useSettingsStore = create<SettingsState>(set => ({
       storage.set(KEYS.LOCATION_LAST_LABEL, coords.label);
     }
     set({ lastLocation: coords });
+  },
+
+  setSeekerProfile: (profile: SeekerProfile, answers: [string, string, string]): void => {
+    storage.set(KEYS.ONBOARDING_SEEKER_PROFILE, profile);
+    storage.set(KEYS.ONBOARDING_ANSWERS, JSON.stringify(answers));
+    set({ seekerProfile: profile, onboardingAnswers: answers });
+  },
+
+  resetProfile: (): void => {
+    storage.set(KEYS.ONBOARDING_SEEN, false);
+    storage.delete(KEYS.ONBOARDING_SEEKER_PROFILE);
+    storage.delete(KEYS.ONBOARDING_ANSWERS);
+    set({ hasSeenOnboarding: false, seekerProfile: null, onboardingAnswers: null });
   },
 
   clearLocation: (): void => {

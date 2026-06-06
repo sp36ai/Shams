@@ -36,7 +36,8 @@ import {
   ANTHROPIC_API_KEY,
   type PlanTier,
 } from '../config';
-import { ORACLE_SYNTHESIS_SYSTEM_PROMPT } from '../prompts/oracleSynthesisPrompt';
+import { ORACLE_SYNTHESIS_SYSTEM_PROMPT, TONE_GUARDRAILS } from '../prompts/oracleSynthesisPrompt';
+import { runSafetyValidator } from './safetyValidator';
 import { getManzila, getManzilaOracleLine } from '../engine/manazil';
 import { houseForLongitude } from '../engine/primitives/chartBuilder';
 import { HOUSE_MATRIX } from '../engine/kp/rules/houseMatrix';
@@ -226,7 +227,8 @@ async function synthesiseOracleVoice(params: {
 
   const systemPrompt =
     ORACLE_SYNTHESIS_SYSTEM_PROMPT +
-    `\n\nMOON STATION TONIGHT:\n${params.manzilaLine}\n\nWeave al-Qamar's station naturally into the opening or spiritual_layer. Never state the mansion name as a label. Let it arrive as imagery.`;
+    `\n\nMOON STATION TONIGHT:\n${params.manzilaLine}\n\nWeave al-Qamar's station naturally into the opening or spiritual_layer. Never state the mansion name as a label. Let it arrive as imagery.` +
+    TONE_GUARDRAILS;
 
   const timeoutMs = 25_000;
   const controller = new AbortController();
@@ -443,7 +445,7 @@ export const askOracle = onCall(
         verdict.verdict === 'YES' || verdict.verdict === 'CONDITIONAL' ? 'CONFIRMED' : 'DENIED';
       const manzilaLine = getManzilaOracleLine(moonLongitude, verdictBinary);
 
-      const oracle = apiKey
+      const oracleRaw = apiKey
         ? await synthesiseOracleVoice({
             verdict: verdict.verdict,
             stage: (verdict as any).stage,
@@ -454,6 +456,10 @@ export const askOracle = onCall(
             apiKey,
           })
         : ORACLE_FALLBACK;
+
+      const oracle = apiKey
+        ? await runSafetyValidator(oracleRaw, verdict.id, apiKey)
+        : oracleRaw;
 
       logger.info('oracle synthesis', { userId, oracle });
 
