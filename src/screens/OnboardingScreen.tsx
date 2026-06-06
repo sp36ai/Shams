@@ -131,7 +131,7 @@ const OnboardingScreen: React.FC = () => {
   const [inferring, setInferring] = useState(false);
   const [profile, setProfile] = useState<SeekerProfile | null>(null);
 
-  const apiKey = (globalThis as Record<string, unknown>).ANTHROPIC_API_KEY as string | undefined ?? '';
+  const apiKey = process.env.ANTHROPIC_API_KEY ?? '';
 
   const advanceTo = useCallback((index: number) => {
     scrollRef.current?.scrollTo({ x: index * width, animated: true });
