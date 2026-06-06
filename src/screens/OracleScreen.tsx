@@ -887,7 +887,6 @@ const OracleScreen: React.FC = () => {
             readingId: reading.id,
             verdict: reading.verdict,
             category: reading.category ?? 'general',
-            spiritualState: 'uncertain', // default; TODO: derive from oracle tone
             severity,
             oracleSummary: narrationForReading(reading)?.slice(0, 200) ?? '',
             apiKey: remedyApiKey,

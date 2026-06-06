@@ -52,13 +52,56 @@ function categoryToThemes(category: string): RankingContext['dominantThemes'] {
     career: ['MATERIAL_ANXIETY', 'DELAY'],
     finance: ['MATERIAL_ANXIETY', 'STAGNATION'],
     health: ['ANXIETY', 'GRIEF'],
+    property: ['MATERIAL_ANXIETY', 'OBSTRUCTION'],
     travel: ['DOUBT', 'FORCING'],
     legal: ['CONFLICT', 'OBSTRUCTION'],
-    lost_item: ['STAGNATION', 'ANXIETY'],
-    relationship: ['ESTRANGEMENT', 'CONFLICT'],
+    education: ['DOUBT', 'DELAY'],
+    business: ['MATERIAL_ANXIETY', 'FORCING'],
+    children: ['GRIEF', 'ATTACHMENT'],
+    lostitem: ['STAGNATION', 'ANXIETY'],
+    enemies: ['CONFLICT', 'ESTRANGEMENT'],
     spiritual: ['SPIRITUAL_NEGLECT', 'DOUBT'],
+    general: ['DOUBT', 'OBSTRUCTION'],
   };
   return map[category.toLowerCase()] ?? ['DOUBT', 'OBSTRUCTION'];
+}
+
+/**
+ * Option A — derive SpiritualState from verdict × category.
+ *
+ * Mapping table covers all 14 QuestionType values × CONFIRMED/DENIED/NEUTRAL.
+ * NEUTRAL verdict defaults to the category's ambient emotional state.
+ */
+function deriveSpiritualState(
+  verdict: string,
+  category: string,
+): RankingContext['spiritualState'] {
+  const classification = verdictToClassification(verdict);
+  const cat = category.toLowerCase();
+
+  if (classification === 'CONFIRMED') {
+    // Arrival states — differentiated by domain
+    if (cat === 'marriage' || cat === 'children') return 'hopeful';
+    if (cat === 'spiritual') return 'grateful';
+    return 'hopeful';
+  }
+
+  if (classification === 'DENIED') {
+    // Loss/obstruction states — differentiated by domain
+    if (cat === 'marriage' || cat === 'children') return 'grieving';
+    if (cat === 'legal' || cat === 'enemies') return 'remorseful';
+    if (cat === 'finance' || cat === 'property' || cat === 'business') return 'anxious';
+    if (cat === 'health') return 'fearful' as RankingContext['spiritualState'];
+    if (cat === 'spiritual') return 'remorseful';
+    return 'uncertain'; // career, education, travel, lostitem, general
+  }
+
+  // NEUTRAL — ambient state by domain
+  if (cat === 'legal' || cat === 'enemies') return 'uncertain';
+  if (cat === 'health') return 'anxious';
+  if (cat === 'spiritual') return 'uncertain';
+  if (cat === 'marriage' || cat === 'children') return 'hopeful';
+  return 'uncertain';
 }
 
 /** Write selectionReason to Firestore — fire-and-forget, never awaited in render path. */
@@ -179,14 +222,14 @@ function fallbackFromCandidates(
 }
 
 /**
- * Convenience builder — derives RankingContext from a Reading's verdict fields.
+ * Convenience builder — derives full SelectionContext from a Reading's verdict fields.
+ * spiritualState is derived internally via Option A mapping (verdict × category).
  * Called in OracleScreen after askOracle resolves.
  */
 export function contextFromReading(params: {
   readingId: string;
   verdict: string;
   category: string;
-  spiritualState: RankingContext['spiritualState'];
   severity: RankingContext['severity'];
   oracleSummary: string;
   apiKey: string;
@@ -195,7 +238,7 @@ export function contextFromReading(params: {
     readingId: params.readingId,
     oracleClassification: verdictToClassification(params.verdict),
     dominantThemes: categoryToThemes(params.category),
-    spiritualState: params.spiritualState,
+    spiritualState: deriveSpiritualState(params.verdict, params.category),
     severity: params.severity,
     oracleSummary: params.oracleSummary,
     apiKey: params.apiKey,
