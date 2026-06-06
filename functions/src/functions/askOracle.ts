@@ -37,6 +37,7 @@ import {
   type PlanTier,
 } from '../config';
 import { ORACLE_SYNTHESIS_SYSTEM_PROMPT, TONE_GUARDRAILS } from '../prompts/oracleSynthesisPrompt';
+import { runSafetyValidator } from './safetyValidator';
 import { getManzila, getManzilaOracleLine } from '../engine/manazil';
 import { houseForLongitude } from '../engine/primitives/chartBuilder';
 import { HOUSE_MATRIX } from '../engine/kp/rules/houseMatrix';
@@ -444,7 +445,7 @@ export const askOracle = onCall(
         verdict.verdict === 'YES' || verdict.verdict === 'CONDITIONAL' ? 'CONFIRMED' : 'DENIED';
       const manzilaLine = getManzilaOracleLine(moonLongitude, verdictBinary);
 
-      const oracle = apiKey
+      const oracleRaw = apiKey
         ? await synthesiseOracleVoice({
             verdict: verdict.verdict,
             stage: (verdict as any).stage,
@@ -455,6 +456,10 @@ export const askOracle = onCall(
             apiKey,
           })
         : ORACLE_FALLBACK;
+
+      const oracle = apiKey
+        ? await runSafetyValidator(oracleRaw, verdict.id, apiKey)
+        : oracleRaw;
 
       logger.info('oracle synthesis', { userId, oracle });
 
