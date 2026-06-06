@@ -30,6 +30,7 @@ const STATE_TAG_MAP: Record<SpiritualState, RemedyTag[]> = {
   proud: ['PRIDE', 'FORCING', 'ATTACHMENT'],
   anxious: ['ANXIETY', 'MATERIAL_ANXIETY', 'RESTLESSNESS'],
   grateful: ['ABUNDANCE', 'SPIRITUAL_NEGLECT'],
+  fearful: ['GRIEF', 'DOUBT', 'SUPPRESSION'],
 };
 
 const CONFIRMED_DIMENSIONS = new Set(['gratitude', 'opening', 'activation']);

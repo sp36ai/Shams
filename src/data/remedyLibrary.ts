@@ -68,7 +68,8 @@ export type SpiritualState =
   | 'grieving'
   | 'proud'
   | 'anxious'
-  | 'grateful';
+  | 'grateful'
+  | 'fearful';
 
 export interface TaggedRemedy {
   id: string;

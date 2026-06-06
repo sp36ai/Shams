@@ -91,7 +91,7 @@ function deriveSpiritualState(
     if (cat === 'marriage' || cat === 'children') return 'grieving';
     if (cat === 'legal' || cat === 'enemies') return 'remorseful';
     if (cat === 'finance' || cat === 'property' || cat === 'business') return 'anxious';
-    if (cat === 'health') return 'fearful' as RankingContext['spiritualState'];
+    if (cat === 'health') return 'fearful';
     if (cat === 'spiritual') return 'remorseful';
     return 'uncertain'; // career, education, travel, lostitem, general
   }

@@ -277,6 +277,49 @@ describe('Quadrant D — Transition + uncertain', () => {
   });
 });
 
+describe('fearful state — health DENIED routing', () => {
+  it('S21: health DENIED + fearful + high → comfort/trust/emotional_release remedies', () => {
+    const r = getCandidates(ctx({
+      oracleClassification: 'DENIED',
+      dominantThemes: ['GRIEF', 'DOUBT', 'SUPPRESSION'],
+      spiritualState: 'fearful',
+      severity: 'high',
+    }));
+    expect(r.length).toBeGreaterThanOrEqual(4);
+    const dims = effectSet(r);
+    const hasComfortOrTrust = dims.some(d =>
+      ['comfort', 'trust_building', 'emotional_release', 'spiritual_clearing'].includes(d));
+    expect(hasComfortOrTrust).toBe(true);
+  });
+
+  it('S22: health DENIED + fearful → quran_03, dhikr_02, or tawbah_03 in top-8', () => {
+    const r = getCandidates(ctx({
+      oracleClassification: 'DENIED',
+      dominantThemes: ['GRIEF', 'DOUBT', 'SUPPRESSION'],
+      spiritualState: 'fearful',
+      severity: 'high',
+    }));
+    const ids = new Set(r.map(rem => rem.id));
+    const expectedIds = ['quran_03', 'dhikr_02', 'tawbah_03'];
+    const atLeastOne = expectedIds.some(id => ids.has(id));
+    expect(atLeastOne).toBe(true);
+  });
+
+  it('S23: fearful state does not route to MATERIAL_ANXIETY remedies', () => {
+    const r = getCandidates(ctx({
+      oracleClassification: 'DENIED',
+      dominantThemes: ['GRIEF', 'DOUBT'],
+      spiritualState: 'fearful',
+      severity: 'moderate',
+    }));
+    // sadaqa_04 and dua_02 are MATERIAL_ANXIETY remedies — should not dominate
+    const materialIds = new Set(['sadaqa_04', 'dua_02']);
+    const top3 = r.slice(0, 3).map(rem => rem.id);
+    const materialInTop3 = top3.filter(id => materialIds.has(id)).length;
+    expect(materialInTop3).toBeLessThanOrEqual(1);
+  });
+});
+
 // ── Remedy collapse guard ─────────────────────────────────────────────────────
 // Verifies that 3–5 remedies don't dominate across all scenarios.
 
