@@ -73,7 +73,7 @@ describe('enrichWithDescriptions — fallback isolation', () => {
   it('fires all generators in parallel, not sequentially', async () => {
     const order: number[] = [];
     const remedies = [makeRemedy('r1'), makeRemedy('r2'), makeRemedy('r3')];
-    const generate = jest.fn().mockImplementation(async (_r: RenderedRemedy, idx?: number) => {
+    const generate = jest.fn().mockImplementation(async (_r: RenderedRemedy, _idx?: number) => {
       order.push(Date.now());
       return 'ok';
     });

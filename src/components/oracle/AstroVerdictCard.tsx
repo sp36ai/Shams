@@ -90,8 +90,18 @@ const VeilLine: React.FC = () => {
   useEffect(() => {
     Animated.loop(
       Animated.sequence([
-        Animated.timing(anim, { toValue: 1, duration: 900, useNativeDriver: true, easing: Easing.inOut(Easing.sin) }),
-        Animated.timing(anim, { toValue: 0, duration: 900, useNativeDriver: true, easing: Easing.inOut(Easing.sin) }),
+        Animated.timing(anim, {
+          toValue: 1,
+          duration: 900,
+          useNativeDriver: true,
+          easing: Easing.inOut(Easing.sin),
+        }),
+        Animated.timing(anim, {
+          toValue: 0,
+          duration: 900,
+          useNativeDriver: true,
+          easing: Easing.inOut(Easing.sin),
+        }),
       ]),
     ).start();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
@@ -112,44 +122,48 @@ const VeilLine: React.FC = () => {
 // ── confidencePhrase — number (0-100) → locked display string ─────────────────
 
 function confidencePhrase(confidence: number): string {
-  if (confidence >= 70) return '4 celestial witnesses aligned';
-  if (confidence >= 40) return 'The heavens speak with measured certainty';
+  if (confidence >= 70) {
+    return '4 celestial witnesses aligned';
+  }
+  if (confidence >= 40) {
+    return 'The heavens speak with measured certainty';
+  }
   return 'The stars speak softly — listen closely';
 }
 
 // ── Category icon map — Unicode geometry, no emoji except 📿 ─────────────────
 
 const CATEGORY_ICON: Record<string, string> = {
-  salawat:      '☽',
-  dua:          '✦',
-  istikhara:    '◈',
-  sadaqa:       '◇',
-  fasting:      '◌',
-  quran:        '✧',
-  dhikr:        '📿',
-  charity:      '◇',
+  salawat: '☽',
+  dua: '✦',
+  istikhara: '◈',
+  sadaqa: '◇',
+  fasting: '◌',
+  quran: '✧',
+  dhikr: '📿',
+  charity: '◇',
   night_prayer: '★',
-  silence:      '◎',
-  tawbah:       '↩',
+  silence: '◎',
+  tawbah: '↩',
 };
 
 // ── effectDimension → display string ─────────────────────────────────────────
 
 const EFFECT_LABEL: Record<string, string> = {
   spiritual_clearing: 'A practice of spiritual purification',
-  calming:            'A practice of inner stillness',
-  emotional_release:  'A practice of releasing what is held',
-  surrender:          'A practice of returning to Allah',
-  trust_building:     'A practice of deepening trust',
-  reconciliation:     'A practice of mending what is broken',
-  activation:         'A practice of renewed movement',
-  grounding:          'A practice of returning to centre',
-  humility:           'A practice of softening the self',
-  clarity:            'A practice of clearing the inner eye',
-  opening:            'A practice of opening closed doors',
-  comfort:            'A practice of receiving divine comfort',
-  patience:           'A practice of sacred waiting',
-  gratitude:          'A practice of anchoring in blessing',
+  calming: 'A practice of inner stillness',
+  emotional_release: 'A practice of releasing what is held',
+  surrender: 'A practice of returning to Allah',
+  trust_building: 'A practice of deepening trust',
+  reconciliation: 'A practice of mending what is broken',
+  activation: 'A practice of renewed movement',
+  grounding: 'A practice of returning to centre',
+  humility: 'A practice of softening the self',
+  clarity: 'A practice of clearing the inner eye',
+  opening: 'A practice of opening closed doors',
+  comfort: 'A practice of receiving divine comfort',
+  patience: 'A practice of sacred waiting',
+  gratitude: 'A practice of anchoring in blessing',
 };
 
 // ── AstroVerdictCard ──────────────────────────────────────────────────────────
@@ -160,7 +174,11 @@ interface AstroVerdictCardProps {
   selectedRemedies?: RenderedRemedy[];
 }
 
-const AstroVerdictCard: React.FC<AstroVerdictCardProps> = ({ result, onSwitchMode, selectedRemedies }) => {
+const AstroVerdictCard: React.FC<AstroVerdictCardProps> = ({
+  result,
+  onSwitchMode,
+  selectedRemedies,
+}) => {
   const colors = useColors();
   const typography = useTypography();
 
@@ -171,7 +189,11 @@ const AstroVerdictCard: React.FC<AstroVerdictCardProps> = ({ result, onSwitchMod
     const t1 = setTimeout(() => setPhase(1), 600);
     const t2 = setTimeout(() => setPhase(2), 1400);
     const t3 = setTimeout(() => setPhase(3), 2400);
-    return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+      clearTimeout(t3);
+    };
   }, []); // empty dep — fires once on mount, never again
 
   const verdictOpacity = useRef(new Animated.Value(0)).current;
@@ -363,7 +385,12 @@ const AstroVerdictCard: React.FC<AstroVerdictCardProps> = ({ result, onSwitchMod
             <Text style={[typography('button'), { color: verdictColor, letterSpacing: 3 }]}>
               {result.verdict}
             </Text>
-            <Text style={[typography('caption'), { color: colors.textMuted, marginLeft: 8, fontStyle: 'italic' }]}>
+            <Text
+              style={[
+                typography('caption'),
+                { color: colors.textMuted, marginLeft: 8, fontStyle: 'italic' },
+              ]}
+            >
               {confidencePhrase(result.confidence)}
             </Text>
           </View>
@@ -422,7 +449,9 @@ const AstroVerdictCard: React.FC<AstroVerdictCardProps> = ({ result, onSwitchMod
           <View style={[styles.subLordBlock, { borderTopColor: colors.border }]}>
             <Text style={[typography('caption'), { color: colors.textMuted }]}>MOON SUB-LORD</Text>
             <View style={styles.subLordRow}>
-              <Text style={[typography('heading'), { color: colors.accent }]}>{result.subLord}</Text>
+              <Text style={[typography('heading'), { color: colors.accent }]}>
+                {result.subLord}
+              </Text>
               <Text style={[typography('caption'), { color: colors.textFaint, marginLeft: 6 }]}>
                 {result.subLordHouse > 0 ? `occupies H${result.subLordHouse}` : '—'}
               </Text>
@@ -475,7 +504,9 @@ const AstroVerdictCard: React.FC<AstroVerdictCardProps> = ({ result, onSwitchMod
               </Text>
               {(oracle.spiritual_layer?.length ?? 0) > 0 && (
                 <View style={[styles.spiritualLayer, { borderLeftColor: colors.amber }]}>
-                  <Text style={[typography('bodyItalic'), { color: colors.textFaint, fontSize: 13 }]}>
+                  <Text
+                    style={[typography('bodyItalic'), { color: colors.textFaint, fontSize: 13 }]}
+                  >
                     {oracle.spiritual_layer}
                   </Text>
                 </View>
@@ -571,7 +602,10 @@ const AstroVerdictCard: React.FC<AstroVerdictCardProps> = ({ result, onSwitchMod
             )}
             {remedy.asma !== undefined && (
               <Text
-                style={[typography('label'), { color: colors.amber, fontSize: 12, marginBottom: 6 }]}
+                style={[
+                  typography('label'),
+                  { color: colors.amber, fontSize: 12, marginBottom: 6 },
+                ]}
               >
                 {remedy.asma}
               </Text>
@@ -613,7 +647,9 @@ const AstroVerdictCard: React.FC<AstroVerdictCardProps> = ({ result, onSwitchMod
             <View style={[styles.timingBlock, { borderTopColor: colors.border }]}>
               <Text style={[typography('caption'), { color: colors.accent }]}>
                 ⊛ Within {result.timing.range.max} {result.timing.window}
-                {result.timing.activeDasha !== undefined ? `  ·  ${result.timing.activeDasha} MD` : ''}
+                {result.timing.activeDasha !== undefined
+                  ? `  ·  ${result.timing.activeDasha} MD`
+                  : ''}
                 {result.timing.activeAntardasha !== undefined
                   ? ` / ${result.timing.activeAntardasha} AD`
                   : ''}
@@ -698,9 +734,9 @@ const AstroVerdictCard: React.FC<AstroVerdictCardProps> = ({ result, onSwitchMod
           >
             GUIDANCE FOR THIS MOMENT
           </Text>
-          {selectedRemedies.map(remedy => (
+          {selectedRemedies.map(libraryRemedy => (
             <View
-              key={remedy.id}
+              key={libraryRemedy.id}
               style={[
                 styles.libraryRemedyCard,
                 { borderColor: colors.border, backgroundColor: colors.surfaceElevated },
@@ -708,22 +744,46 @@ const AstroVerdictCard: React.FC<AstroVerdictCardProps> = ({ result, onSwitchMod
             >
               {/* Header row — category icon + name */}
               <View style={styles.libraryRemedyHeader}>
-                <Text style={[typography('label'), { color: colors.amber, opacity: 0.6, fontSize: 10, letterSpacing: 1.2 }]}>
-                  {(CATEGORY_ICON[remedy.category] ?? '◈') + '  ' + remedy.category.toUpperCase().replace('_', ' ')}
+                <Text
+                  style={[
+                    typography('label'),
+                    { color: colors.amber, opacity: 0.6, fontSize: 10, letterSpacing: 1.2 },
+                  ]}
+                >
+                  {(CATEGORY_ICON[libraryRemedy.category] ?? '◈') +
+                    '  ' +
+                    libraryRemedy.category.toUpperCase().replace('_', ' ')}
                 </Text>
               </View>
               {/* Title */}
-              <Text style={[typography('body'), { color: colors.text, marginBottom: 4, fontSize: 14, lineHeight: 20 }]}>
-                {remedy.title}
+              <Text
+                style={[
+                  typography('body'),
+                  { color: colors.text, marginBottom: 4, fontSize: 14, lineHeight: 20 },
+                ]}
+              >
+                {libraryRemedy.title}
               </Text>
-              {/* Description — derived from effectDimension */}
-              <Text style={[typography('caption'), { color: colors.textMuted, fontSize: 12, lineHeight: 18, marginBottom: 8 }]}>
-                {EFFECT_LABEL[remedy.effectDimension] ?? 'A practice of sacred intention'}
+              {/* Description — Haiku-generated or effectDimension fallback */}
+              <Text
+                style={[
+                  typography('caption'),
+                  { color: colors.textMuted, fontSize: 12, lineHeight: 18, marginBottom: 8 },
+                ]}
+              >
+                {libraryRemedy.description ??
+                  EFFECT_LABEL[libraryRemedy.effectDimension] ??
+                  'A practice of sacred intention'}
               </Text>
               {/* effectDimension pill */}
               <View style={[styles.effectPill, { borderColor: colors.borderAccent }]}>
-                <Text style={[typography('label'), { color: colors.amber, opacity: 0.5, fontSize: 9, letterSpacing: 0.8 }]}>
-                  {remedy.effectDimension.replace(/_/g, ' ')}
+                <Text
+                  style={[
+                    typography('label'),
+                    { color: colors.amber, opacity: 0.5, fontSize: 9, letterSpacing: 0.8 },
+                  ]}
+                >
+                  {libraryRemedy.effectDimension.replace(/_/g, ' ')}
                 </Text>
               </View>
             </View>

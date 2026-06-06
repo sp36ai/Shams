@@ -525,7 +525,9 @@ const OracleScreen: React.FC = () => {
 
   const [showQuotaModal, setShowQuotaModal] = useState(false);
   const [showNewQuestionModal, setShowNewQuestionModal] = useState(false);
-  const [redirectMessage, setRedirectMessage] = useState<'conversational' | 'ambiguous' | null>(null);
+  const [redirectMessage, setRedirectMessage] = useState<'conversational' | 'ambiguous' | null>(
+    null,
+  );
 
   // ── Threshold overlay — sacred crossing animation ───────────────────────────
   const thresholdOpacity = useRef(new Animated.Value(0)).current;
@@ -561,7 +563,9 @@ const OracleScreen: React.FC = () => {
   }, [thresholdOpacity, thresholdScale]);
 
   // Fire on mount
-  useEffect(() => { runThreshold(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    runThreshold();
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Quota exhaustion timestamp — upgrade CTA appears only after 6 h ─────────
   const quotaExhaustedAt = useRef<number>(0);
@@ -571,9 +575,13 @@ const OracleScreen: React.FC = () => {
 
   const evaluateTrialBanner = useCallback(() => {
     const { plan: currentPlan, checkTrial } = useQuotaStore.getState();
-    if (currentPlan !== 'free') return;
+    if (currentPlan !== 'free') {
+      return;
+    }
     const { active, daysRemaining } = checkTrial();
-    if (!active) return;
+    if (!active) {
+      return;
+    }
     if (daysRemaining === 2) {
       setTrialBannerKind('day6');
     } else if (daysRemaining === 1) {
@@ -589,7 +597,9 @@ const OracleScreen: React.FC = () => {
   useEffect(() => {
     evaluateTrialBanner();
     const sub = AppState.addEventListener('change', nextState => {
-      if (nextState === 'active') evaluateTrialBanner();
+      if (nextState === 'active') {
+        evaluateTrialBanner();
+      }
     });
     return () => sub.remove();
   }, [evaluateTrialBanner]);
@@ -619,8 +629,18 @@ const OracleScreen: React.FC = () => {
     }
     const loop = Animated.loop(
       Animated.sequence([
-        Animated.timing(orbPulse, { toValue: 1.22, duration: 625, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
-        Animated.timing(orbPulse, { toValue: 1, duration: 625, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
+        Animated.timing(orbPulse, {
+          toValue: 1.22,
+          duration: 625,
+          easing: Easing.inOut(Easing.sin),
+          useNativeDriver: true,
+        }),
+        Animated.timing(orbPulse, {
+          toValue: 1,
+          duration: 625,
+          easing: Easing.inOut(Easing.sin),
+          useNativeDriver: true,
+        }),
       ]),
     );
     loop.start();
@@ -955,6 +975,7 @@ const OracleScreen: React.FC = () => {
       questionsToday,
       readings,
       sending,
+      seekerProfile,
       stage,
       startTrial,
       t,
@@ -1225,7 +1246,12 @@ const OracleScreen: React.FC = () => {
           <View style={styles.composer}>
             <TextInput
               value={input}
-              onChangeText={v => { setInput(v); if (redirectMessage !== null) setRedirectMessage(null); }}
+              onChangeText={v => {
+                setInput(v);
+                if (redirectMessage !== null) {
+                  setRedirectMessage(null);
+                }
+              }}
               placeholder={t('oracle.placeholder')}
               placeholderTextColor={colors.textFaint}
               style={[
@@ -1387,7 +1413,7 @@ const OracleScreen: React.FC = () => {
                 },
               ]}
             >
-              {"وَسَخَّرَ لَكُمُ ٱلَّيۡلَ وَٱلنَّهَارَ وَٱلشَّمۡسَ وَٱلۡقَمَرَ"}
+              {'وَسَخَّرَ لَكُمُ ٱلَّيۡلَ وَٱلنَّهَارَ وَٱلشَّمۡسَ وَٱلۡقَمَرَ'}
             </Text>
             <Text
               style={[
@@ -1395,7 +1421,7 @@ const OracleScreen: React.FC = () => {
                 { color: colors.textFaint, textAlign: 'center', fontSize: 10, letterSpacing: 0.4 },
               ]}
             >
-              {"He subjected for you the night, the day, the sun, the moon — Quran 16:12"}
+              {'He subjected for you the night, the day, the sun, the moon — Quran 16:12'}
             </Text>
           </View>
         </View>
@@ -1418,13 +1444,21 @@ const OracleScreen: React.FC = () => {
             <Text
               style={[
                 typography('caption'),
-                { color: colors.goldBright, textAlign: 'center', letterSpacing: 1.6, marginBottom: 6 },
+                {
+                  color: colors.goldBright,
+                  textAlign: 'center',
+                  letterSpacing: 1.6,
+                  marginBottom: 6,
+                },
               ]}
             >
               الأفلاك ترتاح
             </Text>
             <Text
-              style={[typography('subheading'), { color: colors.text, textAlign: 'center', marginBottom: 10 }]}
+              style={[
+                typography('subheading'),
+                { color: colors.text, textAlign: 'center', marginBottom: 10 },
+              ]}
             >
               The oracle rests
             </Text>
@@ -1434,13 +1468,19 @@ const OracleScreen: React.FC = () => {
                 { color: colors.textMuted, textAlign: 'center', marginBottom: 24, lineHeight: 22 },
               ]}
             >
-              {'The heavens have answered as many questions as the day allows. Return at Fajr — the stars remember.'}
+              {
+                'The heavens have answered as many questions as the day allows. Return at Fajr — the stars remember.'
+              }
             </Text>
             <Pressable
               onPress={() => setShowQuotaModal(false)}
               style={[
                 styles.modalBtn,
-                { borderColor: colors.borderAccent, borderWidth: StyleSheet.hairlineWidth, marginBottom: 12 },
+                {
+                  borderColor: colors.borderAccent,
+                  borderWidth: StyleSheet.hairlineWidth,
+                  marginBottom: 12,
+                },
               ]}
               accessibilityRole="button"
             >
@@ -1459,7 +1499,11 @@ const OracleScreen: React.FC = () => {
                   <Text
                     style={[
                       typography('caption'),
-                      { color: colors.textFaint, textAlign: 'center', textDecorationLine: 'underline' },
+                      {
+                        color: colors.textFaint,
+                        textAlign: 'center',
+                        textDecorationLine: 'underline',
+                      },
                     ]}
                   >
                     Unlock unlimited access
