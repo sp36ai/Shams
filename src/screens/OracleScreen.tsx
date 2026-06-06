@@ -46,6 +46,7 @@ import StarfieldBackground from '@components/StarfieldBackground';
 import AstroVerdictCard from '../components/oracle/AstroVerdictCard';
 import WatchVerdictCard from '../components/oracle/WatchVerdictCard';
 import type { AstroVerdictResult } from '../types/verdict';
+import { selectRemedies, contextFromReading } from '../data/remedySelector';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -873,6 +874,26 @@ const OracleScreen: React.FC = () => {
         await addReading(reading);
         setLastReading(reading);
         setStage('answered');
+
+        // Phase 3 — library-backed remedy selection. Fire-and-forget: never
+        // awaited, never blocks render, selectionReason logged to Firestore only.
+        const remedyApiKey = process.env.ANTHROPIC_API_KEY ?? '';
+        if (remedyApiKey) {
+          const vj = reading.verdictJson as { confidence?: number } | null;
+          const confidence = vj?.confidence ?? 0;
+          const severity: 'low' | 'moderate' | 'high' =
+            confidence >= 70 ? 'low' : confidence >= 40 ? 'moderate' : 'high';
+          const selCtx = contextFromReading({
+            readingId: reading.id,
+            verdict: reading.verdict,
+            category: reading.category ?? 'general',
+            spiritualState: 'uncertain', // default; TODO: derive from oracle tone
+            severity,
+            oracleSummary: narrationForReading(reading)?.slice(0, 200) ?? '',
+            apiKey: remedyApiKey,
+          });
+          selectRemedies(selCtx).catch(() => undefined);
+        }
 
         const shamsMsg: ChatMessage = {
           id: `s_${reading.id}`,
