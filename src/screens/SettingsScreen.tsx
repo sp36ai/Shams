@@ -25,6 +25,19 @@ const SettingsScreen: React.FC = () => {
   const { lang, switchLanguage } = useI18n();
 
   const lastLocation = useSettingsStore(s => s.lastLocation);
+  const seekerProfile = useSettingsStore(s => s.seekerProfile);
+  const resetProfile = useSettingsStore(s => s.resetProfile);
+
+  const handleResetProfile = useCallback(() => {
+    Alert.alert(
+      'Reset Spiritual Profile',
+      'You will be returned to the onboarding questions on your next app open.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Reset', style: 'destructive', onPress: resetProfile },
+      ],
+    );
+  }, [resetProfile]);
 
   const userName = useAuthStore(selectUserName);
   const userEmail = useAuthStore(selectUserEmail);
@@ -174,6 +187,25 @@ const SettingsScreen: React.FC = () => {
               </Text>
             )}
           </View>
+          {seekerProfile !== null && (
+            <Pressable
+              onPress={handleResetProfile}
+              accessibilityRole="button"
+              style={({ pressed }) => [
+                styles.actionRow,
+                {
+                  borderColor: colors.border,
+                  backgroundColor: colors.surfaceElevated,
+                  opacity: pressed ? 0.75 : 1,
+                  marginTop: 10,
+                },
+              ]}
+            >
+              <Text style={[typography('button'), { color: colors.textMuted }]}>
+                {'Reset spiritual profile'}
+              </Text>
+            </Pressable>
+          )}
         </Section>
 
         <Section title="Subscription">

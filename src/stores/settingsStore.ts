@@ -48,6 +48,7 @@ export interface SettingsState {
   setLastLocation: (coords: Coords) => void;
   clearLocation: () => void;
   setSeekerProfile: (profile: SeekerProfile, answers: [string, string, string]) => void;
+  resetProfile: () => void;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -134,6 +135,13 @@ export const useSettingsStore = create<SettingsState>(set => ({
     storage.set(KEYS.ONBOARDING_SEEKER_PROFILE, profile);
     storage.set(KEYS.ONBOARDING_ANSWERS, JSON.stringify(answers));
     set({ seekerProfile: profile, onboardingAnswers: answers });
+  },
+
+  resetProfile: (): void => {
+    storage.set(KEYS.ONBOARDING_SEEN, false);
+    storage.delete(KEYS.ONBOARDING_SEEKER_PROFILE);
+    storage.delete(KEYS.ONBOARDING_ANSWERS);
+    set({ hasSeenOnboarding: false, seekerProfile: null, onboardingAnswers: null });
   },
 
   clearLocation: (): void => {
