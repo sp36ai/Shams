@@ -47,6 +47,7 @@ import AstroVerdictCard from '../components/oracle/AstroVerdictCard';
 import WatchVerdictCard from '../components/oracle/WatchVerdictCard';
 import type { AstroVerdictResult } from '../types/verdict';
 import { selectRemedies, contextFromReading } from '../data/remedySelector';
+import { renderRemedies, type RenderedRemedy } from '../data/remedyRenderer';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -624,6 +625,7 @@ const OracleScreen: React.FC = () => {
   const [sending, setSending] = useState(false);
   const [stage, setStage] = useState<ConvStage>('ready');
   const [lastReading, setLastReading] = useState<Reading | null>(null);
+  const [selectedRemedies, setSelectedRemedies] = useState<RenderedRemedy[]>([]);
   const listRef = useRef<FlatList<ChatMessage> | null>(null);
 
   const lonDegForTiming = lastLocation?.lon ?? 74.3587;
@@ -891,7 +893,9 @@ const OracleScreen: React.FC = () => {
             oracleSummary: narrationForReading(reading)?.slice(0, 200) ?? '',
             apiKey: remedyApiKey,
           });
-          selectRemedies(selCtx).catch(() => undefined);
+          selectRemedies(selCtx)
+            .then(result => setSelectedRemedies(renderRemedies(result.selectedRemedies.map(r => r.id))))
+            .catch(() => undefined);
         }
 
         const shamsMsg: ChatMessage = {
@@ -970,8 +974,14 @@ const OracleScreen: React.FC = () => {
   );
 
   const renderItem = useCallback(
-    ({ item }: { item: ChatMessage }) => <Bubble message={item} />,
-    [],
+    ({ item }: { item: ChatMessage }) => (
+      <Bubble
+        message={item}
+        currentReadingId={lastReading?.id}
+        selectedRemedies={selectedRemedies}
+      />
+    ),
+    [lastReading?.id, selectedRemedies],
   );
 
   const keyExtractor = useCallback((item: ChatMessage) => item.id, []);
@@ -1492,6 +1502,7 @@ const OracleScreen: React.FC = () => {
                   setShowNewQuestionModal(false);
                   setStage('ready');
                   setLastReading(null);
+                  setSelectedRemedies([]);
                   runThreshold();
                 }}
                 style={[styles.modalBtn, { backgroundColor: colors.primary }]}
@@ -1511,7 +1522,11 @@ const OracleScreen: React.FC = () => {
 
 // ── Bubble ────────────────────────────────────────────────────────────────────
 
-const Bubble: React.FC<{ message: ChatMessage }> = ({ message }) => {
+const Bubble: React.FC<{
+  message: ChatMessage;
+  currentReadingId?: string;
+  selectedRemedies?: RenderedRemedy[];
+}> = ({ message, currentReadingId, selectedRemedies }) => {
   const colors = useColors();
   const typography = useTypography();
   const t = useTranslation();
@@ -1569,6 +1584,9 @@ const Bubble: React.FC<{ message: ChatMessage }> = ({ message }) => {
             <AstroVerdictCard
               result={readingToAstroResult(message.reading)}
               onSwitchMode={() => setShowWatch(true)}
+              selectedRemedies={
+                message.reading.id === currentReadingId ? selectedRemedies : undefined
+              }
             />
           ))}
         {message.isUpgradeCta === true && (

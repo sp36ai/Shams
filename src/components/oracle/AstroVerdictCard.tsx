@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import type { RenderedRemedy } from '../../data/remedyRenderer';
 import { Animated, Easing, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { useColors } from '@theme/ThemeProvider';
@@ -116,28 +117,66 @@ function confidencePhrase(confidence: number): string {
   return 'The stars speak softly — listen closely';
 }
 
+// ── Category icon map — Unicode geometry, no emoji except 📿 ─────────────────
+
+const CATEGORY_ICON: Record<string, string> = {
+  salawat:      '☽',
+  dua:          '✦',
+  istikhara:    '◈',
+  sadaqa:       '◇',
+  fasting:      '◌',
+  quran:        '✧',
+  dhikr:        '📿',
+  charity:      '◇',
+  night_prayer: '★',
+  silence:      '◎',
+  tawbah:       '↩',
+};
+
+// ── effectDimension → display string ─────────────────────────────────────────
+
+const EFFECT_LABEL: Record<string, string> = {
+  spiritual_clearing: 'A practice of spiritual purification',
+  calming:            'A practice of inner stillness',
+  emotional_release:  'A practice of releasing what is held',
+  surrender:          'A practice of returning to Allah',
+  trust_building:     'A practice of deepening trust',
+  reconciliation:     'A practice of mending what is broken',
+  activation:         'A practice of renewed movement',
+  grounding:          'A practice of returning to centre',
+  humility:           'A practice of softening the self',
+  clarity:            'A practice of clearing the inner eye',
+  opening:            'A practice of opening closed doors',
+  comfort:            'A practice of receiving divine comfort',
+  patience:           'A practice of sacred waiting',
+  gratitude:          'A practice of anchoring in blessing',
+};
+
 // ── AstroVerdictCard ──────────────────────────────────────────────────────────
 
 interface AstroVerdictCardProps {
   result: AstroVerdictResult;
   onSwitchMode?: () => void;
+  selectedRemedies?: RenderedRemedy[];
 }
 
-const AstroVerdictCard: React.FC<AstroVerdictCardProps> = ({ result, onSwitchMode }) => {
+const AstroVerdictCard: React.FC<AstroVerdictCardProps> = ({ result, onSwitchMode, selectedRemedies }) => {
   const colors = useColors();
   const typography = useTypography();
 
-  // ── 3-phase reveal ──────────────────────────────────────────────────────────
-  const [phase, setPhase] = useState<0 | 1 | 2>(0);
+  // ── 4-phase reveal ──────────────────────────────────────────────────────────
+  const [phase, setPhase] = useState<0 | 1 | 2 | 3>(0);
 
   useEffect(() => {
     const t1 = setTimeout(() => setPhase(1), 600);
     const t2 = setTimeout(() => setPhase(2), 1400);
-    return () => { clearTimeout(t1); clearTimeout(t2); };
+    const t3 = setTimeout(() => setPhase(3), 2400);
+    return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
   }, []); // empty dep — fires once on mount, never again
 
   const verdictOpacity = useRef(new Animated.Value(0)).current;
   const proseOpacity = useRef(new Animated.Value(0)).current;
+  const remedyOpacity = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     if (phase === 1) {
@@ -154,7 +193,14 @@ const AstroVerdictCard: React.FC<AstroVerdictCardProps> = ({ result, onSwitchMod
         useNativeDriver: true,
       }).start();
     }
-  }, [phase, verdictOpacity, proseOpacity]);
+    if (phase === 3) {
+      Animated.timing(remedyOpacity, {
+        toValue: 1,
+        duration: 700,
+        useNativeDriver: true,
+      }).start();
+    }
+  }, [phase, verdictOpacity, proseOpacity, remedyOpacity]);
 
   // Confidence bar — fires once Phase 2 layout is measured
   const [barContainerWidth, setBarContainerWidth] = useState(0);
@@ -624,6 +670,66 @@ const AstroVerdictCard: React.FC<AstroVerdictCardProps> = ({ result, onSwitchMod
           )}
         </Animated.View>
       )}
+
+      {/* ── Phase 3 — Remedy block (2400ms) ───────────────────────────────── */}
+      {phase >= 3 && selectedRemedies && selectedRemedies.length > 0 && (
+        <Animated.View style={{ opacity: remedyOpacity }}>
+          {/* Gold hairline separator */}
+          <View
+            style={{
+              height: StyleSheet.hairlineWidth,
+              backgroundColor: colors.borderAccent,
+              marginHorizontal: 16,
+              opacity: 0.7,
+            }}
+          />
+          <Text
+            style={[
+              typography('label'),
+              {
+                color: colors.amber,
+                textAlign: 'center',
+                letterSpacing: 1.4,
+                fontSize: 10,
+                marginTop: 14,
+                marginBottom: 10,
+              },
+            ]}
+          >
+            GUIDANCE FOR THIS MOMENT
+          </Text>
+          {selectedRemedies.map(remedy => (
+            <View
+              key={remedy.id}
+              style={[
+                styles.libraryRemedyCard,
+                { borderColor: colors.border, backgroundColor: colors.surfaceElevated },
+              ]}
+            >
+              {/* Header row — category icon + name */}
+              <View style={styles.libraryRemedyHeader}>
+                <Text style={[typography('label'), { color: colors.amber, opacity: 0.6, fontSize: 10, letterSpacing: 1.2 }]}>
+                  {(CATEGORY_ICON[remedy.category] ?? '◈') + '  ' + remedy.category.toUpperCase().replace('_', ' ')}
+                </Text>
+              </View>
+              {/* Title */}
+              <Text style={[typography('body'), { color: colors.text, marginBottom: 4, fontSize: 14, lineHeight: 20 }]}>
+                {remedy.title}
+              </Text>
+              {/* Description — derived from effectDimension */}
+              <Text style={[typography('caption'), { color: colors.textMuted, fontSize: 12, lineHeight: 18, marginBottom: 8 }]}>
+                {EFFECT_LABEL[remedy.effectDimension] ?? 'A practice of sacred intention'}
+              </Text>
+              {/* effectDimension pill */}
+              <View style={[styles.effectPill, { borderColor: colors.borderAccent }]}>
+                <Text style={[typography('label'), { color: colors.amber, opacity: 0.5, fontSize: 9, letterSpacing: 0.8 }]}>
+                  {remedy.effectDimension.replace(/_/g, ' ')}
+                </Text>
+              </View>
+            </View>
+          ))}
+        </Animated.View>
+      )}
     </View>
   );
 };
@@ -770,6 +876,23 @@ const styles = StyleSheet.create({
     marginHorizontal: 12,
     marginBottom: 8,
     fontStyle: 'italic',
+  },
+  libraryRemedyCard: {
+    marginHorizontal: 12,
+    marginBottom: 10,
+    borderRadius: 12,
+    borderWidth: StyleSheet.hairlineWidth,
+    padding: 14,
+  },
+  libraryRemedyHeader: {
+    marginBottom: 6,
+  },
+  effectPill: {
+    alignSelf: 'flex-start',
+    borderWidth: StyleSheet.hairlineWidth,
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 3,
   },
   verdictPillContainer: {
     alignItems: 'center',
