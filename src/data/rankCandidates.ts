@@ -1,4 +1,9 @@
-import { REMEDY_LIBRARY, type RemedyTag, type SpiritualState, type TaggedRemedy } from './remedyLibrary';
+import {
+  REMEDY_LIBRARY,
+  type RemedyTag,
+  type SpiritualState,
+  type TaggedRemedy,
+} from './remedyLibrary';
 import type { SeekerProfile } from '../stores/settingsStore';
 
 export type OracleClassification = 'CONFIRMED' | 'DENIED' | 'NEUTRAL';
@@ -39,9 +44,9 @@ const CONFIRMED_DIMENSIONS = new Set(['gratitude', 'opening', 'activation']);
 const DENIED_DIMENSIONS = new Set(['surrender', 'patience', 'trust_building', 'comfort']);
 
 const PROFILE_EFFECT_MAP: Record<SeekerProfile, string[]> = {
-  clarity:   ['clarity', 'activation', 'grounding'],
-  comfort:   ['comfort', 'emotional_release', 'calming'],
-  action:    ['opening', 'activation', 'trust_building'],
+  clarity: ['clarity', 'activation', 'grounding'],
+  comfort: ['comfort', 'emotional_release', 'calming'],
+  action: ['opening', 'activation', 'trust_building'],
   surrender: ['surrender', 'patience', 'spiritual_clearing'],
 };
 
@@ -66,9 +71,7 @@ export function rankCandidates(
       }
 
       // Secondary: spiritual state alignment (+5 per hit, no double-count)
-      const primaryHits = new Set(
-        context.dominantThemes.filter(t => remedy.themeTags.includes(t)),
-      );
+      const primaryHits = new Set(context.dominantThemes.filter(t => remedy.themeTags.includes(t)));
       for (const tag of stateTags) {
         if (remedy.themeTags.includes(tag) && !primaryHits.has(tag)) {
           score += 5;
@@ -113,7 +116,9 @@ export function enforceCategoryDiversity(
   const counts: Record<string, number> = {};
   return candidates.filter(r => {
     const n = counts[r.category] ?? 0;
-    if (n >= maxPerCategory) return false;
+    if (n >= maxPerCategory) {
+      return false;
+    }
     counts[r.category] = n + 1;
     return true;
   });

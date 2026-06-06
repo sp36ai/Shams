@@ -38,14 +38,18 @@ export interface SelectionResult {
 export interface SelectionContext extends RankingContext {
   readingId: string;
   oracleSummary: string; // 1–2 sentences for the LLM, never shown to user
-  questionText: string;  // original question — used by Haiku description generator
+  questionText: string; // original question — used by Haiku description generator
   apiKey: string;
   seekerProfile?: SeekerProfile | null;
 }
 
 function verdictToClassification(verdict: string): RankingContext['oracleClassification'] {
-  if (verdict === 'YES' || verdict === 'CONDITIONAL') return 'CONFIRMED';
-  if (verdict === 'NO' || verdict === 'DENIED') return 'DENIED';
+  if (verdict === 'YES' || verdict === 'CONDITIONAL') {
+    return 'CONFIRMED';
+  }
+  if (verdict === 'NO' || verdict === 'DENIED') {
+    return 'DENIED';
+  }
   return 'NEUTRAL';
 }
 
@@ -76,35 +80,54 @@ function categoryToThemes(category: string): RankingContext['dominantThemes'] {
  * Mapping table covers all 14 QuestionType values × CONFIRMED/DENIED/NEUTRAL.
  * NEUTRAL verdict defaults to the category's ambient emotional state.
  */
-function deriveSpiritualState(
-  verdict: string,
-  category: string,
-): RankingContext['spiritualState'] {
+function deriveSpiritualState(verdict: string, category: string): RankingContext['spiritualState'] {
   const classification = verdictToClassification(verdict);
   const cat = category.toLowerCase();
 
   if (classification === 'CONFIRMED') {
     // Arrival states — differentiated by domain
-    if (cat === 'marriage' || cat === 'children') return 'hopeful';
-    if (cat === 'spiritual') return 'grateful';
+    if (cat === 'marriage' || cat === 'children') {
+      return 'hopeful';
+    }
+    if (cat === 'spiritual') {
+      return 'grateful';
+    }
     return 'hopeful';
   }
 
   if (classification === 'DENIED') {
     // Loss/obstruction states — differentiated by domain
-    if (cat === 'marriage' || cat === 'children') return 'grieving';
-    if (cat === 'legal' || cat === 'enemies') return 'remorseful';
-    if (cat === 'finance' || cat === 'property' || cat === 'business') return 'anxious';
-    if (cat === 'health') return 'fearful';
-    if (cat === 'spiritual') return 'remorseful';
+    if (cat === 'marriage' || cat === 'children') {
+      return 'grieving';
+    }
+    if (cat === 'legal' || cat === 'enemies') {
+      return 'remorseful';
+    }
+    if (cat === 'finance' || cat === 'property' || cat === 'business') {
+      return 'anxious';
+    }
+    if (cat === 'health') {
+      return 'fearful';
+    }
+    if (cat === 'spiritual') {
+      return 'remorseful';
+    }
     return 'uncertain'; // career, education, travel, lostitem, general
   }
 
   // NEUTRAL — ambient state by domain
-  if (cat === 'legal' || cat === 'enemies') return 'uncertain';
-  if (cat === 'health') return 'anxious';
-  if (cat === 'spiritual') return 'uncertain';
-  if (cat === 'marriage' || cat === 'children') return 'hopeful';
+  if (cat === 'legal' || cat === 'enemies') {
+    return 'uncertain';
+  }
+  if (cat === 'health') {
+    return 'anxious';
+  }
+  if (cat === 'spiritual') {
+    return 'uncertain';
+  }
+  if (cat === 'marriage' || cat === 'children') {
+    return 'hopeful';
+  }
   return 'uncertain';
 }
 
@@ -152,7 +175,9 @@ Maximum 30 words.`;
 
     clearTimeout(timer);
 
-    if (!res.ok) throw new Error(`haiku http ${res.status}`);
+    if (!res.ok) {
+      throw new Error(`haiku http ${res.status}`);
+    }
 
     const data = (await res.json()) as {
       content?: Array<{ type: string; text?: string }>;
@@ -163,7 +188,9 @@ Maximum 30 words.`;
       .join('')
       .trim();
 
-    if (text.length < 10) throw new Error('description too short');
+    if (text.length < 10) {
+      throw new Error('description too short');
+    }
     return text;
   } catch (err) {
     clearTimeout(timer);
@@ -214,7 +241,10 @@ export async function selectRemedies(ctx: SelectionContext): Promise<SelectionRe
 
   if (!ctx.apiKey) {
     // No API key — return top 3 from TypeScript ranking, no LLM call
-    return { selectedRemedies: renderRemedies(candidates.slice(0, 3).map(r => r.id)), selectionReason: 'fallback: no api key' };
+    return {
+      selectedRemedies: renderRemedies(candidates.slice(0, 3).map(r => r.id)),
+      selectionReason: 'fallback: no api key',
+    };
   }
 
   const oracleContext = {
@@ -281,9 +311,7 @@ export async function selectRemedies(ctx: SelectionContext): Promise<SelectionRe
     }
 
     const selectionReason =
-      typeof parsed.selectionReason === 'string'
-        ? parsed.selectionReason
-        : 'no reason provided';
+      typeof parsed.selectionReason === 'string' ? parsed.selectionReason : 'no reason provided';
 
     // Fire-and-forget Firestore write — never awaited
     logSelectionReason(ctx.readingId, selectionReason);

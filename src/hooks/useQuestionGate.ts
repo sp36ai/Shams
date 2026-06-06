@@ -26,11 +26,7 @@ Respond with ONLY the classification word. No explanation. No punctuation. No ot
 
 export type QuestionClass = 'VALID_HORARY' | 'CONVERSATIONAL' | 'AMBIGUOUS';
 
-const VALID_CLASSES: readonly QuestionClass[] = [
-  'VALID_HORARY',
-  'CONVERSATIONAL',
-  'AMBIGUOUS',
-];
+const VALID_CLASSES: readonly QuestionClass[] = ['VALID_HORARY', 'CONVERSATIONAL', 'AMBIGUOUS'];
 
 export async function classifyQuestion(text: string): Promise<QuestionClass> {
   // 500+ chars → skip classification, genuine question

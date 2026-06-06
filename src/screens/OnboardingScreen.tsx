@@ -97,7 +97,9 @@ No explanation. No punctuation.`;
       }),
     });
 
-    if (!res.ok) return 'clarity';
+    if (!res.ok) {
+      return 'clarity';
+    }
 
     const data = (await res.json()) as {
       content?: Array<{ type: string; text?: string }>;
@@ -138,29 +140,39 @@ const OnboardingScreen: React.FC = () => {
     setActiveIndex(index);
   }, []);
 
-  const handleChoiceQ1Q2 = useCallback((choice: Choice, qIndex: number) => {
-    setAnswers(prev => {
-      const next = [...prev];
-      next[qIndex] = choice.label;
-      return next;
-    });
-    setTimeout(() => advanceTo(qIndex + 1), 220);
-  }, [advanceTo]);
+  const handleChoiceQ1Q2 = useCallback(
+    (choice: Choice, qIndex: number) => {
+      setAnswers(prev => {
+        const next = [...prev];
+        next[qIndex] = choice.label;
+        return next;
+      });
+      setTimeout(() => advanceTo(qIndex + 1), 220);
+    },
+    [advanceTo],
+  );
 
-  const handleChoiceQ3 = useCallback(async (choice: Choice) => {
-    const finalAnswers: [string, string, string] = [
-      answers[0] ?? '',
-      answers[1] ?? '',
-      choice.label,
-    ];
-    setAnswers(prev => { const n = [...prev]; n[2] = choice.label; return n; });
-    setInferring(true);
+  const handleChoiceQ3 = useCallback(
+    async (choice: Choice) => {
+      const finalAnswers: [string, string, string] = [
+        answers[0] ?? '',
+        answers[1] ?? '',
+        choice.label,
+      ];
+      setAnswers(prev => {
+        const n = [...prev];
+        n[2] = choice.label;
+        return n;
+      });
+      setInferring(true);
 
-    const inferred = await inferProfile(finalAnswers, apiKey);
-    setSeekerProfile(inferred, finalAnswers);
-    setProfile(inferred);
-    setInferring(false);
-  }, [answers, apiKey, setSeekerProfile]);
+      const inferred = await inferProfile(finalAnswers, apiKey);
+      setSeekerProfile(inferred, finalAnswers);
+      setProfile(inferred);
+      setInferring(false);
+    },
+    [answers, apiKey, setSeekerProfile],
+  );
 
   const handleEnter = useCallback(() => {
     markOnboardingComplete();
@@ -219,7 +231,12 @@ const OnboardingScreen: React.FC = () => {
             <Text
               style={[
                 typography('caption'),
-                { color: colors.textFaint, letterSpacing: 2, marginBottom: 6, marginTop: qIndex === 0 ? 8 : 0 },
+                {
+                  color: colors.textFaint,
+                  letterSpacing: 2,
+                  marginBottom: 6,
+                  marginTop: qIndex === 0 ? 8 : 0,
+                },
               ]}
             >
               {q.eyebrow}
@@ -238,7 +255,9 @@ const OnboardingScreen: React.FC = () => {
               {q.choices.map((choice, cIndex) => {
                 const isLast = qIndex === 2;
                 const onPress = isLast
-                  ? () => { void handleChoiceQ3(choice); }
+                  ? () => {
+                      void handleChoiceQ3(choice);
+                    }
                   : () => handleChoiceQ1Q2(choice, qIndex);
 
                 return (
@@ -271,9 +290,7 @@ const OnboardingScreen: React.FC = () => {
             {/* Q3 completion state */}
             {qIndex === 2 && (
               <View style={styles.completionArea}>
-                {inferring && (
-                  <ActivityIndicator color={colors.goldBright} size="small" />
-                )}
+                {inferring && <ActivityIndicator color={colors.goldBright} size="small" />}
                 {!inferring && profile !== null && (
                   <Pressable
                     onPress={handleEnter}

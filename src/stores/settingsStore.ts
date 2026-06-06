@@ -62,17 +62,25 @@ function readBool(key: string, fallback: boolean): boolean {
 
 function readSeekerProfile(): SeekerProfile | null {
   const v = storage.getString(KEYS.ONBOARDING_SEEKER_PROFILE);
-  if (v === 'clarity' || v === 'comfort' || v === 'action' || v === 'surrender') return v;
+  if (v === 'clarity' || v === 'comfort' || v === 'action' || v === 'surrender') {
+    return v;
+  }
   return null;
 }
 
 function readOnboardingAnswers(): [string, string, string] | null {
   const raw = storage.getString(KEYS.ONBOARDING_ANSWERS);
-  if (!raw) return null;
+  if (!raw) {
+    return null;
+  }
   try {
     const parsed = JSON.parse(raw);
-    if (Array.isArray(parsed) && parsed.length === 3) return parsed as [string, string, string];
-  } catch { /* ignore */ }
+    if (Array.isArray(parsed) && parsed.length === 3) {
+      return parsed as [string, string, string];
+    }
+  } catch {
+    /* ignore */
+  }
   return null;
 }
 
