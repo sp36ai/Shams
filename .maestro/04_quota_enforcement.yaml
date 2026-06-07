@@ -1,4 +1,4 @@
-appId: com.shamsalasrar
+appId: com.astrosarfaraz.shamsalasrar
 name: "Quota — Free user hits daily limit"
 ---
 # This test requires a free-plan test account with questionsToday already at limit.

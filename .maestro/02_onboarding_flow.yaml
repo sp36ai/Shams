@@ -1,4 +1,4 @@
-appId: com.shamsalasrar
+appId: com.astrosarfaraz.shamsalasrar
 name: "Onboarding — 3-question seeker profile"
 ---
 # Assumes user is already authenticated (run after sign-up or use a seeded account)

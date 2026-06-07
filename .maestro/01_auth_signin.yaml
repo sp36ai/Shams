@@ -1,4 +1,4 @@
-appId: com.shamsalasrar
+appId: com.astrosarfaraz.shamsalasrar
 name: "Auth — Sign In flow"
 ---
 - launchApp:
