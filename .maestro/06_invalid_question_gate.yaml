@@ -1,0 +1,29 @@
+appId: com.shamsalasrar
+name: "Oracle — Question gate rejects non-horary input"
+---
+- launchApp
+
+- waitForAnimationToEnd:
+    timeout: 4000
+
+# Conversational input — should NOT consume quota
+- tapOn:
+    id: "oracle-input"
+- inputText: "Hello, how are you?"
+- tapOn:
+    id: "oracle-send-btn"
+
+# Gate should fire soft redirect, NOT loading panel
+- assertNotVisible: "CASTING THE SACRED CHART"
+- assertVisible: "The oracle awaits a sincere question"
+
+# Clear and try ambiguous input
+- tapOn:
+    id: "oracle-input"
+- clearText
+- inputText: "What about my situation?"
+- tapOn:
+    id: "oracle-send-btn"
+
+- assertNotVisible: "CASTING THE SACRED CHART"
+- assertVisible: "The stars hear your intent"

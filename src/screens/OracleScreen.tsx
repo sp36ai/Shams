@@ -1245,6 +1245,7 @@ const OracleScreen: React.FC = () => {
           {/* Composer */}
           <View style={styles.composer}>
             <TextInput
+              testID="oracle-input"
               value={input}
               onChangeText={v => {
                 setInput(v);
@@ -1273,6 +1274,7 @@ const OracleScreen: React.FC = () => {
               underlineColorAndroid="transparent"
             />
             <Pressable
+              testID="oracle-send-btn"
               onPress={handleSend}
               disabled={sending || input.trim().length === 0 || !canAsk}
               style={({ pressed }: { pressed: boolean }) => [
@@ -1473,6 +1475,7 @@ const OracleScreen: React.FC = () => {
               }
             </Text>
             <Pressable
+              testID="quota-modal-dismiss"
               onPress={() => setShowQuotaModal(false)}
               style={[
                 styles.modalBtn,

@@ -1,0 +1,26 @@
+appId: com.shamsalasrar
+name: "Quota — Free user hits daily limit"
+---
+# This test requires a free-plan test account with questionsToday already at limit.
+# Run this against a test account where the quota is pre-exhausted,
+# OR manually exhaust the quota first (3 questions on free plan).
+
+- launchApp
+
+- waitForAnimationToEnd:
+    timeout: 4000
+
+- tapOn:
+    id: "oracle-input"
+- inputText: "Will I succeed in my exam?"
+- tapOn:
+    id: "oracle-send-btn"
+
+# Quota modal should fire
+- assertVisible: "The oracle rests"
+- assertVisible: "I understand"
+
+# Dismiss modal
+- tapOn:
+    id: "quota-modal-dismiss"
+- assertNotVisible: "The oracle rests"
