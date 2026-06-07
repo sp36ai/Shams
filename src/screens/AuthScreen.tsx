@@ -522,7 +522,14 @@ interface TabButtonProps {
   testID?: string;
 }
 
-const TabButton: React.FC<TabButtonProps> = ({ label, active, onPress, colors, typography, testID }) => (
+const TabButton: React.FC<TabButtonProps> = ({
+  label,
+  active,
+  onPress,
+  colors,
+  typography,
+  testID,
+}) => (
   <Pressable
     onPress={onPress}
     testID={testID}
