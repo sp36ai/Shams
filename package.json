@@ -20,6 +20,8 @@
     "test:web": "npx serve .",
     "test:coverage": "jest --coverage --testPathIgnorePatterns=firestore.rules.test.ts --testPathIgnorePatterns=functions/",
     "test:rules": "firebase emulators:exec --config firebase.test.json --only firestore \"jest firestore.rules.test.ts --testEnvironment node --runInBand\"",
+    "test:e2e": "maestro test .maestro/",
+    "test:e2e:single": "maestro test",
     "check:orphans": "npx madge --extensions ts,tsx --ts-config tsconfig.json --orphans src",
     "validate:firebase:predeploy": "powershell -ExecutionPolicy Bypass -File scripts/Validate-FirebasePredeploy.ps1",
     "postinstall": "npx patch-package || echo \"No patches\""

@@ -293,6 +293,7 @@ const OnboardingScreen: React.FC = () => {
                 {inferring && <ActivityIndicator color={colors.goldBright} size="small" />}
                 {!inferring && profile !== null && (
                   <Pressable
+                    testID="onboarding-enter-btn"
                     onPress={handleEnter}
                     style={({ pressed }) => [
                       styles.cta,

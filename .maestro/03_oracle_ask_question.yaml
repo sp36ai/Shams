@@ -1,0 +1,54 @@
+appId: com.astrosarfaraz.shamsalasrar
+name: "Oracle — Ask a horary question"
+---
+# Assumes authenticated + onboarding complete + location set
+
+- launchApp
+
+- waitForAnimationToEnd:
+    timeout: 4000
+
+# OracleScreen should be visible
+- assertVisible: "ORACLE"
+- assertVisible: "SHAMS AL-ASRĀR"
+
+# Verify quota badge is visible (free user)
+- assertVisible: "QUESTIONS"
+
+# Verify HORA and DAY LORD strips load
+- assertVisible: "HORA"
+- assertVisible: "DAY LORD"
+
+# Type a horary question
+- tapOn:
+    id: "oracle-input"
+- inputText: "Will I get the job I applied for this month?"
+
+# Send button should be enabled now
+- tapOn:
+    id: "oracle-send-btn"
+
+# Loading panel should appear
+- assertVisible: "CASTING THE SACRED CHART"
+
+# Wait for oracle response (Cloud Function — up to 30s)
+- waitForAnimationToEnd:
+    timeout: 30000
+
+# Loading should be gone, response visible
+- assertNotVisible: "CASTING THE SACRED CHART"
+
+# Follow-up chips should appear
+- assertVisible: "When will it happen?"
+- assertVisible: "Why this verdict?"
+- assertVisible: "What remedy?"
+
+# Ask a follow-up timing question
+- tapOn: "When will it happen?"
+- waitForAnimationToEnd:
+    timeout: 5000
+
+# Ask why
+- tapOn: "Why this verdict?"
+- waitForAnimationToEnd:
+    timeout: 5000

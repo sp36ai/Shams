@@ -296,6 +296,7 @@ const AuthScreen: React.FC = () => {
               onPress={() => dispatch({ type: 'SET_TAB', tab: 'signIn' })}
               colors={colors}
               typography={typography}
+              testID="auth-tab-signin"
             />
             <TabButton
               label={t('auth.signUpTab')}
@@ -303,6 +304,7 @@ const AuthScreen: React.FC = () => {
               onPress={() => dispatch({ type: 'SET_TAB', tab: 'signUp' })}
               colors={colors}
               typography={typography}
+              testID="auth-tab-signup"
             />
           </View>
 
@@ -400,6 +402,7 @@ const AuthScreen: React.FC = () => {
             <Pressable
               onPress={() => void handleSubmit()}
               disabled={isLoading}
+              testID="auth-submit-btn"
               style={({ pressed }) => [
                 styles.submitBtn,
                 {
@@ -468,6 +471,7 @@ const AuthScreen: React.FC = () => {
           <Pressable
             onPress={() => void signInWithGoogle()}
             disabled={isLoading}
+            testID="auth-google-btn"
             style={({ pressed }) => [
               styles.socialBtn,
               { borderColor: colors.border, backgroundColor: colors.surface },
@@ -515,11 +519,20 @@ interface TabButtonProps {
   onPress: () => void;
   colors: ReturnType<typeof useColors>;
   typography: ReturnType<typeof useTypography>;
+  testID?: string;
 }
 
-const TabButton: React.FC<TabButtonProps> = ({ label, active, onPress, colors, typography }) => (
+const TabButton: React.FC<TabButtonProps> = ({
+  label,
+  active,
+  onPress,
+  colors,
+  typography,
+  testID,
+}) => (
   <Pressable
     onPress={onPress}
+    testID={testID}
     style={[
       styles.tabBtn,
       active && { borderBottomColor: colors.goldBright, borderBottomWidth: 2 },
