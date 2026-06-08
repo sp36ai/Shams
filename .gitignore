@@ -136,3 +136,8 @@ android/app/build/outputs/
 
 # Claude Code project settings
 .claude/
+
+# Keystore files — never commit
+*.jks
+*.jks.old
+*.b64
