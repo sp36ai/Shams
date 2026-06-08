@@ -32,11 +32,12 @@ jobs:
       - name: Build
         run: npm run build
         working-directory: functions
-
+      - name: Write service account key
+                run: echo '${{ secrets.GOOGLE_APPLICATION_CREDENTIALS }}' | base64 -d > /tmp/sa-key.json
       - name: Deploy to Firebase
         run: npx firebase-tools deploy --only functions --project shams-app-4d0e7 --force
         env:
-          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
+                  GOOGLE_APPLICATION_CREDENTIALS: /tmp/sa-key.json
 
       - name: Health check
         run: |
