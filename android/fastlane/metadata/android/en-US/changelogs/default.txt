@@ -1,0 +1,1 @@
+Initial release of Shams al-Asrar — KP horary oracle.

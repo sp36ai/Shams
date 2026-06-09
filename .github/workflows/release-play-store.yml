@@ -1,4 +1,4 @@
-name: Build Release APK
+name: Release to Play Store
 
 on:
   push:
@@ -8,12 +8,23 @@ on:
       - 'src/**'
       - 'package.json'
       - 'package-lock.json'
-      - '.github/workflows/build-release-apk.yml'
+      - '.github/workflows/release-play-store.yml'
   workflow_dispatch:
+    inputs:
+      track:
+        description: 'Play Store track'
+        required: true
+        default: 'internal'
+        type: choice
+        options:
+          - internal
+          - alpha
+          - beta
+          - production
 
 jobs:
-  build:
-    name: Build signed release APK
+  release:
+    name: Build AAB and deploy to Play Store
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -36,11 +47,7 @@ jobs:
 
       - name: Write google-services.json
         run: |
-          if [ -n "${{ secrets.GOOGLE_SERVICES_JSON }}" ]; then
-            echo "${{ secrets.GOOGLE_SERVICES_JSON }}" | base64 -d > android/app/google-services.json
-          else
-            cp android/app/google-services.json.ci android/app/google-services.json
-          fi
+          echo "${{ secrets.GOOGLE_SERVICES_JSON }}" | base64 -d > android/app/google-services.json
 
       - name: Decode keystore
         run: |
@@ -55,9 +62,9 @@ jobs:
           key: gradle-${{ hashFiles('android/**/*.gradle*', 'android/gradle.properties') }}
           restore-keys: gradle-
 
-      - name: Build release APK
+      - name: Build release AAB
         run: |
-          cd android && chmod +x gradlew && ./gradlew assembleRelease --no-daemon \
+          cd android && chmod +x gradlew && ./gradlew bundleRelease --no-daemon \
             -PSHAMS_UPLOAD_STORE_FILE=shams-upload-key.jks \
             -PSHAMS_UPLOAD_STORE_PASSWORD="${{ secrets.SHAMS_UPLOAD_STORE_PASSWORD }}" \
             -PSHAMS_UPLOAD_KEY_ALIAS="${{ secrets.SHAMS_UPLOAD_KEY_ALIAS }}" \
@@ -67,9 +74,19 @@ jobs:
         if: always()
         run: rm -f android/app/shams-upload-key.jks
 
-      - name: Upload APK
+      - name: Upload AAB artifact
         uses: actions/upload-artifact@v4
         with:
-          name: shams-release-${{ github.run_number }}
-          path: android/app/build/outputs/apk/release/app-release.apk
+          name: shams-aab-${{ github.run_number }}
+          path: android/app/build/outputs/bundle/release/app-release.aab
           retention-days: 30
+
+      - name: Deploy to Play Store
+        uses: r0adkll/upload-google-play@v1
+        with:
+          serviceAccountJsonPlainText: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON }}
+          packageName: com.astrosarfaraz.shamsalasrar
+          releaseFiles: android/app/build/outputs/bundle/release/app-release.aab
+          track: ${{ github.event.inputs.track || 'internal' }}
+          status: completed
+          whatsNewDirectory: android/fastlane/metadata/android/en-US/changelogs
