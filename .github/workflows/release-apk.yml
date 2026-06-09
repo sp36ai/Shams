@@ -1,0 +1,56 @@
+name: Release APK
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'android/**'
+      - '.github/workflows/release-apk.yml'
+  workflow_dispatch:
+
+jobs:
+  build-release-apk:
+    name: Build Release APK
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install Node dependencies
+        run: npm ci
+
+      - name: Decode keystore
+        run: |
+          echo "${{ secrets.SHAMS_UPLOAD_KEYSTORE }}" | base64 --decode > android/app/shams-upload.keystore
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x android/gradlew
+
+      - name: Build release APK
+        working-directory: android
+        env:
+          SHAMS_UPLOAD_KEY_ALIAS: ${{ secrets.SHAMS_UPLOAD_KEY_ALIAS }}
+          SHAMS_UPLOAD_STORE_PASSWORD: ${{ secrets.SHAMS_UPLOAD_STORE_PASSWORD }}
+          SHAMS_UPLOAD_KEY_PASSWORD: ${{ secrets.SHAMS_UPLOAD_KEY_PASSWORD }}
+        run: ./gradlew assembleRelease
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: shams-release-apk
+          path: android/app/build/outputs/apk/release/*.apk
+          retention-days: 30
