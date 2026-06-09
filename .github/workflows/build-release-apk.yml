@@ -58,6 +58,7 @@ jobs:
       - name: Build release APK
         run: |
           cd android && chmod +x gradlew && ./gradlew assembleRelease --no-daemon \
+            -x :react-native-reanimated:assertMinimalReactNativeVersionTask \
             -PSHAMS_UPLOAD_STORE_FILE=shams-upload-key.jks \
             -PSHAMS_UPLOAD_STORE_PASSWORD="${{ secrets.SHAMS_UPLOAD_STORE_PASSWORD }}" \
             -PSHAMS_UPLOAD_KEY_ALIAS="${{ secrets.SHAMS_UPLOAD_KEY_ALIAS }}" \
