@@ -28,10 +28,7 @@ jobs:
           cache: 'npm'
 
       - name: Install Node dependencies
-        run: npm ci
-
-      - name: Pin react-native-reanimated to RN 0.74-compatible version
-        run: npm install react-native-reanimated@3.10.1 --legacy-peer-deps
+        run: npm install --legacy-peer-deps
 
       - name: Set up JDK 17
         uses: actions/setup-java@v4
