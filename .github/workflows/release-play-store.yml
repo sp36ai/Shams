@@ -88,5 +88,8 @@ jobs:
           packageName: com.astrosarfaraz.shamsalasrar
           releaseFiles: android/app/build/outputs/bundle/release/app-release.aab
           track: ${{ github.event.inputs.track || 'internal' }}
-          status: completed
+          # Production releases roll out staged at 10%; promote to 100% in
+          # Play Console (or re-run with a higher fraction) once stable.
+          status: ${{ github.event.inputs.track == 'production' && 'inProgress' || 'completed' }}
+          userFraction: ${{ github.event.inputs.track == 'production' && '0.1' || '' }}
           whatsNewDirectory: android/fastlane/metadata/android/en-US/changelogs

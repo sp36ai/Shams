@@ -141,3 +141,6 @@ android/app/build/outputs/
 *.jks
 *.jks.old
 *.b64
+
+# Firestore emulator log
+firestore-debug.log

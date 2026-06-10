@@ -6,6 +6,7 @@ import { initializeAppCheckService } from './firebase/appCheck';
 import { ThemeProvider } from '@theme/ThemeProvider';
 import { I18nProvider } from '@i18n/I18nProvider';
 import RootNavigator from './navigation/RootNavigator';
+import ErrorBoundary from './components/ErrorBoundary';
 
 /**
  * Entry point for Shams Al-Asrar.
@@ -49,13 +50,15 @@ const App: React.FC = () => {
   }
 
   return (
-    <ThemeProvider>
-      <SafeAreaProvider>
-        <I18nProvider>
-          <RootNavigator />
-        </I18nProvider>
-      </SafeAreaProvider>
-    </ThemeProvider>
+    <ErrorBoundary>
+      <ThemeProvider>
+        <SafeAreaProvider>
+          <I18nProvider>
+            <RootNavigator />
+          </I18nProvider>
+        </SafeAreaProvider>
+      </ThemeProvider>
+    </ErrorBoundary>
   );
 };
 
