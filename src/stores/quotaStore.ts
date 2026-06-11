@@ -19,7 +19,7 @@ import { storage, KEYS } from '@storage/mmkv';
 
 export type PlanTier = 'free' | 'mureed' | 'khass';
 
-export const FREE_DAILY_LIMIT = 100;
+export const FREE_DAILY_LIMIT = 3;
 export const TRIAL_DAILY_LIMIT = 5;
 export const TRIAL_DURATION_DAYS = 7;
 
