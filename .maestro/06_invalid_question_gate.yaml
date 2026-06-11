@@ -20,7 +20,7 @@ name: "Oracle — Question gate rejects non-horary input"
 # Clear and try ambiguous input
 - tapOn:
     id: "oracle-input"
-- clearText
+- eraseText
 - inputText: "What about my situation?"
 - tapOn:
     id: "oracle-send-btn"
