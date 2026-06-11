@@ -134,20 +134,12 @@ jobs:
           force-avd-creation: false
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
           disable-animations: true
+          # NOTE: the runner executes each script line in a separate shell, so
+          # env exports do not persist between lines — keep commands self-contained.
           script: |
-            # Install APK
             adb install -r android/app/build/outputs/apk/debug/app-debug.apk
-
-            # Install Maestro
-            export MAESTRO_VERSION=1.39.0
-            curl -Ls "https://get.maestro.mobile.dev" | bash
-            export PATH="$PATH:$HOME/.maestro/bin"
-
-            # Run all Maestro flows sequentially, collecting results even on failure
-            maestro test \
-              --format junit \
-              --output maestro-results.xml \
-              .maestro/ || true
+            curl -Ls "https://get.maestro.mobile.dev" | MAESTRO_VERSION=1.39.0 bash
+            "$HOME/.maestro/bin/maestro" test --format junit --output maestro-results.xml .maestro/ || true
 
       - name: Upload Maestro results
         if: always()
