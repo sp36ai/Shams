@@ -317,6 +317,7 @@ const AuthScreen: React.FC = () => {
           >
             {isSignUp && (
               <Field
+                testID="auth-input-name"
                 label={t('auth.name')}
                 value={form.name}
                 error={form.nameError}
@@ -330,6 +331,7 @@ const AuthScreen: React.FC = () => {
             )}
 
             <Field
+              testID="auth-input-email"
               label={t('auth.email')}
               value={form.email}
               error={form.emailError}
@@ -345,6 +347,7 @@ const AuthScreen: React.FC = () => {
 
             <Field
               ref={passwordRef}
+              testID="auth-input-password"
               label={t('auth.password')}
               value={form.password}
               error={form.passwordError}
@@ -362,6 +365,7 @@ const AuthScreen: React.FC = () => {
             {isSignUp && (
               <Field
                 ref={confirmRef}
+                testID="auth-input-confirm"
                 label={t('auth.confirmPassword')}
                 value={form.confirmPassword}
                 error={form.confirmError}
@@ -566,6 +570,7 @@ interface FieldProps {
   onRightPress?: () => void;
   colors: ReturnType<typeof useColors>;
   typography: ReturnType<typeof useTypography>;
+  testID?: string;
 }
 
 const Field = React.forwardRef<TextInput, FieldProps>(
@@ -585,6 +590,7 @@ const Field = React.forwardRef<TextInput, FieldProps>(
       onRightPress,
       colors,
       typography,
+      testID,
     },
     ref,
   ) => (
@@ -614,6 +620,7 @@ const Field = React.forwardRef<TextInput, FieldProps>(
       >
         <TextInput
           ref={ref}
+          testID={testID}
           value={value}
           onChangeText={onChangeText}
           onSubmitEditing={onSubmitEditing}

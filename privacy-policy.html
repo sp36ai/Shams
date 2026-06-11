@@ -1,21 +1,281 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>Privacy Policy - Shams al-Asrar</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Privacy Policy — Shams al-Asrār</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: Georgia, 'Times New Roman', serif;
+      background: #0a0f1e;
+      color: #d4c8a8;
+      line-height: 1.75;
+      padding: 40px 20px 80px;
+    }
+
+    .container {
+      max-width: 760px;
+      margin: 0 auto;
+    }
+
+    header {
+      text-align: center;
+      border-bottom: 1px solid #B8860B44;
+      padding-bottom: 32px;
+      margin-bottom: 40px;
+    }
+
+    .app-name {
+      font-size: 2rem;
+      color: #FFD700;
+      letter-spacing: 0.06em;
+      font-style: italic;
+    }
+
+    .app-name-arabic {
+      display: block;
+      font-size: 1.1rem;
+      color: #B8860B;
+      margin-top: 4px;
+      letter-spacing: 0.1em;
+    }
+
+    .by-line {
+      margin-top: 10px;
+      font-size: 0.9rem;
+      color: #8a7a5a;
+    }
+
+    .meta {
+      margin-top: 16px;
+      font-size: 0.82rem;
+      color: #6a6050;
+    }
+
+    h2 {
+      font-size: 1.1rem;
+      color: #FFD700;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      margin: 36px 0 12px;
+      padding-bottom: 6px;
+      border-bottom: 1px solid #B8860B33;
+    }
+
+    p {
+      margin-bottom: 14px;
+      color: #c8bca0;
+    }
+
+    ul {
+      margin: 0 0 14px 24px;
+      color: #c8bca0;
+    }
+
+    ul li {
+      margin-bottom: 6px;
+    }
+
+    a {
+      color: #FFD700;
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    .highlight-box {
+      background: #1a2340;
+      border: 1px solid #B8860B44;
+      border-radius: 8px;
+      padding: 18px 22px;
+      margin: 20px 0;
+      color: #c8bca0;
+    }
+
+    footer {
+      margin-top: 60px;
+      text-align: center;
+      font-size: 0.8rem;
+      color: #4a4030;
+      border-top: 1px solid #B8860B22;
+      padding-top: 24px;
+    }
+  </style>
 </head>
 <body>
-<h1>Privacy Policy</h1>
-<p>This privacy policy applies to the Shams al-Asrar app, operated by Astro Sarfaraz.</p>
-<h2>Information Collection</h2>
-<p>The app may collect device IP address, pages visited, and mobile OS type.</p>
-<h2>Your Rights</h2>
-<p>Contact sp6916629@gmail.com to request access or deletion of your data.</p>
-<h2>Children</h2>
-<p>We do not knowingly collect data from children under 13.</p>
-<h2>Changes</h2>
-<p>Effective date: 2026-05-31.</p>
-<h2>Contact</h2>
-<p>Email: sp6916629@gmail.com</p>
+  <div class="container">
+
+    <header>
+      <div class="app-name">
+        Shams al-Asrār
+        <span class="app-name-arabic">شمس الأسرار</span>
+      </div>
+      <p class="by-line">by Astro Sarfaraz</p>
+      <p class="meta">
+        Privacy Policy &nbsp;·&nbsp; Effective Date: 1 June 2026 &nbsp;·&nbsp; Last Updated: 11 June 2026
+      </p>
+    </header>
+
+    <div class="highlight-box">
+      <strong style="color:#FFD700;">Your privacy matters.</strong> Shams al-Asrār does not sell,
+      rent, or trade your personal information to any third party. Data is collected only to
+      provide the service, and you may request deletion at any time.
+    </div>
+
+    <h2>1. Who We Are</h2>
+    <p>
+      Shams al-Asrār is a horary astrology application developed and operated by
+      <strong style="color:#d4c8a8;">Astro Sarfaraz</strong> (sole proprietor), based in India.
+      The app is available on the Google Play Store under the package name
+      <code style="color:#B8860B;">com.astrosarfaraz.shamsalasrar</code>.
+    </p>
+    <p>
+      For any privacy-related queries, contact us at:
+      <a href="mailto:sp6916629@gmail.com">sp6916629@gmail.com</a>
+    </p>
+
+    <h2>2. Information We Collect</h2>
+    <p>We collect only what is necessary to provide the service:</p>
+    <ul>
+      <li>
+        <strong>Account information</strong> — email address or phone number provided during
+        sign-up via Firebase Authentication (Google Sign-In or email/password).
+      </li>
+      <li>
+        <strong>Location data</strong> — GPS coordinates at the time you ask a question. Location
+        is used solely to calculate the astronomical chart for that moment (latitude, longitude,
+        and local time). It is not stored permanently or used for tracking.
+      </li>
+      <li>
+        <strong>Question content</strong> — the text of questions you submit to the oracle, stored
+        in your personal reading history in Firestore.
+      </li>
+      <li>
+        <strong>Usage data</strong> — question count, daily quota consumption, and subscription
+        status, stored to enforce plan limits.
+      </li>
+      <li>
+        <strong>Purchase information</strong> — subscription plan, purchase token, and expiry date
+        from Google Play Billing, used to verify and activate your subscription.
+      </li>
+      <li>
+        <strong>Device information</strong> — anonymised device identifiers used by Firebase for
+        App Check (fraud prevention). We do not collect your full device ID.
+      </li>
+      <li>
+        <strong>Crash and diagnostic data</strong> — if the app crashes or encounters an error,
+        Firebase Crashlytics records a crash report containing the device model, operating system
+        version, app version, and a technical stack trace. Crash reports do not include your
+        questions, readings, or account details.
+      </li>
+    </ul>
+
+    <h2>3. How We Use Your Information</h2>
+    <ul>
+      <li>To generate your personalised oracle reading using the astronomical engine.</li>
+      <li>To maintain your reading history within the app.</li>
+      <li>To verify subscription purchases and enforce plan quotas.</li>
+      <li>To authenticate your account securely.</li>
+      <li>To prevent abuse and protect the integrity of the service.</li>
+      <li>To diagnose crashes and fix technical problems in the app.</li>
+    </ul>
+    <p>We do <strong>not</strong> use your data for advertising, profiling, or sale to third parties.</p>
+
+    <h2>4. Third-Party Services</h2>
+    <p>The app integrates the following third-party services, each governed by their own privacy policy:</p>
+    <ul>
+      <li>
+        <strong>Firebase (Google LLC)</strong> — Authentication, Firestore database, and Cloud
+        Functions. Data is stored in the <em>asia-south1</em> (Mumbai) region.
+        <a href="https://firebase.google.com/support/privacy" target="_blank" rel="noopener">Firebase Privacy</a>
+      </li>
+      <li>
+        <strong>Google Play Billing (Google LLC)</strong> — In-app subscription processing.
+        We receive a purchase token and product ID; full payment details are handled by Google.
+        <a href="https://policies.google.com/privacy" target="_blank" rel="noopener">Google Privacy Policy</a>
+      </li>
+      <li>
+        <strong>Firebase Crashlytics (Google LLC)</strong> — Crash reporting and stability
+        monitoring. Crash reports are retained by Crashlytics for 90 days.
+        <a href="https://firebase.google.com/support/privacy" target="_blank" rel="noopener">Firebase Privacy</a>
+      </li>
+      <li>
+        <strong>Anthropic (Claude API)</strong> — The oracle response text is generated using
+        Anthropic's Claude model. Your question text and chart data are sent to Anthropic's API
+        for this purpose.
+        <a href="https://www.anthropic.com/privacy" target="_blank" rel="noopener">Anthropic Privacy Policy</a>
+      </li>
+    </ul>
+
+    <h2>5. Data Storage and Retention</h2>
+    <p>
+      Your account data and reading history are stored in Firebase Firestore (Mumbai region,
+      India). Local device preferences are stored on-device using encrypted storage and are
+      never transmitted to our servers.
+    </p>
+    <p>
+      We retain your data for as long as your account is active. If you delete your account,
+      all associated data (readings, quota records, subscription status) is permanently deleted
+      within 30 days.
+    </p>
+
+    <h2>6. Your Rights</h2>
+    <p>You have the right to:</p>
+    <ul>
+      <li><strong>Access</strong> — request a copy of the data we hold about you.</li>
+      <li><strong>Correction</strong> — request correction of inaccurate data.</li>
+      <li><strong>Deletion</strong> — request deletion of your account and all associated data.</li>
+      <li><strong>Portability</strong> — request your reading history in a structured format.</li>
+      <li><strong>Withdrawal of consent</strong> — you may revoke location permission at any
+          time via your device settings; this will disable chart generation.</li>
+    </ul>
+    <p>
+      To exercise any of these rights, email us at
+      <a href="mailto:sp6916629@gmail.com">sp6916629@gmail.com</a>. We will respond within
+      30 days.
+    </p>
+
+    <h2>7. Children's Privacy</h2>
+    <p>
+      Shams al-Asrār is not directed at children under the age of 13. We do not knowingly
+      collect personal information from children. If you believe a child has provided us with
+      personal data, please contact us and we will delete it promptly.
+    </p>
+
+    <h2>8. Security</h2>
+    <p>
+      We use Firebase App Check (Play Integrity API) to ensure only the genuine app can access
+      our backend. All data in transit is encrypted via TLS. Firebase Firestore security rules
+      restrict each user to their own data only.
+    </p>
+
+    <h2>9. Changes to This Policy</h2>
+    <p>
+      We may update this Privacy Policy from time to time. When we do, we will revise the
+      "Last Updated" date at the top of this page. Continued use of the app after changes
+      constitutes acceptance of the updated policy. For significant changes, we will notify
+      you within the app.
+    </p>
+
+    <h2>10. Contact</h2>
+    <p>
+      For any privacy concerns, data requests, or complaints:
+    </p>
+    <p>
+      <strong style="color:#d4c8a8;">Astro Sarfaraz</strong><br />
+      Email: <a href="mailto:sp6916629@gmail.com">sp6916629@gmail.com</a><br />
+      App: Shams al-Asrār (com.astrosarfaraz.shamsalasrar)
+    </p>
+
+    <footer>
+      &copy; 2026 Astro Sarfaraz. All rights reserved.<br />
+      Shams al-Asrār &nbsp;·&nbsp; شمس الأسرار
+    </footer>
+
+  </div>
 </body>
 </html>
