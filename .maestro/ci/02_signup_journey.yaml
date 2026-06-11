@@ -12,22 +12,25 @@ name: "Journey — sign up through onboarding to the Oracle"
     permissions:
       location: allow
 
-- waitForAnimationToEnd:
-    timeout: 4000
-
-# Land on Auth, switch to sign-up
-- assertVisible:
-    id: "auth-tab-signup"
+# Land on Auth (splash + auth bootstrap), switch to sign-up
+- extendedWaitUntil:
+    visible:
+      id: "auth-tab-signup"
+    timeout: 20000
 - tapOn:
     id: "auth-tab-signup"
 
-- tapOn: "Full name"
+- tapOn:
+    id: "auth-input-name"
 - inputText: "CI Test Seeker"
-- tapOn: "Email"
+- tapOn:
+    id: "auth-input-email"
 - inputRandomEmail
-- tapOn: "Password"
+- tapOn:
+    id: "auth-input-password"
 - inputText: "CiTestPass!2026"
-- tapOn: "Confirm password"
+- tapOn:
+    id: "auth-input-confirm"
 - inputText: "CiTestPass!2026"
 - hideKeyboard
 - tapOn:
