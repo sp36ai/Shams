@@ -1,0 +1,5 @@
+Initial release of Shams al-Asrār — KP horary astrology oracle.
+
+- Ask any horary question and receive a full KP chart reading
+- Supports English, Urdu, and Hindi
+- Secure sign-in with email or Google
