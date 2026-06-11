@@ -5,8 +5,10 @@ name: "Settings — plan display and sign out"
 
 - launchApp
 
-- waitForAnimationToEnd:
-    timeout: 4000
+# Splash + session restore for the account created in 02
+- extendedWaitUntil:
+    visible: "Settings"
+    timeout: 20000
 
 # Navigate to Settings tab
 - tapOn: "Settings"
