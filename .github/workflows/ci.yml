@@ -1,5 +1,8 @@
 name: CI
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
+
 on:
   push:
     branches: [main, master]
@@ -70,6 +73,9 @@ jobs:
     runs-on: ubuntu-latest
     needs: app-quality
     timeout-minutes: 60
+    permissions:
+      contents: read
+      checks: write
     env:
       ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
 
@@ -138,8 +144,9 @@ jobs:
           # env exports do not persist between lines — keep commands self-contained.
           script: |
             adb install -r android/app/build/outputs/apk/debug/app-debug.apk
+            adb emu geo fix 67.0011 24.8607
             curl -Ls "https://get.maestro.mobile.dev" | MAESTRO_VERSION=1.39.0 bash
-            "$HOME/.maestro/bin/maestro" test --format junit --output maestro-results.xml .maestro/ || true
+            "$HOME/.maestro/bin/maestro" test --format junit --output maestro-results.xml .maestro/ci/ || true
 
       - name: Upload Maestro results
         if: always()
