@@ -19,7 +19,7 @@ import { storage, KEYS } from '@storage/mmkv';
 
 export type PlanTier = 'free' | 'mureed' | 'khass';
 
-export const FREE_DAILY_LIMIT = 100;
+export const FREE_DAILY_LIMIT = 3;
 export const TRIAL_DAILY_LIMIT = 5;
 export const TRIAL_DURATION_DAYS = 7;
 
@@ -98,9 +98,6 @@ export interface QuotaState {
   FREE_DAILY_LIMIT: number;
   /** ISO expiry date returned by the server after purchase verification. */
   planExpiry: string | null;
-  /** True in __DEV__ builds — bypasses quota entirely, false in release. */
-  devUnlock: boolean;
-  setDevUnlock: (val: boolean) => void;
 
   /** True when the user may ask another question right now. */
   canAsk: () => boolean;
@@ -131,14 +128,9 @@ export const useQuotaStore = create<QuotaState>((set, get) => ({
   trialActive: _initTrialState.trialActive,
   trialExpired: _initTrialState.trialExpired,
   FREE_DAILY_LIMIT,
-  devUnlock: __DEV__,
-  setDevUnlock: (val: boolean) => set({ devUnlock: val }),
 
   canAsk(): boolean {
-    const { plan, questionsToday, trialActive, devUnlock } = get();
-    if (devUnlock) {
-      return true;
-    }
+    const { plan, questionsToday, trialActive } = get();
     if ((UNLIMITED_PLANS as PlanTier[]).includes(plan)) {
       return true;
     }
@@ -147,10 +139,7 @@ export const useQuotaStore = create<QuotaState>((set, get) => ({
   },
 
   consumeOne(): boolean {
-    const { plan, questionsToday, trialActive, devUnlock } = get();
-    if (devUnlock) {
-      return true;
-    }
+    const { plan, questionsToday, trialActive } = get();
     if ((UNLIMITED_PLANS as PlanTier[]).includes(plan)) {
       return true;
     }

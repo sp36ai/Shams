@@ -19,8 +19,6 @@ function makeState(plan: PlanTier, questionsToday: number): QuotaState {
     trialActive: false,
     trialExpired: false,
     FREE_DAILY_LIMIT,
-    devUnlock: false,
-    setDevUnlock: () => undefined,
     canAsk: () => false,
     consumeOne: () => false,
     setPlan: () => undefined,
@@ -31,8 +29,8 @@ function makeState(plan: PlanTier, questionsToday: number): QuotaState {
 }
 
 describe('FREE_DAILY_LIMIT', () => {
-  test('is 100', () => {
-    expect(FREE_DAILY_LIMIT).toBe(100);
+  test('is 3', () => {
+    expect(FREE_DAILY_LIMIT).toBe(3);
   });
 });
 
@@ -51,8 +49,8 @@ describe('selectQuestionsLeft', () => {
     expect(selectQuestionsLeft(makeState('free', 0))).toBe(FREE_DAILY_LIMIT);
   });
 
-  test('free plan with 10 used → FREE_DAILY_LIMIT - 10 left', () => {
-    expect(selectQuestionsLeft(makeState('free', 10))).toBe(FREE_DAILY_LIMIT - 10);
+  test('free plan with 1 used → FREE_DAILY_LIMIT - 1 left', () => {
+    expect(selectQuestionsLeft(makeState('free', 1))).toBe(FREE_DAILY_LIMIT - 1);
   });
 
   test('free plan at limit → 0 left', () => {
