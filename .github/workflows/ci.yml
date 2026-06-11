@@ -121,8 +121,9 @@ jobs:
           key: gradle-${{ hashFiles('android/**/*.gradle*', 'android/gradle.properties') }}
           restore-keys: gradle-
 
-      - name: Build debug APK
-        run: cd android && chmod +x gradlew && ./gradlew assembleDebug --no-daemon -q
+      # -Pe2eBundleJs embeds the JS bundle so the app runs without Metro
+      - name: Build debug APK (embedded JS bundle)
+        run: cd android && chmod +x gradlew && ./gradlew assembleDebug -Pe2eBundleJs=true --no-daemon -q
 
       - name: Enable KVM (emulator acceleration)
         run: |
@@ -135,6 +136,7 @@ jobs:
         with:
           api-level: 31
           arch: x86_64
+          target: google_apis
           profile: pixel_6
           avd-name: shams_test
           force-avd-creation: false

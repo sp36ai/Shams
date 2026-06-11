@@ -159,16 +159,20 @@ function checkNotRooted(): SecurityCheckResult {
 /**
  * Run all integrity checks in sequence. Returns the first failure,
  * or PASS if all pass. Call once at app start, before mounting screens.
+ *
+ * Emulator detection is observe-only: hard-blocking emulators also blanks
+ * Google Play's pre-launch report (which runs on emulated devices) and any
+ * emulator-based E2E run. The signal is logged for monitoring instead;
+ * server-side protection comes from App Check / Play Integrity.
  */
 export function runSecurityChecks(): SecurityCheckResult {
-  const checks = [
+  const blockingChecks = [
     { fn: checkHermes, name: 'Hermes' },
     { fn: checkNotDebugging, name: 'Debugger' },
-    { fn: checkNotEmulator, name: 'Emulator' },
     { fn: checkNotRooted, name: 'Root/Frida' },
   ];
 
-  for (const { fn, name } of checks) {
+  for (const { fn, name } of blockingChecks) {
     const result = fn();
     if (!result.passed) {
       log.error(`Security check [${name}] failed: ${result.reason}`);
@@ -176,7 +180,12 @@ export function runSecurityChecks(): SecurityCheckResult {
     }
   }
 
-  log.info('All security checks passed');
+  const emulator = checkNotEmulator();
+  if (!emulator.passed) {
+    log.warn('Emulator detected — continuing (observe-only check)');
+  }
+
+  log.info('All blocking security checks passed');
   return PASS;
 }
 

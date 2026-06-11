@@ -11,6 +11,12 @@ apply plugin: "com.google.firebase.crashlytics"
 
 react {
     // RN 0.74 — autolinking is applied via native_modules.gradle at the bottom of this file
+
+    // E2E builds (-Pe2eBundleJs=true) embed the JS bundle in the debug APK so
+    // the app runs on a CI emulator without a Metro dev server.
+    if (project.hasProperty("e2eBundleJs")) {
+        debuggableVariants = []
+    }
 }
 
 /**
