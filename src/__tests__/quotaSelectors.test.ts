@@ -19,8 +19,6 @@ function makeState(plan: PlanTier, questionsToday: number): QuotaState {
     trialActive: false,
     trialExpired: false,
     FREE_DAILY_LIMIT,
-    devUnlock: false,
-    setDevUnlock: () => undefined,
     canAsk: () => false,
     consumeOne: () => false,
     setPlan: () => undefined,
