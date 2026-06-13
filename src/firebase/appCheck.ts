@@ -14,8 +14,9 @@ export const initializeAppCheckService = () => {
   const provider = appCheck.newReactNativeFirebaseAppCheckProvider();
 
   if (__DEV__) {
+    const debugToken = process.env.FIREBASE_APP_CHECK_DEBUG_TOKEN_ANDROID;
     provider.configure({
-      android: { provider: 'debug' },
+      android: { provider: 'debug', ...(debugToken ? { debugToken } : {}) },
       apple: { provider: 'debug' },
       web: { provider: 'debug', siteKey: 'none' },
     });
