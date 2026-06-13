@@ -1,3 +1,7 @@
+---
+render_with_liquid: false
+---
+
 # DĀR AL-SHAMS — COMPONENT IMPLEMENTATION GUIDE
 
 Sacred UI component patterns for the manuscript chamber aesthetic.
