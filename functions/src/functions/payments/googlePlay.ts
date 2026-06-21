@@ -31,7 +31,6 @@ import {
   GOOGLE_PLAY_CLIENT_EMAIL,
   GOOGLE_PLAY_PRIVATE_KEY,
   PLAY_PRODUCT_MAP,
-  PLAN_DURATION_DAYS,
 } from '../../config';
 
 // ── Google Play API client (no googleapis SDK to keep bundle small) ───────────
@@ -41,12 +40,12 @@ interface GoogleAccessToken {
   expires_in: number;
 }
 
-interface ProductPurchase {
-  purchaseState: number; // 0 = purchased, 1 = canceled, 2 = pending
-  consumptionState: number; // 0 = not consumed
-  acknowledgementState: number; // 0 = not acknowledged
+interface SubscriptionPurchase {
+  purchaseState: number; // 0 = purchased, 1 = cancelled
+  acknowledgementState: number; // 0 = not acknowledged, 1 = acknowledged
   orderId: string;
-  purchaseTimeMillis: string;
+  startTimeMillis: string;
+  expiryTimeMillis: string; // authoritative expiry from Play Store
 }
 
 function httpsPost(url: string, body: string, headers: Record<string, string>): Promise<string> {
@@ -176,12 +175,12 @@ export const verifyGooglePlayPurchase = onCall(
       // Get Google OAuth token
       const accessToken = await getGoogleAccessToken();
 
-      // Verify purchase with Google Play API
-      const apiUrl = `https://androidpublisher.googleapis.com/androidpublisher/v3/applications/${input.packageName}/purchases/products/${input.productId}/tokens/${input.purchaseToken}`;
+      // Verify subscription with Google Play Subscriptions API
+      const apiUrl = `https://androidpublisher.googleapis.com/androidpublisher/v3/applications/${input.packageName}/purchases/subscriptions/${input.productId}/tokens/${input.purchaseToken}`;
       const { status, body } = await httpsGet(apiUrl, accessToken);
 
       if (status !== 200) {
-        logger.warn('play purchase verification failed', {
+        logger.warn('play subscription verification failed', {
           userId,
           status,
           body: body.slice(0, 200),
@@ -191,19 +190,23 @@ export const verifyGooglePlayPurchase = onCall(
         throw new HttpsError('invalid-argument', 'Purchase could not be verified');
       }
 
-      const purchase = JSON.parse(body) as ProductPurchase;
+      const purchase = JSON.parse(body) as SubscriptionPurchase;
 
-      // purchaseState 0 = purchased
+      // purchaseState 0 = active subscription
       if (purchase.purchaseState !== 0) {
-        throw new HttpsError('failed-precondition', 'Purchase is not in a valid state');
+        throw new HttpsError('failed-precondition', 'Subscription is not in an active state');
       }
 
-      const durationDays = PLAN_DURATION_DAYS[plan];
-      const expiresAt = new Date(Date.now() + durationDays * 86_400_000);
+      // Use Play Store's authoritative expiry — this handles monthly vs annual correctly
+      const expiryMs = parseInt(purchase.expiryTimeMillis, 10);
+      if (isNaN(expiryMs) || expiryMs <= Date.now()) {
+        throw new HttpsError('failed-precondition', 'Subscription has already expired');
+      }
+      const expiresAt = new Date(expiryMs);
 
       // Acknowledge to prevent auto-refund (24h window)
       if (purchase.acknowledgementState === 0) {
-        const ackUrl = `https://androidpublisher.googleapis.com/androidpublisher/v3/applications/${input.packageName}/purchases/products/${input.productId}/tokens/${input.purchaseToken}:acknowledge`;
+        const ackUrl = `https://androidpublisher.googleapis.com/androidpublisher/v3/applications/${input.packageName}/purchases/subscriptions/${input.productId}/tokens/${input.purchaseToken}:acknowledge`;
         await httpsPostAuth(ackUrl, accessToken);
       }
 
