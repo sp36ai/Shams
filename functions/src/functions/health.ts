@@ -24,3 +24,4 @@ export const health = onRequest(
     res.status(200).json(status);
   },
 );
+
