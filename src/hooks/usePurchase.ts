@@ -11,9 +11,14 @@ import {
   type SubscriptionPurchase,
   type PurchaseError,
 } from 'react-native-iap';
+
 import functions, { type FirebaseFunctionsTypes } from '@react-native-firebase/functions';
 import { useQuotaStore } from '@stores/quotaStore';
 import type { PlanTier } from '@stores/quotaStore';
+
+type AndroidSubscriptionProduct = {
+  subscriptionOfferDetails?: Array<{ offerToken: string; basePlanId: string }>;
+};
 
 type FunctionsWithRegion = FirebaseFunctionsTypes.Module & {
   region(r: string): FirebaseFunctionsTypes.Module;
@@ -109,11 +114,17 @@ export function usePurchase(): PurchaseState {
       try {
         const sku = SKU_MAP[plan];
 
-        // Validate SKU is live on Play Console before launching the purchase sheet
-        await getSubscriptions({ skus: [sku] });
+        // Validate SKU is live on Play Console and get offer token (required for
+        // Play Billing Library v5+ used by react-native-iap v12).
+        const subs = await getSubscriptions({ skus: [sku] });
+        const sub = subs.find(s => s.productId === sku) as AndroidSubscriptionProduct | undefined;
+        const offerToken = sub?.subscriptionOfferDetails?.[0]?.offerToken;
 
         // Launch the Google Play subscription sheet
-        const result = await requestSubscription({ sku });
+        const result = await requestSubscription({
+          sku,
+          ...(offerToken ? { subscriptionOffers: [{ sku, offerToken }] } : {}),
+        });
 
         const p: SubscriptionPurchase | null = Array.isArray(result)
           ? (result[0] ?? null)
