@@ -77,33 +77,16 @@ jobs:
       - name: Verify AAB targetSdkVersion
         run: |
           AAB=android/app/build/outputs/bundle/release/app-release.aab
-          echo "AAB size: $(wc -c < $AAB) bytes"
-          python3 - <<'EOF'
-          import zipfile, struct, sys
+          echo "=== AAB size: $(wc -c < $AAB) bytes ==="
 
-          def parse_varint(data, pos):
-              result, shift = 0, 0
-              while True:
-                  b = data[pos]; pos += 1
-                  result |= (b & 0x7F) << shift
-                  if not (b & 0x80): return result, pos
-                  shift += 7
+          # Extract the proto-format manifest from the AAB (it's a ZIP)
+          unzip -p "$AAB" base/manifest/AndroidManifest.xml > /tmp/proto-manifest.pb
+          echo "Proto manifest size: $(wc -c < /tmp/proto-manifest.pb) bytes"
 
-          with zipfile.ZipFile("android/app/build/outputs/bundle/release/app-release.aab") as z:
-              manifest_bytes = z.read("base/manifest/AndroidManifest.xml")
-          print(f"Manifest proto size: {len(manifest_bytes)} bytes")
-
-          # Search for targetSdkVersion field in proto
-          # In compiled proto, look for uses-sdk element attributes
-          hex_data = manifest_bytes.hex()
-          print(f"Proto header (first 40 bytes hex): {hex_data[:80]}")
-
-          # The targetSdkVersion is typically near the start of the manifest
-          # Tag 0x0101021b (uses-sdk targetSdkVersion) in proto binary format
-          # Just print first 200 bytes for inspection
-          sample = manifest_bytes[:200]
-          print(f"Decimal values: {list(sample[:50])}")
-          EOF
+          # Use aapt2 to decode the proto-format manifest into human-readable form
+          AAPT2=$(find "$ANDROID_HOME/build-tools" -name "aapt2" 2>/dev/null | sort -rV | head -1)
+          echo "=== aapt2: $AAPT2 ==="
+          $AAPT2 dump xmltree --proto-format /tmp/proto-manifest.pb 2>&1 | head -60
 
       - name: Upload AAB artifact
         uses: actions/upload-artifact@v4
