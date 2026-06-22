@@ -59,12 +59,12 @@ jobs:
           path: |
             ~/.gradle/caches
             ~/.gradle/wrapper
-          key: gradle-v2-${{ hashFiles('android/**/*.gradle*', 'android/gradle.properties') }}
-          restore-keys: gradle-v2-
+          key: gradle-${{ hashFiles('android/**/*.gradle*', 'android/gradle.properties') }}
+          restore-keys: gradle-
 
       - name: Build release AAB
         run: |
-          cd android && chmod +x gradlew && ./gradlew clean bundleRelease --no-daemon --no-build-cache \
+          cd android && chmod +x gradlew && ./gradlew bundleRelease --no-daemon --no-build-cache \
             -PSHAMS_UPLOAD_STORE_FILE=shams-upload-key.jks \
             -PSHAMS_UPLOAD_STORE_PASSWORD="${{ secrets.SHAMS_UPLOAD_STORE_PASSWORD }}" \
             -PSHAMS_UPLOAD_KEY_ALIAS="${{ secrets.SHAMS_UPLOAD_KEY_ALIAS }}" \
@@ -77,16 +77,16 @@ jobs:
       - name: Verify AAB targetSdkVersion
         run: |
           AAB=android/app/build/outputs/bundle/release/app-release.aab
-          echo "AAB size: $(wc -c < $AAB) bytes"
-          python3 - <<'EOF'
-          import zipfile
-          with zipfile.ZipFile("android/app/build/outputs/bundle/release/app-release.aab") as z:
-              manifest_bytes = z.read("base/manifest/AndroidManifest.xml")
-          print(f"Manifest proto size: {len(manifest_bytes)} bytes")
-          hex_data = manifest_bytes.hex()
-          print(f"Proto header (first 40 bytes hex): {hex_data[:80]}")
-          print(f"Proto bytes (first 200): {list(manifest_bytes[:50])}")
-          EOF
+          echo "=== AAB size: $(wc -c < $AAB) bytes ==="
+
+          # Extract the proto-format manifest from the AAB (it's a ZIP)
+          unzip -p "$AAB" base/manifest/AndroidManifest.xml > /tmp/proto-manifest.pb
+          echo "Proto manifest size: $(wc -c < /tmp/proto-manifest.pb) bytes"
+
+          # Use aapt2 to decode the proto-format manifest into human-readable form
+          AAPT2=$(find "$ANDROID_HOME/build-tools" -name "aapt2" 2>/dev/null | sort -rV | head -1)
+          echo "=== aapt2: $AAPT2 ==="
+          $AAPT2 dump xmltree --proto-format /tmp/proto-manifest.pb 2>&1 | head -60
 
       - name: Upload AAB artifact
         uses: actions/upload-artifact@v4
@@ -101,7 +101,7 @@ jobs:
           serviceAccountJsonPlainText: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON }}
           packageName: com.astrosarfaraz.shamsalasrar
           releaseFiles: android/app/build/outputs/bundle/release/app-release.aab
-          track: ${{ github.event.inputs.track || 'internal' }}
+          tracks: ${{ github.event.inputs.track || 'internal' }}
           # Production releases roll out staged at 10%; promote to 100% in
           # Play Console (or re-run with a higher fraction) once stable.
           status: ${{ github.event.inputs.track == 'production' && 'inProgress' || 'completed' }}
