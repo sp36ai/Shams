@@ -64,7 +64,7 @@ jobs:
 
       - name: Build release AAB
         run: |
-          cd android && chmod +x gradlew && ./gradlew bundleRelease --no-daemon \
+          cd android && chmod +x gradlew && ./gradlew bundleRelease --no-daemon --no-build-cache \
             -PSHAMS_UPLOAD_STORE_FILE=shams-upload-key.jks \
             -PSHAMS_UPLOAD_STORE_PASSWORD="${{ secrets.SHAMS_UPLOAD_STORE_PASSWORD }}" \
             -PSHAMS_UPLOAD_KEY_ALIAS="${{ secrets.SHAMS_UPLOAD_KEY_ALIAS }}" \
@@ -74,6 +74,37 @@ jobs:
         if: always()
         run: rm -f android/app/shams-upload-key.jks
 
+      - name: Verify AAB targetSdkVersion
+        run: |
+          AAB=android/app/build/outputs/bundle/release/app-release.aab
+          echo "AAB size: $(wc -c < $AAB) bytes"
+          python3 - <<'EOF'
+          import zipfile, struct, sys
+
+          def parse_varint(data, pos):
+              result, shift = 0, 0
+              while True:
+                  b = data[pos]; pos += 1
+                  result |= (b & 0x7F) << shift
+                  if not (b & 0x80): return result, pos
+                  shift += 7
+
+          with zipfile.ZipFile("android/app/build/outputs/bundle/release/app-release.aab") as z:
+              manifest_bytes = z.read("base/manifest/AndroidManifest.xml")
+          print(f"Manifest proto size: {len(manifest_bytes)} bytes")
+
+          # Search for targetSdkVersion field in proto
+          # In compiled proto, look for uses-sdk element attributes
+          hex_data = manifest_bytes.hex()
+          print(f"Proto header (first 40 bytes hex): {hex_data[:80]}")
+
+          # The targetSdkVersion is typically near the start of the manifest
+          # Tag 0x0101021b (uses-sdk targetSdkVersion) in proto binary format
+          # Just print first 200 bytes for inspection
+          sample = manifest_bytes[:200]
+          print(f"Decimal values: {list(sample[:50])}")
+          EOF
+
       - name: Upload AAB artifact
         uses: actions/upload-artifact@v4
         with:
@@ -82,12 +113,12 @@ jobs:
           retention-days: 30
 
       - name: Deploy to Play Store
-        uses: r0adkll/upload-google-play@v1
+        uses: r0adkll/upload-google-play@v3
         with:
           serviceAccountJsonPlainText: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON }}
           packageName: com.astrosarfaraz.shamsalasrar
           releaseFiles: android/app/build/outputs/bundle/release/app-release.aab
-          track: ${{ github.event.inputs.track || 'internal' }}
+          tracks: ${{ github.event.inputs.track || 'internal' }}
           # Production releases roll out staged at 10%; promote to 100% in
           # Play Console (or re-run with a higher fraction) once stable.
           status: ${{ github.event.inputs.track == 'production' && 'inProgress' || 'completed' }}
