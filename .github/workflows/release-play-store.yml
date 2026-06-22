@@ -93,3 +93,4 @@ jobs:
           status: ${{ github.event.inputs.track == 'production' && 'inProgress' || 'completed' }}
           userFraction: ${{ github.event.inputs.track == 'production' && '0.1' || '' }}
           whatsNewDirectory: android/fastlane/metadata/android/en-US/changelogs
+
