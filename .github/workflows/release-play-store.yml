@@ -59,12 +59,12 @@ jobs:
           path: |
             ~/.gradle/caches
             ~/.gradle/wrapper
-          key: gradle-${{ hashFiles('android/**/*.gradle*', 'android/gradle.properties') }}
-          restore-keys: gradle-
+          key: gradle-v2-${{ hashFiles('android/**/*.gradle*', 'android/gradle.properties') }}
+          restore-keys: gradle-v2-
 
       - name: Build release AAB
         run: |
-          cd android && chmod +x gradlew && ./gradlew bundleRelease --no-daemon --no-build-cache \
+          cd android && chmod +x gradlew && ./gradlew clean bundleRelease --no-daemon --no-build-cache \
             -PSHAMS_UPLOAD_STORE_FILE=shams-upload-key.jks \
             -PSHAMS_UPLOAD_STORE_PASSWORD="${{ secrets.SHAMS_UPLOAD_STORE_PASSWORD }}" \
             -PSHAMS_UPLOAD_KEY_ALIAS="${{ secrets.SHAMS_UPLOAD_KEY_ALIAS }}" \
@@ -85,7 +85,7 @@ jobs:
           print(f"Manifest proto size: {len(manifest_bytes)} bytes")
           hex_data = manifest_bytes.hex()
           print(f"Proto header (first 40 bytes hex): {hex_data[:80]}")
-          print(f"Decimal values (first 50): {list(manifest_bytes[:50])}")
+          print(f"Proto bytes (first 200): {list(manifest_bytes[:50])}")
           EOF
 
       - name: Upload AAB artifact
