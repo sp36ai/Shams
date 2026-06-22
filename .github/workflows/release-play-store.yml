@@ -79,27 +79,13 @@ jobs:
           AAB=android/app/build/outputs/bundle/release/app-release.aab
           echo "AAB size: $(wc -c < $AAB) bytes"
           python3 - <<'EOF'
-          import zipfile, struct, sys
-
-          def parse_varint(data, pos):
-              result, shift = 0, 0
-              while True:
-                  b = data[pos]; pos += 1
-                  result |= (b & 0x7F) << shift
-                  if not (b & 0x80): return result, pos
-                  shift += 7
-
+          import zipfile
           with zipfile.ZipFile("android/app/build/outputs/bundle/release/app-release.aab") as z:
               manifest_bytes = z.read("base/manifest/AndroidManifest.xml")
           print(f"Manifest proto size: {len(manifest_bytes)} bytes")
-
-          # Search for targetSdkVersion field in proto
           hex_data = manifest_bytes.hex()
           print(f"Proto header (first 40 bytes hex): {hex_data[:80]}")
-
-          # Just print first 50 bytes as decimal for inspection
-          sample = manifest_bytes[:200]
-          print(f"Decimal values: {list(sample[:50])}")
+          print(f"Decimal values (first 50): {list(manifest_bytes[:50])}")
           EOF
 
       - name: Upload AAB artifact
@@ -110,12 +96,12 @@ jobs:
           retention-days: 30
 
       - name: Deploy to Play Store
-        uses: r0adkll/upload-google-play@v3
+        uses: r0adkll/upload-google-play@v1
         with:
           serviceAccountJsonPlainText: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON }}
           packageName: com.astrosarfaraz.shamsalasrar
           releaseFiles: android/app/build/outputs/bundle/release/app-release.aab
-          tracks: ${{ github.event.inputs.track || 'internal' }}
+          track: ${{ github.event.inputs.track || 'internal' }}
           # Production releases roll out staged at 10%; promote to 100% in
           # Play Console (or re-run with a higher fraction) once stable.
           status: ${{ github.event.inputs.track == 'production' && 'inProgress' || 'completed' }}
