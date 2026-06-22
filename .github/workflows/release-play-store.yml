@@ -83,10 +83,10 @@ jobs:
           unzip -p "$AAB" base/manifest/AndroidManifest.xml > /tmp/proto-manifest.pb
           echo "Proto manifest size: $(wc -c < /tmp/proto-manifest.pb) bytes"
 
-          # Use aapt2 to decode the proto-format manifest into human-readable form
-          AAPT2=$(find "$ANDROID_HOME/build-tools" -name "aapt2" 2>/dev/null | sort -rV | head -1)
-          echo "=== aapt2: $AAPT2 ==="
-          $AAPT2 dump xmltree --proto-format /tmp/proto-manifest.pb 2>&1 | head -60
+          # Decode SDK versions from the proto manifest using Python
+          echo "=== Full hex dump of first 200 bytes ==="d -1)
+          xxd /tmp/proto-manifest.pb | head -12
+          python3 -c "import sys,struct; d=open('/tmp/proto-manifest.pb','rb').read(); sdk_hits=[d[i+2] for i in range(len(d)-2) if d[i]==0x20 and d[i-1] in (0x08,0x10,0x18,0x20,0x28) and i>0]; print('SDK candidates:',sdk_hits[:20])" 2>&1
 
       - name: Upload AAB artifact
         uses: actions/upload-artifact@v4
