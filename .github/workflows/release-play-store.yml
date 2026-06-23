@@ -64,7 +64,7 @@ jobs:
 
       - name: Build release AAB
         run: |
-          cd android && chmod +x gradlew && ./gradlew bundleRelease --no-daemon --no-build-cache \
+          cd android && chmod +x gradlew && ./gradlew bundleRelease --no-daemon --no-build-cache --no-configuration-cache \
             -PSHAMS_UPLOAD_STORE_FILE=shams-upload-key.jks \
             -PSHAMS_UPLOAD_STORE_PASSWORD="${{ secrets.SHAMS_UPLOAD_STORE_PASSWORD }}" \
             -PSHAMS_UPLOAD_KEY_ALIAS="${{ secrets.SHAMS_UPLOAD_KEY_ALIAS }}" \
@@ -79,14 +79,19 @@ jobs:
           AAB=android/app/build/outputs/bundle/release/app-release.aab
           echo "=== AAB size: $(wc -c < $AAB) bytes ==="
 
-          # Extract the proto-format manifest from the AAB (it's a ZIP)
-          unzip -p "$AAB" base/manifest/AndroidManifest.xml > /tmp/proto-manifest.pb
-          echo "Proto manifest size: $(wc -c < /tmp/proto-manifest.pb) bytes"
+          # Print the intermediate merged manifest (human-readable XML before proto conversion)
+          echo "=== Intermediate merged manifests ==="
+          find android/app/build/intermediates -name "AndroidManifest.xml" 2>/dev/null | while read f; do
+            echo "--- $f ---"
+            grep -i 'uses-sdk\|targetSdk\|minSdk\|package\|versionCode\|versionName' "$f" || true
+          done
 
-          # Decode SDK versions from the proto manifest using Python
-          echo "=== Full hex dump of first 200 bytes ==="d -1)
-          xxd /tmp/proto-manifest.pb | head -12
-          python3 -c "import sys,struct; d=open('/tmp/proto-manifest.pb','rb').read(); sdk_hits=[d[i+2] for i in range(len(d)-2) if d[i]==0x20 and d[i-1] in (0x08,0x10,0x18,0x20,0x28) and i>0]; print('SDK candidates:',sdk_hits[:20])" 2>&1
+          # Use bundletool to dump the actual AAB manifest
+          echo "=== Fetching bundletool ==="
+          wget -q "https://github.com/google/bundletool/releases/download/1.17.2/bundletool-all-1.17.2.jar" -O /tmp/bundletool.jar
+          echo "=== bundletool dump manifest (sdk + version lines) ==="
+          java -jar /tmp/bundletool.jar dump manifest --bundle="$AAB" \
+            | grep -iE 'uses-sdk|targetSdk|minSdk|versionCode|versionName|package' || true
 
       - name: Upload AAB artifact
         uses: actions/upload-artifact@v4
