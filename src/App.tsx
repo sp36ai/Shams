@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, StatusBar } from 'react-native';
+import { View, Text, StyleSheet, StatusBar, ScrollView } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { runSecurityChecks, INTEGRITY_FAIL_MESSAGE } from '@utils/security';
 import { initializeAppCheckService } from './firebase/appCheck';
@@ -7,18 +7,38 @@ import { ThemeProvider } from '@theme/ThemeProvider';
 import { I18nProvider } from '@i18n/I18nProvider';
 import RootNavigator from './navigation/RootNavigator';
 
-/**
- * Entry point for Shams Al-Asrar.
- * Handles critical boot-time security and environment setup:
- * 1. Device integrity/security checks (Root/Jailbreak/Tampering)
- * 2. Firebase App Check initialization for backend enforcement
- */
+class ErrorBoundary extends React.Component<
+  { children: React.ReactNode },
+  { error: Error | null }
+> {
+  constructor(props: { children: React.ReactNode }) {
+    super(props);
+    this.state = { error: null };
+  }
+  static getDerivedStateFromError(error: Error) {
+    return { error };
+  }
+  render() {
+    if (this.state.error) {
+      return (
+        <View style={styles.errorContainer}>
+          <StatusBar barStyle="light-content" backgroundColor="#030E10" />
+          <Text style={styles.errorTitle}>Crash Report</Text>
+          <ScrollView>
+            <Text style={styles.errorMessage}>
+              {this.state.error.message}{'\n\n'}{this.state.error.stack}
+            </Text>
+          </ScrollView>
+        </View>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 const App: React.FC = () => {
   const [securityPassed, setSecurityPassed] = useState(true);
 
-  // 1. Immediate Integrity Check
-  // This runs before the navigation tree mounts to prevent unauthorized access
-  // or UI flickering on compromised devices.
   useEffect(() => {
     const result = runSecurityChecks();
     if (!result.passed) {
@@ -27,8 +47,6 @@ const App: React.FC = () => {
     }
   }, []);
 
-  // 2. Initialize Firebase App Check
-  // Required to satisfy backend enforcement for Cloud Functions (e.g., askOracle).
   useEffect(() => {
     try {
       initializeAppCheckService();
@@ -37,35 +55,33 @@ const App: React.FC = () => {
     }
   }, []);
 
-
-  // Terminal Safety Gate: If integrity fails, we show a non-bypassable error view.
   if (!securityPassed) {
     return (
       <View style={styles.errorContainer}>
         <StatusBar barStyle="light-content" backgroundColor="#030E10" />
         <Text style={styles.errorTitle}>Integrity Error</Text>
-        <Text style={styles.errorMessage}>
-          {INTEGRITY_FAIL_MESSAGE}
-        </Text>
+        <Text style={styles.errorMessage}>{INTEGRITY_FAIL_MESSAGE}</Text>
       </View>
     );
   }
 
   return (
-    <ThemeProvider>
-      <SafeAreaProvider>
-        <I18nProvider>
-          <RootNavigator />
-        </I18nProvider>
-      </SafeAreaProvider>
-    </ThemeProvider>
+    <ErrorBoundary>
+      <ThemeProvider>
+        <SafeAreaProvider>
+          <I18nProvider>
+            <RootNavigator />
+          </I18nProvider>
+        </SafeAreaProvider>
+      </ThemeProvider>
+    </ErrorBoundary>
   );
 };
 
 const styles = StyleSheet.create({
   errorContainer: {
     flex: 1,
-    backgroundColor: '#030E10', // Matches theme.colors.bg
+    backgroundColor: '#030E10',
     justifyContent: 'center',
     alignItems: 'center',
     padding: 32,
@@ -78,9 +94,9 @@ const styles = StyleSheet.create({
   },
   errorMessage: {
     color: '#FFFFFF',
-    fontSize: 16,
-    textAlign: 'center',
-    lineHeight: 24,
+    fontSize: 12,
+    textAlign: 'left',
+    lineHeight: 18,
   },
 });
 
