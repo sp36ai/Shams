@@ -2,13 +2,10 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, StatusBar } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { runSecurityChecks, INTEGRITY_FAIL_MESSAGE } from '@utils/security';
-import { useQuotaStore } from '@stores/quotaStore';
 import { initializeAppCheckService } from './firebase/appCheck';
 import { ThemeProvider } from '@theme/ThemeProvider';
 import { I18nProvider } from '@i18n/I18nProvider';
 import RootNavigator from './navigation/RootNavigator';
-import { storage, KEYS } from '@storage/mmkv';
-import { useSettingsStore } from '@stores/settingsStore';
 
 /**
  * Entry point for Shams Al-Asrar.
@@ -40,42 +37,6 @@ const App: React.FC = () => {
     }
   }, []);
 
-  // Temporary: AGGRESSIVE reset for testing - clear ALL quota/trial data
-  useEffect(() => {
-    // Clear all quota-related storage
-    storage.delete(KEYS.QUOTA_WEEK);
-    storage.delete(KEYS.QUOTA_COUNT);
-    storage.delete(KEYS.QUOTA_PLAN);
-    storage.delete(KEYS.QUOTA_PLAN_EXPIRY);
-    storage.delete(KEYS.TRIAL_START);
-    
-    // Set unlimited plan
-    storage.set(KEYS.QUOTA_PLAN, 'mureed');
-    storage.set(KEYS.QUOTA_COUNT, 0);
-    
-    // Force store to re-read with unlimited plan and NO trial
-    useQuotaStore.setState({ 
-      plan: 'mureed',
-      questionsToday: 0, 
-      trialActive: false, 
-      trialExpired: false,
-      trialStartDate: null
-    });
-    
-    console.log('DEV: AGGRESSIVE quota reset - unlimited mureed plan, no trial.');
-  }, []);
-
-  // Temporary: Capture location on startup for testing
-  useEffect(() => {
-    // HARDCODED coordinates for testing (New Delhi, India)
-    useSettingsStore.getState().setLastLocation({
-      lat: 28.6139,
-      lon: 77.2090,
-      label: 'Test Location',
-      capturedAt: Date.now(),
-    });
-    console.log('DEV: Hardcoded test location set: 28.6139, 77.2090');
-  }, []);
 
   // Terminal Safety Gate: If integrity fails, we show a non-bypassable error view.
   if (!securityPassed) {

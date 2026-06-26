@@ -620,10 +620,7 @@ function normaliseAuthError(raw: string, t: ReturnType<typeof useTranslation>): 
     return t('errors.network');
   }
 
-  // Generic fallback — do NOT leak raw Firebase error detail to production UI
-  if (!__DEV__) {
-    return t('errors.unknown');
-  }
+  // Generic fallback
   return raw;
 }
 
