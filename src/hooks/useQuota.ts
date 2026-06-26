@@ -29,7 +29,9 @@ export function useQuota(): QuotaState {
 
   const refresh = useCallback(() => {
     setLoading(true);
-    (functions() as FunctionsWithRegion).region('asia-south1').httpsCallable<object, { remaining: number }>('getQuota')({})
+    (functions() as FunctionsWithRegion)
+      .region('asia-south1')
+      .httpsCallable<object, { remaining: number }>('getQuota')({})
       .then(r => setServerRemaining(r.data.remaining))
       .catch(() => setServerRemaining(null))
       .finally(() => setLoading(false));
@@ -40,8 +42,7 @@ export function useQuota(): QuotaState {
   }, [refresh]);
 
   const isPremium = currentPlan !== 'free';
-  const canAsk =
-    storeCanAsk && (isPremium || serverRemaining === null || serverRemaining > 0);
+  const canAsk = storeCanAsk && (isPremium || serverRemaining === null || serverRemaining > 0);
 
   return {
     canAsk,

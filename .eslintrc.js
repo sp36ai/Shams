@@ -28,6 +28,7 @@ module.exports = {
     'ios/',
     'build/',
     'dist/',
+    'functions/',
     '*.config.js',
     'babel.config.js',
     'metro.config.js',

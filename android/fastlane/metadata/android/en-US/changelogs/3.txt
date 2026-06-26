@@ -1,0 +1,6 @@
+Initial public release of Shams al-Asrār (v0.1.1).
+
+- Ask any horary question and receive a full KP chart reading
+- Supports English, Urdu, and Hindi
+- Secure sign-in with email or Google
+- 7-day trial and premium subscription plans

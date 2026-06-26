@@ -1,0 +1,95 @@
+name: Release to Play Store
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'android/**'
+      - 'src/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.github/workflows/release-play-store.yml'
+  workflow_dispatch:
+    inputs:
+      track:
+        description: 'Play Store track'
+        required: true
+        default: 'internal'
+        type: choice
+        options:
+          - internal
+          - alpha
+          - beta
+          - production
+
+jobs:
+  release:
+    name: Build AAB and deploy to Play Store
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Write google-services.json
+        run: |
+          echo "${{ secrets.GOOGLE_SERVICES_JSON }}" | base64 -d > android/app/google-services.json
+
+      - name: Decode keystore
+        run: |
+          echo "${{ secrets.SHAMS_UPLOAD_KEYSTORE }}" | base64 -d > android/app/shams-upload-key.jks
+
+      - name: Cache Gradle
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-${{ hashFiles('android/**/*.gradle*', 'android/gradle.properties') }}
+          restore-keys: gradle-
+
+      - name: Build release AAB
+        run: |
+          cd android && chmod +x gradlew && ./gradlew bundleRelease --no-daemon \
+            -PSHAMS_UPLOAD_STORE_FILE=shams-upload-key.jks \
+            -PSHAMS_UPLOAD_STORE_PASSWORD="${{ secrets.SHAMS_UPLOAD_STORE_PASSWORD }}" \
+            -PSHAMS_UPLOAD_KEY_ALIAS="${{ secrets.SHAMS_UPLOAD_KEY_ALIAS }}" \
+            -PSHAMS_UPLOAD_KEY_PASSWORD="${{ secrets.SHAMS_UPLOAD_KEY_PASSWORD }}"
+
+      - name: Remove keystore
+        if: always()
+        run: rm -f android/app/shams-upload-key.jks
+
+      - name: Upload AAB artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: shams-aab-${{ github.run_number }}
+          path: android/app/build/outputs/bundle/release/app-release.aab
+          retention-days: 30
+
+      - name: Deploy to Play Store
+        uses: r0adkll/upload-google-play@v1
+        with:
+          serviceAccountJsonPlainText: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON }}
+          packageName: com.astrosarfaraz.shamsalasrar
+          releaseFiles: android/app/build/outputs/bundle/release/app-release.aab
+          track: ${{ github.event.inputs.track || 'internal' }}
+          # Production releases roll out staged at 10%; promote to 100% in
+          # Play Console (or re-run with a higher fraction) once stable.
+          status: ${{ github.event.inputs.track == 'production' && 'inProgress' || 'completed' }}
+          userFraction: ${{ github.event.inputs.track == 'production' && '0.1' || '' }}
+          whatsNewDirectory: android/fastlane/metadata/android/en-US/changelogs

@@ -2,6 +2,7 @@ apply plugin: "com.android.application"
 apply plugin: "org.jetbrains.kotlin.android"
 apply plugin: "com.facebook.react"
 apply plugin: "com.google.gms.google-services"
+apply plugin: "com.google.firebase.crashlytics"
 
 /**
  * Shams al-Asrār — Android app module
@@ -34,7 +35,7 @@ android {
         applicationId "com.astrosarfaraz.shamsalasrar"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 7
+        versionCode 8
         versionName "0.1.5"
 
         // react-native-iap v12 has amazon/play product flavors;

@@ -25,6 +25,19 @@ const SettingsScreen: React.FC = () => {
   const { lang, switchLanguage } = useI18n();
 
   const lastLocation = useSettingsStore(s => s.lastLocation);
+  const seekerProfile = useSettingsStore(s => s.seekerProfile);
+  const resetProfile = useSettingsStore(s => s.resetProfile);
+
+  const handleResetProfile = useCallback(() => {
+    Alert.alert(
+      'Reset Spiritual Profile',
+      'You will be returned to the onboarding questions on your next app open.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Reset', style: 'destructive', onPress: resetProfile },
+      ],
+    );
+  }, [resetProfile]);
 
   const userName = useAuthStore(selectUserName);
   const userEmail = useAuthStore(selectUserEmail);
@@ -87,13 +100,27 @@ const SettingsScreen: React.FC = () => {
         nebula2={colors.nebula2}
         nebula3={colors.nebula3}
       />
-      <View style={[styles.header, { borderColor: colors.border, backgroundColor: colors.surfaceElevated }]}>
-        <Text style={[typography('caption'), { color: colors.textFaint, letterSpacing: 2.5, marginBottom: 4 }]}>
+      <View
+        style={[
+          styles.header,
+          { borderColor: colors.border, backgroundColor: colors.surfaceElevated },
+        ]}
+      >
+        <Text
+          style={[
+            typography('caption'),
+            { color: colors.textFaint, letterSpacing: 2.5, marginBottom: 4 },
+          ]}
+        >
           {'AL-DAFTAR'}
         </Text>
         <View style={styles.headerDivider}>
           <View style={[styles.headerLine, { backgroundColor: colors.goldBright }]} />
-          <Text style={[{ color: colors.goldBright, fontSize: 9, marginHorizontal: 8, opacity: 0.5 }]}>{'✦'}</Text>
+          <Text
+            style={[{ color: colors.goldBright, fontSize: 9, marginHorizontal: 8, opacity: 0.5 }]}
+          >
+            {'✦'}
+          </Text>
           <View style={[styles.headerLine, { backgroundColor: colors.goldBright }]} />
         </View>
         <Text style={[typography('subheading'), { color: colors.goldBright, marginTop: 6 }]}>
@@ -160,6 +187,25 @@ const SettingsScreen: React.FC = () => {
               </Text>
             )}
           </View>
+          {seekerProfile !== null && (
+            <Pressable
+              onPress={handleResetProfile}
+              accessibilityRole="button"
+              style={({ pressed }) => [
+                styles.actionRow,
+                {
+                  borderColor: colors.border,
+                  backgroundColor: colors.surfaceElevated,
+                  opacity: pressed ? 0.75 : 1,
+                  marginTop: 10,
+                },
+              ]}
+            >
+              <Text style={[typography('button'), { color: colors.textMuted }]}>
+                {'Reset spiritual profile'}
+              </Text>
+            </Pressable>
+          )}
         </Section>
 
         <Section title="Subscription">

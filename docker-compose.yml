@@ -1,0 +1,79 @@
+version: '3.9'
+
+services:
+  # Firebase Emulator Suite — for local testing without GCP
+  firebase:
+    image: node:22-alpine
+    container_name: shams-firebase-emulator
+    working_dir: /app
+    ports:
+      - "4000:4000"    # Emulator UI
+      - "5000:5000"    # Functions
+      - "9099:9099"    # Firestore
+      - "9199:9199"    # Auth
+    volumes:
+      - .:/app
+      - firebase-cache:/app/node_modules
+      - firebase-data:/app/firebase-data
+    environment:
+      - NODE_ENV=development
+      - FIREBASE_EMULATOR_HOST=localhost:9099
+    command: >
+      sh -c "
+      npm install -g firebase-tools &&
+      firebase emulators:start --project=demo-project --import=./firebase-data --export-on-exit
+      "
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4000"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Android Build Environment
+  android-build:
+    image: ghcr.io/cirruslabs/android-sdk:latest
+    container_name: shams-android-build
+    working_dir: /workspace
+    volumes:
+      - .:/workspace
+      - gradle-cache:/root/.gradle
+      - android-cache:/root/.android
+    environment:
+      - GRADLE_OPTS=-Dorg.gradle.jvmargs=-Xmx4096m
+      - ANDROID_SDK_ROOT=/sdk
+    command: >
+      sh -c "
+      cd /workspace &&
+      chmod +x gradlew &&
+      ./gradlew --version &&
+      echo 'Ready for Android builds. Run: docker-compose exec android-build ./gradlew assembleDebug'
+      "
+
+  # Postgres (optional, for future backend use)
+  postgres:
+    image: postgres:16-alpine
+    container_name: shams-postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: shams_db
+      POSTGRES_USER: shams_user
+      POSTGRES_PASSWORD: shams_password
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U shams_user"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  firebase-cache:
+  firebase-data:
+  gradle-cache:
+  android-cache:
+  postgres-data:
+
+networks:
+  default:
+    name: shams-network

@@ -3,27 +3,34 @@
  */
 
 import {
-  FREE_LIMIT,
+  FREE_DAILY_LIMIT,
   selectQuestionsLeft,
   selectIsUnlimited,
   type QuotaState,
   type PlanTier,
 } from '../stores/quotaStore';
 
-function makeState(plan: PlanTier, usedThisWeek: number): QuotaState {
+function makeState(plan: PlanTier, questionsToday: number): QuotaState {
   return {
     plan,
-    usedThisWeek,
+    planExpiry: null,
+    questionsToday,
+    trialStartDate: null,
+    trialActive: false,
+    trialExpired: false,
+    FREE_DAILY_LIMIT,
     canAsk: () => false,
     consumeOne: () => false,
     setPlan: () => undefined,
+    startTrial: () => undefined,
+    checkTrial: () => ({ active: false, daysRemaining: 0, expired: false }),
     reset: () => undefined,
   };
 }
 
-describe('FREE_LIMIT', () => {
-  test('is 100', () => {
-    expect(FREE_LIMIT).toBe(100);
+describe('FREE_DAILY_LIMIT', () => {
+  test('is 3', () => {
+    expect(FREE_DAILY_LIMIT).toBe(3);
   });
 });
 
@@ -32,32 +39,29 @@ describe('selectIsUnlimited', () => {
     expect(selectIsUnlimited(makeState('free', 0))).toBe(false);
   });
 
-  test.each<PlanTier>(['starter', 'premium', 'consultation'])('%s plan IS unlimited', plan => {
+  test.each<PlanTier>(['mureed', 'khass'])('%s plan IS unlimited', plan => {
     expect(selectIsUnlimited(makeState(plan, 0))).toBe(true);
   });
 });
 
 describe('selectQuestionsLeft', () => {
-  test('free plan with 0 used → 3 left', () => {
-    expect(selectQuestionsLeft(makeState('free', 0))).toBe(3);
+  test('free plan with 0 used → FREE_DAILY_LIMIT left', () => {
+    expect(selectQuestionsLeft(makeState('free', 0))).toBe(FREE_DAILY_LIMIT);
   });
 
-  test('free plan with 1 used → 2 left', () => {
-    expect(selectQuestionsLeft(makeState('free', 1))).toBe(2);
+  test('free plan with 1 used → FREE_DAILY_LIMIT - 1 left', () => {
+    expect(selectQuestionsLeft(makeState('free', 1))).toBe(FREE_DAILY_LIMIT - 1);
   });
 
-  test('free plan with 3 used → 0 left (exhausted)', () => {
-    expect(selectQuestionsLeft(makeState('free', 3))).toBe(0);
+  test('free plan at limit → 0 left', () => {
+    expect(selectQuestionsLeft(makeState('free', FREE_DAILY_LIMIT))).toBe(0);
   });
 
   test('free plan over limit clamps to 0 (no negative)', () => {
-    expect(selectQuestionsLeft(makeState('free', 99))).toBe(0);
+    expect(selectQuestionsLeft(makeState('free', FREE_DAILY_LIMIT + 50))).toBe(0);
   });
 
-  test.each<PlanTier>(['starter', 'premium', 'consultation'])(
-    '%s plan → Infinity left regardless of usage',
-    plan => {
-      expect(selectQuestionsLeft(makeState(plan, 999))).toBe(Infinity);
-    },
-  );
+  test.each<PlanTier>(['mureed', 'khass'])('%s plan → Infinity left regardless of usage', plan => {
+    expect(selectQuestionsLeft(makeState(plan, 999))).toBe(Infinity);
+  });
 });

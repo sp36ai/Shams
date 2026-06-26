@@ -8,6 +8,7 @@ on:
       - 'functions/**'
       - 'src/astrology/**'
       - '.github/workflows/deploy-functions.yml'
+  workflow_dispatch:
 
 jobs:
   deploy:

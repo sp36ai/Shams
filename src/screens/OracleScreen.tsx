@@ -10,7 +10,10 @@
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
+  Animated,
   ActivityIndicator,
+  AppState,
+  Easing,
   FlatList,
   KeyboardAvoidingView,
   Modal,
@@ -36,11 +39,15 @@ import { useQuotaStore, FREE_DAILY_LIMIT, TRIAL_DAILY_LIMIT } from '@stores/quot
 import { useQuota } from '@hooks/useQuota';
 import { useTimingStrip } from '@hooks/useTimingStrip';
 import { classifyIntent, type IntentResult } from '@hooks/useIntentClassifier';
+import { storage, KEYS } from '@storage/mmkv';
+import { classifyQuestion } from '@hooks/useQuestionGate';
 import { askOracle as callOracleFunction } from '../firebase/oracle';
 import StarfieldBackground from '@components/StarfieldBackground';
 import AstroVerdictCard from '../components/oracle/AstroVerdictCard';
 import WatchVerdictCard from '../components/oracle/WatchVerdictCard';
 import type { AstroVerdictResult } from '../types/verdict';
+import { selectRemedies, contextFromReading } from '../data/remedySelector';
+import type { RenderedRemedy } from '../data/remedyRenderer';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -167,20 +174,20 @@ function readingToAstroResult(reading: Reading): AstroVerdictResult {
     rulingPlanets,
     timing: vj?.timing?.window
       ? {
-        window: vj.timing.window,
-        range: { min: vj.timing.range?.min ?? 0, max: vj.timing.range?.max ?? 1 },
-        activeDasha: vj.timing.activeDasha,
-        activeAntardasha: vj.timing.activeAntardasha,
-      }
+          window: vj.timing.window,
+          range: { min: vj.timing.range?.min ?? 0, max: vj.timing.range?.max ?? 1 },
+          activeDasha: vj.timing.activeDasha,
+          activeAntardasha: vj.timing.activeAntardasha,
+        }
       : undefined,
     remedy: vj?.remedy?.action
       ? {
-        planet: vj.remedy.planet ?? '—',
-        action: vj.remedy.action,
-        avoid: vj.remedy.avoid ?? '',
-        zikr: vj.remedy.zikr,
-        charity: vj.remedy.charity,
-      }
+          planet: vj.remedy.planet ?? '—',
+          action: vj.remedy.action,
+          avoid: vj.remedy.avoid ?? '',
+          zikr: vj.remedy.zikr,
+          charity: vj.remedy.charity,
+        }
       : undefined,
     narrative,
     createdAt: reading.createdAt,
@@ -288,9 +295,15 @@ function detectIntent(text: string): FollowupIntent {
 // ── Followup response builders ────────────────────────────────────────────────
 
 const ARABIC_PLANET_NAME: Record<string, string> = {
-  Sun: 'Shams', Moon: 'al-Qamar', Mars: 'al-Mirrikh',
-  Mercury: 'Utarid', Jupiter: 'Mushtari', Venus: 'Zuhra',
-  Saturn: 'Zuhal', Rahu: "al-Ra's", Ketu: 'al-Dhanab',
+  Sun: 'Shams',
+  Moon: 'al-Qamar',
+  Mars: 'al-Mirrikh',
+  Mercury: 'Utarid',
+  Jupiter: 'Mushtari',
+  Venus: 'Zuhra',
+  Saturn: 'Zuhal',
+  Rahu: "al-Ra's",
+  Ketu: 'al-Dhanab',
 };
 
 function timingResponse(reading: Reading, lang: 'en' | 'ur' | 'hi'): string {
@@ -340,7 +353,7 @@ function whyResponse(reading: Reading, lang: 'en' | 'ur' | 'hi'): string {
   // Fallback: celestial witness description — no KP jargon
   const msl = vj?.moonSubLord;
   const rawPlanet = msl?.planet ?? '';
-  const planet = (ARABIC_PLANET_NAME[rawPlanet] ?? (rawPlanet || '—'));
+  const planet = ARABIC_PLANET_NAME[rawPlanet] ?? (rawPlanet || '—');
   const conf = vj?.confidence ?? 0;
   if (lang === 'ur') {
     return `فیصلہ **آسمانی گواہ ${planet}** کی شہادت پر منحصر ہے۔\n\nیقین: **${conf}%**`;
@@ -380,7 +393,9 @@ function remedyResponse(reading: Reading, lang: 'en' | 'ur' | 'hi'): string {
     lines.push(lang === 'ur' ? `• ذکر: *${oracleRemedy.zikr}*` : `• Zikr: *${oracleRemedy.zikr}*`);
   }
   if (oracleRemedy?.sadaqah) {
-    lines.push(lang === 'ur' ? `• صدقہ: ${oracleRemedy.sadaqah}` : `• Sadaqah: ${oracleRemedy.sadaqah}`);
+    lines.push(
+      lang === 'ur' ? `• صدقہ: ${oracleRemedy.sadaqah}` : `• Sadaqah: ${oracleRemedy.sadaqah}`,
+    );
   }
 
   // Verdict remedy — supplementary (planet-specific action + avoid)
@@ -388,10 +403,13 @@ function remedyResponse(reading: Reading, lang: 'en' | 'ur' | 'hi'): string {
     lines.push(`• ${verdictRemedy.action}`);
   }
   if (verdictRemedy?.avoid) {
-    lines.push(lang === 'ur' ? `• پرہیز: ${verdictRemedy.avoid}` : `• Avoid: ${verdictRemedy.avoid}`);
+    lines.push(
+      lang === 'ur' ? `• پرہیز: ${verdictRemedy.avoid}` : `• Avoid: ${verdictRemedy.avoid}`,
+    );
   }
 
-  const header = lang === 'ur' ? 'علاج اور عمل:' : lang === 'hi' ? 'علاج اور عمل:' : 'Remedy & practice:';
+  const header =
+    lang === 'ur' ? 'علاج اور عمل:' : lang === 'hi' ? 'علاج اور عمل:' : 'Remedy & practice:';
   return `${header}\n\n${lines.join('\n')}`;
 }
 
@@ -487,6 +505,9 @@ const OracleScreen: React.FC = () => {
   const lastLocation = useSettingsStore(
     (s: ReturnType<typeof useSettingsStore.getState>) => s.lastLocation,
   );
+  const seekerProfile = useSettingsStore(
+    (s: ReturnType<typeof useSettingsStore.getState>) => s.seekerProfile,
+  );
 
   const addReading = useReadingsStore(
     (s: ReturnType<typeof useReadingsStore.getState>) => s.addReading,
@@ -504,6 +525,84 @@ const OracleScreen: React.FC = () => {
 
   const [showQuotaModal, setShowQuotaModal] = useState(false);
   const [showNewQuestionModal, setShowNewQuestionModal] = useState(false);
+  const [redirectMessage, setRedirectMessage] = useState<'conversational' | 'ambiguous' | null>(
+    null,
+  );
+
+  // ── Threshold overlay — sacred crossing animation ───────────────────────────
+  const thresholdOpacity = useRef(new Animated.Value(0)).current;
+  const thresholdScale = useRef(new Animated.Value(1.1)).current;
+  const [thresholdVisible, setThresholdVisible] = useState(true);
+
+  const runThreshold = useCallback(() => {
+    setThresholdVisible(true);
+    thresholdOpacity.setValue(0);
+    thresholdScale.setValue(1.1);
+    Animated.sequence([
+      Animated.parallel([
+        Animated.timing(thresholdOpacity, {
+          toValue: 1,
+          duration: 500,
+          easing: Easing.out(Easing.cubic),
+          useNativeDriver: true,
+        }),
+        Animated.timing(thresholdScale, {
+          toValue: 1,
+          duration: 700,
+          easing: Easing.out(Easing.cubic),
+          useNativeDriver: true,
+        }),
+      ]),
+      Animated.delay(400),
+      Animated.timing(thresholdOpacity, {
+        toValue: 0,
+        duration: 400,
+        useNativeDriver: true,
+      }),
+    ]).start(() => setThresholdVisible(false));
+  }, [thresholdOpacity, thresholdScale]);
+
+  // Fire on mount
+  useEffect(() => {
+    runThreshold();
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ── Quota exhaustion timestamp — upgrade CTA appears only after 6 h ─────────
+  const quotaExhaustedAt = useRef<number>(0);
+
+  // ── Trial day banners — Day 6 passive strip, Day 7 once-per-day soft prompt ─
+  const [trialBannerKind, setTrialBannerKind] = useState<'day6' | 'day7' | null>(null);
+
+  const evaluateTrialBanner = useCallback(() => {
+    const { plan: currentPlan, checkTrial } = useQuotaStore.getState();
+    if (currentPlan !== 'free') {
+      return;
+    }
+    const { active, daysRemaining } = checkTrial();
+    if (!active) {
+      return;
+    }
+    if (daysRemaining === 2) {
+      setTrialBannerKind('day6');
+    } else if (daysRemaining === 1) {
+      const today = new Date().toDateString();
+      const shown = storage.getString(KEYS.DAY7_PROMPT_DATE);
+      if (shown !== today) {
+        storage.set(KEYS.DAY7_PROMPT_DATE, today);
+        setTrialBannerKind('day7');
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    evaluateTrialBanner();
+    const sub = AppState.addEventListener('change', nextState => {
+      if (nextState === 'active') {
+        evaluateTrialBanner();
+      }
+    });
+    return () => sub.remove();
+  }, [evaluateTrialBanner]);
 
   const initialGreeting: ChatMessage = useMemo(
     () => ({
@@ -519,16 +618,39 @@ const OracleScreen: React.FC = () => {
   const [input, setInput] = useState('');
   const [inputFocused, setInputFocused] = useState(false);
   const [sending, setSending] = useState(false);
+
+  // ── Loading orb pulse at 0.8 Hz (1250 ms period) ───────────────────────────
+  const orbPulse = useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    if (!sending) {
+      orbPulse.setValue(1);
+      return;
+    }
+    const loop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(orbPulse, {
+          toValue: 1.22,
+          duration: 625,
+          easing: Easing.inOut(Easing.sin),
+          useNativeDriver: true,
+        }),
+        Animated.timing(orbPulse, {
+          toValue: 1,
+          duration: 625,
+          easing: Easing.inOut(Easing.sin),
+          useNativeDriver: true,
+        }),
+      ]),
+    );
+    loop.start();
+    return () => loop.stop();
+  }, [sending, orbPulse]);
+
   const [stage, setStage] = useState<ConvStage>('ready');
   const [lastReading, setLastReading] = useState<Reading | null>(null);
+  const [selectedRemedies, setSelectedRemedies] = useState<RenderedRemedy[]>([]);
   const listRef = useRef<FlatList<ChatMessage> | null>(null);
-
-  // Step 6 — Verify it is working
-  const { themeId, theme: activeTheme } = useTheme();
-  console.log('=== THEME CHECK ===');
-  console.log('ID:', themeId);
-  console.log('BG:', activeTheme.colors.bg);
-  console.log('GOLD:', activeTheme.colors.gold);
 
   const lonDegForTiming = lastLocation?.lon ?? 74.3587;
   const { horaLord, dayLord } = useTimingStrip(lonDegForTiming);
@@ -559,7 +681,9 @@ const OracleScreen: React.FC = () => {
           capturedAt: Date.now(),
         });
       },
-      () => { /* silent — user will see location chip as "required" */ },
+      () => {
+        /* silent — user will see location chip as "required" */
+      },
       { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 },
     );
   }, []); // run once on mount only
@@ -578,7 +702,7 @@ const OracleScreen: React.FC = () => {
         // API key is optional; falls back to basic string matching if unavailable
         const apiKey = process.env.ANTHROPIC_API_KEY || '';
         const recentMessages = messages.slice(0, 3).map(m => m.text);
-        
+
         let intent: IntentResult;
         if (apiKey) {
           intent = await classifyIntent({
@@ -592,10 +716,16 @@ const OracleScreen: React.FC = () => {
           // Fallback to basic detection if no API key
           const basicIntent = detectIntent(text);
           intent = {
-            class: basicIntent === 'new' ? 'NEW_QUESTION' : 
-                   basicIntent === 'timing' ? 'TIMING' :
-                   basicIntent === 'why' ? 'CLARIFY' :
-                   basicIntent === 'remedy' ? 'REMEDY' : 'UNKNOWN',
+            class:
+              basicIntent === 'new'
+                ? 'NEW_QUESTION'
+                : basicIntent === 'timing'
+                  ? 'TIMING'
+                  : basicIntent === 'why'
+                    ? 'CLARIFY'
+                    : basicIntent === 'remedy'
+                      ? 'REMEDY'
+                      : 'UNKNOWN',
             confidence: 'LOW',
             reason: 'fallback to string matching',
           };
@@ -641,6 +771,22 @@ const OracleScreen: React.FC = () => {
         return;
       }
 
+      // ── Layer 1 — Question Intent Gate (pre-quota) ─────────────────────────
+      // Runs before consumeOne(). CONVERSATIONAL and AMBIGUOUS return early with
+      // a soft inline redirect — no quota burn, no modal, no error state.
+      // API failure always defaults to VALID_HORARY so real questions are never blocked.
+      const questionClass = await classifyQuestion(text);
+      if (questionClass === 'CONVERSATIONAL') {
+        setRedirectMessage('conversational');
+        return;
+      }
+      if (questionClass === 'AMBIGUOUS') {
+        setRedirectMessage('ambiguous');
+        return;
+      }
+      // VALID_HORARY falls through — clear any previous redirect
+      setRedirectMessage(null);
+
       // ── Engine path — paywall gate ──────────────────────────────────────────
       if (plan === 'free') {
         if (trialExpired) {
@@ -651,6 +797,9 @@ const OracleScreen: React.FC = () => {
           startTrial();
         }
         if (questionsToday >= (trialActive ? TRIAL_DAILY_LIMIT : FREE_DAILY_LIMIT)) {
+          if (quotaExhaustedAt.current === 0) {
+            quotaExhaustedAt.current = Date.now();
+          }
           setShowQuotaModal(true);
           return;
         }
@@ -689,7 +838,12 @@ const OracleScreen: React.FC = () => {
         resolvedLat = liveCoords.lat;
         resolvedLon = liveCoords.lon;
         // Persist for subsequent questions — stable store action, safe outside deps array
-        useSettingsStore.getState().setLastLocation({ lat: resolvedLat, lon: resolvedLon, label: null, capturedAt: Date.now() });
+        useSettingsStore.getState().setLastLocation({
+          lat: resolvedLat,
+          lon: resolvedLon,
+          label: null,
+          capturedAt: Date.now(),
+        });
       }
 
       const userMsg: ChatMessage = {
@@ -702,14 +856,10 @@ const OracleScreen: React.FC = () => {
       setSending(true);
 
       if (!consumeOne()) {
-        const quotaMsg: ChatMessage = {
-          id: `quota_${Date.now()}`,
-          sender: 'shams',
-          text: t('oracle.quotaExhausted'),
-          isUpgradeCta: true,
-          createdAt: new Date().toISOString(),
-        };
-        setMessages(prev => [quotaMsg, ...prev]);
+        if (quotaExhaustedAt.current === 0) {
+          quotaExhaustedAt.current = Date.now();
+        }
+        setShowQuotaModal(true);
         setSending(false);
         return;
       }
@@ -742,7 +892,7 @@ const OracleScreen: React.FC = () => {
         const reading = await runEngine({
           question: text,
           questionLang: lang,
-          lat: resolvedLat,   // guaranteed non-null by the gate above
+          lat: resolvedLat, // guaranteed non-null by the gate above
           lon: resolvedLon,
           locationRequiredText: t('errors.locationRequired'),
         });
@@ -750,6 +900,29 @@ const OracleScreen: React.FC = () => {
         await addReading(reading);
         setLastReading(reading);
         setStage('answered');
+
+        // Phase 3 — library-backed remedy selection. Fire-and-forget: never
+        // awaited, never blocks render, selectionReason logged to Firestore only.
+        const remedyApiKey = process.env.ANTHROPIC_API_KEY ?? '';
+        if (remedyApiKey) {
+          const vj = reading.verdictJson as { confidence?: number } | null;
+          const confidence = vj?.confidence ?? 0;
+          const severity: 'low' | 'moderate' | 'high' =
+            confidence >= 70 ? 'low' : confidence >= 40 ? 'moderate' : 'high';
+          const selCtx = contextFromReading({
+            readingId: reading.id,
+            verdict: reading.verdict,
+            category: reading.category ?? 'general',
+            severity,
+            oracleSummary: narrationForReading(reading)?.slice(0, 200) ?? '',
+            questionText: text,
+            apiKey: remedyApiKey,
+            seekerProfile,
+          });
+          selectRemedies(selCtx)
+            .then(result => setSelectedRemedies(result.selectedRemedies))
+            .catch(() => undefined);
+        }
 
         const shamsMsg: ChatMessage = {
           id: `s_${reading.id}`,
@@ -768,7 +941,8 @@ const OracleScreen: React.FC = () => {
 
           // Specific error messages for common issues
           if (err.message.includes('ECONNREFUSED') || err.message.includes('network')) {
-            errText = '⚠️ Cannot connect to server.\n\nFor local testing:\n1. Start Firebase emulators: firebase emulators:start\n2. Restart the app';
+            errText =
+              '⚠️ Cannot connect to server.\n\nFor local testing:\n1. Start Firebase emulators: firebase emulators:start\n2. Restart the app';
           } else if (err.message.includes('unauthenticated')) {
             errText = '⚠️ Authentication required. Please sign in.';
           } else if (err.message.includes('app-check')) {
@@ -789,8 +963,25 @@ const OracleScreen: React.FC = () => {
         setSending(false);
       }
     },
-    [addReading, canAsk, consumeOne, lang, lastLocation, lastReading, navigation, plan,
-      questionsToday, readings, sending, stage, startTrial, t, trialActive, trialExpired],
+    [
+      addReading,
+      consumeOne,
+      lang,
+      lastLocation,
+      lastReading,
+      messages,
+      navigation,
+      plan,
+      questionsToday,
+      readings,
+      sending,
+      seekerProfile,
+      stage,
+      startTrial,
+      t,
+      trialActive,
+      trialExpired,
+    ],
   );
 
   const handleSend = useCallback(async () => {
@@ -810,8 +1001,14 @@ const OracleScreen: React.FC = () => {
   );
 
   const renderItem = useCallback(
-    ({ item }: { item: ChatMessage }) => <Bubble message={item} />,
-    [],
+    ({ item }: { item: ChatMessage }) => (
+      <Bubble
+        message={item}
+        currentReadingId={lastReading?.id}
+        selectedRemedies={selectedRemedies}
+      />
+    ),
+    [lastReading?.id, selectedRemedies],
   );
 
   const keyExtractor = useCallback((item: ChatMessage) => item.id, []);
@@ -823,14 +1020,72 @@ const OracleScreen: React.FC = () => {
 
   return (
     <SafeAreaView style={[styles.root, { backgroundColor: theme.colors.bg }]} edges={['top']}>
+      {/* Threshold overlay — sacred crossing on oracle entry and new question */}
+      {thresholdVisible && (
+        <Animated.View
+          pointerEvents="none"
+          style={[
+            StyleSheet.absoluteFillObject,
+            {
+              zIndex: 100,
+              backgroundColor: theme.colors.bg,
+              opacity: thresholdOpacity,
+              transform: [{ scale: thresholdScale }],
+              justifyContent: 'center',
+              alignItems: 'center',
+            },
+          ]}
+        >
+          <Text
+            style={{
+              fontFamily: 'Amiri-Regular',
+              fontSize: 32,
+              color: colors.goldBright,
+              letterSpacing: 2,
+              marginBottom: 16,
+            }}
+          >
+            {'بِسْمِ اللَّهِ'}
+          </Text>
+          <View
+            style={{
+              width: 1,
+              height: 48,
+              backgroundColor: colors.borderAccent,
+              opacity: 0.6,
+            }}
+          />
+          <Text
+            style={[
+              typography('caption'),
+              {
+                color: colors.textFaint,
+                letterSpacing: 3,
+                marginTop: 14,
+                textTransform: 'uppercase',
+                fontSize: 9,
+              },
+            ]}
+          >
+            {'The oracle awaits'}
+          </Text>
+        </Animated.View>
+      )}
+
       {/* Animated starfield */}
       <StarfieldBackground starColor={colors.starfield} />
 
       {/* Header */}
-      <View style={[styles.header, { borderColor: colors.border, backgroundColor: colors.surface }]}> 
+      <View
+        style={[styles.header, { borderColor: colors.border, backgroundColor: colors.surface }]}
+      >
         <View>
-          <Text style={[typography('caption'), { color: colors.goldBright, letterSpacing: 1.5 }]}>ORACLE</Text>
-          <Text style={[typography('subheading'), { color: colors.text, marginTop: 2 }]}>SHAMS AL-ASRĀR</Text>
+          <Text style={[typography('caption'), { color: colors.goldBright, letterSpacing: 1.5 }]}>
+            ORACLE
+          </Text>
+          <Text style={[typography('subheading'), { color: colors.text, marginTop: 2 }]}>
+            SHAMS AL-ASRĀR
+          </Text>
         </View>
         <View style={styles.headerRight}>
           {questionsLeft !== Infinity && (
@@ -860,18 +1115,29 @@ const OracleScreen: React.FC = () => {
         </View>
       </View>
 
-      <View style={[styles.dashboardRow, { borderColor: colors.borderAccent + '44', backgroundColor: colors.surface }]}>
-        <View style={[styles.statCard, { borderColor: colors.borderAccent }]}> 
+      <View
+        style={[
+          styles.dashboardRow,
+          { borderColor: colors.borderAccent + '44', backgroundColor: colors.surface },
+        ]}
+      >
+        <View style={[styles.statCard, { borderColor: colors.borderAccent }]}>
           <Text style={[typography('caption'), { color: colors.textMuted }]}>HORA</Text>
-          <Text style={[typography('label'), { color: colors.goldBright, marginTop: 4 }]}>{horaLord}</Text>
+          <Text style={[typography('label'), { color: colors.goldBright, marginTop: 4 }]}>
+            {horaLord}
+          </Text>
         </View>
-        <View style={[styles.statCard, { borderColor: colors.borderAccent }]}> 
+        <View style={[styles.statCard, { borderColor: colors.borderAccent }]}>
           <Text style={[typography('caption'), { color: colors.textMuted }]}>DAY LORD</Text>
-          <Text style={[typography('label'), { color: colors.goldBright, marginTop: 4 }]}>{dayLord}</Text>
+          <Text style={[typography('label'), { color: colors.goldBright, marginTop: 4 }]}>
+            {dayLord}
+          </Text>
         </View>
-        <View style={[styles.statCard, { borderColor: colors.borderAccent }]}> 
+        <View style={[styles.statCard, { borderColor: colors.borderAccent }]}>
           <Text style={[typography('caption'), { color: colors.textMuted }]}>QUESTIONS</Text>
-          <Text style={[typography('label'), { color: colors.goldBright, marginTop: 4 }]}>{questionsLeft === Infinity ? '∞' : questionsLeft}</Text>
+          <Text style={[typography('label'), { color: colors.goldBright, marginTop: 4 }]}>
+            {questionsLeft === Infinity ? '∞' : questionsLeft}
+          </Text>
         </View>
       </View>
 
@@ -954,11 +1220,39 @@ const OracleScreen: React.FC = () => {
             ))}
           </ScrollView>
 
+          {/* Layer 1 gate redirect — inline, no quota burn */}
+          {redirectMessage !== null && (
+            <Text
+              style={[
+                typography('bodyItalic'),
+                {
+                  color: colors.goldBright,
+                  fontSize: 12,
+                  lineHeight: 18,
+                  textAlign: 'center',
+                  paddingHorizontal: 16,
+                  paddingVertical: 8,
+                  opacity: 0.85,
+                },
+              ]}
+            >
+              {redirectMessage === 'conversational'
+                ? 'The oracle awaits a sincere question. What weighs on your heart?'
+                : 'The stars hear your intent — but need more. Who or what does your question concern?'}
+            </Text>
+          )}
+
           {/* Composer */}
           <View style={styles.composer}>
             <TextInput
+              testID="oracle-input"
               value={input}
-              onChangeText={setInput}
+              onChangeText={v => {
+                setInput(v);
+                if (redirectMessage !== null) {
+                  setRedirectMessage(null);
+                }
+              }}
               placeholder={t('oracle.placeholder')}
               placeholderTextColor={colors.textFaint}
               style={[
@@ -980,6 +1274,7 @@ const OracleScreen: React.FC = () => {
               underlineColorAndroid="transparent"
             />
             <Pressable
+              testID="oracle-send-btn"
               onPress={handleSend}
               disabled={sending || input.trim().length === 0 || !canAsk}
               style={({ pressed }: { pressed: boolean }) => [
@@ -1005,6 +1300,58 @@ const OracleScreen: React.FC = () => {
         </View>
       </KeyboardAvoidingView>
 
+      {/* Trial day banners — thin gold strip, max 44px, above tab bar */}
+      {trialBannerKind === 'day6' && (
+        <View
+          style={[
+            styles.trialBanner,
+            { backgroundColor: colors.surface, borderTopColor: colors.borderAccent },
+          ]}
+        >
+          <Text
+            style={[
+              typography('caption'),
+              {
+                color: colors.goldBright,
+                opacity: 0.6,
+                textAlign: 'center',
+                letterSpacing: 0.6,
+                fontSize: 12,
+              },
+            ]}
+          >
+            {'Your open doors close in 2 days.'}
+          </Text>
+        </View>
+      )}
+
+      {trialBannerKind === 'day7' && (
+        <Pressable
+          onPress={() => navigation.navigate('Premium')}
+          style={[
+            styles.trialBanner,
+            { backgroundColor: colors.surface, borderTopColor: colors.borderAccent },
+          ]}
+          accessibilityRole="button"
+          accessibilityLabel="Choose your path — navigate to subscription"
+        >
+          <Text
+            style={[
+              typography('caption'),
+              {
+                color: colors.goldBright,
+                opacity: 0.6,
+                textAlign: 'center',
+                letterSpacing: 0.6,
+                fontSize: 12,
+              },
+            ]}
+          >
+            {'Your open doors close tonight — Choose Your Path ›'}
+          </Text>
+        </Pressable>
+      )}
+
       {sending && (
         <View style={styles.loadingOverlay} pointerEvents="none">
           <View
@@ -1019,39 +1366,70 @@ const OracleScreen: React.FC = () => {
               },
             ]}
           >
-            {/* Breathing gold medallion dot */}
-            <View
+            {/* Celestial orb — pulsing at 0.8 Hz */}
+            <Animated.View
               style={{
-                width: 36, height: 36, borderRadius: 18,
+                width: 52,
+                height: 52,
+                borderRadius: 26,
                 backgroundColor: colors.manuscriptFog,
-                borderWidth: 1, borderColor: colors.borderAccent,
-                alignSelf: 'center', marginBottom: 14,
-                justifyContent: 'center', alignItems: 'center',
+                borderWidth: 1,
+                borderColor: colors.borderAccent,
+                alignSelf: 'center',
+                marginBottom: 16,
+                justifyContent: 'center',
+                alignItems: 'center',
+                transform: [{ scale: orbPulse }],
+                shadowColor: colors.goldBright,
+                shadowOpacity: 0.4,
+                shadowRadius: 12,
+                shadowOffset: { width: 0, height: 0 },
               }}
             >
-              <Text style={{ color: colors.goldBright, fontSize: 16 }}>✦</Text>
-            </View>
+              <Text style={{ color: colors.goldBright, fontSize: 20 }}>✦</Text>
+            </Animated.View>
             <Text
               style={[
                 typography('label'),
-                { color: colors.goldBright, textAlign: 'center', marginBottom: 6, letterSpacing: 1.4 },
+                {
+                  color: colors.goldBright,
+                  textAlign: 'center',
+                  marginBottom: 10,
+                  letterSpacing: 1.4,
+                },
               ]}
             >
               CASTING THE SACRED CHART
             </Text>
+            {/* Quran 16:12 — the celestial witness */}
             <Text
               style={[
                 typography('caption'),
-                { color: colors.textMuted, textAlign: 'center', fontStyle: 'italic' },
+                {
+                  color: colors.textMuted,
+                  textAlign: 'center',
+                  fontStyle: 'italic',
+                  fontSize: 11,
+                  lineHeight: 18,
+                  marginBottom: 4,
+                },
               ]}
             >
-              The heavens are speaking…
+              {'وَسَخَّرَ لَكُمُ ٱلَّيۡلَ وَٱلنَّهَارَ وَٱلشَّمۡسَ وَٱلۡقَمَرَ'}
+            </Text>
+            <Text
+              style={[
+                typography('caption'),
+                { color: colors.textFaint, textAlign: 'center', fontSize: 10, letterSpacing: 0.4 },
+              ]}
+            >
+              {'He subjected for you the night, the day, the sun, the moon — Quran 16:12'}
             </Text>
           </View>
         </View>
       )}
 
-      {/* Quota modal — soft wall for daily limit */}
+      {/* Quota modal — spiritual rest, no immediate paywall */}
       <Modal
         transparent
         animationType="fade"
@@ -1062,48 +1440,79 @@ const OracleScreen: React.FC = () => {
           <View
             style={[
               styles.modalCard,
-              { backgroundColor: colors.surface, borderColor: colors.border },
+              { backgroundColor: colors.surface, borderColor: colors.borderAccent },
             ]}
           >
             <Text
-              style={[typography('subheading'), { color: colors.text, marginBottom: 8 }]}
+              style={[
+                typography('caption'),
+                {
+                  color: colors.goldBright,
+                  textAlign: 'center',
+                  letterSpacing: 1.6,
+                  marginBottom: 6,
+                },
+              ]}
             >
-              {"Today's questions used"}
+              الأفلاك ترتاح
             </Text>
             <Text
               style={[
-                typography('body'),
-                { color: colors.textMuted, marginBottom: 24 },
+                typography('subheading'),
+                { color: colors.text, textAlign: 'center', marginBottom: 10 },
               ]}
             >
-              {'Come back tomorrow, or unlock unlimited access.'}
+              The oracle rests
             </Text>
-            <View style={styles.modalActions}>
-              <Pressable
-                onPress={() => setShowQuotaModal(false)}
-                style={[
-                  styles.modalBtn,
-                  { borderColor: colors.border, borderWidth: StyleSheet.hairlineWidth },
-                ]}
-                accessibilityRole="button"
-              >
-                <Text style={[typography('button'), { color: colors.text }]}>
-                  Tomorrow
-                </Text>
-              </Pressable>
-              <Pressable
-                onPress={() => {
-                  setShowQuotaModal(false);
-                  navigation.navigate('Premium');
-                }}
-                style={[styles.modalBtn, { backgroundColor: colors.primary }]}
-                accessibilityRole="button"
-              >
-                <Text style={[typography('button'), { color: colors.textOnPrimary }]}>
-                  Unlock Now
-                </Text>
-              </Pressable>
-            </View>
+            <Text
+              style={[
+                typography('bodyItalic'),
+                { color: colors.textMuted, textAlign: 'center', marginBottom: 24, lineHeight: 22 },
+              ]}
+            >
+              {
+                'The heavens have answered as many questions as the day allows. Return at Fajr — the stars remember.'
+              }
+            </Text>
+            <Pressable
+              testID="quota-modal-dismiss"
+              onPress={() => setShowQuotaModal(false)}
+              style={[
+                styles.modalBtn,
+                {
+                  borderColor: colors.borderAccent,
+                  borderWidth: StyleSheet.hairlineWidth,
+                  marginBottom: 12,
+                },
+              ]}
+              accessibilityRole="button"
+            >
+              <Text style={[typography('button'), { color: colors.text }]}>I understand</Text>
+            </Pressable>
+            {/* Upgrade link — shown only after 6 hours of exhaustion, never immediately */}
+            {quotaExhaustedAt.current > 0 &&
+              Date.now() - quotaExhaustedAt.current > 6 * 3600 * 1000 && (
+                <Pressable
+                  onPress={() => {
+                    setShowQuotaModal(false);
+                    navigation.navigate('Premium');
+                  }}
+                  accessibilityRole="button"
+                >
+                  <Text
+                    style={[
+                      typography('caption'),
+                      {
+                        color: colors.textFaint,
+                        textAlign: 'center',
+                        textDecorationLine: 'underline',
+                      },
+                    ]}
+                  >
+                    Unlock unlimited access
+                  </Text>
+                </Pressable>
+              )}
           </View>
         </View>
       </Modal>
@@ -1122,18 +1531,13 @@ const OracleScreen: React.FC = () => {
               { backgroundColor: colors.surface, borderColor: colors.border },
             ]}
           >
-            <Text
-              style={[typography('subheading'), { color: colors.text, marginBottom: 8 }]}
-            >
+            <Text style={[typography('subheading'), { color: colors.text, marginBottom: 8 }]}>
               {'New question detected'}
             </Text>
-            <Text
-              style={[
-                typography('body'),
-                { color: colors.textMuted, marginBottom: 24 },
-              ]}
-            >
-              {'This sounds like a new horary question. Each question needs its own chart for an accurate verdict.'}
+            <Text style={[typography('body'), { color: colors.textMuted, marginBottom: 24 }]}>
+              {
+                'This sounds like a new horary question. Each question needs its own chart for an accurate verdict.'
+              }
             </Text>
             <View style={styles.modalActions}>
               <Pressable
@@ -1144,15 +1548,15 @@ const OracleScreen: React.FC = () => {
                 ]}
                 accessibilityRole="button"
               >
-                <Text style={[typography('button'), { color: colors.text }]}>
-                  Cancel
-                </Text>
+                <Text style={[typography('button'), { color: colors.text }]}>Cancel</Text>
               </Pressable>
               <Pressable
                 onPress={() => {
                   setShowNewQuestionModal(false);
                   setStage('ready');
                   setLastReading(null);
+                  setSelectedRemedies([]);
+                  runThreshold();
                 }}
                 style={[styles.modalBtn, { backgroundColor: colors.primary }]}
                 accessibilityRole="button"
@@ -1171,7 +1575,11 @@ const OracleScreen: React.FC = () => {
 
 // ── Bubble ────────────────────────────────────────────────────────────────────
 
-const Bubble: React.FC<{ message: ChatMessage }> = ({ message }) => {
+const Bubble: React.FC<{
+  message: ChatMessage;
+  currentReadingId?: string;
+  selectedRemedies?: RenderedRemedy[];
+}> = ({ message, currentReadingId, selectedRemedies }) => {
   const colors = useColors();
   const typography = useTypography();
   const t = useTranslation();
@@ -1219,8 +1627,8 @@ const Bubble: React.FC<{ message: ChatMessage }> = ({ message }) => {
         ]}
       >
         {renderText(message.text)}
-        {message.reading !== undefined && (
-          showWatch ? (
+        {message.reading !== undefined &&
+          (showWatch ? (
             <WatchVerdictCard
               result={readingToAstroResult(message.reading)}
               onSwitchMode={() => setShowWatch(false)}
@@ -1229,9 +1637,11 @@ const Bubble: React.FC<{ message: ChatMessage }> = ({ message }) => {
             <AstroVerdictCard
               result={readingToAstroResult(message.reading)}
               onSwitchMode={() => setShowWatch(true)}
+              selectedRemedies={
+                message.reading.id === currentReadingId ? selectedRemedies : undefined
+              }
             />
-          )
-        )}
+          ))}
         {message.isUpgradeCta === true && (
           <Pressable
             onPress={() => navigation.navigate('Premium')}
@@ -1399,6 +1809,13 @@ const styles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth,
     minWidth: 88,
     backgroundColor: 'transparent',
+  },
+  trialBanner: {
+    height: 44,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    borderTopWidth: StyleSheet.hairlineWidth,
   },
   loadingOverlay: {
     ...StyleSheet.absoluteFillObject,

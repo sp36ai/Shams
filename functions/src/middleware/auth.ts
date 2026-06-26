@@ -13,12 +13,12 @@ export function verifyAuth(request: CallableRequest): AuthContext {
       email: 'dev@test.com',
     };
   }
-  
+
   if (!request.auth) {
     throw new HttpsError('unauthenticated', 'Authentication required');
   }
   return {
     userId: request.auth.uid,
-    email: (request.auth.token.email as string | undefined) ?? '',
+    email: request.auth.token.email ?? '',
   };
 }

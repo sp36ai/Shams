@@ -1,0 +1,38 @@
+appId: com.astrosarfaraz.shamsalasrar
+name: "Auth — Sign In flow"
+---
+- launchApp:
+    clearState: true
+
+# Splash screen clears after 2.5s
+- waitForAnimationToEnd:
+    timeout: 4000
+
+# Should land on AuthScreen
+- assertVisible: "SHAMS AL-ASRĀR"
+- assertVisible:
+    id: "auth-tab-signin"
+
+# Switch to sign-up and back
+- tapOn:
+    id: "auth-tab-signup"
+- assertVisible: "Full name"
+- tapOn:
+    id: "auth-tab-signin"
+- assertNotVisible: "Full name"
+
+# Validation — empty submit
+- tapOn:
+    id: "auth-submit-btn"
+- assertVisible: "Enter a valid email address"
+
+# Validation — weak password
+- tapOn:
+    text: "Email"
+- inputText: "test@example.com"
+- tapOn:
+    text: "Password"
+- inputText: "short"
+- tapOn:
+    id: "auth-submit-btn"
+- assertVisible: "Password must be at least 8 characters"

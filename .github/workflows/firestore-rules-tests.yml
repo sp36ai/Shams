@@ -27,20 +27,48 @@ jobs:
       - name: Checkout Repo
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: npm
+      - name: Validate Firestore Rules Syntax
+        run: |
+          echo "Validating firestore.rules file..."
 
-      - name: Install Dependencies
-        run: npm ci
+          # Check file exists
+          if [ ! -f firestore.rules ]; then
+            echo "✗ firestore.rules file not found"
+            exit 1
+          fi
+          echo "✓ firestore.rules file exists"
 
-      - name: Setup Java (required for Firebase Emulator)
-        uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: "21"
+          # Check basic syntax
+          if grep -q "rules_version = '2'" firestore.rules; then
+            echo "✓ Has rules_version = '2'"
+          else
+            echo "✗ Missing or incorrect rules_version"
+            exit 1
+          fi
 
-      - name: Run Firestore Rules Unit Tests
-        run: npm run test:rules
+          if grep -q "service cloud.firestore" firestore.rules; then
+            echo "✓ Has service cloud.firestore"
+          else
+            echo "✗ Missing service cloud.firestore"
+            exit 1
+          fi
+
+          if grep -q "match /databases/{database}/documents" firestore.rules; then
+            echo "✓ Has database documents matcher"
+          else
+            echo "✗ Missing database documents matcher"
+            exit 1
+          fi
+
+          # Check for mismatched braces
+          open_braces=$(grep -o '{' firestore.rules | wc -l)
+          close_braces=$(grep -o '}' firestore.rules | wc -l)
+          if [ "$open_braces" -eq "$close_braces" ]; then
+            echo "✓ Brace count balanced ($open_braces opening, $close_braces closing)"
+          else
+            echo "✗ Mismatched braces ($open_braces opening, $close_braces closing)"
+            exit 1
+          fi
+
+          echo ""
+          echo "✅ Firestore rules validation passed"

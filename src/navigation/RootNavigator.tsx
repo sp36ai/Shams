@@ -40,8 +40,6 @@ const RootStack = createNativeStackNavigator<RootStackParamList>();
 
 const MIN_SPLASH_MS = 2500;
 
-const BYPASS_AUTH_FOR_TESTING = __DEV__;
-
 const RootNavigator: React.FC = () => {
   const { theme } = useTheme();
 
@@ -83,13 +81,11 @@ const RootNavigator: React.FC = () => {
     };
   }, [theme]);
 
-  // Keep showing splash until timer elapses; in dev also wait for auth if needed.
-  const splashStillShowing = BYPASS_AUTH_FOR_TESTING
-    ? !splashElapsed
-    : !splashElapsed || !authBootstrapped || isAuthLoading;
+  // Keep showing splash until the timer elapses and auth state is resolved.
+  const splashStillShowing = !splashElapsed || !authBootstrapped || isAuthLoading;
 
-  const isAuthenticated = BYPASS_AUTH_FOR_TESTING || (user !== null && !isAuthLoading);
-  // Location permission is MANDATORY for all builds — bypass only skips auth, not location/onboarding
+  const isAuthenticated = user !== null && !isAuthLoading;
+  // Location permission is MANDATORY for all builds
   const needsLocationPermission = isAuthenticated && !onboardingLocationPrompted;
   const needsOnboardingFlow = isAuthenticated && onboardingLocationPrompted && !hasSeenOnboarding;
 

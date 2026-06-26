@@ -267,7 +267,12 @@ const AuthScreen: React.FC = () => {
             <Text
               style={[
                 typography('hero'),
-                { color: colors.goldBright, textAlign: 'center', letterSpacing: 1.2, textTransform: 'uppercase' },
+                {
+                  color: colors.goldBright,
+                  textAlign: 'center',
+                  letterSpacing: 1.2,
+                  textTransform: 'uppercase',
+                },
               ]}
             >
               {'SHAMS AL-ASRĀR'}
@@ -291,6 +296,7 @@ const AuthScreen: React.FC = () => {
               onPress={() => dispatch({ type: 'SET_TAB', tab: 'signIn' })}
               colors={colors}
               typography={typography}
+              testID="auth-tab-signin"
             />
             <TabButton
               label={t('auth.signUpTab')}
@@ -298,11 +304,17 @@ const AuthScreen: React.FC = () => {
               onPress={() => dispatch({ type: 'SET_TAB', tab: 'signUp' })}
               colors={colors}
               typography={typography}
+              testID="auth-tab-signup"
             />
           </View>
 
           {/* Form */}
-          <View style={[styles.form, { backgroundColor: colors.surfaceElevated, borderColor: colors.border }] }>
+          <View
+            style={[
+              styles.form,
+              { backgroundColor: colors.surfaceElevated, borderColor: colors.border },
+            ]}
+          >
             {isSignUp && (
               <Field
                 label={t('auth.name')}
@@ -364,7 +376,12 @@ const AuthScreen: React.FC = () => {
             )}
 
             {serverError.length > 0 && (
-              <View style={[styles.serverError, { borderColor: colors.negative, backgroundColor: `${colors.negative}14` }]}>
+              <View
+                style={[
+                  styles.serverError,
+                  { borderColor: colors.negative, backgroundColor: `${colors.negative}14` },
+                ]}
+              >
                 <Text style={[typography('caption'), { color: colors.negative }]}>
                   {serverError}
                 </Text>
@@ -372,7 +389,12 @@ const AuthScreen: React.FC = () => {
             )}
 
             {successMsg.length > 0 && (
-              <View style={[styles.successBox, { borderColor: colors.accent, backgroundColor: `${colors.accent}12` }]}>
+              <View
+                style={[
+                  styles.successBox,
+                  { borderColor: colors.accent, backgroundColor: `${colors.accent}12` },
+                ]}
+              >
                 <Text style={[typography('caption'), { color: colors.accent }]}>{successMsg}</Text>
               </View>
             )}
@@ -380,6 +402,7 @@ const AuthScreen: React.FC = () => {
             <Pressable
               onPress={() => void handleSubmit()}
               disabled={isLoading}
+              testID="auth-submit-btn"
               style={({ pressed }) => [
                 styles.submitBtn,
                 {
@@ -435,7 +458,10 @@ const AuthScreen: React.FC = () => {
           <View style={styles.dividerRow}>
             <View style={[styles.dividerLine, { backgroundColor: colors.border }]} />
             <Text
-              style={[typography('caption'), { color: colors.textFaint, marginHorizontal: 12, letterSpacing: 1.5 }]}
+              style={[
+                typography('caption'),
+                { color: colors.textFaint, marginHorizontal: 12, letterSpacing: 1.5 },
+              ]}
             >
               {'✦  ' + t('auth.orContinueWith') + '  ✦'}
             </Text>
@@ -445,6 +471,7 @@ const AuthScreen: React.FC = () => {
           <Pressable
             onPress={() => void signInWithGoogle()}
             disabled={isLoading}
+            testID="auth-google-btn"
             style={({ pressed }) => [
               styles.socialBtn,
               { borderColor: colors.border, backgroundColor: colors.surface },
@@ -492,16 +519,33 @@ interface TabButtonProps {
   onPress: () => void;
   colors: ReturnType<typeof useColors>;
   typography: ReturnType<typeof useTypography>;
+  testID?: string;
 }
 
-const TabButton: React.FC<TabButtonProps> = ({ label, active, onPress, colors, typography }) => (
+const TabButton: React.FC<TabButtonProps> = ({
+  label,
+  active,
+  onPress,
+  colors,
+  typography,
+  testID,
+}) => (
   <Pressable
     onPress={onPress}
-    style={[styles.tabBtn, active && { borderBottomColor: colors.goldBright, borderBottomWidth: 2 }]}
+    testID={testID}
+    style={[
+      styles.tabBtn,
+      active && { borderBottomColor: colors.goldBright, borderBottomWidth: 2 },
+    ]}
     accessibilityRole="tab"
     accessibilityState={{ selected: active }}
   >
-    <Text style={[typography('label'), { color: active ? colors.goldBright : colors.textMuted, letterSpacing: 1.2 }]}>
+    <Text
+      style={[
+        typography('label'),
+        { color: active ? colors.goldBright : colors.textMuted, letterSpacing: 1.2 },
+      ]}
+    >
       {label}
     </Text>
   </Pressable>
@@ -545,7 +589,18 @@ const Field = React.forwardRef<TextInput, FieldProps>(
     ref,
   ) => (
     <View style={styles.fieldWrap}>
-      <Text style={[typography('label'), { color: colors.goldBright, marginBottom: 6, letterSpacing: 1, fontSize: 10, opacity: 0.8 }]}>
+      <Text
+        style={[
+          typography('label'),
+          {
+            color: colors.goldBright,
+            marginBottom: 6,
+            letterSpacing: 1,
+            fontSize: 10,
+            opacity: 0.8,
+          },
+        ]}
+      >
         {label}
       </Text>
       <View

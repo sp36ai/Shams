@@ -7,7 +7,9 @@ import { ThemeProvider } from '@theme/ThemeProvider';
 import { I18nProvider } from '@i18n/I18nProvider';
 import RootNavigator from './navigation/RootNavigator';
 
-class ErrorBoundary extends React.Component<
+// Inline diagnostic boundary — shows full crash stack on screen.
+// Remove before production release.
+class DiagnosticErrorBoundary extends React.Component<
   { children: React.ReactNode },
   { error: Error | null }
 > {
@@ -55,6 +57,7 @@ const App: React.FC = () => {
     }
   }, []);
 
+  // Terminal Safety Gate: If integrity fails, we show a non-bypassable error view.
   if (!securityPassed) {
     return (
       <View style={styles.errorContainer}>
@@ -66,7 +69,7 @@ const App: React.FC = () => {
   }
 
   return (
-    <ErrorBoundary>
+    <DiagnosticErrorBoundary>
       <ThemeProvider>
         <SafeAreaProvider>
           <I18nProvider>
@@ -74,7 +77,7 @@ const App: React.FC = () => {
           </I18nProvider>
         </SafeAreaProvider>
       </ThemeProvider>
-    </ErrorBoundary>
+    </DiagnosticErrorBoundary>
   );
 };
 

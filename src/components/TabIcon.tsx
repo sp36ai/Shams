@@ -106,9 +106,7 @@ const TabIcon: React.FC<TabIconProps> = ({ name, color, size = 24, focused = fal
 
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-      {focused && (
-        <Circle cx={12} cy={12} r={10} fill={haloFill} />
-      )}
+      {focused && <Circle cx={12} cy={12} r={10} fill={haloFill} />}
       {shape.paths.map((d, i) => (
         <Path
           key={`p${i}`}

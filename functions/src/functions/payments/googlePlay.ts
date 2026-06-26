@@ -32,7 +32,6 @@ import {
   GOOGLE_PLAY_PRIVATE_KEY,
   PLAY_PRODUCT_MAP,
   PLAN_DURATION_DAYS,
-  type PlanTier,
 } from '../../config';
 
 // ── Google Play API client (no googleapis SDK to keep bundle small) ───────────
@@ -199,7 +198,7 @@ export const verifyGooglePlayPurchase = onCall(
         throw new HttpsError('failed-precondition', 'Purchase is not in a valid state');
       }
 
-      const durationDays = PLAN_DURATION_DAYS[plan as PlanTier];
+      const durationDays = PLAN_DURATION_DAYS[plan];
       const expiresAt = new Date(Date.now() + durationDays * 86_400_000);
 
       // Acknowledge to prevent auto-refund (24h window)

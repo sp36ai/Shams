@@ -37,11 +37,11 @@ const PLANS: PlanCard[] = [
     annualPrice: '₹2,490/year',
     annualNote: 'save 2 months',
     features: [
-      '3 questions/day',
-      'Astronomical mode',
-      'Full history',
-      'Timing windows',
-      'Remedies',
+      '3 consultations daily',
+      'Standard oracle voice',
+      'Sealed session history',
+      'Timing & auspice windows',
+      'Spiritual remedies',
     ],
   },
   {
@@ -52,10 +52,10 @@ const PLANS: PlanCard[] = [
     annualPrice: '₹6,990/year',
     annualNote: 'save 2 months',
     features: [
-      'Unlimited',
+      'Unlimited consultations',
       'Both oracle modes',
-      'Confidence detail',
-      'PDF reports',
+      'Full celestial confidence',
+      'Sacred session PDF',
       'Priority synthesis',
     ],
     badge: '★',
@@ -104,13 +104,12 @@ const PremiumScreen: React.FC = () => {
 
   const headerTitle = trialExpired
     ? 'Your 7-day journey has ended.'
-    : 'Unlock Deeper Access';
+    : 'The sanctum opens its doors.';
   const headerSubtitle = trialExpired
     ? 'The stars are still watching. Continue receiving their guidance.'
     : 'Choose your path of guidance.';
 
-  const ctaLabel =
-    selectedPlan === 'mureed' ? 'Begin with Mureed' : 'Begin with Khass';
+  const ctaLabel = selectedPlan === 'mureed' ? 'Begin with Mureed' : 'Begin with Khass';
 
   return (
     <SafeAreaView
@@ -125,7 +124,12 @@ const PremiumScreen: React.FC = () => {
       />
 
       {/* Header */}
-<View style={[styles.header, { borderColor: colors.border, backgroundColor: colors.surfaceElevated }]}> 
+      <View
+        style={[
+          styles.header,
+          { borderColor: colors.border, backgroundColor: colors.surfaceElevated },
+        ]}
+      >
         <Pressable
           onPress={() => navigation.goBack()}
           style={styles.backBtn}
@@ -136,7 +140,9 @@ const PremiumScreen: React.FC = () => {
           <Text style={[typography('body'), { color: colors.accent }]}>{'←'}</Text>
         </Pressable>
         <View style={styles.headerTextWrap}>
-          <Text style={[typography('subheading'), { color: colors.goldBright, textAlign: 'center' }]}> 
+          <Text
+            style={[typography('subheading'), { color: colors.goldBright, textAlign: 'center' }]}
+          >
             {headerTitle}
           </Text>
           <Text
@@ -188,8 +194,7 @@ const PremiumScreen: React.FC = () => {
             const borderColor = isKhass ? KHASS_GOLD : isSelected ? colors.accent : colors.border;
             const borderWidth = isSelected || isKhass ? 1.5 : StyleSheet.hairlineWidth;
             const currentBilling = billing[plan.key];
-            const priceLabel =
-              currentBilling === 'monthly' ? plan.monthlyPrice : plan.annualPrice;
+            const priceLabel = currentBilling === 'monthly' ? plan.monthlyPrice : plan.annualPrice;
 
             return (
               <Pressable
@@ -215,20 +220,12 @@ const PremiumScreen: React.FC = () => {
                 {/* Title row */}
                 <View style={styles.titleRow}>
                   <Text
-                    style={[
-                      typography('heading'),
-                      { color: isKhass ? KHASS_GOLD : colors.text },
-                    ]}
+                    style={[typography('heading'), { color: isKhass ? KHASS_GOLD : colors.text }]}
                   >
                     {plan.title}
                   </Text>
                   {plan.badge !== undefined && (
-                    <Text
-                      style={[
-                        typography('body'),
-                        { color: KHASS_GOLD, marginLeft: 6 },
-                      ]}
-                    >
+                    <Text style={[typography('body'), { color: KHASS_GOLD, marginLeft: 6 }]}>
                       {plan.badge}
                     </Text>
                   )}
@@ -252,10 +249,7 @@ const PremiumScreen: React.FC = () => {
                 </Text>
                 {currentBilling === 'annual' && (
                   <Text
-                    style={[
-                      typography('caption'),
-                      { color: colors.textMuted, marginBottom: 8 },
-                    ]}
+                    style={[typography('caption'), { color: colors.textMuted, marginBottom: 8 }]}
                   >
                     ({plan.annualNote})
                   </Text>
@@ -273,7 +267,9 @@ const PremiumScreen: React.FC = () => {
                           styles.billingPill,
                           {
                             backgroundColor: active
-                              ? isKhass ? KHASS_GOLD : colors.primary
+                              ? isKhass
+                                ? KHASS_GOLD
+                                : colors.primary
                               : colors.bg,
                             borderColor: isKhass ? KHASS_GOLD : colors.border,
                           },
@@ -314,7 +310,10 @@ const PremiumScreen: React.FC = () => {
                         ✓
                       </Text>
                       <Text
-                        style={[typography('caption'), { color: colors.text, flex: 1, fontSize: 12 }]}
+                        style={[
+                          typography('caption'),
+                          { color: colors.text, flex: 1, fontSize: 12 },
+                        ]}
                       >
                         {feat}
                       </Text>

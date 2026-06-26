@@ -1,0 +1,75 @@
+name: Build Release APK
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'android/**'
+      - 'src/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.github/workflows/build-release-apk.yml'
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build signed release APK
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm install --legacy-peer-deps
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Write google-services.json
+        run: |
+          if [ -n "${{ secrets.GOOGLE_SERVICES_JSON }}" ]; then
+            echo "${{ secrets.GOOGLE_SERVICES_JSON }}" | base64 -d > android/app/google-services.json
+          else
+            cp android/app/google-services.json.ci android/app/google-services.json
+          fi
+
+      - name: Decode keystore
+        run: |
+          echo "${{ secrets.SHAMS_UPLOAD_KEYSTORE }}" | base64 -d > android/app/shams-upload-key.jks
+
+      - name: Cache Gradle
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-${{ hashFiles('android/**/*.gradle*', 'android/gradle.properties') }}
+          restore-keys: gradle-
+
+      - name: Build release APK
+        run: |
+          cd android && chmod +x gradlew && ./gradlew assembleRelease --no-daemon \
+            -PSHAMS_UPLOAD_STORE_FILE=shams-upload-key.jks \
+            -PSHAMS_UPLOAD_STORE_PASSWORD="${{ secrets.SHAMS_UPLOAD_STORE_PASSWORD }}" \
+            -PSHAMS_UPLOAD_KEY_ALIAS="${{ secrets.SHAMS_UPLOAD_KEY_ALIAS }}" \
+            -PSHAMS_UPLOAD_KEY_PASSWORD="${{ secrets.SHAMS_UPLOAD_KEY_PASSWORD }}"
+
+      - name: Remove keystore
+        if: always()
+        run: rm -f android/app/shams-upload-key.jks
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: shams-release-${{ github.run_number }}
+          path: android/app/build/outputs/apk/release/app-release.apk
+          retention-days: 30

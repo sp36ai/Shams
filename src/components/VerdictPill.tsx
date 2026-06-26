@@ -9,14 +9,12 @@
  */
 
 import React, { useEffect, useRef } from 'react';
-import {
-  View, Text, Animated, StyleSheet, Platform,
-} from 'react-native';
+import { View, Text, Animated, StyleSheet, Platform } from 'react-native';
 import { useColors } from '@theme/ThemeProvider';
 import { RADIUS, MOTION } from '@theme/themes';
 
 type VerdictKind = 'CONFIRMED' | 'DENIED';
-type Confidence  = 'HIGH' | 'MEDIUM' | 'LOW';
+type Confidence = 'HIGH' | 'MEDIUM' | 'LOW';
 
 interface Props {
   kind: VerdictKind;
@@ -29,12 +27,12 @@ export function VerdictPill({ kind, confidence = 'HIGH', arabicLabel }: Props) {
   const c = useColors();
 
   const isConfirmed = kind === 'CONFIRMED';
-  const accentColor = isConfirmed ? c.maqbool       : c.mardood;
-  const label       = isConfirmed ? 'MAQBOOL'        : 'MARDOOD';
-  const arabic      = arabicLabel ?? (isConfirmed ? 'مَقْبُول' : 'مَرْدُود');
+  const accentColor = isConfirmed ? c.maqbool : c.mardood;
+  const label = isConfirmed ? 'MAQBOOL' : 'MARDOOD';
+  const arabic = arabicLabel ?? (isConfirmed ? 'مَقْبُول' : 'مَرْدُود');
 
   // Entrance animation
-  const scale   = useRef(new Animated.Value(0.88)).current;
+  const scale = useRef(new Animated.Value(0.88)).current;
   const opacity = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -51,20 +49,24 @@ export function VerdictPill({ kind, confidence = 'HIGH', arabicLabel }: Props) {
         useNativeDriver: true,
       }),
     ]).start();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Dot pulse (CONFIRMED only)
   const dotScale = useRef(new Animated.Value(1)).current;
   useEffect(() => {
-    if (!isConfirmed) return;
+    if (!isConfirmed) {
+      return;
+    }
     const pulse = Animated.loop(
       Animated.sequence([
         Animated.timing(dotScale, { toValue: 1.6, duration: 900, useNativeDriver: true }),
         Animated.timing(dotScale, { toValue: 1.0, duration: 900, useNativeDriver: true }),
-      ])
+      ]),
     );
     pulse.start();
     return () => pulse.stop();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isConfirmed]);
 
   return (
@@ -73,15 +75,13 @@ export function VerdictPill({ kind, confidence = 'HIGH', arabicLabel }: Props) {
         style={[
           styles.pill,
           {
-            backgroundColor: isConfirmed
-              ? `${c.maqbool}18`
-              : `${c.mardood}14`,
+            backgroundColor: isConfirmed ? `${c.maqbool}18` : `${c.mardood}14`,
             borderColor: accentColor + (isConfirmed ? '90' : '70'),
           },
           Platform.select({
             ios: {
               shadowColor: accentColor,
-              shadowOpacity: isConfirmed ? 0.35 : 0.20,
+              shadowOpacity: isConfirmed ? 0.35 : 0.2,
               shadowRadius: 12,
               shadowOffset: { width: 0, height: 0 },
             },

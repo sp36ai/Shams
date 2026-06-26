@@ -244,8 +244,8 @@ describe('judgeHorary — output shape', () => {
     const chart = makeChart('Mars', { Mars: 10, Sun: 6, Mercury: 11 });
     const verdict = judgeHorary(chart, CAREER_Q);
     const stepNums = (verdict.reasoning as import('../astrology/types/verdict').ReasoningStep[])
-      .filter((r) => /^\[STEP \d\]/.test(r.description))
-      .map((r) => parseInt(r.description.match(/\[STEP (\d)\]/)![1], 10));
+      .filter(r => /^\[STEP \d\]/.test(r.description))
+      .map(r => parseInt(r.description.match(/\[STEP (\d)\]/)![1], 10));
     expect(stepNums[0]).toBe(1);
     expect(Math.max(...stepNums)).toBeGreaterThanOrEqual(5);
   });

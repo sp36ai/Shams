@@ -12,12 +12,7 @@
  * - Sage garden / olive ink (zaytunAlHikma — light)
  */
 
-export type ThemeId =
-  | 'darAlShams'
-  | 'laylAlBahr'
-  | 'narAlHadid'
-  | 'subhAlWahy'
-  | 'zaytunAlHikma';
+export type ThemeId = 'darAlShams' | 'laylAlBahr' | 'narAlHadid' | 'subhAlWahy' | 'zaytunAlHikma';
 
 export interface ThemeColors {
   /** Deepest background */

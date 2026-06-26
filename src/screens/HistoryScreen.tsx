@@ -219,17 +219,36 @@ const HistoryScreen: React.FC = () => {
 
   return (
     <SafeAreaView style={[styles.root, { backgroundColor: theme.colors.bg }]} edges={['top']}>
-      <StarfieldBackground starColor={colors.starfield} nebula1={colors.nebula1} nebula2={colors.nebula2} nebula3={colors.nebula3} />
+      <StarfieldBackground
+        starColor={colors.starfield}
+        nebula1={colors.nebula1}
+        nebula2={colors.nebula2}
+        nebula3={colors.nebula3}
+      />
 
-      <View style={[styles.header, { borderColor: colors.border, backgroundColor: colors.surface }]}>
-        <Text style={[typography('caption'), { color: colors.goldBright, letterSpacing: 1.6, marginBottom: 4 }]}>
+      <View
+        style={[styles.header, { borderColor: colors.border, backgroundColor: colors.surface }]}
+      >
+        <Text
+          style={[
+            typography('caption'),
+            { color: colors.goldBright, letterSpacing: 1.6, marginBottom: 4 },
+          ]}
+        >
           ARCHIVE
         </Text>
         <Text style={[typography('subheading'), { color: colors.text }]}>
           {t('history.headerTitle')}
         </Text>
         {/* Ornamental gold hairline divider */}
-        <View style={{ height: StyleSheet.hairlineWidth, backgroundColor: colors.borderAccent, marginTop: 10, opacity: 0.5 }} />
+        <View
+          style={{
+            height: StyleSheet.hairlineWidth,
+            backgroundColor: colors.borderAccent,
+            marginTop: 10,
+            opacity: 0.5,
+          }}
+        />
       </View>
 
       {isEmpty ? (
@@ -393,10 +412,7 @@ const ReadingDetailModal: React.FC<{
           {/* Verdict + confidence */}
           <View style={[styles.section, styles.verdictSection, { borderColor: colors.border }]}>
             <View
-              style={[
-                styles.verdictBadge,
-                { borderColor: vColor, backgroundColor: vColor + '14' },
-              ]}
+              style={[styles.verdictBadge, { borderColor: vColor, backgroundColor: vColor + '14' }]}
             >
               <Text style={[typography('heading'), { color: vColor, letterSpacing: 1.2 }]}>
                 {badgeLabel}
@@ -659,12 +675,18 @@ function verdictLabelFor(v: VerdictKind, t: ReturnType<typeof useTranslation>): 
 // Manuscript verdict badge — uses Arabic/sacred terms per the design brief
 function verdictBadgeFor(v: VerdictKind): string {
   switch (v) {
-    case 'YES':    return 'MAQBOOL';
-    case 'NO':     return 'MARDOOD';
-    case 'CONDITIONAL': return 'MASHROOT';
-    case 'DELAYED':     return 'TA\'KHEER';
-    case 'DENIED':      return 'MARDOOD';
-    default:            return 'GHAYR WAZEH';
+    case 'YES':
+      return 'MAQBOOL';
+    case 'NO':
+      return 'MARDOOD';
+    case 'CONDITIONAL':
+      return 'MASHROOT';
+    case 'DELAYED':
+      return "TA'KHEER";
+    case 'DENIED':
+      return 'MARDOOD';
+    default:
+      return 'GHAYR WAZEH';
   }
 }
 

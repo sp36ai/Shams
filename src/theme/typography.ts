@@ -2,10 +2,10 @@
  * Typography tokens — Dār al-Shams
  * --------------------------------------------------------------------------
  * SACRED MANUSCRIPT TYPOGRAPHY SYSTEM
- * 
+ *
  * The app must feel like an illuminated manuscript vault.
  * Typography must be: engraved, ceremonial, archival.
- * 
+ *
  * Three script families:
  *   - Latin (EN)        : Cinzel (engraved headings) + Spectral (manuscript body)
  *   - Arabic (UR, RTL)  : Amiri (Quranic, stable, reverent, highly legible)
@@ -17,7 +17,7 @@
  * - Headings must feel engraved and ceremonial
  * - Body text must be readable manuscript prose
  * - Never use decorative Arabic fonts everywhere
- * 
+ *
  * Resolution rule:
  *   if lang === 'ur' → use arabic set with elevated lineHeight (2.1)
  *   if lang === 'hi' → use devanagari set
