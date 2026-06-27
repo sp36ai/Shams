@@ -246,52 +246,6 @@ const FOLLOWUP_CHIPS: Record<'en' | 'ur' | 'hi', readonly string[]> = {
 
 // ── Followup intent detection ─────────────────────────────────────────────────
 
-type FollowupIntent = 'timing' | 'why' | 'remedy' | 'new' | 'none';
-
-function detectIntent(text: string): FollowupIntent {
-  const q = text.toLowerCase();
-  if (
-    q.includes('new') ||
-    q.includes('نیا') ||
-    q.includes('नया') ||
-    q.includes('another') ||
-    q.includes('again')
-  ) {
-    return 'new';
-  }
-  if (
-    q.includes('when') ||
-    q.includes('timing') ||
-    q.includes('how long') ||
-    q.includes('کب') ||
-    q.includes('وقت') ||
-    q.includes('कब') ||
-    q.includes('समय')
-  ) {
-    return 'timing';
-  }
-  if (
-    q.includes('why') ||
-    q.includes('reason') ||
-    q.includes('کیوں') ||
-    q.includes('क्यों') ||
-    q.includes('because')
-  ) {
-    return 'why';
-  }
-  if (
-    q.includes('remedy') ||
-    q.includes('علاج') ||
-    q.includes('उपाय') ||
-    q.includes('mantra') ||
-    q.includes('what should') ||
-    q.includes('what to do')
-  ) {
-    return 'remedy';
-  }
-  return 'none';
-}
-
 // ── Followup response builders ────────────────────────────────────────────────
 
 const ARABIC_PLANET_NAME: Record<string, string> = {
@@ -698,38 +652,15 @@ const OracleScreen: React.FC = () => {
 
       // Followup path — free, no quota
       if (stage === 'answered' && lastReading !== null) {
-        // Claude Haiku intent classifier — replaces basic string matching
-        // API key is optional; falls back to basic string matching if unavailable
-        const apiKey = process.env.ANTHROPIC_API_KEY || '';
+        // Cloud Function intent classifier — no API key needed on the client
         const recentMessages = messages.slice(0, 3).map(m => m.text);
 
-        let intent: IntentResult;
-        if (apiKey) {
-          intent = await classifyIntent({
-            userMessage: text,
-            lockedQuestion: lastReading.question,
-            verdictDirection: lastReading.verdict,
-            recentMessages,
-            apiKey,
-          });
-        } else {
-          // Fallback to basic detection if no API key
-          const basicIntent = detectIntent(text);
-          intent = {
-            class:
-              basicIntent === 'new'
-                ? 'NEW_QUESTION'
-                : basicIntent === 'timing'
-                  ? 'TIMING'
-                  : basicIntent === 'why'
-                    ? 'CLARIFY'
-                    : basicIntent === 'remedy'
-                      ? 'REMEDY'
-                      : 'UNKNOWN',
-            confidence: 'LOW',
-            reason: 'fallback to string matching',
-          };
-        }
+        const intent = await classifyIntent({
+          userMessage: text,
+          lockedQuestion: lastReading.question,
+          verdictDirection: lastReading.verdict,
+          recentMessages,
+        });
 
         // NEW_QUESTION with HIGH confidence → surface prompt, don't answer
         if (intent.class === 'NEW_QUESTION' && intent.confidence === 'HIGH') {
@@ -902,9 +833,8 @@ const OracleScreen: React.FC = () => {
         setStage('answered');
 
         // Phase 3 — library-backed remedy selection. Fire-and-forget: never
-        // awaited, never blocks render, selectionReason logged to Firestore only.
-        const remedyApiKey = process.env.ANTHROPIC_API_KEY ?? '';
-        if (remedyApiKey) {
+        // awaited, never blocks render, selectionReason logged to Firestore by CF.
+        {
           const vj = reading.verdictJson as { confidence?: number } | null;
           const confidence = vj?.confidence ?? 0;
           const severity: 'low' | 'moderate' | 'high' =
@@ -916,7 +846,6 @@ const OracleScreen: React.FC = () => {
             severity,
             oracleSummary: narrationForReading(reading)?.slice(0, 200) ?? '',
             questionText: text,
-            apiKey: remedyApiKey,
             seekerProfile,
           });
           selectRemedies(selCtx)

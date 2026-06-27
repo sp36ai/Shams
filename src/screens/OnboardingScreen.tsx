@@ -9,11 +9,16 @@ import {
   Dimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import functions, { type FirebaseFunctionsTypes } from '@react-native-firebase/functions';
 
 import { useColors, useTheme } from '@theme/ThemeProvider';
 import { useTypography } from '@theme/useTypography';
 import StarfieldBackground from '@components/StarfieldBackground';
 import { useSettingsStore, type SeekerProfile } from '@stores/settingsStore';
+
+type FunctionsWithRegion = FirebaseFunctionsTypes.Module & {
+  region(r: string): FirebaseFunctionsTypes.Module;
+};
 
 const { width } = Dimensions.get('window');
 
@@ -63,55 +68,20 @@ const QUESTIONS: Question[] = [
   },
 ];
 
-// ── Haiku inference ───────────────────────────────────────────────────────────
+// ── Profile inference (via Cloud Function) ───────────────────────────────────
 
 const VALID_PROFILES = new Set<SeekerProfile>(['clarity', 'comfort', 'action', 'surrender']);
 
-async function inferProfile(
-  answers: [string, string, string],
-  apiKey: string,
-): Promise<SeekerProfile> {
-  const prompt = `A seeker answered three onboarding questions for an Islamic oracle app.
-
-Answer 1 (Intent): "${answers[0]}"
-Answer 2 (Register): "${answers[1]}"
-Answer 3 (Timing): "${answers[2]}"
-
-Based on these three answers, classify the seeker's primary spiritual orientation into exactly one of: clarity, comfort, action, surrender.
-
-Respond with ONLY the single classification word.
-No explanation. No punctuation.`;
-
+async function inferProfile(answers: [string, string, string]): Promise<SeekerProfile> {
   try {
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'anthropic-version': '2023-06-01',
-        'content-type': 'application/json',
-        'x-api-key': apiKey,
-      },
-      body: JSON.stringify({
-        model: 'claude-haiku-4-5-20251001',
-        max_tokens: 10,
-        messages: [{ role: 'user', content: prompt }],
-      }),
-    });
+    const fn = (functions() as FunctionsWithRegion)
+      .region('asia-south1')
+      .httpsCallable<{ answers: string[] }, { profile: string }>('inferProfile');
 
-    if (!res.ok) {
-      return 'clarity';
-    }
+    const result = await fn({ answers });
+    const profile = result.data?.profile as SeekerProfile;
 
-    const data = (await res.json()) as {
-      content?: Array<{ type: string; text?: string }>;
-    };
-    const raw = (data.content ?? [])
-      .filter(b => b.type === 'text')
-      .map(b => b.text ?? '')
-      .join('')
-      .trim()
-      .toLowerCase() as SeekerProfile;
-
-    return VALID_PROFILES.has(raw) ? raw : 'clarity';
+    return VALID_PROFILES.has(profile) ? profile : 'clarity';
   } catch {
     return 'clarity';
   }
@@ -132,8 +102,6 @@ const OnboardingScreen: React.FC = () => {
   const [answers, setAnswers] = useState<string[]>([]);
   const [inferring, setInferring] = useState(false);
   const [profile, setProfile] = useState<SeekerProfile | null>(null);
-
-  const apiKey = process.env.ANTHROPIC_API_KEY ?? '';
 
   const advanceTo = useCallback((index: number) => {
     scrollRef.current?.scrollTo({ x: index * width, animated: true });
@@ -166,12 +134,12 @@ const OnboardingScreen: React.FC = () => {
       });
       setInferring(true);
 
-      const inferred = await inferProfile(finalAnswers, apiKey);
+      const inferred = await inferProfile(finalAnswers);
       setSeekerProfile(inferred, finalAnswers);
       setProfile(inferred);
       setInferring(false);
     },
-    [answers, apiKey, setSeekerProfile],
+    [answers, setSeekerProfile],
   );
 
   const handleEnter = useCallback(() => {
