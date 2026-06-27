@@ -5,6 +5,7 @@
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import { auth } from '../utils/admin';
 import { FUNCTION_OPTS } from '../config';
+import { logger } from '../utils/logger';
 
 /**
  * setAdminClaim — Set administrative privileges for a user.
@@ -20,7 +21,7 @@ import { FUNCTION_OPTS } from '../config';
 export const setAdminClaim = onCall(
   {
     ...FUNCTION_OPTS,
-    enforceAppCheck: process.env.NODE_ENV !== 'development',
+    enforceAppCheck: process.env.FUNCTIONS_EMULATOR !== 'true',
   },
   async request => {
     // 1. Authorization check: Only existing admins can manage administrative claims.
@@ -56,7 +57,7 @@ export const setAdminClaim = onCall(
         message: `Admin claim for user ${targetUid} successfully set to ${isAdmin}.`,
       };
     } catch (error) {
-      console.error('Error setting admin claim:', error);
+      logger.error('Error setting admin claim', { err: String(error) });
       throw new HttpsError('internal', 'Failed to update custom claims.');
     }
   },

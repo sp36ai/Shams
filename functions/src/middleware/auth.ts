@@ -6,8 +6,9 @@ export interface AuthContext {
 }
 
 export function verifyAuth(request: CallableRequest): AuthContext {
-  // DEV MODE: Allow unauthenticated requests for testing
-  if (process.env.NODE_ENV === 'development' && !request.auth) {
+  // Emulator-only bypass — FUNCTIONS_EMULATOR is set automatically by Firebase
+  // and is never true in deployed Cloud Functions.
+  if (process.env.FUNCTIONS_EMULATOR === 'true' && !request.auth) {
     return {
       userId: 'dev-test-user',
       email: 'dev@test.com',

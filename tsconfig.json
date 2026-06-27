@@ -36,7 +36,6 @@
       "@hooks/*": ["./src/hooks/*"],
       "@theme/*": ["./src/theme/*"],
       "@i18n/*": ["./src/i18n/*"],
-      "@supabase/*": ["./src/supabase/*"],
       "@astrology/*": ["./src/astrology/*"],
       "@storage/*": ["./src/storage/*"],
       "@utils/*": ["./src/utils/*"],

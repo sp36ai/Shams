@@ -73,6 +73,7 @@ async function upgradePlan(
   userId: string,
   plan: PlanTier,
   requestMeta: RequestAuditMeta,
+  razorpayPaymentId?: string,
 ): Promise<void> {
   const durationDays = PLAN_DURATION_DAYS[plan];
   const expiresAt = new Date(Date.now() + durationDays * 86_400_000);
@@ -87,15 +88,20 @@ async function upgradePlan(
     { merge: true },
   );
 
-  // Firebase custom claims — client reads these on next getIdTokenResult()
-  await auth.setCustomUserClaims(userId, { plan, planExpiry: expiresAt.toISOString() });
+  // Merge into existing claims — do NOT replace (would wipe admin: true, etc.)
+  const existingUser = await auth.getUser(userId);
+  const currentClaims = existingUser.customClaims ?? {};
+  await auth.setCustomUserClaims(userId, {
+    ...currentClaims,
+    plan,
+    planExpiry: expiresAt.toISOString(),
+  });
 
   logger.info('plan upgraded', {
     userId,
     plan,
     expiresAt: expiresAt.toISOString(),
-    ipAddress: requestMeta.ipAddress, // Log actual IP for audit
-    ipHash: requestMeta.ipHash, // Keep hash for pattern matching
+    ipHash: requestMeta.ipHash,
   });
 
   await db.collection('auditLogs').add({
@@ -103,15 +109,15 @@ async function upgradePlan(
     action: 'plan_upgraded',
     plan,
     source: requestMeta.source,
-    ipAddress: requestMeta.ipAddress,
     ipHash: requestMeta.ipHash,
     userAgent: requestMeta.userAgent,
+    ...(razorpayPaymentId ? { razorpayPaymentId } : {}),
     ts: FieldValue.serverTimestamp(),
   });
 }
 
 export const razorpayWebhook = onRequest(
-  { region: REGION, timeoutSeconds: 30, cors: true, secrets: [RAZORPAY_WEBHOOK_SECRET] },
+  { region: REGION, timeoutSeconds: 30, cors: false, secrets: [RAZORPAY_WEBHOOK_SECRET] },
   async (req, res) => {
     const startedAt = Date.now();
     const requestMeta = requestMetaFromHttp(req);
@@ -207,6 +213,7 @@ export const razorpayWebhook = onRequest(
 
         const userId = notes?.userId;
         const razorPlan = notes?.planId ?? (entity?.description as string | undefined);
+        const paymentId = entity?.id as string | undefined;
 
         if (!userId || !razorPlan) {
           logger.warn('razorpay payment.captured: missing userId or planId in notes', {
@@ -228,7 +235,24 @@ export const razorpayWebhook = onRequest(
           return;
         }
 
-        await upgradePlan(userId, plan, requestMeta);
+        // Idempotency: skip if this payment has already been processed
+        if (paymentId) {
+          const existing = await db
+            .collection('auditLogs')
+            .where('razorpayPaymentId', '==', paymentId)
+            .limit(1)
+            .get();
+          if (!existing.empty) {
+            logger.info('razorpay: duplicate payment event, skipping', {
+              paymentId,
+              ipHash: requestMeta.ipHash,
+            });
+            res.status(200).send('OK');
+            return;
+          }
+        }
+
+        await upgradePlan(userId, plan, requestMeta, paymentId);
       } else if (eventType === 'subscription.activated') {
         const sub = (event.payload as Record<string, unknown>)?.subscription as
           | Record<string, unknown>

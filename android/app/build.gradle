@@ -6,7 +6,7 @@ apply plugin: "com.google.firebase.crashlytics"
 
 /**
  * Shams al-Asrār — Android app module
- * RN 0.74.x, Hermes ON, New Arch OFF, minSdk 24, targetSdk 34
+ * RN 0.74.x, Hermes ON, New Arch OFF, minSdk 24, targetSdk 35
  */
 
 react {
@@ -27,14 +27,14 @@ def jscFlavor = 'org.webkit:android-jsc:+'
 android {
     ndkVersion rootProject.ext.ndkVersion
     buildToolsVersion rootProject.ext.buildToolsVersion
-    compileSdk 34
+    compileSdk 35
 
     namespace "com.astrosarfaraz.shamsalasrar"
 
     defaultConfig {
         applicationId "com.astrosarfaraz.shamsalasrar"
         minSdk 24
-        targetSdk 34
+        targetSdk 35
         versionCode 4
         versionName "0.1.2"
 
@@ -89,7 +89,14 @@ android {
             versionNameSuffix "-debug"
         }
         release {
-            signingConfig project.hasProperty('SHAMS_UPLOAD_STORE_FILE') ? signingConfigs.release : signingConfigs.debug
+            if (!project.hasProperty('SHAMS_UPLOAD_STORE_FILE')) {
+                throw new GradleException(
+                    "Release signing credentials are required.\n" +
+                    "Set SHAMS_UPLOAD_STORE_FILE, SHAMS_UPLOAD_STORE_PASSWORD, " +
+                    "SHAMS_UPLOAD_KEY_ALIAS, SHAMS_UPLOAD_KEY_PASSWORD in ~/.gradle/gradle.properties"
+                )
+            }
+            signingConfig signingConfigs.release
             minifyEnabled true
             shrinkResources true
             // proguard-android-optimize.txt enables more aggressive optimisation

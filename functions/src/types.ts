@@ -111,13 +111,13 @@ export interface QuotaResponse {
   used: number;
   limit: number | null; // null = unlimited
   remaining: number | null;
-  weekKey: string; // "YYYY-MM-DD" (UTC day)
+  dayKey: string; // "YYYY-MM-DD" (UTC day)
   planExpiry: string | null; // ISO 8601 or null for free/no expiry
 }
 
 /** Firestore /quotas/{userId} document shape. */
 export interface QuotaDoc {
-  weekKey: string;
+  dayKey: string;
   used: number;
   plan: PlanTier;
   planExpiry: string | null;

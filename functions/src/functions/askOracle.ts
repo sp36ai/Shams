@@ -30,6 +30,7 @@ import { logger, hashText } from '../utils/logger';
 import { requestMetaFromCallable } from '../utils/requestMeta';
 import {
   FUNCTION_OPTS,
+  ORACLE_FUNCTION_OPTS,
   UNLIMITED_PLANS,
   FREE_LIMIT,
   todayKey,
@@ -124,27 +125,21 @@ async function claimQuotaSlot(
       return; // No quota to decrement for paid plans
     }
 
-    // Dev mode: skip quota enforcement (mirrors auth bypass)
-    if (process.env.NODE_ENV === 'development') {
-      remaining = null;
-      return;
-    }
-
-    const currentWeek = todayKey();
-    const storedWeek = d.weekKey ?? '';
-    const used = storedWeek === currentWeek ? (d.used ?? 0) : 0;
+    const currentDay = todayKey();
+    const storedDay = d.dayKey ?? '';
+    const used = storedDay === currentDay ? (d.used ?? 0) : 0;
 
     if (used >= FREE_LIMIT) {
       throw new HttpsError(
         'resource-exhausted',
-        `Weekly quota exhausted (${used}/${FREE_LIMIT}). Upgrade to continue.`,
+        `Daily quota exhausted (${used}/${FREE_LIMIT}). Upgrade to continue.`,
       );
     }
 
     remaining = FREE_LIMIT - used - 1;
     tx.set(
       quotaRef,
-      { weekKey: currentWeek, used: used + 1, updatedAt: FieldValue.serverTimestamp() },
+      { dayKey: currentDay, used: used + 1, updatedAt: FieldValue.serverTimestamp() },
       { merge: true },
     );
   });
@@ -300,8 +295,8 @@ async function synthesiseOracleVoice(params: {
 
 export const askOracle = onCall(
   {
-    ...FUNCTION_OPTS,
-    enforceAppCheck: process.env.NODE_ENV !== 'development',
+    ...ORACLE_FUNCTION_OPTS,
+    enforceAppCheck: process.env.FUNCTIONS_EMULATOR !== 'true',
     secrets: [ANTHROPIC_API_KEY],
   },
   async (request): Promise<OracleResponse> => {

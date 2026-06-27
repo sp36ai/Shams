@@ -80,6 +80,8 @@ buck-out/
 !.env.example
 functions/.secret.local
 functions/.env.local
+# Project-scoped Firebase env files may contain secrets — keep out of git
+functions/.env.shams-app-*
 
 # Editor
 .vscode/
