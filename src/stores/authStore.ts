@@ -23,6 +23,7 @@ import { GoogleSignin } from '@react-native-google-signin/google-signin';
 import { storage, KEYS } from '@storage/mmkv';
 import { useQuotaStore, type PlanTier } from './quotaStore';
 import { useReadingsStore } from './readingsStore';
+import { invalidateQuotaCache } from '@hooks/useQuota';
 
 // Web client ID from Firebase Console → Authentication → Google → Web SDK configuration
 export const GOOGLE_WEB_CLIENT_ID =
@@ -83,6 +84,8 @@ export const useAuthStore = create<AuthState>(set => ({
   error: null,
 
   bootstrap: async (): Promise<void> => {
+    _authUnsubscribe?.();
+    _authUnsubscribe = null;
     set({ isLoading: true });
     // Await the first emission of onAuthStateChanged so the navigator
     // never flashes the Auth screen before the cached user resolves.
@@ -181,6 +184,7 @@ export const useAuthStore = create<AuthState>(set => ({
     set({ isLoading: true });
     _authUnsubscribe?.();
     _authUnsubscribe = null;
+    invalidateQuotaCache();
     await auth().signOut();
     cacheUserLocally(null);
     useQuotaStore.getState().reset();

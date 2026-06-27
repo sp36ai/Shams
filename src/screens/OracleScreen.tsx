@@ -573,6 +573,7 @@ const OracleScreen: React.FC = () => {
   const [input, setInput] = useState('');
   const [inputFocused, setInputFocused] = useState(false);
   const [sending, setSending] = useState(false);
+  const sendingRef = useRef(false);
 
   // ── Loading orb pulse at 0.8 Hz (1250 ms period) ───────────────────────────
   const orbPulse = useRef(new Animated.Value(1)).current;
@@ -647,9 +648,10 @@ const OracleScreen: React.FC = () => {
 
   const sendMessage = useCallback(
     async (text: string) => {
-      if (!text || sending) {
+      if (!text || sendingRef.current) {
         return;
       }
+      sendingRef.current = true;
 
       // Followup path — free, no quota
       if (stage === 'answered' && lastReading !== null) {
@@ -700,6 +702,7 @@ const OracleScreen: React.FC = () => {
         };
         setMessages(prev => [shamsMsg, ...prev]);
         setSending(false);
+        sendingRef.current = false;
         return;
       }
 
@@ -816,6 +819,7 @@ const OracleScreen: React.FC = () => {
           ...prev,
         ]);
         setSending(false);
+        sendingRef.current = false;
         return;
       }
 
@@ -890,6 +894,7 @@ const OracleScreen: React.FC = () => {
         ]);
       } finally {
         setSending(false);
+        sendingRef.current = false;
       }
     },
     [
@@ -903,7 +908,6 @@ const OracleScreen: React.FC = () => {
       plan,
       questionsToday,
       readings,
-      sending,
       seekerProfile,
       stage,
       startTrial,

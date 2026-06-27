@@ -105,7 +105,7 @@ const OnboardingScreen: React.FC = () => {
   const advanceTo = useCallback((index: number) => {
     scrollRef.current?.scrollTo({ x: index * width, animated: true });
     setActiveIndex(index);
-  }, []);
+  }, [width]);
 
   const handleChoiceQ1Q2 = useCallback(
     (choice: Choice, qIndex: number) => {

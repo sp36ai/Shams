@@ -22,6 +22,11 @@ const QUOTA_TTL_MS = 60_000;
 let _lastFetchAt = 0;
 let _cachedRemaining: number | null = null;
 
+export function invalidateQuotaCache(): void {
+  _lastFetchAt = 0;
+  _cachedRemaining = null;
+}
+
 export function useQuota(): QuotaState {
   const storeCanAsk = useQuotaStore(s => s.canAsk());
   const consumeOne = useQuotaStore(s => s.consumeOne);

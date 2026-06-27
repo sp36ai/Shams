@@ -35,7 +35,7 @@ android {
         applicationId "com.astrosarfaraz.shamsalasrar"
         minSdk 24
         targetSdk 35
-        versionCode project.hasProperty('VERSION_CODE') ? project.property('VERSION_CODE').toInteger() : 4
+        versionCode (project.hasProperty('VERSION_CODE') && !project.property('VERSION_CODE').toString().trim().empty) ? project.property('VERSION_CODE').toString().trim().toInteger() : 4
         versionName "0.1.2"
 
         // react-native-iap v12 has amazon/play product flavors;
