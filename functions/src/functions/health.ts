@@ -13,6 +13,7 @@ export const health = onRequest(
     const status = {
       status: 'ok',
       timestamp: new Date().toISOString(),
+      engineVersion: ENGINE_VERSION,
     };
 
     logger.info('Health check pinged', status);

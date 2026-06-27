@@ -259,8 +259,7 @@ const AstroVerdictCard: React.FC<AstroVerdictCardProps> = ({
   const handleSwitch = onSwitchMode ?? result.onSwitchMode;
   const oracle = result.oracle ?? ORACLE_DEFAULT;
   const remedy = oracle.remedy;
-  const hasRemedy =
-    remedy.quran_verse ?? remedy.dua ?? remedy.asma ?? remedy.zikr ?? remedy.sadaqah ?? false;
+  const hasRemedy = !!(remedy.quran_verse || remedy.dua || remedy.asma || remedy.zikr || remedy.sadaqah);
 
   // UNCLEAR with H0 — location was missing when engine ran; render nothing
   if (result.verdict === 'UNCLEAR' && result.subLordHouse === 0) {

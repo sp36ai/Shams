@@ -66,6 +66,28 @@ export function usePurchase(): PurchaseState {
   const setPlan = useQuotaStore(s => s.setPlan);
   const [purchasing, setPurchasing] = useState(false);
 
+  const verifyWithServer = useCallback(
+    async (
+      purchaseToken: string,
+      productId: string,
+    ): Promise<{ verified: boolean; planExpiry?: string }> => {
+      try {
+        const fn = (functions() as FunctionsWithRegion)
+          .region('asia-south1')
+          .httpsCallable('verifyGooglePlayPurchase');
+        const result = await fn({ purchaseToken, productId, packageName: PACKAGE_NAME });
+        const data = result.data as { plan?: string; planExpiry?: string } | null;
+        if (typeof data?.plan === 'string') {
+          return { verified: true, planExpiry: data.planExpiry };
+        }
+        return { verified: false };
+      } catch {
+        return { verified: false };
+      }
+    },
+    [],
+  );
+
   useEffect(() => {
     initConnection().catch(() => undefined);
 
@@ -95,28 +117,6 @@ export function usePurchase(): PurchaseState {
       endConnection().catch(() => undefined);
     };
   }, [verifyWithServer, setPlan]);
-
-  const verifyWithServer = useCallback(
-    async (
-      purchaseToken: string,
-      productId: string,
-    ): Promise<{ verified: boolean; planExpiry?: string }> => {
-      try {
-        const fn = (functions() as FunctionsWithRegion)
-          .region('asia-south1')
-          .httpsCallable('verifyGooglePlayPurchase');
-        const result = await fn({ purchaseToken, productId, packageName: PACKAGE_NAME });
-        const data = result.data as { plan?: string; planExpiry?: string } | null;
-        if (typeof data?.plan === 'string') {
-          return { verified: true, planExpiry: data.planExpiry };
-        }
-        return { verified: false };
-      } catch {
-        return { verified: false };
-      }
-    },
-    [],
-  );
 
   const purchase = useCallback(
     async (plan: PurchasePlan): Promise<PurchaseResult> => {

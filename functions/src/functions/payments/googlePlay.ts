@@ -41,7 +41,6 @@ interface GoogleAccessToken {
 }
 
 interface SubscriptionPurchase {
-  purchaseState: number; // 0 = purchased, 1 = cancelled
   acknowledgementState: number; // 0 = not acknowledged, 1 = acknowledged
   orderId: string;
   startTimeMillis: string;
@@ -106,8 +105,18 @@ function httpsPostAuth(url: string, accessToken: string): Promise<void> {
         headers: { Authorization: `Bearer ${accessToken}`, 'Content-Length': '0' },
       },
       res => {
-        res.on('data', () => undefined);
-        res.on('end', () => resolve());
+        let body = '';
+        res.on('data', (c: string) => {
+          body += c;
+        });
+        res.on('end', () => {
+          const status = res.statusCode ?? 0;
+          if (status >= 200 && status < 300) {
+            resolve();
+          } else {
+            reject(new Error(`httpsPostAuth ${status}: ${body.slice(0, 200)}`));
+          }
+        });
       },
     );
     req.on('error', reject);
@@ -191,11 +200,6 @@ export const verifyGooglePlayPurchase = onCall(
       }
 
       const purchase = JSON.parse(body) as SubscriptionPurchase;
-
-      // purchaseState 0 = active subscription
-      if (purchase.purchaseState !== 0) {
-        throw new HttpsError('failed-precondition', 'Subscription is not in an active state');
-      }
 
       // Use Play Store's authoritative expiry — this handles monthly vs annual correctly
       const expiryMs = parseInt(purchase.expiryTimeMillis, 10);

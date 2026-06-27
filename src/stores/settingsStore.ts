@@ -75,7 +75,7 @@ function readOnboardingAnswers(): [string, string, string] | null {
   }
   try {
     const parsed = JSON.parse(raw);
-    if (Array.isArray(parsed) && parsed.length === 3) {
+    if (Array.isArray(parsed) && parsed.length === 3 && parsed.every(s => typeof s === 'string')) {
       return parsed as [string, string, string];
     }
   } catch {

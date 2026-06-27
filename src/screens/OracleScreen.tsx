@@ -291,7 +291,7 @@ function timingResponse(reading: Reading, lang: 'en' | 'ur' | 'hi'): string {
     return `آسمانی گواہ **${max} ${wl}** کی کھڑکی اشارہ کرتے ہیں۔\n\nستارے وقت کی کھڑکیاں دیتے ہیں، تقرریاں نہیں۔`;
   }
   if (lang === 'hi') {
-    return `آسمانی گواہ **${max} ${wl}** کی کھڑکی اشارہ کرتے ہیں۔\n\nستارے وقت کی کھڑکیاں دیتے ہیں، تقرریاں نہیں۔`;
+    return `आकाशीय साक्षी **${max} ${wl}** की खिड़की संकेत करते हैं।\n\nतारे समय की खिड़कियाँ देते हैं, नियुक्तियाँ नहीं।`;
   }
   return `The celestial witnesses point to a window of **${max} ${wl}**.\n\nThe stars offer windows, not appointments.`;
 }
@@ -314,7 +314,7 @@ function whyResponse(reading: Reading, lang: 'en' | 'ur' | 'hi'): string {
     return `فیصلہ **آسمانی گواہ ${planet}** کی شہادت پر منحصر ہے۔\n\nیقین: **${conf}%**`;
   }
   if (lang === 'hi') {
-    return `یہ فیصلہ **آسمانی گواہ ${planet}** کی گواہی پر منحصر ہے۔\n\nیقین: **${conf}%**`;
+    return `यह निर्णय **आकाशीय साक्षी ${planet}** की गवाही पर निर्भर है।\n\nविश्वास: **${conf}%**`;
   }
   return `The verdict rests on the testimony of **${planet}**, the celestial witness appointed to this zaaiche.\n\nConfidence: **${conf}%**`;
 }
@@ -364,7 +364,7 @@ function remedyResponse(reading: Reading, lang: 'en' | 'ur' | 'hi'): string {
   }
 
   const header =
-    lang === 'ur' ? 'علاج اور عمل:' : lang === 'hi' ? 'علاج اور عمل:' : 'Remedy & practice:';
+    lang === 'ur' ? 'علاج اور عمل:' : lang === 'hi' ? 'उपचार और अभ्यास:' : 'Remedy & practice:';
   return `${header}\n\n${lines.join('\n')}`;
 }
 
@@ -574,6 +574,7 @@ const OracleScreen: React.FC = () => {
   const [inputFocused, setInputFocused] = useState(false);
   const [sending, setSending] = useState(false);
   const sendingRef = useRef(false);
+  const mountedRef = useRef(true);
 
   // ── Loading orb pulse at 0.8 Hz (1250 ms period) ───────────────────────────
   const orbPulse = useRef(new Animated.Value(1)).current;
@@ -644,6 +645,8 @@ const OracleScreen: React.FC = () => {
     );
   }, []); // run once on mount only
 
+  useEffect(() => () => { mountedRef.current = false; }, []);
+
   // ── Core send logic ─────────────────────────────────────────────────────────
 
   const sendMessage = useCallback(
@@ -668,6 +671,7 @@ const OracleScreen: React.FC = () => {
         // NEW_QUESTION with HIGH confidence → surface prompt, don't answer
         if (intent.class === 'NEW_QUESTION' && intent.confidence === 'HIGH') {
           setShowNewQuestionModal(true);
+          sendingRef.current = false;
           return;
         }
 
@@ -713,10 +717,12 @@ const OracleScreen: React.FC = () => {
       const questionClass = await classifyQuestion(text);
       if (questionClass === 'CONVERSATIONAL') {
         setRedirectMessage('conversational');
+        sendingRef.current = false;
         return;
       }
       if (questionClass === 'AMBIGUOUS') {
         setRedirectMessage('ambiguous');
+        sendingRef.current = false;
         return;
       }
       // VALID_HORARY falls through — clear any previous redirect
@@ -726,6 +732,7 @@ const OracleScreen: React.FC = () => {
       if (plan === 'free') {
         if (trialExpired) {
           navigation.navigate('Premium');
+          sendingRef.current = false;
           return;
         }
         if (!trialActive) {
@@ -736,6 +743,7 @@ const OracleScreen: React.FC = () => {
             quotaExhaustedAt.current = Date.now();
           }
           setShowQuotaModal(true);
+          sendingRef.current = false;
           return;
         }
       }
@@ -767,6 +775,7 @@ const OracleScreen: React.FC = () => {
             createdAt: now,
           };
           setMessages(prev => [locationMsg, userMsg, ...prev]);
+          sendingRef.current = false;
           return;
         }
 
@@ -786,6 +795,7 @@ const OracleScreen: React.FC = () => {
           quotaExhaustedAt.current = Date.now();
         }
         setShowQuotaModal(true);
+        sendingRef.current = false;
         return;
       }
 
@@ -833,6 +843,9 @@ const OracleScreen: React.FC = () => {
         });
 
         await addReading(reading);
+        if (!mountedRef.current) {
+          return;
+        }
         setLastReading(reading);
         setStage('answered');
 

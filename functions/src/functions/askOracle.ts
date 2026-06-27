@@ -29,7 +29,6 @@ import { measure } from '../middleware/telemetry';
 import { logger, hashText } from '../utils/logger';
 import { requestMetaFromCallable } from '../utils/requestMeta';
 import {
-  FUNCTION_OPTS,
   ORACLE_FUNCTION_OPTS,
   UNLIMITED_PLANS,
   FREE_LIMIT,
@@ -376,7 +375,7 @@ export const askOracle = onCall(
       logger.info('oracle computed', {
         userId,
         verdict: verdict.verdict,
-        stage: (verdict as any).stage ?? 'unknown',
+        stage: verdict.stage ?? 'unknown',
         confidence: verdict.confidence,
         confirmedSignificators: verdict.confirmedSignificators ?? [],
         deniedSignificators: verdict.deniedSignificators ?? [],
@@ -424,8 +423,12 @@ export const askOracle = onCall(
             return null;
           }
           const sl = cusp.subLord;
+          const slPlanet = chart.planets[sl];
+          if (!slPlanet) {
+            return null;
+          }
           const slHouse = houseForLongitude(
-            chart.planets[sl].siderealLongitude,
+            slPlanet.siderealLongitude,
             cuspLons,
           ) as number;
           return { house: h, subLord: sl as string, subLordHouse: slHouse };
@@ -443,7 +446,7 @@ export const askOracle = onCall(
       const oracleRaw = apiKey
         ? await synthesiseOracleVoice({
             verdict: verdict.verdict,
-            stage: (verdict as any).stage,
+            stage: verdict.stage,
             confidence: verdict.confidence,
             timingWindow: verdict.timing?.window,
             timingRange: verdict.timing?.range,

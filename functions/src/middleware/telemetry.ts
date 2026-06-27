@@ -20,6 +20,10 @@ export async function measure<T>(name: string, userId: string, fn: () => Promise
     });
     return result;
   } catch (err) {
+    logger.warn(`perf:${name}:error`, {
+      userId,
+      durationMs: Math.round(performance.now() - start),
+    });
     throw err;
   }
 }

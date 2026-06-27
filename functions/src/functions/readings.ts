@@ -38,6 +38,8 @@ export const syncReadings = onCall(
 
         for (const r of chunk) {
           const ref = db.collection('readings').doc(r.id);
+          const clientCreatedAt = new Date(r.createdAt);
+          const createdAt = clientCreatedAt > new Date() ? new Date() : clientCreatedAt;
           batch.set(
             ref,
             {
@@ -46,7 +48,7 @@ export const syncReadings = onCall(
               questionLang: r.questionLang,
               category: r.category,
               verdict: r.verdict,
-              createdAt: new Date(r.createdAt),
+              createdAt,
               syncedAt: FieldValue.serverTimestamp(),
             },
             { merge: true },
