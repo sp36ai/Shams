@@ -37,10 +37,8 @@ export const SyncReadingsSchema = z
           question: z.string().max(500),
           questionLang: LangSchema,
           category: z.string().max(64),
-          verdict: z.enum(['YES', 'NO', 'CONDITIONAL', 'DELAYED', 'UNCLEAR', 'PENDING']),
+          verdict: z.enum(['YES', 'NO', 'CONDITIONAL', 'DELAYED', 'UNCLEAR', 'PENDING', 'DENIED']),
           createdAt: z.string().datetime(),
-          chartJson: z.record(z.unknown()),
-          verdictJson: z.record(z.unknown()),
         }),
       )
       .max(100),

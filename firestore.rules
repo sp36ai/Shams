@@ -73,8 +73,8 @@ service cloud.firestore {
       allow delete: if isSignedIn() && resource.data.userId == request.auth.uid;
       allow create: if false; // Cloud Functions only
       allow update: if false; // Cloud Functions only
-      // Admins
-      allow read, write, delete: if isAdmin();
+      // Admins may read and delete but NOT create/update — must go through Cloud Functions
+      allow read, delete: if isAdmin();
     }
 
     // ── /rateLimits/{userId}/minutes/{minuteKey} ─────────────────────────────

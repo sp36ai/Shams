@@ -72,6 +72,17 @@
 -keep class com.swmansion.rnscreens.** { *; }
 -keep class com.reactnativegooglesignin.** { *; }
 
+# ── Google Sign-In / GMS Auth ────────────────────────────────────────
+-keep class com.google.android.gms.auth.** { *; }
+-keep class com.google.android.gms.common.** { *; }
+-dontwarn com.google.android.gms.auth.**
+
+# ── react-native-iap / Google Play Billing ───────────────────────────
+-keep class com.dooboolab.rniap.** { *; }
+-keep class com.android.vending.billing.** { *; }
+-keep interface com.android.vending.billing.** { *; }
+-dontwarn com.dooboolab.rniap.**
+
 # ── React Native Firebase bridge ─────────────────────────────────────
 -keep class io.invertase.firebase.** { *; }
 

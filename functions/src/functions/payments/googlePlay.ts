@@ -157,7 +157,7 @@ async function getGoogleAccessToken(): Promise<string> {
 export const verifyGooglePlayPurchase = onCall(
   {
     ...FUNCTION_OPTS,
-    enforceAppCheck: process.env.NODE_ENV !== 'development',
+    enforceAppCheck: process.env.FUNCTIONS_EMULATOR !== 'true',
     secrets: [GOOGLE_PLAY_CLIENT_EMAIL, GOOGLE_PLAY_PRIVATE_KEY],
   },
   async request => {
@@ -221,8 +221,14 @@ export const verifyGooglePlayPurchase = onCall(
         { merge: true },
       );
 
-      // Firebase custom claims — client reads these on next getIdTokenResult()
-      await auth.setCustomUserClaims(userId, { plan, planExpiry: expiresAt.toISOString() });
+      // Merge into existing claims — do NOT replace (would wipe admin: true, etc.)
+      const existingUser = await auth.getUser(userId);
+      const currentClaims = existingUser.customClaims ?? {};
+      await auth.setCustomUserClaims(userId, {
+        ...currentClaims,
+        plan,
+        planExpiry: expiresAt.toISOString(),
+      });
 
       logger.info('play purchase verified', {
         userId,

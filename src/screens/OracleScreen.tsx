@@ -26,6 +26,7 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import Geolocation from '@react-native-community/geolocation';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '@navigation/types';
@@ -245,52 +246,6 @@ const FOLLOWUP_CHIPS: Record<'en' | 'ur' | 'hi', readonly string[]> = {
 };
 
 // ── Followup intent detection ─────────────────────────────────────────────────
-
-type FollowupIntent = 'timing' | 'why' | 'remedy' | 'new' | 'none';
-
-function detectIntent(text: string): FollowupIntent {
-  const q = text.toLowerCase();
-  if (
-    q.includes('new') ||
-    q.includes('نیا') ||
-    q.includes('नया') ||
-    q.includes('another') ||
-    q.includes('again')
-  ) {
-    return 'new';
-  }
-  if (
-    q.includes('when') ||
-    q.includes('timing') ||
-    q.includes('how long') ||
-    q.includes('کب') ||
-    q.includes('وقت') ||
-    q.includes('कब') ||
-    q.includes('समय')
-  ) {
-    return 'timing';
-  }
-  if (
-    q.includes('why') ||
-    q.includes('reason') ||
-    q.includes('کیوں') ||
-    q.includes('क्यों') ||
-    q.includes('because')
-  ) {
-    return 'why';
-  }
-  if (
-    q.includes('remedy') ||
-    q.includes('علاج') ||
-    q.includes('उपाय') ||
-    q.includes('mantra') ||
-    q.includes('what should') ||
-    q.includes('what to do')
-  ) {
-    return 'remedy';
-  }
-  return 'none';
-}
 
 // ── Followup response builders ────────────────────────────────────────────────
 
@@ -618,6 +573,7 @@ const OracleScreen: React.FC = () => {
   const [input, setInput] = useState('');
   const [inputFocused, setInputFocused] = useState(false);
   const [sending, setSending] = useState(false);
+  const sendingRef = useRef(false);
 
   // ── Loading orb pulse at 0.8 Hz (1250 ms period) ───────────────────────────
   const orbPulse = useRef(new Animated.Value(1)).current;
@@ -672,7 +628,7 @@ const OracleScreen: React.FC = () => {
     if (!s.onboardingPermissionGranted && !__DEV__) {
       return;
     }
-    navigator.geolocation.getCurrentPosition(
+    Geolocation.getCurrentPosition(
       pos => {
         useSettingsStore.getState().setLastLocation({
           lat: pos.coords.latitude,
@@ -692,44 +648,22 @@ const OracleScreen: React.FC = () => {
 
   const sendMessage = useCallback(
     async (text: string) => {
-      if (!text || sending) {
+      if (!text || sendingRef.current) {
         return;
       }
+      sendingRef.current = true;
 
       // Followup path — free, no quota
       if (stage === 'answered' && lastReading !== null) {
-        // Claude Haiku intent classifier — replaces basic string matching
-        // API key is optional; falls back to basic string matching if unavailable
-        const apiKey = process.env.ANTHROPIC_API_KEY || '';
+        // Cloud Function intent classifier — no API key needed on the client
         const recentMessages = messages.slice(0, 3).map(m => m.text);
 
-        let intent: IntentResult;
-        if (apiKey) {
-          intent = await classifyIntent({
-            userMessage: text,
-            lockedQuestion: lastReading.question,
-            verdictDirection: lastReading.verdict,
-            recentMessages,
-            apiKey,
-          });
-        } else {
-          // Fallback to basic detection if no API key
-          const basicIntent = detectIntent(text);
-          intent = {
-            class:
-              basicIntent === 'new'
-                ? 'NEW_QUESTION'
-                : basicIntent === 'timing'
-                  ? 'TIMING'
-                  : basicIntent === 'why'
-                    ? 'CLARIFY'
-                    : basicIntent === 'remedy'
-                      ? 'REMEDY'
-                      : 'UNKNOWN',
-            confidence: 'LOW',
-            reason: 'fallback to string matching',
-          };
-        }
+        const intent = await classifyIntent({
+          userMessage: text,
+          lockedQuestion: lastReading.question,
+          verdictDirection: lastReading.verdict,
+          recentMessages,
+        });
 
         // NEW_QUESTION with HIGH confidence → surface prompt, don't answer
         if (intent.class === 'NEW_QUESTION' && intent.confidence === 'HIGH') {
@@ -768,6 +702,7 @@ const OracleScreen: React.FC = () => {
         };
         setMessages(prev => [shamsMsg, ...prev]);
         setSending(false);
+        sendingRef.current = false;
         return;
       }
 
@@ -816,7 +751,7 @@ const OracleScreen: React.FC = () => {
 
       if (resolvedLat === null || resolvedLon === null) {
         const liveCoords = await new Promise<{ lat: number; lon: number } | null>(resolve => {
-          navigator.geolocation.getCurrentPosition(
+          Geolocation.getCurrentPosition(
             pos => resolve({ lat: pos.coords.latitude, lon: pos.coords.longitude }),
             () => resolve(null),
             { enableHighAccuracy: true, timeout: 8000, maximumAge: 30000 },
@@ -846,6 +781,14 @@ const OracleScreen: React.FC = () => {
         });
       }
 
+      if (!consumeOne()) {
+        if (quotaExhaustedAt.current === 0) {
+          quotaExhaustedAt.current = Date.now();
+        }
+        setShowQuotaModal(true);
+        return;
+      }
+
       const userMsg: ChatMessage = {
         id: `u_${now}`,
         sender: 'user',
@@ -854,15 +797,6 @@ const OracleScreen: React.FC = () => {
       };
       setMessages(prev => [userMsg, ...prev]);
       setSending(true);
-
-      if (!consumeOne()) {
-        if (quotaExhaustedAt.current === 0) {
-          quotaExhaustedAt.current = Date.now();
-        }
-        setShowQuotaModal(true);
-        setSending(false);
-        return;
-      }
 
       // ── 60-second dedup guard — same question within one minute returns cache ──
       const minuteBucket = Math.floor(Date.now() / 60000);
@@ -885,6 +819,7 @@ const OracleScreen: React.FC = () => {
           ...prev,
         ]);
         setSending(false);
+        sendingRef.current = false;
         return;
       }
 
@@ -902,9 +837,8 @@ const OracleScreen: React.FC = () => {
         setStage('answered');
 
         // Phase 3 — library-backed remedy selection. Fire-and-forget: never
-        // awaited, never blocks render, selectionReason logged to Firestore only.
-        const remedyApiKey = process.env.ANTHROPIC_API_KEY ?? '';
-        if (remedyApiKey) {
+        // awaited, never blocks render, selectionReason logged to Firestore by CF.
+        {
           const vj = reading.verdictJson as { confidence?: number } | null;
           const confidence = vj?.confidence ?? 0;
           const severity: 'low' | 'moderate' | 'high' =
@@ -916,7 +850,6 @@ const OracleScreen: React.FC = () => {
             severity,
             oracleSummary: narrationForReading(reading)?.slice(0, 200) ?? '',
             questionText: text,
-            apiKey: remedyApiKey,
             seekerProfile,
           });
           selectRemedies(selCtx)
@@ -961,6 +894,7 @@ const OracleScreen: React.FC = () => {
         ]);
       } finally {
         setSending(false);
+        sendingRef.current = false;
       }
     },
     [
@@ -974,7 +908,6 @@ const OracleScreen: React.FC = () => {
       plan,
       questionsToday,
       readings,
-      sending,
       seekerProfile,
       stage,
       startTrial,
@@ -1103,7 +1036,7 @@ const OracleScreen: React.FC = () => {
                   },
                 ]}
               >
-                {questionsLeft}/{FREE_DAILY_LIMIT}
+                {questionsLeft}/{trialActive ? TRIAL_DAILY_LIMIT : FREE_DAILY_LIMIT}
               </Text>
             </View>
           )}

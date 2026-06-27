@@ -19,6 +19,9 @@ on:
       - ".github/workflows/firestore-rules-tests.yml"
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
   rules-validation:
     name: Validate Security Rules

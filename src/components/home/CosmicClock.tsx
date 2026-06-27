@@ -14,7 +14,7 @@
  */
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Dimensions, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, View, useWindowDimensions } from 'react-native';
 import Svg, {
   Circle,
   Defs,
@@ -68,11 +68,7 @@ function lahiriAyanamsa(jd: number): number {
 
 // ── SVG layout constants ───────────────────────────────────────────────────────
 
-const { width: SCREEN_W } = Dimensions.get('window');
-const SIZE = Math.min(SCREEN_W - 24, 340);
-const CX = SIZE / 2;
-const CY = SIZE / 2;
-const S = SIZE / 500; // scale from 500-unit design space
+// SCREEN_W, SIZE, CX, CY, S are computed inside the component via useWindowDimensions.
 
 // Radii in design-space units (multiply by S for pixels)
 const R_OUTER_BORDER = 242;
@@ -189,16 +185,28 @@ const ZODIAC_COLORS: readonly string[] = [
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
 
-function polar(r: number, deg: number): { x: number; y: number } {
+function polar(
+  r: number,
+  deg: number,
+  cx: number,
+  cy: number,
+): { x: number; y: number } {
   const rad = ((deg - 90) * Math.PI) / 180;
-  return { x: CX + r * Math.cos(rad), y: CY + r * Math.sin(rad) };
+  return { x: cx + r * Math.cos(rad), y: cy + r * Math.sin(rad) };
 }
 
-function sectorPath(rOuter: number, rInner: number, startDeg: number, endDeg: number): string {
-  const os = polar(rOuter, startDeg);
-  const oe = polar(rOuter, endDeg);
-  const ie = polar(rInner, endDeg);
-  const is_ = polar(rInner, startDeg);
+function sectorPath(
+  rOuter: number,
+  rInner: number,
+  startDeg: number,
+  endDeg: number,
+  cx: number,
+  cy: number,
+): string {
+  const os = polar(rOuter, startDeg, cx, cy);
+  const oe = polar(rOuter, endDeg, cx, cy);
+  const ie = polar(rInner, endDeg, cx, cy);
+  const is_ = polar(rInner, startDeg, cx, cy);
   const large = endDeg - startDeg > 180 ? 1 : 0;
   const ro = rOuter.toFixed(2);
   const ri = rInner.toFixed(2);
@@ -240,7 +248,13 @@ interface ClockState {
   secTipY: number;
 }
 
-function computeState(date: Date, sidereal: boolean): ClockState {
+function computeState(
+  date: Date,
+  sidereal: boolean,
+  cx: number,
+  cy: number,
+  s: number,
+): ClockState {
   // dateToJD returns branded JDut — safe to use as number for arithmetic
   const jd = dateToJD(date) as number;
   const T = (jd - JD_J2000) / 36525;
@@ -265,7 +279,7 @@ function computeState(date: Date, sidereal: boolean): ClockState {
 
   const planets: PlanetState[] = PDEFS.map(d => {
     const lon = lons[d.name] ?? 0;
-    const p = polar(R_PLANET * S, lon);
+    const p = polar(R_PLANET * s, lon, cx, cy);
     return { name: d.name, lon, x: p.x, y: p.y };
   });
 
@@ -284,7 +298,7 @@ function computeState(date: Date, sidereal: boolean): ClockState {
   const hourAngle = hourFrac * 30;
 
   const pad = (n: number) => String(n).padStart(2, '0');
-  const tip = polar(R_HAND_SEC_FWD * S, secAngle);
+  const tip = polar(R_HAND_SEC_FWD * s, secAngle, cx, cy);
 
   return {
     jd,
@@ -315,6 +329,11 @@ interface CosmicClockProps {
 
 export default function CosmicClock({ running }: CosmicClockProps): React.ReactElement {
   const colors = useColors();
+  const { width: SCREEN_W } = useWindowDimensions();
+  const SIZE = Math.min(SCREEN_W - 24, 340);
+  const CX = SIZE / 2;
+  const CY = SIZE / 2;
+  const S = SIZE / 500;
 
   const [showSaturn, setShowSaturn] = useState(true);
   const [showNodes, setShowNodes] = useState(false);
@@ -328,14 +347,21 @@ export default function CosmicClock({ running }: CosmicClockProps): React.ReactE
     siderealRef.current = sidereal;
   }, [sidereal]);
 
-  const [clock, setClock] = useState<ClockState>(() => computeState(new Date(), false));
+  // Keep a ref to the current layout so the interval always uses up-to-date values
+  const layoutRef = useRef({ CX, CY, S });
+  useEffect(() => {
+    layoutRef.current = { CX, CY, S };
+  }, [CX, CY, S]);
+
+  const [clock, setClock] = useState<ClockState>(() => computeState(new Date(), false, CX, CY, S));
 
   useEffect(() => {
     if (!running) {
       return;
     }
     const id = setInterval(() => {
-      setClock(computeState(new Date(), siderealRef.current));
+      const { CX: cx, CY: cy, S: s } = layoutRef.current;
+      setClock(computeState(new Date(), siderealRef.current, cx, cy, s));
     }, 1_000);
     return () => clearInterval(id);
   }, [running]);
@@ -381,9 +407,9 @@ export default function CosmicClock({ running }: CosmicClockProps): React.ReactE
       const num = i + 1;
       const deg = num * 6;
       const isMajor = num % 5 === 0;
-      const outerPt = polar(R_OUTER_TICKS * S, deg);
-      const innerPt = polar((isMajor ? R_INNER_TICKS - 5 : R_INNER_TICKS - 2) * S, deg);
-      const textPt = polar((R_INNER_TICKS - 14) * S, deg);
+      const outerPt = polar(R_OUTER_TICKS * S, deg, CX, CY);
+      const innerPt = polar((isMajor ? R_INNER_TICKS - 5 : R_INNER_TICKS - 2) * S, deg, CX, CY);
+      const textPt = polar((R_INNER_TICKS - 14) * S, deg, CX, CY);
 
       elems.push(
         <Line
@@ -411,7 +437,7 @@ export default function CosmicClock({ running }: CosmicClockProps): React.ReactE
       );
     }
     return elems;
-  }, []);
+  }, [CX, CY, S]);
 
   const zodiacBand = useMemo(() => {
     const elems: React.ReactElement[] = [];
@@ -421,12 +447,12 @@ export default function CosmicClock({ running }: CosmicClockProps): React.ReactE
       const mid = start + 15;
       const color = ZODIAC_COLORS[z] ?? '#ffffff';
       const glyph = ZODIAC_GLYPHS[z] ?? '?';
-      const mp = polar(((R_ZODIAC_OUTER + R_ZODIAC_INNER) / 2) * S, mid);
+      const mp = polar(((R_ZODIAC_OUTER + R_ZODIAC_INNER) / 2) * S, mid, CX, CY);
 
       elems.push(
         <Path
           key={`zs${z}`}
-          d={sectorPath(R_ZODIAC_OUTER * S, R_ZODIAC_INNER * S, start, end)}
+          d={sectorPath(R_ZODIAC_OUTER * S, R_ZODIAC_INNER * S, start, end, CX, CY)}
           fill={`${color}18`}
           stroke={`${color}40`}
           strokeWidth={0.4}
@@ -446,7 +472,7 @@ export default function CosmicClock({ running }: CosmicClockProps): React.ReactE
       );
     }
     return elems;
-  }, []);
+  }, [CX, CY, S]);
 
   const starGeometry = useMemo(() => {
     const elems: React.ReactElement[] = [];
@@ -454,7 +480,7 @@ export default function CosmicClock({ running }: CosmicClockProps): React.ReactE
     // 12 radiating lines from center to R_STAR_OUTER
     for (let i = 0; i < 12; i++) {
       const deg = i * 30;
-      const outerPt = polar(R_STAR_OUTER * S, deg);
+      const outerPt = polar(R_STAR_OUTER * S, deg, CX, CY);
       elems.push(
         <Line
           key={`sl${i}`}
@@ -471,9 +497,9 @@ export default function CosmicClock({ running }: CosmicClockProps): React.ReactE
     // 12 slim triangle petals (alternating cyan / gold tint)
     for (let i = 0; i < 12; i++) {
       const deg = i * 30;
-      const tip_ = polar(R_STAR_OUTER * S, deg);
-      const bL = polar(R_STAR_INNER * S, deg - 5);
-      const bR = polar(R_STAR_INNER * S, deg + 5);
+      const tip_ = polar(R_STAR_OUTER * S, deg, CX, CY);
+      const bL = polar(R_STAR_INNER * S, deg - 5, CX, CY);
+      const bR = polar(R_STAR_INNER * S, deg + 5, CX, CY);
       const petalFill = i % 2 === 0 ? 'rgba(34,211,238,0.12)' : 'rgba(251,191,36,0.10)';
       elems.push(
         <Path
@@ -486,7 +512,7 @@ export default function CosmicClock({ running }: CosmicClockProps): React.ReactE
     }
 
     // Triangle 1 — pointing up (vertices at 0°, 120°, 240°)
-    const [t1a, t1b, t1c] = [0, 120, 240].map(d => polar(R_STAR_OUTER * S, d));
+    const [t1a, t1b, t1c] = [0, 120, 240].map(d => polar(R_STAR_OUTER * S, d, CX, CY));
     elems.push(
       <Path
         key="tri1"
@@ -498,7 +524,7 @@ export default function CosmicClock({ running }: CosmicClockProps): React.ReactE
     );
 
     // Triangle 2 — pointing down (vertices at 60°, 180°, 300°)
-    const [t2a, t2b, t2c] = [60, 180, 300].map(d => polar(R_STAR_OUTER * S, d));
+    const [t2a, t2b, t2c] = [60, 180, 300].map(d => polar(R_STAR_OUTER * S, d, CX, CY));
     elems.push(
       <Path
         key="tri2"
@@ -523,7 +549,7 @@ export default function CosmicClock({ running }: CosmicClockProps): React.ReactE
     );
 
     return elems;
-  }, []);
+  }, [CX, CY, S]);
 
   // Planet track dashed ring — static
   const planetTrack = useMemo(
@@ -538,7 +564,7 @@ export default function CosmicClock({ running }: CosmicClockProps): React.ReactE
         strokeDasharray={`${3 * S} ${9 * S}`}
       />
     ),
-    [],
+    [CX, CY, S],
   );
 
   // ── Planet tap handler ───────────────────────────────────────────────────────
@@ -567,8 +593,8 @@ export default function CosmicClock({ running }: CosmicClockProps): React.ReactE
     const { x, y, lon } = ps;
     const signIdx = Math.floor(lon / 30) % 12;
     const abbr = ZODIAC_ABBR[signIdx] ?? '';
-    const spokePt = polar(R_ZODIAC_INNER * S, lon);
-    const labelPt = polar((R_PLANET + def.r + 8) * S, lon);
+    const spokePt = polar(R_ZODIAC_INNER * S, lon, CX, CY);
+    const labelPt = polar((R_PLANET + def.r + 8) * S, lon, CX, CY);
 
     const onPress = () => handlePlanetPress(ps);
 
@@ -656,8 +682,8 @@ export default function CosmicClock({ running }: CosmicClockProps): React.ReactE
   // ── Clock hands ──────────────────────────────────────────────────────────────
 
   function handLine(fwdR: number, backR: number, angle: number, width: number): React.ReactElement {
-    const tip_ = polar(fwdR * S, angle);
-    const back = polar(-backR * S, angle);
+    const tip_ = polar(fwdR * S, angle, CX, CY);
+    const back = polar(-backR * S, angle, CX, CY);
     return (
       <Line
         x1={back.x}

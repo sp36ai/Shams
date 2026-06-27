@@ -12,6 +12,9 @@ on:
       - '.github/workflows/release-apk.yml'
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
   build-release-apk:
     name: Build Release APK
@@ -28,7 +31,7 @@ jobs:
           cache: 'npm'
 
       - name: Install Node dependencies
-        run: npm install --legacy-peer-deps
+        run: npm ci
 
       - name: Set up JDK 17
         uses: actions/setup-java@v4
@@ -66,7 +69,8 @@ jobs:
             -PSHAMS_UPLOAD_STORE_FILE=shams-upload-key.jks \
             -PSHAMS_UPLOAD_STORE_PASSWORD="${{ secrets.SHAMS_UPLOAD_STORE_PASSWORD }}" \
             -PSHAMS_UPLOAD_KEY_ALIAS="${{ secrets.SHAMS_UPLOAD_KEY_ALIAS }}" \
-            -PSHAMS_UPLOAD_KEY_PASSWORD="${{ secrets.SHAMS_UPLOAD_KEY_PASSWORD }}"
+            -PSHAMS_UPLOAD_KEY_PASSWORD="${{ secrets.SHAMS_UPLOAD_KEY_PASSWORD }}" \
+            -PVERSION_CODE=${{ github.run_number }}
 
       - name: Remove keystore
         if: always()

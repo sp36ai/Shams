@@ -24,6 +24,35 @@ import { logger } from '../../utils/logger';
 import { requestMetaFromHttp, type RequestAuditMeta } from '../../utils/requestMeta';
 import { RAZORPAY_WEBHOOK_SECRET, REGION, PLAN_DURATION_DAYS, type PlanTier } from '../../config';
 
+// Per-IP sliding-window rate limiter for the webhook endpoint.
+// Razorpay retries events a fixed number of times — 30 req/min per IP is very generous.
+const IP_RATE_LIMIT = 30;
+const WINDOW_MS = 60_000;
+const EVICT_EVERY = 500;
+const ipCounters = new Map<string, { count: number; windowStart: number }>();
+let _reqCount = 0;
+
+function checkIpRateLimit(ip: string): boolean {
+  const now = Date.now();
+
+  _reqCount++;
+  if (_reqCount % EVICT_EVERY === 0) {
+    for (const [k, e] of ipCounters) {
+      if (now - e.windowStart >= WINDOW_MS) {
+        ipCounters.delete(k);
+      }
+    }
+  }
+
+  const entry = ipCounters.get(ip);
+  if (!entry || now - entry.windowStart >= WINDOW_MS) {
+    ipCounters.set(ip, { count: 1, windowStart: now });
+    return true;
+  }
+  entry.count += 1;
+  return entry.count <= IP_RATE_LIMIT;
+}
+
 /**
  * RAZORPAY WEBHOOK SECRET — GCP SECRET MANAGER
  * ═════════════════════════════════════════════════════════════════════════════
@@ -73,6 +102,7 @@ async function upgradePlan(
   userId: string,
   plan: PlanTier,
   requestMeta: RequestAuditMeta,
+  razorpayPaymentId?: string,
 ): Promise<void> {
   const durationDays = PLAN_DURATION_DAYS[plan];
   const expiresAt = new Date(Date.now() + durationDays * 86_400_000);
@@ -87,15 +117,20 @@ async function upgradePlan(
     { merge: true },
   );
 
-  // Firebase custom claims — client reads these on next getIdTokenResult()
-  await auth.setCustomUserClaims(userId, { plan, planExpiry: expiresAt.toISOString() });
+  // Merge into existing claims — do NOT replace (would wipe admin: true, etc.)
+  const existingUser = await auth.getUser(userId);
+  const currentClaims = existingUser.customClaims ?? {};
+  await auth.setCustomUserClaims(userId, {
+    ...currentClaims,
+    plan,
+    planExpiry: expiresAt.toISOString(),
+  });
 
   logger.info('plan upgraded', {
     userId,
     plan,
     expiresAt: expiresAt.toISOString(),
-    ipAddress: requestMeta.ipAddress, // Log actual IP for audit
-    ipHash: requestMeta.ipHash, // Keep hash for pattern matching
+    ipHash: requestMeta.ipHash,
   });
 
   await db.collection('auditLogs').add({
@@ -103,15 +138,15 @@ async function upgradePlan(
     action: 'plan_upgraded',
     plan,
     source: requestMeta.source,
-    ipAddress: requestMeta.ipAddress,
     ipHash: requestMeta.ipHash,
     userAgent: requestMeta.userAgent,
+    ...(razorpayPaymentId ? { razorpayPaymentId } : {}),
     ts: FieldValue.serverTimestamp(),
   });
 }
 
 export const razorpayWebhook = onRequest(
-  { region: REGION, timeoutSeconds: 30, cors: true, secrets: [RAZORPAY_WEBHOOK_SECRET] },
+  { region: REGION, timeoutSeconds: 30, cors: false, secrets: [RAZORPAY_WEBHOOK_SECRET] },
   async (req, res) => {
     const startedAt = Date.now();
     const requestMeta = requestMetaFromHttp(req);
@@ -127,6 +162,19 @@ export const razorpayWebhook = onRequest(
     // Only accept POST
     if (req.method !== 'POST') {
       res.status(405).send('Method Not Allowed');
+      return;
+    }
+
+    // Per-IP rate limit — enforced before HMAC to prevent brute-force probing.
+    // Skip rate limiting when IP is unresolvable to avoid collapsing all such
+    // requests into one shared bucket that would block legitimate retries.
+    const clientIp = requestMeta.ipAddress;
+    if (clientIp !== undefined && !checkIpRateLimit(clientIp)) {
+      logger.warn('razorpay webhook: ip rate limit exceeded', {
+        ipHash: requestMeta.ipHash,
+        durationMs: Date.now() - startedAt,
+      });
+      res.status(429).send('Too Many Requests');
       return;
     }
 
@@ -207,6 +255,7 @@ export const razorpayWebhook = onRequest(
 
         const userId = notes?.userId;
         const razorPlan = notes?.planId ?? (entity?.description as string | undefined);
+        const paymentId = entity?.id as string | undefined;
 
         if (!userId || !razorPlan) {
           logger.warn('razorpay payment.captured: missing userId or planId in notes', {
@@ -228,7 +277,24 @@ export const razorpayWebhook = onRequest(
           return;
         }
 
-        await upgradePlan(userId, plan, requestMeta);
+        // Idempotency: skip if this payment has already been processed
+        if (paymentId) {
+          const existing = await db
+            .collection('auditLogs')
+            .where('razorpayPaymentId', '==', paymentId)
+            .limit(1)
+            .get();
+          if (!existing.empty) {
+            logger.info('razorpay: duplicate payment event, skipping', {
+              paymentId,
+              ipHash: requestMeta.ipHash,
+            });
+            res.status(200).send('OK');
+            return;
+          }
+        }
+
+        await upgradePlan(userId, plan, requestMeta, paymentId);
       } else if (eventType === 'subscription.activated') {
         const sub = (event.payload as Record<string, unknown>)?.subscription as
           | Record<string, unknown>

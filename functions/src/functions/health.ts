@@ -8,16 +8,11 @@ import { ENGINE_VERSION } from '../engine/primitives/chartBuilder';
 import { logger } from '../utils/logger';
 
 export const health = onRequest(
-  { region: REGION, timeoutSeconds: 10, cors: true },
+  { region: REGION, timeoutSeconds: 10, cors: false },
   async (_req, res) => {
     const status = {
       status: 'ok',
       timestamp: new Date().toISOString(),
-      engine: {
-        version: ENGINE_VERSION,
-        region: REGION,
-      },
-      projectId: process.env.GCLOUD_PROJECT,
     };
 
     logger.info('Health check pinged', status);

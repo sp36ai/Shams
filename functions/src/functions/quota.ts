@@ -11,7 +11,7 @@ import { measure } from '../middleware/telemetry';
 import type { QuotaResponse, QuotaDoc } from '../types';
 
 export const getQuota = onCall(
-  { ...FUNCTION_OPTS, enforceAppCheck: process.env.NODE_ENV !== 'development' },
+  { ...FUNCTION_OPTS, enforceAppCheck: process.env.FUNCTIONS_EMULATOR !== 'true' },
   async (request): Promise<QuotaResponse> => {
     const { userId } = verifyAuth(request);
 
@@ -24,16 +24,16 @@ export const getQuota = onCall(
           used: 0,
           limit: FREE_LIMIT,
           remaining: FREE_LIMIT,
-          weekKey: todayKey(),
+          dayKey: todayKey(),
           planExpiry: null,
         };
       }
 
       const d = snap.data() as Partial<QuotaDoc>;
       const plan = d.plan ?? 'free';
-      const currentWeek = todayKey();
-      const storedWeek = d.weekKey ?? '';
-      const used = storedWeek === currentWeek ? (d.used ?? 0) : 0;
+      const currentDay = todayKey();
+      const storedDay = d.dayKey ?? '';
+      const used = storedDay === currentDay ? (d.used ?? 0) : 0;
       const planExpiry = d.planExpiry ?? null;
 
       // Check if plan has expired
@@ -46,7 +46,7 @@ export const getQuota = onCall(
       const limit = unlimited ? null : FREE_LIMIT;
       const remaining = unlimited ? null : Math.max(0, FREE_LIMIT - used);
 
-      return { plan: effectivePlan, used, limit, remaining, weekKey: currentWeek, planExpiry };
+      return { plan: effectivePlan, used, limit, remaining, dayKey: currentDay, planExpiry };
     }).catch(err => {
       if (err instanceof HttpsError) {
         throw err;

@@ -9,8 +9,6 @@ import com.facebook.react.ReactPackage
 import com.facebook.react.defaults.DefaultNewArchitectureEntryPoint.load
 import com.facebook.react.defaults.DefaultReactHost.getDefaultReactHost
 import com.facebook.react.defaults.DefaultReactNativeHost
-import com.facebook.react.modules.network.OkHttpClientProvider
-import okhttp3.CertificatePinner
 import com.facebook.soloader.SoLoader
 
 class MainApplication : Application(), ReactApplication {
@@ -38,16 +36,9 @@ class MainApplication : Application(), ReactApplication {
         super.onCreate()
         SoLoader.init(this, /* native exopackage */ false)
 
-        // Security Hardening: Certificate Pinning (captured 2026-05-07)
-        val certificatePinner = CertificatePinner.Builder()
-            .add("firestore.googleapis.com", "sha256/NHasLBXL7uS5JzodPAdAqd/YoGIy3AySHd7yyKRg5xo=")
-            .add("firebase.googleapis.com", "sha256/oVK9AMvzuTJhavj8JKMULZqcgPvnTenud/VH/97y/XY=")
-            .add("identitytoolkit.googleapis.com", "sha256/NHasLBXL7uS5JzodPAdAqd/YoGIy3AySHd7yyKRg5xo=")
-            .build()
-
-        OkHttpClientProvider.setOkHttpClientFactory {
-            OkHttpClientProvider.createClientBuilder().certificatePinner(certificatePinner).build()
-        }
+        // Certificate pinning is enforced at the platform level via network_security_config.xml
+        // (with expiration 2027-05-01). OkHttp-level pinning was removed because it has no
+        // expiration mechanism and would permanently brick the app if Google rotates certs.
 
         if (BuildConfig.IS_NEW_ARCHITECTURE_ENABLED) {
             // If you opted-in for the New Architecture, we load the native entry point for this app.

@@ -1,7 +1,6 @@
 {
   "extends": "@react-native/typescript-config/tsconfig.json",
   "compilerOptions": {
-    "ignoreDeprecations": "5.0",
     "target": "ES2022",
     "module": "ESNext",
     "moduleResolution": "bundler",
@@ -36,7 +35,6 @@
       "@hooks/*": ["./src/hooks/*"],
       "@theme/*": ["./src/theme/*"],
       "@i18n/*": ["./src/i18n/*"],
-      "@supabase/*": ["./src/supabase/*"],
       "@astrology/*": ["./src/astrology/*"],
       "@storage/*": ["./src/storage/*"],
       "@utils/*": ["./src/utils/*"],

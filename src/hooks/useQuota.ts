@@ -18,21 +18,40 @@ export interface QuotaState {
   refresh: () => void;
 }
 
+const QUOTA_TTL_MS = 60_000;
+let _lastFetchAt = 0;
+let _cachedRemaining: number | null = null;
+
+export function invalidateQuotaCache(): void {
+  _lastFetchAt = 0;
+  _cachedRemaining = null;
+}
+
 export function useQuota(): QuotaState {
   const storeCanAsk = useQuotaStore(s => s.canAsk());
   const consumeOne = useQuotaStore(s => s.consumeOne);
   const questionsLeft = useQuotaStore(selectQuestionsLeft);
   const currentPlan = useQuotaStore(s => s.plan);
 
-  const [serverRemaining, setServerRemaining] = useState<number | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [serverRemaining, setServerRemaining] = useState<number | null>(_cachedRemaining);
+  const [loading, setLoading] = useState(_cachedRemaining === null);
 
   const refresh = useCallback(() => {
+    const now = Date.now();
+    if (_cachedRemaining !== null && now - _lastFetchAt < QUOTA_TTL_MS) {
+      setServerRemaining(_cachedRemaining);
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     (functions() as FunctionsWithRegion)
       .region('asia-south1')
       .httpsCallable<object, { remaining: number }>('getQuota')({})
-      .then(r => setServerRemaining(r.data.remaining))
+      .then(r => {
+        _cachedRemaining = r.data.remaining;
+        _lastFetchAt = Date.now();
+        setServerRemaining(r.data.remaining);
+      })
       .catch(() => setServerRemaining(null))
       .finally(() => setLoading(false));
   }, []);

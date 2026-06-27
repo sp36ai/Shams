@@ -202,11 +202,11 @@ export interface StringTable {
     signOutConfirm: string;
   };
   theme: {
-    teal: string;
-    midnightGold: string;
-    royalViolet: string;
-    crimsonDusk: string;
-    arcticSilver: string;
+    darAlShams: string;
+    laylAlBahr: string;
+    narAlHadid: string;
+    subhAlWahy: string;
+    zaytunAlHikma: string;
   };
   errors: {
     network: string;

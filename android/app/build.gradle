@@ -6,7 +6,7 @@ apply plugin: "com.google.firebase.crashlytics"
 
 /**
  * Shams al-Asrār — Android app module
- * RN 0.74.x, Hermes ON, New Arch OFF, minSdk 24, targetSdk 34
+ * RN 0.74.x, Hermes ON, New Arch OFF, minSdk 24, targetSdk 35
  */
 
 react {
@@ -22,20 +22,20 @@ def enableProguardInReleaseBuilds = true
  * The preferred build flavor of JavaScriptCore (JSC).
  * Hermes is enabled, so JSC is unused — keep default.
  */
-def jscFlavor = 'org.webkit:android-jsc:+'
+def jscFlavor = 'org.webkit:android-jsc:r250230'
 
 android {
     ndkVersion rootProject.ext.ndkVersion
     buildToolsVersion rootProject.ext.buildToolsVersion
-    compileSdk 34
+    compileSdk 35
 
     namespace "com.astrosarfaraz.shamsalasrar"
 
     defaultConfig {
         applicationId "com.astrosarfaraz.shamsalasrar"
         minSdk 24
-        targetSdk 34
-        versionCode 4
+        targetSdk 35
+        versionCode (project.hasProperty('VERSION_CODE') && !project.property('VERSION_CODE').toString().trim().empty) ? project.property('VERSION_CODE').toString().trim().toInteger() : 4
         versionName "0.1.2"
 
         // react-native-iap v12 has amazon/play product flavors;
@@ -58,7 +58,7 @@ android {
             reset()
             enable false   // App Bundle handles per-ABI delivery in production
             universalApk false
-            include "armeabi-v7a", "arm64-v8a", "x86", "x86_64"
+            include "arm64-v8a", "x86_64"
         }
     }
 
@@ -89,7 +89,14 @@ android {
             versionNameSuffix "-debug"
         }
         release {
-            signingConfig project.hasProperty('SHAMS_UPLOAD_STORE_FILE') ? signingConfigs.release : signingConfigs.debug
+            if (!project.hasProperty('SHAMS_UPLOAD_STORE_FILE')) {
+                throw new GradleException(
+                    "Release signing credentials are required.\n" +
+                    "Set SHAMS_UPLOAD_STORE_FILE, SHAMS_UPLOAD_STORE_PASSWORD, " +
+                    "SHAMS_UPLOAD_KEY_ALIAS, SHAMS_UPLOAD_KEY_PASSWORD in ~/.gradle/gradle.properties"
+                )
+            }
+            signingConfig signingConfigs.release
             minifyEnabled true
             shrinkResources true
             // proguard-android-optimize.txt enables more aggressive optimisation

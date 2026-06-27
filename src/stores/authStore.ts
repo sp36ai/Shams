@@ -23,6 +23,7 @@ import { GoogleSignin } from '@react-native-google-signin/google-signin';
 import { storage, KEYS } from '@storage/mmkv';
 import { useQuotaStore, type PlanTier } from './quotaStore';
 import { useReadingsStore } from './readingsStore';
+import { invalidateQuotaCache } from '@hooks/useQuota';
 
 // Web client ID from Firebase Console → Authentication → Google → Web SDK configuration
 export const GOOGLE_WEB_CLIENT_ID =
@@ -48,6 +49,8 @@ export interface AuthState {
   signOut: () => Promise<void>;
   clearError: () => void;
 }
+
+let _authUnsubscribe: (() => void) | null = null;
 
 /* -------------------------------------------------------------------------- */
 /*  Local profile cache (name / email written at sign-in for offline display) */
@@ -81,12 +84,14 @@ export const useAuthStore = create<AuthState>(set => ({
   error: null,
 
   bootstrap: async (): Promise<void> => {
+    _authUnsubscribe?.();
+    _authUnsubscribe = null;
     set({ isLoading: true });
     // Await the first emission of onAuthStateChanged so the navigator
     // never flashes the Auth screen before the cached user resolves.
     await new Promise<void>(resolve => {
       let resolved = false;
-      auth().onAuthStateChanged(async fbUser => {
+      _authUnsubscribe = auth().onAuthStateChanged(async fbUser => {
         if (fbUser) {
           try {
             const tokenResult = await fbUser.getIdTokenResult();
@@ -177,6 +182,9 @@ export const useAuthStore = create<AuthState>(set => ({
 
   signOut: async (): Promise<void> => {
     set({ isLoading: true });
+    _authUnsubscribe?.();
+    _authUnsubscribe = null;
+    invalidateQuotaCache();
     await auth().signOut();
     cacheUserLocally(null);
     useQuotaStore.getState().reset();

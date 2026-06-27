@@ -58,11 +58,11 @@ services:
     volumes:
       - postgres-data:/var/lib/postgresql/data
     environment:
-      POSTGRES_DB: shams_db
-      POSTGRES_USER: shams_user
-      POSTGRES_PASSWORD: shams_password
+      POSTGRES_DB: ${POSTGRES_DB:-shams_db}
+      POSTGRES_USER: ${POSTGRES_USER:-shams_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-shams_dev_pass}
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U shams_user"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-shams_user}"]
       interval: 10s
       timeout: 5s
       retries: 5
