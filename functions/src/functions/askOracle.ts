@@ -124,11 +124,6 @@ async function claimQuotaSlot(
       return; // No quota to decrement for paid plans
     }
 
-    // Dev mode: skip quota enforcement (mirrors auth bypass)
-    if (process.env.NODE_ENV === 'development') {
-      remaining = null;
-      return;
-    }
 
     const currentWeek = todayKey();
     const storedWeek = d.weekKey ?? '';
@@ -245,8 +240,8 @@ async function synthesiseOracleVoice(params: {
         'x-api-key': params.apiKey,
       },
       body: JSON.stringify({
-        model: 'claude-opus-4-7',
-        max_tokens: 4096,
+        model: 'claude-opus-4-5',
+        max_tokens: 1024,
         system: systemPrompt,
         messages: [{ role: 'user', content: userMessage }],
       }),

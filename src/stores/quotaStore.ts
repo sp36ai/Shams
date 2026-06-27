@@ -20,11 +20,12 @@ import { storage, KEYS } from '@storage/mmkv';
 export type PlanTier = 'free' | 'mureed' | 'khass';
 
 export const FREE_DAILY_LIMIT = 3;
-export const TRIAL_DAILY_LIMIT = 5;
+export const MUREED_DAILY_LIMIT = 3;
+export const TRIAL_DAILY_LIMIT = 3;
 export const TRIAL_DURATION_DAYS = 7;
 
-/** Plans that get unlimited questions. */
-const UNLIMITED_PLANS: readonly PlanTier[] = ['mureed', 'khass'];
+/** Only khass is truly unlimited. Mureed is 3/day. */
+const UNLIMITED_PLANS: readonly PlanTier[] = ['khass'];
 
 /* -------------------------------------------------------------------------- */
 /*  Day key — UTC "YYYY-MM-DD"                                               */
@@ -130,20 +131,38 @@ export const useQuotaStore = create<QuotaState>((set, get) => ({
   FREE_DAILY_LIMIT,
 
   canAsk(): boolean {
-    const { plan, questionsToday, trialActive } = get();
+    const { plan, planExpiry, questionsToday, trialActive } = get();
+    // Enforce plan expiry — downgrade expired paid plans to free
+    if ((plan === 'mureed' || plan === 'khass') && planExpiry) {
+      if (new Date(planExpiry).getTime() < Date.now()) {
+        return questionsToday < FREE_DAILY_LIMIT;
+      }
+    }
     if ((UNLIMITED_PLANS as PlanTier[]).includes(plan)) {
       return true;
+    }
+    if (plan === 'mureed') {
+      return questionsToday < MUREED_DAILY_LIMIT;
     }
     const limit = trialActive ? TRIAL_DAILY_LIMIT : FREE_DAILY_LIMIT;
     return questionsToday < limit;
   },
 
   consumeOne(): boolean {
-    const { plan, questionsToday, trialActive } = get();
-    if ((UNLIMITED_PLANS as PlanTier[]).includes(plan)) {
+    const { plan, planExpiry, questionsToday, trialActive } = get();
+    const expired =
+      (plan === 'mureed' || plan === 'khass') &&
+      planExpiry != null &&
+      new Date(planExpiry).getTime() < Date.now();
+    if (!expired && (UNLIMITED_PLANS as PlanTier[]).includes(plan)) {
       return true;
     }
-    const limit = trialActive ? TRIAL_DAILY_LIMIT : FREE_DAILY_LIMIT;
+    const limit =
+      !expired && plan === 'mureed'
+        ? MUREED_DAILY_LIMIT
+        : trialActive
+          ? TRIAL_DAILY_LIMIT
+          : FREE_DAILY_LIMIT;
     if (questionsToday >= limit) {
       return false;
     }
@@ -158,8 +177,19 @@ export const useQuotaStore = create<QuotaState>((set, get) => ({
     storage.set(KEYS.QUOTA_PLAN, plan);
     if (expiry) {
       storage.set(KEYS.QUOTA_PLAN_EXPIRY, expiry);
+    } else {
+      storage.delete(KEYS.QUOTA_PLAN_EXPIRY);
     }
-    set({ plan, ...(expiry ? { planExpiry: expiry } : {}) });
+    // Clear trial state when upgrading to paid plan
+    const clearTrial = plan === 'mureed' || plan === 'khass';
+    if (clearTrial) {
+      storage.delete(KEYS.TRIAL_START);
+    }
+    set({
+      plan,
+      planExpiry: expiry ?? null,
+      ...(clearTrial ? { trialStartDate: null, trialActive: false, trialExpired: false } : {}),
+    });
   },
 
   startTrial(): void {

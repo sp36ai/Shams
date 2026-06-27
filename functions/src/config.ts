@@ -8,8 +8,9 @@ import { defineInt, defineSecret } from 'firebase-functions/params';
 
 export type PlanTier = 'free' | 'mureed' | 'khass';
 
-export const UNLIMITED_PLANS: PlanTier[] = ['mureed', 'khass'];
-export const FREE_LIMIT = 100; // questions per UTC day
+export const UNLIMITED_PLANS: PlanTier[] = ['khass'];
+export const MUREED_DAILY_LIMIT = 3;
+export const FREE_LIMIT = 3; // questions per UTC day
 
 /** Return the ISO date string (YYYY-MM-DD) for the current UTC day. */
 export function todayKey(now = Date.now()): string {
@@ -54,9 +55,10 @@ export const PLAY_PRODUCT_MAP: Record<string, PlanTier> = {
   khass_annual: 'khass',
 };
 
-/** Plan durations in days (for expiry calculation). */
-export const PLAN_DURATION_DAYS: Record<PlanTier, number> = {
-  free: 0, // never expires
-  mureed: 31, // monthly billing cycle
-  khass: 31, // monthly billing cycle (annual handled by Play Store)
+/** Plan durations in days by product ID (monthly vs annual). */
+export const PLAN_DURATION_DAYS: Record<string, number> = {
+  mureed_monthly: 31,
+  mureed_annual: 365,
+  khass_monthly: 31,
+  khass_annual: 365,
 };

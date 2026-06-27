@@ -84,30 +84,39 @@ export const useAuthStore = create<AuthState>(set => ({
     set({ isLoading: true });
     // Await the first emission of onAuthStateChanged so the navigator
     // never flashes the Auth screen before the cached user resolves.
-    await new Promise<void>(resolve => {
-      let resolved = false;
-      auth().onAuthStateChanged(async fbUser => {
-        if (fbUser) {
-          try {
-            const tokenResult = await fbUser.getIdTokenResult();
-            const plan = (tokenResult.claims.plan as PlanTier | undefined) ?? 'free';
-            const expiry = tokenResult.claims.planExpiry as string | undefined;
-            useQuotaStore.getState().setPlan(plan, expiry);
-          } catch {
+    // 10-second timeout prevents Splash hanging if Firebase is unreachable.
+    await Promise.race([
+      new Promise<void>(resolve => {
+        let resolved = false;
+        auth().onAuthStateChanged(async fbUser => {
+          if (fbUser) {
+            try {
+              const tokenResult = await fbUser.getIdTokenResult();
+              const plan = (tokenResult.claims.plan as PlanTier | undefined) ?? 'free';
+              const expiry = tokenResult.claims.planExpiry as string | undefined;
+              useQuotaStore.getState().setPlan(plan, expiry);
+            } catch {
+              useQuotaStore.getState().setPlan('free');
+            }
+            cacheUserLocally(fbUser);
+          } else {
+            cacheUserLocally(null);
             useQuotaStore.getState().setPlan('free');
           }
-          cacheUserLocally(fbUser);
-        } else {
-          cacheUserLocally(null);
-          useQuotaStore.getState().setPlan('free');
-        }
-        set({ user: fbUser, isLoading: false });
-        if (!resolved) {
-          resolved = true;
+          set({ user: fbUser, isLoading: false });
+          if (!resolved) {
+            resolved = true;
+            resolve();
+          }
+        });
+      }),
+      new Promise<void>(resolve =>
+        setTimeout(() => {
+          set({ isLoading: false });
           resolve();
-        }
-      });
-    });
+        }, 10_000),
+      ),
+    ]);
   },
 
   signIn: async (email: string, password: string): Promise<Error | null> => {
@@ -177,7 +186,11 @@ export const useAuthStore = create<AuthState>(set => ({
 
   signOut: async (): Promise<void> => {
     set({ isLoading: true });
-    await auth().signOut();
+    try {
+      await auth().signOut();
+    } catch {
+      // sign-out failure is non-fatal — clear local state regardless
+    }
     cacheUserLocally(null);
     useQuotaStore.getState().reset();
     useReadingsStore.getState().clearAll();

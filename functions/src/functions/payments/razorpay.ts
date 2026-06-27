@@ -111,7 +111,7 @@ async function upgradePlan(
 }
 
 export const razorpayWebhook = onRequest(
-  { region: REGION, timeoutSeconds: 30, cors: true, secrets: [RAZORPAY_WEBHOOK_SECRET] },
+  { region: REGION, timeoutSeconds: 30, cors: false, secrets: [RAZORPAY_WEBHOOK_SECRET] },
   async (req, res) => {
     const startedAt = Date.now();
     const requestMeta = requestMetaFromHttp(req);

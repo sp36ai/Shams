@@ -44,6 +44,10 @@ export async function askOracle(args: AskOracleInput): Promise<AskOracleResult> 
     lon: args.lon,
   });
 
+  if (!result.data) {
+    throw new Error('Oracle returned no data');
+  }
+
   const data = result.data as {
     readingId: string;
     verdict: Reading['verdict'];

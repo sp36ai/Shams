@@ -64,9 +64,18 @@ export function usePurchase(): PurchaseState {
   useEffect(() => {
     initConnection().catch(() => undefined);
 
-    // Listeners are required by react-native-iap to keep the purchase queue
-    // draining on Android. Actual results come through the requestSubscription promise.
-    const updateSub = purchaseUpdatedListener((_p: SubscriptionPurchase) => undefined);
+    // Handle async/pending purchases that complete outside the requestSubscription flow
+    const updateSub = purchaseUpdatedListener(async (p: SubscriptionPurchase) => {
+      if (!p.purchaseToken || !p.productId) return;
+      const { verified, planExpiry } = await verifyWithServer(p.purchaseToken, p.productId);
+      if (verified) {
+        const tier = tierFromSku(p.productId);
+        if (tier) {
+          await finishTransaction({ purchase: p, isConsumable: false }).catch(() => undefined);
+          setPlan(tier, planExpiry);
+        }
+      }
+    });
     const errorSub = purchaseErrorListener((_e: PurchaseError) => undefined);
 
     return () => {
@@ -74,7 +83,7 @@ export function usePurchase(): PurchaseState {
       errorSub.remove();
       endConnection().catch(() => undefined);
     };
-  }, []);
+  }, [verifyWithServer, setPlan]);
 
   const verifyWithServer = useCallback(
     async (
@@ -109,11 +118,19 @@ export function usePurchase(): PurchaseState {
       try {
         const sku = SKU_MAP[plan];
 
-        // Validate SKU is live on Play Console before launching the purchase sheet
-        await getSubscriptions({ skus: [sku] });
+        // Fetch subscription details to extract the required offerToken (Play Billing v5)
+        const subs = await getSubscriptions({ skus: [sku] });
+        const sub = subs[0];
+        const offerToken =
+          (sub as unknown as { subscriptionOfferDetails?: Array<{ offerToken: string }> })
+            ?.subscriptionOfferDetails?.[0]?.offerToken;
 
         // Launch the Google Play subscription sheet
-        const result = await requestSubscription({ sku });
+        const result = await requestSubscription(
+          offerToken
+            ? { sku, subscriptionOffers: [{ sku, offerToken }] }
+            : { sku },
+        );
 
         const p: SubscriptionPurchase | null = Array.isArray(result)
           ? (result[0] ?? null)
@@ -158,6 +175,7 @@ export function usePurchase(): PurchaseState {
         if (verified) {
           const tier = tierFromSku(p.productId);
           if (tier) {
+            await finishTransaction({ purchase: p, isConsumable: false }).catch(() => undefined);
             setPlan(tier, planExpiry);
             return { success: true };
           }

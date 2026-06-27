@@ -41,12 +41,12 @@ interface GoogleAccessToken {
   expires_in: number;
 }
 
-interface ProductPurchase {
-  purchaseState: number; // 0 = purchased, 1 = canceled, 2 = pending
-  consumptionState: number; // 0 = not consumed
-  acknowledgementState: number; // 0 = not acknowledged
-  orderId: string;
-  purchaseTimeMillis: string;
+interface SubscriptionPurchaseV2 {
+  subscriptionState: string; // SUBSCRIPTION_STATE_ACTIVE, _CANCELED, _EXPIRED, etc.
+  acknowledgementState: string; // ACKNOWLEDGEMENT_STATE_ACKNOWLEDGED or _PENDING
+  orderId?: string;
+  lineItems: Array<{ expiryTime?: string; autoRenewingPlan?: { autoRenewEnabled: boolean } }>;
+  startTime?: string;
 }
 
 function httpsPost(url: string, body: string, headers: Record<string, string>): Promise<string> {
@@ -176,8 +176,8 @@ export const verifyGooglePlayPurchase = onCall(
       // Get Google OAuth token
       const accessToken = await getGoogleAccessToken();
 
-      // Verify purchase with Google Play API
-      const apiUrl = `https://androidpublisher.googleapis.com/androidpublisher/v3/applications/${input.packageName}/purchases/products/${input.productId}/tokens/${input.purchaseToken}`;
+      // Verify subscription with Google Play Subscriptions v2 API
+      const apiUrl = `https://androidpublisher.googleapis.com/androidpublisher/v3/applications/${input.packageName}/purchases/subscriptionsv2/get/${input.productId}/tokens/${input.purchaseToken}`;
       const { status, body } = await httpsGet(apiUrl, accessToken);
 
       if (status !== 200) {
@@ -191,28 +191,37 @@ export const verifyGooglePlayPurchase = onCall(
         throw new HttpsError('invalid-argument', 'Purchase could not be verified');
       }
 
-      const purchase = JSON.parse(body) as ProductPurchase;
+      const purchase = JSON.parse(body) as SubscriptionPurchaseV2;
 
-      // purchaseState 0 = purchased
-      if (purchase.purchaseState !== 0) {
-        throw new HttpsError('failed-precondition', 'Purchase is not in a valid state');
+      // Only accept active or pending cancellation (not expired)
+      if (
+        purchase.subscriptionState !== 'SUBSCRIPTION_STATE_ACTIVE' &&
+        purchase.subscriptionState !== 'SUBSCRIPTION_STATE_CANCELED'
+      ) {
+        throw new HttpsError('failed-precondition', 'Subscription is not in a valid state');
       }
 
-      const durationDays = PLAN_DURATION_DAYS[plan];
-      const expiresAt = new Date(Date.now() + durationDays * 86_400_000);
+      // Use expiry from Play if available, otherwise fall back to duration table
+      const lineExpiry = purchase.lineItems?.[0]?.expiryTime;
+      const durationDays = PLAN_DURATION_DAYS[input.productId] ?? 31;
+      const expiresAt = lineExpiry
+        ? new Date(lineExpiry)
+        : new Date(Date.now() + durationDays * 86_400_000);
 
-      // Acknowledge to prevent auto-refund (24h window)
-      if (purchase.acknowledgementState === 0) {
-        const ackUrl = `https://androidpublisher.googleapis.com/androidpublisher/v3/applications/${input.packageName}/purchases/products/${input.productId}/tokens/${input.purchaseToken}:acknowledge`;
+      // Acknowledge subscription to prevent auto-refund (3-day window)
+      if (purchase.acknowledgementState !== 'ACKNOWLEDGEMENT_STATE_ACKNOWLEDGED') {
+        const ackUrl = `https://androidpublisher.googleapis.com/androidpublisher/v3/applications/${input.packageName}/purchases/subscriptions/${input.productId}/tokens/${input.purchaseToken}:acknowledge`;
         await httpsPostAuth(ackUrl, accessToken);
       }
+
+      const orderId = purchase.orderId ?? input.purchaseToken.slice(0, 24);
 
       // Update Firestore
       await db.collection('quotas').doc(userId).set(
         {
           plan,
           planExpiry: expiresAt.toISOString(),
-          orderId: purchase.orderId,
+          orderId,
           updatedAt: FieldValue.serverTimestamp(),
         },
         { merge: true },
@@ -224,7 +233,7 @@ export const verifyGooglePlayPurchase = onCall(
       logger.info('play purchase verified', {
         userId,
         plan,
-        orderId: purchase.orderId,
+        orderId,
         ipHash: requestMeta.ipHash,
         durationMs: Date.now() - startedAt,
       });
@@ -243,7 +252,7 @@ export const verifyGooglePlayPurchase = onCall(
       return {
         plan,
         planExpiry: expiresAt.toISOString(),
-        orderId: purchase.orderId,
+        orderId,
       };
     } catch (err) {
       if (err instanceof HttpsError) {

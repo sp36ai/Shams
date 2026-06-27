@@ -19,7 +19,7 @@ import { FUNCTION_OPTS } from '../config';
 const MAX_BATCH_SIZE = 500; // Firestore batch limit
 
 export const syncReadings = onCall(
-  { ...FUNCTION_OPTS, enforceAppCheck: process.env.NODE_ENV !== 'development' },
+  { ...FUNCTION_OPTS, enforceAppCheck: true },
   async request => {
     const { userId } = verifyAuth(request);
     const { readings } = parse(SyncReadingsSchema, request.data);
@@ -70,7 +70,7 @@ export const syncReadings = onCall(
 );
 
 export const deleteReading = onCall(
-  { ...FUNCTION_OPTS, enforceAppCheck: process.env.NODE_ENV !== 'development' },
+  { ...FUNCTION_OPTS, enforceAppCheck: true },
   async request => {
     const { userId } = verifyAuth(request);
     const { readingId } = parse(DeleteReadingSchema, request.data);

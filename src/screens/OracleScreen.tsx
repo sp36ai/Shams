@@ -705,13 +705,31 @@ const OracleScreen: React.FC = () => {
 
         let intent: IntentResult;
         if (apiKey) {
-          intent = await classifyIntent({
-            userMessage: text,
-            lockedQuestion: lastReading.question,
-            verdictDirection: lastReading.verdict,
-            recentMessages,
-            apiKey,
-          });
+          try {
+            intent = await classifyIntent({
+              userMessage: text,
+              lockedQuestion: lastReading.question,
+              verdictDirection: lastReading.verdict,
+              recentMessages,
+              apiKey,
+            });
+          } catch {
+            const basicIntent = detectIntent(text);
+            intent = {
+              class:
+                basicIntent === 'new'
+                  ? 'NEW_QUESTION'
+                  : basicIntent === 'timing'
+                    ? 'TIMING'
+                    : basicIntent === 'why'
+                      ? 'CLARIFY'
+                      : basicIntent === 'remedy'
+                        ? 'REMEDY'
+                        : 'UNKNOWN',
+              confidence: 'LOW',
+              reason: 'fallback to string matching',
+            };
+          }
         } else {
           // Fallback to basic detection if no API key
           const basicIntent = detectIntent(text);

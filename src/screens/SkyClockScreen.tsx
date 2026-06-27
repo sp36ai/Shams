@@ -3,7 +3,7 @@
  *
  * Layout:
  *   1. Header with back button
- *   2. TimingBar — hora, day, moon sign, nakshatra, LST, moon phase
+ *   2. TimingBar — hora, day, moon sign, manzil, LST, moon phase
  *      Refreshes every 60 s; timer runs only while screen is focused.
  *   3. CollapsibleCosmicClock — collapsed by default.
  *      CosmicClock's setInterval runs only when focused AND expanded.
@@ -25,7 +25,7 @@ import StarfieldBackground from '@components/StarfieldBackground';
 import CosmicClock from '@components/home/CosmicClock';
 import type { RootStackParamList } from '@navigation/types';
 
-// ── Sign / nakshatra helpers ──────────────────────────────────────────────────
+// ── Sign / manzil helpers ──────────────────────────────────────────────────
 
 const SIGN_NAMES = [
   'Aries',
@@ -42,34 +42,35 @@ const SIGN_NAMES = [
   'Pisces',
 ] as const;
 
-const NAKSHATRAS: readonly string[] = [
-  'Ashwini',
-  'Bharani',
-  'Krittika',
-  'Rohini',
-  'Mrigashira',
-  'Ardra',
-  'Punarvasu',
-  'Pushya',
-  'Ashlesha',
-  'Magha',
-  'Purva Phalguni',
-  'Uttara Phalguni',
-  'Hasta',
-  'Chitra',
-  'Swati',
-  'Vishakha',
-  'Anuradha',
-  'Jyeshtha',
-  'Mula',
-  'Purva Ashadha',
-  'Uttara Ashadha',
-  'Shravana',
-  'Dhanishtha',
-  'Shatabhisha',
-  'Purva Bhadrapada',
-  'Uttara Bhadrapada',
-  'Revati',
+const MANAZIL: readonly string[] = [
+  'Al-Sharaṭayn',
+  'Al-Buṭayn',
+  'Al-Thurayya',
+  'Al-Dabarān',
+  'Al-Haqʿa',
+  'Al-Hanʿa',
+  'Al-Dhirāʿ',
+  'Al-Nathra',
+  'Al-Ṭarf',
+  'Al-Jabha',
+  'Al-Zubra',
+  'Al-Ṣarfa',
+  'Al-ʿAwwāʾ',
+  'Al-Simāk',
+  'Al-Ghafr',
+  'Al-Zubānā',
+  'Al-Iklīl',
+  'Al-Qalb',
+  'Al-Shawla',
+  'Al-Naʿāʾim',
+  'Al-Balda',
+  'Saʿd al-Dhābiḥ',
+  'Saʿd Bulaʿ',
+  'Saʿd al-Suʿūd',
+  'Saʿd al-Akhbiya',
+  'Al-Fargh al-Awwal',
+  'Al-Fargh al-Thānī',
+  'Baṭn al-Ḥūt',
 ];
 
 function mod360(x: number): number {
@@ -117,8 +118,8 @@ function displayLonSidereal(name: PlanetName, nowMs: number): number {
   return mod360(tropical - LAHIRI_AYANAMSA_2025);
 }
 
-function nakshatraName(lon: number): string {
-  return NAKSHATRAS[Math.floor((lon / 360) * 27)] ?? '—';
+function manzilName(lon: number): string {
+  return MANAZIL[Math.floor((lon / 360) * 28)] ?? '—';
 }
 
 // ── Moon phase ────────────────────────────────────────────────────────────────
@@ -168,15 +169,19 @@ interface TimingState {
   timeLabel: string;
 }
 
+function toArabic(planet: string): string {
+  return PLANET_ARABIC[planet as PlanetName] ?? planet;
+}
+
 function computeTiming(lonDeg: number): TimingState {
   const now = Date.now();
   const moonLon = displayLonSidereal('Moon', now);
   const signIdx = Math.floor(moonLon / 30);
   return {
-    horaLord: horaLordAtMoment(now, lonDeg),
-    dayLord: dayLordAtMoment(now, lonDeg),
+    horaLord: toArabic(horaLordAtMoment(now, lonDeg)),
+    dayLord: toArabic(dayLordAtMoment(now, lonDeg)),
     moonSign: SIGN_NAMES[signIdx] ?? '—',
-    moonNakshatra: nakshatraName(moonLon),
+    moonNakshatra: manzilName(moonLon),
     moonPhaseFull: moonPhase(now),
     lst: localSiderealTime(now, lonDeg),
     timeLabel: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
@@ -195,6 +200,18 @@ const PLANET_GLYPHS: Record<PlanetName, string> = {
   Saturn: '♄',
   Rahu: '☊',
   Ketu: '☋',
+};
+
+const PLANET_ARABIC: Record<PlanetName, string> = {
+  Sun: 'Shams',
+  Moon: 'al-Qamar',
+  Mars: 'al-Mirrikh',
+  Mercury: 'Utarid',
+  Jupiter: 'Mushtari',
+  Venus: 'Zuhra',
+  Saturn: 'Zuhal',
+  Rahu: "Ra's al-Tannin",
+  Ketu: 'Dhanab al-Tannin',
 };
 
 // Mean daily motion (°/day) from J2K Lr constants (°/century ÷ 36525).
@@ -217,6 +234,7 @@ const STATUS_COMBUST = '#B8952A'; // aged brass — combustion, closeness to the
 
 interface PlanetRow {
   name: PlanetName;
+  displayName: string;
   glyph: string;
   sign: string;
   degreeStr: string;
@@ -247,7 +265,7 @@ function computePlanetRows(nowMs: number): PlanetRow[] {
       status = 'Direct';
     }
 
-    return { name, glyph: PLANET_GLYPHS[name], sign, degreeStr, status };
+    return { name, displayName: PLANET_ARABIC[name], glyph: PLANET_GLYPHS[name], sign, degreeStr, status };
   });
 }
 
@@ -354,7 +372,7 @@ const SkyClockScreen: React.FC = () => {
           />
           <View style={[styles.divider, { backgroundColor: colors.border }]} />
           <TimingPill
-            label="Nakshatra"
+            label="Manzil"
             value={timing.moonNakshatra}
             colors={colors}
             typography={typography}
@@ -428,7 +446,7 @@ const SkyClockScreen: React.FC = () => {
               ))}
             </View>
             {/* Data rows */}
-            {planetRows.map(({ name, glyph, sign, degreeStr, status }, i) => (
+            {planetRows.map(({ name, displayName, glyph, sign, degreeStr, status }, i) => (
               <View
                 key={name}
                 style={[
@@ -440,7 +458,7 @@ const SkyClockScreen: React.FC = () => {
                 ]}
               >
                 <Text style={[typography('caption'), styles.colPlanet, { color: colors.text }]}>
-                  {glyph} {name}
+                  {glyph} {displayName}
                 </Text>
                 <Text style={[typography('caption'), styles.colData, { color: colors.accent }]}>
                   {sign}
@@ -472,7 +490,7 @@ const SkyClockScreen: React.FC = () => {
         {/* Disclaimer */}
         <Text style={[typography('caption'), styles.disclaimer, { color: colors.textFaint }]}>
           Sidereal positions are mean-longitude approximations (±1–5°) for display only. Horary
-          judgment uses the full KP engine on the server.
+          judgment uses precise astronomical calculation on the server.
         </Text>
       </ScrollView>
     </SafeAreaView>
