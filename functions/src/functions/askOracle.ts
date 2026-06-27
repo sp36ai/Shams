@@ -32,6 +32,7 @@ import {
   FUNCTION_OPTS,
   UNLIMITED_PLANS,
   FREE_LIMIT,
+  MUREED_DAILY_LIMIT,
   todayKey,
   ANTHROPIC_API_KEY,
   type PlanTier,
@@ -129,14 +130,15 @@ async function claimQuotaSlot(
     const storedWeek = d.weekKey ?? '';
     const used = storedWeek === currentWeek ? (d.used ?? 0) : 0;
 
-    if (used >= FREE_LIMIT) {
+    const dailyLimit = plan === 'mureed' ? MUREED_DAILY_LIMIT : FREE_LIMIT;
+    if (used >= dailyLimit) {
       throw new HttpsError(
         'resource-exhausted',
-        `Weekly quota exhausted (${used}/${FREE_LIMIT}). Upgrade to continue.`,
+        `Daily quota exhausted (${used}/${dailyLimit}). Upgrade to continue.`,
       );
     }
 
-    remaining = FREE_LIMIT - used - 1;
+    remaining = dailyLimit - used - 1;
     tx.set(
       quotaRef,
       { weekKey: currentWeek, used: used + 1, updatedAt: FieldValue.serverTimestamp() },
@@ -424,10 +426,11 @@ export const askOracle = onCall(
             return null;
           }
           const sl = cusp.subLord;
-          const slHouse = houseForLongitude(
-            chart.planets[sl].siderealLongitude,
-            cuspLons,
-          ) as number;
+          const slPos = chart.planets[sl];
+          if (slPos === undefined) {
+            return null;
+          }
+          const slHouse = houseForLongitude(slPos.siderealLongitude, cuspLons) as number;
           return { house: h, subLord: sl as string, subLordHouse: slHouse };
         })
         .filter(Boolean) as Array<{ house: number; subLord: string; subLordHouse: number }>;

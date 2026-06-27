@@ -96,7 +96,7 @@ function httpsGet(url: string, accessToken: string): Promise<{ status: number; b
   });
 }
 
-function httpsPostAuth(url: string, accessToken: string): Promise<void> {
+function httpsPostAuth(url: string, accessToken: string): Promise<number> {
   return new Promise((resolve, reject) => {
     const u = new URL(url);
     const req = https.request(
@@ -108,7 +108,7 @@ function httpsPostAuth(url: string, accessToken: string): Promise<void> {
       },
       res => {
         res.on('data', () => undefined);
-        res.on('end', () => resolve());
+        res.on('end', () => resolve(res.statusCode ?? 0));
       },
     );
     req.on('error', reject);
@@ -193,25 +193,42 @@ export const verifyGooglePlayPurchase = onCall(
 
       const purchase = JSON.parse(body) as SubscriptionPurchaseV2;
 
-      // Only accept active or pending cancellation (not expired)
-      if (
-        purchase.subscriptionState !== 'SUBSCRIPTION_STATE_ACTIVE' &&
-        purchase.subscriptionState !== 'SUBSCRIPTION_STATE_CANCELED'
-      ) {
+      const lineExpiry = purchase.lineItems?.[0]?.expiryTime;
+      const durationDays = PLAN_DURATION_DAYS[input.productId] ?? 31;
+
+      // Only accept active subscriptions or canceled ones still within paid period
+      if (purchase.subscriptionState === 'SUBSCRIPTION_STATE_CANCELED') {
+        const expiryMs = lineExpiry ? new Date(lineExpiry).getTime() : 0;
+        if (isNaN(expiryMs) || expiryMs <= Date.now()) {
+          throw new HttpsError('failed-precondition', 'Subscription has expired');
+        }
+      } else if (purchase.subscriptionState !== 'SUBSCRIPTION_STATE_ACTIVE') {
         throw new HttpsError('failed-precondition', 'Subscription is not in a valid state');
       }
 
-      // Use expiry from Play if available, otherwise fall back to duration table
-      const lineExpiry = purchase.lineItems?.[0]?.expiryTime;
-      const durationDays = PLAN_DURATION_DAYS[input.productId] ?? 31;
-      const expiresAt = lineExpiry
-        ? new Date(lineExpiry)
-        : new Date(Date.now() + durationDays * 86_400_000);
+      // Use expiry from Play if valid, otherwise fall back to duration table
+      let expiresAt: Date;
+      if (lineExpiry) {
+        const parsed = new Date(lineExpiry);
+        expiresAt = isNaN(parsed.getTime())
+          ? new Date(Date.now() + durationDays * 86_400_000)
+          : parsed;
+      } else {
+        expiresAt = new Date(Date.now() + durationDays * 86_400_000);
+      }
 
-      // Acknowledge subscription to prevent auto-refund (3-day window)
+      // Acknowledge subscription to prevent auto-refund (3-day window).
+      // Uses subscriptionsv2 acknowledge endpoint (not the v1 subscriptions path).
       if (purchase.acknowledgementState !== 'ACKNOWLEDGEMENT_STATE_ACKNOWLEDGED') {
-        const ackUrl = `https://androidpublisher.googleapis.com/androidpublisher/v3/applications/${input.packageName}/purchases/subscriptions/${input.productId}/tokens/${input.purchaseToken}:acknowledge`;
-        await httpsPostAuth(ackUrl, accessToken);
+        const ackUrl = `https://androidpublisher.googleapis.com/androidpublisher/v3/applications/${input.packageName}/purchases/subscriptionsv2/tokens/${input.purchaseToken}:acknowledge`;
+        const ackStatus = await httpsPostAuth(ackUrl, accessToken);
+        if (ackStatus !== 200 && ackStatus !== 204) {
+          logger.warn('play subscription ack failed', {
+            userId,
+            ackStatus,
+            purchaseToken: input.purchaseToken.slice(0, 16),
+          });
+        }
       }
 
       const orderId = purchase.orderId ?? input.purchaseToken.slice(0, 24);

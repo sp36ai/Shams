@@ -118,9 +118,8 @@ export interface VerdictTiming {
   readonly window: TimingWindow;
   /** Inclusive range of `window` units until the event. */
   readonly range: { readonly min: number; readonly max: number };
-  readonly activeDasha: Planet;
-  readonly activeAntardasha: Planet;
-  readonly activePratyantardasha: Planet;
+  /** How many of the 5 classical RPs are confirmed significators. */
+  readonly rpMatchCount?: number;
   /** Up to 3 transit windows that activate the significators. */
   readonly transitTriggers: readonly TransitTrigger[];
   readonly doubleTransitSignal?: DoubleTransitSignal;

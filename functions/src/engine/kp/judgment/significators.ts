@@ -138,13 +138,14 @@ export function computeSignificatorSets(
 
 /**
  * STEP 0: Promise Layer Check.
- * Checks if the Cusp Sub-Lord of a specific house is connected to favorable houses.
- * If the Sub-Lord of the primary house is in a denial house, the matter is NOT promised.
+ * Promise is blocked only if the cusp sub-lord occupies a denial house.
+ * A sub-lord in a neutral house does NOT deny promise.
  */
 export function isHousePromised(
   chart: Chart,
   house: HouseIndex,
-  favorableHouses: readonly number[],
+  _favorableHouses: readonly number[],
+  denialHouses: readonly number[],
 ): boolean {
   const cusp: HouseCusp | undefined = chart.cusps[house - 1];
   if (!cusp) {
@@ -153,5 +154,5 @@ export function isHousePromised(
 
   const subLord = cusp.subLord;
   const subLordHouse = houseOfPlanet(subLord, chart);
-  return favorableHouses.includes(subLordHouse);
+  return !denialHouses.includes(subLordHouse);
 }

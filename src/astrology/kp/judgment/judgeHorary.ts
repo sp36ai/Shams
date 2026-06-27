@@ -54,7 +54,6 @@ import type {
   ReasoningStep,
 } from '@astrology/types/verdict';
 import { HOUSE_MATRIX } from '@astrology/kp/rules/houseMatrix';
-import { getSubLords } from '@astrology/primitives/subLord';
 import { houseOfPlanet } from './significations';
 import { computeSignificatorSets } from './significators';
 import { computeConvergenceTiming } from './timing';
@@ -322,7 +321,8 @@ function applyKotamrajuFilter(
     if (planetData === undefined) {
       return false;
     }
-    const subLord = getSubLords(planetData.siderealLongitude).subLord as Planet;
+    // Read sub-lord from pre-computed chart data (not re-derived from ephemeris)
+    const subLord = planetData.subLord as Planet;
     const subLordHouse = houseOfPlanet(subLord, chart);
     return !denial.includes(subLordHouse);
   });
@@ -471,13 +471,15 @@ export function judgeHorary(chart: Chart, question: ClassifiedQuestion): Verdict
   );
 
   // ── STEP 4: Ruling Planets × Significator intersection (Phase D) ─────────
-  const allWitnesses = (chart.rulingPlanets as Planet[]).filter(Boolean);
+  // chart.rulingPlanets = [dayLord, horaLord, ascSignLord, ascStarLord, moonSignLord, moonStarLord]
+  // horaLord is at index 1 — excluded from the 5-RP scoring set per RKP 5-RP rule
+  const horaLord = chart.rulingPlanets[1] as Planet | undefined;
+  const fiveRP = (chart.rulingPlanets as Planet[]).filter((_, i) => i !== 1).filter(Boolean);
 
-  const filteredRulingPlanets = applyKotamrajuFilter(allWitnesses, favorable, denial, chart);
+  const filteredFiveRP = applyKotamrajuFilter(fiveRP, favorable, denial, chart);
+  const filteredRPSet = new Set<Planet>(filteredFiveRP);
 
-  const filteredRPSet = new Set<Planet>(filteredRulingPlanets);
-
-  for (const rp of allWitnesses) {
+  for (const rp of fiveRP) {
     if (!filteredRPSet.has(rp)) {
       reasoning.push(step(4, `${rp} removed by Kotamraju filter (sub-lord in denial)`, 0));
     }
@@ -498,10 +500,18 @@ export function judgeHorary(chart: Chart, question: ClassifiedQuestion): Verdict
     reasoning.push(step(4, `${p}: Denial Significator ∩ Ruling Planet witness → (−1)`, -1));
   }
 
-  for (const rp of filteredRulingPlanets) {
+  for (const rp of filteredFiveRP) {
     if (!confirmedSignificators.includes(rp) && !deniedSignificators.includes(rp)) {
       reasoning.push(step(4, `${rp}: ruling planet but not a question significator → 0`, 0));
     }
+  }
+
+  // horaLord as extended witness — logged separately, does not affect score
+  if (horaLord) {
+    const horaFav = significators.favorable.includes(horaLord);
+    const horaDen = significators.denial.includes(horaLord);
+    const horaLabel = horaFav ? 'favorable extended witness' : horaDen ? 'denial extended witness' : 'neutral extended witness';
+    reasoning.push(step(4, `${horaLord} (Hora Lord): ${horaLabel} — not scored`, 0));
   }
 
   // ── STEP 5: Verdict from total score ─────────────────────────────────────
@@ -514,7 +524,8 @@ export function judgeHorary(chart: Chart, question: ClassifiedQuestion): Verdict
     verdict = 'CONDITIONAL';
   }
 
-  if (verdict === 'YES') {
+  // DELAYED modifier fires on YES or CONDITIONAL when key planets are retrograde
+  if (verdict === 'YES' || verdict === 'CONDITIONAL') {
     const mslRetro = chart.planets[moonSubLord].isRetrograde;
     const jupRetro = chart.planets.Jupiter.isRetrograde;
     const venRetro = chart.planets.Venus.isRetrograde;
@@ -523,7 +534,7 @@ export function judgeHorary(chart: Chart, question: ClassifiedQuestion): Verdict
       const who = [mslRetro && `${moonSubLord}(MSL)`, jupRetro && 'Jupiter', venRetro && 'Venus']
         .filter(Boolean)
         .join(', ');
-      reasoning.push(step(5, `YES → DELAYED: retrograde planet(s): ${who}`, 0));
+      reasoning.push(step(5, `${verdict} → DELAYED: retrograde planet(s): ${who}`, 0));
     }
   }
 
@@ -536,8 +547,8 @@ export function judgeHorary(chart: Chart, question: ClassifiedQuestion): Verdict
   );
 
   // ── Confidence ────────────────────────────────────────────────────────────
-  // MSL Placement (2) + 6 Ruling Planet Witnesses (6) = 8
-  const maxScore = 8;
+  // MSL Placement (2) + 5 Ruling Planet Witnesses (5) = 7
+  const maxScore = 7;
   const confidence = Math.round(
     Math.min(100, Math.max(10, ((score + maxScore) / (2 * maxScore)) * 100)),
   );
@@ -547,7 +558,7 @@ export function judgeHorary(chart: Chart, question: ClassifiedQuestion): Verdict
   reasoning.push(
     step(
       5,
-      `Timing: convergence on MD=${timing.activeDasha} AD=${timing.activeAntardasha} → ${timing.window}`,
+      `Timing: RP intersection (${timing.rpMatchCount ?? 0}/5 match) → ${timing.window} (${timing.range.min}–${timing.range.max})`,
     ),
   );
 

@@ -131,25 +131,32 @@ export const useQuotaStore = create<QuotaState>((set, get) => ({
   FREE_DAILY_LIMIT,
 
   canAsk(): boolean {
-    const { plan, planExpiry, questionsToday, trialActive } = get();
+    // Always read fresh count from MMKV to handle midnight rollover without store re-init
+    const fresh = readCount();
+    const { plan, planExpiry, trialActive } = get();
+    if (fresh !== get().questionsToday) {
+      set({ questionsToday: fresh });
+    }
     // Enforce plan expiry — downgrade expired paid plans to free
     if ((plan === 'mureed' || plan === 'khass') && planExpiry) {
       if (new Date(planExpiry).getTime() < Date.now()) {
-        return questionsToday < FREE_DAILY_LIMIT;
+        return fresh < FREE_DAILY_LIMIT;
       }
     }
     if ((UNLIMITED_PLANS as PlanTier[]).includes(plan)) {
       return true;
     }
     if (plan === 'mureed') {
-      return questionsToday < MUREED_DAILY_LIMIT;
+      return fresh < MUREED_DAILY_LIMIT;
     }
     const limit = trialActive ? TRIAL_DAILY_LIMIT : FREE_DAILY_LIMIT;
-    return questionsToday < limit;
+    return fresh < limit;
   },
 
   consumeOne(): boolean {
-    const { plan, planExpiry, questionsToday, trialActive } = get();
+    // Always read fresh count from MMKV to handle midnight rollover without store re-init
+    const fresh = readCount();
+    const { plan, planExpiry, trialActive } = get();
     const expired =
       (plan === 'mureed' || plan === 'khass') &&
       planExpiry != null &&
@@ -163,10 +170,10 @@ export const useQuotaStore = create<QuotaState>((set, get) => ({
         : trialActive
           ? TRIAL_DAILY_LIMIT
           : FREE_DAILY_LIMIT;
-    if (questionsToday >= limit) {
+    if (fresh >= limit) {
       return false;
     }
-    const next = questionsToday + 1;
+    const next = fresh + 1;
     storage.set(KEYS.QUOTA_COUNT, next);
     storage.set(KEYS.QUOTA_WEEK, todayKey());
     set({ questionsToday: next });
@@ -238,8 +245,17 @@ export const useQuotaStore = create<QuotaState>((set, get) => ({
 /* -------------------------------------------------------------------------- */
 
 export const selectQuestionsLeft = (s: QuotaState): number => {
+  // Expired paid plans: downgrade display to free limit
+  if ((s.plan === 'mureed' || s.plan === 'khass') && s.planExpiry) {
+    if (new Date(s.planExpiry).getTime() < Date.now()) {
+      return Math.max(0, FREE_DAILY_LIMIT - s.questionsToday);
+    }
+  }
   if ((UNLIMITED_PLANS as PlanTier[]).includes(s.plan)) {
     return Infinity;
+  }
+  if (s.plan === 'mureed') {
+    return Math.max(0, MUREED_DAILY_LIMIT - s.questionsToday);
   }
   const limit = s.trialActive ? TRIAL_DAILY_LIMIT : FREE_DAILY_LIMIT;
   return Math.max(0, limit - s.questionsToday);

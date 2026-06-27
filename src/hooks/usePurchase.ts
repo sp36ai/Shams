@@ -71,10 +71,11 @@ export function usePurchase(): PurchaseState {
       if (verified) {
         const tier = tierFromSku(p.productId);
         if (tier) {
-          await finishTransaction({ purchase: p, isConsumable: false }).catch(() => undefined);
           setPlan(tier, planExpiry);
         }
       }
+      // Always finish — prevents infinite re-delivery on verification failure
+      await finishTransaction({ purchase: p, isConsumable: false }).catch(() => undefined);
     });
     const errorSub = purchaseErrorListener((_e: PurchaseError) => undefined);
 
@@ -109,11 +110,6 @@ export function usePurchase(): PurchaseState {
 
   const purchase = useCallback(
     async (plan: PurchasePlan): Promise<PurchaseResult> => {
-      const tier = tierFromPlan(plan);
-      if (tier === currentPlan) {
-        return { success: false, reason: 'already_active' };
-      }
-
       setPurchasing(true);
       try {
         const sku = SKU_MAP[plan];
