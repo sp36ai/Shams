@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, StatusBar, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, StatusBar } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { runSecurityChecks, INTEGRITY_FAIL_MESSAGE } from '@utils/security';
 import { initializeAppCheckService } from './firebase/appCheck';
@@ -7,30 +7,26 @@ import { ThemeProvider } from '@theme/ThemeProvider';
 import { I18nProvider } from '@i18n/I18nProvider';
 import RootNavigator from './navigation/RootNavigator';
 
-// Inline diagnostic boundary — shows full crash stack on screen.
-// Remove before production release.
-class DiagnosticErrorBoundary extends React.Component<
+class ErrorBoundary extends React.Component<
   { children: React.ReactNode },
-  { error: Error | null }
+  { hasError: boolean }
 > {
   constructor(props: { children: React.ReactNode }) {
     super(props);
-    this.state = { error: null };
+    this.state = { hasError: false };
   }
-  static getDerivedStateFromError(error: Error) {
-    return { error };
+  static getDerivedStateFromError() {
+    return { hasError: true };
   }
   render() {
-    if (this.state.error) {
+    if (this.state.hasError) {
       return (
         <View style={styles.errorContainer}>
           <StatusBar barStyle="light-content" backgroundColor="#030E10" />
-          <Text style={styles.errorTitle}>Crash Report</Text>
-          <ScrollView>
-            <Text style={styles.errorMessage}>
-              {this.state.error.message}{'\n\n'}{this.state.error.stack}
-            </Text>
-          </ScrollView>
+          <Text style={styles.errorTitle}>Something went wrong</Text>
+          <Text style={styles.errorMessage}>
+            Please close and reopen the app. If the issue persists, contact support.
+          </Text>
         </View>
       );
     }
@@ -69,7 +65,7 @@ const App: React.FC = () => {
   }
 
   return (
-    <DiagnosticErrorBoundary>
+    <ErrorBoundary>
       <ThemeProvider>
         <SafeAreaProvider>
           <I18nProvider>
@@ -77,7 +73,7 @@ const App: React.FC = () => {
           </I18nProvider>
         </SafeAreaProvider>
       </ThemeProvider>
-    </DiagnosticErrorBoundary>
+    </ErrorBoundary>
   );
 };
 

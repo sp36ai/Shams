@@ -201,7 +201,7 @@ const AuthScreen: React.FC = () => {
     } else {
       const error = await signUp(form.email.trim(), form.password, form.name.trim());
       if (error) {
-        setServerError(error.message);
+        setServerError(normaliseAuthError(error.message, t));
       } else {
         setSuccessMsg('Account created successfully.');
       }
@@ -216,7 +216,7 @@ const AuthScreen: React.FC = () => {
       await auth().sendPasswordResetEmail(form.email.trim());
     } catch (error) {
       if (error instanceof Error) {
-        setServerError(error.message);
+        setServerError(normaliseAuthError(error.message, t));
         return;
       }
       setServerError(t('errors.unknown'));
@@ -675,8 +675,8 @@ function normaliseAuthError(raw: string, t: ReturnType<typeof useTranslation>): 
     return t('errors.network');
   }
 
-  // Generic fallback
-  return raw;
+  // Generic fallback — never expose raw Firebase error strings to users
+  return t('errors.unknown');
 }
 
 /* -------------------------------------------------------------------------- */
