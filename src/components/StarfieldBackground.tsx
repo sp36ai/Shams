@@ -10,9 +10,9 @@
  */
 
 import React, { useEffect, useMemo, useRef } from 'react';
-import { Animated, Dimensions, Easing, Platform, StyleSheet, View } from 'react-native';
+import { Animated, Easing, Platform, StyleSheet, View, useWindowDimensions } from 'react-native';
 
-const { width: W, height: H } = Dimensions.get('window');
+type Dimensions = { W: number; H: number };
 
 // ── Star spec ─────────────────────────────────────────────────────────────────
 
@@ -32,12 +32,12 @@ const TIER_CONFIG: Record<
   StarTier,
   { count: number; minSize: number; maxSize: number; minPeak: number; maxPeak: number }
 > = {
-  tiny: { count: 50, minSize: 0.5, maxSize: 1.0, minPeak: 0.25, maxPeak: 0.55 },
-  medium: { count: 50, minSize: 1.0, maxSize: 2.2, minPeak: 0.5, maxPeak: 0.8 },
-  bright: { count: 20, minSize: 2.5, maxSize: 4.0, minPeak: 0.7, maxPeak: 1.0 },
+  tiny: { count: 30, minSize: 0.5, maxSize: 1.0, minPeak: 0.25, maxPeak: 0.55 },
+  medium: { count: 30, minSize: 1.0, maxSize: 2.2, minPeak: 0.5, maxPeak: 0.8 },
+  bright: { count: 12, minSize: 2.5, maxSize: 4.0, minPeak: 0.7, maxPeak: 1.0 },
 };
 
-function makeStars(): StarSpec[] {
+function makeStars({ W, H }: Dimensions): StarSpec[] {
   const specs: StarSpec[] = [];
   (Object.entries(TIER_CONFIG) as [StarTier, (typeof TIER_CONFIG)[StarTier]][]).forEach(
     ([, cfg]) => {
@@ -79,7 +79,7 @@ interface ShootingSpec {
   cycleSec: number; // repeat interval (seconds)
 }
 
-function makeShooting(): ShootingSpec[] {
+function makeShooting({ W, H }: Dimensions): ShootingSpec[] {
   return [
     {
       startX: W * 0.05,
@@ -118,8 +118,11 @@ const StarfieldBackground: React.FC<StarfieldBackgroundProps> = ({
   nebula2 = 'rgba(15, 168, 154, 0.04)',
   nebula3 = 'rgba(232, 181, 71, 0.03)',
 }) => {
-  const stars = useMemo<StarSpec[]>(makeStars, []);
-  const shooting = useMemo<ShootingSpec[]>(makeShooting, []);
+  const { width: W, height: H } = useWindowDimensions();
+  const dims: Dimensions = useMemo(() => ({ W, H }), [W, H]);
+
+  const stars = useMemo<StarSpec[]>(() => makeStars(dims), [dims]);
+  const shooting = useMemo<ShootingSpec[]>(() => makeShooting(dims), [dims]);
 
   // Nebula clouds — fixed positions, no animation needed
   const nebulae = useMemo<NebulaSpec[]>(
@@ -129,7 +132,7 @@ const StarfieldBackground: React.FC<StarfieldBackgroundProps> = ({
       { x: W * -0.05, y: H * 0.55, size: 240, color: nebula3 },
       { x: W * 0.6, y: H * 0.72, size: 200, color: nebula1 },
     ],
-    [nebula1, nebula2, nebula3],
+    [W, H, nebula1, nebula2, nebula3],
   );
 
   // Star twinkle loops

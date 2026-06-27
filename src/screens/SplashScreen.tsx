@@ -67,6 +67,7 @@ const SplashScreen: React.FC = () => {
   const haloAnim = useRef(new Animated.Value(0.4)).current;
   // Brand block fade in
   const brandAnim = useRef(new Animated.Value(0)).current;
+  const haloLoopRef = useRef<Animated.CompositeAnimation | null>(null);
 
   useEffect(() => {
     // Rotations
@@ -92,7 +93,7 @@ const SplashScreen: React.FC = () => {
     );
 
     // Halo pulse
-    Animated.loop(
+    haloLoopRef.current = Animated.loop(
       Animated.sequence([
         Animated.timing(haloAnim, {
           toValue: 0.75,
@@ -107,7 +108,8 @@ const SplashScreen: React.FC = () => {
           useNativeDriver: true,
         }),
       ]),
-    ).start();
+    );
+    haloLoopRef.current.start();
 
     // Brand fade in (delayed by 300ms)
     Animated.sequence([
@@ -119,6 +121,10 @@ const SplashScreen: React.FC = () => {
         useNativeDriver: true,
       }),
     ]).start();
+
+    return () => {
+      haloLoopRef.current?.stop();
+    };
   }, [outerProgress, midProgress, innerProgress, orbitProgress, haloAnim, brandAnim]);
 
   const outerStyle = useAnimatedStyle(() => ({

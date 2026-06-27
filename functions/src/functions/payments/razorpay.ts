@@ -24,6 +24,23 @@ import { logger } from '../../utils/logger';
 import { requestMetaFromHttp, type RequestAuditMeta } from '../../utils/requestMeta';
 import { RAZORPAY_WEBHOOK_SECRET, REGION, PLAN_DURATION_DAYS, type PlanTier } from '../../config';
 
+// Per-IP sliding-window rate limiter for the webhook endpoint.
+// Razorpay retries events a fixed number of times — 30 req/min per IP is very generous.
+const IP_RATE_LIMIT = 30;
+const ipCounters = new Map<string, { count: number; windowStart: number }>();
+
+function checkIpRateLimit(ip: string): boolean {
+  const now = Date.now();
+  const windowMs = 60_000;
+  const entry = ipCounters.get(ip);
+  if (!entry || now - entry.windowStart >= windowMs) {
+    ipCounters.set(ip, { count: 1, windowStart: now });
+    return true;
+  }
+  entry.count += 1;
+  return entry.count <= IP_RATE_LIMIT;
+}
+
 /**
  * RAZORPAY WEBHOOK SECRET — GCP SECRET MANAGER
  * ═════════════════════════════════════════════════════════════════════════════
@@ -133,6 +150,17 @@ export const razorpayWebhook = onRequest(
     // Only accept POST
     if (req.method !== 'POST') {
       res.status(405).send('Method Not Allowed');
+      return;
+    }
+
+    // Per-IP rate limit — enforced before HMAC to prevent brute-force probing.
+    const clientIp = requestMeta.ipAddress ?? 'unknown';
+    if (!checkIpRateLimit(clientIp)) {
+      logger.warn('razorpay webhook: ip rate limit exceeded', {
+        ipHash: requestMeta.ipHash,
+        durationMs: Date.now() - startedAt,
+      });
+      res.status(429).send('Too Many Requests');
       return;
     }
 

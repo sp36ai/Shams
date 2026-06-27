@@ -187,11 +187,11 @@ export const hi: StringTable = {
   },
 
   theme: {
-    teal: 'फ़िरोज़ी',
-    midnightGold: 'अर्धरात्रि स्वर्ण',
-    royalViolet: 'राजसी बैंगनी',
-    crimsonDusk: 'सिंदूरी सांध्य',
-    arcticSilver: 'ध्रुवीय रजत',
+    darAlShams: 'दारुल शम्स',
+    laylAlBahr: 'लैलुल बह्र',
+    narAlHadid: 'नारुल हदीद',
+    subhAlWahy: 'सुब्हुल वह्य',
+    zaytunAlHikma: 'ज़ैतूनुल हिक्मा',
   },
 
   errors: {

@@ -23,7 +23,7 @@ jobs:
           cache: 'npm'
 
       - name: Regenerate lockfile
-        run: npm install --legacy-peer-deps --package-lock-only
+        run: npm install --package-lock-only
 
       - name: Commit updated lockfile
         run: |

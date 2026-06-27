@@ -20,6 +20,6 @@
         <item name="android:windowBackground">@drawable/launch_screen</item>
         <item name="android:statusBarColor">#030E10</item>
         <item name="android:navigationBarColor">#030E10</item>
-        <item name="android:windowFullscreen">false</item>
+        <!-- android:windowFullscreen removed: deprecated at targetSdk 35 -->
     </style>
 </resources>

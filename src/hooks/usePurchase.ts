@@ -69,9 +69,24 @@ export function usePurchase(): PurchaseState {
   useEffect(() => {
     initConnection().catch(() => undefined);
 
-    // Listeners are required by react-native-iap to keep the purchase queue
-    // draining on Android. Actual results come through the requestSubscription promise.
-    const updateSub = purchaseUpdatedListener((_p: SubscriptionPurchase) => undefined);
+    // purchaseUpdatedListener fires for renewals and deferred purchases
+    // that complete outside the requestSubscription flow (e.g., Play Store auto-renewal).
+    const updateSub = purchaseUpdatedListener((p: SubscriptionPurchase) => {
+      if (!p.purchaseToken || !p.productId) {
+        return;
+      }
+      verifyWithServer(p.purchaseToken, p.productId)
+        .then(({ verified, planExpiry }) => {
+          if (verified) {
+            const tier = tierFromSku(p.productId);
+            if (tier) {
+              setPlan(tier, planExpiry);
+            }
+            finishTransaction({ purchase: p, isConsumable: false }).catch(() => undefined);
+          }
+        })
+        .catch(() => undefined);
+    });
     const errorSub = purchaseErrorListener((_e: PurchaseError) => undefined);
 
     return () => {
@@ -79,7 +94,7 @@ export function usePurchase(): PurchaseState {
       errorSub.remove();
       endConnection().catch(() => undefined);
     };
-  }, []);
+  }, [verifyWithServer, setPlan]);
 
   const verifyWithServer = useCallback(
     async (

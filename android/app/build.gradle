@@ -22,7 +22,7 @@ def enableProguardInReleaseBuilds = true
  * The preferred build flavor of JavaScriptCore (JSC).
  * Hermes is enabled, so JSC is unused — keep default.
  */
-def jscFlavor = 'org.webkit:android-jsc:+'
+def jscFlavor = 'org.webkit:android-jsc:r250230'
 
 android {
     ndkVersion rootProject.ext.ndkVersion
@@ -35,7 +35,7 @@ android {
         applicationId "com.astrosarfaraz.shamsalasrar"
         minSdk 24
         targetSdk 35
-        versionCode 4
+        versionCode project.hasProperty('VERSION_CODE') ? project.property('VERSION_CODE').toInteger() : 4
         versionName "0.1.2"
 
         // react-native-iap v12 has amazon/play product flavors;
@@ -58,7 +58,7 @@ android {
             reset()
             enable false   // App Bundle handles per-ABI delivery in production
             universalApk false
-            include "armeabi-v7a", "arm64-v8a", "x86", "x86_64"
+            include "arm64-v8a", "x86_64"
         }
     }
 

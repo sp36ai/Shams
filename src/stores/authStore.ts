@@ -49,6 +49,8 @@ export interface AuthState {
   clearError: () => void;
 }
 
+let _authUnsubscribe: (() => void) | null = null;
+
 /* -------------------------------------------------------------------------- */
 /*  Local profile cache (name / email written at sign-in for offline display) */
 /* -------------------------------------------------------------------------- */
@@ -86,7 +88,7 @@ export const useAuthStore = create<AuthState>(set => ({
     // never flashes the Auth screen before the cached user resolves.
     await new Promise<void>(resolve => {
       let resolved = false;
-      auth().onAuthStateChanged(async fbUser => {
+      _authUnsubscribe = auth().onAuthStateChanged(async fbUser => {
         if (fbUser) {
           try {
             const tokenResult = await fbUser.getIdTokenResult();
@@ -177,6 +179,8 @@ export const useAuthStore = create<AuthState>(set => ({
 
   signOut: async (): Promise<void> => {
     set({ isLoading: true });
+    _authUnsubscribe?.();
+    _authUnsubscribe = null;
     await auth().signOut();
     cacheUserLocally(null);
     useQuotaStore.getState().reset();

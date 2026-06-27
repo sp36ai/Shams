@@ -6,7 +6,7 @@ import {
   StyleSheet,
   Text,
   View,
-  Dimensions,
+  useWindowDimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import functions, { type FirebaseFunctionsTypes } from '@react-native-firebase/functions';
@@ -19,8 +19,6 @@ import { useSettingsStore, type SeekerProfile } from '@stores/settingsStore';
 type FunctionsWithRegion = FirebaseFunctionsTypes.Module & {
   region(r: string): FirebaseFunctionsTypes.Module;
 };
-
-const { width } = Dimensions.get('window');
 
 // ── Question definitions ──────────────────────────────────────────────────────
 
@@ -94,6 +92,7 @@ const OnboardingScreen: React.FC = () => {
   const colors = useColors();
   const typography = useTypography();
   const scrollRef = useRef<ScrollView>(null);
+  const { width } = useWindowDimensions();
 
   const markOnboardingComplete = useSettingsStore(s => s.markOnboardingComplete);
   const setSeekerProfile = useSettingsStore(s => s.setSeekerProfile);
@@ -168,7 +167,7 @@ const OnboardingScreen: React.FC = () => {
         style={styles.slider}
       >
         {QUESTIONS.map((q, qIndex) => (
-          <View key={qIndex} style={styles.slide}>
+          <View key={qIndex} style={[styles.slide, { width }]}>
             {/* Brand header on first question only */}
             {qIndex === 0 && (
               <>
@@ -319,7 +318,6 @@ const styles = StyleSheet.create({
   root: { flex: 1 },
   slider: { flex: 1 },
   slide: {
-    width,
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',

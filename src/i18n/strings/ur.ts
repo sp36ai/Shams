@@ -188,11 +188,11 @@ export const ur: StringTable = {
   },
 
   theme: {
-    teal: 'فیروزی',
-    midnightGold: 'نیم شب طلائی',
-    royalViolet: 'شاہی بنفشی',
-    crimsonDusk: 'سرخ شام',
-    arcticSilver: 'قطبی نقرئی',
+    darAlShams: 'دارُ الشمس',
+    laylAlBahr: 'لیلُ البحر',
+    narAlHadid: 'نارُ الحدید',
+    subhAlWahy: 'صبحُ الوحی',
+    zaytunAlHikma: 'زیتونُ الحکمہ',
   },
 
   errors: {

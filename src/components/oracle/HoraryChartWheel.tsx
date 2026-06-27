@@ -3,8 +3,9 @@
 // No imports from engine/, astrology/, or julianDay.
 // Source of truth: frozen OracleResponse passed as props.
 
-import React, { useState } from 'react';
-import { Dimensions, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import React, { useMemo, useState } from 'react';
+import { Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { useColors } from '@theme/ThemeProvider';
 import Svg, {
   Circle,
   Defs,
@@ -83,20 +84,7 @@ const SIGN_ORDER = [
   'Pisces',
 ];
 
-const ELEMENT_COLOR: Record<string, string> = {
-  Aries: '#CC4400',
-  Leo: '#CC4400',
-  Sagittarius: '#CC4400',
-  Taurus: '#2d7a2d',
-  Virgo: '#2d7a2d',
-  Capricorn: '#2d7a2d',
-  Gemini: '#1a6b9a',
-  Libra: '#1a6b9a',
-  Aquarius: '#1a6b9a',
-  Cancer: '#6b3fa0',
-  Scorpio: '#6b3fa0',
-  Pisces: '#6b3fa0',
-};
+// Element color map is built inside components from theme tokens (see useElementColors).
 
 const ROLE_LABEL: Record<string, string> = {
   dayLord: 'Day',
@@ -161,13 +149,7 @@ function aspectKind(diff: number): AspectKind | null {
   return null;
 }
 
-const ASPECT_STYLE: Record<AspectKind, { stroke: string; sw: number; op: number; dash?: string }> =
-  {
-    trine: { stroke: '#B8860B', sw: 0.6, op: 0.35 },
-    square: { stroke: '#8B0000', sw: 0.5, op: 0.3 },
-    sextile: { stroke: '#1a3a6b', sw: 0.5, op: 0.3 },
-    opposition: { stroke: '#4a0030', sw: 0.5, op: 0.25, dash: '3 2' },
-  };
+// ASPECT_STYLE is built inside ChartSvg from theme tokens via useAspectStyle().
 
 // ── Props ──────────────────────────────────────────────────────────────────────
 
@@ -199,20 +181,21 @@ function getPlanetStyle(
   confirmedSignificators: string[] | undefined,
   deniedSignificators: string[] | undefined,
   significators: { favorable: string[]; denial: string[]; neutral: string[] } | undefined,
+  colors: ReturnType<typeof useColors>,
 ): PlanetStyle {
   if (planet === moonSubLord) {
-    return { fill: '#100a1e', stroke: '#9370DB', textColor: '#C8A0FF', r: 8, glow: false };
+    return { fill: colors.surface, stroke: colors.caution, textColor: colors.goldBright, r: 8, glow: false };
   }
   if (confirmedSignificators?.includes(planet)) {
-    return { fill: '#0d2a1a', stroke: '#FFD700', textColor: '#FFD700', r: 6, glow: true };
+    return { fill: colors.surface, stroke: colors.goldBright, textColor: colors.goldBright, r: 6, glow: true };
   }
   if (deniedSignificators?.includes(planet)) {
-    return { fill: '#1a0a0a', stroke: '#8B0000', textColor: '#CC3333', r: 6, glow: false };
+    return { fill: colors.surface, stroke: colors.mardood, textColor: colors.mardood, r: 6, glow: false };
   }
   if (significators?.neutral.includes(planet)) {
-    return { fill: '#0a1020', stroke: '#2a4a7a', textColor: '#6a9fd8', r: 6, glow: false };
+    return { fill: colors.surface, stroke: colors.accent, textColor: colors.textMuted, r: 6, glow: false };
   }
-  return { fill: '#080e1a', stroke: '#1a3a6b', textColor: '#4a7aaa', r: 6, glow: false };
+  return { fill: colors.surface, stroke: colors.accent, textColor: colors.textFaint, r: 6, glow: false };
 }
 
 // ── Collision-resolved planet positions ────────────────────────────────────────
@@ -258,19 +241,50 @@ const ChartSvg: React.FC<HoraryChartWheelProps> = props => {
     moonSubLord,
   } = props;
 
+  const colors = useColors();
+  const { width: screenW } = useWindowDimensions();
+
+  const elementColors = useMemo<Record<string, string>>(
+    () => ({
+      Aries: colors.mardood,
+      Leo: colors.mardood,
+      Sagittarius: colors.mardood,
+      Taurus: colors.maqbool,
+      Virgo: colors.maqbool,
+      Capricorn: colors.maqbool,
+      Gemini: colors.accent,
+      Libra: colors.accent,
+      Aquarius: colors.accent,
+      Cancer: colors.goldBright,
+      Scorpio: colors.goldBright,
+      Pisces: colors.goldBright,
+    }),
+    [colors],
+  );
+
   const ascDeg = cuspDegrees[1] ?? 0;
   const ascSignName = cuspSigns[1] ?? 'Aries';
   const ascDegInSign = Math.floor(((ascDeg % 30) + 30) % 30);
 
-  const W = Dimensions.get('window').width - 24;
+  const W = screenW - 24;
   const H = Math.round(W * (VB_H / VB_W));
+
+  const aspectStyle = useMemo(
+    () => ({
+      trine: { stroke: colors.goldBright, sw: 0.6, op: 0.35 },
+      square: { stroke: colors.mardood, sw: 0.5, op: 0.3 },
+      sextile: { stroke: colors.accent, sw: 0.5, op: 0.3 },
+      opposition: { stroke: colors.caution, sw: 0.5, op: 0.25, dash: '3 2' },
+    }),
+    [colors],
+  );
 
   // ── Sign band sectors ────────────────────────────────────────────────────
   const signSectors = SIGN_ORDER.map((signName, n) => {
     const eclStart = n * 30;
     const startRel = eclToRel(eclStart, ascDeg);
     const midRel = startRel + 15;
-    const color = ELEMENT_COLOR[signName] ?? '#1a3a6b';
+    const color = elementColors[signName] ?? colors.accent;
     const [lx, ly] = relToXY(midRel, (R_SIGN_INNER + R_OUTER) / 2);
     const symbol = SIGN_SYMBOLS[signName] ?? '?';
     return (
@@ -363,7 +377,7 @@ const ChartSvg: React.FC<HoraryChartWheelProps> = props => {
       if (kind === null) {
         continue;
       }
-      const s = ASPECT_STYLE[kind];
+      const s = aspectStyle[kind];
       const [x1, y1] = relToXY(eclToRel(lon1, ascDeg), R_INNER);
       const [x2, y2] = relToXY(eclToRel(lon2, ascDeg), R_INNER);
       aspectLines.push(
@@ -391,6 +405,7 @@ const ChartSvg: React.FC<HoraryChartWheelProps> = props => {
       confirmedSignificators,
       deniedSignificators,
       significators,
+      colors,
     );
     const abbr = PLANET_ABBR[planet] ?? planet.slice(0, 2);
     return (
@@ -424,9 +439,9 @@ const ChartSvg: React.FC<HoraryChartWheelProps> = props => {
     <Svg viewBox={`${VB_X} ${VB_Y} ${VB_W} ${VB_H}`} width={W} height={H}>
       <Defs>
         <RadialGradient id="bgGrad" cx="50%" cy="50%" rx="50%" ry="50%">
-          <Stop offset="0%" stopColor="#0d1528" />
-          <Stop offset="60%" stopColor="#0a0f1e" />
-          <Stop offset="100%" stopColor="#060a14" />
+          <Stop offset="0%" stopColor={colors.surface} />
+          <Stop offset="60%" stopColor={colors.bg} />
+          <Stop offset="100%" stopColor={colors.bg} />
         </RadialGradient>
       </Defs>
 
@@ -437,8 +452,8 @@ const ChartSvg: React.FC<HoraryChartWheelProps> = props => {
       {signSectors}
 
       {/* Sign band border rings */}
-      <Circle r={R_OUTER} fill="none" stroke="#1a3a6b" strokeWidth={0.5} opacity={0.6} />
-      <Circle r={R_SIGN_INNER} fill="none" stroke="#1a3a6b" strokeWidth={0.5} opacity={0.6} />
+      <Circle r={R_OUTER} fill="none" stroke={colors.accent} strokeWidth={0.5} opacity={0.6} />
+      <Circle r={R_SIGN_INNER} fill="none" stroke={colors.accent} strokeWidth={0.5} opacity={0.6} />
 
       {/* Cusp lines */}
       {cuspLines}
@@ -447,13 +462,13 @@ const ChartSvg: React.FC<HoraryChartWheelProps> = props => {
       {aspectLines}
 
       {/* Planet track reference ring */}
-      <Circle r={R_PLANET} fill="none" stroke="#1a3a6b" strokeWidth={0.3} opacity={0.4} />
+      <Circle r={R_PLANET} fill="none" stroke={colors.accent} strokeWidth={0.3} opacity={0.4} />
 
       {/* House numbers */}
       {houseNumbers}
 
       {/* Inner disc */}
-      <Circle r={R_INNER} fill="#0a0f1e" stroke="#B8860B" strokeWidth={1} />
+      <Circle r={R_INNER} fill={colors.bg} stroke={colors.goldBright} strokeWidth={1} />
 
       {/* Center text */}
       <SvgText
@@ -462,7 +477,7 @@ const ChartSvg: React.FC<HoraryChartWheelProps> = props => {
         textAnchor="middle"
         alignmentBaseline="central"
         fontSize={13}
-        fill="#B8860B"
+        fill={colors.goldBright}
       >
         شمس
       </SvgText>
@@ -472,7 +487,7 @@ const ChartSvg: React.FC<HoraryChartWheelProps> = props => {
         textAnchor="middle"
         alignmentBaseline="central"
         fontSize={7}
-        fill="#1a3a6b"
+        fill={colors.accent}
       >
         al-Asrār
       </SvgText>
@@ -481,8 +496,8 @@ const ChartSvg: React.FC<HoraryChartWheelProps> = props => {
       {planetGlyphs}
 
       {/* Outer rings (drawn last, on top of sectors) */}
-      <Circle r={R_OUTER} fill="none" stroke="#B8860B" strokeWidth={1.2} opacity={0.8} />
-      <Circle r={R_SIGN_INNER} fill="none" stroke="#B8860B" strokeWidth={0.4} opacity={0.5} />
+      <Circle r={R_OUTER} fill="none" stroke={colors.goldBright} strokeWidth={1.2} opacity={0.8} />
+      <Circle r={R_SIGN_INNER} fill="none" stroke={colors.goldBright} strokeWidth={0.4} opacity={0.5} />
 
       {/* Ascendant line — full diameter, vertical */}
       <Line
@@ -490,7 +505,7 @@ const ChartSvg: React.FC<HoraryChartWheelProps> = props => {
         y1={-R_SIGN_INNER}
         x2={0}
         y2={R_SIGN_INNER}
-        stroke="#FFD700"
+        stroke={colors.goldBright}
         strokeWidth={1.4}
         opacity={0.9}
       />
@@ -503,7 +518,7 @@ const ChartSvg: React.FC<HoraryChartWheelProps> = props => {
         alignmentBaseline="central"
         fontSize={10}
         fontWeight="500"
-        fill="#FFD700"
+        fill={colors.goldBright}
       >
         {`Asc · ${ascDegInSign}° ${ascSignName}`}
       </SvgText>
@@ -515,7 +530,7 @@ const ChartSvg: React.FC<HoraryChartWheelProps> = props => {
         textAnchor="middle"
         alignmentBaseline="central"
         fontSize={8}
-        fill="#1a3a6b"
+        fill={colors.accent}
         fillOpacity={0.7}
       >
         Sidereal · Lahiri · Placidus · display only
@@ -637,28 +652,39 @@ const WitnessesTab: React.FC<{
 
 // ── Tab 3: Significators ──────────────────────────────────────────────────────
 
+type SigVariant = 'favorable' | 'denial' | 'neutral' | 'confirmed' | 'opposing';
+
 const SigRow: React.FC<{
   label: string;
   planets: string[];
-  chipColor: string;
-  borderColor: string;
-  textColor: string;
-}> = ({ label, planets, chipColor, borderColor, textColor }) => (
-  <View style={tabStyles.sigRow}>
-    <Text style={tabStyles.sigLabel}>{label}</Text>
-    <View style={tabStyles.sigChips}>
-      {planets.length === 0 ? (
-        <Text style={tabStyles.empty}>—</Text>
-      ) : (
-        planets.map(p => (
-          <View key={p} style={[tabStyles.chip, { backgroundColor: chipColor, borderColor }]}>
-            <Text style={[tabStyles.chipText, { color: textColor }]}>{p}</Text>
-          </View>
-        ))
-      )}
+  variant: SigVariant;
+}> = ({ label, planets, variant }) => {
+  const colors = useColors();
+  const variantColors: Record<SigVariant, { chip: string; border: string; text: string }> = {
+    favorable: { chip: colors.maqboolGlow, border: colors.maqbool, text: colors.maqbool },
+    denial: { chip: colors.mardoodGlow, border: colors.mardood, text: colors.mardood },
+    neutral: { chip: colors.surface, border: colors.accent, text: colors.accent },
+    confirmed: { chip: colors.surface, border: colors.goldBright, text: colors.goldBright },
+    opposing: { chip: colors.mardoodGlow, border: colors.mardood, text: colors.mardood },
+  };
+  const { chip: chipColor, border: borderColor, text: textColor } = variantColors[variant];
+  return (
+    <View style={tabStyles.sigRow}>
+      <Text style={tabStyles.sigLabel}>{label}</Text>
+      <View style={tabStyles.sigChips}>
+        {planets.length === 0 ? (
+          <Text style={tabStyles.empty}>—</Text>
+        ) : (
+          planets.map(p => (
+            <View key={p} style={[tabStyles.chip, { backgroundColor: chipColor, borderColor }]}>
+              <Text style={[tabStyles.chipText, { color: textColor }]}>{p}</Text>
+            </View>
+          ))
+        )}
+      </View>
     </View>
-  </View>
-);
+  );
+};
 
 const SignificatorsTab: React.FC<{
   significators?: { favorable: string[]; denial: string[]; neutral: string[] };
@@ -666,42 +692,12 @@ const SignificatorsTab: React.FC<{
   deniedSignificators?: string[];
 }> = ({ significators, confirmedSignificators, deniedSignificators }) => (
   <ScrollView style={tabStyles.panel} showsVerticalScrollIndicator={false}>
-    <SigRow
-      label="Favorable"
-      planets={significators?.favorable ?? []}
-      chipColor="#0a1e10"
-      borderColor="#2d7a2d"
-      textColor="#5aaa6a"
-    />
-    <SigRow
-      label="Denial"
-      planets={significators?.denial ?? []}
-      chipColor="#1a0808"
-      borderColor="#8B0000"
-      textColor="#CC3333"
-    />
-    <SigRow
-      label="Neutral"
-      planets={significators?.neutral ?? []}
-      chipColor="#0a1020"
-      borderColor="#1a3a6b"
-      textColor="#4a7aaa"
-    />
+    <SigRow label="Favorable" planets={significators?.favorable ?? []} variant="favorable" />
+    <SigRow label="Denial" planets={significators?.denial ?? []} variant="denial" />
+    <SigRow label="Neutral" planets={significators?.neutral ?? []} variant="neutral" />
     <View style={tabStyles.divider} />
-    <SigRow
-      label="Confirmed ✓"
-      planets={confirmedSignificators ?? []}
-      chipColor="#0d2010"
-      borderColor="#B8860B"
-      textColor="#FFD700"
-    />
-    <SigRow
-      label="Opposing ✗"
-      planets={deniedSignificators ?? []}
-      chipColor="#1a0808"
-      borderColor="#8B0000"
-      textColor="#CC3333"
-    />
+    <SigRow label="Confirmed ✓" planets={confirmedSignificators ?? []} variant="confirmed" />
+    <SigRow label="Opposing ✗" planets={deniedSignificators ?? []} variant="opposing" />
     <View style={tabStyles.spacer} />
   </ScrollView>
 );

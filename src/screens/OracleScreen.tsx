@@ -26,6 +26,7 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import Geolocation from '@react-native-community/geolocation';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '@navigation/types';
@@ -626,7 +627,7 @@ const OracleScreen: React.FC = () => {
     if (!s.onboardingPermissionGranted && !__DEV__) {
       return;
     }
-    navigator.geolocation.getCurrentPosition(
+    Geolocation.getCurrentPosition(
       pos => {
         useSettingsStore.getState().setLastLocation({
           lat: pos.coords.latitude,
@@ -747,7 +748,7 @@ const OracleScreen: React.FC = () => {
 
       if (resolvedLat === null || resolvedLon === null) {
         const liveCoords = await new Promise<{ lat: number; lon: number } | null>(resolve => {
-          navigator.geolocation.getCurrentPosition(
+          Geolocation.getCurrentPosition(
             pos => resolve({ lat: pos.coords.latitude, lon: pos.coords.longitude }),
             () => resolve(null),
             { enableHighAccuracy: true, timeout: 8000, maximumAge: 30000 },
@@ -777,6 +778,14 @@ const OracleScreen: React.FC = () => {
         });
       }
 
+      if (!consumeOne()) {
+        if (quotaExhaustedAt.current === 0) {
+          quotaExhaustedAt.current = Date.now();
+        }
+        setShowQuotaModal(true);
+        return;
+      }
+
       const userMsg: ChatMessage = {
         id: `u_${now}`,
         sender: 'user',
@@ -785,15 +794,6 @@ const OracleScreen: React.FC = () => {
       };
       setMessages(prev => [userMsg, ...prev]);
       setSending(true);
-
-      if (!consumeOne()) {
-        if (quotaExhaustedAt.current === 0) {
-          quotaExhaustedAt.current = Date.now();
-        }
-        setShowQuotaModal(true);
-        setSending(false);
-        return;
-      }
 
       // ── 60-second dedup guard — same question within one minute returns cache ──
       const minuteBucket = Math.floor(Date.now() / 60000);
@@ -1032,7 +1032,7 @@ const OracleScreen: React.FC = () => {
                   },
                 ]}
               >
-                {questionsLeft}/{FREE_DAILY_LIMIT}
+                {questionsLeft}/{trialActive ? TRIAL_DAILY_LIMIT : FREE_DAILY_LIMIT}
               </Text>
             </View>
           )}

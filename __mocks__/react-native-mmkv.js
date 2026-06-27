@@ -1,5 +1,9 @@
 // In-memory mock for react-native-mmkv (native module — can't run in Jest).
-const _store = {};
+let _store = {};
+
+beforeEach(() => {
+  _store = {};
+});
 
 class MMKV {
   getString(key) {

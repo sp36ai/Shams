@@ -180,11 +180,11 @@ export const en: StringTable = {
   },
 
   theme: {
-    teal: 'Teal',
-    midnightGold: 'Midnight Gold',
-    royalViolet: 'Royal Violet',
-    crimsonDusk: 'Crimson Dusk',
-    arcticSilver: 'Arctic Silver',
+    darAlShams: 'Dār al-Shams',
+    laylAlBahr: 'Layl al-Baḥr',
+    narAlHadid: 'Nār al-Ḥadīd',
+    subhAlWahy: 'Ṣubḥ al-Waḥy',
+    zaytunAlHikma: 'Zaytūn al-Ḥikma',
   },
 
   errors: {
