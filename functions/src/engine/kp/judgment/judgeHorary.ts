@@ -377,7 +377,7 @@ export function judgeHorary(chart: Chart, question: ClassifiedQuestion): Verdict
     step(
       1,
       `Moon at ${moonPos.siderealLongitude.toFixed(2)}° sidereal` +
-      ` (manzil lord: ${moonPos.nakshatraLord}, sub-lord: ${moonSubLord})`,
+        ` (manzil lord: ${moonPos.nakshatraLord}, sub-lord: ${moonSubLord})`,
     ),
   );
 
@@ -397,7 +397,7 @@ export function judgeHorary(chart: Chart, question: ClassifiedQuestion): Verdict
       step(
         1,
         `Promise FAILED: cusp ${promise.cuspHouse} sub-lord = ${promise.cuspSubLord}` +
-        ` occupies house ${promise.cuspSubLordHouse} ∈ denial [${denial.join(',')}] → DENIED`,
+          ` occupies house ${promise.cuspSubLordHouse} ∈ denial [${denial.join(',')}] → DENIED`,
         -3,
       ),
     ];
