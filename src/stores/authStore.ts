@@ -199,7 +199,6 @@ export const useAuthStore = create<AuthState>(set => ({
 /*  Selectors                                                                 */
 /* -------------------------------------------------------------------------- */
 
-export const selectIsAuthenticated = (s: AuthState): boolean => s.user !== null;
 export const selectUserName = (s: AuthState): string =>
   s.user?.displayName ?? storage.getString(KEYS.AUTH_USER_NAME) ?? 'Guest';
 export const selectUserEmail = (s: AuthState): string =>

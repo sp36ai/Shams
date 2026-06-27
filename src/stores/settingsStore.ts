@@ -160,15 +160,3 @@ export const useSettingsStore = create<SettingsState>(set => ({
     set({ lastLocation: null });
   },
 }));
-
-/* -------------------------------------------------------------------------- */
-/*  Selectors                                                                 */
-/* -------------------------------------------------------------------------- */
-
-export const selectHasLocation = (s: SettingsState): boolean => s.lastLocation !== null;
-export const selectLocationStale = (s: SettingsState, maxAgeMs = 24 * 60 * 60 * 1000): boolean => {
-  if (s.lastLocation === null) {
-    return true;
-  }
-  return Date.now() - s.lastLocation.capturedAt > maxAgeMs;
-};
