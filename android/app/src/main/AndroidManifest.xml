@@ -11,9 +11,6 @@
     <!-- ═══ Phase 4: Google Play Billing (subscriptions) ═══ -->
     <uses-permission android:name="com.android.vending.BILLING" />
 
-    <!-- ═══ Phase 5: Push notifications for planetary windows (Android 13+) ═══ -->
-    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
-
     <!-- ═══ Network state for offline-handling UX ═══ -->
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 

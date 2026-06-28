@@ -23,6 +23,7 @@ export const AskOracleSchema = z
     lat: LatSchema,
     lon: LonSchema,
     questionLang: LangSchema,
+    seekerProfile: z.enum(['clarity', 'comfort', 'action', 'surrender']).optional(),
   })
   .strict();
 

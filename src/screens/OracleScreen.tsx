@@ -411,6 +411,7 @@ async function runEngine(args: {
   lat: number | null;
   lon: number | null;
   locationRequiredText: string;
+  seekerProfile?: 'clarity' | 'comfort' | 'action' | 'surrender';
 }): Promise<Reading> {
   const now = new Date().toISOString();
 
@@ -442,6 +443,7 @@ async function runEngine(args: {
     questionLang: args.questionLang,
     lat: args.lat,
     lon: args.lon,
+    seekerProfile: args.seekerProfile,
   });
 
   return reading;
@@ -830,6 +832,7 @@ const OracleScreen: React.FC = () => {
           lat: resolvedLat, // guaranteed non-null by the gate above
           lon: resolvedLon,
           locationRequiredText: t('errors.locationRequired'),
+          seekerProfile: seekerProfile ?? undefined,
         });
 
         await addReading(reading);
@@ -867,19 +870,20 @@ const OracleScreen: React.FC = () => {
         setMessages(prev => [shamsMsg, ...prev]);
       } catch (err) {
         console.error('[OracleScreen] Engine error:', err);
-        let errText = t('errors.unknown');
+        let errText =
+          'The scrolls of this moment have not opened their seal. Return at the next appointed hour.';
 
         if (err instanceof Error) {
-          errText = err.message;
-
-          // Specific error messages for common issues
-          if (err.message.includes('ECONNREFUSED') || err.message.includes('network')) {
+          if (err.message.includes('resource-exhausted') || err.message.includes('quota')) {
             errText =
-              '⚠️ Cannot connect to server.\n\nFor local testing:\n1. Start Firebase emulators: firebase emulators:start\n2. Restart the app';
+              'The gate has closed for today. The oracle speaks three times a day to the free seeker.';
           } else if (err.message.includes('unauthenticated')) {
-            errText = '⚠️ Authentication required. Please sign in.';
+            errText = 'The oracle requires a known face. Please sign in to continue.';
           } else if (err.message.includes('app-check')) {
-            errText = '⚠️ App verification failed. Check Firebase App Check setup.';
+            errText = 'The seal of verification is absent. Please reinstall and try again.';
+          } else if (err.message.includes('ECONNREFUSED') || err.message.includes('network')) {
+            errText =
+              'The channel to the oracle is interrupted. Check your connection and try again.';
           }
         }
 

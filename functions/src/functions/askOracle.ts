@@ -37,7 +37,11 @@ import {
   ANTHROPIC_API_KEY,
   type PlanTier,
 } from '../config';
-import { ORACLE_SYNTHESIS_SYSTEM_PROMPT, TONE_GUARDRAILS } from '../prompts/oracleSynthesisPrompt';
+import {
+  ORACLE_SYNTHESIS_SYSTEM_PROMPT,
+  TONE_GUARDRAILS,
+  seekerProfileModifier,
+} from '../prompts/oracleSynthesisPrompt';
 import { runSafetyValidator } from './safetyValidator';
 import { getManzila, getManzilaOracleLine } from '../engine/manazil';
 import { houseForLongitude } from '../engine/primitives/chartBuilder';
@@ -180,7 +184,7 @@ const ORACLE_FALLBACK: NonNullable<OracleVoiceResult> = {
     zikr: 'SubhanAllah 33 times after each prayer for three days.',
     sadaqah: 'Give water to someone who is thirsty, or to a living creature.',
   },
-  signature: 'These words are unveiled under the banner of Shams al-Asrar, by Astro Sarfaraz.',
+  signature: '✨ These words are unveiled under the banner of Shams al-Asrār, by Astro Sarfaraz.',
 };
 
 function buildOracleUserMessage(params: {
@@ -216,13 +220,17 @@ async function synthesiseOracleVoice(params: {
   timingWindow?: string;
   timingRange?: { min: number; max: number };
   manzilaLine: string;
+  seekerProfile?: 'clarity' | 'comfort' | 'action' | 'surrender';
   apiKey: string;
 }): Promise<NonNullable<OracleVoiceResult>> {
   const userMessage = buildOracleUserMessage(params);
 
+  const profileBlock = params.seekerProfile ? seekerProfileModifier(params.seekerProfile) : '';
+
   const systemPrompt =
     ORACLE_SYNTHESIS_SYSTEM_PROMPT +
     `\n\nMOON STATION TONIGHT:\n${params.manzilaLine}\n\nWeave al-Qamar's station naturally into the opening or spiritual_layer. Never state the mansion name as a label. Let it arrive as imagery.` +
+    profileBlock +
     TONE_GUARDRAILS;
 
   const timeoutMs = 25_000;
@@ -282,7 +290,10 @@ async function synthesiseOracleVoice(params: {
         zikr: typeof r.zikr === 'string' ? r.zikr : undefined,
         sadaqah: typeof r.sadaqah === 'string' ? r.sadaqah : undefined,
       },
-      signature: String(parsed.signature ?? 'Oracle of Shams al-Asrār (by Astro Sarfaraz)'),
+      signature: String(
+        parsed.signature ??
+          '✨ These words are unveiled under the banner of Shams al-Asrār, by Astro Sarfaraz.',
+      ),
     };
   } catch (err) {
     clearTimeout(timer);
@@ -448,6 +459,7 @@ export const askOracle = onCall(
             timingWindow: verdict.timing?.window,
             timingRange: verdict.timing?.range,
             manzilaLine,
+            seekerProfile: input.seekerProfile,
             apiKey,
           })
         : ORACLE_FALLBACK;

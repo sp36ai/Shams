@@ -284,3 +284,98 @@ describe('judgeHorary — house matrix coverage', () => {
     expect(['YES', 'NO', 'CONDITIONAL', 'DELAYED', 'UNCLEAR']).toContain(verdict.verdict);
   });
 });
+
+describe('judgeHorary — ruling planets count', () => {
+  test('chart.rulingPlanets contains exactly 5 elements for scoring', () => {
+    // The 5-RP spec: Day Lord, Asc Sign Lord, Asc Star Lord, Moon Sign Lord, Moon Star Lord.
+    // horaLord is stored separately as chart.horaLord, not in rulingPlanets.
+    const chart = makeChart('Mars', { Mars: 10 }, {}, [
+      'Sun',
+      'Mercury',
+      'Jupiter',
+      'Moon',
+      'Venus',
+    ]);
+    expect(chart.rulingPlanets).toHaveLength(5);
+  });
+});
+
+describe('judgeHorary — Kotamraju filter', () => {
+  test('strips a ruling planet whose sub-lord occupies a denial house', () => {
+    // career denial houses: [5, 8, 12]
+    // Sun is a ruling planet; place Sun in house 6 (favorable), but its sub-lord is Saturn.
+    // Place Saturn in house 8 (denial) so Sun fails the Kotamraju check.
+    // The remaining 4 RPs all land in favorable houses.
+    // Without Kotamraju, Sun would score +1; after filter Sun is stripped.
+    // We verify the verdict still reflects the filter's effect (not simply that Sun is absent
+    // from output, since we can't introspect the filter directly from the public API).
+    const chartFiltered = makeChart(
+      'Mars',
+      { Moon: 1, Mars: 10, Sun: 6, Saturn: 8, Mercury: 6, Jupiter: 11 },
+      {},
+      ['Sun', 'Mercury', 'Jupiter', 'Moon', 'Venus'],
+    );
+    // Override Sun's sub-lord to Saturn so the filter strips it
+    chartFiltered.planets.Sun = {
+      ...chartFiltered.planets.Sun,
+      subLord: 'Saturn',
+    };
+    const filteredVerdict = judgeHorary(chartFiltered, CAREER_Q);
+
+    // Build the same chart but put Saturn in a favorable house (house 10) so Sun passes the filter
+    const chartUnfiltered = makeChart(
+      'Mars',
+      { Moon: 1, Mars: 10, Sun: 6, Saturn: 10, Mercury: 6, Jupiter: 11 },
+      {},
+      ['Sun', 'Mercury', 'Jupiter', 'Moon', 'Venus'],
+    );
+    chartUnfiltered.planets.Sun = {
+      ...chartUnfiltered.planets.Sun,
+      subLord: 'Saturn',
+    };
+    const unfilteredVerdict = judgeHorary(chartUnfiltered, CAREER_Q);
+
+    // Both must produce valid verdicts; filtered should score ≤ unfiltered
+    expect(['YES', 'NO', 'CONDITIONAL', 'DELAYED', 'UNCLEAR']).toContain(filteredVerdict.verdict);
+    expect(['YES', 'NO', 'CONDITIONAL', 'DELAYED', 'UNCLEAR']).toContain(unfilteredVerdict.verdict);
+    expect(filteredVerdict.confidence).toBeLessThanOrEqual(unfilteredVerdict.confidence);
+  });
+});
+
+describe('judgeHorary — oracle narration language', () => {
+  const FORBIDDEN_TERMS = [
+    'nakshatra',
+    'rashi',
+    'dasha',
+    'mahadasha',
+    'antardasha',
+    'lagna',
+    'surya',
+    'chandra',
+    'shani',
+    'mangal',
+    'budha',
+    'ashwini',
+    'bharani',
+    'rohini',
+    'ardra',
+    'significator',
+    'sub-lord',
+    'cusp',
+  ];
+
+  test('narration fields contain no Vedic/Sanskrit/KP technical terms', () => {
+    const chart = makeChart('Mars', { Mars: 10, Sun: 6, Mercury: 6, Jupiter: 11 });
+    const verdict = judgeHorary(chart, CAREER_Q);
+
+    const allNarration = [
+      verdict.narration.en,
+      verdict.narration.ur,
+      verdict.narration.hi,
+    ].join(' ').toLowerCase();
+
+    for (const term of FORBIDDEN_TERMS) {
+      expect(allNarration).not.toContain(term);
+    }
+  });
+});

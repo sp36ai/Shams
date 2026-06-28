@@ -135,7 +135,7 @@ export const REMEDY_LIBRARY: TaggedRemedy[] = [
   {
     id: 'dua_04',
     category: 'dua',
-    themeTags: ['GRIEF', 'GRIEF', 'SUPPRESSION'], // source had LOSS — normalised to GRIEF (not in 18-tag vocab)
+    themeTags: ['GRIEF', 'SUPPRESSION'],
     themeNotes: ['loss', 'emotional suppression'],
     effectDimension: 'emotional_release',
     intensity: 'gentle',
@@ -247,7 +247,7 @@ export const REMEDY_LIBRARY: TaggedRemedy[] = [
   {
     id: 'quran_03',
     category: 'quran',
-    themeTags: ['GRIEF', 'GRIEF', 'ESTRANGEMENT'], // source had LOSS — normalised to GRIEF (not in 18-tag vocab)
+    themeTags: ['GRIEF', 'ESTRANGEMENT'],
     themeNotes: ['loss', 'isolation'],
     effectDimension: 'comfort',
     intensity: 'gentle',
@@ -315,7 +315,7 @@ export const REMEDY_LIBRARY: TaggedRemedy[] = [
   {
     id: 'charity_03',
     category: 'charity',
-    themeTags: ['GRIEF', 'GRIEF', 'SUPPRESSION'], // source had LOSS — normalised to GRIEF (not in 18-tag vocab)
+    themeTags: ['GRIEF', 'SUPPRESSION'],
     themeNotes: ['grief in action', 'transforming loss'],
     effectDimension: 'emotional_release',
     intensity: 'moderate',
