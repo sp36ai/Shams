@@ -33,10 +33,13 @@ import {
   ORACLE_FUNCTION_OPTS,
   UNLIMITED_PLANS,
   FREE_LIMIT,
+  TRIAL_DAILY_LIMIT,
+  TRIAL_DURATION_DAYS,
   todayKey,
   ANTHROPIC_API_KEY,
   type PlanTier,
 } from '../config';
+import type { TrialDoc } from '../types';
 import {
   ORACLE_SYNTHESIS_SYSTEM_PROMPT,
   TONE_GUARDRAILS,
@@ -100,18 +103,24 @@ const { classifyQuestion } =
  * Atomically check quota and pre-decrement.
  * Returns the plan and remaining count (null = unlimited).
  * Throws resource-exhausted if quota is zero.
+ *
+ * Trial logic: if /trials/{userId} exists and has not expired the daily
+ * limit is TRIAL_DAILY_LIMIT (5) instead of FREE_LIMIT (3). This is
+ * enforced server-side so reinstalling the app cannot reset the trial.
  */
 async function claimQuotaSlot(
   userId: string,
-): Promise<{ plan: PlanTier; remaining: number | null }> {
+): Promise<{ plan: PlanTier; remaining: number | null; trialActive: boolean }> {
   const quotaRef = db.collection('quotas').doc(userId);
+  const trialRef = db.collection('trials').doc(userId);
 
   let plan: PlanTier = 'free';
   let remaining: number | null = null;
+  let trialActive = false;
 
   await db.runTransaction(async tx => {
-    const snap = await tx.get(quotaRef);
-    const d = snap.exists ? (snap.data() as Partial<QuotaDoc>) : {};
+    const [quotaSnap, trialSnap] = await Promise.all([tx.get(quotaRef), tx.get(trialRef)]);
+    const d = quotaSnap.exists ? (quotaSnap.data() as Partial<QuotaDoc>) : {};
 
     plan = d.plan ?? 'free';
 
@@ -129,18 +138,29 @@ async function claimQuotaSlot(
       return; // No quota to decrement for paid plans
     }
 
+    // Determine effective daily limit — trial takes precedence over free limit
+    let dailyLimit = FREE_LIMIT;
+    if (trialSnap.exists) {
+      const trial = trialSnap.data() as TrialDoc;
+      const trialExpiry = new Date(trial.expiresAt).getTime();
+      if (Date.now() < trialExpiry) {
+        trialActive = true;
+        dailyLimit = TRIAL_DAILY_LIMIT;
+      }
+    }
+
     const currentDay = todayKey();
     const storedDay = d.dayKey ?? '';
     const used = storedDay === currentDay ? (d.used ?? 0) : 0;
 
-    if (used >= FREE_LIMIT) {
+    if (used >= dailyLimit) {
       throw new HttpsError(
         'resource-exhausted',
-        `Daily quota exhausted (${used}/${FREE_LIMIT}). Upgrade to continue.`,
+        `Daily quota exhausted (${used}/${dailyLimit}). Upgrade to continue.`,
       );
     }
 
-    remaining = FREE_LIMIT - used - 1;
+    remaining = dailyLimit - used - 1;
     tx.set(
       quotaRef,
       { dayKey: currentDay, used: used + 1, updatedAt: FieldValue.serverTimestamp() },
@@ -148,7 +168,7 @@ async function claimQuotaSlot(
     );
   });
 
-  return { plan, remaining };
+  return { plan, remaining, trialActive };
 }
 
 // ── Audit log ────────────────────────────────────────────────────────────────
@@ -325,7 +345,7 @@ export const askOracle = onCall(
       await enforceRateLimit(userId);
 
       // 5. Quota (atomic)
-      const { plan, remaining } = await claimQuotaSlot(userId);
+      const { plan, remaining, trialActive } = await claimQuotaSlot(userId);
 
       // 6. Build chart server-side — client has ZERO involvement in ephemeris
       const now = new Date().toISOString();
