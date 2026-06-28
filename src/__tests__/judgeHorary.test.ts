@@ -301,44 +301,49 @@ describe('judgeHorary — ruling planets count', () => {
 });
 
 describe('judgeHorary — Kotamraju filter', () => {
-  test('strips a ruling planet whose sub-lord occupies a denial house', () => {
-    // career denial houses: [5, 8, 12]
-    // Sun is a ruling planet; place Sun in house 6 (favorable), but its sub-lord is Saturn.
-    // Place Saturn in house 8 (denial) so Sun fails the Kotamraju check.
-    // The remaining 4 RPs all land in favorable houses.
-    // Without Kotamraju, Sun would score +1; after filter Sun is stripped.
-    // We verify the verdict still reflects the filter's effect (not simply that Sun is absent
-    // from output, since we can't introspect the filter directly from the public API).
-    const chartFiltered = makeChart(
+  // applyKotamrajuFilter strips a ruling planet when getSubLords(planet.lon).subLord
+  // occupies a denial house. We test this via the public judgeHorary API:
+  // move the sub-lord planet between a denial house and a favorable house, and
+  // verify confidence changes accordingly.
+  //
+  // At lon=165° (house 6 centre): nakshatra = Hasta (Moon), position within nakshatra ≈5°.
+  // KP sub-sequence from Moon: Moon(1.111°), Mars(0.778°), Rahu(2.0°), Jupiter(1.778°)…
+  // 5° falls in the Jupiter sub → getSubLords(165°).subLord = Jupiter.
+  //
+  // To trigger the filter on a ruling planet X at 165°:
+  //   place Jupiter (the computed sub-lord) in a denial house.
+  // To let X pass:
+  //   place Jupiter in a favorable house.
+  //
+  // We use Mercury as the test ruling planet placed at 165° (house 6).
+  // Jupiter is placed in house 8 (denial) vs house 11 (favorable).
+  test('ruling planet is filtered out when its KP sub-lord occupies a denial house', () => {
+    // career denial houses: [5, 8, 12]; favorable: [1, 2, 3, 6, 10, 11]
+    // Mercury at 165° → KP sub-lord = Jupiter.
+    // Scenario A: Jupiter in house 8 (denial) → Mercury stripped by Kotamraju filter.
+    const chartDenied = makeChart(
       'Mars',
-      { Moon: 1, Mars: 10, Sun: 6, Saturn: 8, Mercury: 6, Jupiter: 11 },
+      { Moon: 1, Mars: 10, Sun: 6, Mercury: 6, Jupiter: 8, Venus: 11 },
       {},
       ['Sun', 'Mercury', 'Jupiter', 'Moon', 'Venus'],
     );
-    // Override Sun's sub-lord to Saturn so the filter strips it
-    chartFiltered.planets.Sun = {
-      ...chartFiltered.planets.Sun,
-      subLord: 'Saturn',
-    };
-    const filteredVerdict = judgeHorary(chartFiltered, CAREER_Q);
 
-    // Build the same chart but put Saturn in a favorable house (house 10) so Sun passes the filter
-    const chartUnfiltered = makeChart(
+    // Scenario B: Jupiter in house 11 (favorable) → Mercury passes filter.
+    const chartFavorable = makeChart(
       'Mars',
-      { Moon: 1, Mars: 10, Sun: 6, Saturn: 10, Mercury: 6, Jupiter: 11 },
+      { Moon: 1, Mars: 10, Sun: 6, Mercury: 6, Jupiter: 11, Venus: 11 },
       {},
       ['Sun', 'Mercury', 'Jupiter', 'Moon', 'Venus'],
     );
-    chartUnfiltered.planets.Sun = {
-      ...chartUnfiltered.planets.Sun,
-      subLord: 'Saturn',
-    };
-    const unfilteredVerdict = judgeHorary(chartUnfiltered, CAREER_Q);
 
-    // Both must produce valid verdicts; filtered should score ≤ unfiltered
-    expect(['YES', 'NO', 'CONDITIONAL', 'DELAYED', 'UNCLEAR']).toContain(filteredVerdict.verdict);
-    expect(['YES', 'NO', 'CONDITIONAL', 'DELAYED', 'UNCLEAR']).toContain(unfilteredVerdict.verdict);
-    expect(filteredVerdict.confidence).toBeLessThanOrEqual(unfilteredVerdict.confidence);
+    const deniedVerdict = judgeHorary(chartDenied, CAREER_Q);
+    const favorableVerdict = judgeHorary(chartFavorable, CAREER_Q);
+
+    // Both must produce valid verdicts
+    expect(['YES', 'NO', 'CONDITIONAL', 'DELAYED', 'UNCLEAR']).toContain(deniedVerdict.verdict);
+    expect(['YES', 'NO', 'CONDITIONAL', 'DELAYED', 'UNCLEAR']).toContain(favorableVerdict.verdict);
+    // When Jupiter is in denial, Mercury is filtered → lower or equal score
+    expect(deniedVerdict.confidence).toBeLessThanOrEqual(favorableVerdict.confidence);
   });
 });
 
