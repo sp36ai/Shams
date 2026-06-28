@@ -20,6 +20,8 @@ export interface AskOracleInput {
   lat: number;
   lon: number;
   seekerProfile?: 'clarity' | 'comfort' | 'action' | 'surrender';
+  seekerName?: string;
+  motherName?: string;
 }
 
 export interface AskOracleResult {
@@ -38,13 +40,21 @@ export async function askOracle(args: AskOracleInput): Promise<AskOracleResult> 
 
   const fn = functionsInstance.httpsCallable('askOracle');
 
-  const result = await fn({
+  const payload: Record<string, unknown> = {
     question: args.question,
     questionLang: args.questionLang,
     lat: args.lat,
     lon: args.lon,
     ...(args.seekerProfile !== undefined ? { seekerProfile: args.seekerProfile } : {}),
-  });
+  };
+  if (args.seekerName) {
+    payload.seekerName = args.seekerName;
+  }
+  if (args.motherName) {
+    payload.motherName = args.motherName;
+  }
+
+  const result = await fn(payload);
 
   const data = result.data as {
     readingId: string;

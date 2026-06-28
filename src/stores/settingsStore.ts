@@ -41,6 +41,10 @@ export interface SettingsState {
   seekerProfile: SeekerProfile | null;
   /** Raw onboarding answers for audit. null until onboarding completes. */
   onboardingAnswers: [string, string, string] | null;
+  /** Seeker's own name — used to personalise the Hidden Scroll header. */
+  seekerName: string | null;
+  /** Seeker's mother's name — used in the Hidden Scroll header blessing. */
+  motherName: string | null;
 
   markOnboardingComplete: () => void;
   markLocationPrompted: () => void;
@@ -49,6 +53,7 @@ export interface SettingsState {
   clearLocation: () => void;
   setSeekerProfile: (profile: SeekerProfile, answers: [string, string, string]) => void;
   resetProfile: () => void;
+  setSeekerIdentity: (seekerName: string | null, motherName: string | null) => void;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -66,6 +71,14 @@ function readSeekerProfile(): SeekerProfile | null {
     return v;
   }
   return null;
+}
+
+function readSeekerName(): string | null {
+  return storage.getString(KEYS.SEEKER_NAME) ?? null;
+}
+
+function readMotherName(): string | null {
+  return storage.getString(KEYS.MOTHER_NAME) ?? null;
 }
 
 function readOnboardingAnswers(): [string, string, string] | null {
@@ -111,6 +124,8 @@ export const useSettingsStore = create<SettingsState>(set => ({
   lastLocation: readLastLocation(),
   seekerProfile: readSeekerProfile(),
   onboardingAnswers: readOnboardingAnswers(),
+  seekerName: readSeekerName(),
+  motherName: readMotherName(),
 
   markOnboardingComplete: (): void => {
     storage.set(KEYS.ONBOARDING_SEEN, true);
@@ -150,6 +165,20 @@ export const useSettingsStore = create<SettingsState>(set => ({
     storage.delete(KEYS.ONBOARDING_SEEKER_PROFILE);
     storage.delete(KEYS.ONBOARDING_ANSWERS);
     set({ hasSeenOnboarding: false, seekerProfile: null, onboardingAnswers: null });
+  },
+
+  setSeekerIdentity: (seekerName: string | null, motherName: string | null): void => {
+    if (seekerName === null || seekerName.trim() === '') {
+      storage.delete(KEYS.SEEKER_NAME);
+    } else {
+      storage.set(KEYS.SEEKER_NAME, seekerName.trim());
+    }
+    if (motherName === null || motherName.trim() === '') {
+      storage.delete(KEYS.MOTHER_NAME);
+    } else {
+      storage.set(KEYS.MOTHER_NAME, motherName.trim());
+    }
+    set({ seekerName: seekerName?.trim() || null, motherName: motherName?.trim() || null });
   },
 
   clearLocation: (): void => {
