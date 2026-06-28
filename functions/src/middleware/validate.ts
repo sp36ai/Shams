@@ -23,6 +23,8 @@ export const AskOracleSchema = z
     lat: LatSchema,
     lon: LonSchema,
     questionLang: LangSchema,
+    seekerName: z.string().trim().min(1).max(100).optional(),
+    motherName: z.string().trim().min(1).max(100).optional(),
   })
   .strict();
 

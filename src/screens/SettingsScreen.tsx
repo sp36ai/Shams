@@ -2,8 +2,8 @@
  * SettingsScreen — appearance, language, location, and account settings.
  */
 
-import React, { useCallback } from 'react';
-import { Alert, Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import React, { useCallback, useState } from 'react';
+import { Alert, Linking, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import StarfieldBackground from '@components/StarfieldBackground';
 import { ThemeSwitcher } from '@components/ThemeSwitcher';
@@ -27,6 +27,16 @@ const SettingsScreen: React.FC = () => {
   const lastLocation = useSettingsStore(s => s.lastLocation);
   const seekerProfile = useSettingsStore(s => s.seekerProfile);
   const resetProfile = useSettingsStore(s => s.resetProfile);
+  const storedSeekerName = useSettingsStore(s => s.seekerName);
+  const storedMotherName = useSettingsStore(s => s.motherName);
+  const setSeekerIdentity = useSettingsStore(s => s.setSeekerIdentity);
+
+  const [seekerNameInput, setSeekerNameInput] = useState(storedSeekerName ?? '');
+  const [motherNameInput, setMotherNameInput] = useState(storedMotherName ?? '');
+
+  const handleIdentityBlur = useCallback(() => {
+    setSeekerIdentity(seekerNameInput || null, motherNameInput || null);
+  }, [seekerNameInput, motherNameInput, setSeekerIdentity]);
 
   const handleResetProfile = useCallback(() => {
     Alert.alert(
@@ -166,6 +176,52 @@ const SettingsScreen: React.FC = () => {
               })}
             </View>
           </Row>
+        </Section>
+
+        <Section title="Seeker Identity">
+          <View
+            style={[
+              styles.identityCard,
+              { backgroundColor: colors.surface, borderColor: colors.border },
+            ]}
+          >
+            <Text style={[typography('caption'), { color: colors.goldBright, letterSpacing: 1.2, marginBottom: 4 }]}>
+              {'YOUR NAME'}
+            </Text>
+            <TextInput
+              value={seekerNameInput}
+              onChangeText={setSeekerNameInput}
+              onBlur={handleIdentityBlur}
+              placeholder="e.g. Mohammad Rafiq"
+              placeholderTextColor={colors.textFaint}
+              style={[
+                typography('body'),
+                styles.identityInput,
+                { color: colors.text, borderColor: colors.border },
+              ]}
+              returnKeyType="next"
+            />
+            <Text style={[typography('caption'), { color: colors.goldBright, letterSpacing: 1.2, marginTop: 14, marginBottom: 4 }]}>
+              {"MOTHER'S NAME"}
+            </Text>
+            <TextInput
+              value={motherNameInput}
+              onChangeText={setMotherNameInput}
+              onBlur={handleIdentityBlur}
+              placeholder="e.g. Mymoona"
+              placeholderTextColor={colors.textFaint}
+              style={[
+                typography('body'),
+                styles.identityInput,
+                { color: colors.text, borderColor: colors.border },
+              ]}
+              returnKeyType="done"
+              onSubmitEditing={handleIdentityBlur}
+            />
+            <Text style={[typography('caption'), { color: colors.textFaint, marginTop: 10, lineHeight: 16 }]}>
+              {'Used to personalise the Hidden Scroll header. Stored only on this device.'}
+            </Text>
+          </View>
         </Section>
 
         <Section title={t('settings.profileSection')}>
@@ -499,6 +555,23 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     borderRadius: 999,
     borderWidth: 1,
+  },
+  identityCard: {
+    padding: 16,
+    borderRadius: 16,
+    borderWidth: StyleSheet.hairlineWidth,
+    shadowColor: '#000',
+    shadowOpacity: 0.04,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 1,
+  },
+  identityInput: {
+    borderWidth: StyleSheet.hairlineWidth,
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    backgroundColor: '#FFFFFF06',
   },
   profileCard: {
     padding: 16,

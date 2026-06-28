@@ -403,6 +403,120 @@ function narrationForReading(reading: Reading): string {
   return narration[reading.questionLang] ?? narration.en ?? '';
 }
 
+// ── Hidden Scroll formatter ───────────────────────────────────────────────────
+
+function formatHiddenScroll(
+  reading: Reading,
+  seekerName: string | null,
+  motherName: string | null,
+  locationLabel: string | null,
+): string {
+  const vj = reading.verdictJson as VjExtended | null;
+  const oracle = vj?.oracle;
+
+  if (!oracle) {
+    return narrationForReading(reading);
+  }
+
+  const lines: string[] = [];
+
+  // ── Bismillah ──
+  lines.push('بِسْمِ اللَّهِ الرَّحْمٰنِ الرَّحِيمِ');
+  lines.push('');
+
+  // ── Personalized scroll header ──
+  const now = new Date();
+  const timeStr = now.toLocaleTimeString('en-US', {
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true,
+  });
+  const city = locationLabel ?? 'your location';
+
+  if (seekerName) {
+    if (motherName) {
+      lines.push(
+        `The Hidden Scroll has been opened in the name of ${seekerName}, born of the prayers of ${motherName}, at ${timeStr} in ${city}.`,
+      );
+    } else {
+      lines.push(
+        `The Hidden Scroll has been opened in the name of ${seekerName}, at ${timeStr} in ${city}.`,
+      );
+    }
+  } else {
+    lines.push(
+      `The Hidden Scroll has been opened at ${timeStr} in ${city}.`,
+    );
+  }
+  lines.push('');
+
+  // ── Disclaimer ──
+  lines.push(
+    'Know that the unseen belongs to Allah alone. What follows is a symbolic spiritual reflection in the style of Shams al-Asrār, not a claim of certain knowledge or prophecy.',
+  );
+  lines.push('');
+
+  // ── The Unveiling ──
+  lines.push('✧ The Unveiling');
+  lines.push('');
+  if (oracle.opening) {
+    lines.push(oracle.opening);
+  }
+  if (oracle.interpretation) {
+    lines.push('');
+    lines.push(oracle.interpretation);
+  }
+  if (oracle.spiritual_layer) {
+    lines.push('');
+    lines.push(oracle.spiritual_layer);
+  }
+  if (oracle.hidden_influence) {
+    lines.push('');
+    lines.push(oracle.hidden_influence);
+  }
+  if (oracle.timing) {
+    lines.push('');
+    lines.push(oracle.timing);
+  }
+
+  // ── Spiritual Remedy ──
+  const remedy = oracle.remedy;
+  if (remedy) {
+    lines.push('');
+    lines.push('✧ Spiritual Remedy');
+
+    if (remedy.quran_verse) {
+      lines.push('');
+      lines.push('Allah says:');
+      lines.push(`> ${remedy.quran_verse}`);
+    }
+    if (remedy.dua) {
+      lines.push('');
+      lines.push('Recite daily:');
+      lines.push(`> ${remedy.dua}`);
+    }
+    if (remedy.asma) {
+      lines.push('');
+      lines.push('Invoke the Divine Name:');
+      lines.push(remedy.asma);
+    }
+    if (remedy.zikr) {
+      lines.push('');
+      lines.push(remedy.zikr);
+    }
+    if (remedy.sadaqah) {
+      lines.push('');
+      lines.push(remedy.sadaqah);
+    }
+  }
+
+  // ── Signature ──
+  lines.push('');
+  lines.push(oracle.signature);
+
+  return lines.join('\n');
+}
+
 // ── Engine ────────────────────────────────────────────────────────────────────
 
 async function runEngine(args: {
@@ -411,6 +525,8 @@ async function runEngine(args: {
   lat: number | null;
   lon: number | null;
   locationRequiredText: string;
+  seekerName?: string;
+  motherName?: string;
 }): Promise<Reading> {
   const now = new Date().toISOString();
 
@@ -442,6 +558,8 @@ async function runEngine(args: {
     questionLang: args.questionLang,
     lat: args.lat,
     lon: args.lon,
+    seekerName: args.seekerName,
+    motherName: args.motherName,
   });
 
   return reading;
@@ -462,6 +580,12 @@ const OracleScreen: React.FC = () => {
   );
   const seekerProfile = useSettingsStore(
     (s: ReturnType<typeof useSettingsStore.getState>) => s.seekerProfile,
+  );
+  const seekerName = useSettingsStore(
+    (s: ReturnType<typeof useSettingsStore.getState>) => s.seekerName,
+  );
+  const motherName = useSettingsStore(
+    (s: ReturnType<typeof useSettingsStore.getState>) => s.motherName,
   );
 
   const addReading = useReadingsStore(
@@ -812,7 +936,10 @@ const OracleScreen: React.FC = () => {
           {
             id: `s_cached_${Date.now()}`,
             sender: 'shams',
-            text: narrationForReading(cachedReading) || t('errors.unknown'),
+            text:
+              formatHiddenScroll(cachedReading, seekerName, motherName, lastLocation?.label ?? null) ||
+              narrationForReading(cachedReading) ||
+              t('errors.unknown'),
             reading: cachedReading,
             createdAt: new Date().toISOString(),
           },
@@ -830,6 +957,8 @@ const OracleScreen: React.FC = () => {
           lat: resolvedLat, // guaranteed non-null by the gate above
           lon: resolvedLon,
           locationRequiredText: t('errors.locationRequired'),
+          seekerName: seekerName ?? undefined,
+          motherName: motherName ?? undefined,
         });
 
         await addReading(reading);
@@ -860,7 +989,10 @@ const OracleScreen: React.FC = () => {
         const shamsMsg: ChatMessage = {
           id: `s_${reading.id}`,
           sender: 'shams',
-          text: narrationForReading(reading) || t('errors.unknown'),
+          text:
+            formatHiddenScroll(reading, seekerName, motherName, lastLocation?.label ?? null) ||
+            narrationForReading(reading) ||
+            t('errors.unknown'),
           reading,
           createdAt: new Date().toISOString(),
         };
@@ -904,10 +1036,12 @@ const OracleScreen: React.FC = () => {
       lastLocation,
       lastReading,
       messages,
+      motherName,
       navigation,
       plan,
       questionsToday,
       readings,
+      seekerName,
       seekerProfile,
       stage,
       startTrial,
@@ -1523,22 +1657,140 @@ const Bubble: React.FC<{
   const accentColor = isUser ? colors.chatUserBorder : colors.chatShamsBorder;
   const bubbleBg = isUser ? colors.chatUserBg : colors.chatShamsBg;
 
-  // Bold formatting — **text** → bold
+  // Render the Hidden Scroll format with Bismillah, ✧ headers, blockquotes, bold
   const renderText = (raw: string) => {
-    const parts = raw.split(/(\*\*[^*]+\*\*)/g);
+    const paragraphs = raw.split('\n');
     return (
-      <Text style={[typography('body'), { color: colors.text }]}>
-        {parts.map((part, i) => {
-          if (part.startsWith('**') && part.endsWith('**')) {
+      <View>
+        {paragraphs.map((line, idx) => {
+          // Empty line → small spacer
+          if (line === '') {
+            return <View key={idx} style={{ height: 8 }} />;
+          }
+
+          // Bismillah line — large gold Arabic
+          if (line.startsWith('بِسْمِ')) {
             return (
-              <Text key={i} style={{ fontWeight: '700', color: colors.accent }}>
-                {part.slice(2, -2)}
+              <Text
+                key={idx}
+                style={{
+                  fontFamily: 'Amiri-Regular',
+                  fontSize: 22,
+                  color: accentColor,
+                  textAlign: 'center',
+                  lineHeight: 32,
+                  marginBottom: 4,
+                }}
+              >
+                {line}
               </Text>
             );
           }
-          return <Text key={i}>{part}</Text>;
+
+          // Section header (✧ The Unveiling / ✧ Spiritual Remedy)
+          if (line.startsWith('✧')) {
+            return (
+              <View
+                key={idx}
+                style={{ flexDirection: 'row', alignItems: 'center', marginVertical: 10 }}
+              >
+                <View
+                  style={{
+                    flex: 1,
+                    height: StyleSheet.hairlineWidth,
+                    backgroundColor: accentColor,
+                    opacity: 0.35,
+                  }}
+                />
+                <Text
+                  style={[
+                    typography('label'),
+                    {
+                      color: accentColor,
+                      marginHorizontal: 10,
+                      letterSpacing: 1.2,
+                      fontSize: 11,
+                    },
+                  ]}
+                >
+                  {line}
+                </Text>
+                <View
+                  style={{
+                    flex: 1,
+                    height: StyleSheet.hairlineWidth,
+                    backgroundColor: accentColor,
+                    opacity: 0.35,
+                  }}
+                />
+              </View>
+            );
+          }
+
+          // Blockquote (> text)
+          if (line.startsWith('> ')) {
+            return (
+              <View
+                key={idx}
+                style={{
+                  borderLeftWidth: 2,
+                  borderLeftColor: accentColor + '70',
+                  paddingLeft: 12,
+                  marginVertical: 4,
+                }}
+              >
+                <Text
+                  style={[
+                    typography('body'),
+                    { color: colors.textMuted, lineHeight: 22, fontStyle: 'italic' },
+                  ]}
+                >
+                  {line.slice(2)}
+                </Text>
+              </View>
+            );
+          }
+
+          // "Allah says:" / "Recite daily:" / "Invoke the Divine Name:" — small gold label
+          if (
+            line === 'Allah says:' ||
+            line === 'Recite daily:' ||
+            line === 'Invoke the Divine Name:'
+          ) {
+            return (
+              <Text
+                key={idx}
+                style={[
+                  typography('caption'),
+                  { color: accentColor, letterSpacing: 0.8, marginTop: 4, marginBottom: 2 },
+                ]}
+              >
+                {line}
+              </Text>
+            );
+          }
+
+          // Regular paragraph with **bold** support
+          const parts = line.split(/(\*\*[^*]+\*\*)/g);
+          return (
+            <Text
+              key={idx}
+              style={[typography('body'), { color: colors.text, lineHeight: 22 }]}
+            >
+              {parts.map((part, i) => {
+                if (part.startsWith('**') && part.endsWith('**')) {
+                  return (
+                    <Text key={i} style={{ fontWeight: '700', color: colors.accent }}>
+                      {part.slice(2, -2)}
+                    </Text>
+                  );
+                }
+                return <Text key={i}>{part}</Text>;
+              })}
+            </Text>
+          );
         })}
-      </Text>
+      </View>
     );
   };
 
