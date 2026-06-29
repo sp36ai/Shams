@@ -75,10 +75,10 @@ android {
         // Phase 5 will generate the keystore.
         release {
             if (project.hasProperty('SHAMS_UPLOAD_STORE_FILE')) {
-                storeFile file(SHAMS_UPLOAD_STORE_FILE)
-                storePassword SHAMS_UPLOAD_STORE_PASSWORD
-                keyAlias SHAMS_UPLOAD_KEY_ALIAS
-                keyPassword SHAMS_UPLOAD_KEY_PASSWORD
+                storeFile file(project.property('SHAMS_UPLOAD_STORE_FILE'))
+                storePassword project.property('SHAMS_UPLOAD_STORE_PASSWORD')
+                keyAlias project.property('SHAMS_UPLOAD_KEY_ALIAS')
+                keyPassword project.property('SHAMS_UPLOAD_KEY_PASSWORD')
             }
         }
     }
