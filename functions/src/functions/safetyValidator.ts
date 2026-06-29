@@ -28,16 +28,12 @@ interface FieldValidation {
   modified: boolean;
 }
 
-const FIELDS_TO_VALIDATE = [
-  'hidden_influence',
-  'spiritual_layer',
-  'timing',
-  'warning',
-] as const;
+const FIELDS_TO_VALIDATE = ['hidden_influence', 'spiritual_layer', 'timing', 'warning'] as const;
 
 type ValidatedField = (typeof FIELDS_TO_VALIDATE)[number];
 
-const VALIDATOR_PROMPT = (fieldName: string, fieldText: string): string => `
+const VALIDATOR_PROMPT = (fieldName: string, fieldText: string): string =>
+  `
 You are a safety validator for an Islamic spiritual oracle.
 
 Review the following oracle text and identify any violations:
@@ -95,7 +91,9 @@ async function validateField(
 
     clearTimeout(timer);
 
-    if (!res.ok) throw new Error(`haiku http ${res.status}`);
+    if (!res.ok) {
+      throw new Error(`haiku http ${res.status}`);
+    }
 
     const data = (await res.json()) as {
       content?: Array<{ type: string; text?: string }>;
@@ -150,9 +148,7 @@ export async function runSafetyValidator(
   apiKey: string,
 ): Promise<OracleVoice> {
   const results = await Promise.all(
-    FIELDS_TO_VALIDATE.map(field =>
-      validateField(field, oracle[field] as string | undefined | null, apiKey, readingId),
-    ),
+    FIELDS_TO_VALIDATE.map(field => validateField(field, oracle[field], apiKey, readingId)),
   );
 
   const fieldsModified: string[] = [];

@@ -62,7 +62,9 @@ export const activateTrial = onCall(
         return { startedAt, expiresAt, alreadyActive: false };
       });
     }).catch(err => {
-      if (err instanceof HttpsError) throw err;
+      if (err instanceof HttpsError) {
+        throw err;
+      }
       throw new HttpsError('internal', 'Failed to activate trial');
     });
   },

@@ -26,8 +26,8 @@ export const classifyQuestion = onCall(
   async (request): Promise<{ class: QuestionClass }> => {
     verifyAuth(request);
 
-    const text =
-      typeof request.data?.text === 'string' ? request.data.text.slice(0, 1000) : '';
+    const inputData = request.data as { text?: unknown } | null;
+    const text = typeof inputData?.text === 'string' ? inputData.text.slice(0, 1000) : '';
 
     // 500+ chars is always a real question — skip classification
     if (text.length > 500) {

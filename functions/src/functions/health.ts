@@ -9,7 +9,7 @@ import { logger } from '../utils/logger';
 
 export const health = onRequest(
   { region: REGION, timeoutSeconds: 10, cors: false },
-  async (_req, res) => {
+  (_req, res) => {
     const status = {
       status: 'ok',
       timestamp: new Date().toISOString(),

@@ -16,9 +16,7 @@ export const inferProfile = onCall(
 
     const d = request.data as { answers?: unknown } | null;
     const raw = Array.isArray(d?.answers) ? (d.answers as unknown[]) : [];
-    const answers = raw
-      .slice(0, 3)
-      .map(a => (typeof a === 'string' ? a.slice(0, 200) : ''));
+    const answers = raw.slice(0, 3).map(a => (typeof a === 'string' ? a.slice(0, 200) : ''));
 
     const [a1 = '', a2 = '', a3 = ''] = answers;
 

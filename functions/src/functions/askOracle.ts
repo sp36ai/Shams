@@ -86,12 +86,15 @@ const DISPLAY_PLANETS: Planet[] = [
 
 // Engine — populated by sync-engine.mjs at build time
 
+// eslint-disable-next-line @typescript-eslint/no-var-requires
 const { buildChart } =
   require('../engine/primitives/chartBuilder') as typeof import('../engine/primitives/chartBuilder');
 
+// eslint-disable-next-line @typescript-eslint/no-var-requires
 const { judgeHorary } =
   require('../engine/kp/judgment/judgeHorary') as typeof import('../engine/kp/judgment/judgeHorary');
 
+// eslint-disable-next-line @typescript-eslint/no-var-requires
 const { classifyQuestion } =
   require('../engine/kp/rules/questionKeywords') as typeof import('../engine/kp/rules/questionKeywords');
 
@@ -405,7 +408,7 @@ export const askOracle = onCall(
       logger.info('oracle computed', {
         userId,
         verdict: verdict.verdict,
-        stage: (verdict as any).stage ?? 'unknown',
+        stage: verdict.stage ?? 'unknown',
         confidence: verdict.confidence,
         confirmedSignificators: verdict.confirmedSignificators ?? [],
         deniedSignificators: verdict.deniedSignificators ?? [],
@@ -472,7 +475,7 @@ export const askOracle = onCall(
       const oracleRaw = apiKey
         ? await synthesiseOracleVoice({
             verdict: verdict.verdict,
-            stage: (verdict as any).stage,
+            stage: verdict.stage,
             confidence: verdict.confidence,
             timingWindow: verdict.timing?.window,
             timingRange: verdict.timing?.range,

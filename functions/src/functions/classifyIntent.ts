@@ -2,13 +2,7 @@ import { onCall } from 'firebase-functions/v2/https';
 import { FUNCTION_OPTS, ANTHROPIC_API_KEY } from '../config';
 import { verifyAuth } from '../middleware/auth';
 
-type IntentClass =
-  | 'TIMING'
-  | 'REMEDY'
-  | 'CLARIFY'
-  | 'REFORMAT'
-  | 'NEW_QUESTION'
-  | 'UNKNOWN';
+type IntentClass = 'TIMING' | 'REMEDY' | 'CLARIFY' | 'REFORMAT' | 'NEW_QUESTION' | 'UNKNOWN';
 
 export interface IntentResult {
   class: IntentClass;
@@ -41,12 +35,10 @@ export const classifyIntent = onCall(
       recentMessages?: unknown;
     } | null;
 
-    const userMessage =
-      typeof d?.userMessage === 'string' ? d.userMessage.slice(0, 500) : '';
+    const userMessage = typeof d?.userMessage === 'string' ? d.userMessage.slice(0, 500) : '';
     const lockedQuestion =
       typeof d?.lockedQuestion === 'string' ? d.lockedQuestion.slice(0, 500) : '';
-    const verdictDirection =
-      typeof d?.verdictDirection === 'string' ? d.verdictDirection : '';
+    const verdictDirection = typeof d?.verdictDirection === 'string' ? d.verdictDirection : '';
     const recentMessages = Array.isArray(d?.recentMessages)
       ? (d.recentMessages as unknown[])
           .slice(0, 3)
@@ -59,9 +51,7 @@ export const classifyIntent = onCall(
     }
 
     const verdictBinary =
-      verdictDirection === 'YES' || verdictDirection === 'CONDITIONAL'
-        ? 'CONFIRMED'
-        : 'DENIED';
+      verdictDirection === 'YES' || verdictDirection === 'CONDITIONAL' ? 'CONFIRMED' : 'DENIED';
 
     const systemPrompt = `You are an intent classifier for a horary oracle app.
 A user has received a verdict for a specific horary question.
