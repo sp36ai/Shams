@@ -144,26 +144,24 @@ export async function selectRemedies(ctx: SelectionContext): Promise<SelectionRe
   });
 
   try {
-    const fn = (functions() as FunctionsWithRegion)
-      .region('asia-south1')
-      .httpsCallable<
-        {
-          oracleContext: {
-            classification: string;
-            spiritualState: string;
-            severity: string;
-            summary: string;
-          };
-          candidates: typeof candidatePayload;
-          questionText: string;
-          readingId: string;
-        },
-        {
-          selectedIds: string[];
-          selectionReason: string;
-          descriptions: Record<string, string>;
-        }
-      >('selectRemedies');
+    const fn = (functions() as FunctionsWithRegion).region('asia-south1').httpsCallable<
+      {
+        oracleContext: {
+          classification: string;
+          spiritualState: string;
+          severity: string;
+          summary: string;
+        };
+        candidates: typeof candidatePayload;
+        questionText: string;
+        readingId: string;
+      },
+      {
+        selectedIds: string[];
+        selectionReason: string;
+        descriptions: Record<string, string>;
+      }
+    >('selectRemedies');
 
     const result = await fn({
       oracleContext: {

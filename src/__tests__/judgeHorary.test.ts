@@ -87,12 +87,12 @@ function makeChart(
   planetHouses: Partial<Record<Planet, number>>,
   retrogrades: Partial<Record<Planet, boolean>> = {},
   rulingPlanets: [Planet, Planet, Planet, Planet, Planet, Planet] = [
-    'Sun',     // [0] dayLord
-    'Saturn',  // [1] horaLord — witness-only, excluded from scoring
+    'Sun', // [0] dayLord
+    'Saturn', // [1] horaLord — witness-only, excluded from scoring
     'Mercury', // [2] ascSignLord
     'Jupiter', // [3] ascStarLord
-    'Moon',    // [4] moonSignLord
-    'Venus',   // [5] moonStarLord
+    'Moon', // [4] moonSignLord
+    'Venus', // [5] moonStarLord
   ],
 ): Chart {
   const houseToLon = (h: number) => (h - 1) * 30 + 15;
@@ -152,12 +152,12 @@ describe('judgeHorary — scoring and verdict', () => {
     // Scoring RPs (5, excl. horaLord): Sun→6(+1), Mercury→6(+1), Jupiter→11(+1), Moon→1(0), Venus→5(0)
     // Total: +2 (MSL) + 3 (RPs) = +5 → YES
     const chart = makeChart('Mars', { Moon: 1, Mars: 10, Sun: 6, Mercury: 6, Jupiter: 11 }, {}, [
-      'Sun',     // dayLord
-      'Saturn',  // horaLord (witness-only)
+      'Sun', // dayLord
+      'Saturn', // horaLord (witness-only)
       'Mercury', // ascSignLord
       'Jupiter', // ascStarLord
-      'Moon',    // moonSignLord
-      'Venus',   // moonStarLord
+      'Moon', // moonSignLord
+      'Venus', // moonStarLord
     ]);
     const verdict = judgeHorary(chart, CAREER_Q);
     expect(verdict.verdict).toBe('YES');
@@ -168,12 +168,12 @@ describe('judgeHorary — scoring and verdict', () => {
     // Scoring RPs (5, excl. horaLord): Sun→5(-1), Mercury→8(-1), Jupiter→12(-1), Venus→12(-1), Moon→1(0)
     // Total: -2 (MSL) + -4 (RPs) = -6 → NO
     const chart = makeChart('Venus', { Moon: 1, Venus: 12, Sun: 5, Mercury: 8, Jupiter: 12 }, {}, [
-      'Sun',     // dayLord
-      'Saturn',  // horaLord (witness-only)
+      'Sun', // dayLord
+      'Saturn', // horaLord (witness-only)
       'Mercury', // ascSignLord
       'Jupiter', // ascStarLord
-      'Moon',    // moonSignLord
-      'Venus',   // moonStarLord
+      'Moon', // moonSignLord
+      'Venus', // moonStarLord
     ]);
     const verdict = judgeHorary(chart, CAREER_Q);
     expect(verdict.verdict).toBe('NO');
@@ -184,12 +184,12 @@ describe('judgeHorary — scoring and verdict', () => {
     // Scoring RPs (5, excl. horaLord): Sun→6(+1), Mercury→3(0), Jupiter→5(-1), Moon→1(0), Saturn→7(0)
     // Total: 0 (MSL) + 0 (RPs) = 0 → CONDITIONAL
     const chart = makeChart('Saturn', { Moon: 1, Saturn: 7, Sun: 6, Mercury: 3, Jupiter: 5 }, {}, [
-      'Sun',     // dayLord
-      'Rahu',    // horaLord (witness-only)
+      'Sun', // dayLord
+      'Rahu', // horaLord (witness-only)
       'Mercury', // ascSignLord
       'Jupiter', // ascStarLord
-      'Moon',    // moonSignLord
-      'Saturn',  // moonStarLord
+      'Moon', // moonSignLord
+      'Saturn', // moonStarLord
     ]);
     const verdict = judgeHorary(chart, CAREER_Q);
     expect(verdict.verdict).toBe('CONDITIONAL');
@@ -380,11 +380,9 @@ describe('judgeHorary — oracle narration language', () => {
     const chart = makeChart('Mars', { Mars: 10, Sun: 6, Mercury: 6, Jupiter: 11 });
     const verdict = judgeHorary(chart, CAREER_Q);
 
-    const allNarration = [
-      verdict.narration.en,
-      verdict.narration.ur,
-      verdict.narration.hi,
-    ].join(' ').toLowerCase();
+    const allNarration = [verdict.narration.en, verdict.narration.ur, verdict.narration.hi]
+      .join(' ')
+      .toLowerCase();
 
     for (const term of FORBIDDEN_TERMS) {
       expect(allNarration).not.toContain(term);

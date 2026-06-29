@@ -185,12 +185,7 @@ const ZODIAC_COLORS: readonly string[] = [
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
 
-function polar(
-  r: number,
-  deg: number,
-  cx: number,
-  cy: number,
-): { x: number; y: number } {
+function polar(r: number, deg: number, cx: number, cy: number): { x: number; y: number } {
   const rad = ((deg - 90) * Math.PI) / 180;
   return { x: cx + r * Math.cos(rad), y: cy + r * Math.sin(rad) };
 }

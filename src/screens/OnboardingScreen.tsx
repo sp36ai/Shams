@@ -102,10 +102,13 @@ const OnboardingScreen: React.FC = () => {
   const [inferring, setInferring] = useState(false);
   const [profile, setProfile] = useState<SeekerProfile | null>(null);
 
-  const advanceTo = useCallback((index: number) => {
-    scrollRef.current?.scrollTo({ x: index * width, animated: true });
-    setActiveIndex(index);
-  }, [width]);
+  const advanceTo = useCallback(
+    (index: number) => {
+      scrollRef.current?.scrollTo({ x: index * width, animated: true });
+      setActiveIndex(index);
+    },
+    [width],
+  );
 
   const handleChoiceQ1Q2 = useCallback(
     (choice: Choice, qIndex: number) => {

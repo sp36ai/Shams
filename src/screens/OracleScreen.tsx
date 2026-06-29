@@ -39,7 +39,7 @@ import { useSettingsStore } from '@stores/settingsStore';
 import { useQuotaStore, FREE_DAILY_LIMIT, TRIAL_DAILY_LIMIT } from '@stores/quotaStore';
 import { useQuota } from '@hooks/useQuota';
 import { useTimingStrip } from '@hooks/useTimingStrip';
-import { classifyIntent, type IntentResult } from '@hooks/useIntentClassifier';
+import { classifyIntent } from '@hooks/useIntentClassifier';
 import { storage, KEYS } from '@storage/mmkv';
 import { classifyQuestion } from '@hooks/useQuestionGate';
 import { askOracle as callOracleFunction } from '../firebase/oracle';
