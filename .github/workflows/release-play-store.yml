@@ -54,7 +54,7 @@ jobs:
 
       - name: Decode keystore
         run: |
-          echo "${{ secrets.SHAMS_UPLOAD_KEYSTORE }}" | base64 -di > android/app/shams-upload-key.jks
+          echo "${{ secrets.BASE64_KEYSTORE }}" | base64 -di > android/app/shams-upload-key.jks
 
 
       - name: List keystore aliases (diagnostic)
