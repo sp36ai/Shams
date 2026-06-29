@@ -35,7 +35,7 @@ android {
         applicationId "com.astrosarfaraz.shamsalasrar"
         minSdk 24
         targetSdk 35
-        versionCode (project.hasProperty('VERSION_CODE') && !project.property('VERSION_CODE').toString().trim().empty) ? project.property('VERSION_CODE').toString().trim().toInteger() : 4
+        versionCode project.hasProperty('VERSION_CODE') ? Integer.parseInt(project.property('VERSION_CODE').toString().trim()) : 4
         versionName "0.1.2"
 
         // react-native-iap v12 has amazon/play product flavors;
@@ -76,9 +76,9 @@ android {
         release {
             if (project.hasProperty('SHAMS_UPLOAD_STORE_FILE')) {
                 storeFile file(project.property('SHAMS_UPLOAD_STORE_FILE'))
-                storePassword project.property('SHAMS_UPLOAD_STORE_PASSWORD')
-                keyAlias project.property('SHAMS_UPLOAD_KEY_ALIAS')
-                keyPassword project.property('SHAMS_UPLOAD_KEY_PASSWORD')
+                storePassword project.property('SHAMS_UPLOAD_STORE_PASSWORD').toString()
+                keyAlias project.property('SHAMS_UPLOAD_KEY_ALIAS').toString()
+                keyPassword project.property('SHAMS_UPLOAD_KEY_PASSWORD').toString()
             }
         }
     }
