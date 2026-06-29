@@ -203,6 +203,25 @@ export async function selectRemedies(ctx: SelectionContext): Promise<SelectionRe
 }
 
 /**
+ * Enrich remedies with generated descriptions in parallel.
+ * Each call to `generate` is isolated — failures leave the description absent
+ * rather than propagating to the caller.
+ */
+export async function enrichWithDescriptions(
+  remedies: RenderedRemedy[],
+  generate: (remedy: RenderedRemedy) => Promise<string>,
+): Promise<RenderedRemedy[]> {
+  const results = await Promise.allSettled(remedies.map(r => generate(r)));
+  return remedies.map((r, i) => {
+    const outcome = results[i];
+    if (outcome?.status === 'fulfilled') {
+      return { ...r, description: outcome.value };
+    }
+    return r;
+  });
+}
+
+/**
  * Convenience builder — derives full SelectionContext from a Reading's verdict fields.
  * seekerProfile is optional contextual data for future use.
  */
