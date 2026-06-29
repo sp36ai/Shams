@@ -6,7 +6,7 @@ on:
     paths:
       - 'android/**'
       - 'src/**'
-      - 'package.json'
+      - 'package.json'h
       - 'package-lock.json'
       - '.github/workflows/release-play-store.yml'
   workflow_dispatch:
@@ -50,11 +50,11 @@ jobs:
 
       - name: Write google-services.json
         run: |
-          echo "${{ secrets.GOOGLE_SERVICES_JSON }}" | base64 -d > android/app/google-services.json
+          echo "${{ secrets.GOOGLE_SERVICES_JSON }}" | base64 -di > android/app/google-services.json
 
       - name: Decode keystore
         run: |
-          echo "${{ secrets.SHAMS_UPLOAD_KEYSTORE }}" | base64 -d > android/app/shams-upload-key.jks
+          echo "${{ secrets.SHAMS_UPLOAD_KEYSTORE }}" | base64 -di > android/app/shams-upload-key.jks
 
       - name: Cache Gradle
         uses: actions/cache@v4
