@@ -85,18 +85,14 @@ const DISPLAY_PLANETS: Planet[] = [
 ];
 
 // Engine — populated by sync-engine.mjs at build time
-
-// eslint-disable-next-line @typescript-eslint/no-var-requires
+/* eslint-disable @typescript-eslint/no-var-requires */
 const { buildChart } =
   require('../engine/primitives/chartBuilder') as typeof import('../engine/primitives/chartBuilder');
-
-// eslint-disable-next-line @typescript-eslint/no-var-requires
 const { judgeHorary } =
   require('../engine/kp/judgment/judgeHorary') as typeof import('../engine/kp/judgment/judgeHorary');
-
-// eslint-disable-next-line @typescript-eslint/no-var-requires
 const { classifyQuestion } =
   require('../engine/kp/rules/questionKeywords') as typeof import('../engine/kp/rules/questionKeywords');
+/* eslint-enable @typescript-eslint/no-var-requires */
 
 // ── Quota helpers ────────────────────────────────────────────────────────────
 
