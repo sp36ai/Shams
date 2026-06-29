@@ -86,12 +86,13 @@ function makeChart(
   moonSubLord: Planet,
   planetHouses: Partial<Record<Planet, number>>,
   retrogrades: Partial<Record<Planet, boolean>> = {},
-  rulingPlanets: [Planet, Planet, Planet, Planet, Planet] = [
-    'Sun',
-    'Mercury',
-    'Jupiter',
-    'Moon',
-    'Venus',
+  rulingPlanets: [Planet, Planet, Planet, Planet, Planet, Planet] = [
+    'Sun',     // [0] dayLord
+    'Saturn',  // [1] horaLord — witness-only, excluded from scoring
+    'Mercury', // [2] ascSignLord
+    'Jupiter', // [3] ascStarLord
+    'Moon',    // [4] moonSignLord
+    'Venus',   // [5] moonStarLord
   ],
 ): Chart {
   const houseToLon = (h: number) => (h - 1) * 30 + 15;
@@ -130,7 +131,7 @@ function makeChart(
     ascendant: EVEN_CUSPS[0],
     midheaven: EVEN_CUSPS[9],
     rulingPlanets,
-    horaLord: rulingPlanets[1], // This will be removed from Chart object in chartBuilder.ts
+    horaLord: rulingPlanets[1], // index 1 = horaLord (witness-only per spec)
     engineVersion: '2.0.0',
   };
 }
@@ -147,45 +148,48 @@ const CAREER_Q: ClassifiedQuestion = {
 
 describe('judgeHorary — scoring and verdict', () => {
   test('YES: Moon Sub-Lord in favorable house + all RPs in favorable houses', () => {
-    // Moon Sub-Lord = Mars → house 10 (favorable for career) → +2
-    // Day/Hora/Minute lords: Sun→6, Mercury→6, Jupiter→11  → +3
-    // Total: +5 (MSL) + 6 (RPs) = +8 → YES, no retrogrades
+    // Moon Sub-Lord = Mars → house 10 (favorable) → +2
+    // Scoring RPs (5, excl. horaLord): Sun→6(+1), Mercury→6(+1), Jupiter→11(+1), Moon→1(0), Venus→5(0)
+    // Total: +2 (MSL) + 3 (RPs) = +5 → YES
     const chart = makeChart('Mars', { Moon: 1, Mars: 10, Sun: 6, Mercury: 6, Jupiter: 11 }, {}, [
-      'Sun',
-      'Mercury',
-      'Jupiter',
-      'Moon',
-      'Venus',
+      'Sun',     // dayLord
+      'Saturn',  // horaLord (witness-only)
+      'Mercury', // ascSignLord
+      'Jupiter', // ascStarLord
+      'Moon',    // moonSignLord
+      'Venus',   // moonStarLord
     ]);
     const verdict = judgeHorary(chart, CAREER_Q);
     expect(verdict.verdict).toBe('YES');
   });
 
   test('NO: Moon Sub-Lord in denial house + RPs in denial houses', () => {
-    // Moon Sub-Lord = Venus → house 12 (denial for career) → -2
-    // Day/Hora/Minute lords: Sun→5, Mercury→8, Jupiter→12 → -3
-    // Total: -5 (MSL) - 6 (RPs) = -8 → NO
+    // Moon Sub-Lord = Venus → house 12 (denial) → -2
+    // Scoring RPs (5, excl. horaLord): Sun→5(-1), Mercury→8(-1), Jupiter→12(-1), Venus→12(-1), Moon→1(0)
+    // Total: -2 (MSL) + -4 (RPs) = -6 → NO
     const chart = makeChart('Venus', { Moon: 1, Venus: 12, Sun: 5, Mercury: 8, Jupiter: 12 }, {}, [
-      'Sun',
-      'Mercury',
-      'Jupiter',
-      'Moon',
-      'Venus',
+      'Sun',     // dayLord
+      'Saturn',  // horaLord (witness-only)
+      'Mercury', // ascSignLord
+      'Jupiter', // ascStarLord
+      'Moon',    // moonSignLord
+      'Venus',   // moonStarLord
     ]);
     const verdict = judgeHorary(chart, CAREER_Q);
     expect(verdict.verdict).toBe('NO');
   });
 
   test('CONDITIONAL: neutral Moon Sub-Lord + mixed RPs → score in [-1,+2]', () => {
-    // Moon Sub-Lord = Saturn → house 7 (neutral for career) → 0
-    // Day lord Sun→6 (+1), Hora lord Mercury→3 (neutral, 0), Minute lord Jupiter→5 (denial, -1)
+    // Moon Sub-Lord = Saturn → house 7 (neutral) → 0
+    // Scoring RPs (5, excl. horaLord): Sun→6(+1), Mercury→3(0), Jupiter→5(-1), Moon→1(0), Saturn→7(0)
     // Total: 0 (MSL) + 0 (RPs) = 0 → CONDITIONAL
     const chart = makeChart('Saturn', { Moon: 1, Saturn: 7, Sun: 6, Mercury: 3, Jupiter: 5 }, {}, [
-      'Sun',
-      'Mercury',
-      'Jupiter',
-      'Moon',
-      'Saturn',
+      'Sun',     // dayLord
+      'Rahu',    // horaLord (witness-only)
+      'Mercury', // ascSignLord
+      'Jupiter', // ascStarLord
+      'Moon',    // moonSignLord
+      'Saturn',  // moonStarLord
     ]);
     const verdict = judgeHorary(chart, CAREER_Q);
     expect(verdict.verdict).toBe('CONDITIONAL');
@@ -197,7 +201,7 @@ describe('judgeHorary — scoring and verdict', () => {
       'Mars',
       { Moon: 1, Mars: 10, Sun: 6, Mercury: 6, Jupiter: 11 },
       { Jupiter: true },
-      ['Sun', 'Mercury', 'Jupiter', 'Moon', 'Venus'],
+      ['Sun', 'Saturn', 'Mercury', 'Jupiter', 'Moon', 'Venus'],
     );
     const verdict = judgeHorary(chart, CAREER_Q);
     expect(verdict.verdict).toBe('DELAYED');
@@ -208,7 +212,7 @@ describe('judgeHorary — scoring and verdict', () => {
       'Mars',
       { Moon: 1, Mars: 10, Sun: 6, Mercury: 6, Jupiter: 11 },
       { Mars: true },
-      ['Sun', 'Mercury', 'Jupiter', 'Moon', 'Venus'],
+      ['Sun', 'Saturn', 'Mercury', 'Jupiter', 'Moon', 'Venus'],
     );
     const verdict = judgeHorary(chart, CAREER_Q);
     expect(verdict.verdict).toBe('DELAYED');
@@ -219,7 +223,7 @@ describe('judgeHorary — scoring and verdict', () => {
       'Venus',
       { Moon: 1, Venus: 12, Sun: 5, Mercury: 8, Jupiter: 12 },
       { Jupiter: true, Venus: true },
-      ['Sun', 'Mercury', 'Jupiter', 'Moon', 'Venus'],
+      ['Sun', 'Saturn', 'Mercury', 'Jupiter', 'Moon', 'Venus'],
     );
     const verdict = judgeHorary(chart, CAREER_Q);
     expect(verdict.verdict).toBe('NO');
@@ -286,17 +290,20 @@ describe('judgeHorary — house matrix coverage', () => {
 });
 
 describe('judgeHorary — ruling planets count', () => {
-  test('chart.rulingPlanets contains exactly 5 elements for scoring', () => {
-    // The 5-RP spec: Day Lord, Asc Sign Lord, Asc Star Lord, Moon Sign Lord, Moon Star Lord.
-    // horaLord is stored separately as chart.horaLord, not in rulingPlanets.
+  test('chart.rulingPlanets has 6 elements; horaLord (index 1) excluded from scoring', () => {
+    // Production structure: [dayLord, horaLord, ascSignLord, ascStarLord, moonSignLord, moonStarLord]
+    // judgeHorary filters index 1 (horaLord) → 5 scoring RPs.
     const chart = makeChart('Mars', { Mars: 10 }, {}, [
       'Sun',
+      'Saturn',
       'Mercury',
       'Jupiter',
       'Moon',
       'Venus',
     ]);
-    expect(chart.rulingPlanets).toHaveLength(5);
+    expect(chart.rulingPlanets).toHaveLength(6);
+    expect(chart.horaLord).toBe('Saturn');
+    expect(chart.rulingPlanets[1]).toBe('Saturn');
   });
 });
 
@@ -325,7 +332,7 @@ describe('judgeHorary — Kotamraju filter', () => {
       'Mars',
       { Moon: 1, Mars: 10, Sun: 6, Mercury: 6, Jupiter: 8, Venus: 11 },
       {},
-      ['Sun', 'Mercury', 'Jupiter', 'Moon', 'Venus'],
+      ['Sun', 'Saturn', 'Mercury', 'Jupiter', 'Moon', 'Venus'],
     );
 
     // Scenario B: Jupiter in house 11 (favorable) → Mercury passes filter.
@@ -333,7 +340,7 @@ describe('judgeHorary — Kotamraju filter', () => {
       'Mars',
       { Moon: 1, Mars: 10, Sun: 6, Mercury: 6, Jupiter: 11, Venus: 11 },
       {},
-      ['Sun', 'Mercury', 'Jupiter', 'Moon', 'Venus'],
+      ['Sun', 'Saturn', 'Mercury', 'Jupiter', 'Moon', 'Venus'],
     );
 
     const deniedVerdict = judgeHorary(chartDenied, CAREER_Q);

@@ -471,7 +471,10 @@ export function judgeHorary(chart: Chart, question: ClassifiedQuestion): Verdict
   );
 
   // ── STEP 4: Ruling Planets × Significator intersection (Phase D) ─────────
-  const allWitnesses = (chart.rulingPlanets as Planet[]).filter(Boolean);
+  // horaLord is at index 1 — witness-only display field, not a scoring RP.
+  const allWitnesses = (chart.rulingPlanets as Planet[])
+    .filter((_, i) => i !== 1)
+    .filter(Boolean);
 
   const filteredRulingPlanets = applyKotamrajuFilter(allWitnesses, favorable, denial, chart);
 
