@@ -420,7 +420,7 @@ const ChartSvg: React.FC<HoraryChartWheelProps> = props => {
           stroke={s.stroke}
           strokeWidth={s.sw}
           opacity={s.op}
-          strokeDasharray={s.dash}
+          strokeDasharray={'dash' in s ? s.dash : undefined}
         />,
       );
     }

@@ -131,7 +131,7 @@ export async function selectRemedies(ctx: SelectionContext): Promise<SelectionRe
 
   // Build the payload for the selectRemedies Cloud Function
   const candidatePayload = rendered.map(r => {
-    const ranked = top8.find(c => c.id === r.id);
+    const rankIdx = top8.findIndex(c => c.id === r.id);
     return {
       id: r.id,
       title: r.title,
@@ -139,7 +139,7 @@ export async function selectRemedies(ctx: SelectionContext): Promise<SelectionRe
       effectDimension: r.effectDimension,
       intensity: r.intensity,
       themeTags: r.themeTags,
-      score: ranked?.score ?? 0,
+      score: rankIdx >= 0 ? (top8.length - rankIdx) * 10 : 0,
     };
   });
 

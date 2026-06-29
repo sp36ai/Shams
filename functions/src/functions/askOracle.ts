@@ -29,12 +29,10 @@ import { measure } from '../middleware/telemetry';
 import { logger, hashText } from '../utils/logger';
 import { requestMetaFromCallable } from '../utils/requestMeta';
 import {
-  FUNCTION_OPTS,
   ORACLE_FUNCTION_OPTS,
   UNLIMITED_PLANS,
   FREE_LIMIT,
   TRIAL_DAILY_LIMIT,
-  TRIAL_DURATION_DAYS,
   todayKey,
   ANTHROPIC_API_KEY,
   type PlanTier,
@@ -345,7 +343,7 @@ export const askOracle = onCall(
       await enforceRateLimit(userId);
 
       // 5. Quota (atomic)
-      const { plan, remaining, trialActive } = await claimQuotaSlot(userId);
+      const { plan, remaining } = await claimQuotaSlot(userId);
 
       // 6. Build chart server-side — client has ZERO involvement in ephemeris
       const now = new Date().toISOString();
@@ -484,9 +482,7 @@ export const askOracle = onCall(
           })
         : ORACLE_FALLBACK;
 
-      const oracle = apiKey
-        ? await runSafetyValidator(oracleRaw, verdict.id, apiKey)
-        : oracleRaw;
+      const oracle = apiKey ? await runSafetyValidator(oracleRaw, verdict.id, apiKey) : oracleRaw;
 
       logger.info('oracle synthesis', { userId, oracle });
 
