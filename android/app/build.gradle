@@ -76,6 +76,7 @@ android {
         release {
             if (project.hasProperty('SHAMS_UPLOAD_STORE_FILE')) {
                 storeFile file(project.property('SHAMS_UPLOAD_STORE_FILE'))
+                storeType "PKCS12"
                 storePassword project.property('SHAMS_UPLOAD_STORE_PASSWORD').toString()
                 keyAlias project.property('SHAMS_UPLOAD_KEY_ALIAS').toString()
                 keyPassword project.property('SHAMS_UPLOAD_KEY_PASSWORD').toString()
