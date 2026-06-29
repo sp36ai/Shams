@@ -184,18 +184,48 @@ function getPlanetStyle(
   colors: ReturnType<typeof useColors>,
 ): PlanetStyle {
   if (planet === moonSubLord) {
-    return { fill: colors.surface, stroke: colors.caution, textColor: colors.goldBright, r: 8, glow: false };
+    return {
+      fill: colors.surface,
+      stroke: colors.caution,
+      textColor: colors.goldBright,
+      r: 8,
+      glow: false,
+    };
   }
   if (confirmedSignificators?.includes(planet)) {
-    return { fill: colors.surface, stroke: colors.goldBright, textColor: colors.goldBright, r: 6, glow: true };
+    return {
+      fill: colors.surface,
+      stroke: colors.goldBright,
+      textColor: colors.goldBright,
+      r: 6,
+      glow: true,
+    };
   }
   if (deniedSignificators?.includes(planet)) {
-    return { fill: colors.surface, stroke: colors.mardood, textColor: colors.mardood, r: 6, glow: false };
+    return {
+      fill: colors.surface,
+      stroke: colors.mardood,
+      textColor: colors.mardood,
+      r: 6,
+      glow: false,
+    };
   }
   if (significators?.neutral.includes(planet)) {
-    return { fill: colors.surface, stroke: colors.accent, textColor: colors.textMuted, r: 6, glow: false };
+    return {
+      fill: colors.surface,
+      stroke: colors.accent,
+      textColor: colors.textMuted,
+      r: 6,
+      glow: false,
+    };
   }
-  return { fill: colors.surface, stroke: colors.accent, textColor: colors.textFaint, r: 6, glow: false };
+  return {
+    fill: colors.surface,
+    stroke: colors.accent,
+    textColor: colors.textFaint,
+    r: 6,
+    glow: false,
+  };
 }
 
 // ── Collision-resolved planet positions ────────────────────────────────────────
@@ -390,7 +420,7 @@ const ChartSvg: React.FC<HoraryChartWheelProps> = props => {
           stroke={s.stroke}
           strokeWidth={s.sw}
           opacity={s.op}
-          strokeDasharray={s.dash}
+          strokeDasharray={'dash' in s ? s.dash : undefined}
         />,
       );
     }
@@ -497,7 +527,13 @@ const ChartSvg: React.FC<HoraryChartWheelProps> = props => {
 
       {/* Outer rings (drawn last, on top of sectors) */}
       <Circle r={R_OUTER} fill="none" stroke={colors.goldBright} strokeWidth={1.2} opacity={0.8} />
-      <Circle r={R_SIGN_INNER} fill="none" stroke={colors.goldBright} strokeWidth={0.4} opacity={0.5} />
+      <Circle
+        r={R_SIGN_INNER}
+        fill="none"
+        stroke={colors.goldBright}
+        strokeWidth={0.4}
+        opacity={0.5}
+      />
 
       {/* Ascendant line — full diameter, vertical */}
       <Line

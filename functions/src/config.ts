@@ -9,7 +9,9 @@ import { defineInt, defineSecret } from 'firebase-functions/params';
 export type PlanTier = 'free' | 'mureed' | 'khass';
 
 export const UNLIMITED_PLANS: PlanTier[] = ['mureed', 'khass'];
-export const FREE_LIMIT = 100; // questions per UTC day
+export const FREE_LIMIT = 3; // questions per UTC day — free plan
+export const TRIAL_DAILY_LIMIT = 5; // questions per UTC day — 7-day trial
+export const TRIAL_DURATION_DAYS = 7;
 
 /** Return the ISO date string (YYYY-MM-DD) for the current UTC day. */
 export function todayKey(now = Date.now()): string {

@@ -25,7 +25,7 @@ export function computeConvergenceTiming(
 ): VerdictTiming {
   const momentMs = new Date(chart.momentUtc).getTime();
   const moonLon = chart.planets.Moon.siderealLongitude;
-  const moonNakLord = chart.planets.Moon.nakshatraLord as Planet;
+  const moonNakLord = chart.planets.Moon.nakshatraLord;
 
   // 2. Dasha Participation Check
   const dasha = calculateDasha(moonLon, momentMs);

@@ -12,6 +12,7 @@
 
 import { create } from 'zustand';
 import { storage, KEYS } from '@storage/mmkv';
+import { activateTrialOnServer } from '../firebase/trial';
 
 /* -------------------------------------------------------------------------- */
 /*  Plan tiers                                                                */
@@ -170,6 +171,12 @@ export const useQuotaStore = create<QuotaState>((set, get) => ({
     const today = todayKey();
     storage.set(KEYS.TRIAL_START, today);
     set({ trialStartDate: today, trialActive: true, trialExpired: false });
+    // Register on server so trial cannot be reset by reinstalling the app.
+    // Fire-and-forget: local state is the UX source of truth; server enforces
+    // the limit independently via /trials/{userId} on every askOracle call.
+    void activateTrialOnServer().catch(err =>
+      console.warn('[quotaStore] trial server registration failed', err),
+    );
   },
 
   checkTrial(): { active: boolean; daysRemaining: number; expired: boolean } {

@@ -77,6 +77,16 @@ service cloud.firestore {
       allow read, delete: if isAdmin();
     }
 
+    // ── /trials/{userId} ────────────────────────────────────────────────────
+    // Written by activateTrial Cloud Function (Admin SDK — bypasses rules).
+    // Users may read their own trial record to display days remaining.
+    // No client writes: prevents back-dating the trial start date.
+
+    match /trials/{userId} {
+      allow read:  if isOwner(userId) || isAdmin();
+      allow write: if false; // Admin SDK only
+    }
+
     // ── /rateLimits/{userId}/minutes/{minuteKey} ─────────────────────────────
     // Written exclusively by Cloud Functions. Clients have no access.
 

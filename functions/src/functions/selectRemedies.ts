@@ -128,15 +128,12 @@ export const selectRemedies = onCall(
       summary: '',
     };
     const candidates: CandidateInput[] = Array.isArray(d?.candidates)
-      ? (d.candidates as unknown[]).slice(0, 8).filter(
-          (c): c is CandidateInput =>
-            typeof (c as CandidateInput)?.id === 'string',
-        )
+      ? (d.candidates as unknown[])
+          .slice(0, 8)
+          .filter((c): c is CandidateInput => typeof (c as CandidateInput)?.id === 'string')
       : [];
-    const questionText =
-      typeof d?.questionText === 'string' ? d.questionText.slice(0, 500) : '';
-    const readingId =
-      typeof d?.readingId === 'string' ? d.readingId : '';
+    const questionText = typeof d?.questionText === 'string' ? d.questionText.slice(0, 500) : '';
+    const readingId = typeof d?.readingId === 'string' ? d.readingId : '';
 
     const apiKey = ANTHROPIC_API_KEY.value();
 
@@ -177,9 +174,7 @@ export const selectRemedies = onCall(
           model: 'claude-sonnet-4-6',
           max_tokens: 120,
           system: SELECTION_PROMPT,
-          messages: [
-            { role: 'user', content: JSON.stringify(selectionPayload) },
-          ],
+          messages: [{ role: 'user', content: JSON.stringify(selectionPayload) }],
         }),
         signal: controller.signal,
       });
@@ -190,24 +185,16 @@ export const selectRemedies = onCall(
         const data = (await res.json()) as {
           content?: Array<{ type: string; text?: string }>;
         };
-        const text =
-          data.content?.find(b => b.type === 'text')?.text ?? '{}';
-        const parsed = JSON.parse(
-          text.replace(/```json|```/g, '').trim(),
-        ) as {
+        const text = data.content?.find(b => b.type === 'text')?.text ?? '{}';
+        const parsed = JSON.parse(text.replace(/```json|```/g, '').trim()) as {
           selectedIds?: unknown;
           selectionReason?: unknown;
         };
 
         const candidateIds = new Set(candidates.map(c => c.id));
-        const rawIds = Array.isArray(parsed.selectedIds)
-          ? parsed.selectedIds
-          : [];
+        const rawIds = Array.isArray(parsed.selectedIds) ? parsed.selectedIds : [];
         selectedIds = (rawIds as unknown[])
-          .filter(
-            (id): id is string =>
-              typeof id === 'string' && candidateIds.has(id),
-          )
+          .filter((id): id is string => typeof id === 'string' && candidateIds.has(id))
           .slice(0, 3);
 
         if (typeof parsed.selectionReason === 'string') {

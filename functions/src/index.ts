@@ -3,6 +3,7 @@
  *
  * Exported functions:
  *   askOracle                — callable — compute horary reading (server builds chart)
+ *   activateTrial            — callable — idempotent server-side trial registration
  *   getQuota                 — callable — get caller's quota status
  *   syncReadings             — callable — bulk-sync local readings to Firestore
  *   deleteReading            — callable — delete a single reading (owner only)
@@ -21,6 +22,7 @@
 import './utils/admin';
 
 export { askOracle } from './functions/askOracle';
+export { activateTrial } from './functions/activateTrial';
 export { getQuota } from './functions/quota';
 export { syncReadings, deleteReading } from './functions/readings';
 export { verifyGooglePlayPurchase } from './functions/payments/googlePlay';

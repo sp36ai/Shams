@@ -29,15 +29,20 @@ import { measure } from '../middleware/telemetry';
 import { logger, hashText } from '../utils/logger';
 import { requestMetaFromCallable } from '../utils/requestMeta';
 import {
-  FUNCTION_OPTS,
   ORACLE_FUNCTION_OPTS,
   UNLIMITED_PLANS,
   FREE_LIMIT,
+  TRIAL_DAILY_LIMIT,
   todayKey,
   ANTHROPIC_API_KEY,
   type PlanTier,
 } from '../config';
-import { ORACLE_SYNTHESIS_SYSTEM_PROMPT, TONE_GUARDRAILS } from '../prompts/oracleSynthesisPrompt';
+import type { TrialDoc } from '../types';
+import {
+  ORACLE_SYNTHESIS_SYSTEM_PROMPT,
+  TONE_GUARDRAILS,
+  seekerProfileModifier,
+} from '../prompts/oracleSynthesisPrompt';
 import { runSafetyValidator } from './safetyValidator';
 import { getManzila, getManzilaOracleLine } from '../engine/manazil';
 import { houseForLongitude } from '../engine/primitives/chartBuilder';
@@ -80,15 +85,14 @@ const DISPLAY_PLANETS: Planet[] = [
 ];
 
 // Engine — populated by sync-engine.mjs at build time
-
+/* eslint-disable @typescript-eslint/no-var-requires */
 const { buildChart } =
   require('../engine/primitives/chartBuilder') as typeof import('../engine/primitives/chartBuilder');
-
 const { judgeHorary } =
   require('../engine/kp/judgment/judgeHorary') as typeof import('../engine/kp/judgment/judgeHorary');
-
 const { classifyQuestion } =
   require('../engine/kp/rules/questionKeywords') as typeof import('../engine/kp/rules/questionKeywords');
+/* eslint-enable @typescript-eslint/no-var-requires */
 
 // ── Quota helpers ────────────────────────────────────────────────────────────
 
@@ -96,18 +100,24 @@ const { classifyQuestion } =
  * Atomically check quota and pre-decrement.
  * Returns the plan and remaining count (null = unlimited).
  * Throws resource-exhausted if quota is zero.
+ *
+ * Trial logic: if /trials/{userId} exists and has not expired the daily
+ * limit is TRIAL_DAILY_LIMIT (5) instead of FREE_LIMIT (3). This is
+ * enforced server-side so reinstalling the app cannot reset the trial.
  */
 async function claimQuotaSlot(
   userId: string,
-): Promise<{ plan: PlanTier; remaining: number | null }> {
+): Promise<{ plan: PlanTier; remaining: number | null; trialActive: boolean }> {
   const quotaRef = db.collection('quotas').doc(userId);
+  const trialRef = db.collection('trials').doc(userId);
 
   let plan: PlanTier = 'free';
   let remaining: number | null = null;
+  let trialActive = false;
 
   await db.runTransaction(async tx => {
-    const snap = await tx.get(quotaRef);
-    const d = snap.exists ? (snap.data() as Partial<QuotaDoc>) : {};
+    const [quotaSnap, trialSnap] = await Promise.all([tx.get(quotaRef), tx.get(trialRef)]);
+    const d = quotaSnap.exists ? (quotaSnap.data() as Partial<QuotaDoc>) : {};
 
     plan = d.plan ?? 'free';
 
@@ -125,18 +135,29 @@ async function claimQuotaSlot(
       return; // No quota to decrement for paid plans
     }
 
+    // Determine effective daily limit — trial takes precedence over free limit
+    let dailyLimit = FREE_LIMIT;
+    if (trialSnap.exists) {
+      const trial = trialSnap.data() as TrialDoc;
+      const trialExpiry = new Date(trial.expiresAt).getTime();
+      if (Date.now() < trialExpiry) {
+        trialActive = true;
+        dailyLimit = TRIAL_DAILY_LIMIT;
+      }
+    }
+
     const currentDay = todayKey();
     const storedDay = d.dayKey ?? '';
     const used = storedDay === currentDay ? (d.used ?? 0) : 0;
 
-    if (used >= FREE_LIMIT) {
+    if (used >= dailyLimit) {
       throw new HttpsError(
         'resource-exhausted',
-        `Daily quota exhausted (${used}/${FREE_LIMIT}). Upgrade to continue.`,
+        `Daily quota exhausted (${used}/${dailyLimit}). Upgrade to continue.`,
       );
     }
 
-    remaining = FREE_LIMIT - used - 1;
+    remaining = dailyLimit - used - 1;
     tx.set(
       quotaRef,
       { dayKey: currentDay, used: used + 1, updatedAt: FieldValue.serverTimestamp() },
@@ -144,7 +165,7 @@ async function claimQuotaSlot(
     );
   });
 
-  return { plan, remaining };
+  return { plan, remaining, trialActive };
 }
 
 // ── Audit log ────────────────────────────────────────────────────────────────
@@ -180,7 +201,7 @@ const ORACLE_FALLBACK: NonNullable<OracleVoiceResult> = {
     zikr: 'SubhanAllah 33 times after each prayer for three days.',
     sadaqah: 'Give water to someone who is thirsty, or to a living creature.',
   },
-  signature: 'These words are unveiled under the banner of Shams al-Asrar, by Astro Sarfaraz.',
+  signature: '✨ These words are unveiled under the banner of Shams al-Asrār, by Astro Sarfaraz.',
 };
 
 function buildOracleUserMessage(params: {
@@ -216,13 +237,17 @@ async function synthesiseOracleVoice(params: {
   timingWindow?: string;
   timingRange?: { min: number; max: number };
   manzilaLine: string;
+  seekerProfile?: 'clarity' | 'comfort' | 'action' | 'surrender';
   apiKey: string;
 }): Promise<NonNullable<OracleVoiceResult>> {
   const userMessage = buildOracleUserMessage(params);
 
+  const profileBlock = params.seekerProfile ? seekerProfileModifier(params.seekerProfile) : '';
+
   const systemPrompt =
     ORACLE_SYNTHESIS_SYSTEM_PROMPT +
     `\n\nMOON STATION TONIGHT:\n${params.manzilaLine}\n\nWeave al-Qamar's station naturally into the opening or spiritual_layer. Never state the mansion name as a label. Let it arrive as imagery.` +
+    profileBlock +
     TONE_GUARDRAILS;
 
   const timeoutMs = 25_000;
@@ -282,7 +307,10 @@ async function synthesiseOracleVoice(params: {
         zikr: typeof r.zikr === 'string' ? r.zikr : undefined,
         sadaqah: typeof r.sadaqah === 'string' ? r.sadaqah : undefined,
       },
-      signature: String(parsed.signature ?? 'Oracle of Shams al-Asrār (by Astro Sarfaraz)'),
+      signature: String(
+        parsed.signature ??
+          '✨ These words are unveiled under the banner of Shams al-Asrār, by Astro Sarfaraz.',
+      ),
     };
   } catch (err) {
     clearTimeout(timer);
@@ -376,7 +404,7 @@ export const askOracle = onCall(
       logger.info('oracle computed', {
         userId,
         verdict: verdict.verdict,
-        stage: (verdict as any).stage ?? 'unknown',
+        stage: verdict.stage ?? 'unknown',
         confidence: verdict.confidence,
         confirmedSignificators: verdict.confirmedSignificators ?? [],
         deniedSignificators: verdict.deniedSignificators ?? [],
@@ -443,18 +471,17 @@ export const askOracle = onCall(
       const oracleRaw = apiKey
         ? await synthesiseOracleVoice({
             verdict: verdict.verdict,
-            stage: (verdict as any).stage,
+            stage: verdict.stage,
             confidence: verdict.confidence,
             timingWindow: verdict.timing?.window,
             timingRange: verdict.timing?.range,
             manzilaLine,
+            seekerProfile: input.seekerProfile,
             apiKey,
           })
         : ORACLE_FALLBACK;
 
-      const oracle = apiKey
-        ? await runSafetyValidator(oracleRaw, verdict.id, apiKey)
-        : oracleRaw;
+      const oracle = apiKey ? await runSafetyValidator(oracleRaw, verdict.id, apiKey) : oracleRaw;
 
       logger.info('oracle synthesis', { userId, oracle });
 

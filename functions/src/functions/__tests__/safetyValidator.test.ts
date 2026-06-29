@@ -31,7 +31,13 @@ function makeOracle(overrides: Partial<OracleVoice> = {}): OracleVoice {
     hidden_influence: 'The pattern indicates a thread of unresolved attachment.',
     timing: 'Before the new moon, the first sign will arrive.',
     signature: '✨ These words are unveiled under the banner of Shams al-Asrār, by Astro Sarfaraz.',
-    remedy: { quran_verse: '2:286', asma: 'Yā Laṭīf', dua: 'Allāhumma yassir', zikr: 'Subḥānallāh', sadaqah: 'Give water.' },
+    remedy: {
+      quran_verse: '2:286',
+      asma: 'Yā Laṭīf',
+      dua: 'Allāhumma yassir',
+      zikr: 'Subḥānallāh',
+      sadaqah: 'Give water.',
+    },
     ...overrides,
   };
 }
@@ -56,12 +62,17 @@ describe('runSafetyValidator', () => {
   it('Test 1 — clean content: approved fields pass through unmodified, no issues logged', async () => {
     global.fetch = vi.fn().mockResolvedValue({
       ok: true,
-      json: vi.fn().mockImplementation(async () => ({
-        content: [{ type: 'text', text: JSON.stringify({
-          status: 'approved',
-          issues: [],
-          final_text: 'original',
-        }) }],
+      json: vi.fn().mockImplementation(() => ({
+        content: [
+          {
+            type: 'text',
+            text: JSON.stringify({
+              status: 'approved',
+              issues: [],
+              final_text: 'original',
+            }),
+          },
+        ],
       })),
     });
 
@@ -97,6 +108,7 @@ describe('runSafetyValidator', () => {
 
     // validator_failed was logged (mockAdd called from per-field catch blocks)
     expect(mockAdd).toHaveBeenCalled();
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     const loggedArg = mockAdd.mock.calls[0]?.[0] as Record<string, unknown>;
     expect(loggedArg.status).toBe('validator_failed');
     expect(Array.isArray(loggedArg.issues)).toBe(true);

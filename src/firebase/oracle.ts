@@ -19,6 +19,7 @@ export interface AskOracleInput {
   questionLang: 'en' | 'ur' | 'hi';
   lat: number;
   lon: number;
+  seekerProfile?: 'clarity' | 'comfort' | 'action' | 'surrender';
 }
 
 export interface AskOracleResult {
@@ -42,6 +43,7 @@ export async function askOracle(args: AskOracleInput): Promise<AskOracleResult> 
     questionLang: args.questionLang,
     lat: args.lat,
     lon: args.lon,
+    ...(args.seekerProfile !== undefined ? { seekerProfile: args.seekerProfile } : {}),
   });
 
   const data = result.data as {

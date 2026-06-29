@@ -29,5 +29,5 @@ module.exports = {
     node: true,
     es2021: true,
   },
-  ignorePatterns: ['node_modules/', 'build/', 'dist/', 'lib/', '*.config.js'],
+  ignorePatterns: ['node_modules/', 'build/', 'dist/', 'lib/', '*.config.js', 'vitest.config.ts'],
 };

@@ -10,16 +10,12 @@ import { logger } from '../utils/logger';
  */
 export async function measure<T>(name: string, userId: string, fn: () => Promise<T>): Promise<T> {
   const start = performance.now();
-  try {
-    const result = await fn();
-    const duration = performance.now() - start;
+  const result = await fn();
+  const duration = performance.now() - start;
 
-    logger.info(`perf:${name}`, {
-      userId,
-      durationMs: Math.round(duration),
-    });
-    return result;
-  } catch (err) {
-    throw err;
-  }
+  logger.info(`perf:${name}`, {
+    userId,
+    durationMs: Math.round(duration),
+  });
+  return result;
 }

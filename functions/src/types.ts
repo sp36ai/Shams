@@ -139,6 +139,13 @@ export interface ReadingDoc {
   createdAt: FirebaseFirestore.Timestamp;
 }
 
+/** Firestore /trials/{userId} document shape. */
+export interface TrialDoc {
+  userId: string;
+  startedAt: string; // ISO 8601
+  expiresAt: string; // ISO 8601 — startedAt + TRIAL_DURATION_DAYS
+}
+
 /** Firestore /auditLogs/{logId} document shape. */
 export interface AuditLogDoc {
   userId: string;

@@ -131,7 +131,7 @@ export async function selectRemedies(ctx: SelectionContext): Promise<SelectionRe
 
   // Build the payload for the selectRemedies Cloud Function
   const candidatePayload = rendered.map(r => {
-    const ranked = top8.find(c => c.id === r.id);
+    const rankIdx = top8.findIndex(c => c.id === r.id);
     return {
       id: r.id,
       title: r.title,
@@ -139,31 +139,29 @@ export async function selectRemedies(ctx: SelectionContext): Promise<SelectionRe
       effectDimension: r.effectDimension,
       intensity: r.intensity,
       themeTags: r.themeTags,
-      score: ranked?.score ?? 0,
+      score: rankIdx >= 0 ? (top8.length - rankIdx) * 10 : 0,
     };
   });
 
   try {
-    const fn = (functions() as FunctionsWithRegion)
-      .region('asia-south1')
-      .httpsCallable<
-        {
-          oracleContext: {
-            classification: string;
-            spiritualState: string;
-            severity: string;
-            summary: string;
-          };
-          candidates: typeof candidatePayload;
-          questionText: string;
-          readingId: string;
-        },
-        {
-          selectedIds: string[];
-          selectionReason: string;
-          descriptions: Record<string, string>;
-        }
-      >('selectRemedies');
+    const fn = (functions() as FunctionsWithRegion).region('asia-south1').httpsCallable<
+      {
+        oracleContext: {
+          classification: string;
+          spiritualState: string;
+          severity: string;
+          summary: string;
+        };
+        candidates: typeof candidatePayload;
+        questionText: string;
+        readingId: string;
+      },
+      {
+        selectedIds: string[];
+        selectionReason: string;
+        descriptions: Record<string, string>;
+      }
+    >('selectRemedies');
 
     const result = await fn({
       oracleContext: {
@@ -202,6 +200,25 @@ export async function selectRemedies(ctx: SelectionContext): Promise<SelectionRe
       selectionReason: 'fallback: cf call failed',
     };
   }
+}
+
+/**
+ * Enrich remedies with generated descriptions in parallel.
+ * Each call to `generate` is isolated — failures leave the description absent
+ * rather than propagating to the caller.
+ */
+export async function enrichWithDescriptions(
+  remedies: RenderedRemedy[],
+  generate: (remedy: RenderedRemedy) => Promise<string>,
+): Promise<RenderedRemedy[]> {
+  const results = await Promise.allSettled(remedies.map(r => generate(r)));
+  return remedies.map((r, i) => {
+    const outcome = results[i];
+    if (outcome?.status === 'fulfilled') {
+      return { ...r, description: outcome.value };
+    }
+    return r;
+  });
 }
 
 /**
