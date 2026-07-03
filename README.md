@@ -1,6 +1,38 @@
-# Shams al-Asrar
+# Shams al-Asrār — The Sun of Secrets
 
-Deterministic RKP horary oracle with Firebase backend and in-app subscriptions.
+## What It Is
+
+Shams al-Asrār is a horary oracle — a modern vessel descended from centuries of Muslim scholarly tradition. It is not a horoscope. It is not a personality test. It is celestial counsel — precise, ancient, and deeply serious.
+
+For seekers with real questions. People in transition. Those facing genuine choice-points. Anyone who believes the cosmos speaks, and knows how to listen.
+
+## The Name
+
+**Shams al-Asrār** means "Sun of Secrets." In the horary tradition, the sun is the supreme governor of time. Every hour of every day is ruled by the sun's motion through the heavens. Your question arrives in a specific moment — precise to the second. This oracle reads that moment: the sun's position, the stars' arrangement, what the advancing light of that precise second illuminates about your situation.
+
+Five celestial powers converge at the instant of your question — the cosmic validators. When these forces align, the truth is certain. When they scatter, the answer grows complex — but it is still true.
+
+## Two Oracle Modes
+
+**Digital Watch Oracle** — Answers anchored to your precise timestamp alone.
+
+**Astronomical Oracle** — Answers grounded in the actual planetary positions at your moment of asking.
+
+Both reveal the same truth. The difference is the depth of celestial witness you seek.
+
+## Subscription Tiers
+
+**Free Trial:** 7 days full access to both oracle modes.
+
+**Mureed (₹249/month):** 3 questions per day, single oracle mode. Perfect for regular seekers. Annual: ₹2,490 (2 months free).
+
+**Khass (₹699/month):** Unlimited questions, both oracle modes, exportable reports, reading archive, direct feedback channel. Annual: ₹6,990 (2 months free).
+
+## The Brand
+
+Built by **Astro Sarfaraz** — a solo developer, owner, and practicing celestial scholar with deep knowledge of horary and mystical traditions. Shams al-Asrār is a labor of spiritual and technical precision.
+
+---
 
 ## Architecture
 
@@ -15,7 +47,7 @@ Deterministic RKP horary oracle with Firebase backend and in-app subscriptions.
 ## Features
 
 ### Judgment (Oracle)
-- **Ask**: Capture question → build RKP chart for current moment/saved location → server judgment → narrated verdict with timing/remedy/reasoning
+- **Ask**: Capture question → build celestial chart for current moment/saved location → server judgment → narrated verdict with timing/remedy/reasoning
 - **Intents**: Follow-up questions (timing, remedy, why) repurpose the chart without recalculating
 - **Confidence**: Verdict confidence level with detailed breakdown by judgment phase
 
@@ -38,7 +70,7 @@ Deterministic RKP horary oracle with Firebase backend and in-app subscriptions.
 
 ### User-Facing Callable Functions
 
-- **`askOracle`** — Horary judgment: validates input, enforces quota, builds chart, calls RKP engine, returns verdict
+- **`askOracle`** — Horary judgment: validates input, enforces quota, builds chart, calls celestial engine, returns verdict
 - **`getQuota`** — Returns user's plan, daily usage, and remaining questions
 - **`syncReadings`** — Bulk fetch readings from Firestore
 - **`deleteReading`** — Delete reading by ID
@@ -50,18 +82,18 @@ Deterministic RKP horary oracle with Firebase backend and in-app subscriptions.
 - **`setAdminClaim`** — Admin privilege management (admin-only, requires existing admin status)
 - **`health`** — Readiness/liveness check (public, no auth required)
 
-## RKP Engine
+## Celestial Engine
 
 The authoritative algorithm documents:
 
-- `docs/RKP_RULES_FROM_SARFARAZ.md` — Judgment rules and KP terminology
+- `docs/RKP_RULES_FROM_SARFARAZ.md` — Judgment rules and horary methodology
 - `src/astrology/kp/judgment/JUDGMENT_ALGORITHM.md` — Implementation details
 
 The engine code:
 
 ```
 src/astrology/
-  ├── engine/           Core RKP calculations
+  ├── engine/           Core celestial calculations
   ├── kp/
   │   ├── judgment/     Verdict logic + timing + remedy
   │   └── charts/       Chart construction, aspects, yoga
@@ -150,13 +182,13 @@ npm test                    # Vitest (currently minimal coverage)
 ├── android/               Android project (gradle, manifests, resources)
 ├── functions/             Cloud Functions (TypeScript)
 │   ├── src/
-│   │   ├── engine/        Shared RKP engine (symlinked from src/)
+│   │   ├── engine/        Shared celestial engine (symlinked from src/)
 │   │   ├── functions/     Callable and HTTP endpoints
 │   │   └── utils/         Firebase admin, validation, logging
 │   └── firebase.json      Functions config (region: asia-south1)
 ├── src/                   React Native app (TypeScript)
 │   ├── __tests__/         Jest tests
-│   ├── astrology/         RKP engine (shared with functions/)
+│   ├── astrology/         Celestial engine (shared with functions/)
 │   ├── components/        Reusable UI (buttons, cards, modals)
 │   ├── hooks/             React hooks (purchase, quota, classifier, timing)
 │   ├── i18n/              Translations (EN, UR, HI)

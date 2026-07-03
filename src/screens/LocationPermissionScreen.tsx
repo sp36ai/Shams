@@ -131,7 +131,7 @@ const LocationPermissionScreen: React.FC = () => {
   const titleText = isDenied ? t('permission.deniedTitle') : 'Location Required to Continue';
   const bodyText = isDenied
     ? t('permission.deniedBody')
-    : 'Shams al-Asrār requires your precise location to calculate accurate house cusps (Placidus system) for your specific coordinates. This is essential for the RKP horary engine to provide an authentic and reliable verdict.\n\nWithout location access, the app cannot function.';
+    : 'Shams al-Asrār requires your precise location to read the heavens for your exact position. Every question is anchored to its moment and place — without both, the celestial counsel cannot be trusted.\n\nWithout location access, the app cannot function.';
 
   return (
     <SafeAreaView

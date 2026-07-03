@@ -569,7 +569,7 @@ const ChartSvg: React.FC<HoraryChartWheelProps> = props => {
         fill={colors.accent}
         fillOpacity={0.7}
       >
-        Sidereal · Lahiri · Placidus · display only
+        Celestial positions · display only
       </SvgText>
     </Svg>
   );
@@ -577,7 +577,7 @@ const ChartSvg: React.FC<HoraryChartWheelProps> = props => {
 
 // ── Tabs ───────────────────────────────────────────────────────────────────────
 
-const TAB_LABELS = ['Sub-lords', 'Witnesses', 'Significators'] as const;
+const TAB_LABELS = ['Celestial Chain', 'Witnesses', 'Celestial Powers'] as const;
 type TabIndex = 0 | 1 | 2;
 
 interface TabBarProps {
@@ -612,7 +612,7 @@ const SubLordTab: React.FC<{
 }> = ({ planetChain, moonSubLord }) => (
   <ScrollView style={tabStyles.panel} showsVerticalScrollIndicator={false}>
     <View style={tabStyles.tableHeader}>
-      {['Planet', 'Manzil Lord', 'Sub Lord', 'Sub-Sub'].map(h => (
+      {['Planet', 'Manzil Lord', 'Cosmic Lord', 'Inner Lord'].map(h => (
         <Text key={h} style={[tabStyles.colHead, { flex: h === 'Planet' ? 1.2 : 1 }]}>
           {h}
         </Text>

@@ -9,7 +9,7 @@ import type { StringTable } from '@i18n/types';
 export const en: StringTable = {
   app: {
     name: 'Shams al-Asrar',
-    tagline: 'RKP Horary',
+    tagline: 'Sacred Horary Oracle',
     poweredBy: 'Powered by Astro Sarfaraz',
   },
 
@@ -36,7 +36,7 @@ export const en: StringTable = {
   permission: {
     locationTitle: 'Location for chart judgment',
     locationRationale:
-      'RKP horary depends on the exact moment and place of the question. Without location, the house cusps cannot be set correctly and the judgment cannot be trusted. Your coordinates stay on this device.',
+      'Celestial counsel depends on the exact moment and place of the question. Without location, the heavens cannot be read for your precise position and the judgment cannot be trusted. Your coordinates stay on this device.',
     grantAccess: 'Grant location access',
     notNow: 'Not now',
     deniedTitle: 'Location is required',
@@ -78,9 +78,9 @@ export const en: StringTable = {
   },
 
   oracle: {
-    headerTitle: 'RKP Horary',
+    headerTitle: 'Shams al-Asrār',
     welcomeMessage:
-      'Ask one clear question. The chart will be cast for the exact moment and place of asking, then judged through the RKP rules active in the engine.',
+      'Ask one clear question. The heavens will be read for the exact moment and place of asking, and the oracle will deliver its celestial counsel.',
     placeholder: 'Type your question…',
     sendButton: 'Ask',
     quotaRemaining: '{{count}} questions remaining this week',
@@ -119,7 +119,7 @@ export const en: StringTable = {
   history: {
     headerTitle: 'Readings',
     emptyTitle: 'No readings yet',
-    emptyBody: 'Saved RKP judgments will appear here.',
+    emptyBody: 'Your readings will appear here.',
     filterAll: 'All',
     filterYes: 'Yes',
     filterNo: 'No',
@@ -132,31 +132,33 @@ export const en: StringTable = {
 
   premium: {
     headerTitle: 'Choose Your Path',
-    subheading: 'Three doors. Same engine. Different depth.',
-    tierStarter: 'Starter',
-    tierPremium: 'Premium',
-    tierConsultation: 'Consultation',
-    starterPrice: '₹299',
-    premiumPrice: '₹999',
-    consultationPrice: '₹1,499',
-    starterPeriod: 'per week',
+    subheading: 'Two doors. Same oracle. Different depth.',
+    tierStarter: 'Mureed',
+    tierPremium: 'Khass',
+    tierConsultation: 'Khass Annual',
+    starterPrice: '₹249',
+    premiumPrice: '₹699',
+    consultationPrice: '₹6,990',
+    starterPeriod: 'per month',
     premiumPeriod: 'per month',
-    consultationPeriod: 'per month',
-    starterDescription: 'Unlimited questions for one week. Perfect for a single matter.',
-    premiumDescription: 'Unlimited questions, full history, and remedy guidance every month.',
+    consultationPeriod: 'per year',
+    starterDescription:
+      '3 questions per day, single oracle mode access. Perfect for regular seekers.',
+    premiumDescription:
+      'Unlimited questions, both oracle modes, exportable reports, reading archive, direct feedback channel.',
     consultationDescription:
-      'Everything in Premium, plus strategic multi-question sessions, priority planetary windows, and downloadable PDF reports.',
+      'Everything in Khass at an annual rate, with 2 months free.',
     selectPlan: 'Select',
-    currentPlan: 'Current plan',
-    moneyBackPromise: '7-day money-back promise',
+    currentPlan: 'Current path',
+    moneyBackPromise: '7-day free trial',
     restorePurchase: 'Restore purchase',
     manageSubscription: 'Manage subscription',
     feature_unlimited_questions: 'Unlimited questions',
-    feature_full_history: 'Full reading history',
-    feature_remedies: 'Remedy guidance',
-    feature_pdf_export: 'PDF report export',
-    feature_priority_windows: 'Priority planetary windows',
-    feature_strategic_sessions: 'Strategic multi-question sessions',
+    feature_full_history: 'Full reading archive',
+    feature_remedies: 'Spiritual remedies',
+    feature_pdf_export: 'Exportable reports',
+    feature_priority_windows: 'Both oracle modes',
+    feature_strategic_sessions: 'Direct feedback channel',
   },
 
   settings: {

@@ -1,31 +1,63 @@
 Shams al-Asrār — The Sun of Secrets
 
-Ask any question and receive a clear, chart-based answer rooted in KP (Krishnamurti Paddhati) horary astrology — one of the most precise systems of Vedic astrology for answering specific questions.
+WHAT IT IS
 
-HOW IT WORKS
-1. Type your question — about career, relationships, travel, health, finances, or anything weighing on your mind.
-2. The app casts a horary chart for the exact moment and place of your question.
-3. Receive a structured KP reading: the verdict, the planetary significators behind it, and practical remedies.
+Shams al-Asrār is a horary oracle — a modern vessel descended from centuries of Muslim scholarly tradition. It is not a horoscope. It is not a personality test. It is celestial counsel — precise, ancient, and deeply serious.
 
-WHY KP HORARY?
-Unlike general horoscopes, horary astrology answers one specific question from the chart of the moment it is asked. The KP system refines this with sub-lord analysis, giving direct, unambiguous readings instead of vague predictions.
+For seekers with real questions. People in transition. Those facing genuine choice-points. Students of the celestial arts who respect the craft. Anyone who believes the cosmos speaks, and knows how to listen.
 
-FEATURES
-• Horary oracle — ask in your own words and get a full KP chart reading with verdict and reasoning
-• Remedies — practical suggestions tailored to your chart
-• Sky Clock — see the current planetary weather and auspicious timing windows
-• History — every reading is saved so you can revisit past questions and outcomes
-• Three languages — full support for English, Urdu, and Hindi
-• Light and dark themes
+THE FOUNDATION
+
+For centuries, Muslim scholars preserved and refined the art of horary astrology — the practice of consulting the heavens for precise answers to singular, burning questions. Works like the legendary Shams al-Ma'arif documented celestial correspondences, the motion of stars, and the deep connections between cosmic moments and human destiny. Scholars including Ahmad al-Buni and Al-Kindi studied the relationship between time, the heavens, and human affairs with rigorous precision. Shams al-Asrār is built on this legacy.
+
+THE NAME
+
+Shams al-Asrār means "Sun of Secrets." In the horary tradition, the sun is the supreme governor of time. Every hour of every day is ruled by the sun's motion through the heavens. Your question arrives in a specific moment — precise to the second. In that moment, the sun occupies an exact position in the sky. Five celestial powers converge at the instant of your question. When these forces align, the truth is certain. When they scatter, the answer grows complex — but it is still true. Like the sun revealing what darkness conceals, Shams al-Asrār illuminates what remains hidden in your situation.
+
+HOW TO USE IT
+
+Ask once. Ask truly. The exact moment of your question — captured to the second — becomes the foundation of your answer.
+
+The Right Question matters. Horary works best for specific, time-bound questions with clear outcomes. "Will I get this job?" "Should I move to this city?" "Is this person trustworthy?" These are horary questions.
+
+Every reading includes:
+• A Quranic reflection resonant with your question
+• A spiritual remedy rooted in sacred practice
+• A guide for next steps
+
+TWO ORACLE MODES
+
+Digital Watch Oracle — Answers anchored to your precise timestamp alone.
+
+Astronomical Oracle — Answers grounded in the actual planetary positions at your moment of asking.
+
+Both reveal the same truth. The difference is the depth of celestial witness you seek.
+
+SUBSCRIPTION TIERS
+
+Free Trial: 7 days full access to both oracle modes.
+
+Mureed (₹249/month): 3 questions per day, single oracle mode access. Perfect for regular seekers. Annual plan: ₹2,490 (2 months free).
+
+Khass (₹699/month): Unlimited questions, both oracle modes, exportable reports, reading archive, direct feedback channel. Annual plan: ₹6,990 (2 months free).
+
+WHAT THIS IS NOT
+
+• Not fortune-telling
+• Not a personality test
+• Not a substitute for your own wisdom or professional advice
+• Not entertainment
+• Not a general-purpose astrology app
+• Not a daily horoscope engine
 
 YOUR DATA, PROTECTED
-• Secure sign-in with email or Google
-• Your questions and readings are private to your account
-• No third-party ad trackers
 
-FREE AND PREMIUM
-Start free with daily questions included, plus a 7-day trial of expanded access. Upgrade to a premium plan for unlimited questions and the complete reading experience.
+Your readings are private. No tracking. No analytics. No sale of your questions or data. What you ask the heavens remains between you and the heavens.
 
-Location access is requested once: horary charts require the place of the question to be cast accurately.
+THE PHILOSOPHY
 
-Shams al-Asrār is a guidance and self-reflection tool. It does not replace professional medical, legal, or financial advice.
+Every moment holds a secret. Every second contains a truth waiting to be read. The sun moves. The stars speak. Ask once, and let Shams al-Asrār reveal what the light of your precise moment has already shown.
+
+This is celestial counsel. This is precision. This is reception.
+
+Built by Astro Sarfaraz — a solo developer and practicing celestial scholar with deep knowledge of horary and mystical traditions.

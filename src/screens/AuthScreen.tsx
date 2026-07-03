@@ -16,6 +16,7 @@ import React, { useCallback, useEffect, useReducer, useRef, useState } from 'rea
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
+  Linking,
   Platform,
   Pressable,
   ScrollView,
@@ -499,9 +500,23 @@ const AuthScreen: React.FC = () => {
             ]}
           >
             {t('auth.termsNotice')}{' '}
-            <Text style={{ color: colors.accent }}>{t('auth.privacyLink')}</Text>
+            <Text
+              style={{ color: colors.accent }}
+              onPress={() =>
+                void Linking.openURL('https://shams-app-4d0e7.web.app/privacy-policy.html')
+              }
+            >
+              {t('auth.privacyLink')}
+            </Text>
             {' & '}
-            <Text style={{ color: colors.accent }}>{t('auth.termsLink')}</Text>
+            <Text
+              style={{ color: colors.accent }}
+              onPress={() =>
+                void Linking.openURL('https://shams-app-4d0e7.web.app/terms.html')
+              }
+            >
+              {t('auth.termsLink')}
+            </Text>
           </Text>
         </ScrollView>
       </KeyboardAvoidingView>
