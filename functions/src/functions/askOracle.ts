@@ -210,8 +210,10 @@ function buildOracleUserMessage(params: {
   confidence: number;
   timingWindow?: string;
   timingRange?: { min: number; max: number };
+  seekerName?: string;
+  motherName?: string;
 }): string {
-  const { verdict, stage, confidence, timingWindow, timingRange } = params;
+  const { verdict, stage, confidence, timingWindow, timingRange, seekerName, motherName } = params;
 
   // Map verdict to CONFIRMED / DENIED
   const verdictBinary = verdict === 'YES' || verdict === 'CONDITIONAL' ? 'CONFIRMED' : 'DENIED';
@@ -227,7 +229,14 @@ function buildOracleUserMessage(params: {
     timingStr = `${timingRange.min}–${timingRange.max} ${timingWindow}`;
   }
 
-  return `VERDICT: ${verdictBinary}\nCONFIDENCE: ${confidenceLevel}\nTIMING: ${timingStr}`;
+  let msg = `VERDICT: ${verdictBinary}\nCONFIDENCE: ${confidenceLevel}\nTIMING: ${timingStr}`;
+  if (seekerName) {
+    msg += `\nSEEKER_NAME: ${seekerName}`;
+  }
+  if (motherName) {
+    msg += `\nMOTHER_NAME: ${motherName}`;
+  }
+  return msg;
 }
 
 async function synthesiseOracleVoice(params: {
@@ -239,6 +248,8 @@ async function synthesiseOracleVoice(params: {
   manzilaLine: string;
   seekerProfile?: 'clarity' | 'comfort' | 'action' | 'surrender';
   apiKey: string;
+  seekerName?: string;
+  motherName?: string;
 }): Promise<NonNullable<OracleVoiceResult>> {
   const userMessage = buildOracleUserMessage(params);
 
@@ -478,6 +489,8 @@ export const askOracle = onCall(
             manzilaLine,
             seekerProfile: input.seekerProfile,
             apiKey,
+            seekerName: input.seekerName,
+            motherName: input.motherName,
           })
         : ORACLE_FALLBACK;
 

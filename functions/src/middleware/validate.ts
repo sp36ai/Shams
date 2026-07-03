@@ -24,6 +24,8 @@ export const AskOracleSchema = z
     lon: LonSchema,
     questionLang: LangSchema,
     seekerProfile: z.enum(['clarity', 'comfort', 'action', 'surrender']).optional(),
+    seekerName: z.string().trim().min(1).max(100).optional(),
+    motherName: z.string().trim().min(1).max(100).optional(),
   })
   .strict();
 

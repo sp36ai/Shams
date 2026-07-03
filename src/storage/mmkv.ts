@@ -60,6 +60,10 @@ export const KEYS = Object.freeze({
   ONBOARDING_SEEKER_PROFILE: 'onboarding.seekerProfile.v1',
   ONBOARDING_ANSWERS: 'onboarding.answers.v1',
 
+  // Seeker identity (name + mother's name for the Hidden Scroll header)
+  SEEKER_NAME: 'seeker.name.v1',
+  MOTHER_NAME: 'seeker.motherName.v1',
+
   // Auth domain
   AUTH_USER_ID: 'auth.userId.v1',
   AUTH_USER_NAME: 'auth.userName.v1',
