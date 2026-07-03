@@ -4,14 +4,12 @@ name: "Auth — Sign In flow"
 - launchApp:
     clearState: true
 
-# Splash screen clears after 2.5s
-- waitForAnimationToEnd:
-    timeout: 4000
-
-# Should land on AuthScreen
+# Splash clears after 2.5s + Firebase auth bootstrap
+- extendedWaitUntil:
+    visible:
+      id: "auth-tab-signin"
+    timeout: 20000
 - assertVisible: "SHAMS AL-ASRĀR"
-- assertVisible:
-    id: "auth-tab-signin"
 
 # Switch to sign-up and back
 - tapOn:
@@ -28,11 +26,12 @@ name: "Auth — Sign In flow"
 
 # Validation — weak password
 - tapOn:
-    text: "Email"
+    id: "auth-input-email"
 - inputText: "test@example.com"
 - tapOn:
-    text: "Password"
+    id: "auth-input-password"
 - inputText: "short"
+- hideKeyboard
 - tapOn:
     id: "auth-submit-btn"
 - assertVisible: "Password must be at least 8 characters"

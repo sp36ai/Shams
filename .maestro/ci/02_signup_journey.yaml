@@ -1,0 +1,73 @@
+appId: com.astrosarfaraz.shamsalasrar
+name: "Journey — sign up through onboarding to the Oracle"
+---
+# Full first-run journey against the real Firebase backend:
+# sign-up → location grant → 3-question onboarding → Oracle screen.
+# Creates a throwaway account (random email) on each run.
+# Onboarding profile inference falls back to 'clarity' without an
+# Anthropic key, so this flow needs no secrets.
+
+- launchApp:
+    clearState: true
+    permissions:
+      location: allow
+
+# Land on Auth (splash + auth bootstrap), switch to sign-up
+- extendedWaitUntil:
+    visible:
+      id: "auth-tab-signup"
+    timeout: 20000
+- tapOn:
+    id: "auth-tab-signup"
+
+- tapOn:
+    id: "auth-input-name"
+- inputText: "CI Test Seeker"
+- tapOn:
+    id: "auth-input-email"
+- inputRandomEmail
+- tapOn:
+    id: "auth-input-password"
+- inputText: "CiTestPass!2026"
+- tapOn:
+    id: "auth-input-confirm"
+- inputText: "CiTestPass!2026"
+- hideKeyboard
+- tapOn:
+    id: "auth-submit-btn"
+
+# Firebase sign-up roundtrip → location gate
+- extendedWaitUntil:
+    visible: "Grant location access"
+    timeout: 30000
+- tapOn: "Grant location access"
+
+# Onboarding — Question 1 (location fix can take up to 8s)
+- extendedWaitUntil:
+    visible: "QUESTION ONE — INTENT"
+    timeout: 20000
+- tapOn: "I face a decision and need clarity"
+
+- extendedWaitUntil:
+    visible: "QUESTION TWO — REGISTER"
+    timeout: 5000
+- tapOn: "Directly — I want clear answers"
+
+- extendedWaitUntil:
+    visible: "QUESTION THREE — TIMING"
+    timeout: 5000
+- tapOn: "Before important choices"
+
+# Profile inference (falls back fast without API key)
+- extendedWaitUntil:
+    visible:
+      id: "onboarding-enter-btn"
+    timeout: 20000
+- tapOn:
+    id: "onboarding-enter-btn"
+
+# Should land on the Oracle tab
+- extendedWaitUntil:
+    visible:
+      id: "oracle-input"
+    timeout: 10000
