@@ -78,8 +78,11 @@ buck-out/
 !.env.example
 functions/.secret.local
 functions/.env.local
-# Project-scoped Firebase env files may contain secrets — keep out of git
+# Project-scoped Firebase env files may contain secrets — keep out of git.
+# Exception: functions/.env.shams-app-4d0e7 holds only non-secret params
+# (RATE_LIMIT_PER_MINUTE) — actual secrets stay in Secret Manager via defineSecret.
 functions/.env.shams-app-*
+!functions/.env.shams-app-4d0e7
 
 # Editor
 .vscode/
