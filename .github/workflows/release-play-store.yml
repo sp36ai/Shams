@@ -64,6 +64,16 @@ jobs:
         run: |
           keytool -list -storetype PKCS12 -keystore android/app/shams-upload-key.jks -storepass "${{ secrets.SHAMS_UPLOAD_STORE_PASSWORD }}" 2>&1 || echo 'keytool failed'
 
+      - name: Diagnose SHAMS_UPLOAD_KEY_ALIAS secret (hash only, never prints the value)
+        run: |
+          RAW="${{ secrets.SHAMS_UPLOAD_KEY_ALIAS }}"
+          echo "raw length: ${#RAW}"
+          printf '%s' "$RAW" | sha256sum
+          TRIMMED="$(printf '%s' "$RAW" | xargs)"
+          echo "trimmed length: ${#TRIMMED}"
+          printf '%s' "$TRIMMED" | sha256sum
+          echo "expected sha256 for the literal string 'shams-upload': e2785c93fd039043db741bd1c30e33341dd5176c780ee65b5801754c0934949f"
+
       - name: Cache Gradle
         uses: actions/cache@v4
         with:
