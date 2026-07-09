@@ -74,6 +74,18 @@ jobs:
           printf '%s' "$TRIMMED" | sha256sum
           echo "expected sha256 for the literal string 'shams-upload': e2785c93fd039043db741bd1c30e33341dd5176c780ee65b5801754c0934949f"
 
+      - name: Diagnose STORE_PASSWORD vs KEY_PASSWORD equality (hash only, never prints either value)
+        run: |
+          STORE_HASH="$(printf '%s' "${{ secrets.SHAMS_UPLOAD_STORE_PASSWORD }}" | sha256sum)"
+          KEY_HASH="$(printf '%s' "${{ secrets.SHAMS_UPLOAD_KEY_PASSWORD }}" | sha256sum)"
+          echo "store password hash: $STORE_HASH"
+          echo "key password hash:   $KEY_HASH"
+          if [ "$STORE_HASH" = "$KEY_HASH" ]; then
+            echo "MATCH: store and key passwords are identical"
+          else
+            echo "MISMATCH: store and key passwords differ — PKCS12 requires them to be identical"
+          fi
+
       - name: Cache Gradle
         uses: actions/cache@v4
         with:
