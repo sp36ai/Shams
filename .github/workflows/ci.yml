@@ -122,6 +122,15 @@ jobs:
           key: gradle-${{ hashFiles('android/**/*.gradle*', 'android/gradle.properties') }}
           restore-keys: gradle-
 
+      # debug.keystore is gitignored (not a secret, but not committed either);
+      # generate it fresh with the exact alias/passwords signingConfigs.debug expects.
+      - name: Generate debug keystore
+        run: |
+          keytool -genkeypair -v -keystore android/app/debug.keystore \
+            -storepass android -keypass android -alias androiddebugkey \
+            -keyalg RSA -keysize 2048 -validity 10000 \
+            -dname "CN=Android Debug,O=Android,C=US"
+
       # -Pe2eBundleJs embeds the JS bundle so the app runs without Metro
       - name: Build debug APK (embedded JS bundle)
         run: cd android && chmod +x gradlew && ./gradlew assembleDebug -Pe2eBundleJs=true --no-daemon -q
