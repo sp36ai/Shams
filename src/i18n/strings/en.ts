@@ -146,8 +146,7 @@ export const en: StringTable = {
       '3 questions per day, single oracle mode access. Perfect for regular seekers.',
     premiumDescription:
       'Unlimited questions, both oracle modes, exportable reports, reading archive, direct feedback channel.',
-    consultationDescription:
-      'Everything in Khass at an annual rate, with 2 months free.',
+    consultationDescription: 'Everything in Khass at an annual rate, with 2 months free.',
     selectPlan: 'Select',
     currentPlan: 'Current path',
     moneyBackPromise: '7-day free trial',

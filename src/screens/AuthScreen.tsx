@@ -515,9 +515,7 @@ const AuthScreen: React.FC = () => {
             {' & '}
             <Text
               style={{ color: colors.accent }}
-              onPress={() =>
-                void Linking.openURL('https://shams-app-4d0e7.web.app/terms.html')
-              }
+              onPress={() => void Linking.openURL('https://shams-app-4d0e7.web.app/terms.html')}
             >
               {t('auth.termsLink')}
             </Text>

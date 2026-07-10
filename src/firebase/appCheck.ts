@@ -23,7 +23,7 @@ export const initializeAppCheckService = () => {
     provider.configure({
       android: { provider: 'playIntegrity' },
       apple: { provider: 'appAttestWithDeviceCheckFallback' },
-      web: { provider: 'recaptchaEnterprise', siteKey: '6LebYN0sAAAAAJ8NNyk7bgEB1EA7AB-sQV3yxOsR' },
+      web: { provider: 'reCaptchaEnterprise', siteKey: '6LebYN0sAAAAAJ8NNyk7bgEB1EA7AB-sQV3yxOsR' },
     });
   }
 

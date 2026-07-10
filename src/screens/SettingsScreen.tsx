@@ -3,7 +3,16 @@
  */
 
 import React, { useCallback, useState } from 'react';
-import { Alert, Linking, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import {
+  Alert,
+  Linking,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import StarfieldBackground from '@components/StarfieldBackground';
 import { ThemeSwitcher } from '@components/ThemeSwitcher';
@@ -185,7 +194,12 @@ const SettingsScreen: React.FC = () => {
               { backgroundColor: colors.surface, borderColor: colors.border },
             ]}
           >
-            <Text style={[typography('caption'), { color: colors.goldBright, letterSpacing: 1.2, marginBottom: 4 }]}>
+            <Text
+              style={[
+                typography('caption'),
+                { color: colors.goldBright, letterSpacing: 1.2, marginBottom: 4 },
+              ]}
+            >
               {'YOUR NAME'}
             </Text>
             <TextInput
@@ -201,7 +215,12 @@ const SettingsScreen: React.FC = () => {
               ]}
               returnKeyType="next"
             />
-            <Text style={[typography('caption'), { color: colors.goldBright, letterSpacing: 1.2, marginTop: 14, marginBottom: 4 }]}>
+            <Text
+              style={[
+                typography('caption'),
+                { color: colors.goldBright, letterSpacing: 1.2, marginTop: 14, marginBottom: 4 },
+              ]}
+            >
               {"MOTHER'S NAME"}
             </Text>
             <TextInput
@@ -218,7 +237,12 @@ const SettingsScreen: React.FC = () => {
               returnKeyType="done"
               onSubmitEditing={handleIdentityBlur}
             />
-            <Text style={[typography('caption'), { color: colors.textFaint, marginTop: 10, lineHeight: 16 }]}>
+            <Text
+              style={[
+                typography('caption'),
+                { color: colors.textFaint, marginTop: 10, lineHeight: 16 },
+              ]}
+            >
               {'Used to personalise the Hidden Scroll header. Stored only on this device.'}
             </Text>
           </View>
