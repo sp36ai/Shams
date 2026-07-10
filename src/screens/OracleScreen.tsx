@@ -444,9 +444,7 @@ function formatHiddenScroll(
       );
     }
   } else {
-    lines.push(
-      `The Hidden Scroll has been opened at ${timeStr} in ${city}.`,
-    );
+    lines.push(`The Hidden Scroll has been opened at ${timeStr} in ${city}.`);
   }
   lines.push('');
 
@@ -939,7 +937,12 @@ const OracleScreen: React.FC = () => {
             id: `s_cached_${Date.now()}`,
             sender: 'shams',
             text:
-              formatHiddenScroll(cachedReading, seekerName, motherName, lastLocation?.label ?? null) ||
+              formatHiddenScroll(
+                cachedReading,
+                seekerName,
+                motherName,
+                lastLocation?.label ?? null,
+              ) ||
               narrationForReading(cachedReading) ||
               t('errors.unknown'),
             reading: cachedReading,
@@ -1777,10 +1780,7 @@ const Bubble: React.FC<{
           // Regular paragraph with **bold** support
           const parts = line.split(/(\*\*[^*]+\*\*)/g);
           return (
-            <Text
-              key={idx}
-              style={[typography('body'), { color: colors.text, lineHeight: 22 }]}
-            >
+            <Text key={idx} style={[typography('body'), { color: colors.text, lineHeight: 22 }]}>
               {parts.map((part, i) => {
                 if (part.startsWith('**') && part.endsWith('**')) {
                   return (
