@@ -1,5 +1,5 @@
 // Top-level build file — Shams al-Asrār
-// React Native 0.77.x — Android-first
+// React Native 0.78.x — Android-first
 
 buildscript {
     ext {

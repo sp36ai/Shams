@@ -54,7 +54,7 @@ type TKey = Parameters<ReturnType<typeof useTranslation>>[0];
 /*  Custom tab button — strips the default ripple for a quieter spiritual feel*/
 /* -------------------------------------------------------------------------- */
 
-const TabButton: React.FC<BottomTabBarButtonProps> = props => {
+const TabButton = (props: BottomTabBarButtonProps): React.JSX.Element => {
   const { children, onPress, accessibilityState, accessibilityLabel, testID } = props;
   return (
     <Pressable
