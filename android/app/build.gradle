@@ -99,14 +99,21 @@ android {
             versionNameSuffix "-debug"
         }
         release {
-            if (!project.hasProperty('SHAMS_UPLOAD_STORE_FILE')) {
+            def hasReleaseSigning = project.hasProperty('SHAMS_UPLOAD_STORE_FILE')
+            // buildTypes blocks are evaluated for every Gradle invocation, not just
+            // release builds — only enforce the secrets when a release task was
+            // actually requested, so `assembleDebug`/CI debug builds aren't blocked.
+            def isReleaseTask = gradle.startParameter.taskNames.any {
+                it.toLowerCase().contains("release")
+            }
+            if (isReleaseTask && !hasReleaseSigning) {
                 throw new GradleException(
                     "Release signing credentials are required.\n" +
                     "Set SHAMS_UPLOAD_STORE_FILE, SHAMS_UPLOAD_STORE_PASSWORD, " +
                     "SHAMS_UPLOAD_KEY_ALIAS, SHAMS_UPLOAD_KEY_PASSWORD in ~/.gradle/gradle.properties"
                 )
             }
-            signingConfig signingConfigs.release
+            signingConfig hasReleaseSigning ? signingConfigs.release : signingConfigs.debug
             minifyEnabled true
             shrinkResources true
             // proguard-android-optimize.txt enables more aggressive optimisation
