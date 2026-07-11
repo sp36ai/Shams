@@ -9,6 +9,7 @@ import com.facebook.react.ReactPackage
 import com.facebook.react.defaults.DefaultNewArchitectureEntryPoint.load
 import com.facebook.react.defaults.DefaultReactHost.getDefaultReactHost
 import com.facebook.react.defaults.DefaultReactNativeHost
+import com.facebook.react.soloader.OpenSourceMergedSoMapping
 import com.facebook.soloader.SoLoader
 
 class MainApplication : Application(), ReactApplication {
@@ -34,7 +35,11 @@ class MainApplication : Application(), ReactApplication {
 
     override fun onCreate() {
         super.onCreate()
-        SoLoader.init(this, /* native exopackage */ false)
+        // RN 0.78 splits several small JNI libs (react_featureflagsjni, uimanagerjni,
+        // yoga, etc.) and merges them into libreactnative.so at build time ("SoMerging").
+        // Without this mapping, SoLoader tries to dlopen the standalone .so files that
+        // no longer exist and crashes on startup with UnsatisfiedLinkError.
+        SoLoader.init(this, OpenSourceMergedSoMapping)
 
         // Certificate pinning is enforced at the platform level via network_security_config.xml
         // (with expiration 2027-05-01). OkHttp-level pinning was removed because it has no
