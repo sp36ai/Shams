@@ -54,6 +54,8 @@ export interface SettingsState {
   setSeekerProfile: (profile: SeekerProfile, answers: [string, string, string]) => void;
   resetProfile: () => void;
   setSeekerIdentity: (seekerName: string | null, motherName: string | null) => void;
+  /** Called when the signed-in Firebase uid changes (new account on this device). */
+  resetForNewAccount: () => void;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -187,6 +189,29 @@ export const useSettingsStore = create<SettingsState>(set => ({
     storage.delete(KEYS.LOCATION_LAST_LABEL);
     storage.delete(KEYS.LOCATION_LAST_TIMESTAMP);
     set({ lastLocation: null });
+  },
+
+  // Onboarding/location-prompt flags and seeker identity are per-account, but
+  // MMKV is device-scoped. Without this, signing out and creating/signing into
+  // a *different* account on the same device inherits the previous account's
+  // "already onboarded" flags and silently skips LocationPermission/Onboarding.
+  // OS-level location permission and the last GPS fix are left alone — those
+  // are properties of the device, not the account, and stay valid.
+  resetForNewAccount: (): void => {
+    storage.set(KEYS.ONBOARDING_SEEN, false);
+    storage.set(KEYS.ONBOARDING_LOCATION_PROMPTED, false);
+    storage.delete(KEYS.ONBOARDING_SEEKER_PROFILE);
+    storage.delete(KEYS.ONBOARDING_ANSWERS);
+    storage.delete(KEYS.SEEKER_NAME);
+    storage.delete(KEYS.MOTHER_NAME);
+    set({
+      hasSeenOnboarding: false,
+      onboardingLocationPrompted: false,
+      seekerProfile: null,
+      onboardingAnswers: null,
+      seekerName: null,
+      motherName: null,
+    });
   },
 }));
 

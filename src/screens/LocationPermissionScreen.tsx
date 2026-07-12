@@ -61,6 +61,17 @@ import { requestLocationPermission, isLocationUsable } from '@utils/permissions'
 
 type ScreenStatus = 'idle' | 'requesting' | 'granted' | 'denied' | 'blocked';
 
+/** Resolves with `promise`, or after `ms` — whichever comes first. */
+function raceWithTimeout(promise: Promise<void>, ms: number): Promise<void> {
+  return new Promise<void>(resolve => {
+    const timer = setTimeout(resolve, ms);
+    promise.then(() => {
+      clearTimeout(timer);
+      resolve();
+    });
+  });
+}
+
 const LocationPermissionScreen: React.FC = () => {
   const { theme } = useTheme();
   const colors = useColors();
@@ -88,28 +99,35 @@ const LocationPermissionScreen: React.FC = () => {
       setPermissionGranted(true);
 
       // Capture current position via W3C Geolocation API (available globally in RN).
-      await new Promise<void>(resolve => {
-        navigator.geolocation.getCurrentPosition(
-          pos => {
-            setLastLocation({
-              lat: pos.coords.latitude,
-              lon: pos.coords.longitude,
-              label: null,
-              capturedAt: Date.now(),
-            });
-            resolve();
-          },
-          () => {
-            // Permission granted but fix failed — advance without coords.
-            resolve();
-          },
-          {
-            enableHighAccuracy: permResult.status === 'granted-fine',
-            timeout: 8000,
-            maximumAge: 30000,
-          },
-        );
-      });
+      // The `timeout` option below is honored by the native module, but some
+      // devices/OEM location stacks never invoke either callback at all (no
+      // fix, no error) — without a JS-side backstop that hangs this screen on
+      // its spinner forever. raceWithTimeout guarantees we advance regardless.
+      await raceWithTimeout(
+        new Promise<void>(resolve => {
+          navigator.geolocation.getCurrentPosition(
+            pos => {
+              setLastLocation({
+                lat: pos.coords.latitude,
+                lon: pos.coords.longitude,
+                label: null,
+                capturedAt: Date.now(),
+              });
+              resolve();
+            },
+            () => {
+              // Permission granted but fix failed — advance without coords.
+              resolve();
+            },
+            {
+              enableHighAccuracy: permResult.status === 'granted-fine',
+              timeout: 8000,
+              maximumAge: 30000,
+            },
+          );
+        }),
+        10000,
+      );
 
       markLocationPrompted();
       setStatus('granted');

@@ -23,6 +23,7 @@ import { GoogleSignin } from '@react-native-google-signin/google-signin';
 import { storage, KEYS } from '@storage/mmkv';
 import { useQuotaStore, type PlanTier } from './quotaStore';
 import { useReadingsStore } from './readingsStore';
+import { useSettingsStore } from './settingsStore';
 import { invalidateQuotaCache } from '@hooks/useQuota';
 
 // Web client ID from Firebase Console → Authentication → Google → Web SDK configuration
@@ -93,6 +94,13 @@ export const useAuthStore = create<AuthState>(set => ({
       let resolved = false;
       _authUnsubscribe = auth().onAuthStateChanged(async fbUser => {
         if (fbUser) {
+          // A different uid than last session means a different account signed
+          // in on this device — per-account onboarding/location flags must not
+          // leak from whoever used the device before.
+          const previousUid = storage.getString(KEYS.AUTH_USER_ID);
+          if (previousUid !== undefined && previousUid !== fbUser.uid) {
+            useSettingsStore.getState().resetForNewAccount();
+          }
           try {
             const tokenResult = await fbUser.getIdTokenResult();
             const plan = (tokenResult.claims.plan as PlanTier | undefined) ?? 'free';
@@ -115,16 +123,16 @@ export const useAuthStore = create<AuthState>(set => ({
     });
   },
 
+  // signIn/signUp/signInWithGoogle only perform the Firebase call and surface
+  // errors. They deliberately do NOT set `user`/plan/cache themselves —
+  // onAuthStateChanged above fires for every one of these and is the single
+  // place that syncs user, custom-claim plan, and local cache. Duplicating
+  // that here raced two independent getIdTokenResult() calls against each
+  // other and could leave isLoading/user set from whichever finished last.
   signIn: async (email: string, password: string): Promise<Error | null> => {
     set({ isLoading: true, error: null });
     try {
-      const cred = await auth().signInWithEmailAndPassword(email, password);
-      const tokenResult = await cred.user.getIdTokenResult();
-      const plan = (tokenResult.claims.plan as PlanTier | undefined) ?? 'free';
-      const expiry = tokenResult.claims.planExpiry as string | undefined;
-      useQuotaStore.getState().setPlan(plan, expiry);
-      cacheUserLocally(cred.user);
-      set({ user: cred.user, isLoading: false });
+      await auth().signInWithEmailAndPassword(email, password);
       return null;
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Sign in failed';
@@ -138,11 +146,15 @@ export const useAuthStore = create<AuthState>(set => ({
     try {
       const cred = await auth().createUserWithEmailAndPassword(email, password);
       if (name) {
-        await cred.user.updateProfile({ displayName: name });
+        // The account already exists at this point — a displayName write
+        // failing (e.g. a network blip right after signup) must not be
+        // reported as "signup failed", since the user is in fact signed in.
+        try {
+          await cred.user.updateProfile({ displayName: name });
+        } catch {
+          /* non-fatal — displayName can be set later from Settings */
+        }
       }
-      useQuotaStore.getState().setPlan('free');
-      cacheUserLocally(cred.user);
-      set({ user: cred.user, isLoading: false });
       return null;
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Sign up failed';
@@ -161,17 +173,7 @@ export const useAuthStore = create<AuthState>(set => ({
         throw new Error('Google sign-in returned no ID token');
       }
       const googleCredential = auth.GoogleAuthProvider.credential(idToken);
-      const cred = await auth().signInWithCredential(googleCredential);
-      try {
-        const tokenResult = await cred.user.getIdTokenResult();
-        const plan = (tokenResult.claims.plan as PlanTier | undefined) ?? 'free';
-        const expiry = tokenResult.claims.planExpiry as string | undefined;
-        useQuotaStore.getState().setPlan(plan, expiry);
-      } catch {
-        useQuotaStore.getState().setPlan('free');
-      }
-      cacheUserLocally(cred.user);
-      set({ user: cred.user, isLoading: false });
+      await auth().signInWithCredential(googleCredential);
       return null;
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Google sign-in failed';
@@ -181,9 +183,13 @@ export const useAuthStore = create<AuthState>(set => ({
   },
 
   signOut: async (): Promise<void> => {
+    // Deliberately does NOT unsubscribe the onAuthStateChanged listener —
+    // bootstrap() only ever runs once per app launch, so tearing it down here
+    // left it permanently dead for the rest of the session: any sign-in or
+    // signup attempted after a sign-out (without restarting the app) would
+    // update Firebase Auth successfully but nothing would ever flip `user`/
+    // `isLoading` back, leaving the app stuck on Splash/loading forever.
     set({ isLoading: true });
-    _authUnsubscribe?.();
-    _authUnsubscribe = null;
     invalidateQuotaCache();
     await auth().signOut();
     cacheUserLocally(null);
