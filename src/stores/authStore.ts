@@ -53,6 +53,31 @@ export interface AuthState {
 
 let _authUnsubscribe: (() => void) | null = null;
 
+const AUTH_TOKEN_TIMEOUT_MS = 8000;
+
+/**
+ * Resolves with `promise`'s value, or `undefined` after `ms` — whichever comes
+ * first. Some real devices' network stacks let getIdTokenResult() hang
+ * indefinitely (no resolve, no reject) rather than time out on their own,
+ * which would otherwise leave the app on the Splash screen forever, since
+ * nothing downstream ever flips `isLoading` back to false.
+ */
+function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T | undefined> {
+  return new Promise<T | undefined>(resolve => {
+    const timer = setTimeout(() => resolve(undefined), ms);
+    promise.then(
+      value => {
+        clearTimeout(timer);
+        resolve(value);
+      },
+      () => {
+        clearTimeout(timer);
+        resolve(undefined);
+      },
+    );
+  });
+}
+
 /* -------------------------------------------------------------------------- */
 /*  Local profile cache (name / email written at sign-in for offline display) */
 /* -------------------------------------------------------------------------- */
@@ -102,9 +127,9 @@ export const useAuthStore = create<AuthState>(set => ({
             useSettingsStore.getState().resetForNewAccount();
           }
           try {
-            const tokenResult = await fbUser.getIdTokenResult();
-            const plan = (tokenResult.claims.plan as PlanTier | undefined) ?? 'free';
-            const expiry = tokenResult.claims.planExpiry as string | undefined;
+            const tokenResult = await withTimeout(fbUser.getIdTokenResult(), AUTH_TOKEN_TIMEOUT_MS);
+            const plan = (tokenResult?.claims.plan as PlanTier | undefined) ?? 'free';
+            const expiry = tokenResult?.claims.planExpiry as string | undefined;
             useQuotaStore.getState().setPlan(plan, expiry);
           } catch {
             useQuotaStore.getState().setPlan('free');
