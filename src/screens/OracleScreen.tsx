@@ -638,12 +638,26 @@ const OracleScreen: React.FC = () => {
         duration: 400,
         useNativeDriver: true,
       }),
-    ]).start(() => setThresholdVisible(false));
+    ]).start(() => {
+      try {
+        setThresholdVisible(false);
+      } catch (err) {
+        throw new Error(
+          `[DIAG:runThreshold.onComplete] ${err instanceof Error ? err.message : String(err)}`,
+        );
+      }
+    });
   }, [thresholdOpacity, thresholdScale]);
 
   // Fire on mount
   useEffect(() => {
-    runThreshold();
+    try {
+      runThreshold();
+    } catch (err) {
+      throw new Error(
+        `[DIAG:runThreshold.mount] ${err instanceof Error ? err.message : String(err)}`,
+      );
+    }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Quota exhaustion timestamp — upgrade CTA appears only after 6 h ─────────
@@ -674,13 +688,19 @@ const OracleScreen: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    evaluateTrialBanner();
-    const sub = AppState.addEventListener('change', nextState => {
-      if (nextState === 'active') {
-        evaluateTrialBanner();
-      }
-    });
-    return () => sub.remove();
+    try {
+      evaluateTrialBanner();
+      const sub = AppState.addEventListener('change', nextState => {
+        if (nextState === 'active') {
+          evaluateTrialBanner();
+        }
+      });
+      return () => sub.remove();
+    } catch (err) {
+      throw new Error(
+        `[DIAG:trialBanner.effect] ${err instanceof Error ? err.message : String(err)}`,
+      );
+    }
   }, [evaluateTrialBanner]);
 
   const initialGreeting: ChatMessage = useMemo(
@@ -703,28 +723,32 @@ const OracleScreen: React.FC = () => {
   const orbPulse = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
-    if (!sending) {
-      orbPulse.setValue(1);
-      return;
+    try {
+      if (!sending) {
+        orbPulse.setValue(1);
+        return;
+      }
+      const loop = Animated.loop(
+        Animated.sequence([
+          Animated.timing(orbPulse, {
+            toValue: 1.22,
+            duration: 625,
+            easing: Easing.inOut(Easing.sin),
+            useNativeDriver: true,
+          }),
+          Animated.timing(orbPulse, {
+            toValue: 1,
+            duration: 625,
+            easing: Easing.inOut(Easing.sin),
+            useNativeDriver: true,
+          }),
+        ]),
+      );
+      loop.start();
+      return () => loop.stop();
+    } catch (err) {
+      throw new Error(`[DIAG:orbPulse.effect] ${err instanceof Error ? err.message : String(err)}`);
     }
-    const loop = Animated.loop(
-      Animated.sequence([
-        Animated.timing(orbPulse, {
-          toValue: 1.22,
-          duration: 625,
-          easing: Easing.inOut(Easing.sin),
-          useNativeDriver: true,
-        }),
-        Animated.timing(orbPulse, {
-          toValue: 1,
-          duration: 625,
-          easing: Easing.inOut(Easing.sin),
-          useNativeDriver: true,
-        }),
-      ]),
-    );
-    loop.start();
-    return () => loop.stop();
   }, [sending, orbPulse]);
 
   const [stage, setStage] = useState<ConvStage>('ready');
@@ -745,27 +769,37 @@ const OracleScreen: React.FC = () => {
   // Covers: fresh installs, DEV builds that bypass LocationPermissionScreen,
   // and users whose GPS fix failed during onboarding.
   useEffect(() => {
-    const s = useSettingsStore.getState();
-    if (s.lastLocation !== null) {
-      return;
+    try {
+      const s = useSettingsStore.getState();
+      if (s.lastLocation !== null) {
+        return;
+      }
+      if (!s.onboardingPermissionGranted && !__DEV__) {
+        return;
+      }
+      Geolocation.getCurrentPosition(
+        pos => {
+          try {
+            useSettingsStore.getState().setLastLocation({
+              lat: pos.coords.latitude,
+              lon: pos.coords.longitude,
+              label: null,
+              capturedAt: Date.now(),
+            });
+          } catch (err) {
+            throw new Error(
+              `[DIAG:gpsFetch.onSuccess] ${err instanceof Error ? err.message : String(err)}`,
+            );
+          }
+        },
+        () => {
+          /* silent — user will see location chip as "required" */
+        },
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 },
+      );
+    } catch (err) {
+      throw new Error(`[DIAG:gpsFetch.effect] ${err instanceof Error ? err.message : String(err)}`);
     }
-    if (!s.onboardingPermissionGranted && !__DEV__) {
-      return;
-    }
-    Geolocation.getCurrentPosition(
-      pos => {
-        useSettingsStore.getState().setLastLocation({
-          lat: pos.coords.latitude,
-          lon: pos.coords.longitude,
-          label: null,
-          capturedAt: Date.now(),
-        });
-      },
-      () => {
-        /* silent — user will see location chip as "required" */
-      },
-      { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 },
-    );
   }, []); // run once on mount only
 
   // ── Core send logic ─────────────────────────────────────────────────────────
