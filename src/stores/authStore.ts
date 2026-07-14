@@ -18,7 +18,11 @@
 import { create } from 'zustand';
 import auth from '@react-native-firebase/auth';
 import type { FirebaseAuthTypes } from '@react-native-firebase/auth';
-import { GoogleSignin, isErrorWithCode, statusCodes } from '@react-native-google-signin/google-signin';
+import {
+  GoogleSignin,
+  isErrorWithCode,
+  statusCodes,
+} from '@react-native-google-signin/google-signin';
 
 import { storage, KEYS } from '@storage/mmkv';
 import { useQuotaStore, type PlanTier } from './quotaStore';
