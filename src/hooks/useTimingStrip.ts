@@ -20,14 +20,20 @@ export function useTimingStrip(lonDeg: number): TimingStrip {
 
   useFocusEffect(
     useCallback(() => {
-      const refresh = () => {
-        const now = Date.now();
-        setHoraLord(horaLordAtMoment(now, lonDeg) as Planet);
-        setDayLord(dayLordAtMoment(now, lonDeg) as Planet);
-      };
-      refresh();
-      const id = setInterval(refresh, REFRESH_MS);
-      return () => clearInterval(id);
+      try {
+        const refresh = () => {
+          const now = Date.now();
+          setHoraLord(horaLordAtMoment(now, lonDeg) as Planet);
+          setDayLord(dayLordAtMoment(now, lonDeg) as Planet);
+        };
+        refresh();
+        const id = setInterval(refresh, REFRESH_MS);
+        return () => clearInterval(id);
+      } catch (err) {
+        throw new Error(
+          `[DIAG:useTimingStrip.focusEffect] ${err instanceof Error ? err.message : String(err)}`,
+        );
+      }
     }, [lonDeg]),
   );
 
