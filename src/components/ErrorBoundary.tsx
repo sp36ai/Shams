@@ -1,9 +1,11 @@
 import React from 'react';
-import { View, Text, Pressable, StyleSheet, StatusBar } from 'react-native';
+import { View, Text, Pressable, ScrollView, StyleSheet, StatusBar } from 'react-native';
 import crashlytics from '@react-native-firebase/crashlytics';
 
 interface ErrorBoundaryState {
   hasError: boolean;
+  errorMessage: string | null;
+  errorStack: string | null;
 }
 
 /**
@@ -12,10 +14,10 @@ interface ErrorBoundaryState {
  * fallback instead of a white screen.
  */
 class ErrorBoundary extends React.Component<React.PropsWithChildren, ErrorBoundaryState> {
-  state: ErrorBoundaryState = { hasError: false };
+  state: ErrorBoundaryState = { hasError: false, errorMessage: null, errorStack: null };
 
-  static getDerivedStateFromError(): ErrorBoundaryState {
-    return { hasError: true };
+  static getDerivedStateFromError(error: Error): ErrorBoundaryState {
+    return { hasError: true, errorMessage: error.message, errorStack: error.stack ?? null };
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo): void {
@@ -23,7 +25,7 @@ class ErrorBoundary extends React.Component<React.PropsWithChildren, ErrorBounda
   }
 
   private handleRetry = (): void => {
-    this.setState({ hasError: false });
+    this.setState({ hasError: false, errorMessage: null, errorStack: null });
   };
 
   render(): React.ReactNode {
@@ -35,6 +37,14 @@ class ErrorBoundary extends React.Component<React.PropsWithChildren, ErrorBounda
           <Text style={styles.message}>
             An unexpected error occurred. The issue has been reported automatically.
           </Text>
+          {this.state.errorMessage !== null && (
+            <ScrollView style={styles.detailsBox}>
+              <Text selectable style={styles.detailsText}>
+                {this.state.errorMessage}
+                {this.state.errorStack ? `\n\n${this.state.errorStack}` : ''}
+              </Text>
+            </ScrollView>
+          )}
           <Pressable style={styles.button} onPress={this.handleRetry} testID="error-retry-btn">
             <Text style={styles.buttonText}>Try Again</Text>
           </Pressable>
@@ -65,6 +75,19 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 22,
     marginBottom: 24,
+  },
+  detailsBox: {
+    maxHeight: 220,
+    width: '100%',
+    backgroundColor: '#0A1A1D',
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 24,
+  },
+  detailsText: {
+    color: '#FF9999',
+    fontSize: 12,
+    fontFamily: 'monospace',
   },
   button: {
     backgroundColor: '#1F3A3D',
