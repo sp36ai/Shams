@@ -209,6 +209,16 @@ const AuthScreen: React.FC = () => {
     }
   }, [form, t, clearError, signIn, signUp]);
 
+  const handleGoogleSignIn = useCallback(async () => {
+    setServerError('');
+    setSuccessMsg('');
+    clearError();
+    const error = await signInWithGoogle();
+    if (error) {
+      setServerError(error.message);
+    }
+  }, [clearError, signInWithGoogle]);
+
   const handleForgotPassword = useCallback(async () => {
     if (!form.email) {
       return dispatch({ type: 'SET_ERRORS', emailError: t('auth.invalidEmail') });
@@ -474,7 +484,7 @@ const AuthScreen: React.FC = () => {
           </View>
 
           <Pressable
-            onPress={() => void signInWithGoogle()}
+            onPress={() => void handleGoogleSignIn()}
             disabled={isLoading}
             testID="auth-google-btn"
             style={({ pressed }) => [

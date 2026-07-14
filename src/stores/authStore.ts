@@ -18,7 +18,11 @@
 import { create } from 'zustand';
 import auth from '@react-native-firebase/auth';
 import type { FirebaseAuthTypes } from '@react-native-firebase/auth';
-import { GoogleSignin } from '@react-native-google-signin/google-signin';
+import {
+  GoogleSignin,
+  isErrorWithCode,
+  statusCodes,
+} from '@react-native-google-signin/google-signin';
 
 import { storage, KEYS } from '@storage/mmkv';
 import { useQuotaStore, type PlanTier } from './quotaStore';
@@ -201,6 +205,12 @@ export const useAuthStore = create<AuthState>(set => ({
       await auth().signInWithCredential(googleCredential);
       return null;
     } catch (err) {
+      // User dismissing the account picker is not a failure — don't surface
+      // it as an auth error banner.
+      if (isErrorWithCode(err) && err.code === statusCodes.SIGN_IN_CANCELLED) {
+        set({ isLoading: false });
+        return null;
+      }
       const msg = err instanceof Error ? err.message : 'Google sign-in failed';
       set({ isLoading: false, error: msg });
       return err instanceof Error ? err : new Error(msg);
