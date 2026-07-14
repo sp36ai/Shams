@@ -81,8 +81,15 @@ const RootNavigator: React.FC = () => {
     };
   }, [theme]);
 
-  // Keep showing splash until the timer elapses and auth state is resolved.
-  const splashStillShowing = !splashElapsed || !authBootstrapped || isAuthLoading;
+  // Keep showing splash until the timer elapses and the initial session
+  // restore resolves. Deliberately excludes `isAuthLoading` after that point —
+  // it also flips true for every subsequent signIn/signUp/signInWithGoogle
+  // button press, and gating Splash on it swapped AuthScreen for Splash (a
+  // full unmount) on every attempt, silently destroying the error message
+  // that attempt was trying to show. AuthScreen has its own local spinner
+  // for in-flight auth calls, so this full-screen swap was never needed
+  // outside the initial cold-start bootstrap.
+  const splashStillShowing = !splashElapsed || !authBootstrapped;
 
   const isAuthenticated = user !== null && !isAuthLoading;
   // Location permission is MANDATORY for all builds
