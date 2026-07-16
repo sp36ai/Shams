@@ -94,6 +94,15 @@ service cloud.firestore {
       allow read, write: if false;
     }
 
+    // ── /playPurchaseTokens/{tokenHash} ──────────────────────────────────────
+    // Maps a Google Play purchase token (sha256) to the single account that
+    // claimed it, so one token cannot be replayed to upgrade many accounts.
+    // Written exclusively by verifyGooglePlayPurchase (Admin SDK).
+
+    match /playPurchaseTokens/{tokenHash} {
+      allow read, write: if false; // Admin SDK only
+    }
+
     // ── /auditLogs/{logId} ───────────────────────────────────────────────────
     // Admin read-only. Cloud Functions write via Admin SDK.
 

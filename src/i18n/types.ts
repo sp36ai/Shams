@@ -200,6 +200,10 @@ export interface StringTable {
     versionLabel: string;
     signOut: string;
     signOutConfirm: string;
+    deleteAccount: string;
+    deleteAccountAction: string;
+    deleteAccountConfirm: string;
+    deleteAccountFailed: string;
   };
   theme: {
     darAlShams: string;

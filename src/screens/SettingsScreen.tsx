@@ -61,6 +61,7 @@ const SettingsScreen: React.FC = () => {
   const userName = useAuthStore(selectUserName);
   const userEmail = useAuthStore(selectUserEmail);
   const signOut = useAuthStore(s => s.signOut);
+  const deleteAccount = useAuthStore(s => s.deleteAccount);
   const isLoading = useAuthStore(s => s.isLoading);
 
   const readings = useReadingsStore(s => s.readings);
@@ -77,6 +78,27 @@ const SettingsScreen: React.FC = () => {
       },
     ]);
   }, [signOut, t]);
+
+  const handleDeleteAccount = useCallback(() => {
+    // Two-step, explicit, destructive confirmation — this is irreversible and
+    // deletes the account plus all server-side data.
+    Alert.alert(t('settings.deleteAccount'), t('settings.deleteAccountConfirm'), [
+      { text: t('common.cancel'), style: 'cancel' },
+      {
+        text: t('settings.deleteAccountAction'),
+        style: 'destructive',
+        onPress: () => {
+          void (async () => {
+            const err = await deleteAccount();
+            if (err) {
+              Alert.alert(t('settings.deleteAccountFailed'), '');
+            }
+            // On success, RootNavigator sees user === null and returns to Auth.
+          })();
+        },
+      },
+    ]);
+  }, [deleteAccount, t]);
 
   const handleLanguageChange = useCallback(
     (next: LangCode) => {
@@ -317,6 +339,21 @@ const SettingsScreen: React.FC = () => {
           >
             <Text style={[typography('button'), { color: colors.negative }]}>
               {t('settings.signOut')}
+            </Text>
+          </Pressable>
+
+          <Pressable
+            onPress={handleDeleteAccount}
+            disabled={isLoading}
+            accessibilityRole="button"
+            accessibilityLabel={t('settings.deleteAccount')}
+            style={({ pressed }) => [
+              styles.deleteAccountBtn,
+              { opacity: pressed || isLoading ? 0.5 : 1 },
+            ]}
+          >
+            <Text style={[typography('caption'), { color: colors.textMuted, textAlign: 'center' }]}>
+              {t('settings.deleteAccount')}
             </Text>
           </Pressable>
         </Section>
@@ -612,6 +649,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     borderRadius: 12,
     borderWidth: StyleSheet.hairlineWidth,
+    alignItems: 'center',
+  },
+  deleteAccountBtn: {
+    marginTop: 14,
+    paddingVertical: 8,
     alignItems: 'center',
   },
   locationCard: {

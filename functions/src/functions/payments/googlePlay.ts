@@ -19,6 +19,7 @@
  */
 
 import * as https from 'https';
+import { createHash } from 'crypto';
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import { FieldValue } from 'firebase-admin/firestore';
 import { db, auth } from '../../utils/admin';
@@ -148,7 +149,19 @@ async function getGoogleAccessToken(): Promise<string> {
     { 'Content-Type': 'application/x-www-form-urlencoded' },
   );
 
-  const tokenData = JSON.parse(tokenResp) as GoogleAccessToken;
+  let tokenData: Partial<GoogleAccessToken>;
+  try {
+    tokenData = JSON.parse(tokenResp) as Partial<GoogleAccessToken>;
+  } catch {
+    logger.error('google oauth token response was not JSON', { resp: tokenResp.slice(0, 200) });
+    throw new HttpsError('internal', 'Play Store authentication failed');
+  }
+  if (!tokenData.access_token) {
+    logger.error('google oauth token fetch returned no access_token', {
+      resp: tokenResp.slice(0, 200),
+    });
+    throw new HttpsError('internal', 'Play Store authentication failed');
+  }
   return tokenData.access_token;
 }
 
@@ -203,6 +216,38 @@ export const verifyGooglePlayPurchase = onCall(
         throw new HttpsError('failed-precondition', 'Subscription has already expired');
       }
       const expiresAt = new Date(expiryMs);
+
+      // Bind this purchase token to exactly ONE account. Google does not tie a
+      // Play purchase token to a Firebase user, so without this the same valid,
+      // active token could be replayed from any number of accounts — each call
+      // verifies successfully and upgrades that caller. Record the token→user
+      // link atomically and reject if it's already owned by a different account.
+      // Re-verification by the SAME user (e.g. restore purchase) is allowed.
+      const tokenHash = createHash('sha256').update(input.purchaseToken).digest('hex');
+      const tokenRef = db.collection('playPurchaseTokens').doc(tokenHash);
+      await db.runTransaction(async tx => {
+        const snap = await tx.get(tokenRef);
+        if (snap.exists) {
+          const ownerId = (snap.data() as { userId?: string }).userId;
+          if (ownerId && ownerId !== userId) {
+            throw new HttpsError(
+              'permission-denied',
+              'This purchase is already linked to another account.',
+            );
+          }
+        }
+        tx.set(
+          tokenRef,
+          {
+            userId,
+            productId: input.productId,
+            orderId: purchase.orderId,
+            plan,
+            updatedAt: FieldValue.serverTimestamp(),
+          },
+          { merge: true },
+        );
+      });
 
       // Acknowledge to prevent auto-refund (24h window)
       if (purchase.acknowledgementState === 0) {

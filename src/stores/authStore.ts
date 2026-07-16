@@ -29,6 +29,7 @@ import { useQuotaStore, type PlanTier } from './quotaStore';
 import { useReadingsStore } from './readingsStore';
 import { useSettingsStore } from './settingsStore';
 import { invalidateQuotaCache } from '@hooks/useQuota';
+import { deleteAccountOnServer } from '../firebase/account';
 
 // Web client ID from Firebase Console → Authentication → Google → Web SDK configuration
 export const GOOGLE_WEB_CLIENT_ID =
@@ -58,6 +59,8 @@ export interface AuthState {
   signUp: (email: string, password: string, name: string) => Promise<Error | null>;
   signInWithGoogle: () => Promise<Error | null>;
   signOut: () => Promise<void>;
+  /** Permanently delete the account + server data, then clear local state. */
+  deleteAccount: () => Promise<Error | null>;
   clearError: () => void;
 }
 
@@ -276,10 +279,35 @@ export const useAuthStore = create<AuthState>(set => ({
     useReadingsStore.getState().clearAll();
     // NOTE: per-account onboarding flags + seeker identity/profile are NOT wiped
     // here. They are cleared lazily by bootstrap() only when a *different* uid
-    // signs in (see AUTH_LAST_UID sentinel below), so the SAME user signing back
-    // in keeps their onboarding, while a different user on a shared device gets a
-    // clean slate. The sentinel survives sign-out, which is what makes that work.
+    // signs in (via the AUTH_LAST_UID sentinel, which survives sign-out), so the
+    // SAME user signing back in keeps their onboarding while a different user on
+    // a shared device gets a clean slate. Account DELETION differs — see below.
     set({ user: null, isLoading: false, error: null });
+  },
+
+  deleteAccount: async (): Promise<Error | null> => {
+    set({ isLoading: true, error: null });
+    try {
+      // Server deletes readings/quota/trial + the Firebase Auth user itself.
+      await deleteAccountOnServer();
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Account deletion failed';
+      set({ isLoading: false, error: msg });
+      return err instanceof Error ? err : new Error(msg);
+    }
+    // The account no longer exists — tear down the local session and ALL
+    // per-account state (unlike sign-out, a deletion must leave nothing behind).
+    invalidateQuotaCache();
+    await auth()
+      .signOut()
+      .catch(() => undefined);
+    cacheUserLocally(null);
+    useQuotaStore.getState().reset();
+    useReadingsStore.getState().clearAll();
+    useSettingsStore.getState().resetForNewAccount();
+    storage.delete(KEYS.AUTH_LAST_UID);
+    set({ user: null, isLoading: false, error: null, lockoutUntil: null });
+    return null;
   },
 
   clearError: (): void => set({ error: null }),

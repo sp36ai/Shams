@@ -186,6 +186,11 @@ export const ur: StringTable = {
     versionLabel: 'ورژن',
     signOut: 'باہر نکلیں',
     signOutConfirm: 'شمسُ الاسرار سے باہر نکلیں؟',
+    deleteAccount: 'کھاتہ حذف کریں',
+    deleteAccountAction: 'حذف کریں',
+    deleteAccountConfirm:
+      'یہ آپ کا کھاتہ اور تمام فیصلے ہمیشہ کے لیے حذف کر دے گا۔ یہ واپس نہیں آ سکتا۔',
+    deleteAccountFailed: 'کھاتہ حذف نہ ہو سکا۔ برائے مہربانی دوبارہ کوشش کریں۔',
   },
 
   theme: {
