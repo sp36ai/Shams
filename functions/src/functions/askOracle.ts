@@ -229,12 +229,19 @@ function buildOracleUserMessage(params: {
     timingStr = `${timingRange.min}–${timingRange.max} ${timingWindow}`;
   }
 
+  // Strip newlines/control chars from the user-supplied names before they go
+  // into the labelled prompt — otherwise a name containing a newline could
+  // inject a fake "SEEKER_NAME:"/instruction line into the prompt structure.
+  const sanitizeName = (s: string): string =>
+    // eslint-disable-next-line no-control-regex
+    s.replace(/[\u0000-\u001F\u007F]/g, ' ').trim();
+
   let msg = `VERDICT: ${verdictBinary}\nCONFIDENCE: ${confidenceLevel}\nTIMING: ${timingStr}`;
   if (seekerName) {
-    msg += `\nSEEKER_NAME: ${seekerName}`;
+    msg += `\nSEEKER_NAME: ${sanitizeName(seekerName)}`;
   }
   if (motherName) {
-    msg += `\nMOTHER_NAME: ${motherName}`;
+    msg += `\nMOTHER_NAME: ${sanitizeName(motherName)}`;
   }
   return msg;
 }
