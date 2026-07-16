@@ -13,6 +13,20 @@ import type {
 import HoraryChartWheel from './HoraryChartWheel';
 import { VerdictPill } from '../VerdictPill';
 
+// User-facing planet labels. The two lunar nodes surface under their Arabic
+// names rather than the Sanskrit Rahu/Ketu; the classical planets are unchanged.
+const NODE_DISPLAY_NAME: Readonly<Record<string, string>> = {
+  Rahu: "Al-Ra's",
+  Ketu: 'Al-Dhanab',
+};
+
+function displayPlanetName(name: string | undefined): string {
+  if (name === undefined) {
+    return '';
+  }
+  return NODE_DISPLAY_NAME[name] ?? name;
+}
+
 // ── Oracle voice default (Ayat al-Kursi fallback) ─────────────────────────────
 
 const ORACLE_DEFAULT: OracleVoice = {
@@ -64,7 +78,7 @@ const RulingPlanetChip: React.FC<{ entry: RulingPlanetEntry }> = ({ entry }) => 
           { color: entry.matching ? colors.accent : colors.textMuted, fontSize: 10 },
         ]}
       >
-        {entry.planet}
+        {displayPlanetName(entry.planet)}
       </Text>
       <Text style={[typography('caption'), { color: colors.textFaint, fontSize: 9, marginTop: 1 }]}>
         {entry.role === 'dayLord'
@@ -648,10 +662,10 @@ const AstroVerdictCard: React.FC<AstroVerdictCardProps> = ({
               <Text style={[typography('caption'), { color: colors.accent }]}>
                 ⊛ Within {result.timing.range.max} {result.timing.window}
                 {result.timing.activeDasha !== undefined
-                  ? `  ·  ${result.timing.activeDasha} MD`
+                  ? `  ·  ${displayPlanetName(result.timing.activeDasha)}'s reign`
                   : ''}
                 {result.timing.activeAntardasha !== undefined
-                  ? ` / ${result.timing.activeAntardasha} AD`
+                  ? ` / ${displayPlanetName(result.timing.activeAntardasha)}`
                   : ''}
               </Text>
             </View>
@@ -661,7 +675,7 @@ const AstroVerdictCard: React.FC<AstroVerdictCardProps> = ({
           {result.remedy !== undefined && (
             <View style={[styles.remedyBlock, { borderTopColor: colors.border }]}>
               <Text style={[typography('caption'), { color: colors.amber, fontStyle: 'italic' }]}>
-                ◈ {result.remedy.planet}: {result.remedy.action}
+                ◈ {displayPlanetName(result.remedy.planet)}: {result.remedy.action}
               </Text>
               {result.remedy.zikr !== undefined && (
                 <Text
