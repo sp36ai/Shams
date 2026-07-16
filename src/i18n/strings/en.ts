@@ -104,6 +104,25 @@ export const en: StringTable = {
     remedyLabel: 'Remedy',
     chartMomentLabel: 'Moment of question',
     locationLabel: 'Location',
+    awaitsHint: 'The oracle awaits',
+    redirectConversational: 'The oracle awaits a sincere question. What weighs on your heart?',
+    redirectAmbiguous:
+      'The stars hear your intent — but need more. Who or what does your question concern?',
+    errSealed:
+      'The scrolls of this moment have not opened their seal. Return at the next appointed hour.',
+    errQuotaClosed:
+      'The gate has closed for today. The oracle speaks three times a day to the free seeker.',
+    errNeedsAuth: 'The oracle requires a known face. Please sign in to continue.',
+    errNeedsVerification: 'The seal of verification is absent. Please reinstall and try again.',
+    errChannelInterrupted:
+      'The channel to the oracle is interrupted. Check your connection and try again.',
+    quotaModalBody:
+      'The heavens have answered as many questions as the day allows. Return at Fajr — the stars remember.',
+    quotaModalDismiss: 'I understand',
+    quotaUnlockLink: 'Unlock unlimited access',
+    newQuestionTitle: 'New question detected',
+    newQuestionBody:
+      'This sounds like a new horary question. Each question needs its own chart for an accurate verdict.',
   },
 
   skyClock: {

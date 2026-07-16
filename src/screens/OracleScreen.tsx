@@ -275,7 +275,7 @@ function timingResponse(reading: Reading, lang: 'en' | 'ur' | 'hi'): string {
     return lang === 'ur'
       ? 'اس زائچے میں وقت کا تعین ممکن نہیں۔ جب چاند اپنی موجودہ منزل سے گزرے تو دوبارہ پوچھیں۔'
       : lang === 'hi'
-        ? 'اس زائچے میں وقت واضح نہیں ہے۔'
+        ? 'इस ज़ाइचे में समय स्पष्ट नहीं है। जब चंद्रमा अपनी वर्तमान मंज़िल से गुज़रे, तब पुनः पूछें।'
         : 'The zaaiche does not name a day. Watch for the sign the celestial witnesses have described.';
   }
   const max = t.range?.max ?? 1;
@@ -291,7 +291,7 @@ function timingResponse(reading: Reading, lang: 'en' | 'ur' | 'hi'): string {
     return `آسمانی گواہ **${max} ${wl}** کی کھڑکی اشارہ کرتے ہیں۔\n\nستارے وقت کی کھڑکیاں دیتے ہیں، تقرریاں نہیں۔`;
   }
   if (lang === 'hi') {
-    return `آسمانی گواہ **${max} ${wl}** کی کھڑکی اشارہ کرتے ہیں۔\n\nستارے وقت کی کھڑکیاں دیتے ہیں، تقرریاں نہیں۔`;
+    return `आकाशीय साक्षी **${max} ${wl}** की खिड़की का संकेत देते हैं।\n\nतारे समय की खिड़कियाँ देते हैं, नियुक्तियाँ नहीं।`;
   }
   return `The celestial witnesses point to a window of **${max} ${wl}**.\n\nThe stars offer windows, not appointments.`;
 }
@@ -314,7 +314,7 @@ function whyResponse(reading: Reading, lang: 'en' | 'ur' | 'hi'): string {
     return `فیصلہ **آسمانی گواہ ${planet}** کی شہادت پر منحصر ہے۔\n\nیقین: **${conf}%**`;
   }
   if (lang === 'hi') {
-    return `یہ فیصلہ **آسمانی گواہ ${planet}** کی گواہی پر منحصر ہے۔\n\nیقین: **${conf}%**`;
+    return `यह निर्णय **आकाशीय साक्षी ${planet}** की गवाही पर निर्भर है।\n\nविश्वास: **${conf}%**`;
   }
   return `The verdict rests on the testimony of **${planet}**, the celestial witness appointed to this zaaiche.\n\nConfidence: **${conf}%**`;
 }
@@ -328,7 +328,7 @@ function remedyResponse(reading: Reading, lang: 'en' | 'ur' | 'hi'): string {
     return lang === 'ur'
       ? 'اس زائچے کے لیے کوئی مخصوص علاج نہیں ملا۔'
       : lang === 'hi'
-        ? 'اس زائچے کے لیے کوئی علاج نہیں ملا۔'
+        ? 'इस ज़ाइचे के लिए कोई विशेष उपाय नहीं मिला।'
         : 'No specific remedy was given for this zaaiche.';
   }
 
@@ -364,7 +364,7 @@ function remedyResponse(reading: Reading, lang: 'en' | 'ur' | 'hi'): string {
   }
 
   const header =
-    lang === 'ur' ? 'علاج اور عمل:' : lang === 'hi' ? 'علاج اور عمل:' : 'Remedy & practice:';
+    lang === 'ur' ? 'علاج اور عمل:' : lang === 'hi' ? 'उपाय और अभ्यास:' : 'Remedy & practice:';
   return `${header}\n\n${lines.join('\n')}`;
 }
 
@@ -385,7 +385,7 @@ function elaborationResponse(reading: Reading, lang: 'en' | 'ur' | 'hi'): string
     (lang === 'ur'
       ? 'اس زائچے کے بارے میں مزید تفصیل دستیاب نہیں۔'
       : lang === 'hi'
-        ? 'اس زائچے کے بارے میں مزید جانکاری دستیاب نہیں۔'
+        ? 'इस ज़ाइचे के बारे में और जानकारी उपलब्ध नहीं है।'
         : 'No additional detail is available for this zaaiche.')
   );
 }
@@ -1039,20 +1039,17 @@ const OracleScreen: React.FC = () => {
         setMessages(prev => [shamsMsg, ...prev]);
       } catch (err) {
         console.error('[OracleScreen] Engine error:', err);
-        let errText =
-          'The scrolls of this moment have not opened their seal. Return at the next appointed hour.';
+        let errText = t('oracle.errSealed');
 
         if (err instanceof Error) {
           if (err.message.includes('resource-exhausted') || err.message.includes('quota')) {
-            errText =
-              'The gate has closed for today. The oracle speaks three times a day to the free seeker.';
+            errText = t('oracle.errQuotaClosed');
           } else if (err.message.includes('unauthenticated')) {
-            errText = 'The oracle requires a known face. Please sign in to continue.';
+            errText = t('oracle.errNeedsAuth');
           } else if (err.message.includes('app-check')) {
-            errText = 'The seal of verification is absent. Please reinstall and try again.';
+            errText = t('oracle.errNeedsVerification');
           } else if (err.message.includes('ECONNREFUSED') || err.message.includes('network')) {
-            errText =
-              'The channel to the oracle is interrupted. Check your connection and try again.';
+            errText = t('oracle.errChannelInterrupted');
           }
         }
 
@@ -1175,7 +1172,7 @@ const OracleScreen: React.FC = () => {
               },
             ]}
           >
-            {'The oracle awaits'}
+            {t('oracle.awaitsHint')}
           </Text>
         </Animated.View>
       )}
@@ -1345,8 +1342,8 @@ const OracleScreen: React.FC = () => {
               ]}
             >
               {redirectMessage === 'conversational'
-                ? 'The oracle awaits a sincere question. What weighs on your heart?'
-                : 'The stars hear your intent — but need more. Who or what does your question concern?'}
+                ? t('oracle.redirectConversational')
+                : t('oracle.redirectAmbiguous')}
             </Text>
           )}
 
@@ -1578,9 +1575,7 @@ const OracleScreen: React.FC = () => {
                 { color: colors.textMuted, textAlign: 'center', marginBottom: 24, lineHeight: 22 },
               ]}
             >
-              {
-                'The heavens have answered as many questions as the day allows. Return at Fajr — the stars remember.'
-              }
+              {t('oracle.quotaModalBody')}
             </Text>
             <Pressable
               testID="quota-modal-dismiss"
@@ -1595,7 +1590,9 @@ const OracleScreen: React.FC = () => {
               ]}
               accessibilityRole="button"
             >
-              <Text style={[typography('button'), { color: colors.text }]}>I understand</Text>
+              <Text style={[typography('button'), { color: colors.text }]}>
+                {t('oracle.quotaModalDismiss')}
+              </Text>
             </Pressable>
             {/* Upgrade link — shown only after 6 hours of exhaustion, never immediately */}
             {quotaExhaustedAt.current > 0 &&
@@ -1617,7 +1614,7 @@ const OracleScreen: React.FC = () => {
                       },
                     ]}
                   >
-                    Unlock unlimited access
+                    {t('oracle.quotaUnlockLink')}
                   </Text>
                 </Pressable>
               )}
@@ -1640,12 +1637,10 @@ const OracleScreen: React.FC = () => {
             ]}
           >
             <Text style={[typography('subheading'), { color: colors.text, marginBottom: 8 }]}>
-              {'New question detected'}
+              {t('oracle.newQuestionTitle')}
             </Text>
             <Text style={[typography('body'), { color: colors.textMuted, marginBottom: 24 }]}>
-              {
-                'This sounds like a new horary question. Each question needs its own chart for an accurate verdict.'
-              }
+              {t('oracle.newQuestionBody')}
             </Text>
             <View style={styles.modalActions}>
               <Pressable
@@ -1656,7 +1651,9 @@ const OracleScreen: React.FC = () => {
                 ]}
                 accessibilityRole="button"
               >
-                <Text style={[typography('button'), { color: colors.text }]}>Cancel</Text>
+                <Text style={[typography('button'), { color: colors.text }]}>
+                  {t('common.cancel')}
+                </Text>
               </Pressable>
               <Pressable
                 onPress={() => {
@@ -1670,7 +1667,7 @@ const OracleScreen: React.FC = () => {
                 accessibilityRole="button"
               >
                 <Text style={[typography('button'), { color: colors.textOnPrimary }]}>
-                  Ask New Question
+                  {t('oracle.askNewQuestion')}
                 </Text>
               </Pressable>
             </View>

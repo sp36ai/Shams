@@ -131,6 +131,19 @@ export interface StringTable {
     remedyLabel: string;
     chartMomentLabel: string;
     locationLabel: string;
+    awaitsHint: string;
+    redirectConversational: string;
+    redirectAmbiguous: string;
+    errSealed: string;
+    errQuotaClosed: string;
+    errNeedsAuth: string;
+    errNeedsVerification: string;
+    errChannelInterrupted: string;
+    quotaModalBody: string;
+    quotaModalDismiss: string;
+    quotaUnlockLink: string;
+    newQuestionTitle: string;
+    newQuestionBody: string;
   };
   skyClock: {
     headerTitle: string;
