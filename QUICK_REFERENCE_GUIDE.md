@@ -243,10 +243,10 @@ Node.js >= 18
 1. User opens app (SplashScreen)
 2. Firebase app initialized
 3. App Check token generated (device attestation)
-4. User logs in via:
-   - Google Sign-In (preferred)
-   - Anonymous login (fallback)
-5. Exchange Supabase token → Firebase custom token
+4. User logs in via Firebase Auth:
+   - Email / password
+   - Google Sign-In
+5. Firebase Auth issues the ID token (no Supabase token exchange exists)
 6. Access Firestore with token + App Check validation
 
 ### Access Control Levels

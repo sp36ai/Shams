@@ -50,7 +50,7 @@
 
 #### Security Model
 
-- **Auth Provider:** Supabase Auth (primary); Firebase Auth for App Check only
+- **Auth Provider:** Firebase Auth (email/password + Google Sign-In) — the sole identity provider. There is no Supabase Auth in the codebase.
 - **Access Control:** Deny-by-default with explicit allowlists
 - **Privileged Operations:** Cloud Functions only (Admin SDK bypasses rules)
 

@@ -84,7 +84,6 @@ export interface StringTable {
     password: string;
     confirmPassword: string;
     name: string;
-    phone: string;
     showPassword: string;
     hidePassword: string;
     forgotPassword: string;
@@ -92,9 +91,6 @@ export interface StringTable {
     signUp: string;
     orContinueWith: string;
     google: string;
-    facebook: string;
-    apple: string;
-    twitter: string;
     languageLabel: string;
     termsNotice: string;
     privacyLink: string;
