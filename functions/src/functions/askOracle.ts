@@ -384,6 +384,13 @@ export const askOracle = onCall(
         userId,
         question: input.question,
         questionLang: input.questionLang,
+        // Exact chart inputs — buildChart() is a pure function of these three,
+        // so persisting them makes the reading reproducible/auditable (the
+        // verdict can be re-derived later). createdAt is the Firestore commit
+        // time, a different clock, so it cannot substitute for chartAt.
+        chartAt: now,
+        lat: input.lat,
+        lon: input.lon,
         category: verdict.qType,
         verdict: verdict.verdict,
         confidence: verdict.confidence,

@@ -129,6 +129,14 @@ export interface ReadingDoc {
   userId: string;
   question: string; // stored server-side; not returned to client via getReading
   questionLang: LangCode;
+  /**
+   * Exact chart inputs for server-cast readings (askOracle). Absent on
+   * offline readings uploaded via syncReadings. Together they make a
+   * server reading reproducible — buildChart() is pure over (chartAt, lat, lon).
+   */
+  chartAt?: string; // ISO-8601 UTC moment the chart was cast for
+  lat?: number;
+  lon?: number;
   category: string;
   verdict: VerdictKind;
   confidence: number;
