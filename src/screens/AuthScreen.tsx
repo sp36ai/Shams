@@ -133,11 +133,24 @@ const AuthScreen: React.FC = () => {
   const t = useTranslation();
 
   const isLoading = useAuthStore(s => s.isLoading);
-  const authError = useAuthStore(s => s.error);
+  const lockoutUntil = useAuthStore(s => s.lockoutUntil);
   const signIn = useAuthStore(s => s.signIn);
   const signUp = useAuthStore(s => s.signUp);
   const signInWithGoogle = useAuthStore(s => s.signInWithGoogle);
   const clearError = useAuthStore(s => s.clearError);
+
+  // Live countdown while sign-in is locally locked out after repeated failures.
+  const [nowTick, setNowTick] = useState(() => Date.now());
+  useEffect(() => {
+    if (lockoutUntil === null || lockoutUntil <= Date.now()) {
+      return;
+    }
+    const id = setInterval(() => setNowTick(Date.now()), 500);
+    return () => clearInterval(id);
+  }, [lockoutUntil]);
+  const lockRemainingSec =
+    lockoutUntil !== null ? Math.max(0, Math.ceil((lockoutUntil - nowTick) / 1000)) : 0;
+  const isLocked = lockRemainingSec > 0;
 
   // Configure Google Sign-In once on mount
   React.useEffect(() => {
@@ -151,17 +164,23 @@ const AuthScreen: React.FC = () => {
   const passwordRef = useRef<TextInput>(null);
   const confirmRef = useRef<TextInput>(null);
 
-  // Sync Firebase Auth error into local display state
-  useEffect(() => {
-    if (authError !== null && authError !== '') {
-      setServerError(normaliseAuthError(authError, t));
-    } else {
-      setServerError('');
-    }
-  }, [authError, t]);
+  // When a handler sets a notice AND programmatically changes a form field in
+  // the same commit (e.g. duplicate-account → switch to Sign In + prefill
+  // email), the "dismiss on keypress" effect below would otherwise wipe that
+  // notice on the very next render. This flag suppresses exactly one such pass.
+  const keepNoticeRef = useRef(false);
 
-  // Dismiss messages on next keypress
+  // Error/success display is driven entirely from the handler return values
+  // below (each normalised via normaliseAuthError). We intentionally do NOT
+  // mirror authStore.error into serverError via an effect — doing both raced
+  // two writers against each other and could clobber a just-set notice.
+
+  // Dismiss messages on next real keypress (not on programmatic field changes).
   useEffect(() => {
+    if (keepNoticeRef.current) {
+      keepNoticeRef.current = false;
+      return;
+    }
     setServerError('');
     setSuccessMsg('');
   }, [form.email, form.password, form.confirmPassword, form.name]);
@@ -198,13 +217,34 @@ const AuthScreen: React.FC = () => {
 
     // ── Network call ──────────────────────────────────────────────────
     if (form.tab === 'signIn') {
-      await signIn(form.email.trim(), form.password);
+      const error = await signIn(form.email.trim(), form.password);
+      if (error) {
+        // If this failure tripped (or hit an active) local lockout, the live
+        // countdown banner speaks for itself — don't also show a wrong-password
+        // line underneath it.
+        if (useAuthStore.getState().lockoutUntil !== null) {
+          setServerError('');
+        } else {
+          setServerError(normaliseAuthError(error.message, t));
+        }
+      }
     } else {
       const error = await signUp(form.email.trim(), form.password, form.name.trim());
       if (error) {
-        setServerError(error.message);
+        // An existing-email collision is not a dead end — route the seeker to
+        // the Sign In tab (pre-filling their email) with an in-voice nudge,
+        // instead of a generic "could not create account".
+        if (error.message.toLowerCase().includes('email-already-in-use')) {
+          const existingEmail = form.email.trim();
+          keepNoticeRef.current = true;
+          dispatch({ type: 'SET_TAB', tab: 'signIn' });
+          dispatch({ type: 'SET_EMAIL', value: existingEmail });
+          setServerError(t('auth.accountExists'));
+        } else {
+          setServerError(normaliseAuthError(error.message, t));
+        }
       } else {
-        setSuccessMsg('Account created successfully.');
+        setSuccessMsg(t('auth.accountCreated'));
       }
     }
   }, [form, t, clearError, signIn, signUp]);
@@ -215,29 +255,30 @@ const AuthScreen: React.FC = () => {
     clearError();
     const error = await signInWithGoogle();
     if (error) {
-      setServerError(error.message);
+      setServerError(normaliseAuthError(error.message, t));
     }
-  }, [clearError, signInWithGoogle]);
+  }, [clearError, signInWithGoogle, t]);
 
   const handleForgotPassword = useCallback(async () => {
-    if (!form.email) {
+    if (!isValidEmail(form.email)) {
       return dispatch({ type: 'SET_ERRORS', emailError: t('auth.invalidEmail') });
     }
     try {
       await auth().sendPasswordResetEmail(form.email.trim());
     } catch (error) {
-      if (error instanceof Error) {
-        setServerError(error.message);
-        return;
-      }
-      setServerError(t('errors.unknown'));
+      const msg = error instanceof Error ? error.message : '';
+      setServerError(msg ? normaliseAuthError(msg, t) : t('errors.unknown'));
       return;
     }
-    setSuccessMsg(`Reset link sent to ${form.email.trim()}`);
+    setSuccessMsg(t('auth.resetLinkSent'));
   }, [form.email, t]);
 
   const isSignUp = form.tab === 'signUp';
   const submitLabel = isSignUp ? t('auth.signUp') : t('auth.signIn');
+  // A live lockout countdown takes precedence over any lingering error line.
+  const displayError = isLocked
+    ? t('errors.tooManyAttempts', { seconds: lockRemainingSec })
+    : serverError;
 
   return (
     <SafeAreaView style={[styles.root, { backgroundColor: theme.colors.bg }]}>
@@ -251,8 +292,12 @@ const AuthScreen: React.FC = () => {
 
       <KeyboardAvoidingView
         style={styles.flex}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 24}
+        // Android already resizes the window via android:windowSoftInputMode=
+        // "adjustResize" (see AndroidManifest.xml), so applying a 'height'
+        // behavior here double-adjusts and pushes fields off-screen. Let the
+        // OS resize + the ScrollView handle Android; only iOS needs 'padding'.
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        keyboardVerticalOffset={0}
       >
         <ScrollView
           contentContainerStyle={styles.scroll}
@@ -390,7 +435,7 @@ const AuthScreen: React.FC = () => {
               />
             )}
 
-            {serverError.length > 0 && (
+            {displayError.length > 0 && (
               <View
                 style={[
                   styles.serverError,
@@ -398,7 +443,7 @@ const AuthScreen: React.FC = () => {
                 ]}
               >
                 <Text style={[typography('caption'), { color: colors.negative }]}>
-                  {serverError}
+                  {displayError}
                 </Text>
               </View>
             )}
@@ -416,12 +461,12 @@ const AuthScreen: React.FC = () => {
 
             <Pressable
               onPress={() => void handleSubmit()}
-              disabled={isLoading}
+              disabled={isLoading || isLocked}
               testID="auth-submit-btn"
               style={({ pressed }) => [
                 styles.submitBtn,
                 {
-                  backgroundColor: isLoading ? colors.surfaceElevated : colors.primary,
+                  backgroundColor: isLoading || isLocked ? colors.surfaceElevated : colors.primary,
                   // 3D press: colored shadow + slight scale
                   shadowColor: colors.accent,
                   shadowRadius: pressed ? 4 : 12,
@@ -447,10 +492,12 @@ const AuthScreen: React.FC = () => {
 
             <View style={styles.toggleRow}>
               <Text style={[typography('caption'), { color: colors.textMuted }]}>
-                {isSignUp ? 'Already have an account? ' : "Don't have an account? "}
+                {isSignUp ? t('auth.haveAccount') : t('auth.noAccount')}
               </Text>
               <TouchableOpacity
                 onPress={() => dispatch({ type: 'SET_TAB', tab: isSignUp ? 'signIn' : 'signUp' })}
+                accessibilityRole="button"
+                accessibilityLabel={isSignUp ? t('auth.signInTab') : t('auth.signUpTab')}
               >
                 <Text style={[typography('caption'), { color: colors.accent, fontWeight: 'bold' }]}>
                   {isSignUp ? t('auth.signInTab') : t('auth.signUpTab')}
@@ -459,7 +506,12 @@ const AuthScreen: React.FC = () => {
             </View>
 
             {!isSignUp && (
-              <TouchableOpacity onPress={handleForgotPassword} style={styles.forgotBtn}>
+              <TouchableOpacity
+                onPress={handleForgotPassword}
+                style={styles.forgotBtn}
+                accessibilityRole="button"
+                accessibilityLabel={t('auth.forgotPassword')}
+              >
                 <Text
                   style={[typography('caption'), { color: colors.textMuted, textAlign: 'center' }]}
                 >
@@ -656,9 +708,19 @@ const Field = React.forwardRef<TextInput, FieldProps>(
           placeholderTextColor={colors.textFaint}
           underlineColorAndroid="transparent"
           blurOnSubmit={returnKeyType === 'done'}
+          // The visible field label is a sibling <Text>, not programmatically
+          // associated, so a screen reader would otherwise announce an unlabeled
+          // edit box. Bind the label explicitly, and voice the inline error.
+          accessibilityLabel={error.length > 0 ? `${label}. ${error}` : label}
         />
         {rightLabel !== undefined && (
-          <Pressable onPress={onRightPress} style={styles.fieldRight} hitSlop={8}>
+          <Pressable
+            onPress={onRightPress}
+            style={styles.fieldRight}
+            hitSlop={8}
+            accessibilityRole="button"
+            accessibilityLabel={rightLabel}
+          >
             <Text style={[typography('caption'), { color: colors.textMuted }]}>{rightLabel}</Text>
           </Pressable>
         )}
@@ -694,6 +756,12 @@ function normaliseAuthError(raw: string, t: ReturnType<typeof useTranslation>): 
   // Sign-up failures
   if (lower.includes('email-already-in-use') || lower.includes('operation-not-allowed')) {
     return t('errors.signUpFailed');
+  }
+
+  // Too many attempts — Firebase's own server-side throttle (our client
+  // lockout is surfaced separately with a live countdown).
+  if (lower.includes('too-many-requests')) {
+    return t('errors.tooManyAttemptsWait');
   }
 
   // Network / connectivity

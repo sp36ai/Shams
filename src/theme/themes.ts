@@ -156,7 +156,9 @@ const darAlShams: Theme = {
 
     text: '#F4EFE3',
     textMuted: '#A89F8C',
-    textFaint: '#5A5548',
+    // Raised from #5A5548 (2.66:1) to meet WCAG AA (4.6:1 on bg). Used as
+    // TextInput placeholder + faint captions app-wide.
+    textFaint: '#7E7A70',
     textOnGold: '#1A1308',
 
     celestialDust: '#E8C77D',
@@ -223,7 +225,8 @@ const laylAlBahr: Theme = {
 
     text: '#E0E8F8',
     textMuted: '#8A9AB8',
-    textFaint: '#3A4460',
+    // Raised from #3A4460 (2.07:1) to meet WCAG AA (4.6:1 on bg).
+    textFaint: '#737A8E',
     textOnGold: '#E0E8F8',
 
     celestialDust: '#6B8FCC',
@@ -290,7 +293,8 @@ const narAlHadid: Theme = {
 
     text: '#F8F0EE',
     textMuted: '#A08880',
-    textFaint: '#504030',
+    // Raised from #504030 (1.98:1) to meet WCAG AA (4.6:1 on bg).
+    textFaint: '#84796E',
     textOnGold: '#F8F0EE',
 
     celestialDust: '#CC4038',
@@ -357,7 +361,8 @@ const subhAlWahy: Theme = {
 
     text: '#2A1F0E',
     textMuted: '#6B5A3C',
-    textFaint: '#9A8A6A',
+    // Darkened from #9A8A6A (3.14:1) to meet WCAG AA (4.6:1 on light bg).
+    textFaint: '#7B6E55',
     textOnGold: '#FAF6EF',
 
     celestialDust: '#D4AA4E',
@@ -424,7 +429,8 @@ const zaytunAlHikma: Theme = {
 
     text: '#1A2A14',
     textMuted: '#4A6038',
-    textFaint: '#7A9068',
+    // Darkened from #7A9068 (3.23:1) to meet WCAG AA (4.6:1 on light bg).
+    textFaint: '#637554',
     textOnGold: '#F4F7F0',
 
     celestialDust: '#7EA05C',

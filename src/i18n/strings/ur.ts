@@ -60,7 +60,6 @@ export const ur: StringTable = {
     password: 'پاس ورڈ',
     confirmPassword: 'پاس ورڈ کی تصدیق',
     name: 'پورا نام',
-    phone: 'فون نمبر (اختیاری)',
     showPassword: 'پاس ورڈ دکھائیں',
     hidePassword: 'پاس ورڈ چھپائیں',
     forgotPassword: 'پاس ورڈ بھول گئے؟',
@@ -68,9 +67,6 @@ export const ur: StringTable = {
     signUp: 'کھاتہ بنائیں',
     orContinueWith: 'یا اِس سے جاری رکھیں',
     google: 'گوگل',
-    facebook: 'فیس بک',
-    apple: 'ایپل',
-    twitter: 'ایکس',
     languageLabel: 'زبان',
     termsNotice: 'جاری رکھ کر آپ ہماری',
     privacyLink: 'رازداری کی پالیسی',
@@ -82,7 +78,12 @@ export const ur: StringTable = {
     forgotPasswordTitle: 'پاس ورڈ از سرِ نو ترتیب دیں',
     forgotPasswordBody: 'اپنا ای میل درج کریں، ہم آپ کو بحالی کا ربط بھیج دیں گے۔',
     sendResetLink: 'بحالی کا ربط بھیجیں',
-    resetLinkSent: 'بحالی کا ربط آپ کے میل باکس میں بھیج دیا گیا ہے۔',
+    resetLinkSent:
+      'بحالی کا ربط آپ کے میل باکس میں بھیجا جا رہا ہے۔ اُس پر جا کر نیا پاس ورڈ مقرر کریں، پھر یہاں واپس آ کر داخل ہوں۔',
+    accountCreated: 'آپ کا کھاتہ مہربند ہو گیا۔ شمس آپ کی منتظر ہے۔',
+    accountExists: 'یہ ای میل پہلے ہی ہمارے ساتھ ہے۔ جاری رکھنے کے لیے داخل ہوں۔',
+    haveAccount: 'پہلے سے طالبوں میں شامل ہیں؟ ',
+    noAccount: 'شمس میں نئے ہیں؟ ',
   },
 
   oracle: {
@@ -199,9 +200,11 @@ export const ur: StringTable = {
     network: 'انٹرنیٹ موجود نہیں۔ نیٹ ورک دیکھ کر دوبارہ کوشش کریں۔',
     unknown: 'غیر متوقع خرابی پیش آئی۔',
     sessionExpired: 'آپ کا سیشن ختم ہو چکا ہے۔ دوبارہ داخل ہوں۔',
-    signInFailed: 'داخلہ ناکام۔ ای میل اور پاس ورڈ دیکھ لیں۔',
-    signUpFailed: 'کھاتہ نہیں بن سکا۔ دوبارہ کوشش کریں۔',
+    signInFailed: 'دروازہ نہ کھلا۔ اپنا ای میل اور پاس ورڈ دیکھ لیں۔',
+    signUpFailed: 'کھاتہ مہربند نہ ہو سکا۔ برائے مہربانی دوبارہ کوشش کریں۔',
     locationRequired: 'چارٹ بنانے کے لیے مقام درکار ہے۔',
+    tooManyAttempts: 'بہت زیادہ کوششیں۔ دروازہ {{seconds}} سیکنڈ کے لیے تھم گیا۔',
+    tooManyAttemptsWait: 'بہت زیادہ کوششیں۔ دوبارہ کوشش سے پہلے تھوڑا رُکیں۔',
   },
 };
 

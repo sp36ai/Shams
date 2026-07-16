@@ -24,8 +24,8 @@
                  ▼                     ▼                     ▼
         ┌──────────────────┐  ┌──────────────────┐  ┌──────────────────┐
         │  Metro Bundler   │  │  Firebase Auth   │  │   Navigation     │
-        │  (Terser + RN)   │  │  (Supabase +     │  │   (Bottom Tabs)  │
-        │                  │  │   Firebase Auth) │  │                  │
+        │  (Terser + RN)   │  │  (email/pwd +    │  │   (Bottom Tabs)  │
+        │                  │  │   Google)        │  │                  │
         │ • Mangle IDs     │  │                  │  │  • Oracle Screen │
         │ • Strip Console  │  │                  │  │  • History Tab   │
         │ • 3-Pass Compress│  │                  │  │  • Settings      │
@@ -372,12 +372,12 @@ USER OPENS APP
    │  AuthScreen               │
    │  (Login/Register)         │
    │                           │
-   │  1. Google Sign-In        │
-   │  2. Continue Anonymously  │
+   │  1. Email / password      │
+   │  2. Google Sign-In        │
    │                           │
-   │  → Get Supabase token     │
-   │  → Exchange for Firebase  │
-   │    custom token           │
+   │  → Firebase Auth issues   │
+   │    the ID token directly  │
+   │    (no token exchange)    │
    └────────┬───────────────────┘
             │
             ▼

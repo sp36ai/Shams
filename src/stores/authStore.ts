@@ -45,6 +45,12 @@ export interface AuthState {
   isLoading: boolean;
   /** Last auth error message, or null. */
   error: string | null;
+  /**
+   * Epoch ms until which sign-in is locally locked out after too many failed
+   * attempts, or null. Client-side defense-in-depth on top of Firebase's own
+   * server-side throttling — gives the UI a concrete countdown to show.
+   */
+  lockoutUntil: number | null;
 
   /** Call once at app startup to install the auth state listener. */
   bootstrap: () => Promise<void>;
@@ -58,6 +64,16 @@ export interface AuthState {
 let _authUnsubscribe: (() => void) | null = null;
 
 const AUTH_TOKEN_TIMEOUT_MS = 8000;
+
+/** After this many consecutive failed sign-ins, lock the button locally. */
+const MAX_SIGNIN_ATTEMPTS = 5;
+/** How long the local lockout lasts once triggered. */
+const SIGNIN_LOCKOUT_MS = 30_000;
+
+function readLockoutUntil(): number | null {
+  const v = storage.getNumber(KEYS.AUTH_LOCKOUT_UNTIL);
+  return v !== undefined && v > Date.now() ? v : null;
+}
 
 /**
  * Resolves with `promise`'s value, or `undefined` after `ms` — whichever comes
@@ -112,6 +128,7 @@ export const useAuthStore = create<AuthState>(set => ({
   user: null,
   isLoading: false,
   error: null,
+  lockoutUntil: readLockoutUntil(),
 
   bootstrap: async (): Promise<void> => {
     _authUnsubscribe?.();
@@ -126,10 +143,17 @@ export const useAuthStore = create<AuthState>(set => ({
           // A different uid than last session means a different account signed
           // in on this device — per-account onboarding/location flags must not
           // leak from whoever used the device before.
-          const previousUid = storage.getString(KEYS.AUTH_USER_ID);
+          //
+          // We compare against AUTH_LAST_UID (not AUTH_USER_ID): the latter is
+          // the display cache and is cleared on sign-out, which would make this
+          // check see `undefined` after every explicit sign-out and therefore
+          // never fire. AUTH_LAST_UID deliberately survives sign-out so the
+          // "different account signed in" reset actually triggers.
+          const previousUid = storage.getString(KEYS.AUTH_LAST_UID);
           if (previousUid !== undefined && previousUid !== fbUser.uid) {
             useSettingsStore.getState().resetForNewAccount();
           }
+          storage.set(KEYS.AUTH_LAST_UID, fbUser.uid);
           try {
             const tokenResult = await withTimeout(fbUser.getIdTokenResult(), AUTH_TOKEN_TIMEOUT_MS);
             const plan = (tokenResult?.claims.plan as PlanTier | undefined) ?? 'free';
@@ -159,13 +183,33 @@ export const useAuthStore = create<AuthState>(set => ({
   // that here raced two independent getIdTokenResult() calls against each
   // other and could leave isLoading/user set from whichever finished last.
   signIn: async (email: string, password: string): Promise<Error | null> => {
+    // Refuse immediately while locally locked out — don't even hit the network.
+    const activeLockout = readLockoutUntil();
+    if (activeLockout !== null) {
+      set({ lockoutUntil: activeLockout, isLoading: false });
+      return new Error('auth/too-many-requests (locked)');
+    }
+
     set({ isLoading: true, error: null });
     try {
       await auth().signInWithEmailAndPassword(email, password);
+      // Success clears the failure counter and any lockout.
+      storage.delete(KEYS.AUTH_FAILED_ATTEMPTS);
+      storage.delete(KEYS.AUTH_LOCKOUT_UNTIL);
+      set({ lockoutUntil: null });
       return null;
     } catch (err) {
+      const attempts = (storage.getNumber(KEYS.AUTH_FAILED_ATTEMPTS) ?? 0) + 1;
+      let nextLockout: number | null = null;
+      if (attempts >= MAX_SIGNIN_ATTEMPTS) {
+        nextLockout = Date.now() + SIGNIN_LOCKOUT_MS;
+        storage.set(KEYS.AUTH_LOCKOUT_UNTIL, nextLockout);
+        storage.set(KEYS.AUTH_FAILED_ATTEMPTS, 0); // reset — the lockout is the penalty now
+      } else {
+        storage.set(KEYS.AUTH_FAILED_ATTEMPTS, attempts);
+      }
       const msg = err instanceof Error ? err.message : 'Sign in failed';
-      set({ isLoading: false, error: msg });
+      set({ isLoading: false, error: msg, lockoutUntil: nextLockout });
       return err instanceof Error ? err : new Error(msg);
     }
   },
@@ -230,6 +274,11 @@ export const useAuthStore = create<AuthState>(set => ({
     cacheUserLocally(null);
     useQuotaStore.getState().reset();
     useReadingsStore.getState().clearAll();
+    // NOTE: per-account onboarding flags + seeker identity/profile are NOT wiped
+    // here. They are cleared lazily by bootstrap() only when a *different* uid
+    // signs in (see AUTH_LAST_UID sentinel below), so the SAME user signing back
+    // in keeps their onboarding, while a different user on a shared device gets a
+    // clean slate. The sentinel survives sign-out, which is what makes that work.
     set({ user: null, isLoading: false, error: null });
   },
 

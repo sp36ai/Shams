@@ -84,7 +84,6 @@ export interface StringTable {
     password: string;
     confirmPassword: string;
     name: string;
-    phone: string;
     showPassword: string;
     hidePassword: string;
     forgotPassword: string;
@@ -92,9 +91,6 @@ export interface StringTable {
     signUp: string;
     orContinueWith: string;
     google: string;
-    facebook: string;
-    apple: string;
-    twitter: string;
     languageLabel: string;
     termsNotice: string;
     privacyLink: string;
@@ -107,6 +103,10 @@ export interface StringTable {
     forgotPasswordBody: string;
     sendResetLink: string;
     resetLinkSent: string;
+    accountCreated: string;
+    accountExists: string;
+    haveAccount: string;
+    noAccount: string;
   };
   oracle: {
     headerTitle: string;
@@ -215,5 +215,9 @@ export interface StringTable {
     signInFailed: string;
     signUpFailed: string;
     locationRequired: string;
+    /** Client lockout countdown — interpolates {{seconds}}. */
+    tooManyAttempts: string;
+    /** Firebase server-side throttle (no known countdown). */
+    tooManyAttemptsWait: string;
   };
 }

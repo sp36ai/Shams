@@ -42,7 +42,10 @@ const App: React.FC = () => {
   if (!securityPassed) {
     return (
       <View style={styles.errorContainer}>
-        <StatusBar barStyle="light-content" backgroundColor="#030E10" />
+        <StatusBar
+          barStyle="light-content"
+          backgroundColor={styles.errorContainer.backgroundColor}
+        />
         <Text style={styles.errorTitle}>Integrity Error</Text>
         <Text style={styles.errorMessage}>{INTEGRITY_FAIL_MESSAGE}</Text>
       </View>
@@ -62,22 +65,26 @@ const App: React.FC = () => {
   );
 };
 
+// This gate renders above ThemeProvider, so it cannot read theme context.
+// Colors are pinned to the canonical darAlShams palette (src/theme/themes.ts)
+// so even the integrity-failure screen reads as the obsidian / gold manuscript.
 const styles = StyleSheet.create({
   errorContainer: {
     flex: 1,
-    backgroundColor: '#030E10', // Matches theme.colors.bg
+    backgroundColor: '#0A0A0F', // darAlShams.bg
     justifyContent: 'center',
     alignItems: 'center',
     padding: 32,
   },
   errorTitle: {
-    color: '#FF4444',
+    color: '#E8C77D', // goldBright
     fontSize: 24,
     fontWeight: 'bold',
     marginBottom: 16,
+    letterSpacing: 0.8,
   },
   errorMessage: {
-    color: '#FFFFFF',
+    color: '#F4EFE3', // text
     fontSize: 16,
     textAlign: 'center',
     lineHeight: 24,

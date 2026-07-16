@@ -68,6 +68,14 @@ export const KEYS = Object.freeze({
   AUTH_USER_ID: 'auth.userId.v1',
   AUTH_USER_NAME: 'auth.userName.v1',
   AUTH_USER_EMAIL: 'auth.userEmail.v1',
+  // Last signed-in uid. Unlike AUTH_USER_ID (a display cache cleared on
+  // sign-out), this sentinel persists across sign-out so bootstrap() can tell
+  // when a *different* account signs in and reset per-account state.
+  AUTH_LAST_UID: 'auth.lastUid.v1',
+  // Client-side sign-in throttle. Persisted so force-killing the app between
+  // attempts cannot reset the lockout.
+  AUTH_FAILED_ATTEMPTS: 'auth.failedAttempts.v1',
+  AUTH_LOCKOUT_UNTIL: 'auth.lockoutUntil.v1',
 } as const);
 
 export type StorageKey = (typeof KEYS)[keyof typeof KEYS];

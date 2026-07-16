@@ -59,7 +59,6 @@ export const hi: StringTable = {
     password: 'पासवर्ड',
     confirmPassword: 'पासवर्ड की पुष्टि',
     name: 'पूरा नाम',
-    phone: 'फ़ोन (वैकल्पिक)',
     showPassword: 'पासवर्ड दिखाएँ',
     hidePassword: 'पासवर्ड छिपाएँ',
     forgotPassword: 'पासवर्ड भूल गए?',
@@ -67,9 +66,6 @@ export const hi: StringTable = {
     signUp: 'खाता बनाएँ',
     orContinueWith: 'या इससे जारी रखें',
     google: 'गूगल',
-    facebook: 'फ़ेसबुक',
-    apple: 'ऐप्पल',
-    twitter: 'एक्स',
     languageLabel: 'भाषा',
     termsNotice: 'जारी रखकर आप हमारी',
     privacyLink: 'गोपनीयता नीति',
@@ -81,7 +77,12 @@ export const hi: StringTable = {
     forgotPasswordTitle: 'पासवर्ड पुनः सेट करें',
     forgotPasswordBody: 'अपना ईमेल दर्ज करें, हम आपको पुनःसेट लिंक भेजेंगे।',
     sendResetLink: 'पुनःसेट लिंक भेजें',
-    resetLinkSent: 'पुनःसेट लिंक आपके इनबॉक्स में भेज दिया गया है।',
+    resetLinkSent:
+      'पुनःसेट लिंक आपके इनबॉक्स में भेजा जा रहा है। उस पर जाकर नया पासवर्ड सेट करें, फिर यहाँ लौटकर साइन इन करें।',
+    accountCreated: 'आपका खाता अंकित हो गया। शम्स आपकी प्रतीक्षा में है।',
+    accountExists: 'यह ईमेल पहले से हमारे साथ है। जारी रखने के लिए साइन इन करें।',
+    haveAccount: 'पहले से साधकों में शामिल हैं? ',
+    noAccount: 'शम्स में नए हैं? ',
   },
 
   oracle: {
@@ -198,9 +199,11 @@ export const hi: StringTable = {
     network: 'इंटरनेट उपलब्ध नहीं। नेटवर्क जाँचकर पुनः प्रयास करें।',
     unknown: 'एक अप्रत्याशित त्रुटि हुई।',
     sessionExpired: 'आपका सत्र समाप्त हो गया है। पुनः साइन इन करें।',
-    signInFailed: 'साइन इन विफल। ईमेल और पासवर्ड जाँचें।',
-    signUpFailed: 'खाता नहीं बन सका। पुनः प्रयास करें।',
+    signInFailed: 'द्वार नहीं खुला। अपना ईमेल और पासवर्ड जाँचें।',
+    signUpFailed: 'खाता अंकित नहीं हो सका। कृपया पुनः प्रयास करें।',
     locationRequired: 'कुंडली बनाने के लिए स्थान आवश्यक है।',
+    tooManyAttempts: 'बहुत अधिक प्रयास। द्वार {{seconds}} सेकंड के लिए विश्राम में है।',
+    tooManyAttemptsWait: 'बहुत अधिक प्रयास। पुनः प्रयास से पहले थोड़ा रुकें।',
   },
 };
 

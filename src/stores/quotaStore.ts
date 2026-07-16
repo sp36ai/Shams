@@ -108,6 +108,13 @@ export interface QuotaState {
   setPlan: (plan: PlanTier, expiry?: string) => void;
   /** Start the 7-day trial (no-op if already started). */
   startTrial: () => void;
+  /**
+   * Reconcile the locally-displayed trial window against the authoritative
+   * server start date (returned by activateTrial). Prevents a reinstall from
+   * silently re-gifting a fresh 7-day countdown when the server already holds
+   * an earlier — possibly expired — start date.
+   */
+  reconcileTrialFromServer: (serverStartedAt: string) => void;
   /** Read current trial status. */
   checkTrial: () => { active: boolean; daysRemaining: number; expired: boolean };
   /** Reset quota to 0 for testing / sign-out. */
@@ -172,11 +179,29 @@ export const useQuotaStore = create<QuotaState>((set, get) => ({
     storage.set(KEYS.TRIAL_START, today);
     set({ trialStartDate: today, trialActive: true, trialExpired: false });
     // Register on server so trial cannot be reset by reinstalling the app.
-    // Fire-and-forget: local state is the UX source of truth; server enforces
-    // the limit independently via /trials/{userId} on every askOracle call.
-    void activateTrialOnServer().catch(err =>
-      console.warn('[quotaStore] trial server registration failed', err),
-    );
+    // The server is idempotent and returns the ORIGINAL start date if one
+    // already exists — reconcile the local countdown to it so a reinstall
+    // cannot show a fresh 7 days over a server-side window that already
+    // started (or expired). Server also enforces the limit independently via
+    // /trials/{userId} on every askOracle call.
+    void activateTrialOnServer()
+      .then(res => get().reconcileTrialFromServer(res.startedAt))
+      .catch(err => console.warn('[quotaStore] trial server registration failed', err));
+  },
+
+  reconcileTrialFromServer(serverStartedAt: string): void {
+    // Normalise to the same UTC "YYYY-MM-DD" day key the local clock uses.
+    const parsed = new Date(serverStartedAt);
+    if (Number.isNaN(parsed.getTime())) {
+      return;
+    }
+    const serverDay = parsed.toISOString().slice(0, 10);
+    if (serverDay === get().trialStartDate) {
+      return; // already aligned — nothing to do
+    }
+    storage.set(KEYS.TRIAL_START, serverDay);
+    const { trialActive, trialExpired } = computeTrialState(serverDay);
+    set({ trialStartDate: serverDay, trialActive, trialExpired });
   },
 
   checkTrial(): { active: boolean; daysRemaining: number; expired: boolean } {

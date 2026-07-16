@@ -104,6 +104,12 @@ android/app/src/main/assets/index.android.bundle
 android/app/src/main/res/drawable-*/node_modules*
 *.tsbuildinfo
 
+# Fonts are provisioned at build time (scripts/download-fonts.mjs), not committed.
+# CI runs `npm run fonts` before the Android build; devs run it once locally.
+assets/fonts/*.ttf
+assets/fonts/*.otf
+android/app/src/main/assets/fonts/
+
 # Patch package
 patches/.bak
 
