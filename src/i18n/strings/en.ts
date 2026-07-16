@@ -70,7 +70,8 @@ export const en: StringTable = {
     forgotPasswordTitle: 'Reset your password',
     forgotPasswordBody: 'Enter your email and we will send you a reset link.',
     sendResetLink: 'Send reset link',
-    resetLinkSent: 'A reset link has been sent to your inbox.',
+    resetLinkSent:
+      'A reset link is on its way to your inbox. Follow it to set a new password, then return here to sign in.',
     accountCreated: 'Your account is sealed. The oracle awaits you.',
     accountExists: 'This email already walks with us. Sign in to continue.',
     haveAccount: 'Already among the seekers? ',
