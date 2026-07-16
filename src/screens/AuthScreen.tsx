@@ -133,7 +133,6 @@ const AuthScreen: React.FC = () => {
   const t = useTranslation();
 
   const isLoading = useAuthStore(s => s.isLoading);
-  const authError = useAuthStore(s => s.error);
   const signIn = useAuthStore(s => s.signIn);
   const signUp = useAuthStore(s => s.signUp);
   const signInWithGoogle = useAuthStore(s => s.signInWithGoogle);
@@ -151,17 +150,23 @@ const AuthScreen: React.FC = () => {
   const passwordRef = useRef<TextInput>(null);
   const confirmRef = useRef<TextInput>(null);
 
-  // Sync Firebase Auth error into local display state
-  useEffect(() => {
-    if (authError !== null && authError !== '') {
-      setServerError(normaliseAuthError(authError, t));
-    } else {
-      setServerError('');
-    }
-  }, [authError, t]);
+  // When a handler sets a notice AND programmatically changes a form field in
+  // the same commit (e.g. duplicate-account → switch to Sign In + prefill
+  // email), the "dismiss on keypress" effect below would otherwise wipe that
+  // notice on the very next render. This flag suppresses exactly one such pass.
+  const keepNoticeRef = useRef(false);
 
-  // Dismiss messages on next keypress
+  // Error/success display is driven entirely from the handler return values
+  // below (each normalised via normaliseAuthError). We intentionally do NOT
+  // mirror authStore.error into serverError via an effect — doing both raced
+  // two writers against each other and could clobber a just-set notice.
+
+  // Dismiss messages on next real keypress (not on programmatic field changes).
   useEffect(() => {
+    if (keepNoticeRef.current) {
+      keepNoticeRef.current = false;
+      return;
+    }
     setServerError('');
     setSuccessMsg('');
   }, [form.email, form.password, form.confirmPassword, form.name]);
@@ -198,13 +203,27 @@ const AuthScreen: React.FC = () => {
 
     // ── Network call ──────────────────────────────────────────────────
     if (form.tab === 'signIn') {
-      await signIn(form.email.trim(), form.password);
+      const error = await signIn(form.email.trim(), form.password);
+      if (error) {
+        setServerError(normaliseAuthError(error.message, t));
+      }
     } else {
       const error = await signUp(form.email.trim(), form.password, form.name.trim());
       if (error) {
-        setServerError(error.message);
+        // An existing-email collision is not a dead end — route the seeker to
+        // the Sign In tab (pre-filling their email) with an in-voice nudge,
+        // instead of a generic "could not create account".
+        if (error.message.toLowerCase().includes('email-already-in-use')) {
+          const existingEmail = form.email.trim();
+          keepNoticeRef.current = true;
+          dispatch({ type: 'SET_TAB', tab: 'signIn' });
+          dispatch({ type: 'SET_EMAIL', value: existingEmail });
+          setServerError(t('auth.accountExists'));
+        } else {
+          setServerError(normaliseAuthError(error.message, t));
+        }
       } else {
-        setSuccessMsg('Account created successfully.');
+        setSuccessMsg(t('auth.accountCreated'));
       }
     }
   }, [form, t, clearError, signIn, signUp]);
@@ -215,25 +234,22 @@ const AuthScreen: React.FC = () => {
     clearError();
     const error = await signInWithGoogle();
     if (error) {
-      setServerError(error.message);
+      setServerError(normaliseAuthError(error.message, t));
     }
-  }, [clearError, signInWithGoogle]);
+  }, [clearError, signInWithGoogle, t]);
 
   const handleForgotPassword = useCallback(async () => {
-    if (!form.email) {
+    if (!isValidEmail(form.email)) {
       return dispatch({ type: 'SET_ERRORS', emailError: t('auth.invalidEmail') });
     }
     try {
       await auth().sendPasswordResetEmail(form.email.trim());
     } catch (error) {
-      if (error instanceof Error) {
-        setServerError(error.message);
-        return;
-      }
-      setServerError(t('errors.unknown'));
+      const msg = error instanceof Error ? error.message : '';
+      setServerError(msg ? normaliseAuthError(msg, t) : t('errors.unknown'));
       return;
     }
-    setSuccessMsg(`Reset link sent to ${form.email.trim()}`);
+    setSuccessMsg(t('auth.resetLinkSent'));
   }, [form.email, t]);
 
   const isSignUp = form.tab === 'signUp';
@@ -447,10 +463,12 @@ const AuthScreen: React.FC = () => {
 
             <View style={styles.toggleRow}>
               <Text style={[typography('caption'), { color: colors.textMuted }]}>
-                {isSignUp ? 'Already have an account? ' : "Don't have an account? "}
+                {isSignUp ? t('auth.haveAccount') : t('auth.noAccount')}
               </Text>
               <TouchableOpacity
                 onPress={() => dispatch({ type: 'SET_TAB', tab: isSignUp ? 'signIn' : 'signUp' })}
+                accessibilityRole="button"
+                accessibilityLabel={isSignUp ? t('auth.signInTab') : t('auth.signUpTab')}
               >
                 <Text style={[typography('caption'), { color: colors.accent, fontWeight: 'bold' }]}>
                   {isSignUp ? t('auth.signInTab') : t('auth.signUpTab')}
@@ -459,7 +477,12 @@ const AuthScreen: React.FC = () => {
             </View>
 
             {!isSignUp && (
-              <TouchableOpacity onPress={handleForgotPassword} style={styles.forgotBtn}>
+              <TouchableOpacity
+                onPress={handleForgotPassword}
+                style={styles.forgotBtn}
+                accessibilityRole="button"
+                accessibilityLabel={t('auth.forgotPassword')}
+              >
                 <Text
                   style={[typography('caption'), { color: colors.textMuted, textAlign: 'center' }]}
                 >
@@ -656,9 +679,19 @@ const Field = React.forwardRef<TextInput, FieldProps>(
           placeholderTextColor={colors.textFaint}
           underlineColorAndroid="transparent"
           blurOnSubmit={returnKeyType === 'done'}
+          // The visible field label is a sibling <Text>, not programmatically
+          // associated, so a screen reader would otherwise announce an unlabeled
+          // edit box. Bind the label explicitly, and voice the inline error.
+          accessibilityLabel={error.length > 0 ? `${label}. ${error}` : label}
         />
         {rightLabel !== undefined && (
-          <Pressable onPress={onRightPress} style={styles.fieldRight} hitSlop={8}>
+          <Pressable
+            onPress={onRightPress}
+            style={styles.fieldRight}
+            hitSlop={8}
+            accessibilityRole="button"
+            accessibilityLabel={rightLabel}
+          >
             <Text style={[typography('caption'), { color: colors.textMuted }]}>{rightLabel}</Text>
           </Pressable>
         )}

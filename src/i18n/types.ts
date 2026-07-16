@@ -107,6 +107,10 @@ export interface StringTable {
     forgotPasswordBody: string;
     sendResetLink: string;
     resetLinkSent: string;
+    accountCreated: string;
+    accountExists: string;
+    haveAccount: string;
+    noAccount: string;
   };
   oracle: {
     headerTitle: string;

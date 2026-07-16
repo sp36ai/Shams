@@ -74,7 +74,11 @@ export const en: StringTable = {
     forgotPasswordTitle: 'Reset your password',
     forgotPasswordBody: 'Enter your email and we will send you a reset link.',
     sendResetLink: 'Send reset link',
-    resetLinkSent: 'Check your inbox for a reset link.',
+    resetLinkSent: 'A reset link has been sent to your inbox.',
+    accountCreated: 'Your account is sealed. The oracle awaits you.',
+    accountExists: 'This email already walks with us. Sign in to continue.',
+    haveAccount: 'Already among the seekers? ',
+    noAccount: 'New to the oracle? ',
   },
 
   oracle: {
@@ -192,8 +196,8 @@ export const en: StringTable = {
     network: 'No internet connection. Check your network and try again.',
     unknown: 'An unexpected error occurred.',
     sessionExpired: 'Your session has expired. Please sign in again.',
-    signInFailed: 'Sign-in failed. Check your email and password.',
-    signUpFailed: 'We could not create your account. Try again.',
+    signInFailed: 'The gate did not open. Check your email and password.',
+    signUpFailed: 'The account could not be sealed. Please try again.',
     locationRequired: 'Location is required to cast the chart and judge the question.',
   },
 };

@@ -32,12 +32,16 @@ class ErrorBoundary extends React.Component<React.PropsWithChildren, ErrorBounda
     if (this.state.hasError) {
       return (
         <View style={styles.container}>
-          <StatusBar barStyle="light-content" backgroundColor="#030E10" />
-          <Text style={styles.title}>Something went wrong</Text>
+          <StatusBar barStyle="light-content" backgroundColor={styles.container.backgroundColor} />
+          <Text style={styles.title}>The veil trembled</Text>
           <Text style={styles.message}>
-            An unexpected error occurred. The issue has been reported automatically.
+            Something interrupted the reading. It has been recorded, and the oracle awaits your
+            return.
           </Text>
-          {this.state.errorMessage !== null && (
+          {/* Raw error text + stack are shown ONLY in development. In production
+              they would leak internal details to the user and read as an
+              off-brand technical dump at the worst possible moment. */}
+          {__DEV__ && this.state.errorMessage !== null && (
             <ScrollView style={styles.detailsBox}>
               <Text selectable style={styles.detailsText}>
                 {this.state.errorMessage}
@@ -46,7 +50,7 @@ class ErrorBoundary extends React.Component<React.PropsWithChildren, ErrorBounda
             </ScrollView>
           )}
           <Pressable style={styles.button} onPress={this.handleRetry} testID="error-retry-btn">
-            <Text style={styles.buttonText}>Try Again</Text>
+            <Text style={styles.buttonText}>Return</Text>
           </Pressable>
         </View>
       );
@@ -55,22 +59,27 @@ class ErrorBoundary extends React.Component<React.PropsWithChildren, ErrorBounda
   }
 }
 
+// This component sits ABOVE ThemeProvider in the tree (App.tsx), so it cannot
+// read theme context via hooks. Colors are pinned to the canonical darAlShams
+// palette (see src/theme/themes.ts) so the crash fallback still reads as the
+// obsidian / illuminated-gold manuscript rather than a generic error page.
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#030E10',
+    backgroundColor: '#0A0A0F', // themes.ts darAlShams.bg
     justifyContent: 'center',
     alignItems: 'center',
     padding: 32,
   },
   title: {
-    color: '#FF4444',
+    color: '#E8C77D', // goldBright
     fontSize: 22,
     fontWeight: 'bold',
     marginBottom: 12,
+    letterSpacing: 0.8,
   },
   message: {
-    color: '#FFFFFF',
+    color: '#F4EFE3', // text
     fontSize: 15,
     textAlign: 'center',
     lineHeight: 22,
@@ -79,26 +88,27 @@ const styles = StyleSheet.create({
   detailsBox: {
     maxHeight: 220,
     width: '100%',
-    backgroundColor: '#0A1A1D',
+    backgroundColor: '#1A1A26', // surfaceElevated
     borderRadius: 8,
     padding: 12,
     marginBottom: 24,
   },
   detailsText: {
-    color: '#FF9999',
+    color: '#A89F8C', // textMuted
     fontSize: 12,
     fontFamily: 'monospace',
   },
   button: {
-    backgroundColor: '#1F3A3D',
+    backgroundColor: '#C9A961', // primary
     paddingVertical: 12,
     paddingHorizontal: 32,
     borderRadius: 8,
   },
   buttonText: {
-    color: '#FFFFFF',
+    color: '#1A1308', // textOnPrimary
     fontSize: 16,
     fontWeight: '600',
+    letterSpacing: 1,
   },
 });
 

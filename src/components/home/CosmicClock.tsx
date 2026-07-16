@@ -424,7 +424,7 @@ export default function CosmicClock({ running }: CosmicClockProps): React.ReactE
           alignmentBaseline="central"
           fontSize={isMajor ? 9 * S : 7 * S}
           fill={isMajor ? '#ffffff' : 'rgba(255,255,255,0.55)'}
-          fontFamily="Cairo-Regular"
+          fontFamily="Spectral-Regular"
           fontWeight={isMajor ? 'bold' : 'normal'}
         >
           {String(num)}
@@ -665,7 +665,7 @@ export default function CosmicClock({ running }: CosmicClockProps): React.ReactE
             fontSize={5.5 * S}
             fill={def.color}
             opacity={0.75}
-            fontFamily="Cairo-Regular"
+            fontFamily="Spectral-Regular"
           >
             {`${def.sym} ${abbr}`}
           </SvgText>
@@ -820,12 +820,12 @@ const styles = StyleSheet.create({
     marginBottom: 14,
   },
   timeText: {
-    fontFamily: 'Cairo-Regular',
+    fontFamily: 'Spectral-Regular',
     fontSize: 26,
     letterSpacing: 3,
   },
   dateText: {
-    fontFamily: 'CormorantGaramond-Italic',
+    fontFamily: 'Spectral-Italic',
     fontSize: 12,
     letterSpacing: 1,
     marginTop: 2,
@@ -845,7 +845,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
   },
   tooltipText: {
-    fontFamily: 'Cairo-Regular',
+    fontFamily: 'Spectral-Regular',
     fontSize: 11,
     letterSpacing: 0.5,
   },
@@ -867,14 +867,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   cardLabel: {
-    fontFamily: 'Cinzel-Regular',
+    fontFamily: 'Cinzel-SemiBold',
     fontSize: 7,
     letterSpacing: 1.5,
     textTransform: 'uppercase',
     marginBottom: 3,
   },
   cardValue: {
-    fontFamily: 'Cairo-Regular',
+    fontFamily: 'Spectral-Regular',
     fontSize: 11,
     letterSpacing: 0.5,
   },
@@ -891,7 +891,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
   },
   btnText: {
-    fontFamily: 'Cinzel-Regular',
+    fontFamily: 'Cinzel-SemiBold',
     fontSize: 8,
     letterSpacing: 1.5,
     textTransform: 'uppercase',

@@ -45,6 +45,12 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Provision fonts
+        # Fonts are not committed (see .gitignore); fetch them into
+        # assets/fonts/ so the RN Gradle plugin links them into the AAB.
+        # Without this the app ships in the system default font.
+        run: npm run fonts
+
       - name: Setup Java
         uses: actions/setup-java@v4
         with:

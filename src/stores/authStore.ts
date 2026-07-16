@@ -126,10 +126,17 @@ export const useAuthStore = create<AuthState>(set => ({
           // A different uid than last session means a different account signed
           // in on this device — per-account onboarding/location flags must not
           // leak from whoever used the device before.
-          const previousUid = storage.getString(KEYS.AUTH_USER_ID);
+          //
+          // We compare against AUTH_LAST_UID (not AUTH_USER_ID): the latter is
+          // the display cache and is cleared on sign-out, which would make this
+          // check see `undefined` after every explicit sign-out and therefore
+          // never fire. AUTH_LAST_UID deliberately survives sign-out so the
+          // "different account signed in" reset actually triggers.
+          const previousUid = storage.getString(KEYS.AUTH_LAST_UID);
           if (previousUid !== undefined && previousUid !== fbUser.uid) {
             useSettingsStore.getState().resetForNewAccount();
           }
+          storage.set(KEYS.AUTH_LAST_UID, fbUser.uid);
           try {
             const tokenResult = await withTimeout(fbUser.getIdTokenResult(), AUTH_TOKEN_TIMEOUT_MS);
             const plan = (tokenResult?.claims.plan as PlanTier | undefined) ?? 'free';
@@ -230,6 +237,11 @@ export const useAuthStore = create<AuthState>(set => ({
     cacheUserLocally(null);
     useQuotaStore.getState().reset();
     useReadingsStore.getState().clearAll();
+    // NOTE: per-account onboarding flags + seeker identity/profile are NOT wiped
+    // here. They are cleared lazily by bootstrap() only when a *different* uid
+    // signs in (see AUTH_LAST_UID sentinel below), so the SAME user signing back
+    // in keeps their onboarding, while a different user on a shared device gets a
+    // clean slate. The sentinel survives sign-out, which is what makes that work.
     set({ user: null, isLoading: false, error: null });
   },
 

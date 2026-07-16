@@ -5,6 +5,7 @@
   "description": "Shams al-Asrar - local RKP horary app powered by a deterministic judgment engine.",
   "scripts": {
     "android": "react-native run-android",
+    "fonts": "node scripts/download-fonts.mjs",
     "start": "react-native start",
     "start:reset": "react-native start --reset-cache",
     "build:android:debug": "cd android && ./gradlew assembleDebug",
