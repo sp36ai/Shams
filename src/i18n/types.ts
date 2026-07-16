@@ -215,5 +215,9 @@ export interface StringTable {
     signInFailed: string;
     signUpFailed: string;
     locationRequired: string;
+    /** Client lockout countdown — interpolates {{seconds}}. */
+    tooManyAttempts: string;
+    /** Firebase server-side throttle (no known countdown). */
+    tooManyAttemptsWait: string;
   };
 }

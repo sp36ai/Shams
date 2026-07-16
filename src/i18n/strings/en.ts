@@ -196,6 +196,8 @@ export const en: StringTable = {
     signInFailed: 'The gate did not open. Check your email and password.',
     signUpFailed: 'The account could not be sealed. Please try again.',
     locationRequired: 'Location is required to cast the chart and judge the question.',
+    tooManyAttempts: 'Too many attempts. The gate rests for {{seconds}}s.',
+    tooManyAttemptsWait: 'Too many attempts. Pause a moment before trying again.',
   },
 };
 

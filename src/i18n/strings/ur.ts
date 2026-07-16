@@ -203,6 +203,8 @@ export const ur: StringTable = {
     signInFailed: 'دروازہ نہ کھلا۔ اپنا ای میل اور پاس ورڈ دیکھ لیں۔',
     signUpFailed: 'کھاتہ مہربند نہ ہو سکا۔ برائے مہربانی دوبارہ کوشش کریں۔',
     locationRequired: 'چارٹ بنانے کے لیے مقام درکار ہے۔',
+    tooManyAttempts: 'بہت زیادہ کوششیں۔ دروازہ {{seconds}} سیکنڈ کے لیے تھم گیا۔',
+    tooManyAttemptsWait: 'بہت زیادہ کوششیں۔ دوبارہ کوشش سے پہلے تھوڑا رُکیں۔',
   },
 };
 

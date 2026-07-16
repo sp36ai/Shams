@@ -133,10 +133,24 @@ const AuthScreen: React.FC = () => {
   const t = useTranslation();
 
   const isLoading = useAuthStore(s => s.isLoading);
+  const lockoutUntil = useAuthStore(s => s.lockoutUntil);
   const signIn = useAuthStore(s => s.signIn);
   const signUp = useAuthStore(s => s.signUp);
   const signInWithGoogle = useAuthStore(s => s.signInWithGoogle);
   const clearError = useAuthStore(s => s.clearError);
+
+  // Live countdown while sign-in is locally locked out after repeated failures.
+  const [nowTick, setNowTick] = useState(() => Date.now());
+  useEffect(() => {
+    if (lockoutUntil === null || lockoutUntil <= Date.now()) {
+      return;
+    }
+    const id = setInterval(() => setNowTick(Date.now()), 500);
+    return () => clearInterval(id);
+  }, [lockoutUntil]);
+  const lockRemainingSec =
+    lockoutUntil !== null ? Math.max(0, Math.ceil((lockoutUntil - nowTick) / 1000)) : 0;
+  const isLocked = lockRemainingSec > 0;
 
   // Configure Google Sign-In once on mount
   React.useEffect(() => {
@@ -205,7 +219,14 @@ const AuthScreen: React.FC = () => {
     if (form.tab === 'signIn') {
       const error = await signIn(form.email.trim(), form.password);
       if (error) {
-        setServerError(normaliseAuthError(error.message, t));
+        // If this failure tripped (or hit an active) local lockout, the live
+        // countdown banner speaks for itself — don't also show a wrong-password
+        // line underneath it.
+        if (useAuthStore.getState().lockoutUntil !== null) {
+          setServerError('');
+        } else {
+          setServerError(normaliseAuthError(error.message, t));
+        }
       }
     } else {
       const error = await signUp(form.email.trim(), form.password, form.name.trim());
@@ -254,6 +275,10 @@ const AuthScreen: React.FC = () => {
 
   const isSignUp = form.tab === 'signUp';
   const submitLabel = isSignUp ? t('auth.signUp') : t('auth.signIn');
+  // A live lockout countdown takes precedence over any lingering error line.
+  const displayError = isLocked
+    ? t('errors.tooManyAttempts', { seconds: lockRemainingSec })
+    : serverError;
 
   return (
     <SafeAreaView style={[styles.root, { backgroundColor: theme.colors.bg }]}>
@@ -267,8 +292,12 @@ const AuthScreen: React.FC = () => {
 
       <KeyboardAvoidingView
         style={styles.flex}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 24}
+        // Android already resizes the window via android:windowSoftInputMode=
+        // "adjustResize" (see AndroidManifest.xml), so applying a 'height'
+        // behavior here double-adjusts and pushes fields off-screen. Let the
+        // OS resize + the ScrollView handle Android; only iOS needs 'padding'.
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        keyboardVerticalOffset={0}
       >
         <ScrollView
           contentContainerStyle={styles.scroll}
@@ -406,7 +435,7 @@ const AuthScreen: React.FC = () => {
               />
             )}
 
-            {serverError.length > 0 && (
+            {displayError.length > 0 && (
               <View
                 style={[
                   styles.serverError,
@@ -414,7 +443,7 @@ const AuthScreen: React.FC = () => {
                 ]}
               >
                 <Text style={[typography('caption'), { color: colors.negative }]}>
-                  {serverError}
+                  {displayError}
                 </Text>
               </View>
             )}
@@ -432,12 +461,12 @@ const AuthScreen: React.FC = () => {
 
             <Pressable
               onPress={() => void handleSubmit()}
-              disabled={isLoading}
+              disabled={isLoading || isLocked}
               testID="auth-submit-btn"
               style={({ pressed }) => [
                 styles.submitBtn,
                 {
-                  backgroundColor: isLoading ? colors.surfaceElevated : colors.primary,
+                  backgroundColor: isLoading || isLocked ? colors.surfaceElevated : colors.primary,
                   // 3D press: colored shadow + slight scale
                   shadowColor: colors.accent,
                   shadowRadius: pressed ? 4 : 12,
@@ -727,6 +756,12 @@ function normaliseAuthError(raw: string, t: ReturnType<typeof useTranslation>): 
   // Sign-up failures
   if (lower.includes('email-already-in-use') || lower.includes('operation-not-allowed')) {
     return t('errors.signUpFailed');
+  }
+
+  // Too many attempts — Firebase's own server-side throttle (our client
+  // lockout is surfaced separately with a live countdown).
+  if (lower.includes('too-many-requests')) {
+    return t('errors.tooManyAttemptsWait');
   }
 
   // Network / connectivity

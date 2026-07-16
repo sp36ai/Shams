@@ -202,6 +202,8 @@ export const hi: StringTable = {
     signInFailed: 'द्वार नहीं खुला। अपना ईमेल और पासवर्ड जाँचें।',
     signUpFailed: 'खाता अंकित नहीं हो सका। कृपया पुनः प्रयास करें।',
     locationRequired: 'कुंडली बनाने के लिए स्थान आवश्यक है।',
+    tooManyAttempts: 'बहुत अधिक प्रयास। द्वार {{seconds}} सेकंड के लिए विश्राम में है।',
+    tooManyAttemptsWait: 'बहुत अधिक प्रयास। पुनः प्रयास से पहले थोड़ा रुकें।',
   },
 };
 
