@@ -1,19 +1,19 @@
 /**
  * i18n type contracts — Shams al-Asrār
  * --------------------------------------------------------------------------
- * Three-language scope (locked, do not extend without product sign-off):
+ * Two-language scope (locked, do not extend without product sign-off):
  *   - en  : English (LTR, default)
  *   - ur  : Urdu    (RTL, Nastaliq)
- *   - hi  : Hindi   (LTR, Devanagari)
  *
- * Engine narration produces three SEPARATE templates per verdict — never
+ * Hindi is deliberately NOT supported (product decision). Engine narration
+ * produces a SEPARATE template per language per verdict — never
  * machine-translated. Strings file shape is identical across languages so
  * TS catches missing keys at compile time (see StringTable type below).
  */
 
-export type LangCode = 'en' | 'ur' | 'hi';
+export type LangCode = 'en' | 'ur';
 
-export const LANG_CODES: readonly LangCode[] = ['en', 'ur', 'hi'];
+export const LANG_CODES: readonly LangCode[] = ['en', 'ur'];
 
 export const DEFAULT_LANG: LangCode = 'en';
 
@@ -31,7 +31,6 @@ export interface LangMeta {
 export const LANG_META: Readonly<Record<LangCode, LangMeta>> = Object.freeze({
   en: { code: 'en', nativeName: 'English', englishName: 'English', isRTL: false },
   ur: { code: 'ur', nativeName: 'اردو', englishName: 'Urdu', isRTL: true },
-  hi: { code: 'hi', nativeName: 'हिन्दी', englishName: 'Hindi', isRTL: false },
 });
 
 export function isValidLang(value: unknown): value is LangCode {
@@ -40,7 +39,7 @@ export function isValidLang(value: unknown): value is LangCode {
 
 /**
  * Canonical string-table shape. The `en` file is the source of truth; `ur`
- * and `hi` MUST satisfy `StringTable` so missing keys fail typecheck.
+ * MUST satisfy `StringTable` so missing keys fail typecheck.
  *
  * Grouped by feature surface to keep large tables navigable.
  */

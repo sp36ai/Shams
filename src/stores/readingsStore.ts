@@ -41,7 +41,7 @@ export interface Reading {
   /** Original question text as the user wrote it. */
   question: string;
   /** Detected language of the question. */
-  questionLang: 'en' | 'ur' | 'hi';
+  questionLang: 'en' | 'ur';
   category: QuestionCategory;
   verdict: VerdictKind;
   /** ISO timestamp of when the question was asked (also the chart moment). */

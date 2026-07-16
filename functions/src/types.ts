@@ -17,7 +17,7 @@ export type VerdictKind =
   | 'UNCLEAR'
   | 'PENDING'
   | 'DENIED';
-export type LangCode = 'en' | 'ur' | 'hi';
+export type LangCode = 'en' | 'ur';
 
 /** Response from askOracle. */
 export interface OracleResponse {

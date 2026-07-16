@@ -380,9 +380,7 @@ describe('judgeHorary — oracle narration language', () => {
     const chart = makeChart('Mars', { Mars: 10, Sun: 6, Mercury: 6, Jupiter: 11 });
     const verdict = judgeHorary(chart, CAREER_Q);
 
-    const allNarration = [verdict.narration.en, verdict.narration.ur, verdict.narration.hi]
-      .join(' ')
-      .toLowerCase();
+    const allNarration = [verdict.narration.en, verdict.narration.ur].join(' ').toLowerCase();
 
     for (const term of FORBIDDEN_TERMS) {
       expect(allNarration).not.toContain(term);

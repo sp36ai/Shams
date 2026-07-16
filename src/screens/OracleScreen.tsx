@@ -107,7 +107,7 @@ interface VjExtended extends VjShape {
     moonSignLord?: string;
     moonStarLord?: string;
   };
-  narration?: Partial<Record<'en' | 'ur' | 'hi', string>>;
+  narration?: Partial<Record<'en' | 'ur', string>>;
   significators?: { favorable: string[]; denial: string[]; neutral: string[] };
   confirmedSignificators?: string[];
   deniedSignificators?: string[];
@@ -206,7 +206,7 @@ function readingToAstroResult(reading: Reading): AstroVerdictResult {
 
 // ── Chips per language ────────────────────────────────────────────────────────
 
-const INITIAL_CHIPS: Record<'en' | 'ur' | 'hi', readonly string[]> = {
+const INITIAL_CHIPS: Record<'en' | 'ur', readonly string[]> = {
   en: [
     'Will I succeed?',
     'Career & livelihood',
@@ -227,22 +227,11 @@ const INITIAL_CHIPS: Record<'en' | 'ur' | 'hi', readonly string[]> = {
     'قانونی تنازع',
     'گمشدہ چیز',
   ],
-  hi: [
-    'क्या मैं सफल होऊंगा?',
-    'करियर',
-    'विवाह और प्रेम',
-    'वित्त',
-    'स्वास्थ्य',
-    'यात्रा',
-    'कानूनी मामला',
-    'खोई वस्तु',
-  ],
 };
 
-const FOLLOWUP_CHIPS: Record<'en' | 'ur' | 'hi', readonly string[]> = {
+const FOLLOWUP_CHIPS: Record<'en' | 'ur', readonly string[]> = {
   en: ['When will it happen?', 'Why this verdict?', 'What remedy?', 'New question'],
   ur: ['کب ہوگا؟', 'یہ فیصلہ کیوں؟', 'علاج کیا ہے؟', 'نیا سوال'],
-  hi: ['कब होगा?', 'यह निर्णय क्यों?', 'उपाय क्या है?', 'नया सवाल'],
 };
 
 // ── Followup intent detection ─────────────────────────────────────────────────
@@ -261,7 +250,7 @@ const ARABIC_PLANET_NAME: Record<string, string> = {
   Ketu: 'al-Dhanab',
 };
 
-function timingResponse(reading: Reading, lang: 'en' | 'ur' | 'hi'): string {
+function timingResponse(reading: Reading, lang: 'en' | 'ur'): string {
   const vj = reading.verdictJson as VjExtended | null;
 
   // Prefer oracle prose timing — already in oracle voice
@@ -274,29 +263,24 @@ function timingResponse(reading: Reading, lang: 'en' | 'ur' | 'hi'): string {
   if (!t) {
     return lang === 'ur'
       ? 'اس زائچے میں وقت کا تعین ممکن نہیں۔ جب چاند اپنی موجودہ منزل سے گزرے تو دوبارہ پوچھیں۔'
-      : lang === 'hi'
-        ? 'इस ज़ाइचे में समय स्पष्ट नहीं है। जब चंद्रमा अपनी वर्तमान मंज़िल से गुज़रे, तब पुनः पूछें।'
-        : 'The zaaiche does not name a day. Watch for the sign the celestial witnesses have described.';
+      : 'The zaaiche does not name a day. Watch for the sign the celestial witnesses have described.';
   }
   const max = t.range?.max ?? 1;
   const win = t.window ?? 'weeks';
-  const winLabel: Record<string, Record<'en' | 'ur' | 'hi', string>> = {
-    days: { en: 'days', ur: 'دن', hi: 'दिन' },
-    weeks: { en: 'weeks', ur: 'ہفتے', hi: 'सप्ताह' },
-    months: { en: 'months', ur: 'مہینے', hi: 'महीने' },
-    years: { en: 'years', ur: 'سال', hi: 'वर्ष' },
+  const winLabel: Record<string, Record<'en' | 'ur', string>> = {
+    days: { en: 'days', ur: 'دن' },
+    weeks: { en: 'weeks', ur: 'ہفتے' },
+    months: { en: 'months', ur: 'مہینے' },
+    years: { en: 'years', ur: 'سال' },
   };
   const wl = winLabel[win]?.[lang] ?? win;
   if (lang === 'ur') {
     return `آسمانی گواہ **${max} ${wl}** کی کھڑکی اشارہ کرتے ہیں۔\n\nستارے وقت کی کھڑکیاں دیتے ہیں، تقرریاں نہیں۔`;
   }
-  if (lang === 'hi') {
-    return `आकाशीय साक्षी **${max} ${wl}** की खिड़की का संकेत देते हैं।\n\nतारे समय की खिड़कियाँ देते हैं, नियुक्तियाँ नहीं।`;
-  }
   return `The celestial witnesses point to a window of **${max} ${wl}**.\n\nThe stars offer windows, not appointments.`;
 }
 
-function whyResponse(reading: Reading, lang: 'en' | 'ur' | 'hi'): string {
+function whyResponse(reading: Reading, lang: 'en' | 'ur'): string {
   const vj = reading.verdictJson as VjExtended | null;
 
   // Oracle interpretation is the best "why" answer — already in oracle voice
@@ -313,13 +297,10 @@ function whyResponse(reading: Reading, lang: 'en' | 'ur' | 'hi'): string {
   if (lang === 'ur') {
     return `فیصلہ **آسمانی گواہ ${planet}** کی شہادت پر منحصر ہے۔\n\nیقین: **${conf}%**`;
   }
-  if (lang === 'hi') {
-    return `यह निर्णय **आकाशीय साक्षी ${planet}** की गवाही पर निर्भर है।\n\nविश्वास: **${conf}%**`;
-  }
   return `The verdict rests on the testimony of **${planet}**, the celestial witness appointed to this zaaiche.\n\nConfidence: **${conf}%**`;
 }
 
-function remedyResponse(reading: Reading, lang: 'en' | 'ur' | 'hi'): string {
+function remedyResponse(reading: Reading, lang: 'en' | 'ur'): string {
   const vj = reading.verdictJson as VjExtended | null;
   const oracleRemedy = vj?.oracle?.remedy;
   const verdictRemedy = vj?.remedy;
@@ -327,9 +308,7 @@ function remedyResponse(reading: Reading, lang: 'en' | 'ur' | 'hi'): string {
   if (!oracleRemedy && !verdictRemedy) {
     return lang === 'ur'
       ? 'اس زائچے کے لیے کوئی مخصوص علاج نہیں ملا۔'
-      : lang === 'hi'
-        ? 'इस ज़ाइचे के लिए कोई विशेष उपाय नहीं मिला।'
-        : 'No specific remedy was given for this zaaiche.';
+      : 'No specific remedy was given for this zaaiche.';
   }
 
   const lines: string[] = [];
@@ -363,12 +342,11 @@ function remedyResponse(reading: Reading, lang: 'en' | 'ur' | 'hi'): string {
     );
   }
 
-  const header =
-    lang === 'ur' ? 'علاج اور عمل:' : lang === 'hi' ? 'उपाय और अभ्यास:' : 'Remedy & practice:';
+  const header = lang === 'ur' ? 'علاج اور عمل:' : 'Remedy & practice:';
   return `${header}\n\n${lines.join('\n')}`;
 }
 
-function elaborationResponse(reading: Reading, lang: 'en' | 'ur' | 'hi'): string {
+function elaborationResponse(reading: Reading, lang: 'en' | 'ur'): string {
   const vj = reading.verdictJson as VjExtended | null;
   const oracle = vj?.oracle;
 
@@ -384,9 +362,7 @@ function elaborationResponse(reading: Reading, lang: 'en' | 'ur' | 'hi'): string
     narrationForReading(reading) ||
     (lang === 'ur'
       ? 'اس زائچے کے بارے میں مزید تفصیل دستیاب نہیں۔'
-      : lang === 'hi'
-        ? 'इस ज़ाइचे के बारे में और जानकारी उपलब्ध नहीं है।'
-        : 'No additional detail is available for this zaaiche.')
+      : 'No additional detail is available for this zaaiche.')
   );
 }
 
@@ -394,7 +370,7 @@ function elaborationResponse(reading: Reading, lang: 'en' | 'ur' | 'hi'): string
 
 function narrationForReading(reading: Reading): string {
   const verdictJson = reading.verdictJson as {
-    narration?: Partial<Record<'en' | 'ur' | 'hi', string>>;
+    narration?: Partial<Record<'en' | 'ur', string>>;
   };
   const narration = verdictJson?.narration;
   if (narration === undefined) {
@@ -519,7 +495,7 @@ function formatHiddenScroll(
 
 async function runEngine(args: {
   question: string;
-  questionLang: 'en' | 'ur' | 'hi';
+  questionLang: 'en' | 'ur';
   lat: number | null;
   lon: number | null;
   locationRequiredText: string;
@@ -545,7 +521,6 @@ async function runEngine(args: {
         narration: {
           en: args.locationRequiredText,
           ur: args.locationRequiredText,
-          hi: args.locationRequiredText,
         },
       },
     };

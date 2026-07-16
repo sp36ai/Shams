@@ -32,13 +32,11 @@ import { storage, KEYS } from '@storage/mmkv';
 
 import en from './strings/en';
 import ur from './strings/ur';
-import hi from './strings/hi';
 import { DEFAULT_LANG, isValidLang, LANG_META, type LangCode, type StringTable } from './types';
 
 const TABLES: Readonly<Record<LangCode, StringTable>> = Object.freeze({
   en,
   ur,
-  hi,
 });
 
 /**

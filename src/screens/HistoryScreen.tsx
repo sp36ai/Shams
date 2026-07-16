@@ -51,7 +51,7 @@ interface ReasoningStep {
 interface VerdictJson {
   verdict: VerdictKind;
   confidence: number;
-  narration?: Partial<Record<'en' | 'ur' | 'hi', string>>;
+  narration?: Partial<Record<'en' | 'ur', string>>;
   reasoning?: ReasoningStep[];
   timing?: {
     window: string;

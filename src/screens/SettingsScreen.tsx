@@ -113,9 +113,7 @@ const SettingsScreen: React.FC = () => {
       const restartMessage =
         next === 'ur'
           ? 'زبان بدل گئی ہے۔ درست ترتیب کے لیے ایپ دوبارہ کھولیں۔'
-          : next === 'hi'
-            ? 'भाषा बदल गई है। सही विन्यास के लिए ऐप दोबारा खोलें।'
-            : 'Language changed. Reopen the app for the correct layout.';
+          : 'Language changed. Reopen the app for the correct layout.';
 
       Alert.alert(t('common.pleaseWait'), restartMessage, [
         { text: t('common.ok'), style: 'default' },

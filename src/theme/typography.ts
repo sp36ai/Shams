@@ -6,10 +6,9 @@
  * The app must feel like an illuminated manuscript vault.
  * Typography must be: engraved, ceremonial, archival.
  *
- * Three script families:
+ * Two script families:
  *   - Latin (EN)        : Cinzel (engraved headings) + Spectral (manuscript body)
  *   - Arabic (UR, RTL)  : Amiri (Quranic, stable, reverent, highly legible)
- *   - Devanagari (HI)   : Noto Sans Devanagari
  *
  * CRITICAL RULES:
  * - Arabic must feel Quranic, not decorative
@@ -20,7 +19,6 @@
  *
  * Resolution rule:
  *   if lang === 'ur' → use arabic set with elevated lineHeight (2.1)
- *   if lang === 'hi' → use devanagari set
  *   else             → use latin set
  */
 
@@ -47,26 +45,17 @@ export const FONT_FAMILIES = Object.freeze({
     bodySemiBold: 'Amiri-Bold',
     bodyItalic: 'Amiri-Regular',
   },
-  devanagari: {
-    display: 'NotoSansDevanagari-Bold',
-    displayBold: 'NotoSansDevanagari-Bold',
-    body: 'NotoSansDevanagari-Regular',
-    bodyMedium: 'NotoSansDevanagari-Medium',
-    bodySemiBold: 'NotoSansDevanagari-SemiBold',
-    bodyItalic: 'NotoSansDevanagari-Regular',
-  },
 });
 
 export type FontRole = keyof typeof FONT_FAMILIES.latin;
 export type ScriptFamily = keyof typeof FONT_FAMILIES;
 
 // Per-script line-height multipliers. Nastaliq glyphs need much more vertical
-// space than Latin or Devanagari; 2.1 is the minimum that prevents clipping
-// of diacritics and connecting strokes on real Android devices.
+// space than Latin; 2.1 is the minimum that prevents clipping of diacritics
+// and connecting strokes on real Android devices.
 export const LINE_HEIGHT_MULTIPLIER: Record<ScriptFamily, number> = {
   latin: 1.35,
   urdu: 2.1,
-  devanagari: 1.55,
 };
 
 export interface TypographyVariant {
@@ -143,7 +132,7 @@ export type TypographyVariantId = keyof typeof TYPOGRAPHY_VARIANTS;
  */
 export function resolveVariant(variantId: TypographyVariantId, lang: LangCode): TextStyle {
   const variant = TYPOGRAPHY_VARIANTS[variantId];
-  const family: ScriptFamily = lang === 'ur' ? 'urdu' : lang === 'hi' ? 'devanagari' : 'latin';
+  const family: ScriptFamily = lang === 'ur' ? 'urdu' : 'latin';
   const familySet = FONT_FAMILIES[family];
   const fontFamily = familySet[variant.role];
 

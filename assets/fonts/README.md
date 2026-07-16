@@ -24,10 +24,6 @@ into the APK/AAB.
 | `Spectral-Italic.ttf`             | Spectral 400 italic      | SIL OFL 1.1 |
 | `Amiri-Regular.ttf`               | Amiri 400 (Arabic)       | SIL OFL 1.1 |
 | `Amiri-Bold.ttf`                  | Amiri 700 (Arabic)       | SIL OFL 1.1 |
-| `NotoSansDevanagari-Regular.ttf`  | Noto Sans Devanagari 400 | SIL OFL 1.1 |
-| `NotoSansDevanagari-Medium.ttf`   | Noto Sans Devanagari 500 | SIL OFL 1.1 |
-| `NotoSansDevanagari-SemiBold.ttf` | Noto Sans Devanagari 600 | SIL OFL 1.1 |
-| `NotoSansDevanagari-Bold.ttf`     | Noto Sans Devanagari 700 | SIL OFL 1.1 |
 
 ## Why these specific families
 
@@ -38,7 +34,6 @@ into the APK/AAB.
   system and all runtime code use Spectral.
 - **Amiri**: Quranic, reverent, highly legible Arabic (UR). Line-height
   multiplier MUST be 2.1 (see `src/theme/typography.ts`).
-- **Noto Sans Devanagari**: Modern sans for Hindi readability.
 
 ## How to install
 

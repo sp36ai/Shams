@@ -153,9 +153,9 @@ Only sacred objects glow:
   - Centered alignment
   - Soft manuscript panels
 
-### Devanagari (Hindi)
-
-**All text:** Noto Sans Devanagari
+> **Note:** Hindi / Devanagari is deliberately NOT supported (product
+> decision). The app ships two languages only — English (Latin) and Urdu
+> (Arabic). Do not reintroduce a Devanagari font or `hi` locale.
 
 ### Typography Scale
 
