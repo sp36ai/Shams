@@ -1017,13 +1017,29 @@ const OracleScreen: React.FC = () => {
         let errText = t('oracle.errSealed');
 
         if (err instanceof Error) {
-          if (err.message.includes('resource-exhausted') || err.message.includes('quota')) {
+          const m = err.message.toLowerCase();
+          // Connectivity / timeout — Firebase callables surface these as
+          // `unavailable` or `deadline-exceeded`, and the native SDK adds
+          // strings like "unable to resolve host" / "timeout". Match broadly so
+          // an offline user gets "try again", not the mystical "sealed" message.
+          const isConnectivity =
+            m.includes('econnrefused') ||
+            m.includes('network') ||
+            m.includes('unavailable') ||
+            m.includes('deadline-exceeded') ||
+            m.includes('timeout') ||
+            m.includes('timed out') ||
+            m.includes('unable to resolve host') ||
+            m.includes('enotfound') ||
+            m.includes('failed to connect');
+
+          if (m.includes('resource-exhausted') || m.includes('quota')) {
             errText = t('oracle.errQuotaClosed');
-          } else if (err.message.includes('unauthenticated')) {
+          } else if (m.includes('unauthenticated')) {
             errText = t('oracle.errNeedsAuth');
-          } else if (err.message.includes('app-check')) {
+          } else if (m.includes('app-check')) {
             errText = t('oracle.errNeedsVerification');
-          } else if (err.message.includes('ECONNREFUSED') || err.message.includes('network')) {
+          } else if (isConnectivity) {
             errText = t('oracle.errChannelInterrupted');
           }
         }
