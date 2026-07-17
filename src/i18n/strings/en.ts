@@ -43,6 +43,9 @@ export const en: StringTable = {
     deniedBody:
       'Without location, the app cannot cast a reliable horary chart. You can enable it later in system settings.',
     openSettings: 'Open Settings',
+    prominentTitle: 'Location Required to Continue',
+    prominentBody:
+      'Shams al-Asrār requires your precise location to read the heavens for your exact position. Every question is anchored to its moment and place — without both, the celestial counsel cannot be trusted.\n\nWithout location access, the app cannot function.',
   },
   onboarding: {
     bismillah: '✦  BISMILLAH  ✦',
@@ -170,6 +173,16 @@ export const en: StringTable = {
     sortOldest: 'Oldest first',
     deleteConfirm: 'Delete this reading? This cannot be undone.',
     deleteAction: 'Delete',
+    narrationLabel: 'Verdict',
+    significatorsLabel: 'Significators',
+    moonSubLordLabel: 'Moon Sub-Lord',
+    dayLordLabel: 'Day Lord',
+    horaLordLabel: 'Hora Lord',
+    minuteLordLabel: 'Minute Lord',
+    rpScoreLabel: 'RP Score',
+    horaSuffix: 'Hora',
+    houseLabel: 'House',
+    avoidLabel: 'Avoid',
   },
 
   premium: {
@@ -232,6 +245,24 @@ export const en: StringTable = {
     deleteAccountConfirm:
       'This permanently deletes your account and all your readings. This cannot be undone.',
     deleteAccountFailed: 'Could not delete your account. Please try again.',
+    resetProfileTitle: 'Reset Spiritual Profile',
+    resetProfileBody: 'You will be returned to the onboarding questions on your next app open.',
+    resetProfileAction: 'Reset',
+    resetProfileButton: 'Reset spiritual profile',
+    seekerIdentitySection: 'Seeker Identity',
+    yourNameLabel: 'YOUR NAME',
+    yourNamePlaceholder: 'e.g. Mohammad Rafiq',
+    motherNameLabel: "MOTHER'S NAME",
+    motherNamePlaceholder: 'e.g. Mymoona',
+    identityHint: 'Used to personalise the Hidden Scroll header. Stored only on this device.',
+    readingStatsSection: 'Reading Stats',
+    planFree: 'Free',
+    unlimitedReadings: 'Unlimited readings',
+    questionsUsedToday: '{{used}}/{{limit}} questions used today',
+    statTotal: 'Total',
+    statYes: 'YES',
+    statNo: 'NO',
+    statCond: 'COND',
   },
 
   theme: {

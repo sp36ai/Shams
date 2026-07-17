@@ -51,6 +51,9 @@ export const ur: StringTable = {
     deniedBody:
       'مقام کے بغیر آپ کا پرشنا چارٹ نہیں بن سکتا۔ آپ بعد میں ترتیبات سے اسے فعال کر سکتے ہیں۔',
     openSettings: 'ترتیبات کھولیں',
+    prominentTitle: 'جاری رکھنے کے لیے مقام درکار ہے',
+    prominentBody:
+      'شمس الاسرار کو آپ کے درست مقام کی ضرورت ہے تاکہ آپ کی عین جگہ کے لیے آسمان پڑھا جا سکے۔ ہر سوال اپنے وقت اور جگہ سے جڑا ہوتا ہے — دونوں کے بغیر فلکی رہنمائی پر بھروسہ نہیں کیا جا سکتا۔\n\nمقام تک رسائی کے بغیر ایپ کام نہیں کر سکتی۔',
   },
   onboarding: {
     bismillah: '✦  بسم اللہ  ✦',
@@ -175,6 +178,16 @@ export const ur: StringTable = {
     sortOldest: 'پہلے پرانے',
     deleteConfirm: 'یہ فیصلہ حذف کریں؟ یہ واپس نہیں آ سکتا۔',
     deleteAction: 'حذف کریں',
+    narrationLabel: 'فیصلہ',
+    significatorsLabel: 'گواہ ستارے',
+    moonSubLordLabel: 'قمر کا ذیلی مالک',
+    dayLordLabel: 'مالکِ روز',
+    horaLordLabel: 'مالکِ ساعت',
+    minuteLordLabel: 'مالکِ دقیقہ',
+    rpScoreLabel: 'گواہوں کا اسکور',
+    horaSuffix: 'ساعت',
+    houseLabel: 'گھر',
+    avoidLabel: 'پرہیز',
   },
 
   premium: {
@@ -237,6 +250,24 @@ export const ur: StringTable = {
     deleteAccountConfirm:
       'یہ آپ کا کھاتہ اور تمام فیصلے ہمیشہ کے لیے حذف کر دے گا۔ یہ واپس نہیں آ سکتا۔',
     deleteAccountFailed: 'کھاتہ حذف نہ ہو سکا۔ برائے مہربانی دوبارہ کوشش کریں۔',
+    resetProfileTitle: 'روحانی پروفائل ری سیٹ کریں',
+    resetProfileBody: 'اگلی بار ایپ کھولنے پر آپ کو ابتدائی سوالات پر واپس لے جایا جائے گا۔',
+    resetProfileAction: 'ری سیٹ',
+    resetProfileButton: 'روحانی پروفائل ری سیٹ کریں',
+    seekerIdentitySection: 'سائل کی شناخت',
+    yourNameLabel: 'آپ کا نام',
+    yourNamePlaceholder: 'مثلاً محمد رفیق',
+    motherNameLabel: 'والدہ کا نام',
+    motherNamePlaceholder: 'مثلاً میمونہ',
+    identityHint: 'مخفی طومار کے سرنامے کو ذاتی بنانے کے لیے۔ صرف اسی آلے پر محفوظ ہے۔',
+    readingStatsSection: 'فیصلوں کے اعداد و شمار',
+    planFree: 'مفت',
+    unlimitedReadings: 'لامحدود فیصلے',
+    questionsUsedToday: 'آج {{used}}/{{limit}} سوالات استعمال ہوئے',
+    statTotal: 'کل',
+    statYes: 'ہاں',
+    statNo: 'نہیں',
+    statCond: 'مشروط',
   },
 
   theme: {

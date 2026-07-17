@@ -85,7 +85,6 @@ export async function askOracle(args: AskOracleInput): Promise<AskOracleResult> 
       planet: string;
       action: string;
       avoid: string;
-      mantra?: string;
       charity?: string;
     };
     reasoning: Array<{ ruleId: string; description: string; weight: number }>;

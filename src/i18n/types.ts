@@ -75,6 +75,8 @@ export interface StringTable {
     deniedTitle: string;
     deniedBody: string;
     openSettings: string;
+    prominentTitle: string;
+    prominentBody: string;
   };
   onboarding: {
     bismillah: string;
@@ -188,6 +190,16 @@ export interface StringTable {
     sortOldest: string;
     deleteConfirm: string;
     deleteAction: string;
+    narrationLabel: string;
+    significatorsLabel: string;
+    moonSubLordLabel: string;
+    dayLordLabel: string;
+    horaLordLabel: string;
+    minuteLordLabel: string;
+    rpScoreLabel: string;
+    horaSuffix: string;
+    houseLabel: string;
+    avoidLabel: string;
   };
   premium: {
     headerTitleDefault: string;
@@ -247,6 +259,24 @@ export interface StringTable {
     deleteAccountAction: string;
     deleteAccountConfirm: string;
     deleteAccountFailed: string;
+    resetProfileTitle: string;
+    resetProfileBody: string;
+    resetProfileAction: string;
+    resetProfileButton: string;
+    seekerIdentitySection: string;
+    yourNameLabel: string;
+    yourNamePlaceholder: string;
+    motherNameLabel: string;
+    motherNamePlaceholder: string;
+    identityHint: string;
+    readingStatsSection: string;
+    planFree: string;
+    unlimitedReadings: string;
+    questionsUsedToday: string;
+    statTotal: string;
+    statYes: string;
+    statNo: string;
+    statCond: string;
   };
   theme: {
     darAlShams: string;

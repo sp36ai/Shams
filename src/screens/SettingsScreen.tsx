@@ -48,15 +48,11 @@ const SettingsScreen: React.FC = () => {
   }, [seekerNameInput, motherNameInput, setSeekerIdentity]);
 
   const handleResetProfile = useCallback(() => {
-    Alert.alert(
-      'Reset Spiritual Profile',
-      'You will be returned to the onboarding questions on your next app open.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Reset', style: 'destructive', onPress: resetProfile },
-      ],
-    );
-  }, [resetProfile]);
+    Alert.alert(t('settings.resetProfileTitle'), t('settings.resetProfileBody'), [
+      { text: t('common.cancel'), style: 'cancel' },
+      { text: t('settings.resetProfileAction'), style: 'destructive', onPress: resetProfile },
+    ]);
+  }, [resetProfile, t]);
 
   const userName = useAuthStore(selectUserName);
   const userEmail = useAuthStore(selectUserEmail);
@@ -207,7 +203,7 @@ const SettingsScreen: React.FC = () => {
           </Row>
         </Section>
 
-        <Section title="Seeker Identity">
+        <Section title={t('settings.seekerIdentitySection')}>
           <View
             style={[
               styles.identityCard,
@@ -220,13 +216,13 @@ const SettingsScreen: React.FC = () => {
                 { color: colors.goldBright, letterSpacing: 1.2, marginBottom: 4 },
               ]}
             >
-              {'YOUR NAME'}
+              {t('settings.yourNameLabel')}
             </Text>
             <TextInput
               value={seekerNameInput}
               onChangeText={setSeekerNameInput}
               onBlur={handleIdentityBlur}
-              placeholder="e.g. Mohammad Rafiq"
+              placeholder={t('settings.yourNamePlaceholder')}
               placeholderTextColor={colors.textFaint}
               style={[
                 typography('body'),
@@ -241,13 +237,13 @@ const SettingsScreen: React.FC = () => {
                 { color: colors.goldBright, letterSpacing: 1.2, marginTop: 14, marginBottom: 4 },
               ]}
             >
-              {"MOTHER'S NAME"}
+              {t('settings.motherNameLabel')}
             </Text>
             <TextInput
               value={motherNameInput}
               onChangeText={setMotherNameInput}
               onBlur={handleIdentityBlur}
-              placeholder="e.g. Mymoona"
+              placeholder={t('settings.motherNamePlaceholder')}
               placeholderTextColor={colors.textFaint}
               style={[
                 typography('body'),
@@ -263,7 +259,7 @@ const SettingsScreen: React.FC = () => {
                 { color: colors.textFaint, marginTop: 10, lineHeight: 16 },
               ]}
             >
-              {'Used to personalise the Hidden Scroll header. Stored only on this device.'}
+              {t('settings.identityHint')}
             </Text>
           </View>
         </Section>
@@ -302,23 +298,24 @@ const SettingsScreen: React.FC = () => {
               ]}
             >
               <Text style={[typography('button'), { color: colors.textMuted }]}>
-                {'Reset spiritual profile'}
+                {t('settings.resetProfileButton')}
               </Text>
             </Pressable>
           )}
         </Section>
 
-        <Section title="Subscription">
+        <Section title={t('settings.subscriptionLabel')}>
           <SubscriptionCard
             plan={plan}
             questionsToday={questionsToday}
             colors={colors}
             typography={typography}
+            t={t}
           />
         </Section>
 
-        <Section title="Reading Stats">
-          <ReadingStatsRow readings={readings} colors={colors} typography={typography} />
+        <Section title={t('settings.readingStatsSection')}>
+          <ReadingStatsRow readings={readings} colors={colors} typography={typography} t={t} />
         </Section>
 
         <Section title={t('settings.accountSection')}>
@@ -389,14 +386,14 @@ const SettingsScreen: React.FC = () => {
 
 // ── SubscriptionCard ──────────────────────────────────────────────────────────
 
-function planLabel(plan: PlanTier): string {
+function planLabel(plan: PlanTier, t: ReturnType<typeof useTranslation>): string {
   switch (plan) {
     case 'mureed':
-      return '✦ Mureed';
+      return `✦ ${t('premium.mureedTitle')}`;
     case 'khass':
-      return '✦ Khass';
+      return `✦ ${t('premium.khassTitle')}`;
     default:
-      return 'Free';
+      return t('settings.planFree');
   }
 }
 
@@ -407,7 +404,8 @@ const SubscriptionCard: React.FC<{
   questionsToday: number;
   colors: ReturnType<typeof useColors>;
   typography: ReturnType<typeof useTypography>;
-}> = ({ plan, questionsToday, colors, typography }) => {
+  t: ReturnType<typeof useTranslation>;
+}> = ({ plan, questionsToday, colors, typography, t }) => {
   const isPaid = (UNLIMITED_PLAN_SET as PlanTier[]).includes(plan);
   return (
     <View
@@ -422,15 +420,15 @@ const SubscriptionCard: React.FC<{
       <Text
         style={[typography('bodyEmphasis'), { color: isPaid ? colors.amber : colors.textMuted }]}
       >
-        {planLabel(plan)}
+        {planLabel(plan, t)}
       </Text>
       {isPaid ? (
         <Text style={[typography('caption'), { color: colors.textFaint, marginTop: 2 }]}>
-          Unlimited readings
+          {t('settings.unlimitedReadings')}
         </Text>
       ) : (
         <Text style={[typography('caption'), { color: colors.textFaint, marginTop: 2 }]}>
-          {questionsToday}/{FREE_DAILY_LIMIT} questions used today
+          {t('settings.questionsUsedToday', { used: questionsToday, limit: FREE_DAILY_LIMIT })}
         </Text>
       )}
     </View>
@@ -447,32 +445,33 @@ const ReadingStatsRow: React.FC<{
   readings: readonly { verdict: VerdictKind }[];
   colors: ReturnType<typeof useColors>;
   typography: ReturnType<typeof useTypography>;
-}> = ({ readings, colors, typography }) => (
+  t: ReturnType<typeof useTranslation>;
+}> = ({ readings, colors, typography, t }) => (
   <View style={styles.statsRow}>
     <StatCard
       value={String(readings.length)}
-      label="Total"
+      label={t('settings.statTotal')}
       color={colors.accent}
       colors={colors}
       typography={typography}
     />
     <StatCard
       value={String(countVerdict(readings, 'YES'))}
-      label="YES"
+      label={t('settings.statYes')}
       color={colors.positive}
       colors={colors}
       typography={typography}
     />
     <StatCard
       value={String(countVerdict(readings, 'NO'))}
-      label="NO"
+      label={t('settings.statNo')}
       color={colors.negative}
       colors={colors}
       typography={typography}
     />
     <StatCard
       value={String(countVerdict(readings, 'CONDITIONAL') + countVerdict(readings, 'DELAYED'))}
-      label="COND"
+      label={t('settings.statCond')}
       color={colors.caution}
       colors={colors}
       typography={typography}
