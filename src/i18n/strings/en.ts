@@ -236,6 +236,7 @@ export const en: StringTable = {
     subscriptionLabel: 'Subscription',
     privacyPolicy: 'Privacy Policy',
     termsOfService: 'Terms of Service',
+    dataDeletion: 'How to delete your data',
     aboutLabel: 'About',
     versionLabel: 'Version',
     signOut: 'Sign Out',

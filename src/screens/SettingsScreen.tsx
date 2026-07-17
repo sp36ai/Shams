@@ -26,6 +26,13 @@ import { useAuthStore, selectUserName, selectUserEmail } from '@stores/authStore
 import { useReadingsStore, type VerdictKind } from '@stores/readingsStore';
 import { useQuotaStore, FREE_DAILY_LIMIT, type PlanTier } from '@stores/quotaStore';
 
+// Public legal / data pages (hosted on Firebase Hosting). Kept in one place so
+// the in-app links and the Play Console listing stay in sync.
+const LEGAL_BASE = 'https://shams-app-4d0e7.web.app';
+const PRIVACY_URL = `${LEGAL_BASE}/privacy-policy.html`;
+const TERMS_URL = `${LEGAL_BASE}/terms.html`;
+const DATA_DELETION_URL = `${LEGAL_BASE}/data-deletion.html`;
+
 const SettingsScreen: React.FC = () => {
   const { theme } = useTheme();
   const colors = useColors();
@@ -379,10 +386,57 @@ const SettingsScreen: React.FC = () => {
             </Pressable>
           </View>
         </Section>
+
+        <Section title={t('settings.legalSection')}>
+          <LinkRow
+            label={t('settings.privacyPolicy')}
+            url={PRIVACY_URL}
+            colors={colors}
+            typography={typography}
+          />
+          <LinkRow
+            label={t('settings.termsOfService')}
+            url={TERMS_URL}
+            colors={colors}
+            typography={typography}
+          />
+          <LinkRow
+            label={t('settings.dataDeletion')}
+            url={DATA_DELETION_URL}
+            colors={colors}
+            typography={typography}
+          />
+        </Section>
       </ScrollView>
     </SafeAreaView>
   );
 };
+
+// ── LinkRow — opens an external legal/data page ──────────────────────────────
+
+const LinkRow: React.FC<{
+  label: string;
+  url: string;
+  colors: ReturnType<typeof useColors>;
+  typography: ReturnType<typeof useTypography>;
+}> = ({ label, url, colors, typography }) => (
+  <Pressable
+    onPress={() => void Linking.openURL(url)}
+    accessibilityRole="link"
+    accessibilityLabel={label}
+    style={({ pressed }) => [
+      styles.linkRow,
+      {
+        borderColor: colors.border,
+        backgroundColor: colors.surface,
+        opacity: pressed ? 0.75 : 1,
+      },
+    ]}
+  >
+    <Text style={[typography('body'), { color: colors.text }]}>{label}</Text>
+    <Text style={[typography('body'), { color: colors.textFaint }]}>{'↗'}</Text>
+  </Pressable>
+);
 
 // ── SubscriptionCard ──────────────────────────────────────────────────────────
 
@@ -663,6 +717,16 @@ const styles = StyleSheet.create({
     shadowRadius: 12,
     shadowOffset: { width: 0, height: 4 },
     elevation: 1,
+  },
+  linkRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    borderRadius: 16,
+    borderWidth: StyleSheet.hairlineWidth,
+    marginBottom: 8,
   },
   actionRow: {
     paddingVertical: 12,

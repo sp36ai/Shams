@@ -251,6 +251,7 @@ export interface StringTable {
     subscriptionLabel: string;
     privacyPolicy: string;
     termsOfService: string;
+    dataDeletion: string;
     aboutLabel: string;
     versionLabel: string;
     signOut: string;

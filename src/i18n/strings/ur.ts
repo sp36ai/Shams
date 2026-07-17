@@ -241,6 +241,7 @@ export const ur: StringTable = {
     subscriptionLabel: 'سبسکرپشن',
     privacyPolicy: 'رازداری کی پالیسی',
     termsOfService: 'شرائطِ استعمال',
+    dataDeletion: 'اپنا ڈیٹا کیسے حذف کریں',
     aboutLabel: 'تعارف',
     versionLabel: 'ورژن',
     signOut: 'باہر نکلیں',

@@ -162,7 +162,8 @@ export interface AuditLogDoc {
   verdict?: VerdictKind;
   plan?: PlanTier;
   source?: 'callable' | 'http';
-  ipAddress?: string;
+  // Raw IP is NEVER persisted — only this correlation hash. The raw address is
+  // used transiently in-memory (e.g. per-IP rate limiting) and then discarded.
   ipHash?: string; // SHA-256 hash prefix of caller IP, never raw IP
   userAgent?: string;
   durationMs?: number;
