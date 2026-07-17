@@ -3,6 +3,7 @@ import { describe, it, expect } from 'vitest';
 import {
   guardOracleRemedy,
   findForbiddenRemedyTerm,
+  findForbiddenTermInText,
   ISLAMIC_FALLBACK_REMEDY,
 } from '../remedyGuard';
 
@@ -61,5 +62,25 @@ describe('remedyGuard — non-Islamic remedies are replaced with the fallback', 
 
   it('the fallback remedy is itself clean', () => {
     expect(findForbiddenRemedyTerm(ISLAMIC_FALLBACK_REMEDY)).toBeNull();
+  });
+});
+
+describe('findForbiddenTermInText — string-level scanner (remedy descriptions)', () => {
+  it('passes clean sacred guidance text', () => {
+    expect(
+      findForbiddenTermInText('Recite Surah Al-Fatiha at dawn and give quietly to the needy.'),
+    ).toBeNull();
+  });
+
+  it('flags a description steered toward non-Islamic practice', () => {
+    expect(findForbiddenTermInText('Wear a red coral gemstone to strengthen Mars.')).toBeTruthy();
+    expect(findForbiddenTermInText('Perform a havan and chant the mantra 108 times.')).toBeTruthy();
+    expect(findForbiddenTermInText('Balance your root chakra with a crystal.')).toBeTruthy();
+  });
+
+  it('handles empty / non-string input', () => {
+    expect(findForbiddenTermInText('')).toBeNull();
+    expect(findForbiddenTermInText(undefined)).toBeNull();
+    expect(findForbiddenTermInText(null)).toBeNull();
   });
 });

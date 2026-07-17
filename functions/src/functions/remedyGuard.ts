@@ -74,6 +74,23 @@ const FORBIDDEN_REMEDY_PATTERNS: readonly RegExp[] = [
 ];
 
 /**
+ * Scan a single string for forbidden non-Islamic vocabulary.
+ * Returns the first matched term (for logging) or null when clean.
+ */
+export function findForbiddenTermInText(text: string | undefined | null): string | null {
+  if (typeof text !== 'string') {
+    return null;
+  }
+  for (const pattern of FORBIDDEN_REMEDY_PATTERNS) {
+    const match = pattern.exec(text);
+    if (match) {
+      return match[0];
+    }
+  }
+  return null;
+}
+
+/**
  * Scan every string value in a remedy object for forbidden vocabulary.
  * Returns the first matched term (for logging) or null when clean.
  */
@@ -82,14 +99,9 @@ export function findForbiddenRemedyTerm(remedy: OracleRemedy | undefined | null)
     return null;
   }
   for (const value of Object.values(remedy)) {
-    if (typeof value !== 'string') {
-      continue;
-    }
-    for (const pattern of FORBIDDEN_REMEDY_PATTERNS) {
-      const match = pattern.exec(value);
-      if (match) {
-        return match[0];
-      }
+    const match = findForbiddenTermInText(typeof value === 'string' ? value : null);
+    if (match) {
+      return match;
     }
   }
   return null;

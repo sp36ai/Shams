@@ -3,6 +3,8 @@ import { FieldValue } from 'firebase-admin/firestore';
 import { db } from '../utils/admin';
 import { FUNCTION_OPTS, ANTHROPIC_API_KEY } from '../config';
 import { verifyAuth } from '../middleware/auth';
+import { logger } from '../utils/logger';
+import { findForbiddenTermInText } from './remedyGuard';
 
 interface CandidateInput {
   id: string;
@@ -104,7 +106,21 @@ Maximum 30 words.`;
       .join('')
       .trim();
 
-    return text.length >= 10 ? text : '';
+    if (text.length < 10) {
+      return '';
+    }
+
+    // Remedy descriptions must stay Islamic. The question text is user-supplied
+    // and feeds this prompt, so a crafted question could steer the description
+    // non-Islamic. Drop any that trips the guard — the client then falls back
+    // to the neutral effect-dimension label.
+    const forbidden = findForbiddenTermInText(text);
+    if (forbidden !== null) {
+      logger.warn('selectRemedies: non-Islamic description dropped', { forbidden });
+      return '';
+    }
+
+    return text;
   } catch {
     clearTimeout(timer);
     return '';
