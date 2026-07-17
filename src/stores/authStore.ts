@@ -231,6 +231,14 @@ export const useAuthStore = create<AuthState>(set => ({
           /* non-fatal — displayName can be set later from Settings */
         }
       }
+      // Send a verification email so `emailVerified` can later gate abuse-prone
+      // grants (trial / free readings). Non-fatal: signup must not fail if the
+      // mail send hiccups, and Google sign-in accounts are already verified.
+      try {
+        await cred.user.sendEmailVerification();
+      } catch {
+        /* non-fatal — user can request verification again later */
+      }
       return null;
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Sign up failed';
