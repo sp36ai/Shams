@@ -24,14 +24,22 @@ export const FUNCTION_OPTS = {
   region: REGION,
   timeoutSeconds: 60,
   memory: '512MiB' as const,
+  // Ceiling on autoscaling. Without it a traffic spike or abuse burst spawns
+  // unbounded concurrent instances — and, for the LLM functions, unbounded
+  // concurrent paid Anthropic calls (cost blow-up + upstream 429 cascades).
+  // Well above launch-scale demand; tune per observed load.
+  maxInstances: 50,
   // enforceAppCheck is set per-function — see individual function files.
 } as const;
 
 // askOracle calls Anthropic (up to 25s) + safety validation (up to 24s) + cold start overhead.
-// 120s prevents timeout on cold starts.
+// 120s prevents timeout on cold starts. Tighter instance ceiling than the
+// general opts because each instance can hold an expensive Opus synthesis in
+// flight — this bounds peak concurrent Opus spend and respects Anthropic limits.
 export const ORACLE_FUNCTION_OPTS = {
   ...FUNCTION_OPTS,
   timeoutSeconds: 120,
+  maxInstances: 20,
 } as const;
 
 /**
