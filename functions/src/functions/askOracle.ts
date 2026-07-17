@@ -44,6 +44,7 @@ import {
   seekerProfileModifier,
 } from '../prompts/oracleSynthesisPrompt';
 import { runSafetyValidator } from './safetyValidator';
+import { findForbiddenRemedyTerm, ISLAMIC_FALLBACK_REMEDY } from './remedyGuard';
 import { getManzila, getManzilaOracleLine } from '../engine/manazil';
 import { houseForLongitude } from '../engine/primitives/chartBuilder';
 import { HOUSE_MATRIX } from '../engine/kp/rules/houseMatrix';
@@ -508,7 +509,24 @@ export const askOracle = onCall(
           })
         : ORACLE_FALLBACK;
 
-      const oracle = apiKey ? await runSafetyValidator(oracleRaw, verdict.id, apiKey) : oracleRaw;
+      const validated = apiKey
+        ? await runSafetyValidator(oracleRaw, verdict.id, apiKey)
+        : oracleRaw;
+
+      // Deterministic remedy gate — remedies must be exclusively Islamic
+      // (Quran, Asmā' al-Ḥusnā, dua/dhikr, sadaqah). A forbidden term anywhere
+      // in the remedy replaces the whole object with the sanctioned fallback.
+      const forbiddenRemedyTerm = findForbiddenRemedyTerm(validated.remedy);
+      const oracle = forbiddenRemedyTerm
+        ? { ...validated, remedy: { ...ISLAMIC_FALLBACK_REMEDY } }
+        : validated;
+      if (forbiddenRemedyTerm) {
+        logger.warn('remedy guard: non-Islamic remedy replaced with fallback', {
+          userId,
+          readingId: verdict.id,
+          matchedTerm: forbiddenRemedyTerm,
+        });
+      }
 
       logger.info('oracle synthesis', { userId, oracle });
 

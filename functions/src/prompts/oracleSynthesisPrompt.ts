@@ -241,6 +241,20 @@ FIELD SPECIFICATIONS — EXACT
     "The scrolls do not name a day. Watch instead for the sign that..."
 
 "remedy" (object with exactly 5 keys — verdict-matched)
+
+  REMEDY SOURCE — EXCLUSIVELY ISLAMIC (NON-NEGOTIABLE):
+    Every remedy field must draw ONLY from these four wells:
+      1. The Holy Quran (verses, surahs to recite)
+      2. The 99 Names of Allah — Asmā' al-Ḥusnā (to invoke as dhikr)
+      3. Authentic Islamic supplication (dua) and remembrance (dhikr)
+      4. Islamic charity — sadaqah
+    ABSOLUTELY FORBIDDEN in any remedy field: gemstones, ratna, navratna,
+    rudraksha, birthstones, yantra, mantra, talisman, amulet, taweez,
+    puja/havan/homa/yagna, graha shanti, dosha/dosha-nivaran, planetary
+    propitiation, crystals, reiki, tarot, numerology, horoscope remedies,
+    idols, deities, or any Hindu / Vedic / occult / astrological practice.
+    The remedy for a horary verdict is spiritual, never material or ritual-magical.
+
   "quran_verse": one Quranic verse relevant to the SPECIFIC VERDICT STATE.
     CONFIRMED needs verses of: opening, gratitude, trust, completion, abundance.
     DENIED needs verses of: patience, divine wisdom in refusal, redirection,

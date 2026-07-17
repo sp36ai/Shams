@@ -158,7 +158,7 @@ function buildRemedy(moonSubLord: Planet, reasoning: ReasoningStep[]): VerdictRe
   reasoning.push(
     step(
       0,
-      `Remedy planet = Moon's Sub-Lord ${moonSubLord} (PROVISIONAL — owner cultural text pending)`,
+      `Remedy anchored to Moon's Sub-Lord ${moonSubLord} — Islamic remedy (Quran recitation, Name of Allah, sadaqah)`,
       0,
     ),
   );
