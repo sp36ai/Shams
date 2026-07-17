@@ -180,5 +180,7 @@ export type AuditAction =
   | 'payment_play_ok'
   | 'payment_play_fail'
   | 'plan_upgraded'
+  | 'subscription_cancelled'
+  | 'account_deleted'
   | 'reading_synced'
   | 'reading_deleted';
