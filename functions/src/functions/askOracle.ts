@@ -171,11 +171,18 @@ async function claimQuotaSlot(
 
 // ── Audit log ────────────────────────────────────────────────────────────────
 
+// Operational oracle logs are high-volume (one per reading) and are telemetry,
+// not a fraud/financial record — so they carry an expiresAt for Firestore TTL
+// cleanup. Payment/security/deletion audit logs deliberately OMIT this field
+// and are therefore retained indefinitely (see docs/PLAY_DATA_SAFETY.md).
+const AUDIT_LOG_RETENTION_MS = 90 * 24 * 60 * 60 * 1000; // 90 days
+
 async function writeAuditLog(entry: Omit<AuditLogDoc, 'ts'>): Promise<void> {
   try {
     await db.collection('auditLogs').add({
       ...entry,
       ts: FieldValue.serverTimestamp(),
+      expiresAt: new Date(Date.now() + AUDIT_LOG_RETENTION_MS),
     });
   } catch (err) {
     logger.error('audit log write failed', { err: String(err) });
