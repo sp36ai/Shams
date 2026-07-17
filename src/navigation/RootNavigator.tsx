@@ -5,7 +5,10 @@
  *   1. Splash (always shown, min 2.5s brand moment)
  *   2. Auth   (if user is not signed in)
  *   3. LocationPermission (first launch after auth if not yet prompted)
- *   4. Main   (bottom tabs: Oracle | SkyClock | History | Settings)
+ *   4. Main   (bottom tabs: Oracle | History | Settings)
+ *
+ * SkyClock is a secondary stack route (SkyState) reached from the Oracle
+ * header, and Premium is a full-screen modal — neither is a bottom tab.
  *
  * Firebase Auth bootstrap is awaited asynchronously via onAuthStateChanged;
  * while it resolves we stay on Splash so the user never sees a flash of the
