@@ -5,6 +5,7 @@ import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useColors, useTheme } from '@theme/ThemeProvider';
 import { useTypography } from '@theme/useTypography';
+import { useI18n, type TranslationKey } from '@i18n/I18nProvider';
 import { useQuotaStore } from '@stores/quotaStore';
 import { usePurchase, type PurchasePlan } from '@hooks/usePurchase';
 import type { RootStackParamList } from '@navigation/types';
@@ -17,46 +18,48 @@ type BillingPeriod = 'monthly' | 'annual';
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 
-interface PlanCard {
+/**
+ * Static plan config. Prices are currency amounts that must match the Play
+ * Store billing setup, so they are NOT localized. All plan *text* (title,
+ * subtitle, features) is resolved through t() at render time.
+ */
+interface PlanConfig {
   key: PlanKey;
-  title: string;
-  subtitle: string;
+  titleKey: TranslationKey;
+  subtitleKey: TranslationKey;
   monthlyPrice: string;
   annualPrice: string;
-  annualNote: string;
-  features: string[];
+  featureKeys: readonly TranslationKey[];
   badge?: string;
 }
 
-const PLANS: PlanCard[] = [
+const PLANS: readonly PlanConfig[] = [
   {
     key: 'mureed',
-    title: 'MUREED',
-    subtitle: 'Disciple',
-    monthlyPrice: '₹249/month',
-    annualPrice: '₹2,490/year',
-    annualNote: 'save 2 months',
-    features: [
-      '3 consultations daily',
-      'Standard oracle voice',
-      'Sealed session history',
-      'Timing & auspice windows',
-      'Spiritual remedies',
+    titleKey: 'premium.mureedTitle',
+    subtitleKey: 'premium.mureedSubtitle',
+    monthlyPrice: '₹249',
+    annualPrice: '₹2,490',
+    featureKeys: [
+      'premium.mureedFeature1',
+      'premium.mureedFeature2',
+      'premium.mureedFeature3',
+      'premium.mureedFeature4',
+      'premium.mureedFeature5',
     ],
   },
   {
     key: 'khass',
-    title: 'KHASS',
-    subtitle: 'The Chosen',
-    monthlyPrice: '₹699/month',
-    annualPrice: '₹6,990/year',
-    annualNote: 'save 2 months',
-    features: [
-      'Unlimited consultations',
-      'Both oracle modes',
-      'Full celestial confidence',
-      'Sacred session PDF',
-      'Priority synthesis',
+    titleKey: 'premium.khassTitle',
+    subtitleKey: 'premium.khassSubtitle',
+    monthlyPrice: '₹699',
+    annualPrice: '₹6,990',
+    featureKeys: [
+      'premium.khassFeature1',
+      'premium.khassFeature2',
+      'premium.khassFeature3',
+      'premium.khassFeature4',
+      'premium.khassFeature5',
     ],
     badge: '★',
   },
@@ -67,6 +70,7 @@ const PremiumScreen: React.FC = () => {
   const { theme } = useTheme();
   const colors = useColors();
   const typography = useTypography();
+  const { t } = useI18n();
 
   const trialExpired = useQuotaStore(s => s.trialExpired);
   const { purchase, restore, purchasing } = usePurchase();
@@ -89,27 +93,27 @@ const PremiumScreen: React.FC = () => {
     } else if (result.reason === 'already_active') {
       navigation.goBack();
     } else if (result.reason !== 'user_cancelled') {
-      Alert.alert('Error', 'Payment verification failed. Please try again.');
+      Alert.alert(t('premium.errorTitle'), t('premium.paymentFailed'));
     }
-  }, [purchase, navigation, selectedPlan, billing]);
+  }, [purchase, navigation, selectedPlan, billing, t]);
 
   const handleRestore = useCallback(async () => {
     const result = await restore();
     if (result.success) {
       navigation.goBack();
     } else {
-      Alert.alert('Restore', 'No active purchases found on this account.');
+      Alert.alert(t('premium.restoreTitle'), t('premium.noPurchases'));
     }
-  }, [restore, navigation]);
+  }, [restore, navigation, t]);
 
   const headerTitle = trialExpired
-    ? 'Your 7-day journey has ended.'
-    : 'The sanctum opens its doors.';
+    ? t('premium.headerTitleExpired')
+    : t('premium.headerTitleDefault');
   const headerSubtitle = trialExpired
-    ? 'The stars are still watching. Continue receiving their guidance.'
-    : 'Choose your path of guidance.';
+    ? t('premium.headerSubtitleExpired')
+    : t('premium.headerSubtitleDefault');
 
-  const ctaLabel = selectedPlan === 'mureed' ? 'Begin with Mureed' : 'Begin with Khass';
+  const ctaLabel = selectedPlan === 'mureed' ? t('premium.ctaMureed') : t('premium.ctaKhass');
 
   return (
     <SafeAreaView
@@ -135,7 +139,7 @@ const PremiumScreen: React.FC = () => {
           style={styles.backBtn}
           hitSlop={12}
           accessibilityRole="button"
-          accessibilityLabel="Go back"
+          accessibilityLabel={t('common.back')}
         >
           <Text style={[typography('body'), { color: colors.accent }]}>{'←'}</Text>
         </Pressable>
@@ -178,7 +182,7 @@ const PremiumScreen: React.FC = () => {
                 { color: colors.goldBright, letterSpacing: 1.2, marginHorizontal: 8 },
               ]}
             >
-              BEGIN WITH 7 DAYS FREE
+              {t('premium.trialBanner')}
             </Text>
             <Text style={[typography('caption'), { color: colors.textFaint, letterSpacing: 1 }]}>
               ✦
@@ -194,7 +198,11 @@ const PremiumScreen: React.FC = () => {
             const borderColor = isKhass ? KHASS_GOLD : isSelected ? colors.accent : colors.border;
             const borderWidth = isSelected || isKhass ? 1.5 : StyleSheet.hairlineWidth;
             const currentBilling = billing[plan.key];
-            const priceLabel = currentBilling === 'monthly' ? plan.monthlyPrice : plan.annualPrice;
+            const priceAmount = currentBilling === 'monthly' ? plan.monthlyPrice : plan.annualPrice;
+            const pricePeriod =
+              currentBilling === 'monthly' ? t('premium.perMonth') : t('premium.perYear');
+            const priceLabel = `${priceAmount}${pricePeriod}`;
+            const planTitle = t(plan.titleKey);
 
             return (
               <Pressable
@@ -215,14 +223,14 @@ const PremiumScreen: React.FC = () => {
                   },
                 ]}
                 accessibilityRole="button"
-                accessibilityLabel={`Select ${plan.title} plan`}
+                accessibilityLabel={t('premium.selectPlanLabel', { plan: planTitle })}
               >
                 {/* Title row */}
                 <View style={styles.titleRow}>
                   <Text
                     style={[typography('heading'), { color: isKhass ? KHASS_GOLD : colors.text }]}
                   >
-                    {plan.title}
+                    {planTitle}
                   </Text>
                   {plan.badge !== undefined && (
                     <Text style={[typography('body'), { color: KHASS_GOLD, marginLeft: 6 }]}>
@@ -231,7 +239,7 @@ const PremiumScreen: React.FC = () => {
                   )}
                 </View>
                 <Text style={[typography('caption'), { color: colors.textMuted, marginBottom: 8 }]}>
-                  {plan.subtitle}
+                  {t(plan.subtitleKey)}
                 </Text>
 
                 {/* Price */}
@@ -251,7 +259,7 @@ const PremiumScreen: React.FC = () => {
                   <Text
                     style={[typography('caption'), { color: colors.textMuted, marginBottom: 8 }]}
                   >
-                    ({plan.annualNote})
+                    ({t('premium.annualSaveNote')})
                   </Text>
                 )}
 
@@ -275,7 +283,13 @@ const PremiumScreen: React.FC = () => {
                           },
                         ]}
                         accessibilityRole="button"
-                        accessibilityLabel={`${period} billing for ${plan.title}`}
+                        accessibilityLabel={t('premium.billingLabel', {
+                          period:
+                            period === 'monthly'
+                              ? t('premium.billingMonthly')
+                              : t('premium.billingAnnual'),
+                          plan: planTitle,
+                        })}
                       >
                         <Text
                           style={[
@@ -286,7 +300,9 @@ const PremiumScreen: React.FC = () => {
                             },
                           ]}
                         >
-                          {period === 'monthly' ? 'Monthly' : 'Annual'}
+                          {period === 'monthly'
+                            ? t('premium.billingMonthly')
+                            : t('premium.billingAnnual')}
                         </Text>
                       </Pressable>
                     );
@@ -295,8 +311,8 @@ const PremiumScreen: React.FC = () => {
 
                 {/* Feature list */}
                 <View style={styles.features}>
-                  {plan.features.map(feat => (
-                    <View key={feat} style={styles.featureRow}>
+                  {plan.featureKeys.map(featKey => (
+                    <View key={featKey} style={styles.featureRow}>
                       <Text
                         style={[
                           typography('caption'),
@@ -315,7 +331,7 @@ const PremiumScreen: React.FC = () => {
                           { color: colors.text, flex: 1, fontSize: 12 },
                         ]}
                       >
-                        {feat}
+                        {t(featKey)}
                       </Text>
                     </View>
                   ))}
@@ -350,14 +366,14 @@ const PremiumScreen: React.FC = () => {
           accessibilityLabel={ctaLabel}
         >
           <Text style={[typography('button'), { color: colors.textOnPrimary }]}>
-            {purchasing ? 'Processing…' : ctaLabel}
+            {purchasing ? t('premium.processing') : ctaLabel}
           </Text>
         </Pressable>
 
         {/* Restore */}
         <Pressable onPress={handleRestore} style={styles.restoreBtn} hitSlop={8}>
           <Text style={[typography('caption'), { color: colors.textFaint, textAlign: 'center' }]}>
-            Restore previous purchase
+            {t('premium.restorePurchase')}
           </Text>
         </Pressable>
       </ScrollView>
