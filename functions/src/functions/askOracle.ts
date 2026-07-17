@@ -534,7 +534,14 @@ export const askOracle = onCall(
         });
       }
 
-      logger.info('oracle synthesis', { userId, oracle });
+      // Log only non-PII shape metadata. The oracle prose weaves in the
+      // seeker's and mother's names (per the synthesis prompt), so logging the
+      // object itself would leak raw PII — violating this logger's contract.
+      logger.info('oracle synthesis', {
+        userId,
+        hasOracleVoice: Boolean(oracle?.opening),
+        remedyReplaced: Boolean(forbiddenRemedyTerm),
+      });
 
       // 13. Return minimal response — no chart internals, no algorithm state
       return {
