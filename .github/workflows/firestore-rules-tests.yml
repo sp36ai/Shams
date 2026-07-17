@@ -10,6 +10,7 @@ on:
       - "firestore.rules"
       - "firestore.rules.test.ts"
       - "firebase.test.json"
+      - "jest.rules.config.cjs"
       - "package.json"
       - ".github/workflows/firestore-rules-tests.yml"
   pull_request:
@@ -18,6 +19,7 @@ on:
       - "firestore.rules"
       - "firestore.rules.test.ts"
       - "firebase.test.json"
+      - "jest.rules.config.cjs"
       - "package.json"
       - ".github/workflows/firestore-rules-tests.yml"
   workflow_dispatch:
@@ -77,4 +79,28 @@ jobs:
           fi
 
           echo ""
-          echo "✅ Firestore rules validation passed"
+          echo "✅ Firestore rules syntax check passed"
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      # The Firestore emulator is a Java process.
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: "temurin"
+          java-version: "17"
+
+      - name: Install dependencies
+        run: npm ci
+
+      # firebase-tools provides the emulator; kept out of package.json (heavy)
+      # and installed here so `npm run test:rules` can boot the emulator.
+      - name: Install firebase-tools
+        run: npm install -g firebase-tools@13
+
+      - name: Run Firestore rules tests (emulator)
+        run: npm run test:rules
