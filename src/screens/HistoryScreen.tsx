@@ -24,8 +24,10 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
+import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 
 import { useColors, useTheme } from '@theme/ThemeProvider';
+import type { MainTabParamList } from '@navigation/types';
 import { useTypography } from '@theme/useTypography';
 import { useTranslation, useI18n } from '@i18n/I18nProvider';
 import {
@@ -109,7 +111,9 @@ const HistoryScreen: React.FC = () => {
   const colors = useColors();
   const typography = useTypography();
   const t = useTranslation();
-  const navigation = useNavigation<{ navigate: (screen: string) => void }>();
+  // Typed against the tab param list so navigate() targets are compile-checked
+  // (the old inline `{ navigate: (screen: string) => void }` accepted any typo).
+  const navigation = useNavigation<BottomTabNavigationProp<MainTabParamList>>();
 
   const filter = useReadingsStore((s: ReturnType<typeof useReadingsStore.getState>) => s.filter);
   const sort = useReadingsStore((s: ReturnType<typeof useReadingsStore.getState>) => s.sort);
