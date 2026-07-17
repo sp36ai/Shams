@@ -1393,6 +1393,12 @@ const OracleScreen: React.FC = () => {
               )}
             </Pressable>
           </View>
+          <Text
+            style={[typography('caption'), styles.disclaimer, { color: colors.textFaint }]}
+            accessibilityRole="text"
+          >
+            {t('oracle.disclaimer')}
+          </Text>
         </View>
       </KeyboardAvoidingView>
 
@@ -1971,6 +1977,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'flex-end',
     gap: 8,
+  },
+  disclaimer: {
+    textAlign: 'center',
+    fontSize: 10,
+    lineHeight: 14,
+    opacity: 0.7,
+    marginTop: 8,
+    paddingHorizontal: 12,
   },
   composerInput: {
     flex: 1,

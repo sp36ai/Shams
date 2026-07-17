@@ -212,6 +212,11 @@ const LocationPermissionScreen: React.FC = () => {
             <Pressable
               onPress={isDenied && status === 'blocked' ? handleOpenSettings : handleGrant}
               disabled={isLoading}
+              accessibilityRole="button"
+              accessibilityState={{ disabled: isLoading }}
+              accessibilityLabel={
+                status === 'blocked' ? t('permission.openSettings') : t('permission.grantAccess')
+              }
               style={({ pressed }) => [
                 styles.primaryButton,
                 {

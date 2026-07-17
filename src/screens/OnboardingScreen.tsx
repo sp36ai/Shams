@@ -283,6 +283,8 @@ const OnboardingScreen: React.FC = () => {
                     key={cIndex}
                     onPress={onPress}
                     disabled={inferring || profile !== null}
+                    accessibilityRole="button"
+                    accessibilityLabel={t(choice.labelKey)}
                     style={({ pressed }) => [
                       styles.choiceCard,
                       {
@@ -313,6 +315,8 @@ const OnboardingScreen: React.FC = () => {
                   <Pressable
                     testID="onboarding-enter-btn"
                     onPress={handleEnter}
+                    accessibilityRole="button"
+                    accessibilityLabel={t('onboarding.enterApp')}
                     style={({ pressed }) => [
                       styles.cta,
                       { backgroundColor: colors.primary, opacity: pressed ? 0.85 : 1 },

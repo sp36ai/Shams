@@ -148,6 +148,8 @@ export const en: StringTable = {
     newQuestionTitle: 'New question detected',
     newQuestionBody:
       'This sounds like a new horary question. Each question needs its own chart for an accurate verdict.',
+    disclaimer:
+      'For spiritual reflection only — not a substitute for professional medical, legal, or financial advice.',
   },
 
   skyClock: {

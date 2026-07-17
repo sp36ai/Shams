@@ -46,6 +46,9 @@ export function ThemeSwitcher() {
               key={id}
               onPress={() => setThemeId(id)}
               activeOpacity={0.75}
+              accessibilityRole="button"
+              accessibilityState={{ selected: isActive }}
+              accessibilityLabel={t.name}
               style={[
                 styles.card,
                 {

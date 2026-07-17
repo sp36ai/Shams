@@ -807,6 +807,9 @@ export default function CosmicClock({ running }: CosmicClockProps): React.ReactE
             ]}
             onPress={btn.onPress}
             activeOpacity={0.75}
+            accessibilityRole="button"
+            accessibilityState={{ selected: btn.active }}
+            accessibilityLabel={btn.label}
           >
             <Text
               style={[styles.btnText, { color: btn.active ? colors.accent : colors.textMuted }]}

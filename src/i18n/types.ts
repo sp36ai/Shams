@@ -167,6 +167,7 @@ export interface StringTable {
     quotaUnlockLink: string;
     newQuestionTitle: string;
     newQuestionBody: string;
+    disclaimer: string;
   };
   skyClock: {
     headerTitle: string;
