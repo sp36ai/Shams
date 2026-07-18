@@ -26,6 +26,8 @@ The following findings were fixed and verified after the initial audit (function
 | **M5** — no offline UX | ✅ Fixed | NetInfo `useIsOffline` hook + app-root `OfflineBanner` |
 | **M6** — engine mirror drift | ✅ Fixed | synced `functions/src/engine` to `src/astrology` + CI drift guard |
 | **L3** — stray empty files | ✅ Fixed | removed `dasha.ts`, `docs/timing.ts` |
+| **Dependencies** (cat. 12) | ✅ Closed | patched functions prod transitives (protobufjs/grpc-js/form-data/qs — was 4 crit/5 high, now 0 high/crit in prod deps); added a gating `npm audit --omit=dev --audit-level=high` CI step to both jobs |
+| **Engine determinism** | ✅ Locked | golden-vector regression tests on both engine trees (server vitest + client jest), explicit values, horaLord guard |
 | **H4** — store screenshots/feature graphic | ⚠️ Documented only | genuine captures required; `android/fastlane/metadata/README.md` specifies exactly what's needed (cannot be fabricated) |
 
 **Still open (require a device / live services / human — cannot be closed from the repo):** C1 end-to-end sandbox proof, H3 billing alarms + spend dashboard, performance/battery profiling, crash-free device startup, Islamic-content scholarly review, `npm audit`/`osv-scanner` run, deployed rules state. **Deferred by design:** L1 native SSL pinning (Phase 5), L2 integrity-gate override, L4 documentation cleanup.

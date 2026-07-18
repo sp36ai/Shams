@@ -30,6 +30,12 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Dependency audit (production)
+        # Fail on high/critical vulnerabilities in production dependencies.
+        # Dev-only tooling advisories (e.g. RN CLI) are excluded — they don't
+        # ship and are gated on upstream RN, not this repo.
+        run: npm audit --omit=dev --audit-level=high
+
       - name: Lint
         run: npm run lint
 
@@ -61,6 +67,12 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+
+      - name: Dependency audit (production)
+        # Fail on high/critical vulnerabilities in Cloud Functions production
+        # dependencies (firebase-admin/google-cloud transitive chain). Dev-only
+        # test-tooling advisories are excluded.
+        run: npm audit --omit=dev --audit-level=high
 
       - name: Engine sync guard
         # functions/src/engine is a generated mirror of src/astrology (produced
