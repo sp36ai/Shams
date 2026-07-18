@@ -3,7 +3,7 @@
 Consolidated index of the audit engagement on branch
 `claude/shams-auth-ui-audit-54yz9g`. Each domain links to its detailed report.
 
-**Test status:** 91 app + 23 functions + 39 Firestore-rules = **153 tests, all
+**Test status:** 182 app + 34 functions + 39 Firestore-rules = **255 tests, all
 green**; `tsc` + `eslint` clean on both packages.
 
 ---
@@ -24,6 +24,11 @@ green**; `tsc` + `eslint` clean on both packages.
 | Input-validation completeness | [INPUT_VALIDATION_AUDIT](./INPUT_VALIDATION_AUDIT.md) | Capped client strings feeding LLM prompts |
 | Performance & bundle size | [PERFORMANCE_AUDIT](./PERFORMANCE_AUDIT.md) | Removed 2 MB orphaned asset |
 | Play data-safety mapping | [PLAY_DATA_SAFETY](./PLAY_DATA_SAFETY.md) | Evidence-based form worksheet |
+| CI completeness | *(in ci.yml)* | Engine mirror drift guard + runtime audit steps |
+| Critical-path tests | *(store + schema suites)* | 32 new tests: stores, validation schemas |
+| Store integrity | [STORE_INTEGRITY_AUDIT](./STORE_INTEGRITY_AUDIT.md) | Fixed cross-account readings leak |
+| i18n completeness | [I18N_COMPLETENESS_AUDIT](./I18N_COMPLETENESS_AUDIT.md) | Localized verdict-card prose; ur table verified clean |
+| Theme WCAG contrast | [THEME_CONTRAST_AUDIT](./THEME_CONTRAST_AUDIT.md) | 14 palette fixes across all 5 themes, 70-assertion lock |
 
 Earlier in the engagement: auth + UI hardening, account deletion, Hindi removal
 + full en/ur localization + RTL, Islamic-only remedy enforcement, and the
