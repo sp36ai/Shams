@@ -352,10 +352,10 @@ export const QUESTION_KEYWORDS: Readonly<Record<QuestionType, readonly string[]>
  * Lowercases, trims, collapses whitespace. Preserves Unicode (Urdu/Hindi).
  */
 export function normalizeQuestion(text: string): string {
-  // toLowerCase (NOT toLocaleLowerCase): locale-independent so the classifier is
-  // deterministic regardless of the server's runtime locale. toLocaleLowerCase
-  // would fold "I"→"ı" under a Turkish/Azeri locale, silently changing which
-  // keyword matches and therefore the verdict. Urdu/Hindi are caseless (unaffected).
+  // toLowerCase (NOT toLocaleLowerCase): locale-independent so classification is
+  // deterministic regardless of device locale. toLocaleLowerCase folds "I"→"ı"
+  // under a Turkish/Azeri locale, silently changing keyword matches and the
+  // verdict. Urdu/Hindi are caseless (unaffected).
   return text.toLowerCase().trim().replace(/\s+/g, ' ');
 }
 
