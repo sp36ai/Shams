@@ -1,19 +1,19 @@
 /**
  * i18n type contracts — Shams al-Asrār
  * --------------------------------------------------------------------------
- * Three-language scope (locked, do not extend without product sign-off):
+ * Two-language scope (locked, do not extend without product sign-off):
  *   - en  : English (LTR, default)
  *   - ur  : Urdu    (RTL, Nastaliq)
- *   - hi  : Hindi   (LTR, Devanagari)
  *
- * Engine narration produces three SEPARATE templates per verdict — never
+ * Hindi is deliberately NOT supported (product decision). Engine narration
+ * produces a SEPARATE template per language per verdict — never
  * machine-translated. Strings file shape is identical across languages so
  * TS catches missing keys at compile time (see StringTable type below).
  */
 
-export type LangCode = 'en' | 'ur' | 'hi';
+export type LangCode = 'en' | 'ur';
 
-export const LANG_CODES: readonly LangCode[] = ['en', 'ur', 'hi'];
+export const LANG_CODES: readonly LangCode[] = ['en', 'ur'];
 
 export const DEFAULT_LANG: LangCode = 'en';
 
@@ -31,7 +31,6 @@ export interface LangMeta {
 export const LANG_META: Readonly<Record<LangCode, LangMeta>> = Object.freeze({
   en: { code: 'en', nativeName: 'English', englishName: 'English', isRTL: false },
   ur: { code: 'ur', nativeName: 'اردو', englishName: 'Urdu', isRTL: true },
-  hi: { code: 'hi', nativeName: 'हिन्दी', englishName: 'Hindi', isRTL: false },
 });
 
 export function isValidLang(value: unknown): value is LangCode {
@@ -40,7 +39,7 @@ export function isValidLang(value: unknown): value is LangCode {
 
 /**
  * Canonical string-table shape. The `en` file is the source of truth; `ur`
- * and `hi` MUST satisfy `StringTable` so missing keys fail typecheck.
+ * MUST satisfy `StringTable` so missing keys fail typecheck.
  *
  * Grouped by feature surface to keep large tables navigable.
  */
@@ -76,6 +75,30 @@ export interface StringTable {
     deniedTitle: string;
     deniedBody: string;
     openSettings: string;
+    prominentTitle: string;
+    prominentBody: string;
+  };
+  onboarding: {
+    bismillah: string;
+    enterApp: string;
+    q1Eyebrow: string;
+    q1Text: string;
+    q1c1: string;
+    q1c2: string;
+    q1c3: string;
+    q1c4: string;
+    q2Eyebrow: string;
+    q2Text: string;
+    q2c1: string;
+    q2c2: string;
+    q2c3: string;
+    q2c4: string;
+    q3Eyebrow: string;
+    q3Text: string;
+    q3c1: string;
+    q3c2: string;
+    q3c3: string;
+    q3c4: string;
   };
   auth: {
     signInTab: string;
@@ -131,6 +154,40 @@ export interface StringTable {
     remedyLabel: string;
     chartMomentLabel: string;
     locationLabel: string;
+    awaitsHint: string;
+    redirectConversational: string;
+    redirectAmbiguous: string;
+    errSealed: string;
+    errQuotaClosed: string;
+    errNeedsAuth: string;
+    errNeedsVerification: string;
+    errChannelInterrupted: string;
+    quotaModalBody: string;
+    quotaModalDismiss: string;
+    quotaUnlockLink: string;
+    newQuestionTitle: string;
+    newQuestionBody: string;
+    disclaimer: string;
+  };
+  verdictCard: {
+    confHigh: string;
+    confMedium: string;
+    confLow: string;
+    effectFallback: string;
+    effect_spiritual_clearing: string;
+    effect_calming: string;
+    effect_emotional_release: string;
+    effect_surrender: string;
+    effect_trust_building: string;
+    effect_reconciliation: string;
+    effect_activation: string;
+    effect_grounding: string;
+    effect_humility: string;
+    effect_clarity: string;
+    effect_opening: string;
+    effect_comfort: string;
+    effect_patience: string;
+    effect_gratitude: string;
   };
   skyClock: {
     headerTitle: string;
@@ -154,33 +211,52 @@ export interface StringTable {
     sortOldest: string;
     deleteConfirm: string;
     deleteAction: string;
+    narrationLabel: string;
+    significatorsLabel: string;
+    moonSubLordLabel: string;
+    dayLordLabel: string;
+    horaLordLabel: string;
+    minuteLordLabel: string;
+    rpScoreLabel: string;
+    horaSuffix: string;
+    houseLabel: string;
+    avoidLabel: string;
   };
   premium: {
-    headerTitle: string;
-    subheading: string;
-    tierStarter: string;
-    tierPremium: string;
-    tierConsultation: string;
-    starterPrice: string;
-    premiumPrice: string;
-    consultationPrice: string;
-    starterPeriod: string;
-    premiumPeriod: string;
-    consultationPeriod: string;
-    starterDescription: string;
-    premiumDescription: string;
-    consultationDescription: string;
-    selectPlan: string;
-    currentPlan: string;
-    moneyBackPromise: string;
+    headerTitleDefault: string;
+    headerTitleExpired: string;
+    headerSubtitleDefault: string;
+    headerSubtitleExpired: string;
+    trialBanner: string;
+    mureedTitle: string;
+    mureedSubtitle: string;
+    khassTitle: string;
+    khassSubtitle: string;
+    billingMonthly: string;
+    billingAnnual: string;
+    perMonth: string;
+    perYear: string;
+    annualSaveNote: string;
+    mureedFeature1: string;
+    mureedFeature2: string;
+    mureedFeature3: string;
+    mureedFeature4: string;
+    mureedFeature5: string;
+    khassFeature1: string;
+    khassFeature2: string;
+    khassFeature3: string;
+    khassFeature4: string;
+    khassFeature5: string;
+    ctaMureed: string;
+    ctaKhass: string;
+    processing: string;
     restorePurchase: string;
-    manageSubscription: string;
-    feature_unlimited_questions: string;
-    feature_full_history: string;
-    feature_remedies: string;
-    feature_pdf_export: string;
-    feature_priority_windows: string;
-    feature_strategic_sessions: string;
+    selectPlanLabel: string;
+    billingLabel: string;
+    errorTitle: string;
+    paymentFailed: string;
+    restoreTitle: string;
+    noPurchases: string;
   };
   settings: {
     headerTitle: string;
@@ -196,10 +272,33 @@ export interface StringTable {
     subscriptionLabel: string;
     privacyPolicy: string;
     termsOfService: string;
+    dataDeletion: string;
     aboutLabel: string;
     versionLabel: string;
     signOut: string;
     signOutConfirm: string;
+    deleteAccount: string;
+    deleteAccountAction: string;
+    deleteAccountConfirm: string;
+    deleteAccountFailed: string;
+    resetProfileTitle: string;
+    resetProfileBody: string;
+    resetProfileAction: string;
+    resetProfileButton: string;
+    seekerIdentitySection: string;
+    yourNameLabel: string;
+    yourNamePlaceholder: string;
+    motherNameLabel: string;
+    motherNamePlaceholder: string;
+    identityHint: string;
+    readingStatsSection: string;
+    planFree: string;
+    unlimitedReadings: string;
+    questionsUsedToday: string;
+    statTotal: string;
+    statYes: string;
+    statNo: string;
+    statCond: string;
   };
   theme: {
     darAlShams: string;

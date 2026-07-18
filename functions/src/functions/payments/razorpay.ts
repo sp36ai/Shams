@@ -3,7 +3,10 @@
  *
  * Security:
  *   - HMAC-SHA256 signature verification (X-Razorpay-Signature header)
- *   - Only `payment.captured` and `subscription.activated` events trigger plan upgrades
+ *   - `payment.captured`, `subscription.activated`, and `subscription.charged`
+ *     (recurring renewal) trigger plan upgrades / expiry extensions
+ *   - `subscription.cancelled` / `halted` are logged; access is left to lapse
+ *     naturally at the current period end (lazy expiry in quota checks)
  *   - All other events are acknowledged (200) but ignored
  *   - Idempotent: re-processing a known payment is a no-op
  *
@@ -318,6 +321,75 @@ export const razorpayWebhook = onRequest(
         if (plan) {
           await upgradePlan(userId, plan, requestMeta);
         }
+      } else if (eventType === 'subscription.charged') {
+        // Recurring renewal — Razorpay debits the subscriber each cycle. Without
+        // handling this, planExpiry set at activation goes stale and a paying
+        // subscriber is wrongly downgraded at the first renewal boundary.
+        const payload = event.payload as Record<string, unknown> | undefined;
+        const sub = (payload?.subscription as Record<string, unknown> | undefined)?.entity as
+          | Record<string, unknown>
+          | undefined;
+        const paymentEntity = (payload?.payment as Record<string, unknown> | undefined)?.entity as
+          | Record<string, unknown>
+          | undefined;
+        const notes = sub?.notes as Record<string, string> | undefined;
+
+        const userId = notes?.userId;
+        const razorPlan = sub?.plan_id as string | undefined;
+        const paymentId = paymentEntity?.id as string | undefined;
+
+        if (!userId || !razorPlan) {
+          logger.warn('razorpay subscription.charged: missing userId or plan_id', {
+            ipHash: requestMeta.ipHash,
+            durationMs: Date.now() - startedAt,
+          });
+          res.status(200).send('OK');
+          return;
+        }
+
+        const plan = RAZORPAY_PLAN_MAP[razorPlan];
+        if (!plan) {
+          logger.warn('razorpay subscription.charged: unknown plan', {
+            razorPlan,
+            ipHash: requestMeta.ipHash,
+          });
+          res.status(200).send('OK');
+          return;
+        }
+
+        // Idempotency: each renewal is a distinct paymentId; skip if seen.
+        if (paymentId) {
+          const existing = await db
+            .collection('auditLogs')
+            .where('razorpayPaymentId', '==', paymentId)
+            .limit(1)
+            .get();
+          if (!existing.empty) {
+            logger.info('razorpay: duplicate renewal event, skipping', { paymentId });
+            res.status(200).send('OK');
+            return;
+          }
+        }
+
+        await upgradePlan(userId, plan, requestMeta, paymentId);
+      } else if (eventType === 'subscription.cancelled' || eventType === 'subscription.halted') {
+        // Do NOT revoke immediately — the subscriber has paid through the
+        // current period end, and quota checks lazily drop to free once
+        // planExpiry passes. Just record it for the audit trail.
+        const sub = (event.payload as Record<string, unknown> | undefined)?.subscription as
+          | Record<string, unknown>
+          | undefined;
+        const notes = (sub?.entity as Record<string, unknown> | undefined)?.notes as
+          | Record<string, string>
+          | undefined;
+        await db.collection('auditLogs').add({
+          userId: notes?.userId ?? null,
+          action: 'subscription_cancelled',
+          detail: eventType,
+          source: requestMeta.source,
+          ipHash: requestMeta.ipHash,
+          ts: FieldValue.serverTimestamp(),
+        });
       }
       // All other event types: acknowledge silently
     } catch (err) {

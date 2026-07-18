@@ -158,7 +158,7 @@ function buildRemedy(moonSubLord: Planet, reasoning: ReasoningStep[]): VerdictRe
   reasoning.push(
     step(
       0,
-      `Remedy planet = Moon's Sub-Lord ${moonSubLord} (PROVISIONAL — owner cultural text pending)`,
+      `Remedy anchored to Moon's Sub-Lord ${moonSubLord} — Islamic remedy (Quran recitation, Name of Allah, sadaqah)`,
       0,
     ),
   );
@@ -176,8 +176,7 @@ function buildNarration(
 ): VerdictNarration {
   const en = buildEn(verdict, qType, moonSubLord, moonSubLordHouse, score);
   const ur = buildUr(verdict, qType);
-  const hi = buildHi(verdict, qType);
-  return { en, ur, hi };
+  return { en, ur };
 }
 
 const ARABIC_PLANET: Readonly<Record<string, string>> = {
@@ -234,23 +233,6 @@ function buildUr(verdict: VerdictKind, qType: string): string {
       return `اس وقت فلکی گواہی واضح نہیں ہے۔ قمر کے اگلے منزل میں دوبارہ سوال کریں۔`;
     case 'DENIED':
       return `اس وقت زائچہ آپ کے ${qType} کے سوال کا جواب دینے سے قاصر ہے۔ فلکی شاہد کا تعلق بابِ تکمیل سے نہیں ہے۔ کسی مناسب وقت پر دوبارہ رجوع کریں۔`;
-  }
-}
-
-function buildHi(verdict: VerdictKind, qType: string): string {
-  switch (verdict) {
-    case 'YES':
-      return `آپ کے ${qType} کے معاملے میں آسمانی گواہی موافق ہے۔ کامیابی کے آثار روشن ہیں۔`;
-    case 'NO':
-      return `آپ کے ${qType} کے معاملے میں اس وقت آسمانی شہادت سازگار نہیں ہے۔`;
-    case 'CONDITIONAL':
-      return `آپ کے ${qType} کے معاملے میں مشروط رہنمائی ہے۔ کچھ شرائط درکار ہیں۔`;
-    case 'DELAYED':
-      return `آپ کے ${qType} کے معاملے میں تاخیر ممکن ہے، لیکن نتیجہ موافق ہوگا۔`;
-    case 'UNCLEAR':
-      return `اس وقت آسمانی گواہی واضح نہیں ہے۔ کسی اور وقت سوال کریں۔`;
-    case 'DENIED':
-      return `اس وقت زائچہ آپ کے ${qType} کے سوال کا جواب دینے کی صلاحیت نہیں رکھتا۔ مناسب وقت پر دوبارہ رجوع فرمائیں۔`;
   }
 }
 
@@ -471,7 +453,8 @@ export function judgeHorary(chart: Chart, question: ClassifiedQuestion): Verdict
   );
 
   // ── STEP 4: Ruling Planets × Significator intersection (Phase D) ─────────
-  const allWitnesses = (chart.rulingPlanets as Planet[]).filter(Boolean);
+  // horaLord is at index 1 — witness-only display field, not a scoring RP.
+  const allWitnesses = (chart.rulingPlanets as Planet[]).filter((_, i) => i !== 1).filter(Boolean);
 
   const filteredRulingPlanets = applyKotamrajuFilter(allWitnesses, favorable, denial, chart);
 

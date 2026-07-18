@@ -26,6 +26,13 @@ import { useAuthStore, selectUserName, selectUserEmail } from '@stores/authStore
 import { useReadingsStore, type VerdictKind } from '@stores/readingsStore';
 import { useQuotaStore, FREE_DAILY_LIMIT, type PlanTier } from '@stores/quotaStore';
 
+// Public legal / data pages (hosted on Firebase Hosting). Kept in one place so
+// the in-app links and the Play Console listing stay in sync.
+const LEGAL_BASE = 'https://shams-app-4d0e7.web.app';
+const PRIVACY_URL = `${LEGAL_BASE}/privacy-policy.html`;
+const TERMS_URL = `${LEGAL_BASE}/terms.html`;
+const DATA_DELETION_URL = `${LEGAL_BASE}/data-deletion.html`;
+
 const SettingsScreen: React.FC = () => {
   const { theme } = useTheme();
   const colors = useColors();
@@ -48,19 +55,16 @@ const SettingsScreen: React.FC = () => {
   }, [seekerNameInput, motherNameInput, setSeekerIdentity]);
 
   const handleResetProfile = useCallback(() => {
-    Alert.alert(
-      'Reset Spiritual Profile',
-      'You will be returned to the onboarding questions on your next app open.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Reset', style: 'destructive', onPress: resetProfile },
-      ],
-    );
-  }, [resetProfile]);
+    Alert.alert(t('settings.resetProfileTitle'), t('settings.resetProfileBody'), [
+      { text: t('common.cancel'), style: 'cancel' },
+      { text: t('settings.resetProfileAction'), style: 'destructive', onPress: resetProfile },
+    ]);
+  }, [resetProfile, t]);
 
   const userName = useAuthStore(selectUserName);
   const userEmail = useAuthStore(selectUserEmail);
   const signOut = useAuthStore(s => s.signOut);
+  const deleteAccount = useAuthStore(s => s.deleteAccount);
   const isLoading = useAuthStore(s => s.isLoading);
 
   const readings = useReadingsStore(s => s.readings);
@@ -78,6 +82,27 @@ const SettingsScreen: React.FC = () => {
     ]);
   }, [signOut, t]);
 
+  const handleDeleteAccount = useCallback(() => {
+    // Two-step, explicit, destructive confirmation — this is irreversible and
+    // deletes the account plus all server-side data.
+    Alert.alert(t('settings.deleteAccount'), t('settings.deleteAccountConfirm'), [
+      { text: t('common.cancel'), style: 'cancel' },
+      {
+        text: t('settings.deleteAccountAction'),
+        style: 'destructive',
+        onPress: () => {
+          void (async () => {
+            const err = await deleteAccount();
+            if (err) {
+              Alert.alert(t('settings.deleteAccountFailed'), '');
+            }
+            // On success, RootNavigator sees user === null and returns to Auth.
+          })();
+        },
+      },
+    ]);
+  }, [deleteAccount, t]);
+
   const handleLanguageChange = useCallback(
     (next: LangCode) => {
       if (next === lang) {
@@ -91,9 +116,7 @@ const SettingsScreen: React.FC = () => {
       const restartMessage =
         next === 'ur'
           ? 'زبان بدل گئی ہے۔ درست ترتیب کے لیے ایپ دوبارہ کھولیں۔'
-          : next === 'hi'
-            ? 'भाषा बदल गई है। सही विन्यास के लिए ऐप दोबारा खोलें।'
-            : 'Language changed. Reopen the app for the correct layout.';
+          : 'Language changed. Reopen the app for the correct layout.';
 
       Alert.alert(t('common.pleaseWait'), restartMessage, [
         { text: t('common.ok'), style: 'default' },
@@ -187,7 +210,7 @@ const SettingsScreen: React.FC = () => {
           </Row>
         </Section>
 
-        <Section title="Seeker Identity">
+        <Section title={t('settings.seekerIdentitySection')}>
           <View
             style={[
               styles.identityCard,
@@ -200,13 +223,13 @@ const SettingsScreen: React.FC = () => {
                 { color: colors.goldBright, letterSpacing: 1.2, marginBottom: 4 },
               ]}
             >
-              {'YOUR NAME'}
+              {t('settings.yourNameLabel')}
             </Text>
             <TextInput
               value={seekerNameInput}
               onChangeText={setSeekerNameInput}
               onBlur={handleIdentityBlur}
-              placeholder="e.g. Mohammad Rafiq"
+              placeholder={t('settings.yourNamePlaceholder')}
               placeholderTextColor={colors.textFaint}
               style={[
                 typography('body'),
@@ -221,13 +244,13 @@ const SettingsScreen: React.FC = () => {
                 { color: colors.goldBright, letterSpacing: 1.2, marginTop: 14, marginBottom: 4 },
               ]}
             >
-              {"MOTHER'S NAME"}
+              {t('settings.motherNameLabel')}
             </Text>
             <TextInput
               value={motherNameInput}
               onChangeText={setMotherNameInput}
               onBlur={handleIdentityBlur}
-              placeholder="e.g. Mymoona"
+              placeholder={t('settings.motherNamePlaceholder')}
               placeholderTextColor={colors.textFaint}
               style={[
                 typography('body'),
@@ -243,7 +266,7 @@ const SettingsScreen: React.FC = () => {
                 { color: colors.textFaint, marginTop: 10, lineHeight: 16 },
               ]}
             >
-              {'Used to personalise the Hidden Scroll header. Stored only on this device.'}
+              {t('settings.identityHint')}
             </Text>
           </View>
         </Section>
@@ -282,23 +305,24 @@ const SettingsScreen: React.FC = () => {
               ]}
             >
               <Text style={[typography('button'), { color: colors.textMuted }]}>
-                {'Reset spiritual profile'}
+                {t('settings.resetProfileButton')}
               </Text>
             </Pressable>
           )}
         </Section>
 
-        <Section title="Subscription">
+        <Section title={t('settings.subscriptionLabel')}>
           <SubscriptionCard
             plan={plan}
             questionsToday={questionsToday}
             colors={colors}
             typography={typography}
+            t={t}
           />
         </Section>
 
-        <Section title="Reading Stats">
-          <ReadingStatsRow readings={readings} colors={colors} typography={typography} />
+        <Section title={t('settings.readingStatsSection')}>
+          <ReadingStatsRow readings={readings} colors={colors} typography={typography} t={t} />
         </Section>
 
         <Section title={t('settings.accountSection')}>
@@ -317,6 +341,21 @@ const SettingsScreen: React.FC = () => {
           >
             <Text style={[typography('button'), { color: colors.negative }]}>
               {t('settings.signOut')}
+            </Text>
+          </Pressable>
+
+          <Pressable
+            onPress={handleDeleteAccount}
+            disabled={isLoading}
+            accessibilityRole="button"
+            accessibilityLabel={t('settings.deleteAccount')}
+            style={({ pressed }) => [
+              styles.deleteAccountBtn,
+              { opacity: pressed || isLoading ? 0.5 : 1 },
+            ]}
+          >
+            <Text style={[typography('caption'), { color: colors.textMuted, textAlign: 'center' }]}>
+              {t('settings.deleteAccount')}
             </Text>
           </Pressable>
         </Section>
@@ -347,21 +386,68 @@ const SettingsScreen: React.FC = () => {
             </Pressable>
           </View>
         </Section>
+
+        <Section title={t('settings.legalSection')}>
+          <LinkRow
+            label={t('settings.privacyPolicy')}
+            url={PRIVACY_URL}
+            colors={colors}
+            typography={typography}
+          />
+          <LinkRow
+            label={t('settings.termsOfService')}
+            url={TERMS_URL}
+            colors={colors}
+            typography={typography}
+          />
+          <LinkRow
+            label={t('settings.dataDeletion')}
+            url={DATA_DELETION_URL}
+            colors={colors}
+            typography={typography}
+          />
+        </Section>
       </ScrollView>
     </SafeAreaView>
   );
 };
 
+// ── LinkRow — opens an external legal/data page ──────────────────────────────
+
+const LinkRow: React.FC<{
+  label: string;
+  url: string;
+  colors: ReturnType<typeof useColors>;
+  typography: ReturnType<typeof useTypography>;
+}> = ({ label, url, colors, typography }) => (
+  <Pressable
+    onPress={() => void Linking.openURL(url)}
+    accessibilityRole="link"
+    accessibilityLabel={label}
+    style={({ pressed }) => [
+      styles.linkRow,
+      {
+        borderColor: colors.border,
+        backgroundColor: colors.surface,
+        opacity: pressed ? 0.75 : 1,
+      },
+    ]}
+  >
+    <Text style={[typography('body'), { color: colors.text }]}>{label}</Text>
+    <Text style={[typography('body'), { color: colors.textFaint }]}>{'↗'}</Text>
+  </Pressable>
+);
+
 // ── SubscriptionCard ──────────────────────────────────────────────────────────
 
-function planLabel(plan: PlanTier): string {
+function planLabel(plan: PlanTier, t: ReturnType<typeof useTranslation>): string {
   switch (plan) {
     case 'mureed':
-      return '✦ Mureed';
+      return `✦ ${t('premium.mureedTitle')}`;
     case 'khass':
-      return '✦ Khass';
+      return `✦ ${t('premium.khassTitle')}`;
     default:
-      return 'Free';
+      return t('settings.planFree');
   }
 }
 
@@ -372,7 +458,8 @@ const SubscriptionCard: React.FC<{
   questionsToday: number;
   colors: ReturnType<typeof useColors>;
   typography: ReturnType<typeof useTypography>;
-}> = ({ plan, questionsToday, colors, typography }) => {
+  t: ReturnType<typeof useTranslation>;
+}> = ({ plan, questionsToday, colors, typography, t }) => {
   const isPaid = (UNLIMITED_PLAN_SET as PlanTier[]).includes(plan);
   return (
     <View
@@ -387,15 +474,15 @@ const SubscriptionCard: React.FC<{
       <Text
         style={[typography('bodyEmphasis'), { color: isPaid ? colors.amber : colors.textMuted }]}
       >
-        {planLabel(plan)}
+        {planLabel(plan, t)}
       </Text>
       {isPaid ? (
         <Text style={[typography('caption'), { color: colors.textFaint, marginTop: 2 }]}>
-          Unlimited readings
+          {t('settings.unlimitedReadings')}
         </Text>
       ) : (
         <Text style={[typography('caption'), { color: colors.textFaint, marginTop: 2 }]}>
-          {questionsToday}/{FREE_DAILY_LIMIT} questions used today
+          {t('settings.questionsUsedToday', { used: questionsToday, limit: FREE_DAILY_LIMIT })}
         </Text>
       )}
     </View>
@@ -412,32 +499,33 @@ const ReadingStatsRow: React.FC<{
   readings: readonly { verdict: VerdictKind }[];
   colors: ReturnType<typeof useColors>;
   typography: ReturnType<typeof useTypography>;
-}> = ({ readings, colors, typography }) => (
+  t: ReturnType<typeof useTranslation>;
+}> = ({ readings, colors, typography, t }) => (
   <View style={styles.statsRow}>
     <StatCard
       value={String(readings.length)}
-      label="Total"
+      label={t('settings.statTotal')}
       color={colors.accent}
       colors={colors}
       typography={typography}
     />
     <StatCard
       value={String(countVerdict(readings, 'YES'))}
-      label="YES"
+      label={t('settings.statYes')}
       color={colors.positive}
       colors={colors}
       typography={typography}
     />
     <StatCard
       value={String(countVerdict(readings, 'NO'))}
-      label="NO"
+      label={t('settings.statNo')}
       color={colors.negative}
       colors={colors}
       typography={typography}
     />
     <StatCard
       value={String(countVerdict(readings, 'CONDITIONAL') + countVerdict(readings, 'DELAYED'))}
-      label="COND"
+      label={t('settings.statCond')}
       color={colors.caution}
       colors={colors}
       typography={typography}
@@ -614,6 +702,11 @@ const styles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth,
     alignItems: 'center',
   },
+  deleteAccountBtn: {
+    marginTop: 14,
+    paddingVertical: 8,
+    alignItems: 'center',
+  },
   locationCard: {
     padding: 16,
     borderRadius: 16,
@@ -624,6 +717,16 @@ const styles = StyleSheet.create({
     shadowRadius: 12,
     shadowOffset: { width: 0, height: 4 },
     elevation: 1,
+  },
+  linkRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    borderRadius: 16,
+    borderWidth: StyleSheet.hairlineWidth,
+    marginBottom: 8,
   },
   actionRow: {
     paddingVertical: 12,

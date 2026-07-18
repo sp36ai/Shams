@@ -17,7 +17,7 @@ export type VerdictKind =
   | 'UNCLEAR'
   | 'PENDING'
   | 'DENIED';
-export type LangCode = 'en' | 'ur' | 'hi';
+export type LangCode = 'en' | 'ur';
 
 /** Response from askOracle. */
 export interface OracleResponse {
@@ -129,6 +129,14 @@ export interface ReadingDoc {
   userId: string;
   question: string; // stored server-side; not returned to client via getReading
   questionLang: LangCode;
+  /**
+   * Exact chart inputs for server-cast readings (askOracle). Absent on
+   * offline readings uploaded via syncReadings. Together they make a
+   * server reading reproducible — buildChart() is pure over (chartAt, lat, lon).
+   */
+  chartAt?: string; // ISO-8601 UTC moment the chart was cast for
+  lat?: number;
+  lon?: number;
   category: string;
   verdict: VerdictKind;
   confidence: number;
@@ -154,7 +162,8 @@ export interface AuditLogDoc {
   verdict?: VerdictKind;
   plan?: PlanTier;
   source?: 'callable' | 'http';
-  ipAddress?: string;
+  // Raw IP is NEVER persisted — only this correlation hash. The raw address is
+  // used transiently in-memory (e.g. per-IP rate limiting) and then discarded.
   ipHash?: string; // SHA-256 hash prefix of caller IP, never raw IP
   userAgent?: string;
   durationMs?: number;
@@ -171,5 +180,7 @@ export type AuditAction =
   | 'payment_play_ok'
   | 'payment_play_fail'
   | 'plan_upgraded'
+  | 'subscription_cancelled'
+  | 'account_deleted'
   | 'reading_synced'
   | 'reading_deleted';

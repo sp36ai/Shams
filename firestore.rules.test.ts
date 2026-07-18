@@ -234,6 +234,122 @@ describe('/readings/{readingId}', () => {
   });
 });
 
+// ── /trials/{userId} ─────────────────────────────────────────────────────────
+
+describe('/trials/{userId}', () => {
+  it('owner can read own trial record', async () => {
+    await testEnv.withSecurityRulesDisabled(async ctx => {
+      await ctx
+        .firestore()
+        .collection('trials')
+        .doc('alice')
+        .set({ userId: 'alice', startedAt: '2026-01-01T00:00:00Z' });
+    });
+    const db = testEnv.authenticatedContext('alice').firestore();
+    await assertSucceeds(db.collection('trials').doc('alice').get());
+  });
+
+  it("other user CANNOT read someone else's trial", async () => {
+    await testEnv.withSecurityRulesDisabled(async ctx => {
+      await ctx
+        .firestore()
+        .collection('trials')
+        .doc('alice')
+        .set({ userId: 'alice', startedAt: '2026-01-01T00:00:00Z' });
+    });
+    const db = testEnv.authenticatedContext('bob').firestore();
+    await assertFails(db.collection('trials').doc('alice').get());
+  });
+
+  it('owner CANNOT write trial (Admin SDK only — prevents back-dating)', async () => {
+    const db = testEnv.authenticatedContext('alice').firestore();
+    await assertFails(
+      db.collection('trials').doc('alice').set({ startedAt: '2020-01-01T00:00:00Z' }),
+    );
+  });
+
+  it('unauthenticated user CANNOT read a trial', async () => {
+    await testEnv.withSecurityRulesDisabled(async ctx => {
+      await ctx.firestore().collection('trials').doc('alice').set({ userId: 'alice' });
+    });
+    const db = testEnv.unauthenticatedContext().firestore();
+    await assertFails(db.collection('trials').doc('alice').get());
+  });
+});
+
+// ── /playPurchaseTokens/{tokenHash} ──────────────────────────────────────────
+
+describe('/playPurchaseTokens/{tokenHash}', () => {
+  it('authenticated user CANNOT read a purchase-token doc', async () => {
+    await testEnv.withSecurityRulesDisabled(async ctx => {
+      await ctx.firestore().collection('playPurchaseTokens').doc('hash1').set({ userId: 'alice' });
+    });
+    const db = testEnv.authenticatedContext('alice').firestore();
+    await assertFails(db.collection('playPurchaseTokens').doc('hash1').get());
+  });
+
+  it('authenticated user CANNOT write a purchase-token doc (replay defense)', async () => {
+    const db = testEnv.authenticatedContext('alice').firestore();
+    await assertFails(db.collection('playPurchaseTokens').doc('hash1').set({ userId: 'alice' }));
+  });
+
+  it('admin also CANNOT read purchase-token docs (Admin SDK only)', async () => {
+    await testEnv.withSecurityRulesDisabled(async ctx => {
+      await ctx.firestore().collection('playPurchaseTokens').doc('hash1').set({ userId: 'alice' });
+    });
+    const db = testEnv.authenticatedContext('admin1', { admin: true }).firestore();
+    await assertFails(db.collection('playPurchaseTokens').doc('hash1').get());
+  });
+});
+
+// ── /securityEvents/{eventId} ────────────────────────────────────────────────
+
+describe('/securityEvents/{eventId}', () => {
+  it('regular user CANNOT read security events', async () => {
+    await testEnv.withSecurityRulesDisabled(async ctx => {
+      await ctx.firestore().collection('securityEvents').doc('e1').set({ kind: 'suspicious' });
+    });
+    const db = testEnv.authenticatedContext('alice').firestore();
+    await assertFails(db.collection('securityEvents').doc('e1').get());
+  });
+
+  it('admin can read security events', async () => {
+    await testEnv.withSecurityRulesDisabled(async ctx => {
+      await ctx.firestore().collection('securityEvents').doc('e1').set({ kind: 'suspicious' });
+    });
+    const db = testEnv.authenticatedContext('admin1', { admin: true }).firestore();
+    await assertSucceeds(db.collection('securityEvents').doc('e1').get());
+  });
+
+  it('nobody can write security events from a client (Admin SDK only)', async () => {
+    const admin = testEnv.authenticatedContext('admin1', { admin: true }).firestore();
+    await assertFails(admin.collection('securityEvents').doc('e2').set({ kind: 'x' }));
+  });
+});
+
+// ── /_system/{document} ──────────────────────────────────────────────────────
+
+describe('/_system/{document}', () => {
+  it('regular user CANNOT read system config', async () => {
+    await testEnv.withSecurityRulesDisabled(async ctx => {
+      await ctx.firestore().collection('_system').doc('flags').set({ maintenance: false });
+    });
+    const db = testEnv.authenticatedContext('alice').firestore();
+    await assertFails(db.collection('_system').doc('flags').get());
+  });
+
+  it('admin can read and write system config', async () => {
+    const db = testEnv.authenticatedContext('admin1', { admin: true }).firestore();
+    await assertSucceeds(db.collection('_system').doc('flags').set({ maintenance: true }));
+    await assertSucceeds(db.collection('_system').doc('flags').get());
+  });
+
+  it('regular user CANNOT write system config', async () => {
+    const db = testEnv.authenticatedContext('alice').firestore();
+    await assertFails(db.collection('_system').doc('flags').set({ maintenance: true }));
+  });
+});
+
 // ── /rateLimits ──────────────────────────────────────────────────────────────
 
 describe('/rateLimits', () => {

@@ -157,13 +157,12 @@
 1. Navigate to Settings
 2. Tap "اردو"
 3. Observe OracleScreen and HistoryScreen
-4. Tap "हिन्दी"
-5. Tap "English" to restore
+4. Tap "English" to restore
 
 **Expected:**
 - UI switches language immediately (no restart required)
 - Urdu: RTL text alignment, Arabic script renders correctly
-- Hindi: Devanagari script renders correctly
+- Only English and Urdu are offered — no Hindi option is present
 - Language preference persists after app restart
 
 ---

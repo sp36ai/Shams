@@ -24,8 +24,10 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
+import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 
 import { useColors, useTheme } from '@theme/ThemeProvider';
+import type { MainTabParamList } from '@navigation/types';
 import { useTypography } from '@theme/useTypography';
 import { useTranslation, useI18n } from '@i18n/I18nProvider';
 import {
@@ -51,7 +53,7 @@ interface ReasoningStep {
 interface VerdictJson {
   verdict: VerdictKind;
   confidence: number;
-  narration?: Partial<Record<'en' | 'ur' | 'hi', string>>;
+  narration?: Partial<Record<'en' | 'ur', string>>;
   reasoning?: ReasoningStep[];
   timing?: {
     window: string;
@@ -61,7 +63,6 @@ interface VerdictJson {
     planet: string;
     action: string;
     avoid: string;
-    mantra?: string;
   };
   moonSubLord?: {
     planet: string;
@@ -110,7 +111,9 @@ const HistoryScreen: React.FC = () => {
   const colors = useColors();
   const typography = useTypography();
   const t = useTranslation();
-  const navigation = useNavigation<{ navigate: (screen: string) => void }>();
+  // Typed against the tab param list so navigate() targets are compile-checked
+  // (the old inline `{ navigate: (screen: string) => void }` accepted any typo).
+  const navigation = useNavigation<BottomTabNavigationProp<MainTabParamList>>();
 
   const filter = useReadingsStore((s: ReturnType<typeof useReadingsStore.getState>) => s.filter);
   const sort = useReadingsStore((s: ReturnType<typeof useReadingsStore.getState>) => s.sort);
@@ -297,6 +300,7 @@ const ReadingRow: React.FC<{
 }> = ({ reading, onPress, onLongPress }) => {
   const colors = useColors();
   const typography = useTypography();
+  const t = useTranslation();
 
   const vColor = verdictColorFor(reading.verdict, colors);
   const badgeLabel = verdictBadgeFor(reading.verdict);
@@ -327,7 +331,7 @@ const ReadingRow: React.FC<{
           {horaLord !== undefined && horaLord.length > 0 && (
             <>
               <Text style={[typography('caption'), { color: colors.goldBright, fontSize: 10 }]}>
-                {horaLord} Hora
+                {displayPlanetName(horaLord)} {t('history.horaSuffix')}
               </Text>
               <Text style={[typography('caption'), { color: colors.textFaint }]}>·</Text>
             </>
@@ -440,7 +444,7 @@ const ReadingDetailModal: React.FC<{
           {narration.length > 0 && (
             <View style={[styles.section, { borderColor: colors.border }]}>
               <Text style={[typography('caption'), { color: colors.textMuted, marginBottom: 8 }]}>
-                Verdict
+                {t('history.narrationLabel')}
               </Text>
               <Text style={[typography('body'), { color: colors.text, lineHeight: 24 }]}>
                 {narration}
@@ -452,36 +456,36 @@ const ReadingDetailModal: React.FC<{
           {v.moonSubLord !== undefined && (
             <View style={[styles.section, { borderColor: colors.border }]}>
               <Text style={[typography('caption'), { color: colors.textMuted, marginBottom: 10 }]}>
-                Significators
+                {t('history.significatorsLabel')}
               </Text>
               <InfoRow
-                label="Moon Sub-Lord"
-                value={`${v.moonSubLord.planet} — House ${v.moonSubLord.occupiedHouse}`}
+                label={t('history.moonSubLordLabel')}
+                value={`${displayPlanetName(v.moonSubLord.planet)} — ${t('history.houseLabel')} ${v.moonSubLord.occupiedHouse}`}
                 colors={colors}
                 typography={typography}
               />
               {v.rulingPlanets !== undefined && (
                 <>
                   <InfoRow
-                    label="Day Lord"
-                    value={v.rulingPlanets.dayLord}
+                    label={t('history.dayLordLabel')}
+                    value={displayPlanetName(v.rulingPlanets.dayLord)}
                     colors={colors}
                     typography={typography}
                   />
                   <InfoRow
-                    label="Hora Lord"
-                    value={v.rulingPlanets.horaLord}
+                    label={t('history.horaLordLabel')}
+                    value={displayPlanetName(v.rulingPlanets.horaLord)}
                     colors={colors}
                     typography={typography}
                   />
                   <InfoRow
-                    label="Minute Lord"
-                    value={v.rulingPlanets.minuteLord}
+                    label={t('history.minuteLordLabel')}
+                    value={displayPlanetName(v.rulingPlanets.minuteLord)}
                     colors={colors}
                     typography={typography}
                   />
                   <InfoRow
-                    label="RP Score"
+                    label={t('history.rpScoreLabel')}
                     value={
                       v.rulingPlanets.agreementScore >= 0
                         ? `+${v.rulingPlanets.agreementScore}`
@@ -543,20 +547,13 @@ const ReadingDetailModal: React.FC<{
               ]}
             >
               <Text style={[typography('caption'), { color: colors.accent, marginBottom: 8 }]}>
-                {t('oracle.remedyLabel')} — {v.remedy.planet}
+                {t('oracle.remedyLabel')} — {displayPlanetName(v.remedy.planet)}
               </Text>
               <Text style={[typography('body'), { color: colors.text, marginBottom: 6 }]}>
                 {v.remedy.action}
               </Text>
-              {v.remedy.mantra !== undefined && (
-                <Text
-                  style={[typography('caption'), { color: colors.textMuted, fontStyle: 'italic' }]}
-                >
-                  {v.remedy.mantra}
-                </Text>
-              )}
               <Text style={[typography('caption'), { color: colors.textFaint, marginTop: 6 }]}>
-                Avoid: {v.remedy.avoid}
+                {t('history.avoidLabel')}: {v.remedy.avoid}
               </Text>
             </View>
           )}
@@ -640,6 +637,20 @@ const EmptyState: React.FC<{ onAsk: () => void }> = ({ onAsk }) => {
 /* -------------------------------------------------------------------------- */
 /*  Helpers                                                                   */
 /* -------------------------------------------------------------------------- */
+
+// User-facing planet labels. The two lunar nodes surface under their Arabic
+// names rather than the Sanskrit Rahu/Ketu; classical planets are unchanged.
+const NODE_DISPLAY_NAME: Readonly<Record<string, string>> = {
+  Rahu: "Al-Ra's",
+  Ketu: 'Al-Dhanab',
+};
+
+function displayPlanetName(name: string | undefined): string {
+  if (name === undefined) {
+    return '';
+  }
+  return NODE_DISPLAY_NAME[name] ?? name;
+}
 
 function verdictColorFor(v: VerdictKind, colors: ReturnType<typeof useColors>): string {
   switch (v) {

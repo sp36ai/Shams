@@ -3,7 +3,7 @@
  *
  * Layout:
  *   1. Header with back button
- *   2. TimingBar — hora, day, moon sign, nakshatra, LST, moon phase
+ *   2. TimingBar — hora, day, moon sign, lunar mansion (manzil), LST, moon phase
  *      Refreshes every 60 s; timer runs only while screen is focused.
  *   3. CollapsibleCosmicClock — collapsed by default.
  *      CosmicClock's setInterval runs only when focused AND expanded.
@@ -21,11 +21,12 @@ import { useColors, useTheme } from '@theme/ThemeProvider';
 import { useTypography } from '@theme/useTypography';
 import { useSettingsStore } from '@stores/settingsStore';
 import { dayLordAtMoment, horaLordAtMoment } from '@astrology/primitives/rulingPlanets';
+import { getManzila } from '@astrology/manazil';
 import StarfieldBackground from '@components/StarfieldBackground';
 import CosmicClock from '@components/home/CosmicClock';
 import type { RootStackParamList } from '@navigation/types';
 
-// ── Sign / nakshatra helpers ──────────────────────────────────────────────────
+// ── Sign / lunar-mansion helpers ──────────────────────────────────────────────
 
 const SIGN_NAMES = [
   'Aries',
@@ -41,36 +42,6 @@ const SIGN_NAMES = [
   'Aquarius',
   'Pisces',
 ] as const;
-
-const NAKSHATRAS: readonly string[] = [
-  'Ashwini',
-  'Bharani',
-  'Krittika',
-  'Rohini',
-  'Mrigashira',
-  'Ardra',
-  'Punarvasu',
-  'Pushya',
-  'Ashlesha',
-  'Magha',
-  'Purva Phalguni',
-  'Uttara Phalguni',
-  'Hasta',
-  'Chitra',
-  'Swati',
-  'Vishakha',
-  'Anuradha',
-  'Jyeshtha',
-  'Mula',
-  'Purva Ashadha',
-  'Uttara Ashadha',
-  'Shravana',
-  'Dhanishtha',
-  'Shatabhisha',
-  'Purva Bhadrapada',
-  'Uttara Bhadrapada',
-  'Revati',
-];
 
 function mod360(x: number): number {
   return ((x % 360) + 360) % 360;
@@ -89,7 +60,7 @@ const J2K: Readonly<Record<string, { L0: number; Lr: number }>> = {
   Saturn: { L0: 50.0774, Lr: 1222.1138 },
 };
 
-// Spec order for the 9 Jyotish grahas
+// Spec order for the 9 celestial witnesses (7 classical planets + the two nodes)
 const TABLE_PLANET_ORDER = [
   'Sun',
   'Moon',
@@ -117,8 +88,9 @@ function displayLonSidereal(name: PlanetName, nowMs: number): number {
   return mod360(tropical - LAHIRI_AYANAMSA_2025);
 }
 
-function nakshatraName(lon: number): string {
-  return NAKSHATRAS[Math.floor((lon / 360) * 27)] ?? '—';
+/** al-Qamar's Arabic lunar mansion (manzil) for a sidereal longitude — display only. */
+function manzilName(lon: number): string {
+  return getManzila(lon).name;
 }
 
 // ── Moon phase ────────────────────────────────────────────────────────────────
@@ -162,7 +134,7 @@ interface TimingState {
   horaLord: string;
   dayLord: string;
   moonSign: string;
-  moonNakshatra: string;
+  moonManzil: string;
   moonPhaseFull: string;
   lst: string;
   timeLabel: string;
@@ -176,7 +148,7 @@ function computeTiming(lonDeg: number): TimingState {
     horaLord: horaLordAtMoment(now, lonDeg),
     dayLord: dayLordAtMoment(now, lonDeg),
     moonSign: SIGN_NAMES[signIdx] ?? '—',
-    moonNakshatra: nakshatraName(moonLon),
+    moonManzil: manzilName(moonLon),
     moonPhaseFull: moonPhase(now),
     lst: localSiderealTime(now, lonDeg),
     timeLabel: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
@@ -195,6 +167,21 @@ const PLANET_GLYPHS: Record<PlanetName, string> = {
   Saturn: '♄',
   Rahu: '☊',
   Ketu: '☋',
+};
+
+// User-facing labels. Internal keys stay astronomical, but the two lunar nodes
+// surface under their Arabic names (the ascending/descending node) rather than
+// the Sanskrit Rahu/Ketu.
+const PLANET_DISPLAY_NAME: Record<PlanetName, string> = {
+  Sun: 'Sun',
+  Moon: 'Moon',
+  Mars: 'Mars',
+  Mercury: 'Mercury',
+  Jupiter: 'Jupiter',
+  Venus: 'Venus',
+  Saturn: 'Saturn',
+  Rahu: "Al-Ra's",
+  Ketu: 'Al-Dhanab',
 };
 
 // Mean daily motion (°/day) from J2K Lr constants (°/century ÷ 36525).
@@ -354,8 +341,8 @@ const SkyClockScreen: React.FC = () => {
           />
           <View style={[styles.divider, { backgroundColor: colors.border }]} />
           <TimingPill
-            label="Nakshatra"
-            value={timing.moonNakshatra}
+            label="Manzil"
+            value={timing.moonManzil}
             colors={colors}
             typography={typography}
           />
@@ -440,7 +427,7 @@ const SkyClockScreen: React.FC = () => {
                 ]}
               >
                 <Text style={[typography('caption'), styles.colPlanet, { color: colors.text }]}>
-                  {glyph} {name}
+                  {glyph} {PLANET_DISPLAY_NAME[name]}
                 </Text>
                 <Text style={[typography('caption'), styles.colData, { color: colors.accent }]}>
                   {sign}

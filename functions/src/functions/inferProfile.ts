@@ -36,6 +36,11 @@ Based on these three answers, classify the seeker's primary spiritual orientatio
 Respond with ONLY the single classification word.
 No explanation. No punctuation.`;
 
+    // Bound the Anthropic call — without this a hung connection ties up the
+    // function until the platform timeout. Matches the other classifiers.
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 5000);
+
     try {
       const res = await fetch('https://api.anthropic.com/v1/messages', {
         method: 'POST',
@@ -49,7 +54,10 @@ No explanation. No punctuation.`;
           max_tokens: 10,
           messages: [{ role: 'user', content: prompt }],
         }),
+        signal: controller.signal,
       });
+
+      clearTimeout(timer);
 
       if (!res.ok) {
         return { profile: 'clarity' };
@@ -67,6 +75,7 @@ No explanation. No punctuation.`;
 
       return { profile: VALID_PROFILES.has(profile) ? profile : 'clarity' };
     } catch {
+      clearTimeout(timer);
       return { profile: 'clarity' };
     }
   },

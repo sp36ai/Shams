@@ -146,10 +146,8 @@ const LocationPermissionScreen: React.FC = () => {
   const isLoading = status === 'requesting';
 
   // Google Play Compliance: Prominent disclosure must be shown before the system prompt.
-  const titleText = isDenied ? t('permission.deniedTitle') : 'Location Required to Continue';
-  const bodyText = isDenied
-    ? t('permission.deniedBody')
-    : 'Shams al-Asrār requires your precise location to read the heavens for your exact position. Every question is anchored to its moment and place — without both, the celestial counsel cannot be trusted.\n\nWithout location access, the app cannot function.';
+  const titleText = isDenied ? t('permission.deniedTitle') : t('permission.prominentTitle');
+  const bodyText = isDenied ? t('permission.deniedBody') : t('permission.prominentBody');
 
   return (
     <SafeAreaView
@@ -214,6 +212,11 @@ const LocationPermissionScreen: React.FC = () => {
             <Pressable
               onPress={isDenied && status === 'blocked' ? handleOpenSettings : handleGrant}
               disabled={isLoading}
+              accessibilityRole="button"
+              accessibilityState={{ disabled: isLoading }}
+              accessibilityLabel={
+                status === 'blocked' ? t('permission.openSettings') : t('permission.grantAccess')
+              }
               style={({ pressed }) => [
                 styles.primaryButton,
                 {

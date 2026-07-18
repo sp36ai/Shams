@@ -352,7 +352,11 @@ export const QUESTION_KEYWORDS: Readonly<Record<QuestionType, readonly string[]>
  * Lowercases, trims, collapses whitespace. Preserves Unicode (Urdu/Hindi).
  */
 export function normalizeQuestion(text: string): string {
-  return text.toLocaleLowerCase().trim().replace(/\s+/g, ' ');
+  // toLowerCase (NOT toLocaleLowerCase): locale-independent so classification is
+  // deterministic regardless of device locale. toLocaleLowerCase folds "I"→"ı"
+  // under a Turkish/Azeri locale, silently changing keyword matches and the
+  // verdict. Urdu/Hindi are caseless (unaffected).
+  return text.toLowerCase().trim().replace(/\s+/g, ' ');
 }
 
 /**
@@ -362,7 +366,8 @@ export function normalizeQuestion(text: string): string {
  * JS preserves insertion order of the frozen literal above.
  *
  * Determinism contract: for a given input string, the output is fixed.
- * No randomness, no locale-dependent collation beyond `toLocaleLowerCase`.
+ * No randomness, no locale-dependent collation (uses locale-independent
+ * toLowerCase, not toLocaleLowerCase).
  *
  * Phase 1 caller: src/screens/OracleScreen.tsx (engine stub).
  * Phase 3 caller: src/astrology/kp/judgment/judgeHorary.ts (real engine).
@@ -380,7 +385,7 @@ export function classifyQuestion(text: string): QuestionType {
     } // catch-all, evaluated last by skip
     const keywords = QUESTION_KEYWORDS[type];
     for (const kw of keywords) {
-      const lowerKw = kw.toLocaleLowerCase();
+      const lowerKw = kw.toLowerCase();
       // Match whole words/phrases using Unicode-aware boundaries.
       // This prevents "work" from matching in "artwork".
       const regex = new RegExp(`(?<=^|[^\\p{L}\\p{N}])${lowerKw}(?=[^\\p{L}\\p{N}]|$)`, 'u');

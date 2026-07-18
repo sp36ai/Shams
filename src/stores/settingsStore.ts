@@ -204,6 +204,12 @@ export const useSettingsStore = create<SettingsState>(set => ({
     storage.delete(KEYS.ONBOARDING_ANSWERS);
     storage.delete(KEYS.SEEKER_NAME);
     storage.delete(KEYS.MOTHER_NAME);
+    // Precise coordinates are personal data — a deletion must not leave them
+    // cached on the device (see authStore.deleteAccount).
+    storage.delete(KEYS.LOCATION_LAST_LAT);
+    storage.delete(KEYS.LOCATION_LAST_LON);
+    storage.delete(KEYS.LOCATION_LAST_TIMESTAMP);
+    storage.delete(KEYS.LOCATION_LAST_LABEL);
     set({
       hasSeenOnboarding: false,
       onboardingLocationPrompted: false,
@@ -211,6 +217,7 @@ export const useSettingsStore = create<SettingsState>(set => ({
       onboardingAnswers: null,
       seekerName: null,
       motherName: null,
+      lastLocation: null,
     });
   },
 }));

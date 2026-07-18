@@ -4,9 +4,17 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { runSecurityChecks, INTEGRITY_FAIL_MESSAGE } from '@utils/security';
 import { initializeAppCheckService } from './firebase/appCheck';
 import { ThemeProvider } from '@theme/ThemeProvider';
-import { I18nProvider } from '@i18n/I18nProvider';
+import { I18nProvider, applyLayoutDirection, readPersistedLang } from '@i18n/I18nProvider';
 import RootNavigator from './navigation/RootNavigator';
 import ErrorBoundary from './components/ErrorBoundary';
+
+// Re-sync native layout direction to the persisted language BEFORE the first
+// render. I18nManager.forceRTL persists natively, but this makes the persisted
+// language authoritative on every cold start and self-heals any RTL/lang
+// divergence — otherwise a stored Urdu user could get Urdu text in an LTR
+// layout. Idempotent: applyLayoutDirection only forces when the direction
+// actually differs. Runs at module load, the earliest JS point before render.
+applyLayoutDirection(readPersistedLang());
 
 /**
  * Entry point for Shams Al-Asrar.

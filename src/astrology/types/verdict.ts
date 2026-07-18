@@ -154,7 +154,6 @@ export interface VerdictRemedy {
 export interface VerdictNarration {
   readonly en: string;
   readonly ur: string;
-  readonly hi: string;
 }
 
 // ── Reasoning trace ────────────────────────────────────────────────────────

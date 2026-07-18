@@ -38,11 +38,15 @@ export const classifyIntent = onCall(
     const userMessage = typeof d?.userMessage === 'string' ? d.userMessage.slice(0, 500) : '';
     const lockedQuestion =
       typeof d?.lockedQuestion === 'string' ? d.lockedQuestion.slice(0, 500) : '';
-    const verdictDirection = typeof d?.verdictDirection === 'string' ? d.verdictDirection : '';
+    // verdictDirection and each recent message flow into the prompt — cap both
+    // so an oversized client payload can't inflate prompt size / cost.
+    const verdictDirection =
+      typeof d?.verdictDirection === 'string' ? d.verdictDirection.slice(0, 40) : '';
     const recentMessages = Array.isArray(d?.recentMessages)
       ? (d.recentMessages as unknown[])
           .slice(0, 3)
           .filter((m): m is string => typeof m === 'string')
+          .map(m => m.slice(0, 500))
       : [];
 
     const apiKey = ANTHROPIC_API_KEY.value();

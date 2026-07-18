@@ -10,7 +10,6 @@
  * SOURCE OF TRUTH: the font *families* are whatever typography.ts references:
  *     Latin      : Cinzel (display) + Spectral (body)
  *     Arabic     : Amiri
- *     Devanagari : Noto Sans Devanagari
  * If typography.ts changes a family, update the MANIFEST below to match. The two
  * MUST stay in lockstep — a family in code with no file here ships as the system
  * default font (silent brand regression); a file here with no code reference is
@@ -43,9 +42,9 @@ const ANDROID_FONTS_DIR = join(REPO_ROOT, 'android', 'app', 'src', 'main', 'asse
 const RAW_BASE = 'https://raw.githubusercontent.com/google/fonts/main';
 
 // filename (== PostScript name used in typography.ts) → { url, minSize }
-// Variable fonts (Cinzel, Noto Sans Devanagari) are saved under each weighted
-// filename the code references; RN keys on the filename, and the variable file's
-// default instance renders — acceptable, and matches the prior provisioning.
+// Variable fonts (Cinzel) are saved under each weighted filename the code
+// references; RN keys on the filename, and the variable file's default instance
+// renders — acceptable, and matches the prior provisioning.
 const MANIFEST = [
   { name: 'Cinzel-SemiBold.ttf', url: `${RAW_BASE}/ofl/cinzel/Cinzel%5Bwght%5D.ttf`, minSize: 50_000 },
   { name: 'Cinzel-Bold.ttf', url: `${RAW_BASE}/ofl/cinzel/Cinzel%5Bwght%5D.ttf`, minSize: 50_000 },
@@ -57,27 +56,6 @@ const MANIFEST = [
 
   { name: 'Amiri-Regular.ttf', url: `${RAW_BASE}/ofl/amiri/Amiri-Regular.ttf`, minSize: 300_000 },
   { name: 'Amiri-Bold.ttf', url: `${RAW_BASE}/ofl/amiri/Amiri-Bold.ttf`, minSize: 300_000 },
-
-  {
-    name: 'NotoSansDevanagari-Regular.ttf',
-    url: `${RAW_BASE}/ofl/notosansdevanagari/NotoSansDevanagari%5Bwdth,wght%5D.ttf`,
-    minSize: 150_000,
-  },
-  {
-    name: 'NotoSansDevanagari-Medium.ttf',
-    url: `${RAW_BASE}/ofl/notosansdevanagari/NotoSansDevanagari%5Bwdth,wght%5D.ttf`,
-    minSize: 150_000,
-  },
-  {
-    name: 'NotoSansDevanagari-SemiBold.ttf',
-    url: `${RAW_BASE}/ofl/notosansdevanagari/NotoSansDevanagari%5Bwdth,wght%5D.ttf`,
-    minSize: 150_000,
-  },
-  {
-    name: 'NotoSansDevanagari-Bold.ttf',
-    url: `${RAW_BASE}/ofl/notosansdevanagari/NotoSansDevanagari%5Bwdth,wght%5D.ttf`,
-    minSize: 150_000,
-  },
 ];
 
 const VALID_TTF_MAGIC = new Set(['00010000', '4f54544f', '74727565', '74797031']);

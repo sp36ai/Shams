@@ -5,7 +5,7 @@
  *   1. Degree ring  — 60 tick marks + second numbers
  *   2. House band   — 12 sectors with house numbers
  *   3. Zodiac band  — 12 glyphs with element colors
- *   4. Planet track — 8 Jyotish grahas at mean longitudes
+ *   4. Planet track — 8 celestial bodies at mean longitudes
  *   5. Star core    — Star of David + 12 petals + Sun center
  *
  * Clock hands (hour / minute / second) sit above planets.
@@ -110,6 +110,17 @@ const PDEFS: readonly PDef[] = [
   { name: 'Rahu', sym: '☊', r: 4.5, color: '#a78bfa', gradId: 'gRahu', isNode: true },
   { name: 'Ketu', sym: '☋', r: 4.5, color: '#fb7185', gradId: 'gKetu', isNode: true },
 ];
+
+// User-facing labels. Internal names stay astronomical; the two lunar nodes
+// surface under their Arabic names rather than the Sanskrit Rahu/Ketu.
+const NODE_DISPLAY_NAME: Readonly<Record<string, string>> = {
+  Rahu: "Al-Ra's",
+  Ketu: 'Al-Dhanab',
+};
+
+function displayPlanetName(name: string): string {
+  return NODE_DISPLAY_NAME[name] ?? name;
+}
 
 // Radial gradient stop pairs for each planet + Sun
 const GRAD_STOPS: ReadonlyArray<{ id: string; s1: string; s2: string }> = [
@@ -568,7 +579,9 @@ export default function CosmicClock({ running }: CosmicClockProps): React.ReactE
     const signIdx = Math.floor(ps.lon / 30) % 12;
     const signFull = ZODIAC_FULL[signIdx] ?? '';
     const deg = (ps.lon % 30).toFixed(2);
-    setTip(prev => (prev === ps.name ? null : `${ps.name}  ${signFull}  ${deg}°`));
+    setTip(prev =>
+      prev === ps.name ? null : `${displayPlanetName(ps.name)}  ${signFull}  ${deg}°`,
+    );
   }, []);
 
   // ── Dynamic planet elements ──────────────────────────────────────────────────
@@ -778,7 +791,7 @@ export default function CosmicClock({ running }: CosmicClockProps): React.ReactE
         {(
           [
             { label: 'Sat. Rings', active: showSaturn, onPress: () => setShowSaturn(v => !v) },
-            { label: 'Rahu/Ketu', active: showNodes, onPress: () => setShowNodes(v => !v) },
+            { label: 'Nodes', active: showNodes, onPress: () => setShowNodes(v => !v) },
             { label: 'Labels', active: showLabels, onPress: () => setShowLabels(v => !v) },
             { label: 'Sidereal', active: sidereal, onPress: () => setSidereal(v => !v) },
           ] as const
@@ -794,6 +807,9 @@ export default function CosmicClock({ running }: CosmicClockProps): React.ReactE
             ]}
             onPress={btn.onPress}
             activeOpacity={0.75}
+            accessibilityRole="button"
+            accessibilityState={{ selected: btn.active }}
+            accessibilityLabel={btn.label}
           >
             <Text
               style={[styles.btnText, { color: btn.active ? colors.accent : colors.textMuted }]}

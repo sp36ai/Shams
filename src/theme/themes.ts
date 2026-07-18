@@ -158,7 +158,7 @@ const darAlShams: Theme = {
     textMuted: '#A89F8C',
     // Raised from #5A5548 (2.66:1) to meet WCAG AA (4.6:1 on bg). Used as
     // TextInput placeholder + faint captions app-wide.
-    textFaint: '#7E7A70',
+    textFaint: '#878378',
     textOnGold: '#1A1308',
 
     celestialDust: '#E8C77D',
@@ -226,7 +226,7 @@ const laylAlBahr: Theme = {
     text: '#E0E8F8',
     textMuted: '#8A9AB8',
     // Raised from #3A4460 (2.07:1) to meet WCAG AA (4.6:1 on bg).
-    textFaint: '#737A8E',
+    textFaint: '#7B8194',
     textOnGold: '#E0E8F8',
 
     celestialDust: '#6B8FCC',
@@ -239,9 +239,9 @@ const laylAlBahr: Theme = {
     accent: '#4A6FA8',
     amber: '#6B8FCC',
     primary: '#4A6FA8',
-    textOnPrimary: '#E0E8F8',
+    textOnPrimary: '#EEF2FB',
     positive: '#4A8A6A',
-    negative: '#8A4A68',
+    negative: '#8D4C6B',
 
     starfield: '#6B8FCC',
     nebula1: 'rgba(74, 111, 168, 0.08)',
@@ -294,7 +294,7 @@ const narAlHadid: Theme = {
     text: '#F8F0EE',
     textMuted: '#A08880',
     // Raised from #504030 (1.98:1) to meet WCAG AA (4.6:1 on bg).
-    textFaint: '#84796E',
+    textFaint: '#8A7F73',
     textOnGold: '#F8F0EE',
 
     celestialDust: '#CC4038',
@@ -304,7 +304,7 @@ const narAlHadid: Theme = {
     lunarReflection: '#C0A8A0',
     candlelight: '#CC4038',
 
-    accent: '#A03028',
+    accent: '#AB332B',
     amber: '#CC4038',
     primary: '#A03028',
     textOnPrimary: '#F8F0EE',
@@ -350,19 +350,19 @@ const subhAlWahy: Theme = {
     borderAccent: '#B8943C',
 
     gold: '#B8943C',
-    goldBright: '#D4AA4E',
+    goldBright: '#B1872B',
     brass: '#8B6F3C',
 
     maqbool: '#7A9A50',
     maqboolGlow: 'rgba(122, 154, 80, 0.20)',
     mardood: '#8C4A3C',
     mardoodGlow: 'rgba(140, 74, 60, 0.15)',
-    caution: '#B8943C',
+    caution: '#A48435',
 
     text: '#2A1F0E',
     textMuted: '#6B5A3C',
     // Darkened from #9A8A6A (3.14:1) to meet WCAG AA (4.6:1 on light bg).
-    textFaint: '#7B6E55',
+    textFaint: '#70654E',
     textOnGold: '#FAF6EF',
 
     celestialDust: '#D4AA4E',
@@ -372,11 +372,11 @@ const subhAlWahy: Theme = {
     lunarReflection: '#8090A0',
     candlelight: '#D4AA4E',
 
-    accent: '#B8943C',
+    accent: '#AB8938',
     amber: '#D4AA4E',
     primary: '#B8943C',
-    textOnPrimary: '#FAF6EF',
-    positive: '#7A9A50',
+    textOnPrimary: '#3E2E13',
+    positive: '#73924C',
     negative: '#8C4A3C',
 
     starfield: '#D4AA4E',
@@ -418,7 +418,7 @@ const zaytunAlHikma: Theme = {
     borderAccent: '#5A7A45',
 
     gold: '#5A7A45',
-    goldBright: '#7EA05C',
+    goldBright: '#779757',
     brass: '#4A6038',
 
     maqbool: '#5A7A45',
@@ -430,7 +430,7 @@ const zaytunAlHikma: Theme = {
     text: '#1A2A14',
     textMuted: '#4A6038',
     // Darkened from #7A9068 (3.23:1) to meet WCAG AA (4.6:1 on light bg).
-    textFaint: '#637554',
+    textFaint: '#5B6C4E',
     textOnGold: '#F4F7F0',
 
     celestialDust: '#7EA05C',

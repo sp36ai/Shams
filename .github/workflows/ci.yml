@@ -42,6 +42,12 @@ jobs:
       - name: Dead code guard (orphans)
         run: npm run check:orphans
 
+      # Surface new HIGH+ advisories in the shipped app's runtime deps early.
+      # Non-blocking: advisory only, never fails the PR.
+      - name: Runtime dependency audit (non-blocking)
+        continue-on-error: true
+        run: npm audit --omit=dev --audit-level=high
+
   functions-quality:
     name: Functions Quality
     runs-on: ubuntu-latest
@@ -68,8 +74,21 @@ jobs:
       - name: Build
         run: npm run build
 
+      # `npm run build` re-syncs src/astrology → functions/src/engine. If the
+      # committed mirror doesn't match the sync output, the code that deploys
+      # differs from the code that was reviewed/committed — silent drift here
+      # once carried a different scoring rule (horaLord) than the tested source.
+      - name: Engine mirror drift guard
+        run: git diff --exit-code -- src/engine
+
       - name: Unit tests
         run: npm test -- --run
+
+      # Surface new HIGH+ advisories in the deployed Functions runtime early.
+      # Non-blocking: advisory only, never fails the PR.
+      - name: Runtime dependency audit (non-blocking)
+        continue-on-error: true
+        run: npm audit --omit=dev --audit-level=high
 
   e2e:
     name: E2E Tests (Maestro)
@@ -83,6 +102,17 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      # The Android system image + APK build + gradle caches overflow the
+      # runner's ~14 GB free space (emulator setup fails with "No space left on
+      # device"). Reclaim ~10 GB of preinstalled toolchains this job never uses.
+      - name: Free up runner disk space
+        run: |
+          echo "Before:"; df -h /
+          sudo rm -rf /usr/share/dotnet /opt/ghc /opt/hostedtoolcache/CodeQL \
+            /usr/local/share/boost /usr/share/swift /usr/local/share/powershell || true
+          sudo apt-get clean || true
+          echo "After:"; df -h /
 
       - name: Setup Node.js
         uses: actions/setup-node@v4

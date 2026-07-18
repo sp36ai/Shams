@@ -3,6 +3,10 @@ import type { CallableRequest, Request } from 'firebase-functions/v2/https';
 
 export interface RequestAuditMeta {
   source: 'callable' | 'http';
+  /**
+   * Raw caller IP — for TRANSIENT in-memory use only (e.g. per-IP rate
+   * limiting). Never persist this to Firestore; store `ipHash` instead.
+   */
   ipAddress?: string;
   ipHash?: string;
   userAgent?: string;

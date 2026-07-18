@@ -16,7 +16,7 @@ type FunctionsWithRegion = FirebaseFunctionsTypes.Module & {
 
 export interface AskOracleInput {
   question: string;
-  questionLang: 'en' | 'ur' | 'hi';
+  questionLang: 'en' | 'ur';
   lat: number;
   lon: number;
   seekerProfile?: 'clarity' | 'comfort' | 'action' | 'surrender';
@@ -61,7 +61,7 @@ export async function askOracle(args: AskOracleInput): Promise<AskOracleResult> 
     verdict: Reading['verdict'];
     confidence: number;
     category: string;
-    narration: Record<'en' | 'ur' | 'hi', string>;
+    narration: Record<'en' | 'ur', string>;
     timing?: {
       window: string;
       range: { min: number; max: number };
@@ -85,7 +85,6 @@ export async function askOracle(args: AskOracleInput): Promise<AskOracleResult> 
       planet: string;
       action: string;
       avoid: string;
-      mantra?: string;
       charity?: string;
     };
     reasoning: Array<{ ruleId: string; description: string; weight: number }>;

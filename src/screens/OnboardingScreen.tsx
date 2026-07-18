@@ -13,6 +13,7 @@ import functions, { type FirebaseFunctionsTypes } from '@react-native-firebase/f
 
 import { useColors, useTheme } from '@theme/ThemeProvider';
 import { useTypography } from '@theme/useTypography';
+import { useI18n, type TranslationKey } from '@i18n/I18nProvider';
 import StarfieldBackground from '@components/StarfieldBackground';
 import { useSettingsStore, type SeekerProfile } from '@stores/settingsStore';
 
@@ -23,45 +24,91 @@ type FunctionsWithRegion = FirebaseFunctionsTypes.Module & {
 // ── Question definitions ──────────────────────────────────────────────────────
 
 interface Choice {
-  label: string;
+  /** Display label key — resolved through t() at render. */
+  labelKey: TranslationKey;
+  /**
+   * Canonical English answer text sent to inferProfile. Language-independent
+   * on purpose: the seeker's classification must not depend on UI language.
+   */
+  answerEn: string;
   signal: SeekerProfile;
 }
 
 interface Question {
-  eyebrow: string;
-  text: string;
+  eyebrowKey: TranslationKey;
+  textKey: TranslationKey;
   choices: Choice[];
 }
 
 const QUESTIONS: Question[] = [
   {
-    eyebrow: 'QUESTION ONE — INTENT',
-    text: 'What brings you to the oracle?',
+    eyebrowKey: 'onboarding.q1Eyebrow',
+    textKey: 'onboarding.q1Text',
     choices: [
-      { label: 'I face a decision and need clarity', signal: 'clarity' },
-      { label: 'I carry something heavy and need guidance', signal: 'comfort' },
-      { label: 'I am planning something and need direction', signal: 'action' },
-      { label: 'I seek to understand what Allah wills', signal: 'surrender' },
+      {
+        labelKey: 'onboarding.q1c1',
+        answerEn: 'I face a decision and need clarity',
+        signal: 'clarity',
+      },
+      {
+        labelKey: 'onboarding.q1c2',
+        answerEn: 'I carry something heavy and need guidance',
+        signal: 'comfort',
+      },
+      {
+        labelKey: 'onboarding.q1c3',
+        answerEn: 'I am planning something and need direction',
+        signal: 'action',
+      },
+      {
+        labelKey: 'onboarding.q1c4',
+        answerEn: 'I seek to understand what Allah wills',
+        signal: 'surrender',
+      },
     ],
   },
   {
-    eyebrow: 'QUESTION TWO — REGISTER',
-    text: 'How do you prefer the oracle to speak?',
+    eyebrowKey: 'onboarding.q2Eyebrow',
+    textKey: 'onboarding.q2Text',
     choices: [
-      { label: 'Directly — I want clear answers', signal: 'clarity' },
-      { label: 'Gently — I am in a tender place', signal: 'comfort' },
-      { label: 'Practically — I need actionable guidance', signal: 'action' },
-      { label: 'Spiritually — I want depth over direction', signal: 'surrender' },
+      {
+        labelKey: 'onboarding.q2c1',
+        answerEn: 'Directly — I want clear answers',
+        signal: 'clarity',
+      },
+      {
+        labelKey: 'onboarding.q2c2',
+        answerEn: 'Gently — I am in a tender place',
+        signal: 'comfort',
+      },
+      {
+        labelKey: 'onboarding.q2c3',
+        answerEn: 'Practically — I need actionable guidance',
+        signal: 'action',
+      },
+      {
+        labelKey: 'onboarding.q2c4',
+        answerEn: 'Spiritually — I want depth over direction',
+        signal: 'surrender',
+      },
     ],
   },
   {
-    eyebrow: 'QUESTION THREE — TIMING',
-    text: 'When do you most seek guidance?',
+    eyebrowKey: 'onboarding.q3Eyebrow',
+    textKey: 'onboarding.q3Text',
     choices: [
-      { label: 'Before important choices', signal: 'clarity' },
-      { label: 'In moments of uncertainty or pain', signal: 'comfort' },
-      { label: 'When I am planning or building', signal: 'action' },
-      { label: 'In quiet moments of reflection', signal: 'surrender' },
+      { labelKey: 'onboarding.q3c1', answerEn: 'Before important choices', signal: 'clarity' },
+      {
+        labelKey: 'onboarding.q3c2',
+        answerEn: 'In moments of uncertainty or pain',
+        signal: 'comfort',
+      },
+      { labelKey: 'onboarding.q3c3', answerEn: 'When I am planning or building', signal: 'action' },
+      {
+        labelKey: 'onboarding.q3c4',
+        answerEn: 'In quiet moments of reflection',
+        signal: 'surrender',
+      },
     ],
   },
 ];
@@ -91,6 +138,7 @@ const OnboardingScreen: React.FC = () => {
   const { theme } = useTheme();
   const colors = useColors();
   const typography = useTypography();
+  const { t } = useI18n();
   const scrollRef = useRef<ScrollView>(null);
   const { width } = useWindowDimensions();
 
@@ -114,7 +162,7 @@ const OnboardingScreen: React.FC = () => {
     (choice: Choice, qIndex: number) => {
       setAnswers(prev => {
         const next = [...prev];
-        next[qIndex] = choice.label;
+        next[qIndex] = choice.answerEn;
         return next;
       });
       setTimeout(() => advanceTo(qIndex + 1), 220);
@@ -127,11 +175,11 @@ const OnboardingScreen: React.FC = () => {
       const finalAnswers: [string, string, string] = [
         answers[0] ?? '',
         answers[1] ?? '',
-        choice.label,
+        choice.answerEn,
       ];
       setAnswers(prev => {
         const n = [...prev];
-        n[2] = choice.label;
+        n[2] = choice.answerEn;
         return n;
       });
       setInferring(true);
@@ -180,7 +228,7 @@ const OnboardingScreen: React.FC = () => {
                     { color: colors.textFaint, letterSpacing: 2.5, marginBottom: 4 },
                   ]}
                 >
-                  {'✦  BISMILLAH  ✦'}
+                  {t('onboarding.bismillah')}
                 </Text>
                 <Text
                   style={{
@@ -209,7 +257,7 @@ const OnboardingScreen: React.FC = () => {
                 },
               ]}
             >
-              {q.eyebrow}
+              {t(q.eyebrowKey)}
             </Text>
             <Text
               style={[
@@ -217,7 +265,7 @@ const OnboardingScreen: React.FC = () => {
                 { color: colors.text, textAlign: 'center', letterSpacing: 0.4, marginBottom: 20 },
               ]}
             >
-              {q.text}
+              {t(q.textKey)}
             </Text>
 
             {/* Choice cards */}
@@ -235,6 +283,8 @@ const OnboardingScreen: React.FC = () => {
                     key={cIndex}
                     onPress={onPress}
                     disabled={inferring || profile !== null}
+                    accessibilityRole="button"
+                    accessibilityLabel={t(choice.labelKey)}
                     style={({ pressed }) => [
                       styles.choiceCard,
                       {
@@ -250,7 +300,7 @@ const OnboardingScreen: React.FC = () => {
                         { color: colors.text, textAlign: 'center', lineHeight: 22 },
                       ]}
                     >
-                      {choice.label}
+                      {t(choice.labelKey)}
                     </Text>
                   </Pressable>
                 );
@@ -265,13 +315,15 @@ const OnboardingScreen: React.FC = () => {
                   <Pressable
                     testID="onboarding-enter-btn"
                     onPress={handleEnter}
+                    accessibilityRole="button"
+                    accessibilityLabel={t('onboarding.enterApp')}
                     style={({ pressed }) => [
                       styles.cta,
                       { backgroundColor: colors.primary, opacity: pressed ? 0.85 : 1 },
                     ]}
                   >
                     <Text style={[typography('button'), { color: colors.textOnPrimary }]}>
-                      {'Enter Shams al-Asrār'}
+                      {t('onboarding.enterApp')}
                     </Text>
                   </Pressable>
                 )}

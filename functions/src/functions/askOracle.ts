@@ -44,6 +44,7 @@ import {
   seekerProfileModifier,
 } from '../prompts/oracleSynthesisPrompt';
 import { runSafetyValidator } from './safetyValidator';
+import { findForbiddenRemedyTerm, ISLAMIC_FALLBACK_REMEDY } from './remedyGuard';
 import { getManzila, getManzilaOracleLine } from '../engine/manazil';
 import { houseForLongitude } from '../engine/primitives/chartBuilder';
 import { HOUSE_MATRIX } from '../engine/kp/rules/houseMatrix';
@@ -170,11 +171,18 @@ async function claimQuotaSlot(
 
 // ── Audit log ────────────────────────────────────────────────────────────────
 
+// Operational oracle logs are high-volume (one per reading) and are telemetry,
+// not a fraud/financial record — so they carry an expiresAt for Firestore TTL
+// cleanup. Payment/security/deletion audit logs deliberately OMIT this field
+// and are therefore retained indefinitely (see docs/PLAY_DATA_SAFETY.md).
+const AUDIT_LOG_RETENTION_MS = 90 * 24 * 60 * 60 * 1000; // 90 days
+
 async function writeAuditLog(entry: Omit<AuditLogDoc, 'ts'>): Promise<void> {
   try {
     await db.collection('auditLogs').add({
       ...entry,
       ts: FieldValue.serverTimestamp(),
+      expiresAt: new Date(Date.now() + AUDIT_LOG_RETENTION_MS),
     });
   } catch (err) {
     logger.error('audit log write failed', { err: String(err) });
@@ -229,12 +237,19 @@ function buildOracleUserMessage(params: {
     timingStr = `${timingRange.min}–${timingRange.max} ${timingWindow}`;
   }
 
+  // Strip newlines/control chars from the user-supplied names before they go
+  // into the labelled prompt — otherwise a name containing a newline could
+  // inject a fake "SEEKER_NAME:"/instruction line into the prompt structure.
+  const sanitizeName = (s: string): string =>
+    // eslint-disable-next-line no-control-regex
+    s.replace(/[\u0000-\u001F\u007F]/g, ' ').trim();
+
   let msg = `VERDICT: ${verdictBinary}\nCONFIDENCE: ${confidenceLevel}\nTIMING: ${timingStr}`;
   if (seekerName) {
-    msg += `\nSEEKER_NAME: ${seekerName}`;
+    msg += `\nSEEKER_NAME: ${sanitizeName(seekerName)}`;
   }
   if (motherName) {
-    msg += `\nMOTHER_NAME: ${motherName}`;
+    msg += `\nMOTHER_NAME: ${sanitizeName(motherName)}`;
   }
   return msg;
 }
@@ -377,6 +392,13 @@ export const askOracle = onCall(
         userId,
         question: input.question,
         questionLang: input.questionLang,
+        // Exact chart inputs — buildChart() is a pure function of these three,
+        // so persisting them makes the reading reproducible/auditable (the
+        // verdict can be re-derived later). createdAt is the Firestore commit
+        // time, a different clock, so it cannot substitute for chartAt.
+        chartAt: now,
+        lat: input.lat,
+        lon: input.lon,
         category: verdict.qType,
         verdict: verdict.verdict,
         confidence: verdict.confidence,
@@ -406,7 +428,6 @@ export const askOracle = onCall(
         verdict: verdict.verdict,
         plan,
         source: requestMeta.source,
-        ipAddress: requestMeta.ipAddress,
         ipHash: requestMeta.ipHash,
         userAgent: requestMeta.userAgent,
         durationMs: Date.now() - startedAt,
@@ -494,9 +515,33 @@ export const askOracle = onCall(
           })
         : ORACLE_FALLBACK;
 
-      const oracle = apiKey ? await runSafetyValidator(oracleRaw, verdict.id, apiKey) : oracleRaw;
+      const validated = apiKey
+        ? await runSafetyValidator(oracleRaw, verdict.id, apiKey)
+        : oracleRaw;
 
-      logger.info('oracle synthesis', { userId, oracle });
+      // Deterministic remedy gate — remedies must be exclusively Islamic
+      // (Quran, Asmā' al-Ḥusnā, dua/dhikr, sadaqah). A forbidden term anywhere
+      // in the remedy replaces the whole object with the sanctioned fallback.
+      const forbiddenRemedyTerm = findForbiddenRemedyTerm(validated.remedy);
+      const oracle = forbiddenRemedyTerm
+        ? { ...validated, remedy: { ...ISLAMIC_FALLBACK_REMEDY } }
+        : validated;
+      if (forbiddenRemedyTerm) {
+        logger.warn('remedy guard: non-Islamic remedy replaced with fallback', {
+          userId,
+          readingId: verdict.id,
+          matchedTerm: forbiddenRemedyTerm,
+        });
+      }
+
+      // Log only non-PII shape metadata. The oracle prose weaves in the
+      // seeker's and mother's names (per the synthesis prompt), so logging the
+      // object itself would leak raw PII — violating this logger's contract.
+      logger.info('oracle synthesis', {
+        userId,
+        hasOracleVoice: Boolean(oracle?.opening),
+        remedyReplaced: Boolean(forbiddenRemedyTerm),
+      });
 
       // 13. Return minimal response — no chart internals, no algorithm state
       return {
@@ -560,7 +605,6 @@ export const askOracle = onCall(
         userId,
         action: 'oracle_computed',
         source: requestMeta.source,
-        ipAddress: requestMeta.ipAddress,
         ipHash: requestMeta.ipHash,
         userAgent: requestMeta.userAgent,
         durationMs: Date.now() - startedAt,

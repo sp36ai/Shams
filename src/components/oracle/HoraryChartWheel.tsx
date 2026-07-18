@@ -50,8 +50,9 @@ const PLANET_ABBR: Record<string, string> = {
   Jupiter: '♃',
   Venus: '♀',
   Saturn: '♄',
-  Rahu: 'Ra',
-  Ketu: 'Ke',
+  // Ascending / descending lunar nodes — astronomical glyphs, not Sanskrit abbr.
+  Rahu: '☊',
+  Ketu: '☋',
 };
 
 const SIGN_SYMBOLS: Record<string, string> = {

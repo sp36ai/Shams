@@ -20,7 +20,7 @@
     "test:watch": "jest --watch --testPathIgnorePatterns=firestore.rules.test.ts --testPathIgnorePatterns=functions/",
     "test:web": "npx serve ./hosting",
     "test:coverage": "jest --coverage --testPathIgnorePatterns=firestore.rules.test.ts --testPathIgnorePatterns=functions/",
-    "test:rules": "firebase emulators:exec --config firebase.test.json --only firestore \"jest firestore.rules.test.ts --testEnvironment node --runInBand\"",
+    "test:rules": "firebase emulators:exec --config firebase.test.json --only firestore \"jest --config jest.rules.config.cjs --runInBand\"",
     "test:e2e": "maestro test .maestro/",
     "test:e2e:single": "maestro test",
     "check:orphans": "npx madge --extensions ts,tsx --ts-config tsconfig.json --orphans src",
@@ -53,13 +53,13 @@
     ]
   },
   "dependencies": {
+    "@react-native-community/geolocation": "3.4.0",
     "@react-native-firebase/app": "19.3.0",
     "@react-native-firebase/app-check": "19.3.0",
     "@react-native-firebase/auth": "19.3.0",
     "@react-native-firebase/crashlytics": "19.3.0",
     "@react-native-firebase/firestore": "19.3.0",
     "@react-native-firebase/functions": "19.3.0",
-    "@react-native-community/geolocation": "3.4.0",
     "@react-native-google-signin/google-signin": "16.1.2",
     "@react-navigation/bottom-tabs": "7.18.8",
     "@react-navigation/native": "7.3.8",
@@ -78,6 +78,7 @@
   "devDependencies": {
     "@babel/core": "^7.20.0",
     "@babel/preset-env": "^7.20.0",
+    "@babel/preset-typescript": "^7.29.7",
     "@babel/runtime": "^7.20.0",
     "@firebase/rules-unit-testing": "^3.0.4",
     "@react-native-community/cli": "15.0.1",

@@ -3,6 +3,8 @@ import { FieldValue } from 'firebase-admin/firestore';
 import { db } from '../utils/admin';
 import { FUNCTION_OPTS, ANTHROPIC_API_KEY } from '../config';
 import { verifyAuth } from '../middleware/auth';
+import { logger } from '../utils/logger';
+import { findForbiddenTermInText } from './remedyGuard';
 
 interface CandidateInput {
   id: string;
@@ -104,7 +106,21 @@ Maximum 30 words.`;
       .join('')
       .trim();
 
-    return text.length >= 10 ? text : '';
+    if (text.length < 10) {
+      return '';
+    }
+
+    // Remedy descriptions must stay Islamic. The question text is user-supplied
+    // and feeds this prompt, so a crafted question could steer the description
+    // non-Islamic. Drop any that trips the guard — the client then falls back
+    // to the neutral effect-dimension label.
+    const forbidden = findForbiddenTermInText(text);
+    if (forbidden !== null) {
+      logger.warn('selectRemedies: non-Islamic description dropped', { forbidden });
+      return '';
+    }
+
+    return text;
   } catch {
     clearTimeout(timer);
     return '';
@@ -120,20 +136,36 @@ export const selectRemedies = onCall(
   async (request): Promise<SelectRemediesResponse> => {
     verifyAuth(request);
 
+    // Client-supplied strings flow into LLM prompts, so every field is length-
+    // capped here — an oversized payload would otherwise inflate prompt size
+    // and cost. `cap` also coerces non-strings to ''.
+    const cap = (v: unknown, n: number): string => (typeof v === 'string' ? v.slice(0, n) : '');
+
     const d = request.data as SelectRemediasRequest | null;
-    const oracleContext = d?.oracleContext ?? {
-      classification: 'NEUTRAL',
-      spiritualState: 'uncertain',
-      severity: 'moderate',
-      summary: '',
+    const rawCtx = (d?.oracleContext ?? {}) as Record<string, unknown>;
+    const oracleContext = {
+      classification: cap(rawCtx.classification, 40) || 'NEUTRAL',
+      spiritualState: cap(rawCtx.spiritualState, 40) || 'uncertain',
+      severity: cap(rawCtx.severity, 40) || 'moderate',
+      summary: cap(rawCtx.summary, 500),
     };
-    const candidates: CandidateInput[] = Array.isArray(d?.candidates)
-      ? (d.candidates as unknown[])
-          .slice(0, 8)
-          .filter((c): c is CandidateInput => typeof (c as CandidateInput)?.id === 'string')
-      : [];
-    const questionText = typeof d?.questionText === 'string' ? d.questionText.slice(0, 500) : '';
-    const readingId = typeof d?.readingId === 'string' ? d.readingId : '';
+    const candidates: CandidateInput[] = (
+      Array.isArray(d?.candidates) ? (d.candidates as unknown[]) : []
+    )
+      .slice(0, 8)
+      .filter((c): c is Record<string, unknown> => typeof (c as { id?: unknown })?.id === 'string')
+      .map(c => ({
+        id: cap(c.id, 128),
+        title: cap(c.title, 120),
+        category: cap(c.category, 64),
+        effectDimension: cap(c.effectDimension, 64),
+        intensity: cap(c.intensity, 32),
+        themeTags: (Array.isArray(c.themeTags) ? c.themeTags : [])
+          .slice(0, 12)
+          .map(t => cap(t, 40)),
+      }));
+    const questionText = cap(d?.questionText, 500);
+    const readingId = cap(d?.readingId, 128);
 
     const apiKey = ANTHROPIC_API_KEY.value();
 

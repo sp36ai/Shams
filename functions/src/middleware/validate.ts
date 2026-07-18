@@ -13,7 +13,7 @@ import { HttpsError } from 'firebase-functions/v2/https';
 
 const LatSchema = z.number().min(-90).max(90);
 const LonSchema = z.number().min(-180).max(180);
-const LangSchema = z.enum(['en', 'ur', 'hi']);
+const LangSchema = z.enum(['en', 'ur']);
 
 // ── Function-specific schemas ────────────────────────────────────────────────
 

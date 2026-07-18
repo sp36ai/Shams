@@ -7,7 +7,7 @@
 
 import type { Planet } from '../types/chart';
 
-const DAY_LORDS: Planet[] = [
+export const DAY_LORDS: Planet[] = [
   'Sun', // 0: Sunday
   'Moon', // 1: Monday
   'Mars', // 2: Tuesday
@@ -17,7 +17,15 @@ const DAY_LORDS: Planet[] = [
   'Saturn', // 6: Saturday
 ];
 
-const HORA_SEQUENCE: Planet[] = ['Sun', 'Venus', 'Mercury', 'Moon', 'Saturn', 'Jupiter', 'Mars'];
+export const HORA_SEQUENCE: Planet[] = [
+  'Sun',
+  'Venus',
+  'Mercury',
+  'Moon',
+  'Saturn',
+  'Jupiter',
+  'Mars',
+];
 
 /**
  * Calculates the Day Lord (Vara Lord) respecting the sunrise-to-sunrise rule.
