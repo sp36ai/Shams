@@ -3,11 +3,12 @@
  *
  * Runs after Opus synthesis, before the response reaches the client.
  * Four fields validated: hidden_influence, spiritual_layer, timing, warning.
- * All calls fire in parallel via Promise.all. Per-field failures are fail-open:
- * original text passes through, failure is logged to Firestore.
+ * A SINGLE Haiku call validates all present fields at once (previously one
+ * call per field — 4× the requests and cost). Failures are fail-open: the
+ * original text passes through and the gap is logged to Firestore.
  *
- * This is a second defence — tone guardrails in the system prompt are the first.
- * Haiku instability causing blocked readings is a worse outcome than
+ * This is a second defence — tone guardrails in the system prompt are the
+ * first. Haiku instability causing blocked readings is a worse outcome than
  * unvalidated-but-already-guardrailed prose reaching the user.
  */
 
@@ -22,21 +23,21 @@ export interface ValidationResult {
   fieldsModified: string[];
 }
 
-interface FieldValidation {
-  text: string;
-  issues: string[];
-  modified: boolean;
-}
-
 const FIELDS_TO_VALIDATE = ['hidden_influence', 'spiritual_layer', 'timing', 'warning'] as const;
 
 type ValidatedField = (typeof FIELDS_TO_VALIDATE)[number];
 
-const VALIDATOR_PROMPT = (fieldName: string, fieldText: string): string =>
+interface FieldVerdict {
+  status?: string;
+  final_text?: string;
+  issues?: string[];
+}
+
+const VALIDATOR_PROMPT = (fields: Record<string, string>): string =>
   `
 You are a safety validator for an Islamic spiritual oracle.
 
-Review the following oracle text and identify any violations:
+Review EACH field below and identify any violations:
 
 1. Medical claims (diagnoses, treatment instructions, healing guarantees)
 2. Financial claims (investment advice, wealth promises)
@@ -48,85 +49,16 @@ Review the following oracle text and identify any violations:
 7. Fear amplification (doom predictions, catastrophic certainty)
 8. Authority overreach (overrides medical, legal, financial advice)
 
-Field: ${fieldName}
-Text: "${fieldText}"
+Fields to review (JSON object, key = field name, value = text):
+${JSON.stringify(fields)}
 
-If safe, return exactly:
-{"status":"approved","issues":[],"final_text":${JSON.stringify(fieldText)}}
+Return ONLY valid JSON in exactly this shape, with one entry per input field:
+{"results":{"<field_name>":{"status":"approved"|"modified","final_text":"<text>","issues":["describe violation"]}}}
 
-If violations found, return exactly:
-{"status":"modified","issues":["describe violation"],"final_text":"corrected text here"}
-
+If a field is safe, use status "approved" and return final_text unchanged with an empty issues array.
+If a field has violations, use status "modified" and return the corrected final_text.
 Return only valid JSON. No explanation. No markdown.
 `.trim();
-
-async function validateField(
-  fieldName: ValidatedField,
-  fieldText: string | undefined | null,
-  apiKey: string,
-  readingId: string,
-): Promise<FieldValidation> {
-  if (!fieldText) {
-    return { text: fieldText ?? '', issues: [], modified: false };
-  }
-
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), 6000);
-
-  try {
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'anthropic-version': '2023-06-01',
-        'content-type': 'application/json',
-        'x-api-key': apiKey,
-      },
-      body: JSON.stringify({
-        model: 'claude-haiku-4-5-20251001',
-        max_tokens: 512,
-        messages: [{ role: 'user', content: VALIDATOR_PROMPT(fieldName, fieldText) }],
-      }),
-      signal: controller.signal,
-    });
-
-    clearTimeout(timer);
-
-    if (!res.ok) {
-      throw new Error(`haiku http ${res.status}`);
-    }
-
-    const data = (await res.json()) as {
-      content?: Array<{ type: string; text?: string }>;
-    };
-    const raw = (data.content ?? [])
-      .filter(b => b.type === 'text')
-      .map(b => b.text ?? '')
-      .join('')
-      .trim();
-
-    const parsed = JSON.parse(raw) as {
-      status: string;
-      issues: string[];
-      final_text: string;
-    };
-
-    const modified = parsed.status === 'modified';
-    return {
-      text: typeof parsed.final_text === 'string' ? parsed.final_text : fieldText,
-      issues: Array.isArray(parsed.issues) ? parsed.issues : [],
-      modified,
-    };
-  } catch (err) {
-    clearTimeout(timer);
-    // Fail-open: log the gap, return original text unchanged
-    logValidationResult(readingId, {
-      status: 'validator_failed',
-      issues: [`Haiku timeout on field: ${fieldName} — ${String(err)}`],
-      fieldsModified: [],
-    }).catch(() => undefined);
-    return { text: fieldText, issues: [], modified: false };
-  }
-}
 
 function logValidationResult(
   readingId: string,
@@ -147,36 +79,91 @@ export async function runSafetyValidator(
   readingId: string,
   apiKey: string,
 ): Promise<OracleVoice> {
-  const results = await Promise.all(
-    FIELDS_TO_VALIDATE.map(field => validateField(field, oracle[field], apiKey, readingId)),
-  );
-
-  const fieldsModified: string[] = [];
-  const allIssues: string[] = [];
-  const updated: Partial<OracleVoice> = {};
-
-  FIELDS_TO_VALIDATE.forEach((field, i) => {
-    const r = results[i]!;
-    if (r.modified) {
-      fieldsModified.push(field);
-      allIssues.push(...r.issues);
+  // Collect the present, non-empty fields to validate.
+  const present: Partial<Record<ValidatedField, string>> = {};
+  for (const field of FIELDS_TO_VALIDATE) {
+    const value = oracle[field];
+    if (typeof value === 'string' && value.length > 0) {
+      present[field] = value;
     }
-    if (oracle[field] !== undefined) {
-      (updated as Record<string, unknown>)[field] = r.text;
-    }
-  });
-
-  const aggregateStatus: ValidationResult['status'] =
-    fieldsModified.length > 0 ? 'modified' : 'approved';
-
-  // Fire-and-forget — never awaited in return path
-  if (aggregateStatus === 'modified' || allIssues.length > 0) {
-    logValidationResult(readingId, {
-      status: aggregateStatus,
-      issues: allIssues,
-      fieldsModified,
-    }).catch(() => undefined);
+  }
+  if (Object.keys(present).length === 0) {
+    return oracle; // nothing to validate
   }
 
-  return { ...oracle, ...updated };
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 6000);
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'anthropic-version': '2023-06-01',
+        'content-type': 'application/json',
+        'x-api-key': apiKey,
+      },
+      body: JSON.stringify({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 1024,
+        messages: [{ role: 'user', content: VALIDATOR_PROMPT(present as Record<string, string>) }],
+      }),
+      signal: controller.signal,
+    });
+
+    clearTimeout(timer);
+
+    if (!res.ok) {
+      throw new Error(`haiku http ${res.status}`);
+    }
+
+    const data = (await res.json()) as { content?: Array<{ type: string; text?: string }> };
+    const raw = (data.content ?? [])
+      .filter(b => b.type === 'text')
+      .map(b => b.text ?? '')
+      .join('')
+      .trim();
+
+    const parsed = JSON.parse(raw) as { results?: Record<string, FieldVerdict> };
+    const results = parsed.results ?? {};
+
+    const updated: Partial<OracleVoice> = {};
+    const fieldsModified: string[] = [];
+    const allIssues: string[] = [];
+
+    for (const field of FIELDS_TO_VALIDATE) {
+      const original = present[field];
+      if (original === undefined) {
+        continue;
+      }
+      const verdict = results[field];
+      const finalText =
+        verdict && typeof verdict.final_text === 'string' ? verdict.final_text : original;
+      (updated as Record<string, unknown>)[field] = finalText;
+      if (verdict?.status === 'modified') {
+        fieldsModified.push(field);
+        if (Array.isArray(verdict.issues)) {
+          allIssues.push(...verdict.issues);
+        }
+      }
+    }
+
+    if (fieldsModified.length > 0 || allIssues.length > 0) {
+      void logValidationResult(readingId, {
+        status: fieldsModified.length > 0 ? 'modified' : 'approved',
+        issues: allIssues,
+        fieldsModified,
+      });
+    }
+
+    return { ...oracle, ...updated };
+  } catch (err) {
+    clearTimeout(timer);
+    // Fail-open: log the gap, return the oracle unchanged.
+    void logValidationResult(readingId, {
+      status: 'validator_failed',
+      issues: [`Haiku validation failed — ${String(err)}`],
+      fieldsModified: [],
+    });
+    return oracle;
+  }
 }

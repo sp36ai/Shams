@@ -527,6 +527,27 @@ export const askOracle = onCall(
 
       logger.info('oracle synthesis', { userId, oracle });
 
+      // Persist the synthesised voice + manzila onto the reading (the base
+      // reading was written before synthesis) so History can re-render them.
+      void readingRef
+        .set(
+          {
+            oracle,
+            manzila: {
+              number: manzila.number,
+              name: manzila.name,
+              arabic: manzila.arabic,
+              nature: manzila.nature,
+              element: manzila.element,
+              oracleDescriptor: manzila.oracleDescriptor,
+            },
+          },
+          { merge: true },
+        )
+        .catch(err =>
+          logger.warn('oracle persist failed', { readingId: verdict.id, err: String(err) }),
+        );
+
       // 13. Return minimal response — no chart internals, no algorithm state
       return {
         readingId: verdict.id,
