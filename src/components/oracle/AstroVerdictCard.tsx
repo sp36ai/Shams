@@ -4,6 +4,7 @@ import { Animated, Easing, Pressable, StyleSheet, Text, View } from 'react-nativ
 
 import { useColors } from '@theme/ThemeProvider';
 import { useTypography } from '@theme/useTypography';
+import { useTranslation, type TranslateFn, type TranslationKey } from '@i18n/I18nProvider';
 import type {
   AstroVerdictResult,
   HousePill,
@@ -133,16 +134,16 @@ const VeilLine: React.FC = () => {
   );
 };
 
-// ── confidencePhrase — number (0-100) → locked display string ─────────────────
+// ── confidencePhrase — number (0-100) → localized display string ──────────────
 
-function confidencePhrase(confidence: number): string {
+function confidencePhrase(confidence: number, t: TranslateFn): string {
   if (confidence >= 70) {
-    return '4 celestial witnesses aligned';
+    return t('verdictCard.confHigh');
   }
   if (confidence >= 40) {
-    return 'The heavens speak with measured certainty';
+    return t('verdictCard.confMedium');
   }
-  return 'The stars speak softly — listen closely';
+  return t('verdictCard.confLow');
 }
 
 // ── Category icon map — Unicode geometry, no emoji except 📿 ─────────────────
@@ -163,21 +164,23 @@ const CATEGORY_ICON: Record<string, string> = {
 
 // ── effectDimension → display string ─────────────────────────────────────────
 
-const EFFECT_LABEL: Record<string, string> = {
-  spiritual_clearing: 'A practice of spiritual purification',
-  calming: 'A practice of inner stillness',
-  emotional_release: 'A practice of releasing what is held',
-  surrender: 'A practice of returning to Allah',
-  trust_building: 'A practice of deepening trust',
-  reconciliation: 'A practice of mending what is broken',
-  activation: 'A practice of renewed movement',
-  grounding: 'A practice of returning to centre',
-  humility: 'A practice of softening the self',
-  clarity: 'A practice of clearing the inner eye',
-  opening: 'A practice of opening closed doors',
-  comfort: 'A practice of receiving divine comfort',
-  patience: 'A practice of sacred waiting',
-  gratitude: 'A practice of anchoring in blessing',
+// effectDimension → translation key for the fallback description shown when the
+// server-generated remedy description is absent.
+const EFFECT_KEY: Record<string, TranslationKey> = {
+  spiritual_clearing: 'verdictCard.effect_spiritual_clearing',
+  calming: 'verdictCard.effect_calming',
+  emotional_release: 'verdictCard.effect_emotional_release',
+  surrender: 'verdictCard.effect_surrender',
+  trust_building: 'verdictCard.effect_trust_building',
+  reconciliation: 'verdictCard.effect_reconciliation',
+  activation: 'verdictCard.effect_activation',
+  grounding: 'verdictCard.effect_grounding',
+  humility: 'verdictCard.effect_humility',
+  clarity: 'verdictCard.effect_clarity',
+  opening: 'verdictCard.effect_opening',
+  comfort: 'verdictCard.effect_comfort',
+  patience: 'verdictCard.effect_patience',
+  gratitude: 'verdictCard.effect_gratitude',
 };
 
 // ── AstroVerdictCard ──────────────────────────────────────────────────────────
@@ -195,6 +198,7 @@ const AstroVerdictCard: React.FC<AstroVerdictCardProps> = ({
 }) => {
   const colors = useColors();
   const typography = useTypography();
+  const t = useTranslation();
 
   // ── 4-phase reveal ──────────────────────────────────────────────────────────
   const [phase, setPhase] = useState<0 | 1 | 2 | 3>(0);
@@ -405,7 +409,7 @@ const AstroVerdictCard: React.FC<AstroVerdictCardProps> = ({
                 { color: colors.textMuted, marginLeft: 8, fontStyle: 'italic' },
               ]}
             >
-              {confidencePhrase(result.confidence)}
+              {confidencePhrase(result.confidence, t)}
             </Text>
           </View>
         </Animated.View>
@@ -786,8 +790,7 @@ const AstroVerdictCard: React.FC<AstroVerdictCardProps> = ({
                 ]}
               >
                 {libraryRemedy.description ??
-                  EFFECT_LABEL[libraryRemedy.effectDimension] ??
-                  'A practice of sacred intention'}
+                  t(EFFECT_KEY[libraryRemedy.effectDimension] ?? 'verdictCard.effectFallback')}
               </Text>
               {/* effectDimension pill */}
               <View style={[styles.effectPill, { borderColor: colors.borderAccent }]}>

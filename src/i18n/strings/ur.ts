@@ -156,6 +156,26 @@ export const ur: StringTable = {
     disclaimer:
       'صرف روحانی غور و فکر کے لیے — یہ طبی، قانونی یا مالی پیشہ ورانہ مشورے کا نعم البدل نہیں۔',
   },
+  verdictCard: {
+    confHigh: 'چار آسمانی گواہ متفق ہیں',
+    confMedium: 'آسمان ٹھہرے ہوئے یقین سے بولتا ہے',
+    confLow: 'ستارے دھیمے لہجے میں بولتے ہیں — غور سے سنیں',
+    effectFallback: 'مقدس نیت کا عمل',
+    effect_spiritual_clearing: 'روحانی تطہیر کا عمل',
+    effect_calming: 'باطنی سکون کا عمل',
+    effect_emotional_release: 'دل کے بوجھ اتارنے کا عمل',
+    effect_surrender: 'اللہ کی طرف رجوع کا عمل',
+    effect_trust_building: 'توکل گہرا کرنے کا عمل',
+    effect_reconciliation: 'ٹوٹے رشتے جوڑنے کا عمل',
+    effect_activation: 'نئی روانی کا عمل',
+    effect_grounding: 'اپنے مرکز کی طرف لوٹنے کا عمل',
+    effect_humility: 'نفس کو نرم کرنے کا عمل',
+    effect_clarity: 'باطنی نظر صاف کرنے کا عمل',
+    effect_opening: 'بند دروازے کھولنے کا عمل',
+    effect_comfort: 'الٰہی تسلی پانے کا عمل',
+    effect_patience: 'مقدس انتظار کا عمل',
+    effect_gratitude: 'نعمت پر شکر جمانے کا عمل',
+  },
 
   skyClock: {
     headerTitle: 'فلکی گھڑی',

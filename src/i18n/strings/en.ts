@@ -151,6 +151,26 @@ export const en: StringTable = {
     disclaimer:
       'For spiritual reflection only — not a substitute for professional medical, legal, or financial advice.',
   },
+  verdictCard: {
+    confHigh: '4 celestial witnesses aligned',
+    confMedium: 'The heavens speak with measured certainty',
+    confLow: 'The stars speak softly — listen closely',
+    effectFallback: 'A practice of sacred intention',
+    effect_spiritual_clearing: 'A practice of spiritual purification',
+    effect_calming: 'A practice of inner stillness',
+    effect_emotional_release: 'A practice of releasing what is held',
+    effect_surrender: 'A practice of returning to Allah',
+    effect_trust_building: 'A practice of deepening trust',
+    effect_reconciliation: 'A practice of mending what is broken',
+    effect_activation: 'A practice of renewed movement',
+    effect_grounding: 'A practice of returning to centre',
+    effect_humility: 'A practice of softening the self',
+    effect_clarity: 'A practice of clearing the inner eye',
+    effect_opening: 'A practice of opening closed doors',
+    effect_comfort: 'A practice of receiving divine comfort',
+    effect_patience: 'A practice of sacred waiting',
+    effect_gratitude: 'A practice of anchoring in blessing',
+  },
 
   skyClock: {
     headerTitle: 'Sky Clock',

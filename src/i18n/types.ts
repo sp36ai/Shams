@@ -169,6 +169,26 @@ export interface StringTable {
     newQuestionBody: string;
     disclaimer: string;
   };
+  verdictCard: {
+    confHigh: string;
+    confMedium: string;
+    confLow: string;
+    effectFallback: string;
+    effect_spiritual_clearing: string;
+    effect_calming: string;
+    effect_emotional_release: string;
+    effect_surrender: string;
+    effect_trust_building: string;
+    effect_reconciliation: string;
+    effect_activation: string;
+    effect_grounding: string;
+    effect_humility: string;
+    effect_clarity: string;
+    effect_opening: string;
+    effect_comfort: string;
+    effect_patience: string;
+    effect_gratitude: string;
+  };
   skyClock: {
     headerTitle: string;
     nowLabel: string;
