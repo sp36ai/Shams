@@ -9,6 +9,29 @@
 
 ---
 
+## 0. Remediation Log (fixes applied on this branch)
+
+The following findings were fixed and verified after the initial audit (functions build + full test suite 8/8, client typecheck + lint + 66 unit tests, all green):
+
+| Finding | Status | Commit theme |
+|---|---|---|
+| **C1** — broken Play subscription verification | ✅ Fixed + regression test | derive active state from `paymentState`+`expiryTimeMillis` via pure `assertSubscriptionActive()` |
+| **H1** — purchase-token replay | ✅ Fixed | sha256 token→user binding, rejects reuse by another account |
+| **H2** — quota consumed before compute | ✅ Fixed | refund the daily slot when the reading fails post-claim |
+| **H3** — per-reading LLM cost | ✅ Fixed | 4 per-field Haiku calls → 1 batched call (5→2 model calls/reading) |
+| **M1** — oracle prose not persisted | ✅ Fixed | merge `oracle`+`manzila` onto the reading after synthesis |
+| **M2** — no product analytics | ✅ Fixed | Firebase Analytics + paywall/purchase/ask funnel events |
+| **M3** — no Storage rules | ✅ Fixed | deny-by-default `storage.rules` wired in `firebase.json` |
+| **M4** — client/server quota period | ✅ Non-issue (verified) | client already uses UTC daily `todayKey()`, matching the server; the `QUOTA_WEEK` MMKV key is a misleading name only |
+| **M5** — no offline UX | ✅ Fixed | NetInfo `useIsOffline` hook + app-root `OfflineBanner` |
+| **M6** — engine mirror drift | ✅ Fixed | synced `functions/src/engine` to `src/astrology` + CI drift guard |
+| **L3** — stray empty files | ✅ Fixed | removed `dasha.ts`, `docs/timing.ts` |
+| **H4** — store screenshots/feature graphic | ⚠️ Documented only | genuine captures required; `android/fastlane/metadata/README.md` specifies exactly what's needed (cannot be fabricated) |
+
+**Still open (require a device / live services / human — cannot be closed from the repo):** C1 end-to-end sandbox proof, H3 billing alarms + spend dashboard, performance/battery profiling, crash-free device startup, Islamic-content scholarly review, `npm audit`/`osv-scanner` run, deployed rules state. **Deferred by design:** L1 native SSL pinning (Phase 5), L2 integrity-gate override, L4 documentation cleanup.
+
+---
+
 ## 1. Executive Summary
 
 Shams al-Asrār is a mature, unusually well-engineered React Native horary-astrology app. The server-authoritative architecture is genuinely strong: the proprietary RKP judgment engine and all quota/entitlement enforcement run in Cloud Functions behind Firebase Auth + App Check, Firestore rules are deny-by-default with no client-writable privileged fields, inputs are Zod-validated, the Razorpay webhook uses constant-time HMAC verification, and there are no secrets or API keys committed to the repo. Client code quality is high — TypeScript strict, Zustand stores, an error boundary wired to Crashlytics, a boot-time integrity gate, trilingual i18n (en/ur/hi) at parity, and partial accessibility labelling. CI/CD is comprehensive (lint, typecheck, unit tests, dead-code guard, Maestro E2E on an emulator, and a signed-AAB pipeline with bundletool verification and staged rollout).
@@ -96,7 +119,7 @@ Weighted for a production Play Store launch *with subscriptions enabled*. For a 
 | M1 | Oracle voice + manzila are returned to the client but **not persisted** to the reading doc. Re-opening History shows the verdict but loses the AI prose the user paid for. | `functions/src/functions/askOracle.ts:376-399` (persist happens before synthesis at 474-497) | Persist `oracle`/`manzila` onto `/readings/{id}` after synthesis, or accept a documented limitation. |
 | M2 | No Firebase Analytics / product event tracking — only Crashlytics (via `ErrorBoundary`). Release-readiness "Analytics" item unmet; you'll be blind to funnel/conversion. | `src/**` (no `analytics()`/`logEvent` usage; dep absent) | Add `@react-native-firebase/analytics` + key events (sign-up, ask, paywall-view, purchase) or explicitly defer. |
 | M3 | No `storage.rules` file and no `storage` block in `firebase.json`. If a Storage bucket exists it falls back to default rules. | `firebase.json`, repo root | Confirm Storage is unused/disabled, or add a deny-by-default `storage.rules`. |
-| M4 | Client vs server quota period may diverge. Server enforces **3 per UTC day** (`config.ts` `FREE_LIMIT`, `todayKey`). Confirm the client `quotaStore` uses the same period/anchor, or the UI count will disagree with server enforcement near boundaries. | `functions/src/config.ts:12-19` vs `src/stores/quotaStore.ts` | Align client period/anchor to server (UTC daily). Server is authoritative — this is a display-consistency fix. |
+| M4 | ~~Client vs server quota period may diverge.~~ **Verified non-issue:** `src/stores/quotaStore.ts` already uses `todayKey()` = UTC "YYYY-MM-DD" daily, matching the server. Original note came from the stale prior-audit claim of a weekly key. | `src/stores/quotaStore.ts:36` | None — only the `QUOTA_WEEK` MMKV key name is misleading (it holds a day string); a rename would need a migration, not worth it. |
 | M5 | No connectivity detection (`@react-native-community/netinfo` not a dependency) despite `ACCESS_NETWORK_STATE` being declared. Free/local modules work offline via MMKV, but `askOracle` failures surface as generic errors with no "you're offline" state. | `src/**`, `AndroidManifest.xml` | Add NetInfo and an offline banner on the Oracle/Premium screens, or document the degraded UX. |
 | M6 | Engine exists in two near-identical trees (`src/astrology/**` and `functions/src/engine/**`) kept in sync by a build script. Judgment runs server-side only (correct), but the client bundles primitives (`julianDay`, `rulingPlanets`, `ayanamsa`, `siderealTime`) for the free SkyClock/timing strip. | both trees, `scripts/` | Determinism is centralized server-side (good). Keep a CI check that the shared primitives stay byte-identical to prevent client/server timing divergence. |
 
@@ -168,6 +191,8 @@ Weighted for a production Play Store launch *with subscriptions enabled*. For a 
 ---
 
 ## 10. Release Recommendation
+
+> **Updated after remediation (see §0):** C1, H1, H2, H3, M1, M2, M3, M5, M6 are now fixed and verified in-repo. The recommendation below reflects the *original* audit state; the residual blockers are now **(a) proving C1 against a real/sandbox Play purchase** and **(b) producing the store imagery (H4) and the signed-AAB / pre-launch / device artifacts** in §9. With those, a monetized launch moves to **Ready with Minor Fixes**.
 
 ### With subscriptions enabled: **Needs Major Fixes**
 Driven by **C1 (broken subscription verification — hard blocker)**, **H1 (entitlement replay)**, and the absence of verified signed-AAB / pre-launch / device evidence and store imagery (H4). None of these are deep — C1 is a ~10-line fix — but the monetized path cannot ship until C1 is fixed *and proven against a sandbox purchase*.
