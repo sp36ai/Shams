@@ -168,6 +168,30 @@ async function claimQuotaSlot(
   return { plan, remaining, trialActive };
 }
 
+/**
+ * Refund one quota slot for the current day. Called when a reading fails after
+ * the slot was already claimed, so a transient server error does not cost the
+ * user a question. No-op for unlimited plans (no slot was consumed).
+ */
+async function refundQuotaSlot(userId: string): Promise<void> {
+  const quotaRef = db.collection('quotas').doc(userId);
+  const currentDay = todayKey();
+  await db.runTransaction(async tx => {
+    const snap = await tx.get(quotaRef);
+    if (!snap.exists) {
+      return;
+    }
+    const d = snap.data() as Partial<QuotaDoc>;
+    if (d.dayKey === currentDay && (d.used ?? 0) > 0) {
+      tx.set(
+        quotaRef,
+        { used: (d.used ?? 0) - 1, updatedAt: FieldValue.serverTimestamp() },
+        { merge: true },
+      );
+    }
+  });
+}
+
 // ── Audit log ────────────────────────────────────────────────────────────────
 
 async function writeAuditLog(entry: Omit<AuditLogDoc, 'ts'>): Promise<void> {
@@ -345,6 +369,10 @@ export const askOracle = onCall(
     // 1. App Check (enforced by runtime) — 2. Firebase Auth
     const { userId } = verifyAuth(request);
 
+    // Tracks whether a (non-unlimited) quota slot was consumed, so it can be
+    // refunded if the reading fails after the claim.
+    let slotConsumed = false;
+
     return measure('askOracle', userId, async () => {
       // 3. Validate
       const input = parse(AskOracleSchema, request.data);
@@ -354,6 +382,7 @@ export const askOracle = onCall(
 
       // 5. Quota (atomic)
       const { plan, remaining } = await claimQuotaSlot(userId);
+      slotConsumed = remaining !== null; // unlimited plans return null — nothing to refund
 
       // 6. Build chart server-side — client has ZERO involvement in ephemeris
       const now = new Date().toISOString();
@@ -544,9 +573,19 @@ export const askOracle = onCall(
         },
         oracle,
       };
-    }).catch(err => {
+    }).catch(async err => {
       if (err instanceof HttpsError) {
         throw err;
+      }
+
+      // A slot was already consumed but the reading failed — give it back so a
+      // transient error doesn't cost the user one of their daily questions.
+      if (slotConsumed) {
+        try {
+          await refundQuotaSlot(userId);
+        } catch (refundErr) {
+          logger.error('quota refund failed', { userId, err: String(refundErr) });
+        }
       }
 
       logger.error('askOracle unexpected error', {

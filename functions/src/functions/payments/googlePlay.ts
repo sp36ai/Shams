@@ -19,6 +19,7 @@
  */
 
 import * as https from 'https';
+import { createHash } from 'crypto';
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import { FieldValue } from 'firebase-admin/firestore';
 import { db, auth } from '../../utils/admin';
@@ -41,11 +42,73 @@ interface GoogleAccessToken {
 }
 
 interface SubscriptionPurchase {
-  purchaseState: number; // 0 = purchased, 1 = cancelled
+  // purchases.subscriptions (v3) has NO `purchaseState` field — active status
+  // is derived from paymentState: 0 = pending, 1 = received, 2 = free trial,
+  // 3 = deferred. (purchaseState belongs to the products resource, not this one.)
+  paymentState?: number;
   acknowledgementState: number; // 0 = not acknowledged, 1 = acknowledged
   orderId: string;
   startTimeMillis: string;
   expiryTimeMillis: string; // authoritative expiry from Play Store
+}
+
+/**
+ * Determine whether a purchases.subscriptions (v3) resource represents an
+ * active, unexpired subscription, returning its authoritative expiry.
+ * Exported for unit testing.
+ *
+ * A live subscription has paymentState 1 (payment received) or 2 (free trial)
+ * and an expiry in the future. There is intentionally no `purchaseState` check
+ * here — that field does not exist on this resource and reading it always
+ * yielded `undefined`, which previously rejected every valid purchase.
+ */
+export function assertSubscriptionActive(purchase: SubscriptionPurchase, now: number): Date {
+  const active = purchase.paymentState === 1 || purchase.paymentState === 2;
+  if (!active) {
+    throw new HttpsError('failed-precondition', 'Subscription is not in an active state');
+  }
+
+  const expiryMs = parseInt(purchase.expiryTimeMillis, 10);
+  if (Number.isNaN(expiryMs) || expiryMs <= now) {
+    throw new HttpsError('failed-precondition', 'Subscription has already expired');
+  }
+  return new Date(expiryMs);
+}
+
+/**
+ * Bind a purchase token to the redeeming user and reject any attempt to redeem
+ * the same token under a different account. Without this, one valid token could
+ * be replayed to upgrade multiple accounts (entitlement-sharing bypass).
+ *
+ * The token is SHA-256 hashed before use as a Firestore document id so it is
+ * always a legal key regardless of the token's characters.
+ */
+async function bindPurchaseTokenToUser(
+  purchaseToken: string,
+  userId: string,
+  productId: string,
+  orderId: string,
+): Promise<void> {
+  const tokenHash = createHash('sha256').update(purchaseToken).digest('hex');
+  const tokenRef = db.collection('purchaseTokens').doc(tokenHash);
+
+  await db.runTransaction(async tx => {
+    const snap = await tx.get(tokenRef);
+    if (snap.exists) {
+      const owner = snap.data()?.userId as string | undefined;
+      if (owner && owner !== userId) {
+        throw new HttpsError(
+          'permission-denied',
+          'This purchase is already linked to another account.',
+        );
+      }
+    }
+    tx.set(
+      tokenRef,
+      { userId, productId, orderId, updatedAt: FieldValue.serverTimestamp() },
+      { merge: true },
+    );
+  });
 }
 
 function httpsPost(url: string, body: string, headers: Record<string, string>): Promise<string> {
@@ -192,17 +255,14 @@ export const verifyGooglePlayPurchase = onCall(
 
       const purchase = JSON.parse(body) as SubscriptionPurchase;
 
-      // purchaseState 0 = active subscription
-      if (purchase.purchaseState !== 0) {
-        throw new HttpsError('failed-precondition', 'Subscription is not in an active state');
-      }
+      // Validate active + unexpired via the fields the v3 subscriptions resource
+      // actually returns (paymentState + expiryTimeMillis). Returns the
+      // authoritative expiry, which handles monthly vs annual correctly.
+      const expiresAt = assertSubscriptionActive(purchase, Date.now());
 
-      // Use Play Store's authoritative expiry — this handles monthly vs annual correctly
-      const expiryMs = parseInt(purchase.expiryTimeMillis, 10);
-      if (isNaN(expiryMs) || expiryMs <= Date.now()) {
-        throw new HttpsError('failed-precondition', 'Subscription has already expired');
-      }
-      const expiresAt = new Date(expiryMs);
+      // Bind this token to the caller so it cannot be replayed to upgrade a
+      // different account. Throws permission-denied if already owned by another.
+      await bindPurchaseTokenToUser(input.purchaseToken, userId, input.productId, purchase.orderId);
 
       // Acknowledge to prevent auto-refund (24h window)
       if (purchase.acknowledgementState === 0) {
