@@ -155,6 +155,15 @@ export const useAuthStore = create<AuthState>(set => ({
           const previousUid = storage.getString(KEYS.AUTH_LAST_UID);
           if (previousUid !== undefined && previousUid !== fbUser.uid) {
             useSettingsStore.getState().resetForNewAccount();
+            // Explicit signOut() clears readings/quota, but an EXTERNAL session
+            // end (password change elsewhere, token revocation, server-side
+            // disable) fires onAuthStateChanged(null) without that teardown.
+            // Without this, the next account on the device would inherit the
+            // previous user's reading history — a cross-account privacy leak.
+            // Idempotent when the explicit sign-out already ran.
+            useReadingsStore.getState().clearAll();
+            useQuotaStore.getState().reset();
+            invalidateQuotaCache();
           }
           storage.set(KEYS.AUTH_LAST_UID, fbUser.uid);
           try {
