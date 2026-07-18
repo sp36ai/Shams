@@ -15,6 +15,7 @@ import {
 import functions, { type FirebaseFunctionsTypes } from '@react-native-firebase/functions';
 import { useQuotaStore } from '@stores/quotaStore';
 import type { PlanTier } from '@stores/quotaStore';
+import { logPlanPurchased } from '../firebase/analytics';
 
 type AndroidSubscriptionProduct = {
   subscriptionOfferDetails?: Array<{ offerToken: string; basePlanId: string }>;
@@ -103,6 +104,7 @@ export function usePurchase(): PurchaseState {
             const tier = tierFromSku(p.productId);
             if (tier) {
               setPlan(tier, planExpiry);
+              logPlanPurchased(tier);
             }
             finishTransaction({ purchase: p, isConsumable: false }).catch(() => undefined);
           }
@@ -154,6 +156,7 @@ export function usePurchase(): PurchaseState {
         if (verified) {
           await finishTransaction({ purchase: p, isConsumable: false }).catch(() => undefined);
           setPlan(tier, planExpiry);
+          logPlanPurchased(tier);
           return { success: true };
         }
 
@@ -185,6 +188,7 @@ export function usePurchase(): PurchaseState {
           const tier = tierFromSku(p.productId);
           if (tier) {
             setPlan(tier, planExpiry);
+            logPlanPurchased(tier);
             return { success: true };
           }
         }

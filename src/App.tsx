@@ -7,6 +7,7 @@ import { ThemeProvider } from '@theme/ThemeProvider';
 import { I18nProvider } from '@i18n/I18nProvider';
 import RootNavigator from './navigation/RootNavigator';
 import ErrorBoundary from './components/ErrorBoundary';
+import OfflineBanner from './components/OfflineBanner';
 
 /**
  * Entry point for Shams Al-Asrar.
@@ -57,7 +58,10 @@ const App: React.FC = () => {
       <ThemeProvider>
         <SafeAreaProvider>
           <I18nProvider>
-            <RootNavigator />
+            <View style={styles.root}>
+              <RootNavigator />
+              <OfflineBanner />
+            </View>
           </I18nProvider>
         </SafeAreaProvider>
       </ThemeProvider>
@@ -69,6 +73,9 @@ const App: React.FC = () => {
 // Colors are pinned to the canonical darAlShams palette (src/theme/themes.ts)
 // so even the integrity-failure screen reads as the obsidian / gold manuscript.
 const styles = StyleSheet.create({
+  root: {
+    flex: 1,
+  },
   errorContainer: {
     flex: 1,
     backgroundColor: '#0A0A0F', // darAlShams.bg
