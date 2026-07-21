@@ -6,14 +6,9 @@
  * talks to it. The APK contains zero engine logic.
  */
 
-import functions, { type FirebaseFunctionsTypes } from '@react-native-firebase/functions';
 import type { Reading } from '@stores/readingsStore';
+import { regionalFunctions } from './functionsClient';
 import { logOracleAsked } from './analytics';
-
-// RNFB v19 types omit .region() on the Module — it exists at runtime.
-type FunctionsWithRegion = FirebaseFunctionsTypes.Module & {
-  region(r: string): FirebaseFunctionsTypes.Module;
-};
 
 export interface AskOracleInput {
   question: string;
@@ -31,7 +26,7 @@ export interface AskOracleResult {
 }
 
 export async function askOracle(args: AskOracleInput): Promise<AskOracleResult> {
-  const functionsInstance = (functions() as FunctionsWithRegion).region('asia-south1');
+  const functionsInstance = regionalFunctions();
 
   // Emulator disabled — pointing at deployed production function
   // if (__DEV__) {

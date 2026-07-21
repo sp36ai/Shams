@@ -11,11 +11,7 @@
  *   - 500+ char input                 → VALID_HORARY (no one writes 500 chars to test)
  */
 
-import functions, { type FirebaseFunctionsTypes } from '@react-native-firebase/functions';
-
-type FunctionsWithRegion = FirebaseFunctionsTypes.Module & {
-  region(r: string): FirebaseFunctionsTypes.Module;
-};
+import { regionalFunctions } from '../firebase/functionsClient';
 
 export type QuestionClass = 'VALID_HORARY' | 'CONVERSATIONAL' | 'AMBIGUOUS';
 
@@ -28,9 +24,9 @@ export async function classifyQuestion(text: string): Promise<QuestionClass> {
   }
 
   try {
-    const fn = (functions() as FunctionsWithRegion)
-      .region('asia-south1')
-      .httpsCallable<{ text: string }, { class: QuestionClass }>('classifyQuestion');
+    const fn = regionalFunctions().httpsCallable<{ text: string }, { class: QuestionClass }>(
+      'classifyQuestion',
+    );
 
     const result = await fn({ text });
     const cls = result.data?.class;
