@@ -29,5 +29,17 @@ module.exports = {
     node: true,
     es2021: true,
   },
-  ignorePatterns: ['node_modules/', 'build/', 'dist/', 'lib/', '*.config.js', 'vitest.config.ts'],
+  ignorePatterns: [
+    'node_modules/',
+    'build/',
+    'dist/',
+    'lib/',
+    '*.config.js',
+    'vitest.config.ts',
+    // Generated mirror of src/astrology (produced by sync-engine). It is still
+    // type-checked by `tsc --noEmit` above, and linted authoritatively at its
+    // source in the app's own lint job — re-linting the copy under functions'
+    // stricter type-aware rules only flags source-style choices in generated code.
+    'src/engine/',
+  ],
 };

@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
@@ -9,6 +9,7 @@ import { useQuotaStore } from '@stores/quotaStore';
 import { usePurchase, type PurchasePlan } from '@hooks/usePurchase';
 import type { RootStackParamList } from '@navigation/types';
 import StarfieldBackground from '@components/StarfieldBackground';
+import { logPaywallView } from '../firebase/analytics';
 
 const KHASS_GOLD = '#B8952A';
 
@@ -76,6 +77,10 @@ const PremiumScreen: React.FC = () => {
     mureed: 'monthly',
     khass: 'monthly',
   });
+
+  useEffect(() => {
+    logPaywallView(trialExpired ? 'trial_expired' : 'direct');
+  }, [trialExpired]);
 
   const handleBillingToggle = useCallback((plan: PlanKey, period: BillingPeriod) => {
     setBilling(prev => ({ ...prev, [plan]: period }));

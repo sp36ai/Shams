@@ -1,0 +1,19 @@
+rules_version = '2';
+
+/**
+ * Firebase Storage Security Rules — Shams al-Asrar
+ *
+ * The app does NOT use Cloud Storage (no uploads, no user media). These rules
+ * are deny-by-default so that if a Storage bucket is ever provisioned for the
+ * project, it is locked down from the first deploy rather than falling back to
+ * a permissive default. Add scoped allow rules here only when a genuine
+ * Storage feature is introduced.
+ */
+
+service firebase.storage {
+  match /b/{bucket}/o {
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

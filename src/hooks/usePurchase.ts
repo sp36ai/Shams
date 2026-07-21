@@ -12,16 +12,13 @@ import {
   type PurchaseError,
 } from 'react-native-iap';
 
-import functions, { type FirebaseFunctionsTypes } from '@react-native-firebase/functions';
+import { regionalFunctions } from '../firebase/functionsClient';
 import { useQuotaStore } from '@stores/quotaStore';
 import type { PlanTier } from '@stores/quotaStore';
+import { logPlanPurchased } from '../firebase/analytics';
 
 type AndroidSubscriptionProduct = {
   subscriptionOfferDetails?: Array<{ offerToken: string; basePlanId: string }>;
-};
-
-type FunctionsWithRegion = FirebaseFunctionsTypes.Module & {
-  region(r: string): FirebaseFunctionsTypes.Module;
 };
 
 export type PurchasePlan = 'mureed_monthly' | 'mureed_annual' | 'khass_monthly' | 'khass_annual';
@@ -72,9 +69,7 @@ export function usePurchase(): PurchaseState {
       productId: string,
     ): Promise<{ verified: boolean; planExpiry?: string }> => {
       try {
-        const fn = (functions() as FunctionsWithRegion)
-          .region('asia-south1')
-          .httpsCallable('verifyGooglePlayPurchase');
+        const fn = regionalFunctions().httpsCallable('verifyGooglePlayPurchase');
         const result = await fn({ purchaseToken, productId, packageName: PACKAGE_NAME });
         const data = result.data as { plan?: string; planExpiry?: string } | null;
         if (typeof data?.plan === 'string') {
@@ -103,6 +98,7 @@ export function usePurchase(): PurchaseState {
             const tier = tierFromSku(p.productId);
             if (tier) {
               setPlan(tier, planExpiry);
+              logPlanPurchased(tier);
             }
             finishTransaction({ purchase: p, isConsumable: false }).catch(() => undefined);
           }
@@ -154,6 +150,7 @@ export function usePurchase(): PurchaseState {
         if (verified) {
           await finishTransaction({ purchase: p, isConsumable: false }).catch(() => undefined);
           setPlan(tier, planExpiry);
+          logPlanPurchased(tier);
           return { success: true };
         }
 
@@ -185,6 +182,7 @@ export function usePurchase(): PurchaseState {
           const tier = tierFromSku(p.productId);
           if (tier) {
             setPlan(tier, planExpiry);
+            logPlanPurchased(tier);
             return { success: true };
           }
         }

@@ -136,6 +136,10 @@ export interface ReadingDoc {
   timing?: OracleResponse['timing'];
   remedy: OracleResponse['remedy'] | null;
   reasoning: OracleResponse['reasoning'];
+  /** AI voice layer — merged in after synthesis so History can re-render it. */
+  oracle?: OracleResponse['oracle'];
+  /** al-Qamar's lunar mansion at the chart moment — display only. */
+  manzila?: OracleResponse['manzila'];
   createdAt: FirebaseFirestore.Timestamp;
 }
 

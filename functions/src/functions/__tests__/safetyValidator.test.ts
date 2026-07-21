@@ -59,7 +59,8 @@ beforeEach(() => {
 // ── Tests ────────────────────────────────────────────────────────────────────
 
 describe('runSafetyValidator', () => {
-  it('Test 1 — clean content: approved fields pass through unmodified, no issues logged', async () => {
+  it('Test 1 — clean content: one Haiku call validates all fields, approved pass through unmodified', async () => {
+    const oracle = makeOracle();
     global.fetch = vi.fn().mockResolvedValue({
       ok: true,
       json: vi.fn().mockImplementation(() => ({
@@ -67,16 +68,25 @@ describe('runSafetyValidator', () => {
           {
             type: 'text',
             text: JSON.stringify({
-              status: 'approved',
-              issues: [],
-              final_text: 'original',
+              results: {
+                hidden_influence: {
+                  status: 'approved',
+                  final_text: oracle.hidden_influence,
+                  issues: [],
+                },
+                spiritual_layer: {
+                  status: 'approved',
+                  final_text: oracle.spiritual_layer,
+                  issues: [],
+                },
+                timing: { status: 'approved', final_text: oracle.timing, issues: [] },
+              },
             }),
           },
         ],
       })),
     });
 
-    const oracle = makeOracle();
     const result = await runSafetyValidator(oracle, READING_ID, API_KEY);
 
     // Locked fields untouched
@@ -84,10 +94,15 @@ describe('runSafetyValidator', () => {
     expect(result.interpretation).toBe(oracle.interpretation);
     expect(result.signature).toBe(oracle.signature);
 
-    // Validated fields: Haiku returned 'approved' — no Firestore log written with issues
+    // Validated fields returned unchanged
+    expect(result.hidden_influence).toBe(oracle.hidden_influence);
+    expect(result.spiritual_layer).toBe(oracle.spiritual_layer);
+    expect(result.timing).toBe(oracle.timing);
+
+    // Approved → no Firestore log written
     expect(mockAdd).not.toHaveBeenCalled();
-    // warning is undefined in makeOracle → skipped; 3 fields validated (hidden_influence, spiritual_layer, timing)
-    expect(fetch).toHaveBeenCalledTimes(3);
+    // Single batched call for all present fields (was one call per field)
+    expect(fetch).toHaveBeenCalledTimes(1);
   });
 
   it('Test 2 — validator failure: original text returned, validator_failed logged, no throw', async () => {
