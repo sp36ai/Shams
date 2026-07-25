@@ -45,7 +45,7 @@ android {
         minSdk 24
         targetSdk 35
         versionCode project.hasProperty('VERSION_CODE') ? Integer.parseInt(project.property('VERSION_CODE').toString().trim()) : 4
-        versionName "0.1.2"
+        versionName "0.2.0"
 
         // react-native-iap v12 has amazon/play product flavors;
         // select "play" so the app builds without adding its own flavor dimension.
