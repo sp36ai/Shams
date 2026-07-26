@@ -28,13 +28,21 @@ interface StarSpec {
 
 type StarTier = 'tiny' | 'medium' | 'bright';
 
+// Android composites every one of these absolutely-positioned, continuously
+// animating views on the UI thread and ignores per-view shadows entirely
+// (only `elevation` casts a shadow there). At the iOS counts the overdraw
+// shows up as visible jank while sliding on mid/low-end devices, so we run a
+// leaner starfield on Android — the visual difference is negligible, the
+// scroll smoothness is not.
+const IS_ANDROID = Platform.OS === 'android';
+
 const TIER_CONFIG: Record<
   StarTier,
   { count: number; minSize: number; maxSize: number; minPeak: number; maxPeak: number }
 > = {
-  tiny: { count: 30, minSize: 0.5, maxSize: 1.0, minPeak: 0.25, maxPeak: 0.55 },
-  medium: { count: 30, minSize: 1.0, maxSize: 2.2, minPeak: 0.5, maxPeak: 0.8 },
-  bright: { count: 12, minSize: 2.5, maxSize: 4.0, minPeak: 0.7, maxPeak: 1.0 },
+  tiny: { count: IS_ANDROID ? 16 : 30, minSize: 0.5, maxSize: 1.0, minPeak: 0.25, maxPeak: 0.55 },
+  medium: { count: IS_ANDROID ? 14 : 30, minSize: 1.0, maxSize: 2.2, minPeak: 0.5, maxPeak: 0.8 },
+  bright: { count: IS_ANDROID ? 8 : 12, minSize: 2.5, maxSize: 4.0, minPeak: 0.7, maxPeak: 1.0 },
 };
 
 function makeStars({ W, H }: Dimensions): StarSpec[] {
@@ -223,10 +231,16 @@ const StarfieldBackground: React.FC<StarfieldBackgroundProps> = ({
             borderRadius: s.size / 2,
             backgroundColor: starColor,
             opacity: s.opacity,
-            shadowColor: starColor,
-            shadowRadius: Math.max(2, s.size * 1.5),
-            shadowOpacity: 0.28,
-            shadowOffset: { width: 0, height: 0 },
+            // Per-view shadows are an iOS-only glow; Android ignores them (only
+            // `elevation` casts a shadow) so we omit the dead props there.
+            ...(IS_ANDROID
+              ? null
+              : {
+                  shadowColor: starColor,
+                  shadowRadius: Math.max(2, s.size * 1.5),
+                  shadowOpacity: 0.28,
+                  shadowOffset: { width: 0, height: 0 },
+                }),
           }}
         />
       ))}

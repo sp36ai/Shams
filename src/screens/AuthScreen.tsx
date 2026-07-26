@@ -321,13 +321,17 @@ const AuthScreen: React.FC = () => {
               ]}
             />
             <Text
+              numberOfLines={1}
+              adjustsFontSizeToFit
+              minimumFontScale={0.5}
               style={[
                 typography('hero'),
                 {
                   color: colors.goldBright,
                   textAlign: 'center',
-                  letterSpacing: 1.2,
+                  letterSpacing: 0.5,
                   textTransform: 'uppercase',
+                  width: '100%',
                 },
               ]}
             >
