@@ -9,14 +9,10 @@
  * The client never touches the Anthropic API directly.
  */
 
-import functions, { type FirebaseFunctionsTypes } from '@react-native-firebase/functions';
+import { regionalFunctions } from '../firebase/functionsRegion';
 import { getCandidates, type RankingContext } from './rankCandidates';
 import { renderRemedies, type RenderedRemedy } from './remedyRenderer';
 import type { SeekerProfile } from '../stores/settingsStore';
-
-type FunctionsWithRegion = FirebaseFunctionsTypes.Module & {
-  region(r: string): FirebaseFunctionsTypes.Module;
-};
 
 export interface SelectionResult {
   selectedRemedies: RenderedRemedy[];
@@ -144,7 +140,7 @@ export async function selectRemedies(ctx: SelectionContext): Promise<SelectionRe
   });
 
   try {
-    const fn = (functions() as FunctionsWithRegion).region('asia-south1').httpsCallable<
+    const fn = regionalFunctions().httpsCallable<
       {
         oracleContext: {
           classification: string;
