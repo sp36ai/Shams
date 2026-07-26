@@ -258,7 +258,12 @@ const AstroVerdictCard: React.FC<AstroVerdictCardProps> = ({
 
   const handleSwitch = onSwitchMode ?? result.onSwitchMode;
   const oracle = result.oracle ?? ORACLE_DEFAULT;
-  const remedy = oracle.remedy;
+  // `oracle.remedy` is typed non-optional, but the `?? ORACLE_DEFAULT` fallback
+  // above only fires when `oracle` is entirely absent. A reading persisted
+  // before the oracle schema settled — or a partial server payload — can carry
+  // an `oracle` object with no `remedy` sub-object, and reading `.quran_verse`
+  // off `undefined` would throw straight into the "veil trembled" boundary.
+  const remedy = oracle.remedy ?? ORACLE_DEFAULT.remedy;
   const hasRemedy =
     remedy.quran_verse ?? remedy.dua ?? remedy.asma ?? remedy.zikr ?? remedy.sadaqah ?? false;
 
@@ -281,7 +286,7 @@ const AstroVerdictCard: React.FC<AstroVerdictCardProps> = ({
             <Text style={[typography('label'), { color: colors.accent }]}>KP ASTRO</Text>
           </View>
           <Text style={[typography('caption'), { color: colors.textFaint }]}>
-            {result.category.toUpperCase()}
+            {(result.category ?? '').toUpperCase()}
           </Text>
         </View>
         <View style={styles.verdictPillContainer}>
@@ -364,7 +369,7 @@ const AstroVerdictCard: React.FC<AstroVerdictCardProps> = ({
               <Text style={[typography('label'), { color: colors.accent }]}>KP ASTRO</Text>
             </View>
             <Text style={[typography('caption'), { color: colors.textFaint }]}>
-              {result.category.toUpperCase()}
+              {(result.category ?? '').toUpperCase()}
             </Text>
           </View>
 

@@ -27,6 +27,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Geolocation from '@react-native-community/geolocation';
+import crashlytics from '@react-native-firebase/crashlytics';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '@navigation/types';
@@ -639,13 +640,7 @@ const OracleScreen: React.FC = () => {
         useNativeDriver: true,
       }),
     ]).start(() => {
-      try {
-        setThresholdVisible(false);
-      } catch (err) {
-        throw new Error(
-          `[DIAG:runThreshold.onComplete] ${err instanceof Error ? err.message : String(err)}`,
-        );
-      }
+      setThresholdVisible(false);
     });
   }, [thresholdOpacity, thresholdScale]);
 
@@ -654,9 +649,9 @@ const OracleScreen: React.FC = () => {
     try {
       runThreshold();
     } catch (err) {
-      throw new Error(
-        `[DIAG:runThreshold.mount] ${err instanceof Error ? err.message : String(err)}`,
-      );
+      // The threshold overlay is pure ceremony — a failure here must never take
+      // down the screen behind the "veil trembled" boundary. Report and continue.
+      crashlytics().recordError(err instanceof Error ? err : new Error(String(err)));
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -697,9 +692,10 @@ const OracleScreen: React.FC = () => {
       });
       return () => sub.remove();
     } catch (err) {
-      throw new Error(
-        `[DIAG:trialBanner.effect] ${err instanceof Error ? err.message : String(err)}`,
-      );
+      // Trial banners are non-essential chrome — degrade to "no banner" rather
+      // than crashing the reading surface. Report so the gap is still visible.
+      crashlytics().recordError(err instanceof Error ? err : new Error(String(err)));
+      return undefined;
     }
   }, [evaluateTrialBanner]);
 
@@ -747,7 +743,9 @@ const OracleScreen: React.FC = () => {
       loop.start();
       return () => loop.stop();
     } catch (err) {
-      throw new Error(`[DIAG:orbPulse.effect] ${err instanceof Error ? err.message : String(err)}`);
+      // The loading orb animation is cosmetic — never let it crash the screen.
+      crashlytics().recordError(err instanceof Error ? err : new Error(String(err)));
+      return undefined;
     }
   }, [sending, orbPulse]);
 
@@ -787,9 +785,7 @@ const OracleScreen: React.FC = () => {
               capturedAt: Date.now(),
             });
           } catch (err) {
-            throw new Error(
-              `[DIAG:gpsFetch.onSuccess] ${err instanceof Error ? err.message : String(err)}`,
-            );
+            crashlytics().recordError(err instanceof Error ? err : new Error(String(err)));
           }
         },
         () => {
@@ -798,7 +794,9 @@ const OracleScreen: React.FC = () => {
         { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 },
       );
     } catch (err) {
-      throw new Error(`[DIAG:gpsFetch.effect] ${err instanceof Error ? err.message : String(err)}`);
+      // Auto-GPS is a convenience; the user can still resolve location at ask
+      // time. Never let a mount-time geolocation failure crash the screen.
+      crashlytics().recordError(err instanceof Error ? err : new Error(String(err)));
     }
   }, []); // run once on mount only
 

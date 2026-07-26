@@ -333,7 +333,7 @@ const ReadingRow: React.FC<{
             </>
           )}
           <Text style={[typography('caption'), { color: colors.textFaint }]}>
-            {reading.category.toUpperCase()}
+            {(reading.category ?? '').toUpperCase()}
           </Text>
           <Text style={[typography('caption'), { color: colors.textFaint }]}>·</Text>
           <Text style={[typography('caption'), { color: colors.textFaint }]}>
@@ -402,7 +402,7 @@ const ReadingDetailModal: React.FC<{
           {/* Question */}
           <View style={[styles.section, { borderColor: colors.border }]}>
             <Text style={[typography('caption'), { color: colors.textMuted, marginBottom: 6 }]}>
-              {reading.category.toUpperCase()}
+              {(reading.category ?? '').toUpperCase()}
             </Text>
             <Text style={[typography('bodyEmphasis'), { color: colors.text }]}>
               {reading.question}
