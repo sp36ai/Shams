@@ -9,11 +9,7 @@
  * Classification runs server-side via the classifyIntent Cloud Function.
  */
 
-import functions, { type FirebaseFunctionsTypes } from '@react-native-firebase/functions';
-
-type FunctionsWithRegion = FirebaseFunctionsTypes.Module & {
-  region(r: string): FirebaseFunctionsTypes.Module;
-};
+import { regionalFunctions } from '../firebase/functionsRegion';
 
 export type IntentClass =
   | 'TIMING' // "when", "kitne din", "how long"
@@ -49,9 +45,7 @@ export async function classifyIntent(params: ClassifyParams): Promise<IntentResu
   const { userMessage, lockedQuestion, verdictDirection, recentMessages } = params;
 
   try {
-    const fn = (functions() as FunctionsWithRegion)
-      .region('asia-south1')
-      .httpsCallable<ClassifyParams, IntentResult>('classifyIntent');
+    const fn = regionalFunctions().httpsCallable<ClassifyParams, IntentResult>('classifyIntent');
 
     const result = await fn({
       userMessage,

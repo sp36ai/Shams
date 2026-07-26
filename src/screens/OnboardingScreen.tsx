@@ -9,16 +9,12 @@ import {
   useWindowDimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import functions, { type FirebaseFunctionsTypes } from '@react-native-firebase/functions';
+import { regionalFunctions } from '../firebase/functionsRegion';
 
 import { useColors, useTheme } from '@theme/ThemeProvider';
 import { useTypography } from '@theme/useTypography';
 import StarfieldBackground from '@components/StarfieldBackground';
 import { useSettingsStore, type SeekerProfile } from '@stores/settingsStore';
-
-type FunctionsWithRegion = FirebaseFunctionsTypes.Module & {
-  region(r: string): FirebaseFunctionsTypes.Module;
-};
 
 // ── Question definitions ──────────────────────────────────────────────────────
 
@@ -72,9 +68,9 @@ const VALID_PROFILES = new Set<SeekerProfile>(['clarity', 'comfort', 'action', '
 
 async function inferProfile(answers: [string, string, string]): Promise<SeekerProfile> {
   try {
-    const fn = (functions() as FunctionsWithRegion)
-      .region('asia-south1')
-      .httpsCallable<{ answers: string[] }, { profile: string }>('inferProfile');
+    const fn = regionalFunctions().httpsCallable<{ answers: string[] }, { profile: string }>(
+      'inferProfile',
+    );
 
     const result = await fn({ answers });
     const profile = result.data?.profile as SeekerProfile;

@@ -6,11 +6,7 @@
  * trial start date so the server clock cannot be reset by the user.
  */
 
-import functions, { type FirebaseFunctionsTypes } from '@react-native-firebase/functions';
-
-type FunctionsWithRegion = FirebaseFunctionsTypes.Module & {
-  region(r: string): FirebaseFunctionsTypes.Module;
-};
+import { regionalFunctions } from './functionsRegion';
 
 export interface ActivateTrialResult {
   startedAt: string;
@@ -19,9 +15,7 @@ export interface ActivateTrialResult {
 }
 
 export async function activateTrialOnServer(): Promise<ActivateTrialResult> {
-  const fn = (functions() as FunctionsWithRegion)
-    .region('asia-south1')
-    .httpsCallable('activateTrial');
+  const fn = regionalFunctions().httpsCallable('activateTrial');
 
   const result = await fn({});
   return result.data as ActivateTrialResult;

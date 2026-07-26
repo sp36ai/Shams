@@ -208,7 +208,7 @@ const WatchVerdictCard: React.FC<WatchVerdictCardProps> = ({ result, onSwitchMod
           <Text style={[typography('label'), { color: colors.amber }]}>WATCH-TIME</Text>
         </View>
         <Text style={[typography('caption'), { color: colors.textFaint }]}>
-          {result.category.toUpperCase()}
+          {(result.category ?? '').toUpperCase()}
         </Text>
       </View>
 
