@@ -6,6 +6,7 @@ interface ErrorBoundaryState {
   hasError: boolean;
   errorMessage: string | null;
   errorStack: string | null;
+  showDetails: boolean;
 }
 
 /**
@@ -14,10 +15,20 @@ interface ErrorBoundaryState {
  * fallback instead of a white screen.
  */
 class ErrorBoundary extends React.Component<React.PropsWithChildren, ErrorBoundaryState> {
-  state: ErrorBoundaryState = { hasError: false, errorMessage: null, errorStack: null };
+  state: ErrorBoundaryState = {
+    hasError: false,
+    errorMessage: null,
+    errorStack: null,
+    showDetails: false,
+  };
 
   static getDerivedStateFromError(error: Error): ErrorBoundaryState {
-    return { hasError: true, errorMessage: error.message, errorStack: error.stack ?? null };
+    return {
+      hasError: true,
+      errorMessage: error.message,
+      errorStack: error.stack ?? null,
+      showDetails: false,
+    };
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo): void {
@@ -25,7 +36,11 @@ class ErrorBoundary extends React.Component<React.PropsWithChildren, ErrorBounda
   }
 
   private handleRetry = (): void => {
-    this.setState({ hasError: false, errorMessage: null, errorStack: null });
+    this.setState({ hasError: false, errorMessage: null, errorStack: null, showDetails: false });
+  };
+
+  private handleToggleDetails = (): void => {
+    this.setState(prev => ({ showDetails: !prev.showDetails }));
   };
 
   render(): React.ReactNode {
@@ -38,16 +53,32 @@ class ErrorBoundary extends React.Component<React.PropsWithChildren, ErrorBounda
             Something interrupted the reading. It has been recorded, and the oracle awaits your
             return.
           </Text>
-          {/* Raw error text + stack are shown ONLY in development. In production
-              they would leak internal details to the user and read as an
-              off-brand technical dump at the worst possible moment. */}
-          {__DEV__ && this.state.errorMessage !== null && (
-            <ScrollView style={styles.detailsBox}>
-              <Text selectable style={styles.detailsText}>
-                {this.state.errorMessage}
-                {this.state.errorStack ? `\n\n${this.state.errorStack}` : ''}
-              </Text>
-            </ScrollView>
+          {/* The raw error is always recorded to Crashlytics (see componentDidCatch).
+              It is also surfaced here, on demand, so a crash in the field can be
+              read and copied without a debug build — the diagnostic gap that let
+              this fallback recur. In development it expands automatically; in
+              production it stays collapsed behind a quiet tap so the screen still
+              reads as the manuscript rather than a technical dump. */}
+          {this.state.errorMessage !== null && (
+            <>
+              <Pressable
+                onPress={this.handleToggleDetails}
+                style={styles.detailsToggle}
+                testID="error-details-toggle"
+              >
+                <Text style={styles.detailsToggleText}>
+                  {this.state.showDetails ? 'Hide what interrupted the reading' : 'Reveal what interrupted the reading'}
+                </Text>
+              </Pressable>
+              {(__DEV__ || this.state.showDetails) && (
+                <ScrollView style={styles.detailsBox}>
+                  <Text selectable style={styles.detailsText}>
+                    {this.state.errorMessage}
+                    {this.state.errorStack ? `\n\n${this.state.errorStack}` : ''}
+                  </Text>
+                </ScrollView>
+              )}
+            </>
           )}
           <Pressable style={styles.button} onPress={this.handleRetry} testID="error-retry-btn">
             <Text style={styles.buttonText}>Return</Text>
@@ -84,6 +115,17 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 22,
     marginBottom: 24,
+  },
+  detailsToggle: {
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    marginBottom: 12,
+  },
+  detailsToggleText: {
+    color: '#A89F8C', // textMuted
+    fontSize: 12,
+    textDecorationLine: 'underline',
+    letterSpacing: 0.4,
   },
   detailsBox: {
     maxHeight: 220,
