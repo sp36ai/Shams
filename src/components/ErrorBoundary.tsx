@@ -67,7 +67,9 @@ class ErrorBoundary extends React.Component<React.PropsWithChildren, ErrorBounda
                 testID="error-details-toggle"
               >
                 <Text style={styles.detailsToggleText}>
-                  {this.state.showDetails ? 'Hide what interrupted the reading' : 'Reveal what interrupted the reading'}
+                  {this.state.showDetails
+                    ? 'Hide what interrupted the reading'
+                    : 'Reveal what interrupted the reading'}
                 </Text>
               </Pressable>
               {(__DEV__ || this.state.showDetails) && (
