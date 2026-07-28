@@ -52,7 +52,11 @@ export function useQuota(): QuotaState {
   }, []);
 
   useEffect(() => {
-    refresh();
+    try {
+      refresh();
+    } catch (err) {
+      throw new Error(`[DIAG:useQuota.effect] ${err instanceof Error ? err.message : String(err)}`);
+    }
   }, [refresh]);
 
   const isPremium = currentPlan !== 'free';
