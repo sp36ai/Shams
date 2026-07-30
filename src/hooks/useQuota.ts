@@ -40,15 +40,27 @@ export function useQuota(): QuotaState {
       return;
     }
     setLoading(true);
-    regionalFunctions()
-      .httpsCallable<object, { remaining: number }>('getQuota')({})
-      .then(r => {
-        _cachedRemaining = r.data.remaining;
-        _lastFetchAt = Date.now();
-        setServerRemaining(r.data.remaining);
-      })
-      .catch(() => setServerRemaining(null))
-      .finally(() => setLoading(false));
+    // Building the callable is synchronous: regionalFunctions() and
+    // httpsCallable() run before any promise exists. A throw here — a missing
+    // Firebase functions method, an app that is not yet initialised — would
+    // escape this mount effect and crash whatever screen mounts the hook
+    // (OracleScreen: the "veil trembled" fallback). The .catch() below only
+    // covers the async rejection, so guard the synchronous build too and
+    // degrade to "unknown remaining" instead of taking the screen down.
+    try {
+      regionalFunctions()
+        .httpsCallable<object, { remaining: number }>('getQuota')({})
+        .then(r => {
+          _cachedRemaining = r.data.remaining;
+          _lastFetchAt = Date.now();
+          setServerRemaining(r.data.remaining);
+        })
+        .catch(() => setServerRemaining(null))
+        .finally(() => setLoading(false));
+    } catch {
+      setServerRemaining(null);
+      setLoading(false);
+    }
   }, []);
 
   useEffect(() => {
