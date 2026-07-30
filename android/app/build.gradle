@@ -96,7 +96,21 @@ android {
     buildTypes {
         debug {
             signingConfig signingConfigs.debug
-            versionNameSuffix "-debug"
+            // Stamp the commit SHA into the debug version so a sideloaded test
+            // build is uniquely identifiable (adb shell dumpsys package … |
+            // grep versionName, or Settings → Apps → app info). Release builds
+            // keep the clean marketing version for the Play Store.
+            def gitSha = "nogit"
+            try {
+                def proc = ["git", "rev-parse", "--short=8", "HEAD"].execute(null, rootDir)
+                proc.waitFor()
+                if (proc.exitValue() == 0) {
+                    gitSha = proc.text.trim()
+                }
+            } catch (ignored) {
+                // git unavailable (e.g. building from a source tarball) — keep "nogit"
+            }
+            versionNameSuffix "-debug-${gitSha}"
         }
         release {
             def hasReleaseSigning = project.hasProperty('SHAMS_UPLOAD_STORE_FILE')
