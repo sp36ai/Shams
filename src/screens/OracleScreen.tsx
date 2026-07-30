@@ -2028,7 +2028,10 @@ const styles = StyleSheet.create({
     padding: 14,
     borderRadius: 18,
     borderWidth: StyleSheet.hairlineWidth,
-    minWidth: 88,
+    // minWidth: 0 lets the three flex:1 cards shrink to share the row on
+    // narrow/zoomed screens instead of overflowing the right edge (a fixed
+    // minWidth here would force 3×88dp + gaps past a reduced-dp width).
+    minWidth: 0,
     backgroundColor: 'transparent',
   },
   trialBanner: {
