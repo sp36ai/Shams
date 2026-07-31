@@ -178,6 +178,14 @@ dependencies {
     implementation("androidx.swiperefreshlayout:swiperefreshlayout:1.1.0")
     implementation("androidx.appcompat:appcompat:1.7.0")
 
+    // Google Play Services fused location. @react-native-community/geolocation
+    // only uses the reliable FusedLocationProvider when this is on the
+    // classpath; without it every request falls back to the legacy
+    // LocationManager, which routinely returns no fix indoors — the "location
+    // is required" dead end. With this present, setRNConfiguration's
+    // locationProvider 'auto'/'playServices' can fuse Wi-Fi + cell + GPS.
+    implementation("com.google.android.gms:play-services-location:21.3.0")
+
     if (hermesEnabled.toBoolean()) {
         implementation("com.facebook.react:hermes-android")
     } else {
