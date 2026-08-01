@@ -26,7 +26,7 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import Geolocation from '@react-native-community/geolocation';
+import { acquireLocation } from '@utils/acquireLocation';
 import crashlytics from '@react-native-firebase/crashlytics';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -775,24 +775,23 @@ const OracleScreen: React.FC = () => {
       if (!s.onboardingPermissionGranted && !__DEV__) {
         return;
       }
-      Geolocation.getCurrentPosition(
-        pos => {
-          try {
-            useSettingsStore.getState().setLastLocation({
-              lat: pos.coords.latitude,
-              lon: pos.coords.longitude,
-              label: null,
-              capturedAt: Date.now(),
-            });
-          } catch (err) {
-            crashlytics().recordError(err instanceof Error ? err : new Error(String(err)));
+      // Precise fix first, then coarse/network fallback so a granted user gets
+      // a location even indoors where high-accuracy GPS times out.
+      acquireLocation()
+        .then(coords => {
+          if (coords === null) {
+            return; // user will see the location chip as "required"
           }
-        },
-        () => {
-          /* silent — user will see location chip as "required" */
-        },
-        { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 },
-      );
+          useSettingsStore.getState().setLastLocation({
+            lat: coords.lat,
+            lon: coords.lon,
+            label: null,
+            capturedAt: Date.now(),
+          });
+        })
+        .catch(err => {
+          crashlytics().recordError(err instanceof Error ? err : new Error(String(err)));
+        });
     } catch (err) {
       // Auto-GPS is a convenience; the user can still resolve location at ask
       // time. Never let a mount-time geolocation failure crash the screen.
@@ -906,13 +905,9 @@ const OracleScreen: React.FC = () => {
       let resolvedLon: number | null = lastLocation?.lon ?? null;
 
       if (resolvedLat === null || resolvedLon === null) {
-        const liveCoords = await new Promise<{ lat: number; lon: number } | null>(resolve => {
-          Geolocation.getCurrentPosition(
-            pos => resolve({ lat: pos.coords.latitude, lon: pos.coords.longitude }),
-            () => resolve(null),
-            { enableHighAccuracy: true, timeout: 8000, maximumAge: 30000 },
-          );
-        });
+        // Precise fix first, then coarse/network fallback (resolves indoors
+        // where high-accuracy GPS times out) so a granted user is not stuck.
+        const liveCoords = await acquireLocation();
 
         if (liveCoords === null) {
           const userMsg: ChatMessage = { id: `u_${now}`, sender: 'user', text, createdAt: now };
@@ -2028,7 +2023,10 @@ const styles = StyleSheet.create({
     padding: 14,
     borderRadius: 18,
     borderWidth: StyleSheet.hairlineWidth,
-    minWidth: 88,
+    // minWidth: 0 lets the three flex:1 cards shrink to share the row on
+    // narrow/zoomed screens instead of overflowing the right edge (a fixed
+    // minWidth here would force 3×88dp + gaps past a reduced-dp width).
+    minWidth: 0,
     backgroundColor: 'transparent',
   },
   trialBanner: {

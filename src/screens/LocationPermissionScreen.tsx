@@ -58,19 +58,9 @@ import { useTypography } from '@theme/useTypography';
 import { useTranslation } from '@i18n/I18nProvider';
 import { useSettingsStore } from '@stores/settingsStore';
 import { requestLocationPermission, isLocationUsable } from '@utils/permissions';
+import { acquireLocation } from '@utils/acquireLocation';
 
 type ScreenStatus = 'idle' | 'requesting' | 'granted' | 'denied' | 'blocked';
-
-/** Resolves with `promise`, or after `ms` — whichever comes first. */
-function raceWithTimeout(promise: Promise<void>, ms: number): Promise<void> {
-  return new Promise<void>(resolve => {
-    const timer = setTimeout(resolve, ms);
-    promise.then(() => {
-      clearTimeout(timer);
-      resolve();
-    });
-  });
-}
 
 const LocationPermissionScreen: React.FC = () => {
   const { theme } = useTheme();
@@ -98,36 +88,20 @@ const LocationPermissionScreen: React.FC = () => {
 
       setPermissionGranted(true);
 
-      // Capture current position via W3C Geolocation API (available globally in RN).
-      // The `timeout` option below is honored by the native module, but some
-      // devices/OEM location stacks never invoke either callback at all (no
-      // fix, no error) — without a JS-side backstop that hangs this screen on
-      // its spinner forever. raceWithTimeout guarantees we advance regardless.
-      await raceWithTimeout(
-        new Promise<void>(resolve => {
-          navigator.geolocation.getCurrentPosition(
-            pos => {
-              setLastLocation({
-                lat: pos.coords.latitude,
-                lon: pos.coords.longitude,
-                label: null,
-                capturedAt: Date.now(),
-              });
-              resolve();
-            },
-            () => {
-              // Permission granted but fix failed — advance without coords.
-              resolve();
-            },
-            {
-              enableHighAccuracy: permResult.status === 'granted-fine',
-              timeout: 8000,
-              maximumAge: 30000,
-            },
-          );
-        }),
-        10000,
-      );
+      // Capture the current position: precise fix first, then a coarse/network
+      // fallback that resolves indoors where high-accuracy GPS times out.
+      // acquireLocation has its own per-stage backstops, so it always settles
+      // and never hangs this screen on its spinner. A null result means both
+      // stages failed — advance anyway; OracleScreen retries on entry.
+      const coords = await acquireLocation(permResult.status === 'granted-fine');
+      if (coords !== null) {
+        setLastLocation({
+          lat: coords.lat,
+          lon: coords.lon,
+          label: null,
+          capturedAt: Date.now(),
+        });
+      }
 
       markLocationPrompted();
       setStatus('granted');

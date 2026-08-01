@@ -45,7 +45,7 @@ android {
         minSdk 24
         targetSdk 36
         versionCode project.hasProperty('VERSION_CODE') ? Integer.parseInt(project.property('VERSION_CODE').toString().trim()) : 4
-        versionName "0.1.2"
+        versionName "0.1.5"
 
         // react-native-iap v12 has amazon/play product flavors;
         // select "play" so the app builds without adding its own flavor dimension.
@@ -96,7 +96,21 @@ android {
     buildTypes {
         debug {
             signingConfig signingConfigs.debug
-            versionNameSuffix "-debug"
+            // Stamp the commit SHA into the debug version so a sideloaded test
+            // build is uniquely identifiable (adb shell dumpsys package … |
+            // grep versionName, or Settings → Apps → app info). Release builds
+            // keep the clean marketing version for the Play Store.
+            def gitSha = "nogit"
+            try {
+                def proc = ["git", "rev-parse", "--short=8", "HEAD"].execute(null, rootDir)
+                proc.waitFor()
+                if (proc.exitValue() == 0) {
+                    gitSha = proc.text.trim()
+                }
+            } catch (ignored) {
+                // git unavailable (e.g. building from a source tarball) — keep "nogit"
+            }
+            versionNameSuffix "-debug-${gitSha}"
         }
         release {
             def hasReleaseSigning = project.hasProperty('SHAMS_UPLOAD_STORE_FILE')
@@ -163,6 +177,14 @@ dependencies {
     implementation("androidx.core:core-ktx:1.13.1")
     implementation("androidx.swiperefreshlayout:swiperefreshlayout:1.1.0")
     implementation("androidx.appcompat:appcompat:1.7.0")
+
+    // Google Play Services fused location. @react-native-community/geolocation
+    // only uses the reliable FusedLocationProvider when this is on the
+    // classpath; without it every request falls back to the legacy
+    // LocationManager, which routinely returns no fix indoors — the "location
+    // is required" dead end. With this present, setRNConfiguration's
+    // locationProvider 'auto'/'playServices' can fuse Wi-Fi + cell + GPS.
+    implementation("com.google.android.gms:play-services-location:21.3.0")
 
     if (hermesEnabled.toBoolean()) {
         implementation("com.facebook.react:hermes-android")
