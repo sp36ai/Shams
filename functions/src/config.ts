@@ -9,8 +9,12 @@ import { defineInt, defineSecret } from 'firebase-functions/params';
 export type PlanTier = 'free' | 'mureed' | 'khass';
 
 export const UNLIMITED_PLANS: PlanTier[] = ['mureed', 'khass'];
-export const FREE_LIMIT = 3; // questions per UTC day — free plan
-export const TRIAL_DAILY_LIMIT = 5; // questions per UTC day — 7-day trial
+// TEMP (internal testing): raised from 3/5 to give testers headroom while the
+// oracle engine is being debugged. REVERT to FREE_LIMIT=3, TRIAL_DAILY_LIMIT=5
+// before public launch — these are the paywall limits. Must stay in sync with
+// the client (src/stores/quotaStore.ts).
+export const FREE_LIMIT = 50; // questions per UTC day — free plan
+export const TRIAL_DAILY_LIMIT = 50; // questions per UTC day — 7-day trial
 export const TRIAL_DURATION_DAYS = 7;
 
 /** Return the ISO date string (YYYY-MM-DD) for the current UTC day. */
