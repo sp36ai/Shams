@@ -396,7 +396,16 @@ export const askOracle = onCall(
 
       const batch = db.batch();
       batch.set(readingRef, { ...readingDoc, createdAt: FieldValue.serverTimestamp() });
-      await batch.commit();
+      try {
+        await batch.commit();
+      } catch (persistErr) {
+        // The verdict is already computed; persistence is not worth failing the
+        // whole reading over. Log and continue so the seeker still gets an answer.
+        logger.error('reading persist failed (non-fatal)', {
+          userId,
+          err: persistErr instanceof Error ? persistErr.message : String(persistErr),
+        });
+      }
 
       // 11. Audit (fire-and-forget)
       void writeAuditLog({
@@ -452,28 +461,42 @@ export const askOracle = onCall(
         }
       }
 
-      // Cusp sub-lords for the 2-3 most relevant houses (expert panel data)
-      const matrixEntry = HOUSE_MATRIX[classified.qType];
-      const relevantHouses = [matrixEntry.primary, ...matrixEntry.secondary.slice(0, 2)];
-      const cuspLons = chart.cusps.map(c => c.siderealLongitude);
-      const cuspSubLords = relevantHouses
-        .map(h => {
-          const cusp = chart.cusps[h - 1];
-          if (cusp === undefined) {
-            return null;
-          }
-          const sl = cusp.subLord;
-          const slHouse = houseForLongitude(
-            chart.planets[sl].siderealLongitude,
-            cuspLons,
-          ) as number;
-          return { house: h, subLord: sl as string, subLordHouse: slHouse };
-        })
-        .filter(Boolean) as Array<{ house: number; subLord: string; subLordHouse: number }>;
+      // Cusp sub-lords for the 2-3 most relevant houses (expert panel data).
+      // Non-essential display data — guard every lookup so an unknown qType
+      // (missing HOUSE_MATRIX entry) or an absent sub-lord planet degrades to an
+      // empty list instead of throwing the whole reading into an internal error.
+      let cuspSubLords: Array<{ house: number; subLord: string; subLordHouse: number }> = [];
+      try {
+        const matrixEntry = HOUSE_MATRIX[classified.qType];
+        if (matrixEntry !== undefined) {
+          const relevantHouses = [matrixEntry.primary, ...matrixEntry.secondary.slice(0, 2)];
+          const cuspLons = chart.cusps.map(c => c.siderealLongitude);
+          cuspSubLords = relevantHouses
+            .map(h => {
+              const cusp = chart.cusps[h - 1];
+              if (cusp === undefined) {
+                return null;
+              }
+              const sl = cusp.subLord;
+              const slPos = chart.planets[sl];
+              if (slPos === undefined) {
+                return null;
+              }
+              const slHouse = houseForLongitude(slPos.siderealLongitude, cuspLons) as number;
+              return { house: h, subLord: sl as string, subLordHouse: slHouse };
+            })
+            .filter(Boolean) as Array<{ house: number; subLord: string; subLordHouse: number }>;
+        }
+      } catch (dispErr) {
+        logger.error('cuspSubLords computation failed (non-fatal)', {
+          userId,
+          err: dispErr instanceof Error ? dispErr.message : String(dispErr),
+        });
+      }
 
       // 12. Oracle synthesis — Claude adds voice layer (fire with timeout, fallback on error)
       const apiKey = ANTHROPIC_API_KEY.value();
-      const moonLongitude = chart.planets.Moon.siderealLongitude;
+      const moonLongitude = chart.planets.Moon?.siderealLongitude ?? 0;
       const manzila = getManzila(moonLongitude);
       const verdictBinary =
         verdict.verdict === 'YES' || verdict.verdict === 'CONDITIONAL' ? 'CONFIRMED' : 'DENIED';
@@ -552,6 +575,7 @@ export const askOracle = onCall(
       logger.error('askOracle unexpected error', {
         userId,
         err: err instanceof Error ? err.message : String(err),
+        stack: err instanceof Error ? err.stack : undefined,
         durationMs: Date.now() - startedAt,
         ipHash: requestMeta.ipHash,
       });
