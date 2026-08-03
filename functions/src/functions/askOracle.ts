@@ -589,7 +589,26 @@ export const askOracle = onCall(
         userAgent: requestMeta.userAgent,
         durationMs: Date.now() - startedAt,
       });
-      throw new HttpsError('internal', 'Calculation failed. Please try again.');
+
+      // ── TEMP DEBUG (remove once the root cause is fixed) ─────────────────
+      // Three blind server fixes did not resolve the on-device "internal"
+      // error and server logs were not reachable, so surface the real error
+      // (message + top of stack) to the client as the reading narration. The
+      // app shows it on screen, which lets us capture the exact cause without
+      // Cloud Logging access. This must be reverted before public launch.
+      const debugMessage = err instanceof Error ? err.message : String(err);
+      const debugStack = err instanceof Error ? (err.stack ?? '') : '';
+      const debugText = `⚠️ DEBUG (temporary): ${debugMessage}\n\n${debugStack.slice(0, 700)}`;
+      return {
+        readingId: `debug_${Date.now()}`,
+        verdict: 'UNCLEAR',
+        confidence: 0,
+        category: 'general',
+        narration: { en: debugText, ur: debugText, hi: debugText },
+        reasoning: [],
+        quotaRemaining: null,
+        computedAt: new Date().toISOString(),
+      } as unknown as OracleResponse;
     });
   },
 );
