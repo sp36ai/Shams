@@ -335,7 +335,11 @@ async function synthesiseOracleVoice(params: {
 export const askOracle = onCall(
   {
     ...ORACLE_FUNCTION_OPTS,
-    enforceAppCheck: process.env.FUNCTIONS_EMULATOR !== 'true',
+    // TEMP DEBUG: App Check enforcement disabled to test whether it is
+    // rejecting every call before the handler runs (the on-device debug text
+    // never appeared, which points at a pre-handler rejection). REVERT to
+    // `process.env.FUNCTIONS_EMULATOR !== 'true'` once diagnosed.
+    enforceAppCheck: false,
     secrets: [ANTHROPIC_API_KEY],
   },
   async (request): Promise<OracleResponse> => {
@@ -568,12 +572,14 @@ export const askOracle = onCall(
         oracle,
       };
     }).catch(err => {
-      if (err instanceof HttpsError) {
-        throw err;
-      }
+      // TEMP DEBUG: do NOT re-throw HttpsError — surface its code + message too
+      // so a wrapped error (e.g. resource-exhausted, invalid-argument) is
+      // visible on-device instead of collapsing to the generic client fallback.
+      const debugCode = err instanceof HttpsError ? err.code : 'non-https-error';
 
       logger.error('askOracle unexpected error', {
         userId,
+        code: debugCode,
         err: err instanceof Error ? err.message : String(err),
         stack: err instanceof Error ? err.stack : undefined,
         durationMs: Date.now() - startedAt,
@@ -598,7 +604,7 @@ export const askOracle = onCall(
       // Cloud Logging access. This must be reverted before public launch.
       const debugMessage = err instanceof Error ? err.message : String(err);
       const debugStack = err instanceof Error ? (err.stack ?? '') : '';
-      const debugText = `⚠️ DEBUG (temporary): ${debugMessage}\n\n${debugStack.slice(0, 700)}`;
+      const debugText = `⚠️ DEBUG (temporary): [${debugCode}] ${debugMessage}\n\n${debugStack.slice(0, 700)}`;
       return {
         readingId: `debug_${Date.now()}`,
         verdict: 'UNCLEAR',
