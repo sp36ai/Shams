@@ -276,7 +276,9 @@ async function synthesiseOracleVoice(params: {
         'x-api-key': params.apiKey,
       },
       body: JSON.stringify({
-        model: 'claude-opus-4-7',
+        // Was 'claude-opus-4-7' (not a valid Anthropic model id → 404 → every
+        // reading fell back to canned ORACLE_FALLBACK text).
+        model: 'claude-opus-4-1-20250805',
         max_tokens: 4096,
         system: systemPrompt,
         messages: [{ role: 'user', content: userMessage }],
@@ -287,8 +289,13 @@ async function synthesiseOracleVoice(params: {
     clearTimeout(timer);
 
     if (!res.ok) {
-      logger.warn('oracle synthesis HTTP error', { status: res.status });
-      return ORACLE_FALLBACK;
+      const body = await res.text().catch(() => '');
+      logger.warn('oracle synthesis HTTP error', { status: res.status, body: body.slice(0, 300) });
+      // TEMP DEBUG: surface why the AI voice fell back, on-device. REVERT later.
+      return {
+        ...ORACLE_FALLBACK,
+        opening: `⚠️ SYNTH DEBUG: HTTP ${res.status} — ${body.slice(0, 220)}`,
+      };
     }
 
     const json = (await res.json()) as { content?: Array<{ type: string; text?: string }> };
@@ -299,7 +306,10 @@ async function synthesiseOracleVoice(params: {
       parsed = JSON.parse(rawText) as Record<string, unknown>;
     } catch {
       logger.warn('oracle synthesis JSON parse failed', { rawText: rawText.slice(0, 200) });
-      return ORACLE_FALLBACK;
+      return {
+        ...ORACLE_FALLBACK,
+        opening: `⚠️ SYNTH DEBUG: JSON parse failed — ${rawText.slice(0, 180)}`,
+      };
     }
 
     const r = (parsed.remedy ?? {}) as Record<string, unknown>;
@@ -326,7 +336,10 @@ async function synthesiseOracleVoice(params: {
   } catch (err) {
     clearTimeout(timer);
     logger.warn('oracle synthesis failed', { err: String(err) });
-    return ORACLE_FALLBACK;
+    return {
+      ...ORACLE_FALLBACK,
+      opening: `⚠️ SYNTH DEBUG: ${String(err).slice(0, 220)}`,
+    };
   }
 }
 
