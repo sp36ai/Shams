@@ -28,6 +28,7 @@ import OnboardingScreen from '@screens/OnboardingScreen';
 import LocationPermissionScreen from '@screens/LocationPermissionScreen';
 import PremiumScreen from '@screens/PremiumScreen';
 import SkyClockScreen from '@screens/SkyClockScreen';
+import OracleChatScreen from '@screens/OracleChatScreen';
 import MainTabs from './MainTabs';
 
 import { useAuthStore } from '@stores/authStore';
@@ -129,6 +130,12 @@ const RootNavigator: React.FC = () => {
         <RootStack.Screen
           name="SkyState"
           component={SkyClockScreen}
+          options={{ headerShown: false, animation: 'slide_from_right' }}
+        />
+        {/* Oracle Chat — the question/verdict conversation, opened via "Ask Shams" */}
+        <RootStack.Screen
+          name="OracleChat"
+          component={OracleChatScreen}
           options={{ headerShown: false, animation: 'slide_from_right' }}
         />
       </RootStack.Navigator>

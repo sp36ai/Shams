@@ -112,6 +112,18 @@ export const ur: StringTable = {
     remedyLabel: 'تدبیر',
     chartMomentLabel: 'سوال کا لمحہ',
     locationLabel: 'مقام',
+    dailySkyTitle: 'آج کا آسمان آپ کے لیے',
+    askShamsCta: 'شمس سے پوچھیں',
+    moonWatchTitle: 'چاند کی نگرانی',
+    voidOfCourseBanner:
+      'چاند {{time}} تک بے اثر (Void of Course) ہے — اوریکل نئے سوال کے لیے انتظار کو ترجیح دیتا ہے۔',
+    sunriseLabel: 'طلوعِ آفتاب',
+    sunsetLabel: 'غروبِ آفتاب',
+    favoredNowTitle: 'اس وقت موزوں',
+    favoredNowBody: 'یہ گھڑی موزوں ہے:',
+    dailyDhikrTitle: 'آج کا ذکر',
+    dailyDhikrRecite: 'پڑھیں',
+    blessingTitle: 'آج کی برکت',
   },
 
   skyClock: {

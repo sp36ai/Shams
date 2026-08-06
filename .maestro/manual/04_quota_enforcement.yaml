@@ -11,6 +11,8 @@ name: "Quota — Free user hits daily limit"
     timeout: 4000
 
 - tapOn:
+    id: "ask-shams-btn"
+- tapOn:
     id: "oracle-input"
 - inputText: "Will I succeed in my exam?"
 - tapOn:
