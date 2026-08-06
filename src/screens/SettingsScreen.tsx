@@ -5,6 +5,7 @@
 import React, { useCallback, useState } from 'react';
 import {
   Alert,
+  Image,
   Linking,
   Pressable,
   ScrollView,
@@ -28,6 +29,8 @@ import { useSettingsStore } from '@stores/settingsStore';
 import { useAuthStore, selectUserName, selectUserEmail } from '@stores/authStore';
 import { useReadingsStore, type VerdictKind } from '@stores/readingsStore';
 import { useQuotaStore, FREE_DAILY_LIMIT, type PlanTier } from '@stores/quotaStore';
+
+const SEAL_IMAGE = require('@assets/images/sky-clock-disk.png');
 
 const SettingsScreen: React.FC = () => {
   const { theme } = useTheme();
@@ -264,20 +267,26 @@ const SettingsScreen: React.FC = () => {
           <View
             style={[
               styles.profileCard,
+              styles.profileCardRow,
               { backgroundColor: colors.surface, borderColor: colors.border },
             ]}
           >
-            <Text style={[typography('bodyEmphasis'), { color: colors.text }]} numberOfLines={1}>
-              {userName}
-            </Text>
-            {userEmail.length > 0 && (
-              <Text
-                style={[typography('caption'), { color: colors.textMuted, marginTop: 2 }]}
-                numberOfLines={1}
-              >
-                {userEmail}
+            <View style={[styles.avatarRing, { borderColor: colors.borderAccent }]}>
+              <Image source={SEAL_IMAGE} style={styles.avatarImage} resizeMode="contain" />
+            </View>
+            <View style={styles.profileTextCol}>
+              <Text style={[typography('bodyEmphasis'), { color: colors.text }]} numberOfLines={1}>
+                {userName}
               </Text>
-            )}
+              {userEmail.length > 0 && (
+                <Text
+                  style={[typography('caption'), { color: colors.textMuted, marginTop: 2 }]}
+                  numberOfLines={1}
+                >
+                  {userEmail}
+                </Text>
+              )}
+            </View>
           </View>
           {seekerProfile !== null && (
             <Pressable
@@ -627,6 +636,26 @@ const styles = StyleSheet.create({
     shadowRadius: 12,
     shadowOffset: { width: 0, height: 4 },
     elevation: 1,
+  },
+  profileCardRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  avatarRing: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 14,
+  },
+  avatarImage: {
+    width: 34,
+    height: 34,
+  },
+  profileTextCol: {
+    flex: 1,
   },
   signOutBtn: {
     paddingVertical: 14,

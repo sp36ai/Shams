@@ -1,11 +1,12 @@
 /**
  * VerdictPill.tsx
- * MAQBOOL / MARDOOD verdict display.
- * Fully theme-aware — reads colors from context.
+ * MAQBOOL / MARDOOD verdict display — the sacred-terms pill used for the
+ * astro engine's full verdict range, matching the manuscript badge terms
+ * used elsewhere (HistoryScreen's `verdictBadgeFor`).
  *
  * Usage:
- *   <VerdictPill kind="CONFIRMED" confidence="HIGH" />
- *   <VerdictPill kind="DENIED"    confidence="MEDIUM" />
+ *   <VerdictPill verdict="YES" confidence="HIGH" />
+ *   <VerdictPill verdict="DENIED" confidence="MEDIUM" />
  */
 
 import React, { useEffect, useRef } from 'react';
@@ -13,23 +14,60 @@ import { View, Text, Animated, StyleSheet, Platform } from 'react-native';
 import { useColors } from '@theme/ThemeProvider';
 import { RADIUS, MOTION } from '@theme/themes';
 
-type VerdictKind = 'CONFIRMED' | 'DENIED';
+export type PillVerdictKind =
+  | 'YES'
+  | 'NO'
+  | 'CONDITIONAL'
+  | 'DELAYED'
+  | 'UNCLEAR'
+  | 'PENDING'
+  | 'DENIED';
 type Confidence = 'HIGH' | 'MEDIUM' | 'LOW';
 
 interface Props {
-  kind: VerdictKind;
+  verdict: PillVerdictKind;
   confidence?: Confidence;
-  /** Arabic label override — defaults to مَقْبُول / مَرْدُود */
+  /** Arabic label override — defaults to the verdict's own sacred term. */
   arabicLabel?: string;
 }
 
-export function VerdictPill({ kind, confidence = 'HIGH', arabicLabel }: Props) {
+// Manuscript verdict badge — Arabic/sacred terms per the design brief.
+// Mirrors HistoryScreen's `verdictBadgeFor` so the same reading is worded
+// identically whether seen fresh in chat or later in Reading History.
+const VERDICT_LABEL: Record<PillVerdictKind, string> = {
+  YES: 'MAQBOOL',
+  NO: 'MARDOOD',
+  CONDITIONAL: 'MASHROOT',
+  DELAYED: "TA'KHEER",
+  DENIED: 'MARDOOD',
+  UNCLEAR: 'GHAYR WAZEH',
+  PENDING: 'MUNTAZIR',
+};
+
+const VERDICT_ARABIC: Record<PillVerdictKind, string> = {
+  YES: 'مَقْبُول',
+  NO: 'مَرْدُود',
+  CONDITIONAL: 'مَشْرُوط',
+  DELAYED: 'تَأْخِير',
+  DENIED: 'مَرْدُود',
+  UNCLEAR: 'غَيْر وَاضِح',
+  PENDING: 'مُنْتَظِر',
+};
+
+export function VerdictPill({ verdict, confidence = 'HIGH', arabicLabel }: Props) {
   const c = useColors();
 
-  const isConfirmed = kind === 'CONFIRMED';
-  const accentColor = isConfirmed ? c.maqbool : c.mardood;
-  const label = isConfirmed ? 'MAQBOOL' : 'MARDOOD';
-  const arabic = arabicLabel ?? (isConfirmed ? 'مَقْبُول' : 'مَرْدُود');
+  const isFavorable = verdict === 'YES';
+  const accentColor =
+    verdict === 'YES'
+      ? c.maqbool
+      : verdict === 'NO' || verdict === 'DENIED'
+        ? c.mardood
+        : verdict === 'CONDITIONAL' || verdict === 'DELAYED'
+          ? c.caution
+          : c.textMuted;
+  const label = VERDICT_LABEL[verdict];
+  const arabic = arabicLabel ?? VERDICT_ARABIC[verdict];
 
   // Entrance animation
   const scale = useRef(new Animated.Value(0.88)).current;
@@ -52,10 +90,10 @@ export function VerdictPill({ kind, confidence = 'HIGH', arabicLabel }: Props) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Dot pulse (CONFIRMED only)
+  // Dot pulse (favorable/MAQBOOL verdicts only)
   const dotScale = useRef(new Animated.Value(1)).current;
   useEffect(() => {
-    if (!isConfirmed) {
+    if (!isFavorable) {
       return;
     }
     const pulse = Animated.loop(
@@ -67,7 +105,7 @@ export function VerdictPill({ kind, confidence = 'HIGH', arabicLabel }: Props) {
     pulse.start();
     return () => pulse.stop();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isConfirmed]);
+  }, [isFavorable]);
 
   return (
     <Animated.View style={{ opacity, transform: [{ scale }] }}>
@@ -75,13 +113,13 @@ export function VerdictPill({ kind, confidence = 'HIGH', arabicLabel }: Props) {
         style={[
           styles.pill,
           {
-            backgroundColor: isConfirmed ? `${c.maqbool}18` : `${c.mardood}14`,
-            borderColor: accentColor + (isConfirmed ? '90' : '70'),
+            backgroundColor: accentColor + (isFavorable ? '18' : '14'),
+            borderColor: accentColor + (isFavorable ? '90' : '70'),
           },
           Platform.select({
             ios: {
               shadowColor: accentColor,
-              shadowOpacity: isConfirmed ? 0.35 : 0.2,
+              shadowOpacity: isFavorable ? 0.35 : 0.2,
               shadowRadius: 12,
               shadowOffset: { width: 0, height: 0 },
             },
@@ -96,7 +134,7 @@ export function VerdictPill({ kind, confidence = 'HIGH', arabicLabel }: Props) {
               styles.dotOuter,
               {
                 backgroundColor: accentColor + '30',
-                transform: isConfirmed ? [{ scale: dotScale }] : [],
+                transform: isFavorable ? [{ scale: dotScale }] : [],
               },
             ]}
           />

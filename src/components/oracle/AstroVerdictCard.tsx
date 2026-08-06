@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import type { RenderedRemedy } from '../../data/remedyRenderer';
 import { Animated, Easing, Pressable, StyleSheet, Text, View } from 'react-native';
+import Svg, { Circle, Line } from 'react-native-svg';
 
 import { useColors } from '@theme/ThemeProvider';
 import { useTypography } from '@theme/useTypography';
@@ -130,6 +131,65 @@ function confidencePhrase(confidence: number): string {
   }
   return 'The stars speak softly — listen closely';
 }
+
+function confidenceBucket(confidence: number): 'HIGH' | 'MEDIUM' | 'LOW' {
+  if (confidence >= 70) {
+    return 'HIGH';
+  }
+  if (confidence >= 40) {
+    return 'MEDIUM';
+  }
+  return 'LOW';
+}
+
+// ── CrescentGlow — the verdict reveal's crescent + radiating glow icon ────────
+// A small "casting the chart" flourish above the sacred-term pill, matching
+// the reference verdict card: a thin gold crescent under a burst of light.
+
+const CRESCENT_RAYS: ReadonlyArray<readonly [angleDeg: number, length: number, opacity: number]> = [
+  [0, 14, 0.8],
+  [-16, 11, 0.55],
+  [16, 11, 0.55],
+  [-32, 8, 0.3],
+  [32, 8, 0.3],
+];
+
+const CrescentGlow: React.FC<{ color: string }> = ({ color }) => {
+  const colors = useColors();
+  const SIZE = 60;
+  const CX = SIZE / 2;
+  const CY = SIZE / 2 + 8;
+  const R = 13;
+  const rayOrigin = CY - R - 3;
+
+  return (
+    <View style={styles.crescentWrap}>
+      <Svg width={SIZE} height={SIZE} viewBox={`0 0 ${SIZE} ${SIZE}`}>
+        {CRESCENT_RAYS.map(([angle, length, opacity], i) => {
+          const rad = (angle * Math.PI) / 180;
+          const x2 = CX + length * Math.sin(rad);
+          const y2 = rayOrigin - length * Math.cos(rad);
+          return (
+            <Line
+              key={`ray${i}`}
+              x1={CX}
+              y1={rayOrigin}
+              x2={x2}
+              y2={y2}
+              stroke={color}
+              strokeWidth={1.4}
+              opacity={opacity}
+              strokeLinecap="round"
+            />
+          );
+        })}
+        {/* Crescent — a bright disc with an offset "shadow" disc cut across it */}
+        <Circle cx={CX} cy={CY} r={R} fill={color} opacity={0.92} />
+        <Circle cx={CX + R * 0.55} cy={CY - R * 0.18} r={R * 0.94} fill={colors.surface} />
+      </Svg>
+    </View>
+  );
+};
 
 // ── Category icon map — Unicode geometry, no emoji except 📿 ─────────────────
 
@@ -267,6 +327,28 @@ const AstroVerdictCard: React.FC<AstroVerdictCardProps> = ({
   const hasRemedy =
     remedy.quran_verse ?? remedy.dua ?? remedy.asma ?? remedy.zikr ?? remedy.sadaqah ?? false;
 
+  // Hero meta line — "{Hora Lord} Hora · {date} · {time}" — mirrors the
+  // reference verdict card's timestamp strip, built from data already on
+  // the result (no new plumbing needed).
+  const horaLordEntry = result.rulingPlanets.find(rp => rp.role === 'horaLord');
+  const createdDate = new Date(result.createdAt);
+  const createdValid = !Number.isNaN(createdDate.getTime());
+  const heroMetaLine = [
+    horaLordEntry !== undefined ? `${horaLordEntry.planet} Hora` : null,
+    createdValid
+      ? createdDate.toLocaleDateString(undefined, {
+          day: '2-digit',
+          month: 'short',
+          year: 'numeric',
+        })
+      : null,
+    createdValid
+      ? createdDate.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })
+      : null,
+  ]
+    .filter((piece): piece is string => piece !== null)
+    .join('  ·  ');
+
   // UNCLEAR with H0 — location was missing when engine ran; render nothing
   if (result.verdict === 'UNCLEAR' && result.subLordHouse === 0) {
     return null;
@@ -290,7 +372,7 @@ const AstroVerdictCard: React.FC<AstroVerdictCardProps> = ({
           </Text>
         </View>
         <View style={styles.verdictPillContainer}>
-          <VerdictPill kind="DENIED" confidence="HIGH" />
+          <VerdictPill verdict="DENIED" confidence="HIGH" />
         </View>
         {result.narrative.length > 0 && (
           <Text
@@ -373,27 +455,27 @@ const AstroVerdictCard: React.FC<AstroVerdictCardProps> = ({
             </Text>
           </View>
 
-          {/* Verdict banner — colored glow, no percentage */}
-          <View
-            style={[
-              styles.verdictBanner,
-              {
-                borderColor: verdictColor,
-                backgroundColor: verdictColor + '18',
-                shadowColor: verdictColor,
-                shadowRadius: 10,
-                shadowOpacity: 0.45,
-                shadowOffset: { width: 0, height: 0 },
-              },
-            ]}
-          >
-            <Text style={[typography('button'), { color: verdictColor, letterSpacing: 3 }]}>
-              {result.verdict}
-            </Text>
+          {/* Verdict hero — crescent glow + sacred-term pill, the ceremonial reveal */}
+          <View style={styles.verdictHero}>
+            <CrescentGlow color={verdictColor} />
+            <VerdictPill
+              verdict={result.verdict}
+              confidence={confidenceBucket(result.confidence)}
+            />
+            {heroMetaLine.length > 0 && (
+              <Text
+                style={[
+                  typography('caption'),
+                  { color: colors.textFaint, marginTop: 10, letterSpacing: 0.6 },
+                ]}
+              >
+                {heroMetaLine}
+              </Text>
+            )}
             <Text
               style={[
                 typography('caption'),
-                { color: colors.textMuted, marginLeft: 8, fontStyle: 'italic' },
+                { color: colors.textMuted, marginTop: 4, fontStyle: 'italic' },
               ]}
             >
               {confidencePhrase(result.confidence)}
@@ -872,13 +954,13 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     minWidth: 48,
   },
-  verdictBanner: {
-    flexDirection: 'row',
+  verdictHero: {
     alignItems: 'center',
-    borderTopWidth: 1,
-    borderBottomWidth: 1,
     paddingHorizontal: 14,
     paddingVertical: 12,
+  },
+  crescentWrap: {
+    marginBottom: 4,
   },
   barTrack: {
     height: 4,
