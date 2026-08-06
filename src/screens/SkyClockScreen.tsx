@@ -32,6 +32,7 @@ import {
   moonPhase,
   localSiderealTime,
   PLANET_DAILY_SPEED,
+  PLANET_GLYPHS,
   TABLE_PLANET_ORDER,
   type PlanetName,
 } from '@utils/siderealPositions';
@@ -64,18 +65,6 @@ function computeTiming(lonDeg: number): TimingState {
 }
 
 // ── Planet table ──────────────────────────────────────────────────────────────
-
-const PLANET_GLYPHS: Record<PlanetName, string> = {
-  Sun: '☉',
-  Moon: '☽',
-  Mars: '♂',
-  Mercury: '☿',
-  Jupiter: '♃',
-  Venus: '♀',
-  Saturn: '♄',
-  Rahu: '☊',
-  Ketu: '☋',
-};
 
 // Manuscript-toned status colors — no harsh red/orange in the sacred observatory
 const STATUS_RETROGRADE = '#8C7A9A'; // muted violet — retrograde motion restrained

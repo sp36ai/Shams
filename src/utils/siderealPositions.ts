@@ -151,6 +151,18 @@ export function localSiderealTime(nowMs: number, lonDeg: number): string {
 
 // Mean daily motion (°/day) from J2K Lr constants (°/century ÷ 36525).
 // Rahu/Ketu have negative Lr → retrograde mean motion.
+export const PLANET_GLYPHS: Record<PlanetName, string> = {
+  Sun: '☉',
+  Moon: '☽',
+  Mars: '♂',
+  Mercury: '☿',
+  Jupiter: '♃',
+  Venus: '♀',
+  Saturn: '♄',
+  Rahu: '☊',
+  Ketu: '☋',
+};
+
 export const PLANET_DAILY_SPEED: Record<PlanetName, number> = {
   Sun: 36000.76983 / 36525,
   Moon: 481267.8813 / 36525,

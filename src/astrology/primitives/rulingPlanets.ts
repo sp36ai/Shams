@@ -73,6 +73,28 @@ export function horaLordAtMoment(momentMs: number, lonDeg: number): Planet {
 }
 
 /**
+ * Milliseconds remaining until the current hora hands off to the next lord.
+ * Each hora is exactly one local-solar clock hour (same simplified RKP rule
+ * as calculateHoraLord) — used to drive the home dashboard's countdown.
+ */
+export function msUntilNextHora(momentMs: number, lonDeg: number): number {
+  const jdUtc = momentMs / 86400000 + 2440587.5;
+  const lstOffsetDays = lonDeg / 360;
+  const jdLst = jdUtc + lstOffsetDays;
+  const dayFraction = (jdLst + 0.5) % 1;
+  const lstHours = dayFraction * 24;
+
+  let hoursSinceSunrise = lstHours - 6;
+  if (hoursSinceSunrise < 0) {
+    hoursSinceSunrise += 24;
+  }
+
+  const fractionalHour = hoursSinceSunrise - Math.floor(hoursSinceSunrise);
+  const hoursRemaining = 1 - fractionalHour;
+  return hoursRemaining * 3600_000;
+}
+
+/**
  * Calculates the Hora Lord based on the Chaldean order.
  * Each hora is 1 local solar hour. Sunrise is at 6:00 AM.
  *

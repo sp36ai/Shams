@@ -1,17 +1,16 @@
 /**
- * OracleScreen — home dashboard.
+ * OracleScreen — home dashboard ("The Observatory Hall").
  * --------------------------------------------------------------------------
  * The first screen the seeker lands on after onboarding (Oracle is the
  * initial tab in MainTabs). Passive status surface only — no chat, no
- * composer. Shows the live sky readout, quota, location, and a set of
- * astrological "extras" cards (moon watch, favored-now, daily dhikr,
- * today's blessing) — all EXPERIMENTAL, added together to review in the
- * running app before deciding which stay. Hands off to OracleChatScreen
- * (via the "Ask Shams" button) for the actual question/verdict conversation.
+ * composer. Hierarchy follows DĀR AL-SHAMS design system §Home Screen:
+ * hora status → celestial state → ask entry → moon mansion → user tier.
+ * Hands off to OracleChatScreen (via "Ask New Question") for the actual
+ * question/verdict conversation.
  */
 
 import React, { useCallback, useEffect, useState } from 'react';
-import { AppState, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { AppState, Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { acquireLocation } from '@utils/acquireLocation';
 import crashlytics from '@react-native-firebase/crashlytics';
@@ -27,12 +26,17 @@ import { useQuotaStore, FREE_DAILY_LIMIT, TRIAL_DAILY_LIMIT } from '@stores/quot
 import { useQuota } from '@hooks/useQuota';
 import { useTimingStrip } from '@hooks/useTimingStrip';
 import { useSkyExtras } from '@hooks/useSkyExtras';
+import { useHoraCountdown } from '@hooks/useHoraCountdown';
 import { storage, KEYS } from '@storage/mmkv';
+import { displayLonSidereal, PLANET_GLYPHS } from '@utils/siderealPositions';
 import StarfieldBackground from '@components/StarfieldBackground';
 import { buildDailySkyMessage } from '@utils/dailySkyMessage';
 import { favoredChipForPlanet } from '../data/favoredQuestion';
 import { PLANET_DHIKR } from '../data/dailyDhikr';
 import { todaysIslamicNote } from '../data/islamicDayOfWeek';
+import { getManzilaDisplay } from '@astrology/manazil';
+
+const SEAL_IMAGE = require('@assets/images/sky-clock-disk.png');
 
 // Fallback coordinates when no fix is stored yet (mirrors the pairing used
 // by SkyClockScreen's lon-only fallback — location is mandatory in practice,
@@ -53,6 +57,9 @@ const OracleScreen: React.FC = () => {
   const t = useTranslation();
   const { lang } = useI18n();
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  // History lives on the sibling tab navigator, not the root stack — same
+  // loose-typing precedent as HistoryScreen's own navigation prop.
+  const tabNavigation = useNavigation<{ navigate: (screen: string) => void }>();
 
   const lastLocation = useSettingsStore(
     (s: ReturnType<typeof useSettingsStore.getState>) => s.lastLocation,
@@ -65,11 +72,13 @@ const OracleScreen: React.FC = () => {
   );
 
   const { questionsLeft } = useQuota();
+  const plan = useQuotaStore(s => s.plan);
   const trialActive = useQuotaStore(s => s.trialActive);
 
   const latDeg = lastLocation?.lat ?? FALLBACK_LAT;
   const lonDeg = lastLocation?.lon ?? FALLBACK_LON;
   const { horaLord, dayLord } = useTimingStrip(lonDeg);
+  const horaCountdown = useHoraCountdown(lonDeg);
   const skyExtras = useSkyExtras(latDeg, lonDeg);
 
   // ── Trial day banners — Day 6 passive strip, Day 7 once-per-day soft prompt ─
@@ -163,6 +172,15 @@ const OracleScreen: React.FC = () => {
   const dhikr = PLANET_DHIKR[dayLord];
   const islamicNote = todaysIslamicNote(new Date());
 
+  const manzil = getManzilaDisplay(displayLonSidereal('Moon', Date.now()));
+
+  const tierLabel =
+    plan === 'mureed'
+      ? t('premium.tierStarter')
+      : plan === 'khass'
+        ? t('premium.tierPremium')
+        : t('oracle.tierWanderer');
+
   return (
     <SafeAreaView style={[styles.root, { backgroundColor: theme.colors.bg }]} edges={['top']}>
       <StarfieldBackground starColor={colors.starfield} />
@@ -179,31 +197,10 @@ const OracleScreen: React.FC = () => {
             SHAMS AL-ASRĀR
           </Text>
         </View>
-        <View style={styles.headerRight}>
-          {questionsLeft !== Infinity && (
-            <View
-              style={[
-                styles.quotaBadge,
-                { borderColor: questionsLeft === 0 ? colors.negative : colors.borderAccent },
-              ]}
-            >
-              <Text
-                style={[
-                  typography('caption'),
-                  {
-                    color: questionsLeft === 0 ? colors.negative : colors.textMuted,
-                  },
-                ]}
-              >
-                {questionsLeft}/{trialActive ? TRIAL_DAILY_LIMIT : FREE_DAILY_LIMIT}
-              </Text>
-            </View>
-          )}
-          <View style={[styles.locationChip, { borderColor: colors.borderAccent }]}>
-            <Text style={[typography('caption'), { color: colors.textMuted }]} numberOfLines={1}>
-              {locationLabel}
-            </Text>
-          </View>
+        <View style={[styles.locationChip, { borderColor: colors.borderAccent }]}>
+          <Text style={[typography('caption'), { color: colors.textMuted }]} numberOfLines={1}>
+            {locationLabel}
+          </Text>
         </View>
       </View>
 
@@ -234,63 +231,179 @@ const OracleScreen: React.FC = () => {
           </View>
         )}
 
-        {/* Dashboard row */}
-        <View
-          style={[
-            styles.dashboardRow,
-            { borderColor: colors.borderAccent + '44', backgroundColor: colors.surface },
-          ]}
-        >
-          <View style={[styles.statCard, { borderColor: colors.borderAccent }]}>
-            <Text style={[typography('caption'), { color: colors.textMuted }]}>HORA</Text>
-            <Text style={[typography('label'), { color: colors.goldBright, marginTop: 4 }]}>
-              {horaLord}
-            </Text>
-          </View>
-          <View style={[styles.statCard, { borderColor: colors.borderAccent }]}>
-            <Text style={[typography('caption'), { color: colors.textMuted }]}>DAY LORD</Text>
-            <Text style={[typography('label'), { color: colors.goldBright, marginTop: 4 }]}>
-              {dayLord}
-            </Text>
-          </View>
-          <View style={[styles.statCard, { borderColor: colors.borderAccent }]}>
-            <Text style={[typography('caption'), { color: colors.textMuted }]}>QUESTIONS</Text>
-            <Text style={[typography('label'), { color: colors.goldBright, marginTop: 4 }]}>
-              {questionsLeft === Infinity ? '∞' : questionsLeft}
-            </Text>
-          </View>
-        </View>
-
-        {/* Timing strip — hora + day lord; taps into Sky State */}
+        {/* Current Hora — the sacred seal, breathing at the heart of the screen */}
         <Pressable
           onPress={() => navigation.navigate('SkyState')}
           style={[
-            styles.timingStrip,
-            { backgroundColor: colors.surface, borderColor: colors.border },
+            styles.heroCard,
+            { backgroundColor: colors.surface, borderColor: colors.borderAccent + '55' },
           ]}
           accessibilityRole="button"
-          accessibilityLabel="Open Sky State timing panel"
+          accessibilityLabel="Open Al-Falak — Sky State timing panel"
         >
-          <Text style={[typography('caption'), { color: colors.textFaint, fontSize: 9 }]}>
-            HORA
+          <Image source={SEAL_IMAGE} style={styles.sealImage} resizeMode="contain" />
+          <Text
+            style={[
+              typography('caption'),
+              { color: colors.textMuted, letterSpacing: 1.6, marginTop: 12 },
+            ]}
+          >
+            {t('oracle.currentHoraLabel').toUpperCase()}
           </Text>
           <Text
-            style={[typography('label'), { color: colors.accent, marginLeft: 4, marginRight: 16 }]}
+            style={[
+              typography('title'),
+              { color: colors.goldBright, marginTop: 4, letterSpacing: 0.6 },
+            ]}
           >
-            {horaLord}
+            {PLANET_GLYPHS[horaLord]} {horaLord} Hora
           </Text>
-          <Text style={[typography('caption'), { color: colors.textFaint, fontSize: 9 }]}>DAY</Text>
-          <Text style={[typography('label'), { color: colors.accent, marginLeft: 4 }]}>
-            {dayLord}
+          <Text style={[typography('label'), { color: colors.accent, marginTop: 6 }]}>
+            {horaCountdown} {t('oracle.remainingLabel')}
           </Text>
           <Text
             style={[
               typography('caption'),
-              { color: colors.goldBright, marginLeft: 'auto', fontSize: 10, letterSpacing: 0.8 },
+              { color: colors.goldBright, marginTop: 10, fontSize: 10, letterSpacing: 0.8 },
             ]}
           >
-            Al-Falak ›
+            {PLANET_GLYPHS[dayLord]} {dayLord} · Al-Falak ›
           </Text>
+        </Pressable>
+
+        {/* Quota + Tier pills */}
+        <View style={styles.pillRow}>
+          <View
+            style={[
+              styles.infoPill,
+              { backgroundColor: colors.surface, borderColor: colors.border },
+            ]}
+          >
+            <Text style={[typography('caption'), { color: colors.textFaint, fontSize: 10 }]}>
+              {t('oracle.todaysQuotaLabel').toUpperCase()}
+            </Text>
+            <Text style={[typography('label'), { color: colors.goldBright, marginTop: 4 }]}>
+              {questionsLeft === Infinity
+                ? '∞'
+                : `${questionsLeft} / ${trialActive ? TRIAL_DAILY_LIMIT : FREE_DAILY_LIMIT}`}
+            </Text>
+          </View>
+          <View
+            style={[
+              styles.infoPill,
+              { backgroundColor: colors.surface, borderColor: colors.border },
+            ]}
+          >
+            <Text style={[typography('caption'), { color: colors.textFaint, fontSize: 10 }]}>
+              {t('oracle.yourTierLabel').toUpperCase()}
+            </Text>
+            <Text style={[typography('label'), { color: colors.goldBright, marginTop: 4 }]}>
+              {tierLabel.toUpperCase()}
+            </Text>
+          </View>
+        </View>
+
+        {/* Moon Manzil — the current lunar mansion (Manazil al-Qamar) */}
+        <View
+          style={[
+            styles.card,
+            { backgroundColor: colors.surface, borderColor: colors.borderAccent + '44' },
+          ]}
+        >
+          <Text style={[typography('caption'), { color: colors.goldBright, letterSpacing: 1.2 }]}>
+            {t('oracle.moonManzilTitle').toUpperCase()}
+          </Text>
+          <Text
+            style={{
+              fontFamily: 'Amiri-Regular',
+              fontSize: 20,
+              color: colors.goldBright,
+              marginTop: 8,
+            }}
+          >
+            {manzil.arabic}
+          </Text>
+          <Text style={[typography('subheading'), { color: colors.text, marginTop: 2 }]}>
+            {manzil.name}
+          </Text>
+          <Text
+            style={[
+              typography('bodyItalic'),
+              { color: colors.textMuted, marginTop: 6, lineHeight: 20 },
+            ]}
+          >
+            {manzil.descriptor}
+          </Text>
+          {skyExtras.sunTimes !== null && (
+            <Text
+              style={[
+                typography('caption'),
+                { color: colors.textFaint, marginTop: 10, lineHeight: 18 },
+              ]}
+            >
+              {skyExtras.moonPhaseFull}
+              {'   ·   '}
+              {t('oracle.sunriseLabel')} {formatClockTime(skyExtras.sunTimes.sunriseMs)}
+              {'   ·   '}
+              {t('oracle.sunsetLabel')} {formatClockTime(skyExtras.sunTimes.sunsetMs)}
+            </Text>
+          )}
+        </View>
+
+        {/* Ask New Question — opens the oracle chat conversation */}
+        <Pressable
+          testID="ask-shams-btn"
+          onPress={() => navigation.navigate('OracleChat')}
+          style={({ pressed }) => [
+            styles.actionBtn,
+            { backgroundColor: colors.primary, opacity: pressed ? 0.85 : 1 },
+          ]}
+          accessibilityRole="button"
+          accessibilityLabel={t('oracle.askNewQuestionCta')}
+        >
+          <View>
+            <Text style={[typography('button'), { color: colors.textOnPrimary, fontSize: 16 }]}>
+              {'✦ '}
+              {t('oracle.askNewQuestionCta')}
+            </Text>
+            <Text
+              style={[
+                typography('caption'),
+                { color: colors.textOnPrimary, opacity: 0.75, marginTop: 2 },
+              ]}
+            >
+              {t('oracle.consultOracleSubtitle')}
+            </Text>
+          </View>
+          <Text style={[typography('label'), { color: colors.textOnPrimary, opacity: 0.85 }]}>
+            ›
+          </Text>
+        </Pressable>
+
+        {/* Reading History */}
+        <Pressable
+          onPress={() => tabNavigation.navigate('History')}
+          style={({ pressed }) => [
+            styles.actionBtnSecondary,
+            {
+              backgroundColor: colors.surface,
+              borderColor: colors.border,
+              opacity: pressed ? 0.85 : 1,
+            },
+          ]}
+          accessibilityRole="button"
+          accessibilityLabel={t('oracle.readingHistoryCta')}
+        >
+          <View>
+            <Text style={[typography('button'), { color: colors.text, fontSize: 15 }]}>
+              {'📜 '}
+              {t('oracle.readingHistoryCta')}
+            </Text>
+            <Text style={[typography('caption'), { color: colors.textMuted, marginTop: 2 }]}>
+              {t('oracle.viewPastReadingsSubtitle')}
+            </Text>
+          </View>
+          <Text style={[typography('label'), { color: colors.textMuted }]}>›</Text>
         </Pressable>
 
         {/* Today's Sky — daily personalized readout, based on saved profile */}
@@ -323,43 +436,6 @@ const OracleScreen: React.FC = () => {
               ]}
             >
               {dailySky.guidance}
-            </Text>
-          )}
-        </View>
-
-        {/* Moon Watch — sign, nakshatra, phase, sunrise/sunset */}
-        <View
-          style={[
-            styles.card,
-            { backgroundColor: colors.surface, borderColor: colors.borderAccent + '44' },
-          ]}
-        >
-          <Text style={[typography('caption'), { color: colors.goldBright, letterSpacing: 1.2 }]}>
-            {t('oracle.moonWatchTitle').toUpperCase()}
-          </Text>
-          <View style={styles.moonRow}>
-            <Text style={[typography('body'), { color: colors.text, lineHeight: 22 }]}>
-              {'☽ '}
-              <Text style={{ fontWeight: '700', color: colors.accent }}>{skyExtras.moonSign}</Text>
-              {' · '}
-              {skyExtras.moonNakshatra}
-            </Text>
-          </View>
-          <Text
-            style={[typography('body'), { color: colors.textMuted, marginTop: 2, lineHeight: 22 }]}
-          >
-            {skyExtras.moonPhaseFull}
-          </Text>
-          {skyExtras.sunTimes !== null && (
-            <Text
-              style={[
-                typography('caption'),
-                { color: colors.textFaint, marginTop: 8, lineHeight: 18 },
-              ]}
-            >
-              {t('oracle.sunriseLabel')} {formatClockTime(skyExtras.sunTimes.sunriseMs)}
-              {'   ·   '}
-              {t('oracle.sunsetLabel')} {formatClockTime(skyExtras.sunTimes.sunsetMs)}
             </Text>
           )}
         </View>
@@ -445,23 +521,6 @@ const OracleScreen: React.FC = () => {
             {islamicNote.note[lang]}
           </Text>
         </View>
-
-        {/* Ask Shams — opens the oracle chat conversation */}
-        <Pressable
-          testID="ask-shams-btn"
-          onPress={() => navigation.navigate('OracleChat')}
-          style={({ pressed }) => [
-            styles.askShamsBtn,
-            { backgroundColor: colors.primary, opacity: pressed ? 0.85 : 1 },
-          ]}
-          accessibilityRole="button"
-          accessibilityLabel={t('oracle.askShamsCta')}
-        >
-          <Text style={[typography('button'), { color: colors.textOnPrimary, fontSize: 16 }]}>
-            {'✦ '}
-            {t('oracle.askShamsCta')}
-          </Text>
-        </Pressable>
       </ScrollView>
 
       {/* Trial day banners — thin gold strip, max 44px, above tab bar */}
@@ -537,18 +596,6 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 4 },
     elevation: 2,
   },
-  headerRight: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  quotaBadge: {
-    borderWidth: StyleSheet.hairlineWidth,
-    borderRadius: 999,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    backgroundColor: '#FFFFFF0F',
-  },
   locationChip: {
     borderWidth: StyleSheet.hairlineWidth,
     borderRadius: 999,
@@ -569,44 +616,37 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     borderWidth: StyleSheet.hairlineWidth,
   },
-  dashboardRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    gap: 10,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderRadius: 22,
-    marginHorizontal: 16,
-    marginTop: 10,
-    marginBottom: 10,
-    shadowColor: '#000',
-    shadowOpacity: 0.06,
-    shadowRadius: 14,
-    shadowOffset: { width: 0, height: 8 },
-    elevation: 2,
-  },
-  statCard: {
-    flex: 1,
-    alignItems: 'flex-start',
-    padding: 14,
-    borderRadius: 18,
-    borderWidth: StyleSheet.hairlineWidth,
-    // minWidth: 0 lets the three flex:1 cards shrink to share the row on
-    // narrow/zoomed screens instead of overflowing the right edge (a fixed
-    // minWidth here would force 3×88dp + gaps past a reduced-dp width).
-    minWidth: 0,
-    backgroundColor: 'transparent',
-  },
-  timingStrip: {
-    flexDirection: 'row',
+  heroCard: {
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 10,
     marginHorizontal: 16,
-    marginBottom: 10,
+    marginTop: 14,
+    marginBottom: 12,
+    paddingVertical: 22,
+    paddingHorizontal: 16,
+    borderRadius: 26,
     borderWidth: StyleSheet.hairlineWidth,
+    shadowColor: '#000',
+    shadowOpacity: 0.1,
+    shadowRadius: 20,
+    shadowOffset: { width: 0, height: 10 },
+    elevation: 3,
+  },
+  sealImage: {
+    width: 84,
+    height: 84,
+  },
+  pillRow: {
+    flexDirection: 'row',
+    gap: 10,
+    marginHorizontal: 16,
+    marginBottom: 12,
+  },
+  infoPill: {
+    flex: 1,
+    alignItems: 'center',
+    paddingVertical: 12,
     borderRadius: 16,
+    borderWidth: StyleSheet.hairlineWidth,
   },
   card: {
     marginHorizontal: 16,
@@ -615,21 +655,31 @@ const styles = StyleSheet.create({
     borderRadius: 18,
     borderWidth: StyleSheet.hairlineWidth,
   },
-  moonRow: {
-    marginTop: 8,
-  },
-  askShamsBtn: {
-    marginHorizontal: 16,
-    marginTop: 4,
-    paddingVertical: 16,
-    borderRadius: 18,
+  actionBtn: {
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
+    justifyContent: 'space-between',
+    marginHorizontal: 16,
+    marginBottom: 10,
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+    borderRadius: 18,
     shadowColor: '#000',
     shadowOpacity: 0.14,
     shadowRadius: 14,
     shadowOffset: { width: 0, height: 6 },
     elevation: 3,
+  },
+  actionBtnSecondary: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginHorizontal: 16,
+    marginBottom: 14,
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+    borderRadius: 18,
+    borderWidth: StyleSheet.hairlineWidth,
   },
   trialBanner: {
     height: 44,
