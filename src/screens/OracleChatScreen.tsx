@@ -534,6 +534,10 @@ const OracleChatScreen: React.FC = () => {
   const t = useTranslation();
   const { lang } = useI18n();
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  // Ask is now a persistent tab, not always a pushed screen — canGoBack() is
+  // false when reached by tapping the tab directly, so the back arrow falls
+  // back to switching to the Home tab instead of a no-op goBack().
+  const tabNavigation = useNavigation<{ navigate: (screen: string) => void }>();
 
   const lastLocation = useSettingsStore(
     (s: ReturnType<typeof useSettingsStore.getState>) => s.lastLocation,
@@ -1062,7 +1066,9 @@ const OracleChatScreen: React.FC = () => {
         style={[styles.header, { borderColor: colors.border, backgroundColor: colors.surface }]}
       >
         <Pressable
-          onPress={() => navigation.goBack()}
+          onPress={() =>
+            navigation.canGoBack() ? navigation.goBack() : tabNavigation.navigate('Home')
+          }
           style={styles.backBtn}
           accessibilityRole="button"
           accessibilityLabel="Go back"

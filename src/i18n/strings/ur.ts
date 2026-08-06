@@ -17,7 +17,7 @@ import type { StringTable } from '@i18n/types';
 export const ur: StringTable = {
   app: {
     name: 'شمسُ الاسرار',
-    tagline: 'بھیدوں کا سورج',
+    tagline: 'الہی رہنمائی کا فلکیاتی اوریکل',
     poweredBy: 'پیشکش: آسٹرو سرفراز',
   },
 
@@ -39,6 +39,13 @@ export const ur: StringTable = {
 
   splash: {
     invocation: 'آسمان سن رہا ہے۔',
+  },
+
+  nav: {
+    homeTab: 'ہوم',
+    askTab: 'پوچھیں',
+    alFalakTab: 'الفلک',
+    historyTab: 'زائچے',
   },
 
   permission: {

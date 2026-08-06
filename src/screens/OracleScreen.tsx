@@ -30,6 +30,7 @@ import { useHoraCountdown } from '@hooks/useHoraCountdown';
 import { storage, KEYS } from '@storage/mmkv';
 import { displayLonSidereal, PLANET_GLYPHS } from '@utils/siderealPositions';
 import StarfieldBackground from '@components/StarfieldBackground';
+import TabIcon from '@components/TabIcon';
 import { buildDailySkyMessage } from '@utils/dailySkyMessage';
 import { favoredChipForPlanet } from '../data/favoredQuestion';
 import { PLANET_DHIKR } from '../data/dailyDhikr';
@@ -197,10 +198,21 @@ const OracleScreen: React.FC = () => {
             SHAMS AL-ASRĀR
           </Text>
         </View>
-        <View style={[styles.locationChip, { borderColor: colors.borderAccent }]}>
-          <Text style={[typography('caption'), { color: colors.textMuted }]} numberOfLines={1}>
-            {locationLabel}
-          </Text>
+        <View style={styles.headerRight}>
+          <View style={[styles.locationChip, { borderColor: colors.borderAccent }]}>
+            <Text style={[typography('caption'), { color: colors.textMuted }]} numberOfLines={1}>
+              {locationLabel}
+            </Text>
+          </View>
+          <Pressable
+            testID="settings-gear-btn"
+            onPress={() => navigation.navigate('Settings')}
+            style={styles.settingsBtn}
+            accessibilityRole="button"
+            accessibilityLabel={t('settings.headerTitle')}
+          >
+            <TabIcon name="settings" color={colors.textMuted} size={20} />
+          </Pressable>
         </View>
       </View>
 
@@ -231,9 +243,9 @@ const OracleScreen: React.FC = () => {
           </View>
         )}
 
-        {/* Current Hora — the sacred seal, breathing at the heart of the screen */}
+        {/* Current Hora — compact readout, seal as a small badge (not the hero) */}
         <Pressable
-          onPress={() => navigation.navigate('SkyState')}
+          onPress={() => tabNavigation.navigate('AlFalak')}
           style={[
             styles.heroCard,
             { backgroundColor: colors.surface, borderColor: colors.borderAccent + '55' },
@@ -241,34 +253,42 @@ const OracleScreen: React.FC = () => {
           accessibilityRole="button"
           accessibilityLabel="Open Al-Falak — Sky State timing panel"
         >
-          <Image source={SEAL_IMAGE} style={styles.sealImage} resizeMode="contain" />
-          <Text
-            style={[
-              typography('caption'),
-              { color: colors.textMuted, letterSpacing: 1.6, marginTop: 12 },
-            ]}
-          >
-            {t('oracle.currentHoraLabel').toUpperCase()}
-          </Text>
-          <Text
-            style={[
-              typography('title'),
-              { color: colors.goldBright, marginTop: 4, letterSpacing: 0.6 },
-            ]}
-          >
-            {PLANET_GLYPHS[horaLord]} {horaLord} Hora
-          </Text>
-          <Text style={[typography('label'), { color: colors.accent, marginTop: 6 }]}>
-            {horaCountdown} {t('oracle.remainingLabel')}
-          </Text>
-          <Text
-            style={[
-              typography('caption'),
-              { color: colors.goldBright, marginTop: 10, fontSize: 10, letterSpacing: 0.8 },
-            ]}
-          >
-            {PLANET_GLYPHS[dayLord]} {dayLord} · Al-Falak ›
-          </Text>
+          <View style={styles.heroTopRow}>
+            <View style={styles.heroTextCol}>
+              <Text
+                style={[typography('caption'), { color: colors.textMuted, letterSpacing: 1.6 }]}
+              >
+                {t('oracle.currentHoraLabel').toUpperCase()}
+              </Text>
+              <Text
+                style={[
+                  typography('subheading'),
+                  { color: colors.goldBright, marginTop: 3, letterSpacing: 0.4 },
+                ]}
+              >
+                {horaLord} Hora
+              </Text>
+              <Text style={[typography('caption'), { color: colors.accent, marginTop: 4 }]}>
+                {horaCountdown} {t('oracle.remainingLabel')}
+              </Text>
+            </View>
+            <View style={styles.heroSealBadge}>
+              <Image source={SEAL_IMAGE} style={styles.sealImage} resizeMode="contain" />
+            </View>
+          </View>
+          <View style={styles.heroFooterRow}>
+            <Text style={[typography('caption'), { color: colors.textFaint, fontSize: 10 }]}>
+              {PLANET_GLYPHS[dayLord]} {dayLord}
+            </Text>
+            <Text
+              style={[
+                typography('caption'),
+                { color: colors.goldBright, fontSize: 10, letterSpacing: 0.8 },
+              ]}
+            >
+              Al-Falak ›
+            </Text>
+          </View>
         </Pressable>
 
         {/* Quota + Tier pills */}
@@ -353,7 +373,7 @@ const OracleScreen: React.FC = () => {
         {/* Ask New Question — opens the oracle chat conversation */}
         <Pressable
           testID="ask-shams-btn"
-          onPress={() => navigation.navigate('OracleChat')}
+          onPress={() => tabNavigation.navigate('Ask')}
           style={({ pressed }) => [
             styles.actionBtn,
             { backgroundColor: colors.primary, opacity: pressed ? 0.85 : 1 },
@@ -596,6 +616,11 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 4 },
     elevation: 2,
   },
+  headerRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
   locationChip: {
     borderWidth: StyleSheet.hairlineWidth,
     borderRadius: 999,
@@ -603,6 +628,9 @@ const styles = StyleSheet.create({
     paddingVertical: 5,
     maxWidth: '55%',
     backgroundColor: '#FFFFFF08',
+  },
+  settingsBtn: {
+    padding: 4,
   },
   scroll: { flex: 1 },
   scrollBody: {
@@ -617,23 +645,41 @@ const styles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth,
   },
   heroCard: {
-    alignItems: 'center',
     marginHorizontal: 16,
     marginTop: 14,
     marginBottom: 12,
-    paddingVertical: 22,
+    paddingVertical: 14,
     paddingHorizontal: 16,
-    borderRadius: 26,
+    borderRadius: 20,
     borderWidth: StyleSheet.hairlineWidth,
     shadowColor: '#000',
-    shadowOpacity: 0.1,
-    shadowRadius: 20,
-    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.08,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 8 },
     elevation: 3,
   },
+  heroTopRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  heroTextCol: {
+    flex: 1,
+  },
+  heroSealBadge: {
+    marginLeft: 12,
+  },
   sealImage: {
-    width: 84,
-    height: 84,
+    width: 44,
+    height: 44,
+  },
+  heroFooterRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 10,
+    paddingTop: 10,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: '#FFFFFF14',
   },
   pillRow: {
     flexDirection: 'row',

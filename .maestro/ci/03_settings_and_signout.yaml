@@ -5,13 +5,15 @@ name: "Settings — plan display and sign out"
 
 - launchApp
 
-# Splash + session restore for the account created in 02
+# Splash + session restore for the account created in 02 — Settings is now
+# a gear icon in the Home header, not a tab.
 - extendedWaitUntil:
-    visible: "Settings"
+    visible:
+      id: "settings-gear-btn"
     timeout: 20000
 
-# Navigate to Settings tab
-- tapOn: "Settings"
+- tapOn:
+    id: "settings-gear-btn"
 - assertVisible: "AL-DAFTAR"
 
 # Free plan shown for the fresh account

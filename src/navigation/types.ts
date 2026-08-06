@@ -8,7 +8,10 @@
  * Two navigators:
  *   - RootStack  : top-level switch between Splash → Permission → Main.
  *                  Implemented as a native-stack with conditional screens.
- *   - MainTabs   : bottom-tabs for the local RKP shell: Ask | History | Settings.
+ *   - MainTabs   : bottom-tabs for the local RKP shell: Home | Ask | Al-Falak | History.
+ *                  Settings lives on RootStack, reached via the Home header's
+ *                  gear icon rather than a tab (matches the Dār al-Shams
+ *                  reference IA).
  *
  * Deep linking is NOT enabled in Phase 1 (no public URL scheme registered yet).
  * When we wire it in Phase 4 for payment-return URLs and password-reset
@@ -31,10 +34,8 @@ export type RootStackParamList = {
   LocationPermission: undefined;
   Main: undefined;
   Premium: undefined;
-  /** Sky State — secondary timing/context screen, reachable from Oracle timing strip. */
-  SkyState: undefined;
-  /** Oracle chat — the question/verdict conversation, reachable via the "Ask Shams" button on the home dashboard. */
-  OracleChat: undefined;
+  /** Settings — reached via the gear icon in the Home dashboard header. */
+  Settings: undefined;
 };
 
 export type RootStackScreenProps<RouteName extends keyof RootStackParamList> =
@@ -45,9 +46,13 @@ export type RootStackScreenProps<RouteName extends keyof RootStackParamList> =
 /* -------------------------------------------------------------------------- */
 
 export type MainTabParamList = {
-  Oracle: undefined;
+  /** Home dashboard — formerly the "Oracle" tab; content unchanged, renamed to match the reference IA. */
+  Home: undefined;
+  /** Oracle chat — the question/verdict conversation, now a persistent tab. */
+  Ask: undefined;
+  /** Al-Falak — Sky State timing/context panel, now a persistent tab. */
+  AlFalak: undefined;
   History: undefined;
-  Settings: undefined;
 };
 
 /**

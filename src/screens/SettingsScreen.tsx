@@ -14,6 +14,9 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import type { RootStackParamList } from '@navigation/types';
 import StarfieldBackground from '@components/StarfieldBackground';
 import { ThemeSwitcher } from '@components/ThemeSwitcher';
 
@@ -32,6 +35,7 @@ const SettingsScreen: React.FC = () => {
   const typography = useTypography();
   const t = useTranslation();
   const { lang, switchLanguage } = useI18n();
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
 
   const lastLocation = useSettingsStore(s => s.lastLocation);
   const seekerProfile = useSettingsStore(s => s.seekerProfile);
@@ -125,6 +129,14 @@ const SettingsScreen: React.FC = () => {
           { borderColor: colors.border, backgroundColor: colors.surfaceElevated },
         ]}
       >
+        <Pressable
+          onPress={() => navigation.goBack()}
+          style={styles.backBtn}
+          accessibilityRole="button"
+          accessibilityLabel="Go back"
+        >
+          <Text style={[typography('label'), { color: colors.accent, fontSize: 20 }]}>‹</Text>
+        </Pressable>
         <Text
           style={[
             typography('caption'),
@@ -522,6 +534,15 @@ const styles = StyleSheet.create({
     shadowRadius: 16,
     shadowOffset: { width: 0, height: 4 },
     elevation: 2,
+    position: 'relative',
+  },
+  backBtn: {
+    position: 'absolute',
+    top: 14,
+    left: 16,
+    zIndex: 1,
+    paddingHorizontal: 6,
+    paddingVertical: 4,
   },
   headerDivider: {
     flexDirection: 'row',

@@ -5,7 +5,8 @@
  *   1. Splash (always shown, min 2.5s brand moment)
  *   2. Auth   (if user is not signed in)
  *   3. LocationPermission (first launch after auth if not yet prompted)
- *   4. Main   (bottom tabs: Oracle | SkyClock | History | Settings)
+ *   4. Main   (bottom tabs: Home | Ask | Al-Falak | History; Settings is a
+ *              root-level push from Home's header gear icon)
  *
  * Firebase Auth bootstrap is awaited asynchronously via onAuthStateChanged;
  * while it resolves we stay on Splash so the user never sees a flash of the
@@ -27,8 +28,7 @@ import AuthScreen from '@screens/AuthScreen';
 import OnboardingScreen from '@screens/OnboardingScreen';
 import LocationPermissionScreen from '@screens/LocationPermissionScreen';
 import PremiumScreen from '@screens/PremiumScreen';
-import SkyClockScreen from '@screens/SkyClockScreen';
-import OracleChatScreen from '@screens/OracleChatScreen';
+import SettingsScreen from '@screens/SettingsScreen';
 import MainTabs from './MainTabs';
 
 import { useAuthStore } from '@stores/authStore';
@@ -126,16 +126,10 @@ const RootNavigator: React.FC = () => {
           component={PremiumScreen}
           options={{ presentation: 'modal', animation: 'slide_from_bottom' }}
         />
-        {/* Sky State — timing/context panel, secondary route from Oracle header */}
+        {/* Settings — reached via the gear icon in the Home dashboard header */}
         <RootStack.Screen
-          name="SkyState"
-          component={SkyClockScreen}
-          options={{ headerShown: false, animation: 'slide_from_right' }}
-        />
-        {/* Oracle Chat — the question/verdict conversation, opened via "Ask Shams" */}
-        <RootStack.Screen
-          name="OracleChat"
-          component={OracleChatScreen}
+          name="Settings"
+          component={SettingsScreen}
           options={{ headerShown: false, animation: 'slide_from_right' }}
         />
       </RootStack.Navigator>

@@ -22,7 +22,7 @@
 import React from 'react';
 import Svg, { Path, Circle } from 'react-native-svg';
 
-export type IconName = 'oracle' | 'skyclock' | 'history' | 'settings';
+export type IconName = 'oracle' | 'ask' | 'skyclock' | 'history' | 'settings';
 
 export interface TabIconProps {
   name: IconName;
@@ -48,6 +48,13 @@ const PATHS: Record<IconName, IconShape> = {
       'M2 12 C 5 7, 9 5, 12 5 C 15 5, 19 7, 22 12 C 19 17, 15 19, 12 19 C 9 19, 5 17, 2 12 Z',
     ],
     circles: [{ cx: 12, cy: 12, r: 3 }],
+  },
+
+  // Ask: four-point sparkle/seal — "the question offered up"
+  ask: {
+    paths: [
+      'M12 3 C 13 8, 16 11, 21 12 C 16 13, 13 16, 12 21 C 11 16, 8 13, 3 12 C 8 11, 11 8, 12 3 Z',
+    ],
   },
 
   // Sky Clock: concentric circles with tick marks — astrological disk

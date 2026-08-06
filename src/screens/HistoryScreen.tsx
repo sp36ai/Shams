@@ -147,7 +147,7 @@ const HistoryScreen: React.FC = () => {
   );
 
   const handleAskFirst = useCallback(() => {
-    navigation.navigate('OracleChat');
+    navigation.navigate('Ask');
   }, [navigation]);
 
   const renderItem = useCallback(

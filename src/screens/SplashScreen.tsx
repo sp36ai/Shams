@@ -1,55 +1,41 @@
 /**
- * SplashScreen — animated mandala with rotating zodiac, 2.5s brand moment.
+ * SplashScreen — the gold seal, brand moment (2.5–3.5s).
  * --------------------------------------------------------------------------
- * Visual elements (premium v2):
- *   1. StarfieldBackground (120 stars + nebula + shooting stars)
- *   2. Two layered halo rings: outer pulsing corona + inner soft glow
- *   3. Outer rotating zodiac ring (60s) with SVG tick marks
- *   4. Middle ring — same zodiac, slightly smaller, counter-rotating (80s)
- *   5. Inner counter-rotating 8-petal mandala (40s) with SVG RadialGradient sun
- *   6. 3 slow-orbiting accent dots (120s orbital period) via Reanimated
- *   7. Brand block with slow fade-in on mount
+ * Matches the reference cover art exactly: the Manazil al-Qamar gold seal
+ * (assets/images/sky-clock-disk.png) with a soft upward glow, the
+ * "SHAMS AL-ASRĀR" wordmark, a small diamond divider, and the tagline —
+ * on the obsidian starfield background used throughout the app.
  *
- * Reanimated v3: useSharedValue + withRepeat(withTiming(...)) — all on UI thread.
- * RN Animated: StarfieldBackground + halo pulse use native driver.
+ * Kept minimal motion (fade-in + slow breathing glow) rather than a fully
+ * static image — a completely still splash reads as frozen/broken on a
+ * real device, and the design system's MOTION.breathe (8s) is the
+ * documented "sacred breathing pulse" cadence for glowing seals.
  */
 
 import React, { useEffect, useRef } from 'react';
-import { Animated, Easing as REasing, StyleSheet, Text, View } from 'react-native';
-import Animated2, {
-  Easing,
-  useAnimatedStyle,
-  useSharedValue,
-  withRepeat,
-  withTiming,
-} from 'react-native-reanimated';
-import Svg, {
-  Circle,
-  Defs,
-  G,
-  Line,
-  Path,
-  RadialGradient,
-  Stop,
-  Text as SvgText,
-} from 'react-native-svg';
+import { Animated, Easing as REasing, Image, StyleSheet, Text, View } from 'react-native';
+import Svg, { Line } from 'react-native-svg';
 
 import { useColors, useTheme } from '@theme/ThemeProvider';
 import { useTypography } from '@theme/useTypography';
 import { useTranslation } from '@i18n/I18nProvider';
 import StarfieldBackground from '@components/StarfieldBackground';
 
-const ZODIAC_GLYPHS = ['♈', '♉', '♊', '♋', '♌', '♍', '♎', '♏', '♐', '♑', '♒', '♓'];
+const SEAL_IMAGE = require('@assets/images/sky-clock-disk.png');
 
-const OUTER_DURATION_MS = 60_000;
-const MID_DURATION_MS = 80_000;
-const INNER_DURATION_MS = 40_000;
-const ORBIT_DURATION_MS = 120_000;
+const SEAL_SIZE = 220;
+const RAY_HEIGHT = 140;
 
-const RING_RADIUS = 122;
-const MID_RING_RADIUS = 88;
-const PETAL_RADIUS = 66;
-const ORBIT_RADIUS = 150;
+// Ray fan: [angleDeg from vertical, length fraction, opacity]
+const RAYS: ReadonlyArray<readonly [number, number, number]> = [
+  [0, 1, 0.55],
+  [-6, 0.8, 0.4],
+  [6, 0.8, 0.4],
+  [-13, 0.6, 0.28],
+  [13, 0.6, 0.28],
+  [-20, 0.4, 0.16],
+  [20, 0.4, 0.16],
+];
 
 const SplashScreen: React.FC = () => {
   const { theme } = useTheme();
@@ -57,53 +43,24 @@ const SplashScreen: React.FC = () => {
   const typography = useTypography();
   const t = useTranslation();
 
-  // Reanimated rotation values
-  const outerProgress = useSharedValue(0);
-  const midProgress = useSharedValue(0);
-  const innerProgress = useSharedValue(0);
-  const orbitProgress = useSharedValue(0);
-
   // Halo pulse — RN Animated (native driver)
-  const haloAnim = useRef(new Animated.Value(0.4)).current;
+  const haloAnim = useRef(new Animated.Value(0.45)).current;
   // Brand block fade in
   const brandAnim = useRef(new Animated.Value(0)).current;
   const haloLoopRef = useRef<Animated.CompositeAnimation | null>(null);
 
   useEffect(() => {
-    // Rotations
-    outerProgress.value = withRepeat(
-      withTiming(360, { duration: OUTER_DURATION_MS, easing: Easing.linear }),
-      -1,
-      false,
-    );
-    midProgress.value = withRepeat(
-      withTiming(-360, { duration: MID_DURATION_MS, easing: Easing.linear }),
-      -1,
-      false,
-    );
-    innerProgress.value = withRepeat(
-      withTiming(-360, { duration: INNER_DURATION_MS, easing: Easing.linear }),
-      -1,
-      false,
-    );
-    orbitProgress.value = withRepeat(
-      withTiming(360, { duration: ORBIT_DURATION_MS, easing: Easing.linear }),
-      -1,
-      false,
-    );
-
-    // Halo pulse
     haloLoopRef.current = Animated.loop(
       Animated.sequence([
         Animated.timing(haloAnim, {
-          toValue: 0.75,
-          duration: 2200,
+          toValue: 0.8,
+          duration: 4000,
           easing: REasing.inOut(REasing.sin),
           useNativeDriver: true,
         }),
         Animated.timing(haloAnim, {
-          toValue: 0.3,
-          duration: 2200,
+          toValue: 0.35,
+          duration: 4000,
           easing: REasing.inOut(REasing.sin),
           useNativeDriver: true,
         }),
@@ -111,12 +68,11 @@ const SplashScreen: React.FC = () => {
     );
     haloLoopRef.current.start();
 
-    // Brand fade in (delayed by 300ms)
     Animated.sequence([
-      Animated.delay(300),
+      Animated.delay(200),
       Animated.timing(brandAnim, {
         toValue: 1,
-        duration: 900,
+        duration: 1100,
         easing: REasing.out(REasing.cubic),
         useNativeDriver: true,
       }),
@@ -125,263 +81,16 @@ const SplashScreen: React.FC = () => {
     return () => {
       haloLoopRef.current?.stop();
     };
-  }, [outerProgress, midProgress, innerProgress, orbitProgress, haloAnim, brandAnim]);
-
-  const outerStyle = useAnimatedStyle(() => ({
-    transform: [{ rotate: `${outerProgress.value}deg` }],
-  }));
-  const midStyle = useAnimatedStyle(() => ({
-    transform: [{ rotate: `${midProgress.value}deg` }],
-  }));
-  const innerStyle = useAnimatedStyle(() => ({
-    transform: [{ rotate: `${innerProgress.value}deg` }],
-  }));
-
-  // 3 orbiting dots at 120° apart
-  const dot0Style = useAnimatedStyle(() => {
-    const a = orbitProgress.value * (Math.PI / 180);
-    return {
-      position: 'absolute',
-      width: 6,
-      height: 6,
-      borderRadius: 3,
-      backgroundColor: colors.accent,
-      opacity: 0.8,
-      transform: [
-        { translateX: ORBIT_RADIUS * Math.cos(a) - 3 },
-        { translateY: ORBIT_RADIUS * Math.sin(a) - 3 },
-      ],
-    };
-  });
-  const dot1Style = useAnimatedStyle(() => {
-    const a = (orbitProgress.value + 120) * (Math.PI / 180);
-    return {
-      position: 'absolute',
-      width: 5,
-      height: 5,
-      borderRadius: 2.5,
-      backgroundColor: colors.amber,
-      opacity: 0.6,
-      transform: [
-        { translateX: ORBIT_RADIUS * Math.cos(a) - 2.5 },
-        { translateY: ORBIT_RADIUS * Math.sin(a) - 2.5 },
-      ],
-    };
-  });
-  const dot2Style = useAnimatedStyle(() => {
-    const a = (orbitProgress.value + 240) * (Math.PI / 180);
-    return {
-      position: 'absolute',
-      width: 4,
-      height: 4,
-      borderRadius: 2,
-      backgroundColor: colors.accent,
-      opacity: 0.4,
-      transform: [
-        { translateX: ORBIT_RADIUS * Math.cos(a) - 2 },
-        { translateY: ORBIT_RADIUS * Math.sin(a) - 2 },
-      ],
-    };
-  });
-
-  const svgSize = (RING_RADIUS + 32) * 2;
-  const center = svgSize / 2;
-  const svgSizeMid = (MID_RING_RADIUS + 20) * 2;
-  const centerMid = svgSizeMid / 2;
-  const svgSizeInner = (PETAL_RADIUS + 10) * 2;
-  const centerInner = svgSizeInner / 2;
+  }, [haloAnim, brandAnim]);
 
   return (
     <View style={[styles.root, { backgroundColor: theme.colors.bg }]}>
-      {/* Deep starfield */}
       <StarfieldBackground
         starColor={colors.starfield}
         nebula1={colors.nebula1}
         nebula2={colors.nebula2}
         nebula3={colors.nebula3}
       />
-
-      {/* Outer pulsing corona halo */}
-      <Animated.View
-        pointerEvents="none"
-        style={[
-          styles.halo,
-          {
-            backgroundColor: colors.nebula1,
-            shadowColor: colors.accent,
-            shadowRadius: 60,
-            shadowOpacity: 0.5,
-            shadowOffset: { width: 0, height: 0 },
-            opacity: haloAnim,
-          },
-        ]}
-      />
-
-      {/* Inner soft glow */}
-      <View
-        pointerEvents="none"
-        style={[
-          styles.innerHalo,
-          {
-            backgroundColor: colors.nebula2,
-            shadowColor: colors.amber,
-            shadowRadius: 30,
-            shadowOpacity: 0.35,
-          },
-        ]}
-      />
-
-      <View style={styles.mandalaWrap}>
-        {/* Outer orbiting dots */}
-        <Animated2.View style={dot0Style} />
-        <Animated2.View style={dot1Style} />
-        <Animated2.View style={dot2Style} />
-
-        {/* Outer rotating ring (zodiac glyphs) */}
-        <Animated2.View style={[styles.absCenter, outerStyle]}>
-          <Svg width={svgSize} height={svgSize}>
-            {/* Outer glow ring */}
-            <Circle
-              cx={center}
-              cy={center}
-              r={RING_RADIUS + 12}
-              stroke={colors.accent}
-              strokeOpacity={0.08}
-              strokeWidth={18}
-              fill="none"
-            />
-            <Circle
-              cx={center}
-              cy={center}
-              r={RING_RADIUS}
-              stroke={colors.accent}
-              strokeOpacity={0.3}
-              strokeWidth={1.2}
-              fill="none"
-            />
-            {ZODIAC_GLYPHS.map((glyph, i) => {
-              const angle = (i * 30 - 90) * (Math.PI / 180);
-              const x = center + RING_RADIUS * Math.cos(angle);
-              const y = center + RING_RADIUS * Math.sin(angle);
-              return (
-                <SvgText
-                  key={glyph}
-                  x={x}
-                  y={y + 6}
-                  fontSize={18}
-                  fill={colors.accent}
-                  textAnchor="middle"
-                  opacity={0.9}
-                >
-                  {glyph}
-                </SvgText>
-              );
-            })}
-            {ZODIAC_GLYPHS.map((_, i) => {
-              const angle = (i * 30 - 90) * (Math.PI / 180);
-              const x1 = center + (RING_RADIUS - 14) * Math.cos(angle);
-              const y1 = center + (RING_RADIUS - 14) * Math.sin(angle);
-              const x2 = center + (RING_RADIUS - 24) * Math.cos(angle);
-              const y2 = center + (RING_RADIUS - 24) * Math.sin(angle);
-              return (
-                <Line
-                  key={`t-${i}`}
-                  x1={x1}
-                  y1={y1}
-                  x2={x2}
-                  y2={y2}
-                  stroke={colors.accent}
-                  strokeWidth={1.4}
-                  opacity={0.55}
-                />
-              );
-            })}
-          </Svg>
-        </Animated2.View>
-
-        {/* Middle counter-rotating ring (smaller, accent dots) */}
-        <Animated2.View style={[styles.absCenter, midStyle]}>
-          <Svg width={svgSizeMid} height={svgSizeMid}>
-            <Circle
-              cx={centerMid}
-              cy={centerMid}
-              r={MID_RING_RADIUS}
-              stroke={colors.amber}
-              strokeOpacity={0.2}
-              strokeWidth={1}
-              fill="none"
-            />
-            {Array.from({ length: 12 }).map((_, i) => {
-              const angle = (i * 30 - 90) * (Math.PI / 180);
-              const x = centerMid + MID_RING_RADIUS * Math.cos(angle);
-              const y = centerMid + MID_RING_RADIUS * Math.sin(angle);
-              const isMain = i % 3 === 0;
-              return (
-                <Circle
-                  key={`md-${i}`}
-                  cx={x}
-                  cy={y}
-                  r={isMain ? 2.5 : 1.2}
-                  fill={isMain ? colors.amber : colors.accent}
-                  opacity={isMain ? 0.75 : 0.45}
-                />
-              );
-            })}
-          </Svg>
-        </Animated2.View>
-
-        {/* Inner counter-rotating petal mandala */}
-        <Animated2.View style={[styles.absCenter, innerStyle]}>
-          <Svg width={svgSizeInner} height={svgSizeInner}>
-            <Defs>
-              <RadialGradient id="sunRad" cx="50%" cy="50%">
-                <Stop offset="0%" stopColor={colors.amber} stopOpacity="1" />
-                <Stop offset="45%" stopColor={colors.amber} stopOpacity="0.6" />
-                <Stop offset="100%" stopColor={colors.accent} stopOpacity="0" />
-              </RadialGradient>
-              <RadialGradient id="petalRad" cx="50%" cy="0%">
-                <Stop offset="0%" stopColor={colors.accent} stopOpacity="0.35" />
-                <Stop offset="100%" stopColor={colors.accent} stopOpacity="0.02" />
-              </RadialGradient>
-            </Defs>
-            <G transform={`translate(${centerInner} ${centerInner})`}>
-              {/* 8 petals */}
-              {Array.from({ length: 8 }).map((_, i) => {
-                const rotate = i * 45;
-                const petalPath = `M 0 0 Q ${PETAL_RADIUS * 0.42} ${-PETAL_RADIUS * 0.62} 0 ${-PETAL_RADIUS} Q ${-PETAL_RADIUS * 0.42} ${-PETAL_RADIUS * 0.62} 0 0 Z`;
-                return (
-                  <Path
-                    key={`petal-${i}`}
-                    d={petalPath}
-                    transform={`rotate(${rotate})`}
-                    fill="url(#petalRad)"
-                    stroke={colors.accent}
-                    strokeOpacity={0.6}
-                    strokeWidth={1.2}
-                  />
-                );
-              })}
-              {/* Glow rings */}
-              <Circle r={34} fill="url(#sunRad)" />
-              <Circle r={12} fill={colors.amber} fillOpacity={0.95} />
-              <Circle
-                r={18}
-                fill="none"
-                stroke={colors.amber}
-                strokeOpacity={0.5}
-                strokeWidth={1.5}
-              />
-              <Circle
-                r={28}
-                fill="none"
-                stroke={colors.amber}
-                strokeOpacity={0.2}
-                strokeWidth={1}
-              />
-            </G>
-          </Svg>
-        </Animated2.View>
-      </View>
 
       {/* Corner ornaments */}
       {(['topLeft', 'topRight', 'bottomLeft', 'bottomRight'] as const).map(pos => (
@@ -400,23 +109,57 @@ const SplashScreen: React.FC = () => {
         </View>
       ))}
 
-      {/* Brand block — fades in */}
-      <Animated.View style={[styles.brandBlock, { opacity: brandAnim }]}>
-        {/* Ornamental header rule */}
-        <View style={styles.ornamentRow}>
-          <View
-            style={[styles.ornamentLine, { backgroundColor: colors.goldBright, opacity: 0.3 }]}
-          />
-          <Text
-            style={[{ color: colors.goldBright, fontSize: 10, marginHorizontal: 8, opacity: 0.5 }]}
-          >
-            {'✦'}
-          </Text>
-          <View
-            style={[styles.ornamentLine, { backgroundColor: colors.goldBright, opacity: 0.3 }]}
-          />
-        </View>
+      <Animated.View style={{ opacity: brandAnim, alignItems: 'center' }}>
+        {/* Upward radiating glow above the seal */}
+        <Svg width={SEAL_SIZE} height={RAY_HEIGHT} style={styles.rays}>
+          {RAYS.map(([angle, lenFrac, opacity], i) => {
+            const rad = (angle * Math.PI) / 180;
+            const len = RAY_HEIGHT * lenFrac;
+            const x1 = SEAL_SIZE / 2;
+            const y1 = RAY_HEIGHT;
+            const x2 = x1 + len * Math.sin(rad);
+            const y2 = y1 - len * Math.cos(rad);
+            return (
+              <Line
+                key={i}
+                x1={x1}
+                y1={y1}
+                x2={x2}
+                y2={y2}
+                stroke={colors.goldBright}
+                strokeWidth={1.4}
+                strokeOpacity={opacity}
+                strokeLinecap="round"
+              />
+            );
+          })}
+        </Svg>
 
+        {/* Breathing halo behind the seal */}
+        <Animated.View
+          pointerEvents="none"
+          style={[
+            styles.halo,
+            {
+              backgroundColor: colors.nebula1,
+              shadowColor: colors.goldBright,
+              shadowRadius: 50,
+              shadowOpacity: 0.6,
+              shadowOffset: { width: 0, height: 0 },
+              opacity: haloAnim,
+            },
+          ]}
+        />
+
+        {/* The seal — Manazil al-Qamar gold disk */}
+        <Image
+          source={SEAL_IMAGE}
+          style={styles.sealImage}
+          resizeMode="contain"
+          accessibilityIgnoresInvertColors
+        />
+
+        {/* Wordmark */}
         <Text
           style={[
             typography('hero'),
@@ -425,75 +168,42 @@ const SplashScreen: React.FC = () => {
               textAlign: 'center',
               letterSpacing: 1.2,
               textTransform: 'uppercase',
-              marginTop: 10,
+              marginTop: 18,
+              lineHeight: 44,
             },
           ]}
         >
-          SHAMS AL-ASRĀR
+          {'SHAMS\nAL-ASRĀR'}
         </Text>
+
+        {/* Diamond divider */}
+        <Text
+          style={{
+            color: colors.goldBright,
+            fontSize: 14,
+            opacity: 0.6,
+            marginTop: 12,
+            marginBottom: 12,
+          }}
+        >
+          {'❖'}
+        </Text>
+
+        {/* Tagline */}
         <Text
           style={[
             typography('subheading'),
             {
               color: colors.text,
               textAlign: 'center',
-              marginTop: 8,
               letterSpacing: 1.6,
               textTransform: 'uppercase',
+              paddingHorizontal: 40,
+              lineHeight: 26,
             },
           ]}
         >
           {t('app.tagline')}
-        </Text>
-
-        {/* Ornamental divider with triple dot */}
-        <View style={styles.ornamentRow}>
-          <View
-            style={[styles.ornamentLine, { backgroundColor: colors.goldBright, opacity: 0.25 }]}
-          />
-          <Text
-            style={[
-              {
-                color: colors.goldBright,
-                fontSize: 9,
-                marginHorizontal: 10,
-                letterSpacing: 6,
-                opacity: 0.45,
-              },
-            ]}
-          >
-            {'✦  ✦  ✦'}
-          </Text>
-          <View
-            style={[styles.ornamentLine, { backgroundColor: colors.goldBright, opacity: 0.25 }]}
-          />
-        </View>
-
-        <Text
-          style={[
-            typography('caption'),
-            {
-              color: colors.textMuted,
-              textAlign: 'center',
-              letterSpacing: 2.0,
-            },
-          ]}
-        >
-          {t('app.poweredBy').toUpperCase()}
-        </Text>
-        <Text
-          style={[
-            typography('bodyItalic'),
-            {
-              color: colors.textFaint,
-              textAlign: 'center',
-              marginTop: 18,
-              letterSpacing: 0.5,
-              lineHeight: 20,
-            },
-          ]}
-        >
-          {t('splash.invocation')}
         </Text>
       </Animated.View>
     </View>
@@ -507,50 +217,20 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: 32,
   },
+  rays: {
+    marginBottom: -40, // let the rays overlap into the halo/seal above it
+  },
   halo: {
     position: 'absolute',
-    width: 420,
-    height: 420,
-    borderRadius: 210,
+    top: RAY_HEIGHT - 40,
+    width: SEAL_SIZE + 60,
+    height: SEAL_SIZE + 60,
+    borderRadius: (SEAL_SIZE + 60) / 2,
+    alignSelf: 'center',
   },
-  innerHalo: {
-    position: 'absolute',
-    width: 240,
-    height: 240,
-    borderRadius: 120,
-    opacity: 0.5,
-  },
-  mandalaWrap: {
-    width: 340,
-    height: 340,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 40,
-  },
-  absCenter: {
-    position: 'absolute',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  brandBlock: {
-    alignItems: 'center',
-    paddingHorizontal: 22,
-    paddingVertical: 20,
-    borderRadius: 24,
-    borderWidth: 1,
-    borderColor: 'rgba(201,169,97,0.24)',
-    backgroundColor: 'rgba(18,18,26,0.42)',
-    gap: 4,
-  },
-  ornamentRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    width: '100%',
-    marginVertical: 2,
-  },
-  ornamentLine: {
-    flex: 1,
-    height: 1,
+  sealImage: {
+    width: SEAL_SIZE,
+    height: SEAL_SIZE,
   },
   cornerOrnament: {
     position: 'absolute',
