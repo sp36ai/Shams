@@ -39,10 +39,13 @@ import { useReadingsStore, type Reading } from '@stores/readingsStore';
 import { useSettingsStore } from '@stores/settingsStore';
 import { useQuotaStore, FREE_DAILY_LIMIT, TRIAL_DAILY_LIMIT } from '@stores/quotaStore';
 import { useQuota } from '@hooks/useQuota';
+import { useTimingStrip } from '@hooks/useTimingStrip';
 import { classifyIntent } from '@hooks/useIntentClassifier';
 import { classifyQuestion } from '@hooks/useQuestionGate';
 import { askOracle as callOracleFunction } from '../firebase/oracle';
 import StarfieldBackground from '@components/StarfieldBackground';
+import { displayLonSidereal, PLANET_GLYPHS } from '@utils/siderealPositions';
+import { getSignLordByLongitude } from '@astrology/primitives/rulingPlanets';
 import AstroVerdictCard from '../components/oracle/AstroVerdictCard';
 import WatchVerdictCard from '../components/oracle/WatchVerdictCard';
 import type { AstroVerdictResult } from '../types/verdict';
@@ -675,6 +678,13 @@ const OracleChatScreen: React.FC = () => {
       ? (FOLLOWUP_CHIPS[lang] ?? FOLLOWUP_CHIPS.en)
       : (INITIAL_CHIPS[lang] ?? INITIAL_CHIPS.en);
 
+  // "Ruling Planets Now" strip — day lord, hora lord, Moon, Moon's sign lord.
+  // Shown only before the first question of this sitting is asked, matching
+  // the ritual-chamber framing of the question screen.
+  const { horaLord, dayLord } = useTimingStrip(lastLocation?.lon ?? 74.3587);
+  const moonSignLord = getSignLordByLongitude(displayLonSidereal('Moon', Date.now()));
+  const rulingPlanetsNow = [dayLord, horaLord, 'Moon', moonSignLord] as const;
+
   // ── Core send logic ─────────────────────────────────────────────────────────
 
   const sendMessage = useCallback(
@@ -1088,6 +1098,56 @@ const OracleChatScreen: React.FC = () => {
         )}
       </View>
 
+      {/* Ask Your Question — ritual-chamber framing, shown before the first ask */}
+      {stage === 'ready' && (
+        <View
+          style={[
+            styles.rulingPlanetsCard,
+            { backgroundColor: colors.surface, borderColor: colors.borderAccent + '33' },
+          ]}
+        >
+          <Text style={[typography('title'), { color: colors.text }]}>
+            {t('oracle.askQuestionTitle')}
+          </Text>
+          <Text
+            style={[
+              typography('caption'),
+              { color: colors.textMuted, marginTop: 2, fontStyle: 'italic' },
+            ]}
+          >
+            {t('oracle.chartCastSubtitle')}
+          </Text>
+          <Text
+            style={[
+              typography('caption'),
+              { color: colors.goldBright, marginTop: 12, letterSpacing: 1, fontSize: 10 },
+            ]}
+          >
+            {t('oracle.rulingPlanetsNowLabel').toUpperCase()}
+          </Text>
+          <View style={styles.rulingPlanetsRow}>
+            {rulingPlanetsNow.map((planet, idx) => (
+              <View key={`${planet}-${idx}`} style={styles.rulingPlanetPill}>
+                <Text style={{ color: colors.accent, fontSize: 18 }}>
+                  {PLANET_GLYPHS[planet as keyof typeof PLANET_GLYPHS] ?? '✦'}
+                </Text>
+                <Text style={[typography('caption'), { color: colors.textMuted, fontSize: 9 }]}>
+                  {planet}
+                </Text>
+              </View>
+            ))}
+          </View>
+          <Text
+            style={[
+              typography('caption'),
+              { color: colors.textFaint, marginTop: 10, fontSize: 10 },
+            ]}
+          >
+            {t('oracle.currentHoraLordLabel')}: {horaLord}
+          </Text>
+        </View>
+      )}
+
       <KeyboardAvoidingView
         style={styles.flex}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -1209,7 +1269,7 @@ const OracleChatScreen: React.FC = () => {
                 <ActivityIndicator color={colors.textOnPrimary} />
               ) : (
                 <Text style={[typography('button'), { color: colors.textOnPrimary }]}>
-                  {t('oracle.sendButton')}
+                  {stage === 'ready' ? t('oracle.sealAskCta') : t('oracle.sendButton')}
                 </Text>
               )}
             </Pressable>
@@ -1673,6 +1733,23 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 4,
     backgroundColor: '#FFFFFF0F',
+  },
+  rulingPlanetsCard: {
+    marginHorizontal: 16,
+    marginTop: 12,
+    marginBottom: 4,
+    padding: 16,
+    borderRadius: 18,
+    borderWidth: StyleSheet.hairlineWidth,
+  },
+  rulingPlanetsRow: {
+    flexDirection: 'row',
+    gap: 18,
+    marginTop: 8,
+  },
+  rulingPlanetPill: {
+    alignItems: 'center',
+    gap: 2,
   },
   listContent: {
     paddingHorizontal: 16,

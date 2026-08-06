@@ -142,6 +142,21 @@ export interface StringTable {
     dailyDhikrTitle: string;
     dailyDhikrRecite: string;
     blessingTitle: string;
+    currentHoraLabel: string;
+    remainingLabel: string;
+    todaysQuotaLabel: string;
+    yourTierLabel: string;
+    tierWanderer: string;
+    askNewQuestionCta: string;
+    consultOracleSubtitle: string;
+    readingHistoryCta: string;
+    viewPastReadingsSubtitle: string;
+    moonManzilTitle: string;
+    askQuestionTitle: string;
+    chartCastSubtitle: string;
+    rulingPlanetsNowLabel: string;
+    currentHoraLordLabel: string;
+    sealAskCta: string;
   };
   skyClock: {
     headerTitle: string;
