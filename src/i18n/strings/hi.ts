@@ -113,6 +113,16 @@ export const hi: StringTable = {
     locationLabel: 'स्थान',
     dailySkyTitle: 'आज का आकाश आपके लिए',
     askShamsCta: 'शम्स से पूछें',
+    moonWatchTitle: 'चंद्र निगरानी',
+    voidOfCourseBanner:
+      'चंद्रमा {{time}} तक निष्प्रभावी (void of course) है — ओरेकल नए प्रश्न के लिए प्रतीक्षा को प्राथमिकता देता है।',
+    sunriseLabel: 'सूर्योदय',
+    sunsetLabel: 'सूर्यास्त',
+    favoredNowTitle: 'अभी अनुकूल',
+    favoredNowBody: 'यह घड़ी अनुकूल है:',
+    dailyDhikrTitle: 'आज का ज़िक्र',
+    dailyDhikrRecite: 'पढ़ें',
+    blessingTitle: 'आज की बरकत',
   },
 
   skyClock: {

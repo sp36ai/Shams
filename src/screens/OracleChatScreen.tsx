@@ -48,6 +48,7 @@ import WatchVerdictCard from '../components/oracle/WatchVerdictCard';
 import type { AstroVerdictResult } from '../types/verdict';
 import { selectRemedies, contextFromReading } from '../data/remedySelector';
 import type { RenderedRemedy } from '../data/remedyRenderer';
+import { INITIAL_CHIPS, FOLLOWUP_CHIPS } from '../data/oracleChips';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -202,47 +203,6 @@ function readingToAstroResult(reading: Reading): AstroVerdictResult {
     oracle: vj?.oracle,
   };
 }
-
-// ── Chips per language ────────────────────────────────────────────────────────
-
-const INITIAL_CHIPS: Record<'en' | 'ur' | 'hi', readonly string[]> = {
-  en: [
-    'Will I succeed?',
-    'Career & livelihood',
-    'Marriage & love',
-    'Finance',
-    'Health',
-    'Travel',
-    'Legal matter',
-    'Lost item',
-  ],
-  ur: [
-    'کیا میں کامیاب ہوں گا؟',
-    'نوکری اور روزگار',
-    'شادی اور رشتہ',
-    'مالی معاملہ',
-    'صحت',
-    'سفر',
-    'قانونی تنازع',
-    'گمشدہ چیز',
-  ],
-  hi: [
-    'क्या मैं सफल होऊंगा?',
-    'करियर',
-    'विवाह और प्रेम',
-    'वित्त',
-    'स्वास्थ्य',
-    'यात्रा',
-    'कानूनी मामला',
-    'खोई वस्तु',
-  ],
-};
-
-const FOLLOWUP_CHIPS: Record<'en' | 'ur' | 'hi', readonly string[]> = {
-  en: ['When will it happen?', 'Why this verdict?', 'What remedy?', 'New question'],
-  ur: ['کب ہوگا؟', 'یہ فیصلہ کیوں؟', 'علاج کیا ہے؟', 'نیا سوال'],
-  hi: ['कब होगा?', 'यह निर्णय क्यों?', 'उपाय क्या है?', 'नया सवाल'],
-};
 
 // ── Followup response builders ────────────────────────────────────────────────
 

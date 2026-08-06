@@ -106,6 +106,16 @@ export const en: StringTable = {
     locationLabel: 'Location',
     dailySkyTitle: "Today's Sky for You",
     askShamsCta: 'Ask Shams',
+    moonWatchTitle: 'Moon Watch',
+    voidOfCourseBanner:
+      'Moon is void of course until {{time}} — the oracle prefers to wait for a fresh question.',
+    sunriseLabel: 'Sunrise',
+    sunsetLabel: 'Sunset',
+    favoredNowTitle: 'Favored Now',
+    favoredNowBody: 'This hour favors:',
+    dailyDhikrTitle: 'Daily Dhikr',
+    dailyDhikrRecite: 'Recite',
+    blessingTitle: "Today's Blessing",
   },
 
   skyClock: {

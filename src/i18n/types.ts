@@ -133,6 +133,15 @@ export interface StringTable {
     locationLabel: string;
     dailySkyTitle: string;
     askShamsCta: string;
+    moonWatchTitle: string;
+    voidOfCourseBanner: string;
+    sunriseLabel: string;
+    sunsetLabel: string;
+    favoredNowTitle: string;
+    favoredNowBody: string;
+    dailyDhikrTitle: string;
+    dailyDhikrRecite: string;
+    blessingTitle: string;
   };
   skyClock: {
     headerTitle: string;

@@ -3,13 +3,15 @@
  * --------------------------------------------------------------------------
  * The first screen the seeker lands on after onboarding (Oracle is the
  * initial tab in MainTabs). Passive status surface only — no chat, no
- * composer. Shows the live sky readout, quota, location, and today's
- * personalized sky message, then hands off to OracleChatScreen (via the
- * "Ask Shams" button) for the actual question/verdict conversation.
+ * composer. Shows the live sky readout, quota, location, and a set of
+ * astrological "extras" cards (moon watch, favored-now, daily dhikr,
+ * today's blessing) — all EXPERIMENTAL, added together to review in the
+ * running app before deciding which stay. Hands off to OracleChatScreen
+ * (via the "Ask Shams" button) for the actual question/verdict conversation.
  */
 
 import React, { useCallback, useEffect, useState } from 'react';
-import { AppState, Pressable, StyleSheet, Text, View } from 'react-native';
+import { AppState, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { acquireLocation } from '@utils/acquireLocation';
 import crashlytics from '@react-native-firebase/crashlytics';
@@ -24,9 +26,23 @@ import { useSettingsStore } from '@stores/settingsStore';
 import { useQuotaStore, FREE_DAILY_LIMIT, TRIAL_DAILY_LIMIT } from '@stores/quotaStore';
 import { useQuota } from '@hooks/useQuota';
 import { useTimingStrip } from '@hooks/useTimingStrip';
+import { useSkyExtras } from '@hooks/useSkyExtras';
 import { storage, KEYS } from '@storage/mmkv';
 import StarfieldBackground from '@components/StarfieldBackground';
 import { buildDailySkyMessage } from '@utils/dailySkyMessage';
+import { favoredChipForPlanet } from '../data/favoredQuestion';
+import { PLANET_DHIKR } from '../data/dailyDhikr';
+import { todaysIslamicNote } from '../data/islamicDayOfWeek';
+
+// Fallback coordinates when no fix is stored yet (mirrors the pairing used
+// by SkyClockScreen's lon-only fallback — location is mandatory in practice,
+// this only covers the brief window before the first GPS fix lands).
+const FALLBACK_LAT = 31.634;
+const FALLBACK_LON = 74.3587;
+
+function formatClockTime(ms: number): string {
+  return new Date(ms).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+}
 
 // ── OracleScreen (home dashboard) ───────────────────────────────────────────
 
@@ -51,8 +67,10 @@ const OracleScreen: React.FC = () => {
   const { questionsLeft } = useQuota();
   const trialActive = useQuotaStore(s => s.trialActive);
 
-  const lonDegForTiming = lastLocation?.lon ?? 74.3587;
-  const { horaLord, dayLord } = useTimingStrip(lonDegForTiming);
+  const latDeg = lastLocation?.lat ?? FALLBACK_LAT;
+  const lonDeg = lastLocation?.lon ?? FALLBACK_LON;
+  const { horaLord, dayLord } = useTimingStrip(lonDeg);
+  const skyExtras = useSkyExtras(latDeg, lonDeg);
 
   // ── Trial day banners — Day 6 passive strip, Day 7 once-per-day soft prompt ─
   const [trialBannerKind, setTrialBannerKind] = useState<'day6' | 'day7' | null>(null);
@@ -141,6 +159,10 @@ const OracleScreen: React.FC = () => {
     lang,
   });
 
+  const favoredChip = favoredChipForPlanet(horaLord, lang);
+  const dhikr = PLANET_DHIKR[dayLord];
+  const islamicNote = todaysIslamicNote(new Date());
+
   return (
     <SafeAreaView style={[styles.root, { backgroundColor: theme.colors.bg }]} edges={['top']}>
       <StarfieldBackground starColor={colors.starfield} />
@@ -185,7 +207,33 @@ const OracleScreen: React.FC = () => {
         </View>
       </View>
 
-      <View style={styles.scrollBody}>
+      <ScrollView
+        style={styles.scroll}
+        contentContainerStyle={styles.scrollBody}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Void-of-course Moon warning — classical horary caution */}
+        {skyExtras.voidOfCourse.isVoid && (
+          <View
+            style={[
+              styles.vocBanner,
+              { backgroundColor: colors.surface, borderColor: colors.borderAccent },
+            ]}
+          >
+            <Text
+              style={[
+                typography('caption'),
+                { color: colors.goldBright, textAlign: 'center', lineHeight: 16 },
+              ]}
+            >
+              {'☾ '}
+              {t('oracle.voidOfCourseBanner', {
+                time: formatClockTime(skyExtras.voidOfCourse.signExitMs),
+              })}
+            </Text>
+          </View>
+        )}
+
         {/* Dashboard row */}
         <View
           style={[
@@ -248,7 +296,7 @@ const OracleScreen: React.FC = () => {
         {/* Today's Sky — daily personalized readout, based on saved profile */}
         <View
           style={[
-            styles.dailySkyCard,
+            styles.card,
             { backgroundColor: colors.surface, borderColor: colors.borderAccent + '44' },
           ]}
         >
@@ -279,6 +327,125 @@ const OracleScreen: React.FC = () => {
           )}
         </View>
 
+        {/* Moon Watch — sign, nakshatra, phase, sunrise/sunset */}
+        <View
+          style={[
+            styles.card,
+            { backgroundColor: colors.surface, borderColor: colors.borderAccent + '44' },
+          ]}
+        >
+          <Text style={[typography('caption'), { color: colors.goldBright, letterSpacing: 1.2 }]}>
+            {t('oracle.moonWatchTitle').toUpperCase()}
+          </Text>
+          <View style={styles.moonRow}>
+            <Text style={[typography('body'), { color: colors.text, lineHeight: 22 }]}>
+              {'☽ '}
+              <Text style={{ fontWeight: '700', color: colors.accent }}>{skyExtras.moonSign}</Text>
+              {' · '}
+              {skyExtras.moonNakshatra}
+            </Text>
+          </View>
+          <Text
+            style={[typography('body'), { color: colors.textMuted, marginTop: 2, lineHeight: 22 }]}
+          >
+            {skyExtras.moonPhaseFull}
+          </Text>
+          {skyExtras.sunTimes !== null && (
+            <Text
+              style={[
+                typography('caption'),
+                { color: colors.textFaint, marginTop: 8, lineHeight: 18 },
+              ]}
+            >
+              {t('oracle.sunriseLabel')} {formatClockTime(skyExtras.sunTimes.sunriseMs)}
+              {'   ·   '}
+              {t('oracle.sunsetLabel')} {formatClockTime(skyExtras.sunTimes.sunsetMs)}
+            </Text>
+          )}
+        </View>
+
+        {/* Favored Now — which chip category the current hora lord favors */}
+        <View
+          style={[
+            styles.card,
+            { backgroundColor: colors.surface, borderColor: colors.borderAccent + '44' },
+          ]}
+        >
+          <Text style={[typography('caption'), { color: colors.goldBright, letterSpacing: 1.2 }]}>
+            {t('oracle.favoredNowTitle').toUpperCase()}
+          </Text>
+          <Text style={[typography('body'), { color: colors.text, marginTop: 8, lineHeight: 22 }]}>
+            {t('oracle.favoredNowBody')}{' '}
+            <Text style={{ fontWeight: '700', color: colors.accent }}>{favoredChip}</Text>
+          </Text>
+        </View>
+
+        {/* Daily Dhikr — a Name of Allah tied to today's day lord */}
+        {dhikr !== undefined && (
+          <View
+            style={[
+              styles.card,
+              { backgroundColor: colors.surface, borderColor: colors.borderAccent + '44' },
+            ]}
+          >
+            <Text style={[typography('caption'), { color: colors.goldBright, letterSpacing: 1.2 }]}>
+              {t('oracle.dailyDhikrTitle').toUpperCase()}
+            </Text>
+            <Text
+              style={{
+                fontFamily: 'Amiri-Regular',
+                fontSize: 20,
+                color: colors.goldBright,
+                textAlign: 'center',
+                marginTop: 10,
+                marginBottom: 2,
+              }}
+            >
+              {dhikr.arabic}
+            </Text>
+            <Text
+              style={[
+                typography('body'),
+                { color: colors.text, textAlign: 'center', lineHeight: 22 },
+              ]}
+            >
+              {t('oracle.dailyDhikrRecite')} {dhikr.name} ({dhikr.meaning[lang]})
+            </Text>
+            <Text
+              style={[
+                typography('bodyItalic'),
+                {
+                  color: colors.textMuted,
+                  textAlign: 'center',
+                  marginTop: 4,
+                  lineHeight: 20,
+                },
+              ]}
+            >
+              {dhikr.intention[lang]}
+            </Text>
+          </View>
+        )}
+
+        {/* Today's Blessing — Islamic day-of-week note */}
+        <View
+          style={[
+            styles.card,
+            { backgroundColor: colors.surface, borderColor: colors.borderAccent + '44' },
+          ]}
+        >
+          <Text style={[typography('caption'), { color: colors.goldBright, letterSpacing: 1.2 }]}>
+            {t('oracle.blessingTitle').toUpperCase()}
+          </Text>
+          <Text style={[typography('body'), { color: colors.text, marginTop: 8, lineHeight: 22 }]}>
+            <Text style={{ fontWeight: '700', color: colors.accent }}>
+              {islamicNote.name[lang]}
+            </Text>
+            {' — '}
+            {islamicNote.note[lang]}
+          </Text>
+        </View>
+
         {/* Ask Shams — opens the oracle chat conversation */}
         <Pressable
           testID="ask-shams-btn"
@@ -295,7 +462,7 @@ const OracleScreen: React.FC = () => {
             {t('oracle.askShamsCta')}
           </Text>
         </Pressable>
-      </View>
+      </ScrollView>
 
       {/* Trial day banners — thin gold strip, max 44px, above tab bar */}
       {trialBannerKind === 'day6' && (
@@ -390,9 +557,17 @@ const styles = StyleSheet.create({
     maxWidth: '55%',
     backgroundColor: '#FFFFFF08',
   },
+  scroll: { flex: 1 },
   scrollBody: {
-    flex: 1,
-    paddingBottom: 8,
+    paddingBottom: 24,
+  },
+  vocBanner: {
+    marginHorizontal: 16,
+    marginTop: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 14,
+    borderWidth: StyleSheet.hairlineWidth,
   },
   dashboardRow: {
     flexDirection: 'row',
@@ -433,12 +608,15 @@ const styles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth,
     borderRadius: 16,
   },
-  dailySkyCard: {
+  card: {
     marginHorizontal: 16,
     marginBottom: 14,
     padding: 16,
     borderRadius: 18,
     borderWidth: StyleSheet.hairlineWidth,
+  },
+  moonRow: {
+    marginTop: 8,
   },
   askShamsBtn: {
     marginHorizontal: 16,

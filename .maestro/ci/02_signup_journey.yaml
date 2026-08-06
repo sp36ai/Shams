@@ -66,13 +66,15 @@ name: "Journey — sign up through onboarding to the Oracle"
 - tapOn:
     id: "onboarding-enter-btn"
 
-# Should land on the Oracle home dashboard
+# Should land on the Oracle home dashboard (fixed header, always above the
+# fold — the dashboard body below it now scrolls, so don't assert visibility
+# on scrollable content here).
 - extendedWaitUntil:
-    visible:
-      id: "ask-shams-btn"
+    visible: "SHAMS AL-ASRĀR"
     timeout: 10000
 
-# Enter the oracle chat conversation
+# Enter the oracle chat conversation — tapOn scrolls the dashboard body to
+# find the button even if it's below the fold.
 - tapOn:
     id: "ask-shams-btn"
 - extendedWaitUntil:
