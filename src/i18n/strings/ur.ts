@@ -112,6 +112,8 @@ export const ur: StringTable = {
     remedyLabel: 'تدبیر',
     chartMomentLabel: 'سوال کا لمحہ',
     locationLabel: 'مقام',
+    dailySkyTitle: 'آج کا آسمان آپ کے لیے',
+    askShamsCta: 'شمس سے پوچھیں',
   },
 
   skyClock: {

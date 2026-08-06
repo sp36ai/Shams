@@ -131,6 +131,8 @@ export interface StringTable {
     remedyLabel: string;
     chartMomentLabel: string;
     locationLabel: string;
+    dailySkyTitle: string;
+    askShamsCta: string;
   };
   skyClock: {
     headerTitle: string;

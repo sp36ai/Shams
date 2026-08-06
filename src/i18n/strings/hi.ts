@@ -111,6 +111,8 @@ export const hi: StringTable = {
     remedyLabel: 'उपाय',
     chartMomentLabel: 'प्रश्न का क्षण',
     locationLabel: 'स्थान',
+    dailySkyTitle: 'आज का आकाश आपके लिए',
+    askShamsCta: 'शम्स से पूछें',
   },
 
   skyClock: {

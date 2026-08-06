@@ -8,7 +8,7 @@ name: "Oracle — Ask a horary question"
 - waitForAnimationToEnd:
     timeout: 4000
 
-# OracleScreen should be visible
+# OracleScreen (home dashboard) should be visible
 - assertVisible: "ORACLE"
 - assertVisible: "SHAMS AL-ASRĀR"
 
@@ -18,6 +18,10 @@ name: "Oracle — Ask a horary question"
 # Verify HORA and DAY LORD strips load
 - assertVisible: "HORA"
 - assertVisible: "DAY LORD"
+
+# Enter the oracle chat conversation
+- tapOn:
+    id: "ask-shams-btn"
 
 # Type a horary question
 - tapOn:

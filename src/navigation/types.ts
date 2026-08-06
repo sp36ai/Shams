@@ -33,6 +33,8 @@ export type RootStackParamList = {
   Premium: undefined;
   /** Sky State — secondary timing/context screen, reachable from Oracle timing strip. */
   SkyState: undefined;
+  /** Oracle chat — the question/verdict conversation, reachable via the "Ask Shams" button on the home dashboard. */
+  OracleChat: undefined;
 };
 
 export type RootStackScreenProps<RouteName extends keyof RootStackParamList> =

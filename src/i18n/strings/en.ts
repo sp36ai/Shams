@@ -104,6 +104,8 @@ export const en: StringTable = {
     remedyLabel: 'Remedy',
     chartMomentLabel: 'Moment of question',
     locationLabel: 'Location',
+    dailySkyTitle: "Today's Sky for You",
+    askShamsCta: 'Ask Shams',
   },
 
   skyClock: {

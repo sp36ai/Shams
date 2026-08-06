@@ -6,6 +6,9 @@ name: "Oracle — Question gate rejects non-horary input"
 - waitForAnimationToEnd:
     timeout: 4000
 
+- tapOn:
+    id: "ask-shams-btn"
+
 # Conversational input — should NOT consume quota
 - tapOn:
     id: "oracle-input"
