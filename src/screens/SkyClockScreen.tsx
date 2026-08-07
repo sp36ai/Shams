@@ -21,17 +21,16 @@ import { useColors, useTheme } from '@theme/ThemeProvider';
 import { useTypography } from '@theme/useTypography';
 import { useSettingsStore } from '@stores/settingsStore';
 import { dayLordAtMoment, horaLordAtMoment } from '@astrology/primitives/rulingPlanets';
+import { buildChart } from '@astrology/primitives/chartBuilder';
 import StarfieldBackground from '@components/StarfieldBackground';
 import CosmicClock from '@components/home/CosmicClock';
 import type { RootStackParamList } from '@navigation/types';
 import {
   SIGN_NAMES,
-  mod360,
   displayLonSidereal,
   nakshatraName,
   moonPhase,
   localSiderealTime,
-  PLANET_DAILY_SPEED,
   PLANET_GLYPHS,
   TABLE_PLANET_ORDER,
   type PlanetName,
@@ -78,25 +77,27 @@ interface PlanetRow {
   status: 'Retrograde' | 'Combust' | 'Direct';
 }
 
-function computePlanetRows(nowMs: number): PlanetRow[] {
-  const sunLon = displayLonSidereal('Sun', nowMs);
+// Uses the same Moshier-ephemeris chart engine that powers real horary
+// judgment (buildChart), rather than a linear mean-longitude approximation.
+// A mean-longitude model is a straight line in time — its derivative is a
+// constant, so it can *never* show real retrograde motion (Mercury, Venus,
+// Mars, Jupiter, Saturn each retrograde for real weeks-to-months stretches
+// every year). buildChart's isRetrograde/isCombust come from a true ±12h
+// finite-difference speed check against the actual ephemeris position, with
+// per-planet combustion orbs — the same numbers the oracle's verdict uses.
+function computePlanetRows(nowMs: number, latDeg: number, lonDeg: number): PlanetRow[] {
+  const chart = buildChart(new Date(nowMs).toISOString(), latDeg, lonDeg);
   return TABLE_PLANET_ORDER.map(name => {
-    const lon = displayLonSidereal(name, nowMs);
-    const signIdx = Math.floor(lon / 30);
-    const sign = SIGN_NAMES[signIdx] ?? '—';
-    const degInSign = lon % 30;
-    const deg = Math.floor(degInSign);
-    const arcMin = Math.floor((degInSign - deg) * 60);
+    const p = chart.planets[name];
+    const sign = SIGN_NAMES[p.sign - 1] ?? '—';
+    const deg = Math.floor(p.degreeInSign);
+    const arcMin = Math.floor((p.degreeInSign - deg) * 60);
     const degreeStr = `${deg}°${String(arcMin).padStart(2, '0')}'`;
 
-    const speed = PLANET_DAILY_SPEED[name];
-    const angDiff = mod360(lon - sunLon);
-    const isCombust = name !== 'Sun' && (angDiff < 6 || angDiff > 354);
-
     let status: PlanetRow['status'];
-    if (name === 'Rahu' || name === 'Ketu' || speed < 0) {
+    if (p.isRetrograde) {
       status = 'Retrograde';
-    } else if (isCombust) {
+    } else if (p.isCombust) {
       status = 'Combust';
     } else {
       status = 'Direct';
@@ -121,27 +122,30 @@ const SkyClockScreen: React.FC = () => {
     (s: ReturnType<typeof useSettingsStore.getState>) => s.lastLocation,
   );
   const lonDeg = lastLocation?.lon ?? 74.3587;
+  const latDeg = lastLocation?.lat ?? 31.634;
 
   const [timing, setTiming] = useState<TimingState>(() => computeTiming(lonDeg));
   const [focused, setFocused] = useState(false);
   const [clockExpanded, setClockExpanded] = useState(true);
-  const [planetRows, setPlanetRows] = useState<PlanetRow[]>(() => computePlanetRows(Date.now()));
+  const [planetRows, setPlanetRows] = useState<PlanetRow[]>(() =>
+    computePlanetRows(Date.now(), latDeg, lonDeg),
+  );
 
   // Refresh timing + planet rows every 60 s, only while screen is focused.
   useFocusEffect(
     useCallback(() => {
       setFocused(true);
       setTiming(computeTiming(lonDeg));
-      setPlanetRows(computePlanetRows(Date.now()));
+      setPlanetRows(computePlanetRows(Date.now(), latDeg, lonDeg));
       const id = setInterval(() => {
         setTiming(computeTiming(lonDeg));
-        setPlanetRows(computePlanetRows(Date.now()));
+        setPlanetRows(computePlanetRows(Date.now(), latDeg, lonDeg));
       }, 60_000);
       return () => {
         setFocused(false);
         clearInterval(id);
       };
-    }, [lonDeg]),
+    }, [lonDeg, latDeg]),
   );
 
   const clockRunning = focused && clockExpanded;
