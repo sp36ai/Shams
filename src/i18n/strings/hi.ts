@@ -144,7 +144,7 @@ export const hi: StringTable = {
     chartCastSubtitle: 'चार्ट इसी क्षण के लिए तैयार किया जा रहा है।',
     rulingPlanetsNowLabel: 'वर्तमान शासक ग्रह',
     currentHoraLordLabel: 'वर्तमान होरा स्वामी',
-    sealAskCta: 'मुहर लगाएँ और ओरेकल से पूछें',
+    sealAskCta: 'मुहर लगाकर पूछें',
   },
 
   skyClock: {

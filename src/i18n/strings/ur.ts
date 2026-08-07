@@ -145,7 +145,7 @@ export const ur: StringTable = {
     chartCastSubtitle: 'زائچہ اسی لمحے کے لیے تیار کیا جا رہا ہے۔',
     rulingPlanetsNowLabel: 'موجودہ حاکم سیارے',
     currentHoraLordLabel: 'موجودہ ہورا کا حاکم',
-    sealAskCta: 'مہر لگائیں اور اوریکل سے پوچھیں',
+    sealAskCta: 'مہر لگا کر پوچھیں',
   },
 
   skyClock: {

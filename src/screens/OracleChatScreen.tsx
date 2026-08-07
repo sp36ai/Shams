@@ -199,6 +199,7 @@ function readingToAstroResult(reading: Reading): AstroVerdictResult {
     narrative,
     createdAt: reading.createdAt,
     category: reading.category,
+    question: reading.question,
     significators: vj?.significators,
     confirmedSignificators: vj?.confirmedSignificators,
     deniedSignificators: vj?.deniedSignificators,
@@ -1230,7 +1231,12 @@ const OracleChatScreen: React.FC = () => {
               {sending ? (
                 <ActivityIndicator color={colors.textOnPrimary} />
               ) : (
-                <Text style={[typography('button'), { color: colors.textOnPrimary }]}>
+                <Text
+                  style={[
+                    typography('button'),
+                    { color: colors.textOnPrimary, textAlign: 'center' },
+                  ]}
+                >
                   {stage === 'ready' ? t('oracle.sealAskCta') : t('oracle.sendButton')}
                 </Text>
               )}
@@ -1670,6 +1676,7 @@ const styles = StyleSheet.create({
   },
   composerInput: {
     flex: 1,
+    minWidth: 80,
     minHeight: 40,
     maxHeight: 120,
     paddingHorizontal: 16,
@@ -1683,6 +1690,11 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     minHeight: 40,
     minWidth: 64,
+    // Long CTA copy ("Seal & Ask the Oracle" and its Urdu/Hindi equivalents)
+    // has no flex — without a cap it grows to fit the label on one line and
+    // starves the flex:1 composerInput next to it down to an unreadable
+    // sliver. Cap it so the label wraps onto 2 lines instead.
+    maxWidth: '45%',
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: '#000',
