@@ -291,11 +291,7 @@ async function synthesiseOracleVoice(params: {
     if (!res.ok) {
       const body = await res.text().catch(() => '');
       logger.warn('oracle synthesis HTTP error', { status: res.status, body: body.slice(0, 300) });
-      // TEMP DEBUG: surface why the AI voice fell back, on-device. REVERT later.
-      return {
-        ...ORACLE_FALLBACK,
-        opening: `⚠️ SYNTH DEBUG: HTTP ${res.status} — ${body.slice(0, 220)}`,
-      };
+      return ORACLE_FALLBACK;
     }
 
     const json = (await res.json()) as { content?: Array<{ type: string; text?: string }> };
@@ -306,10 +302,7 @@ async function synthesiseOracleVoice(params: {
       parsed = JSON.parse(rawText) as Record<string, unknown>;
     } catch {
       logger.warn('oracle synthesis JSON parse failed', { rawText: rawText.slice(0, 200) });
-      return {
-        ...ORACLE_FALLBACK,
-        opening: `⚠️ SYNTH DEBUG: JSON parse failed — ${rawText.slice(0, 180)}`,
-      };
+      return ORACLE_FALLBACK;
     }
 
     const r = (parsed.remedy ?? {}) as Record<string, unknown>;
@@ -336,10 +329,7 @@ async function synthesiseOracleVoice(params: {
   } catch (err) {
     clearTimeout(timer);
     logger.warn('oracle synthesis failed', { err: String(err) });
-    return {
-      ...ORACLE_FALLBACK,
-      opening: `⚠️ SYNTH DEBUG: ${String(err).slice(0, 220)}`,
-    };
+    return ORACLE_FALLBACK;
   }
 }
 
@@ -585,14 +575,11 @@ export const askOracle = onCall(
         oracle,
       };
     }).catch(err => {
-      // TEMP DEBUG: do NOT re-throw HttpsError — surface its code + message too
-      // so a wrapped error (e.g. resource-exhausted, invalid-argument) is
-      // visible on-device instead of collapsing to the generic client fallback.
-      const debugCode = err instanceof HttpsError ? err.code : 'non-https-error';
+      const code = err instanceof HttpsError ? err.code : 'internal';
 
       logger.error('askOracle unexpected error', {
         userId,
-        code: debugCode,
+        code,
         err: err instanceof Error ? err.message : String(err),
         stack: err instanceof Error ? err.stack : undefined,
         durationMs: Date.now() - startedAt,
@@ -609,25 +596,17 @@ export const askOracle = onCall(
         durationMs: Date.now() - startedAt,
       });
 
-      // ── TEMP DEBUG (remove once the root cause is fixed) ─────────────────
-      // Three blind server fixes did not resolve the on-device "internal"
-      // error and server logs were not reachable, so surface the real error
-      // (message + top of stack) to the client as the reading narration. The
-      // app shows it on screen, which lets us capture the exact cause without
-      // Cloud Logging access. This must be reverted before public launch.
-      const debugMessage = err instanceof Error ? err.message : String(err);
-      const debugStack = err instanceof Error ? (err.stack ?? '') : '';
-      const debugText = `⚠️ DEBUG (temporary): [${debugCode}] ${debugMessage}\n\n${debugStack.slice(0, 700)}`;
-      return {
-        readingId: `debug_${Date.now()}`,
-        verdict: 'UNCLEAR',
-        confidence: 0,
-        category: 'general',
-        narration: { en: debugText, ur: debugText, hi: debugText },
-        reasoning: [],
-        quotaRemaining: null,
-        computedAt: new Date().toISOString(),
-      } as unknown as OracleResponse;
+      // Preserve a meaningful HttpsError code (e.g. resource-exhausted,
+      // invalid-argument) for the client to branch on; collapse anything
+      // else to a generic internal error. Full detail is in the log above —
+      // never surface raw error/stack text to the client.
+      if (err instanceof HttpsError) {
+        throw err;
+      }
+      throw new HttpsError(
+        'internal',
+        'The oracle could not complete this reading. Please try again.',
+      );
     });
   },
 );
