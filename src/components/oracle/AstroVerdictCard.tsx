@@ -245,6 +245,12 @@ const AstroVerdictCard: React.FC<AstroVerdictCardProps> = ({
   // ── 4-phase reveal ──────────────────────────────────────────────────────────
   const [phase, setPhase] = useState<0 | 1 | 2 | 3>(0);
 
+  // Chart Details — the raw KP data (wheel, manzil, sub-lord, house pills,
+  // ruling planets) is collapsed by default so the chat reads as a clear
+  // verdict + guidance, not a technical form. Still one tap away for anyone
+  // who wants the underlying chart.
+  const [showChartDetails, setShowChartDetails] = useState(false);
+
   useEffect(() => {
     const t1 = setTimeout(() => setPhase(1), 600);
     const t2 = setTimeout(() => setPhase(2), 1400);
@@ -494,83 +500,110 @@ const AstroVerdictCard: React.FC<AstroVerdictCardProps> = ({
             </Text>
           )}
 
-          {/* Horary chart wheel */}
-          {result.verdict !== 'UNCLEAR' &&
-            result.planetDegrees !== undefined &&
-            result.cuspDegrees !== undefined &&
-            result.cuspSigns !== undefined && (
-              <HoraryChartWheel
-                planetDegrees={result.planetDegrees}
-                cuspDegrees={result.cuspDegrees}
-                cuspSigns={result.cuspSigns}
-                planetChain={result.planetChain}
-                significators={result.significators}
-                confirmedSignificators={result.confirmedSignificators}
-                deniedSignificators={result.deniedSignificators}
-                rulingPlanets={result.rulingPlanets}
-                moonSubLord={result.subLord}
-              />
-            )}
+          {/* Chart Details toggle — the raw KP data below is real and often
+              wanted, but it reads as noise stacked ahead of the actual
+              guidance. Collapsed by default; one tap reveals it. */}
+          <Pressable
+            onPress={() => setShowChartDetails(v => !v)}
+            style={({ pressed }) => [
+              styles.chartDetailsToggle,
+              { borderColor: colors.border, opacity: pressed ? 0.7 : 1 },
+            ]}
+            accessibilityRole="button"
+            accessibilityLabel={showChartDetails ? 'Hide chart details' : 'View chart details'}
+          >
+            <Text style={[typography('label'), { color: colors.textMuted, fontSize: 11 }]}>
+              {showChartDetails ? '⌃ HIDE CHART DETAILS' : '⌄ VIEW CHART DETAILS'}
+            </Text>
+          </Pressable>
 
-          {/* al-Qamar's manzila */}
-          {result.manzila !== undefined && (
-            <View style={[styles.manzilaBlock, { borderTopColor: colors.border }]}>
-              <Text style={[typography('caption'), { color: colors.textMuted }]}>
-                {'al-Qamar  ·  منازل القمر'}
-              </Text>
-              <View style={styles.manzilaRow}>
-                <Text style={[typography('heading'), { color: colors.accent }]}>
-                  {result.manzila.arabic}
+          {showChartDetails && (
+            <>
+              {/* Horary chart wheel */}
+              {result.verdict !== 'UNCLEAR' &&
+                result.planetDegrees !== undefined &&
+                result.cuspDegrees !== undefined &&
+                result.cuspSigns !== undefined && (
+                  <HoraryChartWheel
+                    planetDegrees={result.planetDegrees}
+                    cuspDegrees={result.cuspDegrees}
+                    cuspSigns={result.cuspSigns}
+                    planetChain={result.planetChain}
+                    significators={result.significators}
+                    confirmedSignificators={result.confirmedSignificators}
+                    deniedSignificators={result.deniedSignificators}
+                    rulingPlanets={result.rulingPlanets}
+                    moonSubLord={result.subLord}
+                  />
+                )}
+
+              {/* al-Qamar's manzila */}
+              {result.manzila !== undefined && (
+                <View style={[styles.manzilaBlock, { borderTopColor: colors.border }]}>
+                  <Text style={[typography('caption'), { color: colors.textMuted }]}>
+                    {'al-Qamar  ·  منازل القمر'}
+                  </Text>
+                  <View style={styles.manzilaRow}>
+                    <Text style={[typography('heading'), { color: colors.accent }]}>
+                      {result.manzila.arabic}
+                    </Text>
+                    <Text style={[typography('body'), { color: colors.text, marginLeft: 8 }]}>
+                      {result.manzila.name}
+                    </Text>
+                  </View>
+                  <Text style={[typography('caption'), { color: colors.textFaint, marginTop: 2 }]}>
+                    {result.manzila.oracleDescriptor}
+                  </Text>
+                </View>
+              )}
+
+              {/* Sub-lord display */}
+              <View style={[styles.subLordBlock, { borderTopColor: colors.border }]}>
+                <Text style={[typography('caption'), { color: colors.textMuted }]}>
+                  MOON SUB-LORD
                 </Text>
-                <Text style={[typography('body'), { color: colors.text, marginLeft: 8 }]}>
-                  {result.manzila.name}
-                </Text>
+                <View style={styles.subLordRow}>
+                  <Text style={[typography('heading'), { color: colors.accent }]}>
+                    {result.subLord}
+                  </Text>
+                  <Text style={[typography('caption'), { color: colors.textFaint, marginLeft: 6 }]}>
+                    {result.subLordHouse > 0 ? `occupies H${result.subLordHouse}` : '—'}
+                  </Text>
+                </View>
               </View>
-              <Text style={[typography('caption'), { color: colors.textFaint, marginTop: 2 }]}>
-                {result.manzila.oracleDescriptor}
-              </Text>
-            </View>
-          )}
 
-          {/* Sub-lord display */}
-          <View style={[styles.subLordBlock, { borderTopColor: colors.border }]}>
-            <Text style={[typography('caption'), { color: colors.textMuted }]}>MOON SUB-LORD</Text>
-            <View style={styles.subLordRow}>
-              <Text style={[typography('heading'), { color: colors.accent }]}>
-                {result.subLord}
-              </Text>
-              <Text style={[typography('caption'), { color: colors.textFaint, marginLeft: 6 }]}>
-                {result.subLordHouse > 0 ? `occupies H${result.subLordHouse}` : '—'}
-              </Text>
-            </View>
-          </View>
+              {/* House pills */}
+              {result.houses.length > 0 && (
+                <View style={[styles.pillsBlock, { borderTopColor: colors.border }]}>
+                  <Text
+                    style={[typography('caption'), { color: colors.textMuted, marginBottom: 6 }]}
+                  >
+                    HOUSE SIGNIFICATIONS
+                  </Text>
+                  <View style={styles.pillsRow}>
+                    {result.houses.map(h => (
+                      <HousePillView key={`${h.house}-${h.favorable ? 'f' : 'd'}`} pill={h} />
+                    ))}
+                  </View>
+                </View>
+              )}
 
-          {/* House pills */}
-          {result.houses.length > 0 && (
-            <View style={[styles.pillsBlock, { borderTopColor: colors.border }]}>
-              <Text style={[typography('caption'), { color: colors.textMuted, marginBottom: 6 }]}>
-                HOUSE SIGNIFICATIONS
-              </Text>
-              <View style={styles.pillsRow}>
-                {result.houses.map(h => (
-                  <HousePillView key={`${h.house}-${h.favorable ? 'f' : 'd'}`} pill={h} />
-                ))}
-              </View>
-            </View>
-          )}
-
-          {/* Ruling planets */}
-          {result.rulingPlanets.length > 0 && (
-            <View style={[styles.pillsBlock, { borderTopColor: colors.border }]}>
-              <Text style={[typography('caption'), { color: colors.textMuted, marginBottom: 6 }]}>
-                RULING PLANETS
-              </Text>
-              <View style={styles.pillsRow}>
-                {result.rulingPlanets.map(rp => (
-                  <RulingPlanetChip key={rp.role} entry={rp} />
-                ))}
-              </View>
-            </View>
+              {/* Ruling planets */}
+              {result.rulingPlanets.length > 0 && (
+                <View style={[styles.pillsBlock, { borderTopColor: colors.border }]}>
+                  <Text
+                    style={[typography('caption'), { color: colors.textMuted, marginBottom: 6 }]}
+                  >
+                    RULING PLANETS
+                  </Text>
+                  <View style={styles.pillsRow}>
+                    {result.rulingPlanets.map(rp => (
+                      <RulingPlanetChip key={rp.role} entry={rp} />
+                    ))}
+                  </View>
+                </View>
+              )}
+            </>
           )}
 
           {/* B) Oracle prose — gold hairline separator then interpretation */}
@@ -894,6 +927,15 @@ const styles = StyleSheet.create({
     shadowRadius: 18,
     shadowOffset: { width: 0, height: 10 },
     elevation: 3,
+  },
+  chartDetailsToggle: {
+    marginHorizontal: 12,
+    marginTop: 4,
+    alignSelf: 'center',
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    borderRadius: 999,
+    borderWidth: StyleSheet.hairlineWidth,
   },
   modeRow: {
     flexDirection: 'row',
