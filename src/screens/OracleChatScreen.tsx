@@ -199,6 +199,7 @@ function readingToAstroResult(reading: Reading): AstroVerdictResult {
     narrative,
     createdAt: reading.createdAt,
     category: reading.category,
+    question: reading.question,
     significators: vj?.significators,
     confirmedSignificators: vj?.confirmedSignificators,
     deniedSignificators: vj?.deniedSignificators,

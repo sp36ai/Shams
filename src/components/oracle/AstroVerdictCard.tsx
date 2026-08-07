@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import type { RenderedRemedy } from '../../data/remedyRenderer';
-import { Animated, Easing, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Animated, Easing, Pressable, Share, StyleSheet, Text, View } from 'react-native';
 import Svg, { Circle, Line } from 'react-native-svg';
 
 import { useColors } from '@theme/ThemeProvider';
@@ -27,6 +27,55 @@ const ORACLE_DEFAULT: OracleVoice = {
   },
   signature: 'Oracle of Shams al-Asrār (by Astro Sarfaraz)',
 };
+
+// ── Share text ────────────────────────────────────────────────────────────────
+
+const VERDICT_LABEL: Readonly<Record<string, string>> = {
+  YES: 'YES',
+  NO: 'NO',
+  CONDITIONAL: 'CONDITIONAL',
+  DELAYED: 'DELAYED',
+  UNCLEAR: 'UNCLEAR',
+  DENIED: 'DENIED',
+};
+
+/**
+ * Plain-text share summary — built entirely from data already on the
+ * result, no extra fetch/render needed. Kept as a pure function so it's
+ * easy to reason about / test independent of the Share API call itself.
+ */
+export function buildShareText(result: AstroVerdictResult): string {
+  const oracle = result.oracle;
+  const lines: string[] = [];
+
+  lines.push('✦ Shams al-Asrār — Oracle Reading');
+  lines.push('');
+  if (result.question !== undefined && result.question.length > 0) {
+    lines.push(`Question: ${result.question}`);
+  }
+  lines.push(
+    `Verdict: ${VERDICT_LABEL[result.verdict] ?? result.verdict} (${result.confidence}% confidence)`,
+  );
+  if (result.timing !== undefined) {
+    lines.push(`Timing: within ${result.timing.range.max} ${result.timing.window}`);
+  }
+  lines.push('');
+
+  const prose = oracle?.interpretation ?? result.narrative;
+  if (prose.length > 0) {
+    lines.push(prose);
+    lines.push('');
+  }
+
+  if (result.remedy !== undefined) {
+    lines.push(`Remedy: ${result.remedy.action}`);
+    lines.push('');
+  }
+
+  lines.push(`— ${oracle?.signature ?? ORACLE_DEFAULT.signature}`);
+
+  return lines.join('\n');
+}
 
 // ── House pill ────────────────────────────────────────────────────────────────
 
@@ -417,21 +466,33 @@ const AstroVerdictCard: React.FC<AstroVerdictCardProps> = ({
             </Text>
           </>
         )}
-        {handleSwitch !== undefined && (
+        <View style={[styles.footer, { borderTopColor: colors.border }]}>
           <Pressable
-            onPress={handleSwitch}
-            style={({ pressed }) => [
-              styles.footer,
-              { borderTopColor: colors.border, opacity: pressed ? 0.6 : 1 },
-            ]}
+            onPress={() => {
+              Share.share({ message: buildShareText(result) }).catch(() => {
+                // Share sheet dismissal/cancellation throws on some platforms —
+                // nothing to recover from, just don't crash the card over it.
+              });
+            }}
+            style={({ pressed }) => [styles.footerBtn, { opacity: pressed ? 0.6 : 1 }]}
             accessibilityRole="button"
-            accessibilityLabel="Switch to watch-time analysis"
+            accessibilityLabel="Share this reading"
           >
-            <Text style={[typography('label'), { color: colors.amber }]}>
-              ◈ WATCH-TIME ANALYSIS →
-            </Text>
+            <Text style={[typography('label'), { color: colors.amber }]}>↗ SHARE</Text>
           </Pressable>
-        )}
+          {handleSwitch !== undefined && (
+            <Pressable
+              onPress={handleSwitch}
+              style={({ pressed }) => [styles.footerBtn, { opacity: pressed ? 0.6 : 1 }]}
+              accessibilityRole="button"
+              accessibilityLabel="Switch to watch-time analysis"
+            >
+              <Text style={[typography('label'), { color: colors.amber }]}>
+                ◈ WATCH-TIME ANALYSIS →
+              </Text>
+            </Pressable>
+          )}
+        </View>
       </View>
     );
   }
@@ -808,22 +869,34 @@ const AstroVerdictCard: React.FC<AstroVerdictCardProps> = ({
             </Text>
           )}
 
-          {/* Footer — switch to watch mode */}
-          {handleSwitch !== undefined && (
+          {/* Footer — share + switch to watch mode */}
+          <View style={[styles.footer, { borderTopColor: colors.border }]}>
             <Pressable
-              onPress={handleSwitch}
-              style={({ pressed }) => [
-                styles.footer,
-                { borderTopColor: colors.border, opacity: pressed ? 0.6 : 1 },
-              ]}
+              onPress={() => {
+                Share.share({ message: buildShareText(result) }).catch(() => {
+                  // Share sheet dismissal/cancellation throws on some platforms —
+                  // nothing to recover from, just don't crash the card over it.
+                });
+              }}
+              style={({ pressed }) => [styles.footerBtn, { opacity: pressed ? 0.6 : 1 }]}
               accessibilityRole="button"
-              accessibilityLabel="Switch to watch-time analysis"
+              accessibilityLabel="Share this reading"
             >
-              <Text style={[typography('label'), { color: colors.amber }]}>
-                ◈ WATCH-TIME ANALYSIS →
-              </Text>
+              <Text style={[typography('label'), { color: colors.amber }]}>↗ SHARE</Text>
             </Pressable>
-          )}
+            {handleSwitch !== undefined && (
+              <Pressable
+                onPress={handleSwitch}
+                style={({ pressed }) => [styles.footerBtn, { opacity: pressed ? 0.6 : 1 }]}
+                accessibilityRole="button"
+                accessibilityLabel="Switch to watch-time analysis"
+              >
+                <Text style={[typography('label'), { color: colors.amber }]}>
+                  ◈ WATCH-TIME ANALYSIS →
+                </Text>
+              </Pressable>
+            )}
+          </View>
         </Animated.View>
       )}
 
@@ -1027,9 +1100,16 @@ const styles = StyleSheet.create({
   },
   footer: {
     borderTopWidth: StyleSheet.hairlineWidth,
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
     paddingVertical: 10,
     marginTop: 10,
+    gap: 20,
+  },
+  footerBtn: {
+    paddingVertical: 4,
+    paddingHorizontal: 4,
   },
   opening: {
     marginHorizontal: 12,

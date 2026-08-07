@@ -78,6 +78,8 @@ export interface AstroVerdictResult {
   /** ISO timestamp of the chart moment. */
   createdAt: string;
   category: string;
+  /** The seeker's original question text — used for the share summary. */
+  question?: string;
   /** Optional: switch to numerological watch analysis. */
   onSwitchMode?: () => void;
 
