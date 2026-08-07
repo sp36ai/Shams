@@ -1071,7 +1071,9 @@ const OracleChatScreen: React.FC = () => {
         )}
       </View>
 
-      {/* Ask Your Question — ritual-chamber framing, shown before the first ask */}
+      {/* Ask Your Question — a slim single-line info strip, not a card. Shown
+          before the first ask only; kept out of the way of the chat area
+          below (which needs the room). */}
       {stage === 'ready' && (
         <View
           style={[
@@ -1079,35 +1081,14 @@ const OracleChatScreen: React.FC = () => {
             { backgroundColor: colors.surface, borderColor: colors.borderAccent + '33' },
           ]}
         >
-          <Text style={[typography('title'), { color: colors.text }]}>
+          <Text style={[typography('label'), { color: colors.text, fontSize: 13 }]}>
             {t('oracle.askQuestionTitle')}
-          </Text>
-          <Text
-            style={[
-              typography('caption'),
-              { color: colors.textMuted, marginTop: 2, fontStyle: 'italic' },
-            ]}
-          >
-            {t('oracle.chartCastSubtitle')}
-          </Text>
-          <Text
-            style={[
-              typography('caption'),
-              { color: colors.goldBright, marginTop: 12, letterSpacing: 1, fontSize: 10 },
-            ]}
-          >
-            {t('oracle.rulingPlanetsNowLabel').toUpperCase()}
           </Text>
           <View style={styles.rulingPlanetsRow}>
             {rulingPlanetsNow.map((planet, idx) => (
-              <View key={`${planet}-${idx}`} style={styles.rulingPlanetPill}>
-                <Text style={{ color: colors.accent, fontSize: 18 }}>
-                  {PLANET_GLYPHS[planet as keyof typeof PLANET_GLYPHS] ?? '✦'}
-                </Text>
-                <Text style={[typography('caption'), { color: colors.textMuted, fontSize: 9 }]}>
-                  {planet}
-                </Text>
-              </View>
+              <Text key={`${planet}-${idx}`} style={{ color: colors.accent, fontSize: 16 }}>
+                {PLANET_GLYPHS[planet as keyof typeof PLANET_GLYPHS] ?? '✦'}
+              </Text>
             ))}
           </View>
         </View>
@@ -1120,6 +1101,7 @@ const OracleChatScreen: React.FC = () => {
       >
         <FlatList
           ref={listRef}
+          style={styles.flex}
           data={messages}
           keyExtractor={keyExtractor}
           renderItem={renderItem}
@@ -1625,25 +1607,24 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF0F',
   },
   rulingPlanetsCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     marginHorizontal: 16,
-    marginTop: 12,
-    marginBottom: 4,
-    padding: 16,
-    borderRadius: 18,
+    marginTop: 8,
+    marginBottom: 2,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 12,
     borderWidth: StyleSheet.hairlineWidth,
   },
   rulingPlanetsRow: {
     flexDirection: 'row',
-    gap: 18,
-    marginTop: 8,
-  },
-  rulingPlanetPill: {
-    alignItems: 'center',
-    gap: 2,
+    gap: 10,
   },
   listContent: {
     paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingVertical: 10,
     gap: 10,
   },
   // Input area
