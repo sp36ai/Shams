@@ -1110,14 +1110,6 @@ const OracleChatScreen: React.FC = () => {
               </View>
             ))}
           </View>
-          <Text
-            style={[
-              typography('caption'),
-              { color: colors.textFaint, marginTop: 10, fontSize: 10 },
-            ]}
-          >
-            {t('oracle.currentHoraLordLabel')}: {horaLord}
-          </Text>
         </View>
       )}
 
