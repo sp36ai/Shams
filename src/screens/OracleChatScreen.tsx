@@ -119,6 +119,8 @@ interface VjExtended extends VjShape {
   cuspDegrees?: Record<number, number>;
   cuspSigns?: Record<number, string>;
   planetChain?: Record<string, { manzilLord: string; subLord: string; subSubLord: string }>;
+  /** KP horary number (1–249) — additive witness, see judgeHorary.ts docstring. */
+  horaryNumber?: number;
   oracle?: {
     opening: string;
     interpretation: string;
@@ -406,6 +408,9 @@ function formatHiddenScroll(
     }
   } else {
     lines.push(`The Hidden Scroll has been opened at ${timeStr} in ${city}.`);
+  }
+  if (vj?.horaryNumber !== undefined) {
+    lines.push(`Horary №${vj.horaryNumber}.`);
   }
   lines.push('');
 
