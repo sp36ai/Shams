@@ -257,6 +257,20 @@ export interface Verdict {
 
   /** Engine version that produced this verdict. */
   readonly engineVersion: string;
+
+  /**
+   * KP horary number (1–249) supplied for this reading, if any — an
+   * additive witness NOT part of the owner's original 5-step rules. See
+   * judgeHorary.ts module docstring for the full rationale. Absent when no
+   * horary number was supplied.
+   */
+  readonly horaryNumber?: number;
+
+  /** Sub-lord of the horary number's KP division (the extra witness planet). */
+  readonly horarySubLord?: Planet;
+
+  /** House occupied by the horary sub-lord — basis of its ±1 witness score. */
+  readonly horarySubLordHouse?: HouseIndex;
 }
 
 /**

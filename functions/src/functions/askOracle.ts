@@ -375,8 +375,14 @@ export const askOracle = onCall(
         matchedKeywords: [] as string[],
       };
 
+      // 7b. Horary number witness — server-generated, never client-supplied
+      // (keeps judgeHorary itself pure/deterministic; see its module doc).
+      // Distinguishes readings whose chart-derived signal would otherwise be
+      // identical for two questions asked seconds apart.
+      const horaryNumber = 1 + Math.floor(Math.random() * 249);
+
       // 8. Judge horary — proprietary RKP algorithm runs here, server-only
-      const verdict = judgeHorary(chart, classified);
+      const verdict = judgeHorary(chart, classified, horaryNumber);
 
       // 9+10. Persist reading + quota update in a batch
       const readingRef = db.collection('readings').doc(verdict.id);
@@ -399,6 +405,7 @@ export const askOracle = onCall(
             weight: r.weight,
           }),
         ),
+        horaryNumber,
       };
 
       const batch = db.batch();
@@ -558,6 +565,7 @@ export const askOracle = onCall(
         deniedSignificators: verdict.deniedSignificators as string[] | undefined,
         remedy: verdict.remedy,
         reasoning: readingDoc.reasoning,
+        horaryNumber,
         quotaRemaining: remaining,
         computedAt: now,
         planetDegrees,

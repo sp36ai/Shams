@@ -103,6 +103,14 @@ export interface OracleResponse {
     };
     signature: string;
   };
+
+  /**
+   * KP horary number (1–249) generated server-side for this reading — an
+   * additive witness signal, not part of the owner's original 5-step
+   * rules. Surfaced so the reading can display it for authenticity/
+   * traceability. See judgeHorary.ts module docstring for rationale.
+   */
+  horaryNumber?: number;
 }
 
 /** Response from getQuota. */
@@ -137,6 +145,7 @@ export interface ReadingDoc {
   remedy: OracleResponse['remedy'] | null;
   reasoning: OracleResponse['reasoning'];
   createdAt: FirebaseFirestore.Timestamp;
+  horaryNumber?: number;
 }
 
 /** Firestore /trials/{userId} document shape. */

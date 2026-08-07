@@ -114,6 +114,7 @@ export async function askOracle(args: AskOracleInput): Promise<AskOracleResult> 
       };
       signature: string;
     };
+    horaryNumber?: number;
   };
 
   const reading: Reading = {
@@ -142,6 +143,7 @@ export async function askOracle(args: AskOracleInput): Promise<AskOracleResult> 
       planetChain: data.planetChain,
       manzila: data.manzila,
       oracle: data.oracle,
+      horaryNumber: data.horaryNumber,
     },
   };
 
