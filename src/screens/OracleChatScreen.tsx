@@ -1043,10 +1043,20 @@ const OracleChatScreen: React.FC = () => {
           <Text style={[typography('label'), { color: colors.accent, fontSize: 20 }]}>‹</Text>
         </Pressable>
         <View style={styles.headerTitleWrap}>
-          <Text style={[typography('caption'), { color: colors.goldBright, letterSpacing: 1.5 }]}>
+          <Text
+            style={[
+              typography('caption'),
+              { color: colors.goldBright, letterSpacing: 1.5, fontSize: 10, lineHeight: 12 },
+            ]}
+          >
             ORACLE
           </Text>
-          <Text style={[typography('subheading'), { color: colors.text, marginTop: 2 }]}>
+          <Text
+            style={[
+              typography('subheading'),
+              { color: colors.text, marginTop: 1, fontSize: 15, lineHeight: 18 },
+            ]}
+          >
             SHAMS AL-ASRĀR
           </Text>
         </View>
@@ -1583,7 +1593,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 12,
-    paddingVertical: 12,
+    paddingVertical: 8,
     borderBottomWidth: StyleSheet.hairlineWidth,
     gap: 10,
     shadowColor: '#000',
@@ -1603,7 +1613,7 @@ const styles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth,
     borderRadius: 999,
     paddingHorizontal: 10,
-    paddingVertical: 4,
+    paddingVertical: 3,
     backgroundColor: '#FFFFFF0F',
   },
   rulingPlanetsCard: {
@@ -1631,11 +1641,11 @@ const styles = StyleSheet.create({
   inputArea: {
     borderTopWidth: StyleSheet.hairlineWidth,
     paddingHorizontal: 12,
-    paddingTop: 6,
-    paddingBottom: 8,
+    paddingTop: 4,
+    paddingBottom: 6,
   },
   chipsRow: {
-    marginBottom: 6,
+    marginBottom: 4,
   },
   chipsContent: {
     gap: 6,
@@ -1645,7 +1655,7 @@ const styles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth,
     borderRadius: 999,
     paddingHorizontal: 12,
-    paddingVertical: 5,
+    paddingVertical: 4,
     backgroundColor: '#FFFFFF08',
   },
   composer: {
