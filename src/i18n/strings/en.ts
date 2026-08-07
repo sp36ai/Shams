@@ -137,7 +137,7 @@ export const en: StringTable = {
     chartCastSubtitle: 'The chart is cast for this exact moment.',
     rulingPlanetsNowLabel: 'Ruling Planets Now',
     currentHoraLordLabel: 'Current Hora Lord',
-    sealAskCta: 'Seal & Ask the Oracle',
+    sealAskCta: 'Seal & Ask',
   },
 
   skyClock: {
