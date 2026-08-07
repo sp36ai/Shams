@@ -59,7 +59,11 @@ function computeTiming(lonDeg: number): TimingState {
     moonNakshatra: nakshatraName(moonLon),
     moonPhaseFull: moonPhase(now),
     lst: localSiderealTime(now, lonDeg),
-    timeLabel: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+    timeLabel: new Date().toLocaleTimeString([], {
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+    }),
   };
 }
 
@@ -131,7 +135,11 @@ const SkyClockScreen: React.FC = () => {
     computePlanetRows(Date.now(), latDeg, lonDeg),
   );
 
-  // Refresh timing + planet rows every 60 s, only while screen is focused.
+  // Refresh timing + planet rows every second — a "sky clock" should always
+  // read as live, not as a snapshot that goes stale for up to a minute.
+  // buildChart() is cheap (single-digit ms), so a 1 Hz refresh here is no
+  // heavier than the CosmicClock's own per-second tick below. Only runs
+  // while this screen is actually focused.
   useFocusEffect(
     useCallback(() => {
       setFocused(true);
@@ -140,7 +148,7 @@ const SkyClockScreen: React.FC = () => {
       const id = setInterval(() => {
         setTiming(computeTiming(lonDeg));
         setPlanetRows(computePlanetRows(Date.now(), latDeg, lonDeg));
-      }, 60_000);
+      }, 1_000);
       return () => {
         setFocused(false);
         clearInterval(id);
