@@ -9,7 +9,7 @@ import type { StringTable } from '@i18n/types';
 export const en: StringTable = {
   app: {
     name: 'Shams al-Asrar',
-    tagline: 'Sacred Horary Oracle',
+    tagline: 'The Horary Oracle of Divine Guidance',
     poweredBy: 'Powered by Astro Sarfaraz',
   },
 
@@ -31,6 +31,13 @@ export const en: StringTable = {
 
   splash: {
     invocation: 'Chart the exact moment. Judge the exact question.',
+  },
+
+  nav: {
+    homeTab: 'Home',
+    askTab: 'Ask',
+    alFalakTab: 'Al-Falak',
+    historyTab: 'History',
   },
 
   permission: {

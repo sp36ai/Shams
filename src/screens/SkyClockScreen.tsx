@@ -113,6 +113,9 @@ const SkyClockScreen: React.FC = () => {
   const colors = useColors();
   const typography = useTypography();
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  // Al-Falak is now a persistent tab — canGoBack() is false when reached by
+  // tapping the tab directly, so the back arrow falls back to the Home tab.
+  const tabNavigation = useNavigation<{ navigate: (screen: string) => void }>();
 
   const lastLocation = useSettingsStore(
     (s: ReturnType<typeof useSettingsStore.getState>) => s.lastLocation,
@@ -155,7 +158,9 @@ const SkyClockScreen: React.FC = () => {
         ]}
       >
         <Pressable
-          onPress={() => navigation.goBack()}
+          onPress={() =>
+            navigation.canGoBack() ? navigation.goBack() : tabNavigation.navigate('Home')
+          }
           style={styles.backBtn}
           accessibilityRole="button"
           accessibilityLabel="Go back"

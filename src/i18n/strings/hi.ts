@@ -16,7 +16,7 @@ import type { StringTable } from '@i18n/types';
 export const hi: StringTable = {
   app: {
     name: 'शम्सुल असरार',
-    tagline: 'रहस्यों का सूर्य',
+    tagline: 'दिव्य मार्गदर्शन का ज्योतिष ओरेकल',
     poweredBy: 'प्रस्तुति: एस्ट्रो सरफ़राज़',
   },
 
@@ -38,6 +38,13 @@ export const hi: StringTable = {
 
   splash: {
     invocation: 'आकाश सुन रहा है।',
+  },
+
+  nav: {
+    homeTab: 'होम',
+    askTab: 'पूछें',
+    alFalakTab: 'अल-फ़लक',
+    historyTab: 'रीडिंग',
   },
 
   permission: {

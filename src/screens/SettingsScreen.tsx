@@ -5,6 +5,7 @@
 import React, { useCallback, useState } from 'react';
 import {
   Alert,
+  Image,
   Linking,
   Pressable,
   ScrollView,
@@ -14,6 +15,9 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import type { RootStackParamList } from '@navigation/types';
 import StarfieldBackground from '@components/StarfieldBackground';
 import { ThemeSwitcher } from '@components/ThemeSwitcher';
 
@@ -26,12 +30,15 @@ import { useAuthStore, selectUserName, selectUserEmail } from '@stores/authStore
 import { useReadingsStore, type VerdictKind } from '@stores/readingsStore';
 import { useQuotaStore, FREE_DAILY_LIMIT, type PlanTier } from '@stores/quotaStore';
 
+const SEAL_IMAGE = require('@assets/images/sky-clock-disk.png');
+
 const SettingsScreen: React.FC = () => {
   const { theme } = useTheme();
   const colors = useColors();
   const typography = useTypography();
   const t = useTranslation();
   const { lang, switchLanguage } = useI18n();
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
 
   const lastLocation = useSettingsStore(s => s.lastLocation);
   const seekerProfile = useSettingsStore(s => s.seekerProfile);
@@ -125,6 +132,14 @@ const SettingsScreen: React.FC = () => {
           { borderColor: colors.border, backgroundColor: colors.surfaceElevated },
         ]}
       >
+        <Pressable
+          onPress={() => navigation.goBack()}
+          style={styles.backBtn}
+          accessibilityRole="button"
+          accessibilityLabel="Go back"
+        >
+          <Text style={[typography('label'), { color: colors.accent, fontSize: 20 }]}>‹</Text>
+        </Pressable>
         <Text
           style={[
             typography('caption'),
@@ -252,20 +267,26 @@ const SettingsScreen: React.FC = () => {
           <View
             style={[
               styles.profileCard,
+              styles.profileCardRow,
               { backgroundColor: colors.surface, borderColor: colors.border },
             ]}
           >
-            <Text style={[typography('bodyEmphasis'), { color: colors.text }]} numberOfLines={1}>
-              {userName}
-            </Text>
-            {userEmail.length > 0 && (
-              <Text
-                style={[typography('caption'), { color: colors.textMuted, marginTop: 2 }]}
-                numberOfLines={1}
-              >
-                {userEmail}
+            <View style={[styles.avatarRing, { borderColor: colors.borderAccent }]}>
+              <Image source={SEAL_IMAGE} style={styles.avatarImage} resizeMode="contain" />
+            </View>
+            <View style={styles.profileTextCol}>
+              <Text style={[typography('bodyEmphasis'), { color: colors.text }]} numberOfLines={1}>
+                {userName}
               </Text>
-            )}
+              {userEmail.length > 0 && (
+                <Text
+                  style={[typography('caption'), { color: colors.textMuted, marginTop: 2 }]}
+                  numberOfLines={1}
+                >
+                  {userEmail}
+                </Text>
+              )}
+            </View>
           </View>
           {seekerProfile !== null && (
             <Pressable
@@ -522,6 +543,15 @@ const styles = StyleSheet.create({
     shadowRadius: 16,
     shadowOffset: { width: 0, height: 4 },
     elevation: 2,
+    position: 'relative',
+  },
+  backBtn: {
+    position: 'absolute',
+    top: 14,
+    left: 16,
+    zIndex: 1,
+    paddingHorizontal: 6,
+    paddingVertical: 4,
   },
   headerDivider: {
     flexDirection: 'row',
@@ -606,6 +636,26 @@ const styles = StyleSheet.create({
     shadowRadius: 12,
     shadowOffset: { width: 0, height: 4 },
     elevation: 1,
+  },
+  profileCardRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  avatarRing: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 14,
+  },
+  avatarImage: {
+    width: 34,
+    height: 34,
+  },
+  profileTextCol: {
+    flex: 1,
   },
   signOutBtn: {
     paddingVertical: 14,

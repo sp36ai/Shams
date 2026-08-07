@@ -1,8 +1,10 @@
 /**
  * MainTabs — bottom tab navigator for the local RKP shell.
  * --------------------------------------------------------------------------
- * Tabs (in order): Oracle | History | Settings.
- * Oracle is the initial route — it is the primary question surface.
+ * Tabs (in order): Home | Ask | Al-Falak | History — matches the Dār
+ * al-Shams reference IA. Settings is NOT a tab; it's a root-level push
+ * reached via the gear icon in Home's header.
+ * Home is the initial route — it is the primary landing surface.
  *
  * Visual contract:
  *   - Tab bar background: theme.colors.surface, top hairline border.
@@ -33,8 +35,9 @@ import {
 import { Pressable } from 'react-native';
 
 import OracleScreen from '@screens/OracleScreen';
+import OracleChatScreen from '@screens/OracleChatScreen';
+import SkyClockScreen from '@screens/SkyClockScreen';
 import HistoryScreen from '@screens/HistoryScreen';
-import SettingsScreen from '@screens/SettingsScreen';
 
 import { useColors } from '@theme/ThemeProvider';
 import { useTypography } from '@theme/useTypography';
@@ -83,22 +86,24 @@ const MainTabs: React.FC = () => {
   // Memoize labels so screenOptions doesn't rebuild on every render.
   const labels = useMemo<Record<keyof MainTabParamList, string>>(
     () => ({
-      Oracle: t('oracle.headerTitle' as TKey),
-      History: t('history.headerTitle' as TKey),
-      Settings: t('settings.headerTitle' as TKey),
+      Home: t('nav.homeTab' as TKey),
+      Ask: t('nav.askTab' as TKey),
+      AlFalak: t('nav.alFalakTab' as TKey),
+      History: t('nav.historyTab' as TKey),
     }),
     [t],
   );
 
   const iconNames: Record<keyof MainTabParamList, IconName> = {
-    Oracle: 'oracle',
+    Home: 'oracle',
+    Ask: 'ask',
+    AlFalak: 'skyclock',
     History: 'history',
-    Settings: 'settings',
   };
 
   return (
     <Tab.Navigator
-      initialRouteName="Oracle"
+      initialRouteName="Home"
       screenOptions={({ route }) => ({
         headerShown: false,
         tabBarShowLabel: true,
@@ -162,16 +167,17 @@ const MainTabs: React.FC = () => {
         ),
       })}
     >
-      <Tab.Screen name="Oracle" component={OracleScreen} options={{ tabBarLabel: labels.Oracle }} />
+      <Tab.Screen name="Home" component={OracleScreen} options={{ tabBarLabel: labels.Home }} />
+      <Tab.Screen name="Ask" component={OracleChatScreen} options={{ tabBarLabel: labels.Ask }} />
+      <Tab.Screen
+        name="AlFalak"
+        component={SkyClockScreen}
+        options={{ tabBarLabel: labels.AlFalak }}
+      />
       <Tab.Screen
         name="History"
         component={HistoryScreen}
         options={{ tabBarLabel: labels.History }}
-      />
-      <Tab.Screen
-        name="Settings"
-        component={SettingsScreen}
-        options={{ tabBarLabel: labels.Settings }}
       />
     </Tab.Navigator>
   );

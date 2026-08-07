@@ -68,6 +68,12 @@ export interface StringTable {
   splash: {
     invocation: string;
   };
+  nav: {
+    homeTab: string;
+    askTab: string;
+    alFalakTab: string;
+    historyTab: string;
+  };
   permission: {
     locationTitle: string;
     locationRationale: string;

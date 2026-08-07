@@ -48,6 +48,7 @@ import { displayLonSidereal, PLANET_GLYPHS } from '@utils/siderealPositions';
 import { getSignLordByLongitude } from '@astrology/primitives/rulingPlanets';
 import AstroVerdictCard from '../components/oracle/AstroVerdictCard';
 import WatchVerdictCard from '../components/oracle/WatchVerdictCard';
+import CastingAstrolabe from '../components/oracle/CastingAstrolabe';
 import type { AstroVerdictResult } from '../types/verdict';
 import { selectRemedies, contextFromReading } from '../data/remedySelector';
 import type { RenderedRemedy } from '../data/remedyRenderer';
@@ -534,6 +535,10 @@ const OracleChatScreen: React.FC = () => {
   const t = useTranslation();
   const { lang } = useI18n();
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  // Ask is now a persistent tab, not always a pushed screen — canGoBack() is
+  // false when reached by tapping the tab directly, so the back arrow falls
+  // back to switching to the Home tab instead of a no-op goBack().
+  const tabNavigation = useNavigation<{ navigate: (screen: string) => void }>();
 
   const lastLocation = useSettingsStore(
     (s: ReturnType<typeof useSettingsStore.getState>) => s.lastLocation,
@@ -632,40 +637,6 @@ const OracleChatScreen: React.FC = () => {
   const [inputFocused, setInputFocused] = useState(false);
   const [sending, setSending] = useState(false);
   const sendingRef = useRef(false);
-
-  // ── Loading orb pulse at 0.8 Hz (1250 ms period) ───────────────────────────
-  const orbPulse = useRef(new Animated.Value(1)).current;
-
-  useEffect(() => {
-    try {
-      if (!sending) {
-        orbPulse.setValue(1);
-        return;
-      }
-      const loop = Animated.loop(
-        Animated.sequence([
-          Animated.timing(orbPulse, {
-            toValue: 1.22,
-            duration: 625,
-            easing: Easing.inOut(Easing.sin),
-            useNativeDriver: true,
-          }),
-          Animated.timing(orbPulse, {
-            toValue: 1,
-            duration: 625,
-            easing: Easing.inOut(Easing.sin),
-            useNativeDriver: true,
-          }),
-        ]),
-      );
-      loop.start();
-      return () => loop.stop();
-    } catch (err) {
-      // The loading orb animation is cosmetic — never let it crash the screen.
-      crashlytics().recordError(err instanceof Error ? err : new Error(String(err)));
-      return undefined;
-    }
-  }, [sending, orbPulse]);
 
   const [stage, setStage] = useState<ConvStage>('ready');
   const [lastReading, setLastReading] = useState<Reading | null>(null);
@@ -1062,7 +1033,9 @@ const OracleChatScreen: React.FC = () => {
         style={[styles.header, { borderColor: colors.border, backgroundColor: colors.surface }]}
       >
         <Pressable
-          onPress={() => navigation.goBack()}
+          onPress={() =>
+            navigation.canGoBack() ? navigation.goBack() : tabNavigation.navigate('Home')
+          }
           style={styles.backBtn}
           accessibilityRole="button"
           accessibilityLabel="Go back"
@@ -1277,82 +1250,7 @@ const OracleChatScreen: React.FC = () => {
         </View>
       </KeyboardAvoidingView>
 
-      {sending && (
-        <View style={styles.loadingOverlay} pointerEvents="none">
-          <View
-            style={[
-              styles.loadingPanel,
-              {
-                backgroundColor: colors.surfaceElevated,
-                borderColor: colors.borderAccent,
-                shadowColor: colors.accent,
-                shadowOpacity: 0.22,
-                shadowRadius: 24,
-              },
-            ]}
-          >
-            {/* Celestial orb — pulsing at 0.8 Hz */}
-            <Animated.View
-              style={{
-                width: 52,
-                height: 52,
-                borderRadius: 26,
-                backgroundColor: colors.manuscriptFog,
-                borderWidth: 1,
-                borderColor: colors.borderAccent,
-                alignSelf: 'center',
-                marginBottom: 16,
-                justifyContent: 'center',
-                alignItems: 'center',
-                transform: [{ scale: orbPulse }],
-                shadowColor: colors.goldBright,
-                shadowOpacity: 0.4,
-                shadowRadius: 12,
-                shadowOffset: { width: 0, height: 0 },
-              }}
-            >
-              <Text style={{ color: colors.goldBright, fontSize: 20 }}>✦</Text>
-            </Animated.View>
-            <Text
-              style={[
-                typography('label'),
-                {
-                  color: colors.goldBright,
-                  textAlign: 'center',
-                  marginBottom: 10,
-                  letterSpacing: 1.4,
-                },
-              ]}
-            >
-              CASTING THE SACRED CHART
-            </Text>
-            {/* Quran 16:12 — the celestial witness */}
-            <Text
-              style={[
-                typography('caption'),
-                {
-                  color: colors.textMuted,
-                  textAlign: 'center',
-                  fontStyle: 'italic',
-                  fontSize: 11,
-                  lineHeight: 18,
-                  marginBottom: 4,
-                },
-              ]}
-            >
-              {'وَسَخَّرَ لَكُمُ ٱلَّيۡلَ وَٱلنَّهَارَ وَٱلشَّمۡسَ وَٱلۡقَمَرَ'}
-            </Text>
-            <Text
-              style={[
-                typography('caption'),
-                { color: colors.textFaint, textAlign: 'center', fontSize: 10, letterSpacing: 0.4 },
-              ]}
-            >
-              {'He subjected for you the night, the day, the sun, the moon — Quran 16:12'}
-            </Text>
-          </View>
-        </View>
-      )}
+      {sending && <CastingAstrolabe />}
 
       {/* Quota modal — spiritual rest, no immediate paywall */}
       <Modal
@@ -1804,23 +1702,6 @@ const styles = StyleSheet.create({
     shadowRadius: 10,
     shadowOffset: { width: 0, height: 4 },
     elevation: 2,
-  },
-  loadingOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    justifyContent: 'center',
-    alignItems: 'center',
-    zIndex: 10,
-  },
-  loadingPanel: {
-    width: '80%',
-    borderRadius: 18,
-    padding: 20,
-    borderWidth: 1,
-    shadowColor: '#000',
-    shadowOpacity: 0.25,
-    shadowRadius: 18,
-    shadowOffset: { width: 0, height: 8 },
-    elevation: 10,
   },
   modalOverlay: {
     flex: 1,
