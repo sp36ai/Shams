@@ -259,6 +259,15 @@ export interface Verdict {
   readonly engineVersion: string;
 
   /**
+   * Which judgment engine produced this verdict: RKP (Astro Sarfaraz's
+   * scoring adaptation, judgeHorary.ts) or classical KP (categorical
+   * majority-count of significators, judgeKP.ts). Optional so existing
+   * fixtures/cached data without this field still type-check; absent ⇒
+   * treat as 'RKP', the engine that predates this field.
+   */
+  readonly engine?: 'RKP' | 'KP';
+
+  /**
    * KP horary number (1–249) supplied for this reading, if any — an
    * additive witness NOT part of the owner's original 5-step rules. See
    * judgeHorary.ts module docstring for the full rationale. Absent when no

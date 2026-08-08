@@ -201,3 +201,22 @@ export function getRulingPlanets(input: RulingPlanetsInput): {
     set: [dayLord, horaLord, ascSignLord, ascStarLord, moonSignLord, moonStarLord],
   };
 }
+
+/**
+ * `Chart.rulingPlanets` is always the 6-tuple
+ * `[dayLord, horaLord, ascSignLord, ascStarLord, moonSignLord, moonStarLord]`.
+ */
+export const HORA_LORD_INDEX = 1;
+
+/**
+ * The 5 Classical KP Witnesses — the 6-tuple minus Hora Lord.
+ *
+ * docs/RKP_RULES_FROM_SARFARAZ.md §"Ruling planets": "5 Classical KP
+ * Witnesses plus 1 Confirmatory RKP Lord" — Hora Lord IS that confirmatory
+ * RKP-specific addition, not one of classical KP's 5 canonical witnesses
+ * (see docs/RKP_KP_FORENSIC_AUDIT.md §A). RKP's judgment engine uses all 6;
+ * the classical KP engine uses only these 5.
+ */
+export function classicalWitnesses(rulingPlanets: readonly Planet[]): Planet[] {
+  return rulingPlanets.filter((_, i) => i !== HORA_LORD_INDEX);
+}

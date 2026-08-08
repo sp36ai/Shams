@@ -6,12 +6,22 @@
  * Source of truth: docs/RKP_RULES_FROM_SARFARAZ.md §1
  * Provided by: Astro Sarfaraz (project owner) during Phase 1 intake.
  *
- * USED BY:  Phase 3 engine — src/astrology/kp/judgment/judgeHorary.ts
+ * USED BY:  BOTH Phase 3 engines —
+ *             src/astrology/kp/judgment/judgeHorary.ts (RKP)
+ *             src/astrology/kp/judgment/judgeKP.ts (classical KP)
+ *
+ *   The house groupings below are standard textbook KP significations
+ *   (career → 6/10/11, marriage → 7/11/2, etc.) — independent of RKP's
+ *   scoring adaptation, which is why one shared table correctly serves
+ *   both engines (see docs/KP_RULES_CLASSICAL.md §2). If the owner later
+ *   supplies a separately-vetted classical-KP table that diverges from
+ *   this one, split into HOUSE_MATRIX_RKP / HOUSE_MATRIX_KP at that point;
+ *   until then, one table, one source of truth.
  *
  * EDIT POLICY:
  *   This file is a faithful transcription of the owner-provided rules.
  *   DO NOT modify values without owner sign-off. Any change here changes
- *   the verdict for every reading the engine produces.
+ *   the verdict for every reading BOTH engines produce.
  *
  * ════════════════════════════════════════════════════════════════════
  */
