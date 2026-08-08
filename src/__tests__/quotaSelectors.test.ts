@@ -29,13 +29,8 @@ function makeState(plan: PlanTier, questionsToday: number): QuotaState {
 }
 
 describe('FREE_DAILY_LIMIT', () => {
-  // TEMP (internal testing): quotaStore.ts raised this to 50 while the oracle
-  // engine is being debugged — see the REVERT comment there. This assertion
-  // tracks the same TEMP value on purpose, as a tripwire: when the constant
-  // is reverted to 3 before public launch, this test should be updated back
-  // to 3 in the same change, not left silently out of sync.
-  test('is 50 (TEMP internal-testing value — see quotaStore.ts REVERT comment)', () => {
-    expect(FREE_DAILY_LIMIT).toBe(50);
+  test('is 3 — the production paywall limit', () => {
+    expect(FREE_DAILY_LIMIT).toBe(3);
   });
 });
 
