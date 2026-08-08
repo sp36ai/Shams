@@ -80,6 +80,13 @@ export interface AstroVerdictResult {
   category: string;
   /** The seeker's original question text — used for the share summary. */
   question?: string;
+  /**
+   * Ordered trace of the engine's scoring steps that produced this verdict —
+   * the same data judgeHorary() returns server-side. Shown behind "View
+   * Chart Details" for anyone who wants to independently verify the
+   * reading (e.g. checking it against classical KP rules with an AI).
+   */
+  reasoning?: ReadonlyArray<{ ruleId: string; description: string; weight: number }>;
   /** Optional: switch to numerological watch analysis. */
   onSwitchMode?: () => void;
 
