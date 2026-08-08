@@ -25,7 +25,6 @@ export function computeConvergenceTiming(
 ): VerdictTiming {
   const momentMs = new Date(chart.momentUtc).getTime();
   const moonLon = chart.planets.Moon.siderealLongitude;
-  const moonNakLord = chart.planets.Moon.nakshatraLord;
 
   // 2. Dasha Participation Check
   const dasha = calculateDasha(moonLon, momentMs);
@@ -60,16 +59,28 @@ export function computeConvergenceTiming(
   }
 
   // 4. Transit Convergence (Projected Triggers)
-  // Sun transit over timing planet's nakshatra confirms the month/day.
-  const triggers: TransitTrigger[] = [];
-  // Timing planet: strongest confirmed significator or Moon nakshatra lord fallback
-  const timingPlanet = confirmedSignificators.length > 0 ? confirmedSignificators[0] : moonNakLord;
-  // Approximation: Sun moves ~1 deg/day, Jupiter ~30 deg/year (0.08 deg/day).
-  // We use 30 days for Jupiter-scale (years) and 15 days for Sun-scale (months).
-  const leadDaysPerUnit = timingPlanet === 'Jupiter' ? 30.44 : 15.22;
+  // Lead time to the first projected transit hit, scaled to the WINDOW UNIT
+  // itself — not a fixed constant — so the trigger date is actually
+  // consistent with the stated fructification window (previously this used
+  // a fixed ~15/30-day offset regardless of whether the window was "days"
+  // or "years", producing a "years" prediction with a confirming transit
+  // only two weeks away).
+  const DAYS_PER_WINDOW_UNIT: Record<TimingWindow, number> = {
+    days: 1,
+    weeks: 7,
+    months: 30.44, // average month length
+    years: 365.25,
+  };
+  const leadDays = range.min * DAYS_PER_WINDOW_UNIT[window];
 
-  const sunHit = new Date(momentMs + range.min * leadDaysPerUnit * 86_400_000).toISOString();
-  triggers.push({ planet: 'Sun', date: sunHit });
+  // Sun's ~1 year cycle confirms near-term windows (days/weeks/months);
+  // Jupiter's slower transit is the traditional confirming signal for a
+  // years-scale window (see module docstring).
+  const transitPlanet: Planet = window === 'years' ? 'Jupiter' : 'Sun';
+
+  const triggers: TransitTrigger[] = [
+    { planet: transitPlanet, date: new Date(momentMs + leadDays * 86_400_000).toISOString() },
+  ];
 
   return {
     window,
