@@ -93,12 +93,38 @@ The engine code:
 
 ```
 src/astrology/
-  ├── engine/           Core celestial calculations
+  ├── primitives/       Ephemeris, ayanamsa, sidereal time, house cusps, sub-lords
+  │   └── moshier/      Meeus/VSOP87 sun, moon and planet series
   ├── kp/
   │   ├── judgment/     Verdict logic + timing + remedy
-  │   └── charts/       Chart construction, aspects, yoga
-  └── utils/            Ephemeris, coordinates, time math
+  │   └── rules/        House matrix, nakshatras, vimshottari, keywords
+  ├── rkp/              Digital Watch Oracle — watch-selected house frame
+  └── types/            Chart, question and verdict contracts
 ```
+
+### The two modes share one sky
+
+Both oracle modes read the **same real ephemeris** — Meeus/VSOP87 series with
+heliocentric→geocentric conversion, Lahiri ayanamsa, genuine retrograde and
+combustion state. They differ only in where the **house frame** comes from:
+
+| | Astronomical Oracle | Digital Watch Oracle |
+|---|---|---|
+| Entry point | `primitives/chartBuilder.ts` | `rkp/watchChart.ts` |
+| 1st house from | True Ascendant — RAMC, obliquity, latitude (Placidus) | The 5-minute bracket of the querent's local watch minute |
+| Needs location | Yes — the horizon is local | No |
+| Planets | Real | Real |
+
+The watch frame is a **moment-selected** house frame, of the same class as KP's
+1–249 number method, where a querent-chosen number rather than the local horizon
+fixes the Ascendant. It is not a horizon computation and must never be described
+as one, or substituted behind the Astronomical Oracle — the two are surfaced
+separately to the user for exactly that reason. See the header of
+`src/astrology/rkp/watchGrid.ts`.
+
+Because the watch frame replaces the cusps and planetary positions are
+location-invariant, a Watch reading needs nothing from the querent — no birth
+data, and no location either. It can run the moment the app opens.
 
 ## Build & Run
 
