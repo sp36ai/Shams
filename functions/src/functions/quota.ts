@@ -37,10 +37,21 @@ export const getQuota = onCall(
       const planExpiry = d.planExpiry ?? null;
 
       // Check if plan has expired
-      const effectivePlan =
-        plan !== 'free' && planExpiry && Date.now() > new Date(planExpiry).getTime()
-          ? 'free'
-          : plan;
+      const expired =
+        plan !== 'free' && planExpiry !== null && Date.now() > new Date(planExpiry).getTime();
+      const effectivePlan = expired ? 'free' : plan;
+
+      if (expired) {
+        // Self-heal the stale doc, matching askOracle's claimQuotaSlot — otherwise
+        // this correction only ever lives in this response, never persisted, and
+        // every getQuota call before the next askOracle call keeps re-deriving it
+        // from scratch instead of the doc reflecting reality. Best-effort: the
+        // response above is already correct regardless of whether this succeeds.
+        db.collection('quotas')
+          .doc(userId)
+          .set({ plan: 'free', planExpiry: null }, { merge: true })
+          .catch(() => undefined);
+      }
 
       const unlimited = UNLIMITED_PLANS.includes(effectivePlan);
       const limit = unlimited ? null : FREE_LIMIT;
