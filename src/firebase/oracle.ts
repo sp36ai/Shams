@@ -133,6 +133,10 @@ export async function askOracle(args: AskOracleInput): Promise<AskOracleResult> 
     nativeState?: string;
     /** RKP condition classification — Siddhi/Stambhana/Gati/Vakra/Kshaya/Bija. */
     conditionState?: string;
+    /** Closed-enum obstruction anchor — drives client-side remedy ranking. */
+    oracleObstruction?: string;
+    /** ENVIRONMENTAL_FRICTION / INNER_CONFLICT / NONE — drives remedy ranking. */
+    oracleSecondaryTheme?: string;
     /** Physical direction (Vastu) of the activated house right now. */
     houseLordDirection?: string;
     /** Directions currently holding a natural malefic — household Vastu scan. */
@@ -194,6 +198,8 @@ export async function askOracle(args: AskOracleInput): Promise<AskOracleResult> 
       horaryNumber: data.horaryNumber,
       nativeState: data.nativeState,
       conditionState: data.conditionState,
+      oracleObstruction: data.oracleObstruction,
+      oracleSecondaryTheme: data.oracleSecondaryTheme,
       houseLordDirection: data.houseLordDirection,
       vastuAfflictedDirections: data.vastuAfflictedDirections,
       triad: data.triad,

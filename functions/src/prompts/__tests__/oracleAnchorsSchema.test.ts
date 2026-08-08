@@ -2,6 +2,7 @@ import { describe, it, expect, vi } from 'vitest';
 import {
   OracleAnchorsSchema,
   parseOracleAnchors,
+  sanitiseOracleAnchors,
   validateOracleAnchors,
 } from '../oracleAnchorsSchema';
 import type { OracleAnchors } from '../oracleAnchors';
@@ -73,5 +74,62 @@ describe('validateOracleAnchors — fail-open guard', () => {
     const bad = { ...VALID, timing: 'sometime soon' } as OracleAnchors;
     expect(() => validateOracleAnchors(bad, 'reading-2')).not.toThrow();
     expect(validateOracleAnchors(bad, 'reading-2')).toBe(false);
+  });
+});
+
+describe('sanitiseOracleAnchors — fail-SAFE repair', () => {
+  it('passes valid anchors through untouched, repairing nothing', () => {
+    const { anchors, repaired } = sanitiseOracleAnchors(VALID, 'r1');
+    expect(repaired).toEqual([]);
+    expect(anchors).toEqual(VALID);
+  });
+
+  it('repairs only the offending field and keeps every good one', () => {
+    const bad = { ...VALID, timing: 'NaN-NaN months' } as OracleAnchors;
+    const { anchors, repaired } = sanitiseOracleAnchors(bad, 'r2');
+    expect(repaired).toEqual(['timing']);
+    expect(anchors.timing).toBe('UNCLEAR');
+    // Everything else survives — one bad anchor costs one sentence, not the
+    // whole reading.
+    expect(anchors.verdict).toBe('DELAY');
+    expect(anchors.obstruction).toBe('Saturn');
+    expect(anchors.direction).toBe('South');
+  });
+
+  it('repairs several fields at once', () => {
+    const bad = {
+      ...VALID,
+      verdict: 'MAYBE',
+      obstruction: 'Sun',
+      reversal: 'PERHAPS',
+    } as unknown as OracleAnchors;
+    const { anchors, repaired } = sanitiseOracleAnchors(bad, 'r3');
+    expect([...repaired].sort()).toEqual(['obstruction', 'reversal', 'verdict']);
+    expect(anchors.verdict).toBe('INCONCLUSIVE');
+    expect(anchors.obstruction).toBe('NONE');
+    expect(anchors.reversal).toBe('NONE');
+    expect(anchors.confidence).toBe('HIGH'); // untouched
+  });
+
+  it('never repairs a verdict into a confident yes or no', () => {
+    for (const junk of ['YES', 'NO', '', null, undefined, 42]) {
+      const { anchors } = sanitiseOracleAnchors(
+        { ...VALID, verdict: junk } as unknown as OracleAnchors,
+        'r4',
+      );
+      expect(anchors.verdict).toBe('INCONCLUSIVE');
+      expect(anchors.confidence).not.toBe('VERY_HIGH');
+    }
+  });
+
+  it('always returns something the schema accepts, even from total garbage', () => {
+    const { anchors } = sanitiseOracleAnchors({} as unknown as OracleAnchors, 'r5');
+    expect(OracleAnchorsSchema.safeParse(anchors).success).toBe(true);
+    expect(anchors.verdict).toBe('INCONCLUSIVE');
+    expect(anchors.timing).toBe('UNCLEAR');
+  });
+
+  it('does not throw on malformed input', () => {
+    expect(() => sanitiseOracleAnchors(null as unknown as OracleAnchors, 'r6')).not.toThrow();
   });
 });

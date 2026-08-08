@@ -162,10 +162,59 @@ schema exists for what types cannot catch at runtime: an engine change that
 starts emitting an out-of-range value, or a malformed timing string that
 would otherwise reach the prompt and become a fabricated date.
 
-It **fails open** — logs and continues, rather than the hard throw the
-material describes. A seeker who has already spent quota should still get
-their reading, and every anchor has a safe fallback in the prompt.
-`parseOracleAnchors()` throws if a hard failure is ever wanted.
+It **fails safe**, not merely fails open. `validateOracleAnchors()` logged
+the anomaly but still handed the bad value to the model, where an
+out-of-range anchor becomes an invented claim in the seeker's reading.
+`sanitiseOracleAnchors()` — what the pipeline actually calls — repairs
+**field by field**: each malformed anchor is replaced with a cautious
+default while every valid one is preserved, so a single bad anchor costs
+one degraded sentence rather than the whole reading. The request still
+succeeds; no quota is wasted. `parseOracleAnchors()` throws if a hard
+failure is ever wanted.
+
+Each fallback is the most cautious reading of its field: `verdict` and
+`primaryTheme` fall to the "cannot read this hour" states rather than to a
+yes or a no, `confidence` to UNCERTAIN so the prompt's own hedging engages,
+`obstruction`/`secondaryTheme`/`reversal` to NONE so the oracle stays
+silent rather than naming a force at random, and `timing` to UNCLEAR —
+the one value that cannot become a fabricated date.
+
+## Remedy ranking now reads the chart
+
+`src/data/remedySelector.ts` feeds the 39-remedy library
+(`remedyLibrary.ts`, 18-tag vocabulary). Its `dominantThemes` came from the
+question TOPIC alone: every career question got MATERIAL_ANXIETY + DELAY
+whether the chart showed a clean opening or a Rahu-blocked denial, and the
+six native states were collapsed onto the old three-way
+CONFIRMED/DENIED/NEUTRAL bucket.
+
+`contextFromReading()` now takes optional RKP signals and maps them onto
+the **existing** tag vocabulary — no new devotional content is introduced,
+only better ranking inputs:
+
+| Signal | Tags | Provenance |
+|---|---|---|
+| Saturn | DELAY, STAGNATION | the material's own Saturn signature |
+| Mars | CONFLICT, HASTE | the material's "friction, anger, sudden action"; matches remedyTable's Mars line |
+| Rahu | DOUBT, RESTLESSNESS | remedyTable's Rahu line |
+| Ketu | SPIRITUAL_NEGLECT, DOUBT | remedyTable's Ketu line |
+| MOON_DISAGREEMENT | ANXIETY, DOUBT | inner hesitation |
+| Stambhana | OBSTRUCTION, STAGNATION | its own definition |
+| Kshaya | GRIEF, SUPPRESSION | " |
+| Vakra | DOUBT, RESTLESSNESS | " |
+| Bija | DOUBT, STAGNATION | " |
+| Siddhi | ABUNDANCE | " |
+| Gati | — | carries no obstruction of its own |
+
+Chart themes lead; topic themes stay behind them as a floor (a marriage
+question is still about ATTACHMENT even on a clean chart). Every signal is
+optional, so readings persisted before the watch engine rank exactly as
+they did.
+
+DELAY and WAIT deliberately stay in the NEUTRAL bucket rather than DENIED:
+they are not refusals, and routing them there would flood a "yes, but
+later" reading with surrender-and-grief remedies. Their patience signal
+rides on the DELAY/STAGNATION tags, which is the finer instrument.
 
 ## Confidence — conflicting signals now downgrade the score
 

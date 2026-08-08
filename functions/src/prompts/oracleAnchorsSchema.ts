@@ -92,9 +92,93 @@ export function validateOracleAnchors(anchors: OracleAnchors, readingId: string)
   if (result.success) {
     return true;
   }
-  logger.error('oracle anchors failed validation — passing through to synthesis anyway', {
+  logger.error('oracle anchors failed validation', {
     readingId,
     issues: result.error.issues.map(i => `${i.path.join('.')}: ${i.message}`),
   });
   return false;
+}
+
+/**
+ * Per-anchor safe fallbacks.
+ *
+ * Every value here is the MOST CAUTIOUS reading of its field, chosen so that
+ * a corrupted anchor degrades into honest uncertainty rather than into a
+ * confident claim the calculation never made. Specifically:
+ *
+ *   - `verdict` and `primaryTheme` fall to the "we cannot read this hour"
+ *     states, never to a yes or a no.
+ *   - `confidence` falls to UNCERTAIN, so the prompt's own low-confidence
+ *     hedging engages.
+ *   - `obstruction`, `secondaryTheme` and `reversal` fall to NONE — the
+ *     oracle stays silent about them rather than naming a force at random.
+ *   - `timing` falls to UNCLEAR, which is the one value that cannot become
+ *     a fabricated date.
+ *   - `direction` has no "unknown" member, so North is used purely as a
+ *     placeholder; the prompt treats DIRECTION as optional imagery and may
+ *     drop it entirely, so a wrong compass point never becomes an
+ *     instruction.
+ */
+const ANCHOR_FALLBACKS: ValidatedOracleAnchors = Object.freeze({
+  verdict: 'INCONCLUSIVE',
+  confidence: 'UNCERTAIN',
+  condition: 'Bija',
+  primaryTheme: 'UNCLEAR_SIGNAL',
+  obstruction: 'NONE',
+  secondaryTheme: 'NONE',
+  timing: 'UNCLEAR',
+  direction: 'North',
+  reversal: 'NONE',
+  rulerClash: 'NEUTRAL',
+  controllerStyle: 'CAUTIOUS_ADMINISTRATIVE',
+});
+
+/**
+ * Validate, and repair only the fields that actually failed.
+ *
+ * This is what the pipeline uses. `validateOracleAnchors()` alone was
+ * fail-OPEN in the loosest sense — it logged the anomaly and still handed
+ * the bad value to the language model, where an out-of-range anchor becomes
+ * an invented claim in the seeker's reading. This is fail-SAFE: the request
+ * still succeeds (no exception, no wasted quota), but each malformed field
+ * is replaced with its cautious default above while every valid field is
+ * preserved untouched. A single bad anchor therefore costs one degraded
+ * sentence, not the whole reading.
+ *
+ * @returns the anchors to use, plus the names of any fields repaired.
+ */
+export function sanitiseOracleAnchors(
+  anchors: OracleAnchors,
+  readingId: string,
+): { anchors: ValidatedOracleAnchors; repaired: readonly string[] } {
+  const result = OracleAnchorsSchema.safeParse(anchors);
+  if (result.success) {
+    return { anchors: result.data, repaired: [] };
+  }
+
+  // Repair field-by-field so one bad anchor never discards the good ones.
+  const repaired: string[] = [];
+  const patched: Record<string, unknown> = { ...anchors };
+  for (const key of Object.keys(ANCHOR_FALLBACKS) as (keyof ValidatedOracleAnchors)[]) {
+    const fieldResult = OracleAnchorsSchema.shape[key].safeParse(patched[key]);
+    if (!fieldResult.success) {
+      patched[key] = ANCHOR_FALLBACKS[key];
+      repaired.push(key);
+    }
+  }
+
+  logger.error('oracle anchors failed validation — repaired to safe defaults', {
+    readingId,
+    repaired,
+    issues: result.error.issues.map(i => `${i.path.join('.')}: ${i.message}`),
+  });
+
+  // The patched object is now valid by construction; parse once more so a
+  // future schema change that this repair loop does not cover still cannot
+  // ship a bad value.
+  const reparsed = OracleAnchorsSchema.safeParse(patched);
+  return {
+    anchors: reparsed.success ? reparsed.data : ANCHOR_FALLBACKS,
+    repaired,
+  };
 }

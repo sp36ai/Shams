@@ -44,7 +44,7 @@ import {
   seekerProfileModifier,
 } from '../prompts/oracleSynthesisPrompt';
 import { deriveOracleAnchors, type OracleAnchors } from '../prompts/oracleAnchors';
-import { validateOracleAnchors } from '../prompts/oracleAnchorsSchema';
+import { sanitiseOracleAnchors } from '../prompts/oracleAnchorsSchema';
 import { runSafetyValidator } from './safetyValidator';
 import { getManzila, getManzilaOracleLine } from '../engine/manazil';
 import { houseForLongitude } from '../engine/primitives/chartBuilder';
@@ -513,10 +513,14 @@ export const askOracle = onCall(
       const verdictBinary =
         verdict.verdict === 'YES' || verdict.verdict === 'CONDITIONAL' ? 'CONFIRMED' : 'DENIED';
       const manzilaLine = getManzilaOracleLine(moonLongitude, verdictBinary);
-      const oracleAnchors = deriveOracleAnchors(verdict);
       // Runtime guard between calculation and text generation — see
-      // oracleAnchorsSchema.ts. Fail-open: logs and continues.
-      validateOracleAnchors(oracleAnchors, verdict.id);
+      // oracleAnchorsSchema.ts. Fail-SAFE: the request still succeeds, but
+      // any malformed anchor is replaced with a cautious default rather
+      // than reaching the language model and becoming an invented claim.
+      const { anchors: oracleAnchors } = sanitiseOracleAnchors(
+        deriveOracleAnchors(verdict),
+        verdict.id,
+      );
 
       const oracleRaw = apiKey
         ? await synthesiseOracleVoice({
@@ -569,6 +573,11 @@ export const askOracle = onCall(
         // docs/RKP_WATCH_ENGINE.md.
         nativeState: verdict.nativeState,
         conditionState: verdict.conditionState,
+        // The two anchors the client-side remedy ranker keys off, so it
+        // scores against what is actually obstructing the matter rather
+        // than re-deriving anything. Already computed above.
+        oracleObstruction: oracleAnchors.obstruction,
+        oracleSecondaryTheme: oracleAnchors.secondaryTheme,
         houseLordDirection: verdict.houseLord.direction,
         vastuAfflictedDirections: verdict.vastu.afflictedDirections as string[],
         // The Verdict Triad — 1st house (querent) / target house (the query)
