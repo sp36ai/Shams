@@ -126,6 +126,12 @@ Because the watch frame replaces the cusps and planetary positions are
 location-invariant, a Watch reading needs nothing from the querent — no birth
 data, and no location either. It can run the moment the app opens.
 
+Both modes feed the **same remedy layer** — the 38 tagged practices in
+`src/data/remedyLibrary.ts` (salawat, dua, istikhara, sadaqa, fasting, Qur'an,
+dhikr, charity, night prayer, silence, tawbah). `src/data/watchRemedyContext.ts`
+translates a watch verdict into the ranker's vocabulary: the obstructing planet
+describes the *shape* of the difficulty, which is what selects an apt response.
+
 ## Build & Run
 
 ### Local Development
