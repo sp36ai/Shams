@@ -206,6 +206,54 @@ Code:
 
 ---
 
+## 6b. Watch of Currents — situational-momentum reading
+
+RKP's role is not only to seal a matter YES/NO — it reads the LIVE CURRENT
+of conditions around the question at the moment of asking: what is moving,
+what is blocked, what is opening, what is weakening. This is a distinct
+output field, `verdict.current`, computed alongside (never instead of) the
+YES/NO/CONDITIONAL/DELAYED/DENIED verdict above.
+
+Seven canonical symbolic readings:
+
+- current is open
+- current is unstable
+- current is blocked
+- current is turning
+- current is favorable but delayed
+- current is pressured by interference
+- current weakens after initial movement
+
+Derivation (no new astronomy — reuses the significators, ruling planets,
+retrograde/combust flags, and dasha convergence already computed above):
+
+1. **Structural vs. temporary block** — if the promise layer (STEP 0) failed,
+   there is no live current to read at all: `structural: true`, "current is
+   blocked". A fructification-level NO is `structural: false` — the current
+   current is blocked, but not permanently.
+2. **Base flow** from the verdict already reached — YES/DELAYED → `open`,
+   NO → `blocked`, CONDITIONAL → `unstable`.
+3. **Drift** — compares the Mahadasha lord's significator alignment against
+   the Pratyantardasha lord's. A near-term (PD) trend opposite the outer
+   (MD) trend means the current is moving, not flat.
+4. **Turning** — a blocked/unstable base flow whose drift is strengthening
+   is promoted to `turning`: denied today, but the nearer dasha window is
+   already moving favorable.
+5. **Interference** — retrograde on Moon's Sub-Lord/Jupiter/Venus (the same
+   set that drives the DELAYED modifier), or combustion on an active
+   significator witness.
+
+Best-use question shapes this answers: "Will this move forward?", "Is this
+the right time?", "Should I act now or wait?", "Is this path opening or
+closing?" — present-moment directional reading, not deep destiny. Classical
+KP's promise/fructification seal (`judgeKP()`) is the counterpart that
+answers "what is the final seal of the matter" — see
+`docs/RKP_VS_KP_SEPARATION.md`.
+
+Code: `src/astrology/kp/judgment/currentReading.ts`
+
+---
+
 ## 7. Output contract notes
 
 Current decisive payloads in the verdict:

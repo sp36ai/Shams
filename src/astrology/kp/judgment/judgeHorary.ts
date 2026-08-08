@@ -74,6 +74,7 @@ import { getSubLords } from '@astrology/primitives/subLord';
 import { houseOfPlanet } from './significations';
 import { computeSignificatorSets } from './significators';
 import { computeConvergenceTiming } from './timing';
+import { computeCurrentReading } from './currentReading';
 import { ENGINE_VERSION } from '@astrology/primitives/chartBuilder';
 
 // ── Horary number witness (optional additive signal) ──────────────────────────
@@ -466,6 +467,15 @@ export function judgeHorary(
       verdict: 'DENIED' as VerdictKind,
       confidence: 0,
       stage: 'promise_failed' as const,
+      current: computeCurrentReading({
+        verdict: 'DENIED',
+        stage: 'promise_failed',
+        moonSubLord: moonSubLordForDenied,
+        confirmedSignificators: [],
+        deniedSignificators: [],
+        retrogradeFlags: [],
+        combustFlags: [],
+      }),
       horaryNumber,
       reasoning: Object.freeze(deniedReasoning),
       narration: deniedNarration,
@@ -665,6 +675,18 @@ export function judgeHorary(
   const remedy = buildRemedy(moonSubLord, reasoning);
   const narration = buildNarration(verdict, qType, moonSubLord, moonSubLordHouse, score);
 
+  // ── Watch of Currents — RKP's situational-momentum reading ────────────────
+  const current = computeCurrentReading({
+    verdict,
+    stage: 'fructification',
+    moonSubLord,
+    confirmedSignificators: confirmedSignificators as Planet[],
+    deniedSignificators: deniedSignificators as Planet[],
+    retrogradeFlags,
+    combustFlags,
+    timing,
+  });
+
   // ── Final Verdict ─────────────────────────────────────────────────────────
   return Object.freeze({
     id: deterministicId(chart, question),
@@ -680,6 +702,7 @@ export function judgeHorary(
     verdict,
     confidence,
     stage: 'fructification' as const,
+    current,
     reasoning: Object.freeze(reasoning),
     significators,
     confirmedSignificators: Object.freeze(confirmedSignificators as Planet[]),

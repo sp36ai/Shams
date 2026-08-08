@@ -9,6 +9,14 @@ astronomical chart. They are not two names for the same thing, they are not
 one algorithm with a display-mode toggle, and they are allowed to disagree
 on the same chart. This doc is the map of what's shared and what's separate.
 
+**RKP — Watch of Currents.** RKP's defining role is reading the LIVE
+MOVEMENT of conditions around a question: what is moving, blocked, opening,
+weakening — present-moment directional reading, not deep destiny. This is
+exposed as `verdict.current` (see `docs/RKP_RULES_FROM_SARFARAZ.md` §6b and
+`currentReading.ts`) alongside RKP's YES/NO seal. Classical KP has no
+equivalent field — it stays a static promise/fructification seal, the
+"final seal of the matter" that a currents reading alone cannot give.
+
 ---
 
 ## 1. The two engines
@@ -24,6 +32,7 @@ on the same chart. This doc is the map of what's shared and what's separate.
 | Remedy / narration | Absent — not a classical KP output | Present — product/spiritual layer |
 | Retrograde modifier | YES → DELAYED (Moon's sub-lord, Jupiter, or Venus retrograde) | Same rule, applied identically |
 | Timing | `computeConvergenceTiming()` (dasha/antardasha/pratyantardasha convergence) | Same function — timing convergence is astronomical, not a scoring concept, so both engines share it |
+| Current-state reading | None — KP is a static promise/fructification seal | `verdict.current` — flow/drift/interference "Watch of Currents" reading (see §6b of the RKP rules doc) |
 
 They intentionally reach different verdicts on the same chart when the
 promise layer and the scoring layer disagree — see
