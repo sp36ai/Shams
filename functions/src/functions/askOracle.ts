@@ -338,11 +338,13 @@ async function synthesiseOracleVoice(params: {
 export const askOracle = onCall(
   {
     ...ORACLE_FUNCTION_OPTS,
-    // TEMP DEBUG: App Check enforcement disabled to test whether it is
-    // rejecting every call before the handler runs (the on-device debug text
-    // never appeared, which points at a pre-handler rejection). REVERT to
-    // `process.env.FUNCTIONS_EMULATOR !== 'true'` once diagnosed.
-    enforceAppCheck: false,
+    // Matches every other callable in this codebase (readings.ts,
+    // classifyIntent.ts, quota.ts, etc.) — enforced in production, disabled
+    // only inside the local emulator. The client already initializes App
+    // Check with Play Integrity on startup (src/firebase/appCheck.ts)
+    // specifically for this function, and every sibling function has been
+    // enforcing this successfully in production the whole time.
+    enforceAppCheck: process.env.FUNCTIONS_EMULATOR !== 'true',
     secrets: [ANTHROPIC_API_KEY],
   },
   async (request): Promise<OracleResponse> => {

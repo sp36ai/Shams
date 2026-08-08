@@ -1,6 +1,7 @@
 import { onCall } from 'firebase-functions/v2/https';
 import { FUNCTION_OPTS, ANTHROPIC_API_KEY } from '../config';
 import { verifyAuth } from '../middleware/auth';
+import { enforceRateLimit } from '../middleware/rateLimit';
 
 type QuestionClass = 'VALID_HORARY' | 'CONVERSATIONAL' | 'AMBIGUOUS';
 const VALID_CLASSES: readonly QuestionClass[] = ['VALID_HORARY', 'CONVERSATIONAL', 'AMBIGUOUS'];
@@ -24,7 +25,8 @@ export const classifyQuestion = onCall(
     secrets: [ANTHROPIC_API_KEY],
   },
   async (request): Promise<{ class: QuestionClass }> => {
-    verifyAuth(request);
+    const { userId } = verifyAuth(request);
+    await enforceRateLimit(userId);
 
     const inputData = request.data as { text?: unknown } | null;
     const text = typeof inputData?.text === 'string' ? inputData.text.slice(0, 1000) : '';

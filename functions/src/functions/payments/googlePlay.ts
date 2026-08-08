@@ -19,6 +19,7 @@
  */
 
 import * as https from 'https';
+import * as crypto from 'crypto';
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import { FieldValue } from 'firebase-admin/firestore';
 import { db, auth } from '../../utils/admin';
@@ -115,6 +116,13 @@ function httpsPostAuth(url: string, accessToken: string): Promise<void> {
   });
 }
 
+// Full (unshortened, unlike requestMeta's log-correlation IP hash) SHA-256 —
+// collision resistance matters here since it's the actual dedup/binding key,
+// not just a log-friendly identifier.
+function hashPurchaseToken(token: string): string {
+  return crypto.createHash('sha256').update(token).digest('hex');
+}
+
 async function getGoogleAccessToken(): Promise<string> {
   const clientEmail = GOOGLE_PLAY_CLIENT_EMAIL.value();
   const privateKey = GOOGLE_PLAY_PRIVATE_KEY.value().replace(/\\n/g, '\n');
@@ -203,6 +211,50 @@ export const verifyGooglePlayPurchase = onCall(
         throw new HttpsError('failed-precondition', 'Subscription has already expired');
       }
       const expiresAt = new Date(expiryMs);
+
+      // Bind this purchase token to the redeeming account. A subscription's
+      // token stays valid for as long as the subscription is active, so
+      // without this check a single leaked token (a shared screen recording,
+      // a support screenshot, a compromised device) could be redeemed by any
+      // number of accounts, each getting the paid plan off one real payment.
+      // First redeemer binds the token; a re-verification by that same
+      // account (e.g. reinstall, renewal refresh) is a no-op success; a
+      // different account attempting to redeem the same token is rejected.
+      const tokenRef = db.collection('purchaseTokens').doc(hashPurchaseToken(input.purchaseToken));
+      const boundToOtherAccount = await db.runTransaction(async tx => {
+        const snap = await tx.get(tokenRef);
+        if (snap.exists) {
+          const boundUserId = snap.data()?.userId as string | undefined;
+          return boundUserId !== undefined && boundUserId !== userId;
+        }
+        tx.set(tokenRef, {
+          userId,
+          productId: input.productId,
+          packageName: input.packageName,
+          boundAt: FieldValue.serverTimestamp(),
+        });
+        return false;
+      });
+
+      if (boundToOtherAccount) {
+        logger.warn('play purchase token already bound to a different account', {
+          userId,
+          ipHash: requestMeta.ipHash,
+          durationMs: Date.now() - startedAt,
+        });
+        await db.collection('securityEvents').add({
+          type: 'play_purchase_token_reuse',
+          userId,
+          source: requestMeta.source,
+          ipHash: requestMeta.ipHash,
+          userAgent: requestMeta.userAgent,
+          ts: FieldValue.serverTimestamp(),
+        });
+        throw new HttpsError(
+          'already-exists',
+          'This purchase is already linked to a different account.',
+        );
+      }
 
       // Acknowledge to prevent auto-refund (24h window)
       if (purchase.acknowledgementState === 0) {

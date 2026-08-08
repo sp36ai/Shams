@@ -1,6 +1,7 @@
 import { onCall } from 'firebase-functions/v2/https';
 import { FUNCTION_OPTS, ANTHROPIC_API_KEY } from '../config';
 import { verifyAuth } from '../middleware/auth';
+import { enforceRateLimit } from '../middleware/rateLimit';
 
 type SeekerProfile = 'clarity' | 'comfort' | 'action' | 'surrender';
 const VALID_PROFILES = new Set<SeekerProfile>(['clarity', 'comfort', 'action', 'surrender']);
@@ -12,7 +13,8 @@ export const inferProfile = onCall(
     secrets: [ANTHROPIC_API_KEY],
   },
   async (request): Promise<{ profile: SeekerProfile }> => {
-    verifyAuth(request);
+    const { userId } = verifyAuth(request);
+    await enforceRateLimit(userId);
 
     const d = request.data as { answers?: unknown } | null;
     const raw = Array.isArray(d?.answers) ? (d.answers as unknown[]) : [];

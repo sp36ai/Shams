@@ -20,12 +20,10 @@ import { activateTrialOnServer } from '../firebase/trial';
 
 export type PlanTier = 'free' | 'mureed' | 'khass';
 
-// TEMP (internal testing): raised from 3/5 to give testers headroom while the
-// oracle engine is being debugged. REVERT to FREE=3, TRIAL=5 before public
-// launch — these are the paywall limits. Must stay in sync with the server
+// Paywall limits. Must stay in sync with the server
 // (functions/src/config.ts FREE_LIMIT / TRIAL_DAILY_LIMIT).
-export const FREE_DAILY_LIMIT = 50;
-export const TRIAL_DAILY_LIMIT = 50;
+export const FREE_DAILY_LIMIT = 3;
+export const TRIAL_DAILY_LIMIT = 5;
 export const TRIAL_DURATION_DAYS = 7;
 
 /** Plans that get unlimited questions. */
