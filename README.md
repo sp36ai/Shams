@@ -58,7 +58,7 @@ Built by **Astro Sarfaraz** — a solo developer, owner, and practicing celestia
 
 ### Customization
 - **Theme**: Light/dark + 5 aesthetic themes (Shams, Falak, Dasha, Maqbool, Mardood)
-- **Language**: EN (English), UR (اردو), HI (हिन्दी)
+- **Language**: EN (English), UR (اردو) actively maintained; HI (हिन्दी) frozen — see Roadmap
 - **Location**: Capture via GPS during onboarding; fall back to last known location
 
 ### Premium (In-App Subscription)
@@ -250,7 +250,13 @@ See [ARCHITECTURE_AND_FLOWS_REPORT.md](./ARCHITECTURE_AND_FLOWS_REPORT.md) for:
 - **iOS**: Not yet implemented
 - **Offline verdict**: Not yet implemented (Cloud Functions required)
 - **Cloud Functions tests**: Minimal coverage (PR welcome)
-- **Localization**: Partial (EN complete, UR/HI interface only)
+- **Localization**: EN complete, UR interface complete and actively maintained
+- **Hindi (hi) is frozen, not removed**: as the product focuses on its Urdu/Arabic-speaking
+  audience, `hi` is no longer backfilled with new strings. It remains a valid language —
+  persisted `hi` still loads and renders, new keys fall back to English, and users already on
+  Hindi keep a working picker control (and a way to switch away). New users are not offered it.
+  To resume support, flip `status` back to `'active'` in `src/i18n/types.ts` and backfill
+  `src/i18n/strings/hi.ts`; no other code changes are needed.
 
 ---
 

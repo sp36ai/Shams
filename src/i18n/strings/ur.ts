@@ -211,6 +211,8 @@ export const ur: StringTable = {
     legalSection: 'قانونی',
     themeLabel: 'تھیم',
     languageLabel: 'زبان',
+    languageFrozenNotice:
+      'یہ زبان اب فعال طور پر اپ ڈیٹ نہیں کی جاتی۔ نیا متن انگریزی میں ظاہر ہوگا۔',
     notificationsLabel: 'اطلاعات',
     notificationsHint: 'جب فلکی اوقات آپ کے سوالات سے ہم آہنگ ہوں تو یاد دہانی پائیں۔',
     subscriptionLabel: 'سبسکرپشن',

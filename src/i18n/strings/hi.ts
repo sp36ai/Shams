@@ -210,6 +210,8 @@ export const hi: StringTable = {
     legalSection: 'क़ानूनी',
     themeLabel: 'थीम',
     languageLabel: 'भाषा',
+    languageFrozenNotice:
+      'इस भाषा को अब सक्रिय रूप से अपडेट नहीं किया जाता। नया पाठ अंग्रेज़ी में दिखाई देगा।',
     notificationsLabel: 'सूचनाएँ',
     notificationsHint: 'जब ग्रह-काल आपके प्रश्नों के अनुरूप हों, तब स्मरण पाएँ।',
     subscriptionLabel: 'सदस्यता',
