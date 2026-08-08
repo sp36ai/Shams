@@ -8,8 +8,15 @@
  * Sagittarius/11th).
  */
 
-import { computeWatchChart, clockHouseOfSign, signLordOf } from '../watchChart';
-import type { SignIndex } from '@astrology/types/chart';
+import {
+  computeWatchChart,
+  clockHouseOfSign,
+  signLordOf,
+  directionOfSign,
+  directionOfHouse,
+  houseDirections,
+} from '../watchChart';
+import type { HouseIndex, SignIndex } from '@astrology/types/chart';
 
 const ARIES = 1,
   TAURUS = 2,
@@ -85,5 +92,54 @@ describe('signLordOf', () => {
     expect(signLordOf(AQUARIUS as SignIndex)).toBe('Saturn');
     expect(signLordOf(CANCER as SignIndex)).toBe('Moon');
     expect(signLordOf(PISCES as SignIndex)).toBe('Jupiter');
+  });
+});
+
+describe('directionOfSign / directionOfHouse — Vastu mapping', () => {
+  // Verified against 10 of the 12 rows in the user's worked Aquarius-Lagna
+  // example table (the other 2 — Pisces/2nd and Taurus/4th — used 8-point
+  // directions in that table, NE/SE, which this 4-cardinal implementation
+  // reconciles to North/South respectively; see watchChart.ts's
+  // SIGN_DIRECTIONS docstring for the full note).
+  test('matches the worked 10:51 PM example on every unambiguous house', () => {
+    const watch = computeWatchChart(51); // Aquarius Lagna
+    const expected: Array<[HouseIndex, ReturnType<typeof directionOfSign>]> = [
+      [1, 'West'], // Aquarius
+      [3, 'East'], // Aries
+      [5, 'West'], // Gemini
+      [6, 'North'], // Cancer
+      [7, 'East'], // Leo
+      [8, 'South'], // Virgo
+      [9, 'West'], // Libra
+      [10, 'North'], // Scorpio
+      [11, 'East'], // Sagittarius
+      [12, 'South'], // Capricorn
+    ];
+    for (const [house, direction] of expected) {
+      expect(directionOfHouse(house as HouseIndex, watch)).toBe(direction);
+    }
+  });
+
+  test('direction follows classical element: fire=East, earth=South, air=West, water=North', () => {
+    expect(directionOfSign(ARIES as SignIndex)).toBe('East');
+    expect(directionOfSign(LEO as SignIndex)).toBe('East');
+    expect(directionOfSign(SAGITTARIUS as SignIndex)).toBe('East');
+    expect(directionOfSign(TAURUS as SignIndex)).toBe('South');
+    expect(directionOfSign(VIRGO as SignIndex)).toBe('South');
+    expect(directionOfSign(CAPRICORN as SignIndex)).toBe('South');
+    expect(directionOfSign(GEMINI as SignIndex)).toBe('West');
+    expect(directionOfSign(LIBRA as SignIndex)).toBe('West');
+    expect(directionOfSign(AQUARIUS as SignIndex)).toBe('West');
+    expect(directionOfSign(CANCER as SignIndex)).toBe('North');
+    expect(directionOfSign(SCORPIO as SignIndex)).toBe('North');
+    expect(directionOfSign(PISCES as SignIndex)).toBe('North');
+  });
+
+  test('houseDirections returns all 12 in house order', () => {
+    const watch = computeWatchChart(51);
+    const dirs = houseDirections(watch);
+    expect(dirs).toHaveLength(12);
+    expect(dirs[0]).toBe(directionOfHouse(1 as HouseIndex, watch));
+    expect(dirs[9]).toBe(directionOfHouse(10 as HouseIndex, watch));
   });
 });

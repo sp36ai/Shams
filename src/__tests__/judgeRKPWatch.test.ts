@@ -126,6 +126,32 @@ describe('judgeRKPWatch — watch chart wiring', () => {
     expect(verdict.primaryHouse).toBe(10);
     expect(verdict.houseLord.sign).toBe(8); // Scorpio
     expect(verdict.houseLord.lord).toBe('Mars');
+    expect(verdict.houseLord.direction).toBe('North'); // Scorpio = water = North
+  });
+});
+
+describe('judgeRKPWatch — Vastu scan', () => {
+  test('reports every planet by direction and flags directions holding a malefic', () => {
+    // Baseline fixture signs: Sun=Aries(E), Moon=Pisces(N), Mercury=Gemini(W),
+    // Venus=Libra(W), Mars=Scorpio(N), Jupiter=Sagittarius(E), Saturn=Capricorn(S),
+    // Rahu=Pisces(N), Ketu=Leo(E).
+    const chart = makeChart();
+    const verdict = judgeRKPWatch(chart, CAREER_Q, { timezoneOffsetMinutes: 0 });
+    expect(verdict.vastu.occupantsByDirection.East).toEqual(
+      expect.arrayContaining(['Sun', 'Jupiter', 'Ketu']),
+    );
+    expect(verdict.vastu.occupantsByDirection.North).toEqual(
+      expect.arrayContaining(['Moon', 'Mars', 'Rahu']),
+    );
+    expect(verdict.vastu.occupantsByDirection.West).toEqual(
+      expect.arrayContaining(['Mercury', 'Venus']),
+    );
+    expect(verdict.vastu.occupantsByDirection.South).toEqual(['Saturn']);
+    // West holds only benefics (Mercury, Venus) — the one clean direction here.
+    expect(verdict.vastu.afflictedDirections).toEqual(
+      expect.arrayContaining(['East', 'North', 'South']),
+    );
+    expect(verdict.vastu.afflictedDirections).not.toContain('West');
   });
 });
 

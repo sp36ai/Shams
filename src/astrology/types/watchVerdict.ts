@@ -10,7 +10,9 @@
 import type { Chart, HouseIndex, Planet, SignIndex } from './chart';
 import type { ClassifiedQuestion, QuestionType } from './question';
 import type { ReasoningStep, VerdictKind, VerdictTiming } from './verdict';
-import type { WatchChart } from '../primitives/watchChart';
+import type { VastuDirection, WatchChart } from '../primitives/watchChart';
+
+export type { VastuDirection };
 
 /**
  * The richer native verdict states from the RKP watch-current source
@@ -31,6 +33,8 @@ export type SupportDirection = 'supported' | 'obstructed' | 'mixed';
 export interface HouseLordAnalysis {
   readonly house: HouseIndex;
   readonly sign: SignIndex;
+  /** Physical direction currently associated with this house — see watchChart.ts's SIGN_DIRECTIONS. */
+  readonly direction: VastuDirection;
   readonly lord: Planet;
   /** Which clock-house the lord itself is currently placed in. */
   readonly lordHouse: HouseIndex;
@@ -63,6 +67,19 @@ export interface RulingConfirmation {
   readonly denialWitnesses: readonly Planet[];
 }
 
+/**
+ * Household Vastu scan — where the 9 grahas currently sit, by physical
+ * direction, independent of any specific question. Structured fact only
+ * (no remedy text — that's the presentation layer's job, per the source
+ * material's own separation rule).
+ */
+export interface VastuScan {
+  /** Every planet currently transiting a sign mapped to each direction. */
+  readonly occupantsByDirection: Readonly<Record<VastuDirection, readonly Planet[]>>;
+  /** Directions currently holding at least one natural malefic (Sun/Mars/Saturn/Rahu/Ketu). */
+  readonly afflictedDirections: readonly VastuDirection[];
+}
+
 export interface WatchVerdict {
   readonly id: string;
   readonly computedAt: string;
@@ -78,6 +95,7 @@ export interface WatchVerdict {
   readonly houseLord: HouseLordAnalysis;
   readonly moonConfirmation: MoonConfirmation;
   readonly rulingConfirmation: RulingConfirmation;
+  readonly vastu: VastuScan;
 
   readonly verdict: VerdictKind;
   readonly nativeState: WatchVerdictState;

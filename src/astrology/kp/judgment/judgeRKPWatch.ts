@@ -51,6 +51,18 @@
  *  7. TIMING — reuses computeConvergenceTiming() unchanged: dasha/antardasha/
  *     pratyantardasha convergence is astronomical, not house-model-specific.
  *
+ *  8. VASTU SCAN — "the entire 360-degree compass layout of your physical
+ *     living space is mapped directly onto the 12 numbers of a standard
+ *     clock face" (source material). Each sign maps to a fixed physical
+ *     direction by classical element (Fire=East, Earth=South, Air=West,
+ *     Water=North — see primitives/watchChart.ts's SIGN_DIRECTIONS for the
+ *     note on reconciling the two direction tables supplied). This produces
+ *     two structured, non-question-specific facts: which direction the
+ *     activated house currently sits in, and which of the 4 directions
+ *     currently hold a natural malefic. No remedy wording is generated here
+ *     — that stays a presentation-layer concern per the source material's
+ *     own separation rule.
+ *
  * Deliberately NOT yet included (explicit scope-out, not an oversight):
  *   - the 0-100 confidence score / confidence bands
  *   - the 8 classical strictures (Via Combusta, Void of Course, etc.)
@@ -72,6 +84,8 @@ import type {
   MoonConfirmation,
   RulingConfirmation,
   SupportDirection,
+  VastuScan,
+  VastuDirection,
 } from '@astrology/types/watchVerdict';
 import { HOUSE_MATRIX } from '@astrology/kp/rules/houseMatrix';
 import {
@@ -79,6 +93,8 @@ import {
   computeWatchChart,
   clockHouseOfPlanet,
   signLordOf,
+  directionOfHouse,
+  directionOfSign,
   type WatchChart,
 } from '@astrology/primitives/watchChart';
 import { calculateDayLord } from '@astrology/primitives/rulingPlanets';
@@ -198,6 +214,7 @@ export function houseLordAnalysis(
   house: HouseIndex,
 ): HouseLordAnalysis {
   const sign = watch.houseSigns[house - 1] as SignIndex;
+  const direction = directionOfHouse(house, watch);
   const lord = signLordOf(sign);
   const lordHouse = clockHouseOfPlanet(lord, chart, watch);
   const dignity = dignityOf(lord, chart.planets[lord].sign);
@@ -238,6 +255,7 @@ export function houseLordAnalysis(
   return {
     house,
     sign,
+    direction,
     lord,
     lordHouse,
     dignity,
@@ -314,6 +332,39 @@ function rulingConfirmation(
     moonStarLord,
     favorableWitnesses: Object.freeze(favorableWitnesses),
     denialWitnesses: Object.freeze(denialWitnesses),
+  };
+}
+
+// ── Household Vastu scan ────────────────────────────────────────────────────
+
+/**
+ * Where the 9 grahas currently sit, by physical direction — independent of
+ * any specific question. "The entire 360-degree compass layout of your
+ * physical living space is mapped directly onto the 12 numbers of a
+ * standard clock face" (source material). Structured fact only; remedy
+ * wording belongs to the presentation layer.
+ */
+function computeVastuScan(chart: Chart): VastuScan {
+  const occupants: Record<VastuDirection, Planet[]> = {
+    North: [],
+    South: [],
+    East: [],
+    West: [],
+  };
+  for (const p of PLANETS) {
+    occupants[directionOfSign(chart.planets[p].sign)].push(p);
+  }
+  const afflictedDirections = (Object.keys(occupants) as VastuDirection[]).filter(d =>
+    occupants[d].some(p => !BENEFICS.has(p)),
+  );
+  return {
+    occupantsByDirection: Object.freeze({
+      North: Object.freeze(occupants.North),
+      South: Object.freeze(occupants.South),
+      East: Object.freeze(occupants.East),
+      West: Object.freeze(occupants.West),
+    }),
+    afflictedDirections: Object.freeze(afflictedDirections),
   };
 }
 
@@ -396,8 +447,18 @@ export function judgeRKPWatch(
   reasoning.push(
     step(
       'HOUSE_LORD',
-      `House ${primaryHouse} (sign #${houseLord.sign}) lord ${houseLord.lord} in clock-house ${houseLord.lordHouse}, ` +
-        `dignity=${houseLord.dignity}, score=${houseLord.supportScore} -> ${houseLord.verdict}`,
+      `House ${primaryHouse} (sign #${houseLord.sign}, direction ${houseLord.direction}) lord ${houseLord.lord} ` +
+        `in clock-house ${houseLord.lordHouse}, dignity=${houseLord.dignity}, score=${houseLord.supportScore} -> ${houseLord.verdict}`,
+    ),
+  );
+
+  const vastu = computeVastuScan(chart);
+  reasoning.push(
+    step(
+      'VASTU',
+      `Afflicted directions=[${vastu.afflictedDirections.join(',')}]; ` +
+        `activated house (${primaryHouse}) direction=${houseLord.direction}` +
+        (vastu.afflictedDirections.includes(houseLord.direction) ? ' (afflicted)' : ' (clear)'),
     ),
   );
 
@@ -462,6 +523,7 @@ export function judgeRKPWatch(
     houseLord,
     moonConfirmation: moon,
     rulingConfirmation: ruling,
+    vastu,
     verdict,
     nativeState,
     reasoning: Object.freeze(reasoning),

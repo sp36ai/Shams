@@ -131,3 +131,58 @@ export function clockHouseOfSign(sign: SignIndex, watch: WatchChart): HouseIndex
 export function clockHouseOfPlanet(planet: Planet, chart: Chart, watch: WatchChart): HouseIndex {
   return clockHouseOfSign(chart.planets[planet].sign, watch);
 }
+
+// ── Vastu direction mapping ────────────────────────────────────────────────
+//
+// Source: user-supplied RKP elaboration — "the entire 360-degree compass
+// layout of your physical living space is mapped directly onto the 12
+// numbers of a standard clock face... each house corresponds to a precise
+// direction." Two tables were supplied in the same message:
+//
+//   (A) a 12-row table, worked for one specific Aquarius-Lagna chart, using
+//       8-point directions (adds NE/SE for 2 of its 12 rows)
+//   (B) a standalone 4-cardinal table, keyed by SIGN (not house), following
+//       the classical element/direction correspondence:
+//         East = fire signs (Aries, Leo, Sagittarius)
+//         South = earth signs (Taurus, Virgo, Capricorn)
+//         West = air signs (Gemini, Libra, Aquarius)
+//         North = water signs (Cancer, Scorpio, Pisces)
+//
+// (A) and (B) agree on 10 of 12 entries when (A)'s houses are converted to
+// signs on that same worked chart; they disagree only on Pisces (North vs
+// North-East) and Taurus (South vs South-East). (B) is used here as the
+// canonical rule: it is sign-based (so it doesn't depend on which house a
+// sign currently occupies), internally consistent with the classical
+// element scheme, and matches the majority of (A)'s own worked entries.
+// See docs/RKP_WATCH_ENGINE.md for the full note. Revisit if the 8-point
+// version turns out to be the intended one.
+export type VastuDirection = 'North' | 'South' | 'East' | 'West';
+
+export const SIGN_DIRECTIONS: readonly VastuDirection[] = Object.freeze([
+  'East', // Aries (fire)
+  'South', // Taurus (earth)
+  'West', // Gemini (air)
+  'North', // Cancer (water)
+  'East', // Leo (fire)
+  'South', // Virgo (earth)
+  'West', // Libra (air)
+  'North', // Scorpio (water)
+  'East', // Sagittarius (fire)
+  'South', // Capricorn (earth)
+  'West', // Aquarius (air)
+  'North', // Pisces (water)
+]);
+
+export function directionOfSign(sign: SignIndex): VastuDirection {
+  return SIGN_DIRECTIONS[sign - 1] as VastuDirection;
+}
+
+/** The physical direction currently associated with a clock-house. */
+export function directionOfHouse(house: HouseIndex, watch: WatchChart): VastuDirection {
+  return directionOfSign(watch.houseSigns[house - 1] as SignIndex);
+}
+
+/** All 12 houses' directions on this wheel, house 1..12 in order. */
+export function houseDirections(watch: WatchChart): readonly VastuDirection[] {
+  return watch.houseSigns.map(directionOfSign);
+}
