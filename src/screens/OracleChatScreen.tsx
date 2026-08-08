@@ -122,6 +122,14 @@ interface VjExtended extends VjShape {
   planetChain?: Record<string, { manzilLord: string; subLord: string; subSubLord: string }>;
   /** KP horary number (1–249) — additive witness, see judgeHorary.ts docstring. */
   horaryNumber?: number;
+  /**
+   * Classical KP engine's independently-computed verdict for the SAME
+   * reading — rendered on its own screen (KPReadingScreen), not inline
+   * here. Presence of this field is what shows/hides the "View KP
+   * Analysis" link below. See @utils/kpVerdict for the full shape parsed
+   * out of this field.
+   */
+  kp?: unknown;
   oracle?: {
     opening: string;
     interpretation: string;
@@ -1410,6 +1418,14 @@ const Bubble: React.FC<{
   const accentColor = isUser ? colors.chatUserBorder : colors.chatShamsBorder;
   const bubbleBg = isUser ? colors.chatUserBg : colors.chatShamsBg;
 
+  // Present only when this reading's verdictJson carries KP data — guards
+  // against readings saved before classical KP analysis was added.
+  const kpReadingId =
+    message.reading !== undefined &&
+    (message.reading.verdictJson as VjExtended | null)?.kp !== undefined
+      ? message.reading.id
+      : undefined;
+
   // Render the Hidden Scroll format with Bismillah, ✧ headers, blockquotes, bold
   const renderText = (raw: string) => {
     const paragraphs = raw.split('\n');
@@ -1577,6 +1593,21 @@ const Bubble: React.FC<{
               }
             />
           ))}
+        {kpReadingId !== undefined && (
+          <Pressable
+            onPress={() => navigation.navigate('KPReading', { readingId: kpReadingId })}
+            style={({ pressed }) => [
+              bubbleStyles.kpLink,
+              { borderTopColor: colors.border, opacity: pressed ? 0.6 : 1 },
+            ]}
+            accessibilityRole="button"
+            accessibilityLabel="View classical KP analysis for this reading"
+          >
+            <Text style={[typography('label'), { color: colors.accent }]}>
+              {'◈ CLASSICAL KP ANALYSIS →'}
+            </Text>
+          </Pressable>
+        )}
         {message.isUpgradeCta === true && (
           <Pressable
             onPress={() => navigation.navigate('Premium')}
@@ -1745,6 +1776,12 @@ const bubbleStyles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 10,
     borderRadius: 12,
+  },
+  kpLink: {
+    borderTopWidth: StyleSheet.hairlineWidth,
+    alignItems: 'center',
+    paddingVertical: 10,
+    marginTop: 10,
   },
   upgradeBtn: {
     marginTop: 12,

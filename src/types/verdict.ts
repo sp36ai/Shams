@@ -60,6 +60,56 @@ export interface AstroRemedy {
   charity?: string;
 }
 
+// ── Classical KP engine result (separate screen, see KPReadingScreen) ──────
+
+export interface KpWitnessEntry {
+  planet: string;
+  role: 'dayLord' | 'ascSignLord' | 'ascStarLord' | 'moonSignLord' | 'moonStarLord';
+  status: 'confirmed' | 'denied' | 'neutral';
+}
+
+export interface KpTiming {
+  window: 'days' | 'weeks' | 'months' | 'years';
+  range: { min: number; max: number };
+  activeDasha?: string;
+  activeAntardasha?: string;
+}
+
+export interface KpRemedy {
+  planet: string;
+  action: string;
+  avoid: string;
+  zikr?: string;
+  charity?: string;
+}
+
+/**
+ * Classical KP engine's result for a reading — rendered on its own screen
+ * (KPReadingScreen), not inside the RKP chat's AstroVerdictCard/
+ * WatchVerdictCard toggle. See docs/KP_RULES_CLASSICAL.md.
+ */
+export interface KpVerdictResult {
+  verdict: VerdictKind;
+  confidence: number;
+  /** The 5 Classical Witnesses — no Hora Lord. */
+  witnesses: KpWitnessEntry[];
+  confirmedCount: number;
+  deniedCount: number;
+  timing?: KpTiming;
+  /** Absent for DENIED verdicts (promise failed before remedy is computed). */
+  remedy?: KpRemedy;
+  /** Narrative in the question's language — analytical register, no jargon. */
+  narrative: string;
+  category: string;
+  question?: string;
+  createdAt: string;
+  /** Classical KP's own horary-number witness (1–249), if the reading used one. */
+  horaryNumber?: number;
+  horarySubLord?: string;
+  horarySubLordHouse?: number;
+  reasoning?: ReadonlyArray<{ ruleId: string; description: string; weight: number }>;
+}
+
 export interface AstroVerdictResult {
   mode: 'astro';
   verdict: VerdictKind;

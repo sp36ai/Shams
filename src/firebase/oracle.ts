@@ -115,6 +115,43 @@ export async function askOracle(args: AskOracleInput): Promise<AskOracleResult> 
       signature: string;
     };
     horaryNumber?: number;
+    /**
+     * Classical KP engine's independently-computed verdict for the SAME
+     * chart — see docs/KP_RULES_CLASSICAL.md. Rendered on its own screen
+     * (KPReadingScreen), not in the RKP chat's verdict card.
+     */
+    kp?: {
+      verdict: Reading['verdict'];
+      confidence: number;
+      narration: Record<'en' | 'ur' | 'hi', string>;
+      timing?: {
+        window: 'days' | 'weeks' | 'months' | 'years';
+        range: { min: number; max: number };
+        activeDasha?: string;
+        activeAntardasha?: string;
+      };
+      significators?: { favorable: string[]; denial: string[]; neutral: string[] };
+      confirmedSignificators?: string[];
+      deniedSignificators?: string[];
+      rulingPlanets: {
+        dayLord: string;
+        ascSignLord: string;
+        ascStarLord: string;
+        moonSignLord: string;
+        moonStarLord: string;
+      };
+      remedy?: {
+        planet: string;
+        action: string;
+        avoid: string;
+        zikr?: string;
+        charity?: string;
+      };
+      horaryNumber?: number;
+      horarySubLord?: string;
+      horarySubLordHouse?: number;
+      reasoning: Array<{ ruleId: string; description: string; weight: number }>;
+    };
   };
 
   const reading: Reading = {
@@ -144,6 +181,7 @@ export async function askOracle(args: AskOracleInput): Promise<AskOracleResult> 
       manzila: data.manzila,
       oracle: data.oracle,
       horaryNumber: data.horaryNumber,
+      kp: data.kp,
     },
   };
 

@@ -36,6 +36,12 @@ export type RootStackParamList = {
   Premium: undefined;
   /** Settings — reached via the gear icon in the Home dashboard header. */
   Settings: undefined;
+  /**
+   * Classical KP engine's verdict for a reading — a separate screen from
+   * the RKP chat's AstroVerdictCard/WatchVerdictCard, reached via a link on
+   * the RKP verdict card. See docs/KP_RULES_CLASSICAL.md.
+   */
+  KPReading: { readingId: string };
 };
 
 export type RootStackScreenProps<RouteName extends keyof RootStackParamList> =

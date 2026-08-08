@@ -29,6 +29,7 @@ import OnboardingScreen from '@screens/OnboardingScreen';
 import LocationPermissionScreen from '@screens/LocationPermissionScreen';
 import PremiumScreen from '@screens/PremiumScreen';
 import SettingsScreen from '@screens/SettingsScreen';
+import KPReadingScreen from '@screens/KPReadingScreen';
 import MainTabs from './MainTabs';
 
 import { useAuthStore } from '@stores/authStore';
@@ -130,6 +131,12 @@ const RootNavigator: React.FC = () => {
         <RootStack.Screen
           name="Settings"
           component={SettingsScreen}
+          options={{ headerShown: false, animation: 'slide_from_right' }}
+        />
+        {/* Classical KP Analysis — reached via a link on the RKP verdict card */}
+        <RootStack.Screen
+          name="KPReading"
+          component={KPReadingScreen}
           options={{ headerShown: false, animation: 'slide_from_right' }}
         />
       </RootStack.Navigator>
