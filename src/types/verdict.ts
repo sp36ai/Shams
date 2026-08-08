@@ -19,6 +19,8 @@ export interface OracleRemedy {
 }
 
 export interface OracleVoice {
+  /** The verdict heading, e.g. "The Unveiling: YES — but with Delay". */
+  unveiling?: string;
   opening: string;
   interpretation: string;
   spiritual_layer: string;

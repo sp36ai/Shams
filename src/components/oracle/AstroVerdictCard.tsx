@@ -596,6 +596,21 @@ const AstroVerdictCard: React.FC<AstroVerdictCardProps> = ({
       {/* ── Phase 2 — Prose and all detail (1400ms) ────────────────────────── */}
       {phase >= 2 && (
         <Animated.View style={{ opacity: proseOpacity }}>
+          {/* The Unveiling — the oracle's own early verdict heading, in its own
+              voice (distinct from the VerdictPill chrome above). Give the
+              answer early: the seeker should not have to read hundreds of
+              words to learn the direction. */}
+          {(oracle.unveiling?.length ?? 0) > 0 && (
+            <Text
+              style={[
+                typography('heading'),
+                { color: colors.accent, textAlign: 'center', marginBottom: 8 },
+              ]}
+            >
+              {oracle.unveiling}
+            </Text>
+          )}
+
           {/* A) Opening — atmospheric first line */}
           {(oracle.opening?.length ?? 0) > 0 && (
             <Text style={[typography('bodyItalic'), styles.opening, { color: colors.amber }]}>

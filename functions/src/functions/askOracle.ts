@@ -43,6 +43,7 @@ import {
   TONE_GUARDRAILS,
   seekerProfileModifier,
 } from '../prompts/oracleSynthesisPrompt';
+import { deriveOracleAnchors, type OracleAnchors } from '../prompts/oracleAnchors';
 import { runSafetyValidator } from './safetyValidator';
 import { getManzila, getManzilaOracleLine } from '../engine/manazil';
 import { houseForLongitude } from '../engine/primitives/chartBuilder';
@@ -187,6 +188,7 @@ async function writeAuditLog(entry: Omit<AuditLogDoc, 'ts'>): Promise<void> {
 type OracleVoiceResult = OracleResponse['oracle'];
 
 const ORACLE_FALLBACK: NonNullable<OracleVoiceResult> = {
+  unveiling: 'The Unveiling: The Hour Is Not Clear',
   opening: "The scrolls of this moment have not opened their seal to the oracle's eye.",
   interpretation:
     'In the sacred tradition of Shams al-Asrar, silence is not an absence of answer — it is an answer of a different kind. Return at the next appointed hour.',
@@ -205,31 +207,21 @@ const ORACLE_FALLBACK: NonNullable<OracleVoiceResult> = {
 };
 
 function buildOracleUserMessage(params: {
-  verdict: string;
-  stage?: 'promise_failed' | 'fructification';
-  confidence: number;
-  timingWindow?: string;
-  timingRange?: { min: number; max: number };
+  anchors: OracleAnchors;
   seekerName?: string;
   motherName?: string;
 }): string {
-  const { verdict, stage, confidence, timingWindow, timingRange, seekerName, motherName } = params;
+  const { anchors, seekerName, motherName } = params;
 
-  // Map verdict to CONFIRMED / DENIED
-  const verdictBinary = verdict === 'YES' || verdict === 'CONDITIONAL' ? 'CONFIRMED' : 'DENIED';
-
-  // Map confidence to HIGH / MEDIUM / LOW
-  const confidenceLevel = confidence >= 75 ? 'HIGH' : confidence >= 50 ? 'MEDIUM' : 'LOW';
-
-  // Build timing string
-  let timingStr = 'UNCLEAR';
-  if (stage === 'promise_failed') {
-    timingStr = 'UNCLEAR';
-  } else if (timingWindow !== undefined && timingRange !== undefined) {
-    timingStr = `${timingRange.min}–${timingRange.max} ${timingWindow}`;
-  }
-
-  let msg = `VERDICT: ${verdictBinary}\nCONFIDENCE: ${confidenceLevel}\nTIMING: ${timingStr}`;
+  let msg =
+    `VERDICT: ${anchors.verdict}\n` +
+    `CONFIDENCE: ${anchors.confidence}\n` +
+    `PRIMARY_THEME: ${anchors.primaryTheme}\n` +
+    `OBSTRUCTION: ${anchors.obstruction}\n` +
+    `SECONDARY_THEME: ${anchors.secondaryTheme}\n` +
+    `TIMING: ${anchors.timing}\n` +
+    `DIRECTION: ${anchors.direction}\n` +
+    `REVERSAL: ${anchors.reversal}`;
   if (seekerName) {
     msg += `\nSEEKER_NAME: ${seekerName}`;
   }
@@ -240,11 +232,7 @@ function buildOracleUserMessage(params: {
 }
 
 async function synthesiseOracleVoice(params: {
-  verdict: string;
-  stage?: 'promise_failed' | 'fructification';
-  confidence: number;
-  timingWindow?: string;
-  timingRange?: { min: number; max: number };
+  anchors: OracleAnchors;
   manzilaLine: string;
   seekerProfile?: 'clarity' | 'comfort' | 'action' | 'surrender';
   apiKey: string;
@@ -308,6 +296,7 @@ async function synthesiseOracleVoice(params: {
     const r = (parsed.remedy ?? {}) as Record<string, unknown>;
 
     return {
+      unveiling: typeof parsed.unveiling === 'string' ? parsed.unveiling : undefined,
       opening: String(parsed.opening ?? ''),
       interpretation: String(parsed.interpretation ?? ''),
       spiritual_layer: String(parsed.spiritual_layer ?? ''),
@@ -511,19 +500,21 @@ export const askOracle = onCall(
       }
 
       // 12. Oracle synthesis — Claude adds voice layer (fire with timeout, fallback on error)
+      // The language model never recalculates and never sees the engine
+      // internals — only the structured anchors derived below. See
+      // oracleAnchors.ts's module doc: "RKP calculates. Shams al-Asrār
+      // interprets. Astro Sarfaraz presents."
       const apiKey = ANTHROPIC_API_KEY.value();
       const moonLongitude = chart.planets.Moon?.siderealLongitude ?? 0;
       const manzila = getManzila(moonLongitude);
       const verdictBinary =
         verdict.verdict === 'YES' || verdict.verdict === 'CONDITIONAL' ? 'CONFIRMED' : 'DENIED';
       const manzilaLine = getManzilaOracleLine(moonLongitude, verdictBinary);
+      const oracleAnchors = deriveOracleAnchors(verdict);
 
       const oracleRaw = apiKey
         ? await synthesiseOracleVoice({
-            verdict: verdict.verdict,
-            confidence: verdict.confidence,
-            timingWindow: verdict.timing?.window,
-            timingRange: verdict.timing?.range,
+            anchors: oracleAnchors,
             manzilaLine,
             seekerProfile: input.seekerProfile,
             apiKey,

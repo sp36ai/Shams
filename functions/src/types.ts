@@ -95,6 +95,8 @@ export interface OracleResponse {
 
   // ── Oracle voice (Claude synthesis layer) ─────────────────────────────────
   oracle?: {
+    /** The verdict heading, e.g. "The Unveiling: YES — but with Delay". Give the answer early. */
+    unveiling?: string;
     opening: string;
     interpretation: string;
     spiritual_layer: string;

@@ -111,6 +111,8 @@ export async function askOracle(args: AskOracleInput): Promise<AskOracleResult> 
       oracleDescriptor: string;
     };
     oracle?: {
+      /** The verdict heading, e.g. "The Unveiling: YES — but with Delay". */
+      unveiling?: string;
       opening: string;
       interpretation: string;
       spiritual_layer: string;
