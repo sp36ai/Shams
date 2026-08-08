@@ -15,6 +15,7 @@ import {
   directionOfSign,
   directionOfHouse,
   houseDirections,
+  localMinuteOfHour,
 } from '../watchChart';
 import type { HouseIndex, SignIndex } from '../../types/chart';
 
@@ -30,6 +31,41 @@ const ARIES = 1,
   CAPRICORN = 10,
   AQUARIUS = 11,
   PISCES = 12;
+
+describe('localMinuteOfHour', () => {
+  // Base moment: 2025-04-27T10:51:00Z (UTC minute 51).
+  const MOMENT = new Date('2025-04-27T10:51:00Z');
+
+  test('explicit positive offset (IST = +330) reads the real civil minute', () => {
+    // 10:51 UTC + 5:30 = 16:21 local -> minute 21.
+    expect(localMinuteOfHour(MOMENT, 0, 330)).toBe(21);
+  });
+
+  test('explicit negative offset', () => {
+    // 10:51 UTC - 0:45 = 10:06 local -> minute 6.
+    expect(localMinuteOfHour(MOMENT, 0, -45)).toBe(6);
+  });
+
+  test('offset crossing an hour boundary still yields the correct minute-of-hour', () => {
+    // 10:51 UTC + 0:15 = 11:06 local -> minute 6.
+    expect(localMinuteOfHour(MOMENT, 0, 15)).toBe(6);
+  });
+
+  test('offset of 0 is a real, honored value — not treated as "no offset supplied"', () => {
+    // 0 must NOT trigger the local-solar-time fallback (it is a valid
+    // explicit UTC reading), so this must equal the raw UTC minute exactly,
+    // regardless of longitude.
+    expect(localMinuteOfHour(MOMENT, 72.877, 0)).toBe(51);
+  });
+
+  test('omitting the offset falls back to local-solar-time approximation', () => {
+    // Longitude 0 (Greenwich) approximates local solar time ~= UTC, so the
+    // fallback should land close to the raw UTC minute.
+    const minute = localMinuteOfHour(MOMENT, 0);
+    expect(minute).toBeGreaterThanOrEqual(0);
+    expect(minute).toBeLessThanOrEqual(59);
+  });
+});
 
 describe('computeWatchChart', () => {
   test('minute 51 (10:51 PM example) -> Aquarius Lagna, houses cascade as worked', () => {

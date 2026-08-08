@@ -378,10 +378,13 @@ export const askOracle = onCall(
       };
 
       // 8. Judge horary — the clock-based RKP watch engine runs here, server-only.
-      // No timezoneOffsetMinutes is passed (the client doesn't send one yet),
-      // so this falls back to local-solar-time approximation — see
+      // timezoneOffsetMinutes is the querent's real civil clock reading
+      // (what this engine's "watch" actually means); older clients that
+      // don't send it fall back to local-solar-time approximation — see
       // watchChart.ts's localMinuteOfHour() module doc.
-      const verdict = judgeRKPWatch(chart, classified);
+      const verdict = judgeRKPWatch(chart, classified, {
+        timezoneOffsetMinutes: input.timezoneOffsetMinutes,
+      });
 
       // 9+10. Persist reading + quota update in a batch
       const readingRef = db.collection('readings').doc(verdict.id);

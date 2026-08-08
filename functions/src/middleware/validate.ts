@@ -14,6 +14,12 @@ import { HttpsError } from 'firebase-functions/v2/https';
 const LatSchema = z.number().min(-90).max(90);
 const LonSchema = z.number().min(-180).max(180);
 const LangSchema = z.enum(['en', 'ur', 'hi']);
+// Real-world UTC offsets run from -12:00 to +14:00. Sign convention:
+// positive = ahead of UTC (e.g. IST = +330) — the OPPOSITE of JS's
+// Date.prototype.getTimezoneOffset(), which the client negates before
+// sending. See src/firebase/oracle.ts and watchChart.ts's
+// localMinuteOfHour() module doc.
+const TimezoneOffsetSchema = z.number().int().min(-720).max(840);
 
 // ── Function-specific schemas ────────────────────────────────────────────────
 
@@ -26,6 +32,8 @@ export const AskOracleSchema = z
     seekerProfile: z.enum(['clarity', 'comfort', 'action', 'surrender']).optional(),
     seekerName: z.string().trim().min(1).max(100).optional(),
     motherName: z.string().trim().min(1).max(100).optional(),
+    /** Querent's real civil timezone+DST offset, in minutes — see TimezoneOffsetSchema. Optional for backward compat with older clients. */
+    timezoneOffsetMinutes: TimezoneOffsetSchema.optional(),
   })
   .strict();
 

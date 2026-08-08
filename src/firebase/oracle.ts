@@ -35,11 +35,22 @@ export async function askOracle(args: AskOracleInput): Promise<AskOracleResult> 
 
   const fn = functionsInstance.httpsCallable('askOracle');
 
+  // The RKP watch engine's Lagna is the querent's REAL civil clock reading —
+  // "wherever the minute hand rests at the precise second a client asks a
+  // question" — not an approximation from longitude. Date.prototype.
+  // getTimezoneOffset() returns (UTC − local) in minutes (e.g. −330 for
+  // IST); the engine's convention is the opposite sign (positive = ahead of
+  // UTC, e.g. IST = +330 — see watchChart.ts's localMinuteOfHour()), hence
+  // the negation. This reads the device's current timezone/DST state at the
+  // moment of asking, same as a real wristwatch.
+  const timezoneOffsetMinutes = -new Date().getTimezoneOffset();
+
   const payload: Record<string, unknown> = {
     question: args.question,
     questionLang: args.questionLang,
     lat: args.lat,
     lon: args.lon,
+    timezoneOffsetMinutes,
     ...(args.seekerProfile !== undefined ? { seekerProfile: args.seekerProfile } : {}),
   };
   if (args.seekerName) {
