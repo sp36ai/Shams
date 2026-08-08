@@ -61,21 +61,21 @@
  * reading never collide (see ./verdictSnapshots.ts).
  */
 
-import type { Chart, Planet, HouseIndex } from '@astrology/types/chart';
-import type { ClassifiedQuestion } from '@astrology/types/question';
+import type { Chart, Planet, HouseIndex } from '../../types/chart';
+import type { ClassifiedQuestion } from '../../types/question';
 import type {
   Verdict,
   VerdictKind,
   RulingPlanetsSnapshot,
   VerdictNarration,
   ReasoningStep,
-} from '@astrology/types/verdict';
-import { HOUSE_MATRIX } from '@astrology/kp/rules/houseMatrix';
-import { classicalWitnesses } from '@astrology/primitives/rulingPlanets';
+} from '../../types/verdict';
+import { HOUSE_MATRIX } from '../../kp/rules/houseMatrix';
+import { classicalWitnesses } from '../../primitives/rulingPlanets';
 import { houseOfPlanet } from './significations';
 import { computeSignificatorSets } from './significators';
 import { computeConvergenceTiming } from './timing';
-import { ENGINE_VERSION } from '@astrology/primitives/chartBuilder';
+import { ENGINE_VERSION } from '../../primitives/chartBuilder';
 import { checkPromise } from './promise';
 import { applyKotamrajuFilter } from './kotamraju';
 import { applyRetrogradeDelay } from './retrogradeModifier';

@@ -14,7 +14,7 @@
  * behavior change.
  */
 
-import type { Chart, Planet, HouseIndex } from '@astrology/types/chart';
+import type { Chart, Planet, HouseIndex } from '../../types/chart';
 import { houseOfPlanet } from './significations';
 
 export type PromiseCheckResult =

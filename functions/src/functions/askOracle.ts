@@ -9,7 +9,8 @@
  *   5. Quota check         — atomic Firestore transaction (Sunday-week rolling)
  *   6. Build chart         — server-side ephemeris (client never touches this)
  *   7. Classify question   — keyword matcher
- *   8. Judge horary        — full RKP 5-step algorithm
+ *   8. Judge horary        — RKP 5-step algorithm AND classical KP engine,
+ *                            both run on the same chart (docs/KP_RULES_CLASSICAL.md)
  *   9. Persist reading     — /readings/{id} in Firestore
  *  10. Decrement quota     — inside the same Firestore batch
  *  11. Audit log           — /auditLogs/{id}, no PII
@@ -90,6 +91,8 @@ const { buildChart } =
   require('../engine/primitives/chartBuilder') as typeof import('../engine/primitives/chartBuilder');
 const { judgeHorary } =
   require('../engine/kp/judgment/judgeHorary') as typeof import('../engine/kp/judgment/judgeHorary');
+const { judgeKP } =
+  require('../engine/kp/judgment/judgeKP') as typeof import('../engine/kp/judgment/judgeKP');
 const { classifyQuestion } =
   require('../engine/kp/rules/questionKeywords') as typeof import('../engine/kp/rules/questionKeywords');
 /* eslint-enable @typescript-eslint/no-var-requires */
@@ -384,8 +387,28 @@ export const askOracle = onCall(
       // 8. Judge horary — proprietary RKP algorithm runs here, server-only
       const verdict = judgeHorary(chart, classified, horaryNumber);
 
+      // 8b. Classical KP engine — independent verdict, SAME chart, no
+      // horaryNumber (KP has no such witness — see judgeKP module docstring).
+      const kpVerdict = judgeKP(chart, classified);
+
       // 9+10. Persist reading + quota update in a batch
       const readingRef = db.collection('readings').doc(verdict.id);
+      const kpReasoning = kpVerdict.reasoning.map(
+        (r: { ruleId: string; description: string; weight: number }) => ({
+          ruleId: r.ruleId,
+          description: r.description,
+          weight: r.weight,
+        }),
+      );
+      const kpForReadingDoc: NonNullable<ReadingDoc['kp']> = {
+        verdict: kpVerdict.verdict,
+        confidence: kpVerdict.confidence,
+        narration: kpVerdict.narration,
+        timing: kpVerdict.timing
+          ? { window: kpVerdict.timing.window, range: kpVerdict.timing.range }
+          : undefined,
+        reasoning: kpReasoning,
+      };
       const readingDoc: Omit<ReadingDoc, 'createdAt'> = {
         userId,
         question: input.question,
@@ -406,6 +429,7 @@ export const askOracle = onCall(
           }),
         ),
         horaryNumber,
+        kp: kpForReadingDoc,
       };
 
       const batch = db.batch();
@@ -566,6 +590,31 @@ export const askOracle = onCall(
         remedy: verdict.remedy,
         reasoning: readingDoc.reasoning,
         horaryNumber,
+        kp: {
+          verdict: kpVerdict.verdict,
+          confidence: kpVerdict.confidence,
+          narration: kpVerdict.narration,
+          timing: kpVerdict.timing
+            ? { window: kpVerdict.timing.window, range: kpVerdict.timing.range }
+            : undefined,
+          significators: kpVerdict.significators
+            ? {
+                favorable: kpVerdict.significators.favorable as string[],
+                denial: kpVerdict.significators.denial as string[],
+                neutral: kpVerdict.significators.neutral as string[],
+              }
+            : undefined,
+          confirmedSignificators: kpVerdict.confirmedSignificators as string[] | undefined,
+          deniedSignificators: kpVerdict.deniedSignificators as string[] | undefined,
+          rulingPlanets: {
+            dayLord: kpVerdict.rulingPlanets.dayLord as string,
+            ascSignLord: kpVerdict.rulingPlanets.ascSignLord as string,
+            ascStarLord: kpVerdict.rulingPlanets.ascStarLord as string,
+            moonSignLord: kpVerdict.rulingPlanets.moonSignLord as string,
+            moonStarLord: kpVerdict.rulingPlanets.moonStarLord as string,
+          },
+          reasoning: kpReasoning,
+        },
         quotaRemaining: remaining,
         computedAt: now,
         planetDegrees,

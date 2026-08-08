@@ -111,6 +111,36 @@ export interface OracleResponse {
    * traceability. See judgeHorary.ts module docstring for rationale.
    */
   horaryNumber?: number;
+
+  /**
+   * Classical KP engine's independently-computed verdict for the SAME
+   * chart — see docs/KP_RULES_CLASSICAL.md. Always populated server-side
+   * once deployed; optional here only as a wire-format safety net for
+   * older cached client bundles hitting a new function version mid-rollout.
+   * No `remedy` key — remedy is an RKP/product addition, never a KP output.
+   */
+  kp?: {
+    verdict: VerdictKind;
+    confidence: number;
+    narration: Record<LangCode, string>;
+    timing?: OracleResponse['timing'];
+    significators?: {
+      favorable: string[];
+      denial: string[];
+      neutral: string[];
+    };
+    confirmedSignificators?: string[];
+    deniedSignificators?: string[];
+    /** The 5 Classical Witnesses — no Hora Lord (see docs/KP_RULES_CLASSICAL.md §4). */
+    rulingPlanets: {
+      dayLord: string;
+      ascSignLord: string;
+      ascStarLord: string;
+      moonSignLord: string;
+      moonStarLord: string;
+    };
+    reasoning: OracleResponse['reasoning'];
+  };
 }
 
 /** Response from getQuota. */
@@ -146,6 +176,20 @@ export interface ReadingDoc {
   reasoning: OracleResponse['reasoning'];
   createdAt: FirebaseFirestore.Timestamp;
   horaryNumber?: number;
+
+  /**
+   * Classical KP engine's verdict for this reading — trimmed subset of
+   * OracleResponse['kp'] (no significators/rulingPlanets persisted), matching
+   * the existing pattern where ReadingDoc stores a smaller slice than
+   * OracleResponse returns. No remedy — see OracleResponse['kp'] doc.
+   */
+  kp?: {
+    verdict: VerdictKind;
+    confidence: number;
+    narration: Record<LangCode, string>;
+    timing?: OracleResponse['timing'];
+    reasoning: OracleResponse['reasoning'];
+  };
 }
 
 /** Firestore /trials/{userId} document shape. */

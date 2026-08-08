@@ -52,7 +52,7 @@ export function houseSignificators(chart: Chart, house: HouseIndex): readonly Pl
 
   // Tier 1: planets in nakshatra of any occupant
   for (const planet of PLANETS) {
-    const nakLord = chart.planets[planet].nakshatraLord as Planet;
+    const nakLord = chart.planets[planet].nakshatraLord;
     if ((occupants as Planet[]).includes(nakLord)) {
       addIfNew(planet);
     }
@@ -65,7 +65,7 @@ export function houseSignificators(chart: Chart, house: HouseIndex): readonly Pl
 
   // Tier 3: planets in nakshatra of the house lord
   for (const planet of PLANETS) {
-    const nakLord = chart.planets[planet].nakshatraLord as Planet;
+    const nakLord = chart.planets[planet].nakshatraLord;
     if (nakLord === houseLord) {
       addIfNew(planet);
     }

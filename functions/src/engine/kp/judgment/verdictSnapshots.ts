@@ -12,9 +12,9 @@
  * collide.
  */
 
-import type { Chart, Planet, HouseIndex } from '@astrology/types/chart';
-import type { ClassifiedQuestion } from '@astrology/types/question';
-import type { MoonSubLordSnapshot, QuestionCuspDetail } from '@astrology/types/verdict';
+import type { Chart, Planet, HouseIndex } from '../../types/chart';
+import type { ClassifiedQuestion } from '../../types/question';
+import type { MoonSubLordSnapshot, QuestionCuspDetail } from '../../types/verdict';
 
 // ── Deterministic ID (no Math.random — determinism spec) ──────────────────────
 
