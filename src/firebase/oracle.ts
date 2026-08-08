@@ -68,7 +68,8 @@ export async function askOracle(args: AskOracleInput): Promise<AskOracleResult> 
     rulingPlanets?: {
       dayLord: string;
       ascSignLord: string;
-      ascStarLord: string;
+      /** Absent under the RKP watch engine — whole-sign Lagna has no ascending degree to derive a nakshatra from. */
+      ascStarLord?: string;
       moonSignLord: string;
       moonStarLord: string;
       horaLord?: string;
@@ -115,6 +116,12 @@ export async function askOracle(args: AskOracleInput): Promise<AskOracleResult> 
       signature: string;
     };
     horaryNumber?: number;
+    /** RKP watch engine's finer 6-state verdict (YES_STRONG/.../INCONCLUSIVE). */
+    nativeState?: string;
+    /** Physical direction (Vastu) of the activated house right now. */
+    houseLordDirection?: string;
+    /** Directions currently holding a natural malefic — household Vastu scan. */
+    vastuAfflictedDirections?: string[];
   };
 
   const reading: Reading = {
@@ -144,6 +151,9 @@ export async function askOracle(args: AskOracleInput): Promise<AskOracleResult> 
       manzila: data.manzila,
       oracle: data.oracle,
       horaryNumber: data.horaryNumber,
+      nativeState: data.nativeState,
+      houseLordDirection: data.houseLordDirection,
+      vastuAfflictedDirections: data.vastuAfflictedDirections,
     },
   };
 

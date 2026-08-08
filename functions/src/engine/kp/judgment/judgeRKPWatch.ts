@@ -63,11 +63,24 @@
  *     — that stays a presentation-layer concern per the source material's
  *     own separation rule.
  *
+ *  9. CONFIDENCE — the source material's 7-factor, 50-point-base model.
+ *     5 of the 7 factors are computed (sub-lord clarity, Moon agreement,
+ *     ruling-planet overlap, retrograde affliction, timestamp precision);
+ *     Multi-Cusp Agreement and Chart Cleanliness/Void-of-Course are part of
+ *     the documented model but not yet implemented (strictures, deferred)
+ *     — they score 0/neutral rather than being invented. See
+ *     computeConfidence().
+ *
+ *  10. NARRATION / REMEDY — EN/UR/HI narration per native state, and a
+ *     remedy keyed on the activated house's lord (the decisive planet in
+ *     this engine, playing the role Moon's sub-lord plays in judgeHorary).
+ *     Reuses the same remedy table and Arabic naming as judgeHorary.ts —
+ *     see remedyTable.ts / arabicNames.ts.
+ *
  * Deliberately NOT yet included (explicit scope-out, not an oversight):
- *   - the 0-100 confidence score / confidence bands
  *   - the 8 classical strictures (Via Combusta, Void of Course, etc.)
  *   - third-person question house rotation
- *   - remedy / narration (product layer, out of scope for the calc engine)
+ *   - Multi-Cusp Agreement and Chart Cleanliness confidence factors
  *
  * Determinism guarantee: same (chart, question) always produces the same
  * WatchVerdict. No Date.now(), no Math.random().
@@ -76,7 +89,7 @@
 import type { Chart, HouseIndex, Planet, SignIndex } from '../../types/chart';
 import { PLANETS } from '../../types/chart';
 import type { ClassifiedQuestion } from '../../types/question';
-import type { ReasoningStep, VerdictKind } from '../../types/verdict';
+import type { ReasoningStep, VerdictKind, VerdictNarration } from '../../types/verdict';
 import type {
   WatchVerdict,
   WatchVerdictState,
@@ -86,6 +99,7 @@ import type {
   SupportDirection,
   VastuScan,
   VastuDirection,
+  ConfidenceFactors,
 } from '../../types/watchVerdict';
 import { HOUSE_MATRIX } from '../../kp/rules/houseMatrix';
 import {
@@ -99,6 +113,8 @@ import {
 } from '../../primitives/watchChart';
 import { calculateDayLord } from '../../primitives/rulingPlanets';
 import { computeConvergenceTiming } from './timing';
+import { remedyForPlanet } from './remedyTable';
+import { toArabic } from './arabicNames';
 import { ENGINE_VERSION } from '../../primitives/chartBuilder';
 
 // ── Deterministic ID — WATCH-namespaced ────────────────────────────────────
@@ -411,6 +427,117 @@ function combineVerdict(
   return 'WAIT';
 }
 
+// ── Confidence (7-factor, 50-point-base model — 5 of 7 factors supported) ───
+
+/**
+ * Source: RKP Knowledge Base §13.2 / Authentic Engine Specification §23-24 —
+ * the exact point values below are as given there. Multi-Cusp Agreement and
+ * Chart Cleanliness (Void-of-Course etc.) are part of that documented model
+ * but not yet implemented in this engine (see module docstring) — they
+ * contribute 0 rather than an invented value.
+ */
+function computeConfidence(
+  houseLord: HouseLordAnalysis,
+  moon: MoonConfirmation,
+  ruling: RulingConfirmation,
+): { confidence: number; factors: ConfidenceFactors } {
+  const subLordClarity = houseLord.verdict === 'mixed' ? -10 : 20;
+
+  const moonAgreement = moon.agreement === 'agrees' ? 15 : moon.agreement === 'disagrees' ? -15 : 0;
+
+  const overlap = Math.max(ruling.favorableWitnesses.length, ruling.denialWitnesses.length);
+  const rulingOverlap = overlap >= 3 ? 15 : overlap === 2 ? 10 : overlap === 1 ? 5 : -10;
+
+  // "Yes = -5 if in favorable; +0 if in denial" (source material) — applied
+  // as: a retrograde lord only weakens confidence when it was otherwise
+  // supporting the matter.
+  const retrogradeAffliction = houseLord.retrograde && houseLord.verdict === 'supported' ? -5 : 0;
+
+  // Timestamp precision: this app always supplies GPS-derived lat/lon, the
+  // "GPS-timed" case in the source model.
+  const timestampPrecision = 5;
+
+  const factors: ConfidenceFactors = {
+    subLordClarity,
+    moonAgreement,
+    rulingOverlap,
+    retrogradeAffliction,
+    timestampPrecision,
+  };
+
+  const raw =
+    50 + subLordClarity + moonAgreement + rulingOverlap + retrogradeAffliction + timestampPrecision;
+  const confidence = Math.round(Math.min(100, Math.max(0, raw)));
+
+  return { confidence, factors };
+}
+
+// ── Narration ────────────────────────────────────────────────────────────
+
+function buildNarration(
+  nativeState: WatchVerdictState,
+  qType: string,
+  lord: Planet,
+): VerdictNarration {
+  const witness = toArabic(lord);
+  return {
+    en: buildEn(nativeState, qType, witness),
+    ur: buildUr(nativeState, qType),
+    hi: buildHi(nativeState, qType),
+  };
+}
+
+function buildEn(nativeState: WatchVerdictState, qType: string, witness: string): string {
+  switch (nativeState) {
+    case 'YES_STRONG':
+      return `The current for your ${qType} matter is open and strong. ${witness} governs the house of your question from a position of strength, and the witnesses of this moment confirm it. The path is clear to move forward.`;
+    case 'YES_CONDITIONAL':
+      return `The current for your ${qType} matter is open, though not without conditions. ${witness} holds the house of your question, but the witnesses give mixed testimony — the path exists and asks for patience with its terms.`;
+    case 'DELAY':
+      return `The current for your ${qType} matter is favorable, but the timing is deferred. ${witness} carries the promise forward from a position of retreat — the matter will be granted, though the arrival requires patience.`;
+    case 'WAIT':
+      return `The current for your ${qType} matter is neither fully open nor closed. ${witness} stands in a mixed position — the moment counsels waiting rather than forcing the matter now.`;
+    case 'NO_DENIED':
+      return `The current for your ${qType} matter is blocked at this hour. ${witness} stands obstructed in the house of your question. The oracle counsels patience and redirection rather than forcing this path.`;
+    case 'INCONCLUSIVE':
+      return `The witnesses for your ${qType} matter do not speak with one voice at this hour. Return when the moment has settled and ask again.`;
+  }
+}
+
+function buildUr(nativeState: WatchVerdictState, qType: string): string {
+  switch (nativeState) {
+    case 'YES_STRONG':
+      return `آپ کے ${qType} کے معاملے میں آسمانی رو کھلی اور مضبوط ہے۔ فلکی شہادت واضح طور پر کامیابی کی طرف اشارہ کر رہی ہے۔`;
+    case 'YES_CONDITIONAL':
+      return `آپ کے ${qType} کے معاملے میں راستہ کھلا ہے مگر کچھ شرائط کے ساتھ۔ صبر اور توجہ درکار ہے۔`;
+    case 'DELAY':
+      return `آپ کے ${qType} کے معاملے میں تاخیر ہے، لیکن فلکی شہادت بالآخر موافق ہے۔`;
+    case 'WAIT':
+      return `آپ کے ${qType} کے معاملے میں فی الحال انتظار بہتر ہے — رو نہ مکمل کھلی ہے نہ بند۔`;
+    case 'NO_DENIED':
+      return `آپ کے ${qType} کے معاملے میں اس وقت آسمانی رو مسدود ہے۔ صبر اور دوسری راہ پر غور کریں۔`;
+    case 'INCONCLUSIVE':
+      return `اس وقت فلکی گواہی واضح نہیں ہے۔ کچھ دیر بعد دوبارہ سوال کریں۔`;
+  }
+}
+
+function buildHi(nativeState: WatchVerdictState, qType: string): string {
+  switch (nativeState) {
+    case 'YES_STRONG':
+      return `آپ کے ${qType} کے معاملے میں آسمانی رو کھلی اور مضبوط ہے۔ کامیابی کے آثار روشن ہیں۔`;
+    case 'YES_CONDITIONAL':
+      return `آپ کے ${qType} کے معاملے میں راستہ کھلا ہے مگر کچھ شرائط درکار ہیں۔`;
+    case 'DELAY':
+      return `آپ کے ${qType} کے معاملے میں تاخیر ممکن ہے، لیکن نتیجہ موافق ہوگا۔`;
+    case 'WAIT':
+      return `آپ کے ${qType} کے معاملے میں فی الحال انتظار کریں۔`;
+    case 'NO_DENIED':
+      return `آپ کے ${qType} کے معاملے میں اس وقت آسمانی رو مسدود ہے۔`;
+    case 'INCONCLUSIVE':
+      return `اس وقت آسمانی گواہی واضح نہیں ہے۔ کسی اور وقت سوال کریں۔`;
+  }
+}
+
 // ── Main entry point ──────────────────────────────────────────────────────
 
 export interface JudgeRKPWatchOptions {
@@ -496,6 +623,19 @@ export function judgeRKPWatch(
     );
   }
 
+  const { confidence, factors: confidenceFactors } = computeConfidence(houseLord, moon, ruling);
+  reasoning.push(
+    step(
+      'CONFIDENCE',
+      `subLordClarity=${confidenceFactors.subLordClarity} moonAgreement=${confidenceFactors.moonAgreement} ` +
+        `rulingOverlap=${confidenceFactors.rulingOverlap} retrogradeAffliction=${confidenceFactors.retrogradeAffliction} ` +
+        `timestampPrecision=${confidenceFactors.timestampPrecision} -> ${confidence}`,
+    ),
+  );
+
+  const narration = buildNarration(nativeState, qType, houseLord.lord);
+  const remedy = remedyForPlanet(houseLord.lord);
+
   const retrogradeFlags: Planet[] = [];
   const combustFlags: Planet[] = [];
   for (const [p, pos] of Object.entries(chart.planets) as [
@@ -526,6 +666,10 @@ export function judgeRKPWatch(
     vastu,
     verdict,
     nativeState,
+    confidence,
+    confidenceFactors,
+    narration,
+    remedy,
     reasoning: Object.freeze(reasoning),
     timing,
     retrogradeFlags: Object.freeze(retrogradeFlags),

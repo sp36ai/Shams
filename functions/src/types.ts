@@ -33,16 +33,17 @@ export interface OracleResponse {
   };
   /** Sub-lord of each relevant cusp for expert inspection. */
   cuspSubLords?: Array<{ house: number; subLord: string; subLordHouse: number }>;
-  /** All 5 ruling planets at the chart moment. */
+  /** Ruling-planet witnesses at the chart moment. */
   rulingPlanets?: {
     dayLord: string;
     ascSignLord: string;
-    ascStarLord: string;
+    /** Absent under the RKP watch engine — whole-sign Lagna has no ascending degree to derive a nakshatra from. */
+    ascStarLord?: string;
     moonSignLord: string;
     moonStarLord: string;
     horaLord?: string;
   };
-  /** KP significator sets: which planets speak for/against the question. */
+  /** KP significator sets: which planets speak for/against the question. Not produced by the RKP watch engine. */
   significators?: {
     favorable: string[];
     denial: string[];
@@ -64,6 +65,12 @@ export interface OracleResponse {
     description: string;
     weight: number;
   }>;
+  /** RKP watch engine's finer 6-state verdict (YES_STRONG/.../INCONCLUSIVE) — see docs/RKP_WATCH_ENGINE.md. */
+  nativeState?: string;
+  /** Physical direction (Vastu) of the activated house right now. */
+  houseLordDirection?: string;
+  /** Directions currently holding a natural malefic — household Vastu scan. */
+  vastuAfflictedDirections?: string[];
   quotaRemaining: number | null; // null = unlimited plan
   computedAt: string; // ISO 8601
 
@@ -105,10 +112,11 @@ export interface OracleResponse {
   };
 
   /**
-   * KP horary number (1–249) generated server-side for this reading — an
-   * additive witness signal, not part of the owner's original 5-step
-   * rules. Surfaced so the reading can display it for authenticity/
-   * traceability. See judgeHorary.ts module docstring for rationale.
+   * KP horary number (1–249) — an additive witness signal specific to the
+   * older judgeHorary.ts engine. Not produced by the RKP watch engine
+   * (askOracle.ts's current judgment engine, see judgeRKPWatch.ts); kept
+   * optional here only for backward-compatible display of pre-existing
+   * readings that have it.
    */
   horaryNumber?: number;
 }

@@ -173,6 +173,10 @@ describe('judgeRKPWatch — house-lord dignity drives the base direction', () =>
     expect(verdict.nativeState).toBe('YES_STRONG');
     expect(verdict.verdict).toBe('YES');
     expect(verdict.timing).toBeDefined();
+    // 50 base + 20 (unambiguous) + 15 (agrees) + 15 (3 favorable witnesses) + 0 (not retrograde) + 5 (GPS) = 105 -> clamped 100
+    expect(verdict.confidence).toBe(100);
+    expect(verdict.narration.en).toContain('career');
+    expect(verdict.remedy?.planet).toBe('Mars');
   });
 
   test('DELAY: same as YES_STRONG but Mars (the house lord) is retrograde', () => {
@@ -188,6 +192,9 @@ describe('judgeRKPWatch — house-lord dignity drives the base direction', () =>
     expect(verdict.houseLord.retrograde).toBe(true);
     expect(verdict.nativeState).toBe('DELAY');
     expect(verdict.verdict).toBe('DELAYED');
+    // Same as YES_STRONG but retrogradeAffliction kicks in: 105 - 5 = 100 (still clamped)
+    expect(verdict.confidenceFactors.retrogradeAffliction).toBe(-5);
+    expect(verdict.narration.en).toContain('deferred');
   });
 
   test('NO_DENIED: Mars debilitated in the house-10 sign', () => {
@@ -198,6 +205,11 @@ describe('judgeRKPWatch — house-lord dignity drives the base direction', () =>
     expect(verdict.houseLord.verdict).toBe('obstructed');
     expect(verdict.nativeState).toBe('NO_DENIED');
     expect(verdict.verdict).toBe('NO');
+    // 50 base + 20 (unambiguous, obstruction still counts as clear) + 15 (moon
+    // agrees the matter is denied) + 5 (1 favorable, 1 denial witness -> overlap 1)
+    // + 0 (not retrograde) + 5 (GPS) = 95
+    expect(verdict.confidence).toBe(95);
+    expect(verdict.remedy?.planet).toBe('Mars');
     expect(verdict.timing).toBeUndefined();
   });
 });

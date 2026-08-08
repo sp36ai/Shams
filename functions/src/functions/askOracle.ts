@@ -9,7 +9,7 @@
  *   5. Quota check         — atomic Firestore transaction (Sunday-week rolling)
  *   6. Build chart         — server-side ephemeris (client never touches this)
  *   7. Classify question   — keyword matcher
- *   8. Judge horary        — full RKP 5-step algorithm
+ *   8. Judge horary        — RKP watch engine (judgeRKPWatch.ts) — see docs/RKP_WATCH_ENGINE.md
  *   9. Persist reading     — /readings/{id} in Firestore
  *  10. Decrement quota     — inside the same Firestore batch
  *  11. Audit log           — /auditLogs/{id}, no PII
@@ -88,8 +88,8 @@ const DISPLAY_PLANETS: Planet[] = [
 /* eslint-disable @typescript-eslint/no-var-requires */
 const { buildChart } =
   require('../engine/primitives/chartBuilder') as typeof import('../engine/primitives/chartBuilder');
-const { judgeHorary } =
-  require('../engine/kp/judgment/judgeHorary') as typeof import('../engine/kp/judgment/judgeHorary');
+const { judgeRKPWatch } =
+  require('../engine/kp/judgment/judgeRKPWatch') as typeof import('../engine/kp/judgment/judgeRKPWatch');
 const { classifyQuestion } =
   require('../engine/kp/rules/questionKeywords') as typeof import('../engine/kp/rules/questionKeywords');
 /* eslint-enable @typescript-eslint/no-var-requires */
@@ -377,14 +377,11 @@ export const askOracle = onCall(
         matchedKeywords: [] as string[],
       };
 
-      // 7b. Horary number witness — server-generated, never client-supplied
-      // (keeps judgeHorary itself pure/deterministic; see its module doc).
-      // Distinguishes readings whose chart-derived signal would otherwise be
-      // identical for two questions asked seconds apart.
-      const horaryNumber = 1 + Math.floor(Math.random() * 249);
-
-      // 8. Judge horary — proprietary RKP algorithm runs here, server-only
-      const verdict = judgeHorary(chart, classified, horaryNumber);
+      // 8. Judge horary — the clock-based RKP watch engine runs here, server-only.
+      // No timezoneOffsetMinutes is passed (the client doesn't send one yet),
+      // so this falls back to local-solar-time approximation — see
+      // watchChart.ts's localMinuteOfHour() module doc.
+      const verdict = judgeRKPWatch(chart, classified);
 
       // 9+10. Persist reading + quota update in a batch
       const readingRef = db.collection('readings').doc(verdict.id);
@@ -407,7 +404,6 @@ export const askOracle = onCall(
             weight: r.weight,
           }),
         ),
-        horaryNumber,
       };
 
       const batch = db.batch();
@@ -440,10 +436,11 @@ export const askOracle = onCall(
       logger.info('oracle computed', {
         userId,
         verdict: verdict.verdict,
-        stage: verdict.stage ?? 'unknown',
+        nativeState: verdict.nativeState,
         confidence: verdict.confidence,
-        confirmedSignificators: verdict.confirmedSignificators ?? [],
-        deniedSignificators: verdict.deniedSignificators ?? [],
+        houseLordVerdict: verdict.houseLord.verdict,
+        favorableWitnesses: verdict.rulingConfirmation.favorableWitnesses,
+        denialWitnesses: verdict.rulingConfirmation.denialWitnesses,
         plan,
         durationMs: Date.now() - startedAt,
         ipHash: requestMeta.ipHash,
@@ -521,7 +518,6 @@ export const askOracle = onCall(
       const oracleRaw = apiKey
         ? await synthesiseOracleVoice({
             verdict: verdict.verdict,
-            stage: verdict.stage,
             confidence: verdict.confidence,
             timingWindow: verdict.timing?.window,
             timingRange: verdict.timing?.range,
@@ -549,25 +545,31 @@ export const askOracle = onCall(
           : undefined,
         cuspSubLords,
         rulingPlanets: {
-          dayLord: verdict.rulingPlanets.dayLord as string,
-          ascSignLord: verdict.rulingPlanets.ascSignLord as string,
-          ascStarLord: verdict.rulingPlanets.ascStarLord as string,
-          moonSignLord: verdict.rulingPlanets.moonSignLord as string,
-          moonStarLord: verdict.rulingPlanets.moonStarLord as string,
-          horaLord: verdict.rulingPlanets.horaLord as string | undefined,
+          dayLord: verdict.rulingConfirmation.dayLord as string,
+          ascSignLord: verdict.rulingConfirmation.ascSignLord as string,
+          // ascStarLord and horaLord don't apply under the whole-sign watch
+          // Lagna (no continuous ascending degree, no hora concept here) —
+          // see judgeRKPWatch.ts module doc. Omitted rather than faked.
+          ascStarLord: undefined,
+          moonSignLord: verdict.rulingConfirmation.moonSignLord as string,
+          moonStarLord: verdict.rulingConfirmation.moonStarLord as string,
+          horaLord: undefined,
         },
-        significators: verdict.significators
-          ? {
-              favorable: verdict.significators.favorable as string[],
-              denial: verdict.significators.denial as string[],
-              neutral: verdict.significators.neutral as string[],
-            }
-          : undefined,
-        confirmedSignificators: verdict.confirmedSignificators as string[] | undefined,
-        deniedSignificators: verdict.deniedSignificators as string[] | undefined,
+        // KP-style favorable/denial/neutral significator sets don't exist in
+        // this engine's model (see judgeRKPWatch.ts) — omitted rather than
+        // fabricated. confirmedSignificators/deniedSignificators below are
+        // this engine's closest honest analog: the ruling witnesses that
+        // actually landed in a favorable/denial clock-house.
+        significators: undefined,
+        confirmedSignificators: verdict.rulingConfirmation.favorableWitnesses as string[],
+        deniedSignificators: verdict.rulingConfirmation.denialWitnesses as string[],
         remedy: verdict.remedy,
         reasoning: readingDoc.reasoning,
-        horaryNumber,
+        // Watch-engine-specific facts, new in this response — see
+        // docs/RKP_WATCH_ENGINE.md.
+        nativeState: verdict.nativeState,
+        houseLordDirection: verdict.houseLord.direction,
+        vastuAfflictedDirections: verdict.vastu.afflictedDirections as string[],
         quotaRemaining: remaining,
         computedAt: now,
         planetDegrees,

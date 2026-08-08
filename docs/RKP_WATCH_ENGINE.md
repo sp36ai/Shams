@@ -1,20 +1,26 @@
 # RKP — Watch of Currents: the Clock-Based Engine
 
-> Status: Phase 1 implemented and tested. Not yet wired into production
-> (`askOracle.ts` still calls the older `judgeHorary()`).
+> Status: **live in production.** `askOracle.ts` calls `judgeRKPWatch()`.
 > Source: user-supplied RKP elaboration (chat) — this document does not
 > introduce any table or threshold not already given there, except where
 > explicitly marked "confirmed default" (the classical support/obstruction
 > toolkit, chosen by the project owner from three offered options).
 
-## What this replaces
+## What this replaced
 
 Earlier in this engine's history, "RKP" meant a sub-lord scoring variant of
-KP (`judgeHorary.ts`, still present, still production). The project owner
-has since clarified that the *authentic* RKP is a different system entirely:
-a clock-based horary method with no birth chart and no Placidus cusps for
-house determination. This document describes that system as now
-implemented in `judgeRKPWatch.ts`.
+KP (`judgeHorary.ts`). The project owner clarified that the *authentic* RKP
+is a different system entirely: a clock-based horary method with no birth
+chart and no Placidus cusps for house determination. `askOracle.ts` now
+runs `judgeRKPWatch()` exclusively.
+
+`judgeHorary.ts` and `currentReading.ts` are **not deleted** — they remain
+in the codebase, fully tested, unused in production, following the same
+precedent as `judgeKP.ts` (classical KP, also built and tested but never
+wired into `askOracle.ts`). `remedyTable.ts` and `arabicNames.ts` were
+extracted out of `judgeHorary.ts` so `judgeRKPWatch.ts` could share them
+without duplicating the data; `judgeHorary.ts`'s own behavior is unchanged
+by that extraction (see its own test suite, still green).
 
 ## The mechanism
 
@@ -112,22 +118,55 @@ tens of minutes, which changes the 5-minute bucket. Wiring in a real
 timezone (from lat/lon via a tz-lookup, or from the client) would remove
 this caveat.
 
+## Confidence, narration, remedy
+
+Implemented and wired in (see `computeConfidence()` / `buildNarration()` in
+`judgeRKPWatch.ts`):
+
+- **Confidence** — the source material's 7-factor, 50-point-base model. 5 of
+  7 factors are computed (sub-lord clarity, Moon agreement, ruling-planet
+  overlap, retrograde affliction, timestamp precision — always +5, this app
+  always supplies GPS-derived lat/lon). Multi-Cusp Agreement and Chart
+  Cleanliness/Void-of-Course are part of the documented model but not yet
+  implemented (see Strictures below) — they contribute 0, not an invented
+  value.
+- **Narration** (EN/UR/HI) and **remedy** — keyed on the activated house's
+  lord, the decisive planet in this engine (the role Moon's sub-lord plays
+  in `judgeHorary.ts`). Reuses the shared `remedyTable.ts` / `arabicNames.ts`
+  so both engines speak with the same voice.
+
 ## Explicitly deferred (not oversights)
 
-- **Confidence scoring** (the 7-factor 0–100 model, fully specified in the
-  source Knowledge Base with exact point values) — not yet wired in.
 - **The 8 classical strictures** (Via Combusta, Void of Course, Ascendant
   edge degrees, Saturn in 1st/7th, extreme retrograde, planetary war,
   timestamp quality, multiple-questions-in-one) — not yet checked.
 - **Third-person question rotation** (asking about a spouse/child/etc. —
   rotates which house is "self") — product/UX feature, not yet built.
-- **Remedy / narration** — explicitly a presentation-layer concern per the
-  source material's own non-negotiable rule ("keep calculation, judgment,
-  and oracle presentation as separate layers"); not part of this engine.
+- **Multi-Cusp Agreement and Chart Cleanliness confidence factors** — part
+  of the documented model, blocked on the strictures work above.
 
-## Not wired into production
+## Production wiring
 
-`askOracle.ts` still calls `judgeHorary()`. Swapping the live app's verdicts
-over to `judgeRKPWatch()` is a real behavior change to a shipped product and
-hasn't been done pending explicit confirmation this engine is producing the
-readings expected of it.
+`askOracle.ts` calls `judgeRKPWatch(chart, classified)` with no
+`timezoneOffsetMinutes` (the client doesn't send one yet — see the Local
+time caveat above), and maps its `WatchVerdict` onto the existing
+`OracleResponse` contract (`functions/src/types.ts`):
+
+- `rulingPlanets.ascStarLord` and `.horaLord` are omitted (`undefined`) —
+  neither concept applies to a whole-sign watch Lagna.
+- `significators` (KP's favorable/denial/neutral sets) is omitted — this
+  engine doesn't compute them. `confirmedSignificators`/`deniedSignificators`
+  map to the ruling witnesses that actually landed in a favorable/denial
+  clock-house — the closest honest analog.
+- `horaryNumber` is no longer generated — it was specific to
+  `judgeHorary.ts`'s witness model.
+- Three new optional response fields carry this engine's own facts forward:
+  `nativeState` (the finer 6-state verdict), `houseLordDirection`, and
+  `vastuAfflictedDirections` — plumbed through `src/firebase/oracle.ts` into
+  `Reading.verdictJson` for future UI use, not yet rendered by any screen.
+
+The client already treats every ruling-planet/significator field as
+optional (`if (rp?.ascStarLord)` etc. in `OracleChatScreen.tsx`), so the
+narrower witness set degrades gracefully — fewer chips render, nothing
+crashes. The main verdict card (verdict, confidence, narration, timing,
+remedy) is fully populated by the new engine and unaffected.

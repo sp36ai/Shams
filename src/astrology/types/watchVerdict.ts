@@ -9,7 +9,13 @@
 
 import type { Chart, HouseIndex, Planet, SignIndex } from './chart';
 import type { ClassifiedQuestion, QuestionType } from './question';
-import type { ReasoningStep, VerdictKind, VerdictTiming } from './verdict';
+import type {
+  ReasoningStep,
+  VerdictKind,
+  VerdictTiming,
+  VerdictNarration,
+  VerdictRemedy,
+} from './verdict';
 import type { VastuDirection, WatchChart } from '../primitives/watchChart';
 
 export type { VastuDirection };
@@ -80,6 +86,21 @@ export interface VastuScan {
   readonly afflictedDirections: readonly VastuDirection[];
 }
 
+/**
+ * Confidence breakdown — the 5 factors of the source material's 7-factor,
+ * 50-point-base confidence model this engine can currently support (Multi-
+ * Cusp Agreement and Chart Cleanliness/Void-of-Course are part of the
+ * documented model but not yet implemented here — see judgeRKPWatch.ts
+ * module docstring — and score 0/neutral rather than being fabricated).
+ */
+export interface ConfidenceFactors {
+  readonly subLordClarity: number;
+  readonly moonAgreement: number;
+  readonly rulingOverlap: number;
+  readonly retrogradeAffliction: number;
+  readonly timestampPrecision: number;
+}
+
 export interface WatchVerdict {
   readonly id: string;
   readonly computedAt: string;
@@ -99,6 +120,13 @@ export interface WatchVerdict {
 
   readonly verdict: VerdictKind;
   readonly nativeState: WatchVerdictState;
+
+  /** 0-100, base-50 model — see ConfidenceFactors docstring for what's supported. */
+  readonly confidence: number;
+  readonly confidenceFactors: ConfidenceFactors;
+  readonly narration: VerdictNarration;
+  /** Remedy planet = the activated house's lord (the decisive planet in this engine). */
+  readonly remedy?: VerdictRemedy;
 
   readonly reasoning: readonly ReasoningStep[];
   readonly timing?: VerdictTiming;
