@@ -3,6 +3,7 @@ import { FieldValue } from 'firebase-admin/firestore';
 import { db } from '../utils/admin';
 import { FUNCTION_OPTS, ANTHROPIC_API_KEY } from '../config';
 import { verifyAuth } from '../middleware/auth';
+import { enforceRateLimit } from '../middleware/rateLimit';
 
 interface CandidateInput {
   id: string;
@@ -118,7 +119,8 @@ export const selectRemedies = onCall(
     secrets: [ANTHROPIC_API_KEY],
   },
   async (request): Promise<SelectRemediesResponse> => {
-    verifyAuth(request);
+    const { userId } = verifyAuth(request);
+    await enforceRateLimit(userId);
 
     const d = request.data as SelectRemediasRequest | null;
     const oracleContext = d?.oracleContext ?? {
