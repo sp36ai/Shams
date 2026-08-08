@@ -49,6 +49,25 @@ export interface OracleAnchors {
   readonly direction: string;
   /** Whether the decisive planet is retrograde — POSSIBLE or NONE. */
   readonly reversal: 'POSSIBLE' | 'NONE';
+  /**
+   * Whether the querent's own ruler and the matter's ruler are natural
+   * enemies — the RKP material's signature "rigidity, refusal to adjust,
+   * administrative block" signal. CLASH | ALIGNED | NEUTRAL.
+   */
+  readonly rulerClash: 'CLASH' | 'ALIGNED' | 'NEUTRAL';
+  /**
+   * How whoever controls the matter operates, from the target house sign's
+   * polarity: DIRECT_ASSERTIVE (odd sign) or CAUTIOUS_ADMINISTRATIVE (even).
+   *
+   * ⚠ The source material states this in terms of the gender of a real
+   * person ("indicates ... male individuals dominating the situation" /
+   * "female individuals controlling the outcome"). Only the BEHAVIOURAL half
+   * of that claim is passed to the presentation layer. Telling a seeker that
+   * a person of a specific gender is blocking them is an unfalsifiable claim
+   * about a real third party, and the tone guardrails already forbid naming
+   * people. Flagged for owner review.
+   */
+  readonly controllerStyle: 'DIRECT_ASSERTIVE' | 'CAUTIOUS_ADMINISTRATIVE';
 }
 
 /**
@@ -74,6 +93,12 @@ export function deriveOracleAnchors(verdict: WatchVerdict): OracleAnchors {
   })();
 
   const obstruction = (() => {
+    // A malefic actually bearing on the house of the matter outranks one
+    // that merely troubles its lord — it is what the triad protocol denies on.
+    const onTheHouse = verdict.triad.targetPressure.blockingMalefics;
+    if (onTheHouse.length > 0) {
+      return onTheHouse[0] as string;
+    }
     const blockers = [...hl.conjunctObstruction, ...hl.aspectObstruction];
     if (blockers.length > 0) {
       return blockers[0] as string;
@@ -110,5 +135,15 @@ export function deriveOracleAnchors(verdict: WatchVerdict): OracleAnchors {
     timing,
     direction: hl.direction,
     reversal: hl.retrograde ? 'POSSIBLE' : 'NONE',
+    rulerClash:
+      verdict.triad.rulerRelation === 'enemy'
+        ? 'CLASH'
+        : verdict.triad.rulerRelation === 'friend'
+          ? 'ALIGNED'
+          : 'NEUTRAL',
+    controllerStyle:
+      verdict.triad.controllerPolarity === 'masculine'
+        ? 'DIRECT_ASSERTIVE'
+        : 'CAUTIOUS_ADMINISTRATIVE',
   };
 }

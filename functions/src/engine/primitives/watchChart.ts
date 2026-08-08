@@ -173,6 +173,29 @@ export const SIGN_DIRECTIONS: readonly VastuDirection[] = Object.freeze([
   'North', // Pisces (water)
 ]);
 
+// ── Sign gender / polarity ─────────────────────────────────────────────────
+//
+// Source: RKP material, "Even vs. Odd Sign Gender Profiles" —
+//   Odd signs (Aries, Gemini, Leo, Libra, Sagittarius, Aquarius): masculine
+//     energy. Aggressive, logical, direct, or male individuals dominating
+//     the situation.
+//   Even signs (Taurus, Cancer, Virgo, Scorpio, Capricorn, Pisces): feminine
+//     energy. Intuitive, defensive, risk-averse, administrative, or female
+//     individuals controlling the outcome.
+//
+// Used to profile two actors: the querent (from the Lagna sign) and whoever
+// controls the bottleneck (from the target house's sign). This is a
+// structured fact only — the source material's own wording ("male
+// individuals", "female individuals") is a claim about a real person the
+// presentation layer must handle with care; see docs/RKP_WATCH_ENGINE.md.
+
+export type SignPolarity = 'masculine' | 'feminine';
+
+/** Odd signs (1,3,5,…) are masculine; even signs (2,4,6,…) are feminine. */
+export function polarityOfSign(sign: SignIndex): SignPolarity {
+  return sign % 2 === 1 ? 'masculine' : 'feminine';
+}
+
 export function directionOfSign(sign: SignIndex): VastuDirection {
   return SIGN_DIRECTIONS[sign - 1] as VastuDirection;
 }

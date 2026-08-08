@@ -20,9 +20,9 @@
  *     is looked up on the watch wheel.
  *
  *  3. HOUSE-LORD ANALYSIS — the activated house's (whole) sign has a
- *     classical lord. That lord's condition is read via the standard
- *     classical toolkit (confirmed default, not sourced from the RKP
- *     material itself — see module docstring on houseLordAnalysis()):
+ *     classical lord. That lord's condition is read via the classical
+ *     toolkit in classicalToolkit.ts (the RKP material specifies which
+ *     factors matter; the numeric weights are a confirmed default):
  *       - dignity: exalted/own sign = support; debilitated = obstruction
  *       - conjunction: benefic/malefic planets sharing the lord's clock-house
  *       - aspect (drishti): 7th-house aspect for all planets, plus Mars'
@@ -30,6 +30,16 @@
  *       - combustion: weakens (obstruction)
  *       - retrograde: recorded as a modifier (delay), not scored directly
  *     Net tally -> supported / obstructed / mixed.
+ *
+ *  3b. VERDICT TRIAD — the same analysis is run on all three vital points
+ *     the RKP material requires: the 1st house (querent's energy), the
+ *     target house (the query), and the 11th house (fulfilment). Adds the
+ *     natural friendship/enmity clash between the 1st and target rulers
+ *     (planetaryRelations.ts), the Rahu/Ketu/Mars affliction and
+ *     Jupiter/Venus rescue tests on the target and 11th houses, and the
+ *     odd/even polarity profile of the querent and of whoever controls the
+ *     matter. Its four-state outcome (positive/delayed/blocked/mixed) is
+ *     the PRIMARY driver of the verdict — see rkpTriad.ts.
  *
  *  4. MOON CONFIRMATION — Moon's REAL sub-lord (full ephemeris precision,
  *     unaffected by the whole-sign wheel) is placed on the clock wheel and
@@ -43,10 +53,11 @@
  *     lord from). Each witness's clock-house is checked against favorable/
  *     denial houses.
  *
- *  6. VERDICT — house-lord direction + Moon confirmation + ruling-planet
- *     majority combine into one of six native states (YES_STRONG,
- *     YES_CONDITIONAL, DELAY, WAIT, NO_DENIED, INCONCLUSIVE), collapsed onto
- *     the shared VerdictKind for interop with the rest of the app.
+ *  6. VERDICT — the triad outcome (step 3b) sets the base state; Moon
+ *     confirmation and ruling-planet majority then refine it into one of six
+ *     native states (YES_STRONG, YES_CONDITIONAL, DELAY, WAIT, NO_DENIED,
+ *     INCONCLUSIVE), collapsed onto the shared VerdictKind for interop with
+ *     the rest of the app. See combineVerdict().
  *
  *  7. TIMING — reuses computeConvergenceTiming() unchanged: dasha/antardasha/
  *     pratyantardasha convergence is astronomical, not house-model-specific.
@@ -71,11 +82,16 @@
  *     — they score 0/neutral rather than being invented. See
  *     computeConfidence().
  *
- *  10. NARRATION / REMEDY — EN/UR/HI narration per native state, and a
- *     remedy keyed on the activated house's lord (the decisive planet in
- *     this engine, playing the role Moon's sub-lord plays in judgeHorary).
- *     Reuses the same remedy table and Arabic naming as judgeHorary.ts —
- *     see remedyTable.ts / arabicNames.ts.
+ *  10. NARRATION / REMEDY — EN/UR/HI narration per native state, and TWO
+ *     remedy tracks kept side by side:
+ *       - `remedy`: the app's spiritual remedy keyed on the activated
+ *         house's lord (remedyTable.ts / arabicNames.ts), as before.
+ *       - `materialRemedy`: RKP's own material micro-remedies — clock
+ *         acceleration, corner clearance, planetary action window
+ *         (rkpRemedy.ts). The RKP material's remedial rules would forbid
+ *         the spiritual track; the Shams al-Asrār specification requires
+ *         it. Both are emitted as structured facts and the choice is left
+ *         to the presentation layer — see rkpRemedy.ts's scope note.
  *
  * Deliberately NOT yet included (explicit scope-out, not an oversight):
  *   - the 8 classical strictures (Via Combusta, Void of Course, etc.)
@@ -86,7 +102,7 @@
  * WatchVerdict. No Date.now(), no Math.random().
  */
 
-import type { Chart, HouseIndex, Planet, SignIndex } from '../../types/chart';
+import type { Chart, HouseIndex, Planet } from '../../types/chart';
 import { PLANETS } from '../../types/chart';
 import type { ClassifiedQuestion } from '../../types/question';
 import type { ReasoningStep, VerdictKind, VerdictNarration } from '../../types/verdict';
@@ -107,7 +123,6 @@ import {
   computeWatchChart,
   clockHouseOfPlanet,
   signLordOf,
-  directionOfHouse,
   directionOfSign,
   type WatchChart,
 } from '../../primitives/watchChart';
@@ -115,7 +130,14 @@ import { calculateDayLord } from '../../primitives/rulingPlanets';
 import { computeConvergenceTiming } from './timing';
 import { remedyForPlanet } from './remedyTable';
 import { toArabic } from './arabicNames';
+import { BENEFICS } from './classicalToolkit';
+import { analyseTriad, type TriadAnalysis } from './rkpTriad';
+import { computeRKPMaterialRemedy } from './rkpRemedy';
 import { ENGINE_VERSION } from '../../primitives/chartBuilder';
+
+// Re-exported for callers that analysed a single house before the triad
+// protocol landed.
+export { houseLordAnalysis } from './classicalToolkit';
 
 // ── Deterministic ID — WATCH-namespaced ────────────────────────────────────
 
@@ -141,149 +163,6 @@ function deterministicId(chart: Chart, question: ClassifiedQuestion): string {
 
 function step(ruleId: string, description: string): ReasoningStep {
   return { ruleId: `WATCH_${ruleId}`, description, weight: 0 };
-}
-
-// ── Classical toolkit: dignity, benefic/malefic, aspects (confirmed default) ──
-
-const OWN_SIGNS: Readonly<Record<Planet, readonly SignIndex[]>> = {
-  Sun: [5],
-  Moon: [4],
-  Mars: [1, 8],
-  Mercury: [3, 6],
-  Jupiter: [9, 12],
-  Venus: [2, 7],
-  Saturn: [10, 11],
-  Rahu: [],
-  Ketu: [],
-};
-
-const EXALTED_SIGNS: Readonly<Record<Planet, readonly SignIndex[]>> = {
-  Sun: [1],
-  Moon: [2],
-  Mars: [10],
-  Mercury: [6],
-  Jupiter: [4],
-  Venus: [12],
-  Saturn: [7],
-  Rahu: [2, 3],
-  Ketu: [8, 9],
-};
-
-const DEBILITATED_SIGNS: Readonly<Record<Planet, readonly SignIndex[]>> = {
-  Sun: [7],
-  Moon: [8],
-  Mars: [4],
-  Mercury: [12],
-  Jupiter: [10],
-  Venus: [6],
-  Saturn: [1],
-  Rahu: [8, 9],
-  Ketu: [2, 3],
-};
-
-/**
- * Simplified natural benefic/malefic classification (Moon always benefic
- * here — see module docstring). Exhaustive over the 9 grahas: anything not
- * in BENEFICS (Sun, Mars, Saturn, Rahu, Ketu) is treated as malefic.
- */
-const BENEFICS: ReadonlySet<Planet> = new Set(['Jupiter', 'Venus', 'Mercury', 'Moon']);
-
-function dignityOf(planet: Planet, sign: SignIndex): 'exalted' | 'own' | 'debilitated' | 'neutral' {
-  if (EXALTED_SIGNS[planet].includes(sign)) {
-    return 'exalted';
-  }
-  if (OWN_SIGNS[planet].includes(sign)) {
-    return 'own';
-  }
-  if (DEBILITATED_SIGNS[planet].includes(sign)) {
-    return 'debilitated';
-  }
-  return 'neutral';
-}
-
-/** Houses aspected (drishti) by a planet at `fromHouse` — 7th for all, plus special rules. */
-function aspectedHousesFrom(planet: Planet, fromHouse: HouseIndex): HouseIndex[] {
-  const offsets = [6]; // 7th-house aspect, universal
-  if (planet === 'Mars') {
-    offsets.push(3, 7); // 4th, 8th
-  } else if (planet === 'Jupiter') {
-    offsets.push(4, 8); // 5th, 9th
-  } else if (planet === 'Saturn') {
-    offsets.push(2, 9); // 3rd, 10th
-  }
-  return offsets.map(o => (((fromHouse - 1 + o) % 12) + 1) as HouseIndex);
-}
-
-// ── House-lord support/obstruction analysis ────────────────────────────────
-
-/**
- * Analyze the lord of `house` on the watch wheel using the classical
- * toolkit confirmed for this engine: dignity, conjunction, aspect (drishti),
- * combustion, retrograde. This specific scoring is a standard technique
- * applied to the RKP watch framework — not itself sourced from the RKP
- * material, which describes the concept (support vs. obstruction) without
- * giving exact weights. See module docstring.
- */
-export function houseLordAnalysis(
-  chart: Chart,
-  watch: WatchChart,
-  house: HouseIndex,
-): HouseLordAnalysis {
-  const sign = watch.houseSigns[house - 1] as SignIndex;
-  const direction = directionOfHouse(house, watch);
-  const lord = signLordOf(sign);
-  const lordHouse = clockHouseOfPlanet(lord, chart, watch);
-  const dignity = dignityOf(lord, chart.planets[lord].sign);
-
-  const conjunctSupport: Planet[] = [];
-  const conjunctObstruction: Planet[] = [];
-  const aspectSupport: Planet[] = [];
-  const aspectObstruction: Planet[] = [];
-
-  for (const p of PLANETS) {
-    if (p === lord) {
-      continue;
-    }
-    const pHouse = clockHouseOfPlanet(p, chart, watch);
-    if (pHouse === lordHouse) {
-      (BENEFICS.has(p) ? conjunctSupport : conjunctObstruction).push(p);
-    }
-    if (aspectedHousesFrom(p, pHouse).includes(lordHouse)) {
-      (BENEFICS.has(p) ? aspectSupport : aspectObstruction).push(p);
-    }
-  }
-
-  const combust = chart.planets[lord].isCombust;
-  const retrograde = chart.planets[lord].isRetrograde;
-
-  const supportScore =
-    (dignity === 'exalted' || dignity === 'own' ? 2 : 0) +
-    (dignity === 'debilitated' ? -2 : 0) +
-    conjunctSupport.length -
-    conjunctObstruction.length +
-    aspectSupport.length -
-    aspectObstruction.length -
-    (combust ? 1 : 0);
-
-  const verdict: SupportDirection =
-    supportScore > 0 ? 'supported' : supportScore < 0 ? 'obstructed' : 'mixed';
-
-  return {
-    house,
-    sign,
-    direction,
-    lord,
-    lordHouse,
-    dignity,
-    conjunctSupport: Object.freeze(conjunctSupport),
-    conjunctObstruction: Object.freeze(conjunctObstruction),
-    aspectSupport: Object.freeze(aspectSupport),
-    aspectObstruction: Object.freeze(aspectObstruction),
-    retrograde,
-    combust,
-    supportScore,
-    verdict,
-  };
 }
 
 // ── Moon confirmation ──────────────────────────────────────────────────────
@@ -395,36 +274,45 @@ const NATIVE_TO_VERDICT_KIND: Readonly<Record<WatchVerdictState, VerdictKind>> =
   INCONCLUSIVE: 'UNCLEAR',
 };
 
+/**
+ * The triad outcome sets the base state; the Moon and the ruling witnesses
+ * then refine it.
+ *
+ * The triad protocol (rkpTriad.ts) is the RKP material's own definitive
+ * Yes/No/Delayed rule, so it leads. The Moon sub-lord and ruling-planet
+ * witnesses are the confirmation layer the earlier RKP material describes,
+ * and they are kept in that role: they can sharpen a positive triad into
+ * YES_STRONG, soften it to YES_CONDITIONAL, or — when both contradict the
+ * triad outright — reduce it to INCONCLUSIVE. They never overturn a
+ * `blocked` triad, which the material treats as structural.
+ */
 function combineVerdict(
-  houseLord: HouseLordAnalysis,
+  triad: TriadAnalysis,
   moon: MoonConfirmation,
   ruling: RulingConfirmation,
 ): WatchVerdictState {
-  if (houseLord.verdict === 'obstructed') {
-    return 'NO_DENIED';
-  }
-
   const rulingFavors = ruling.favorableWitnesses.length > ruling.denialWitnesses.length;
   const rulingDenies = ruling.denialWitnesses.length > ruling.favorableWitnesses.length;
+  const witnessesContradict = moon.agreement === 'disagrees' && rulingDenies;
 
-  if (houseLord.verdict === 'supported') {
-    if (houseLord.retrograde) {
-      return 'DELAY';
-    }
-    if (moon.agreement === 'agrees' && rulingFavors) {
-      return 'YES_STRONG';
-    }
-    if (moon.agreement === 'disagrees' && rulingDenies) {
-      return 'INCONCLUSIVE';
-    }
-    return 'YES_CONDITIONAL';
-  }
+  switch (triad.outcome) {
+    case 'blocked':
+      return 'NO_DENIED';
 
-  // houseLord.verdict === 'mixed'
-  if (moon.agreement === 'disagrees' || rulingDenies) {
-    return 'INCONCLUSIVE';
+    case 'delayed':
+      // "It will happen, but only after strict corrections." Both witnesses
+      // contradicting means even the delay is not reliably readable.
+      return witnessesContradict ? 'INCONCLUSIVE' : 'DELAY';
+
+    case 'positive':
+      if (witnessesContradict) {
+        return 'INCONCLUSIVE';
+      }
+      return moon.agreement === 'agrees' && rulingFavors ? 'YES_STRONG' : 'YES_CONDITIONAL';
+
+    case 'mixed':
+      return moon.agreement === 'disagrees' || rulingDenies ? 'INCONCLUSIVE' : 'WAIT';
   }
-  return 'WAIT';
 }
 
 // ── Confidence (7-factor, 50-point-base model — 5 of 7 factors supported) ───
@@ -570,12 +458,23 @@ export function judgeRKPWatch(
   const { favorable, denial, primary } = matrix;
   const primaryHouse = primary as HouseIndex;
 
-  const houseLord = houseLordAnalysis(chart, watch, primaryHouse);
+  const triad = analyseTriad(chart, watch, primaryHouse);
+  const houseLord = triad.target;
   reasoning.push(
     step(
       'HOUSE_LORD',
       `House ${primaryHouse} (sign #${houseLord.sign}, direction ${houseLord.direction}) lord ${houseLord.lord} ` +
         `in clock-house ${houseLord.lordHouse}, dignity=${houseLord.dignity}, score=${houseLord.supportScore} -> ${houseLord.verdict}`,
+    ),
+  );
+  reasoning.push(
+    step(
+      'TRIAD',
+      `1st=${triad.lagna.lord} (${triad.querentPolarity}) / ${primaryHouse}th=${triad.target.lord} (${triad.controllerPolarity}) / 11th=${triad.fulfilment.lord}; ` +
+        `ruler relation=${triad.rulerRelation}; ` +
+        `target malefics=[${triad.targetPressure.blockingMalefics.join(',')}] benefics=[${triad.targetPressure.rescuingBenefics.join(',')}]; ` +
+        `11th malefics=[${triad.fulfilmentPressure.blockingMalefics.join(',')}] benefics=[${triad.fulfilmentPressure.rescuingBenefics.join(',')}] ` +
+        `-> ${triad.outcome} (${triad.outcomeReason})`,
     ),
   );
 
@@ -605,9 +504,9 @@ export function judgeRKPWatch(
     ),
   );
 
-  const nativeState = combineVerdict(houseLord, moon, ruling);
+  const nativeState = combineVerdict(triad, moon, ruling);
   const verdict = NATIVE_TO_VERDICT_KIND[nativeState];
-  reasoning.push(step('VERDICT', `${nativeState} -> ${verdict}`));
+  reasoning.push(step('VERDICT', `triad=${triad.outcome} -> ${nativeState} -> ${verdict}`));
 
   const confirmedSignificators = ruling.favorableWitnesses;
   const timing =
@@ -635,6 +534,16 @@ export function judgeRKPWatch(
 
   const narration = buildNarration(nativeState, qType, houseLord.lord);
   const remedy = remedyForPlanet(houseLord.lord);
+  const materialRemedy = computeRKPMaterialRemedy(chart, watch, triad);
+  reasoning.push(
+    step(
+      'MATERIAL_REMEDY',
+      `Clear ${materialRemedy.clearance.direction} corner of [${materialRemedy.clearance.objects.join(', ')}]; ` +
+        `act in the hora/weekday of ${materialRemedy.window.actionPlanet}` +
+        (materialRemedy.window.weekday !== undefined ? ` (${materialRemedy.window.weekday})` : '') +
+        `; advance the watch 2-3 min (${materialRemedy.clock.minutesToNextBucket} min to the next segment)`,
+    ),
+  );
 
   const retrogradeFlags: Planet[] = [];
   const combustFlags: Planet[] = [];
@@ -661,9 +570,11 @@ export function judgeRKPWatch(
     denialHouses: denial as HouseIndex[],
     primaryHouse,
     houseLord,
+    triad,
     moonConfirmation: moon,
     rulingConfirmation: ruling,
     vastu,
+    materialRemedy,
     verdict,
     nativeState,
     confidence,

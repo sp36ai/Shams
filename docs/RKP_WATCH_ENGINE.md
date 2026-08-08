@@ -55,7 +55,113 @@ Sagittarius/11th, Capricorn/12th — see
 - `src/astrology/kp/judgment/judgeRKPWatch.ts` — the judgment engine
   (house-lord analysis, Moon confirmation, ruling-planet confirmation,
   verdict combination, timing).
+- `src/astrology/kp/judgment/classicalToolkit.ts` — dignity, benefic/malefic,
+  drishti, occupation/aspect helpers, `houseLordAnalysis()`.
+- `src/astrology/kp/judgment/rkpTriad.ts` — the Verdict Triad protocol.
+- `src/astrology/kp/judgment/rkpRemedy.ts` — RKP's material micro-remedies.
+- `src/astrology/primitives/planetaryRelations.ts` — natural friendship/enmity.
 - `src/astrology/types/watchVerdict.ts` — the `WatchVerdict` output contract.
+
+## The Verdict Triad
+
+The engine originally judged the target house alone. The RKP material's
+"CORE PREDICTIVE PROTOCOL" makes the verdict a **three-point** relationship:
+
+| Point | House | Meaning |
+|---|---|---|
+| Querent | 1st | the seeker's own energy and capacity |
+| Query | target house (from `HOUSE_MATRIX`) | the matter itself |
+| Fulfilment | 11th | whether the desire actually materialises |
+
+`analyseTriad()` runs `houseLordAnalysis()` on all three, then adds:
+
+- **Ruler clash** — the natural friendship/enmity of the 1st-house ruler
+  and the target-house ruler (`planetaryRelations.ts`). The material's own
+  example: Sun (Leo Lagna) vs. Saturn (Capricorn 6th) = enemies = "hard
+  bureaucratic delay, rigid rules, refusal to adjust".
+- **Malefic affliction / benefic rescue** on the target and 11th houses —
+  Rahu/Ketu/Mars occupying or aspecting vs. Jupiter/Venus doing the same.
+- **Polarity profiles** — odd Lagna sign = masculine/direct querent, even
+  target sign = feminine/administrative controller.
+
+### The outcome ladder
+
+The material names three outcomes but not their precedence, and a chart can
+satisfy more than one. They are resolved most-severe-first:
+
+1. **blocked** — the target or 11th house is *heavily* afflicted by
+   Rahu/Ketu/Mars with zero benefic support.
+2. **delayed** — the target ruler is weak (debilitated, combust, or a
+   net-obstructed tally), retrograde, under Saturn's aspect, or clashing
+   with the Lagna ruler.
+3. **positive** — friendly or strong rulers (or Jupiter on the target) and
+   an 11th house clear of malefics.
+4. **mixed** — none of the three fully met; reported as unresolved rather
+   than forced into one of them.
+
+`combineVerdict()` then lets the Moon sub-lord and the ruling witnesses
+sharpen `positive` into `YES_STRONG`, soften it to `YES_CONDITIONAL`, or —
+when both contradict outright — reduce it to `INCONCLUSIVE`. They never
+overturn a `blocked` triad, which the material treats as structural.
+
+### Three readings that needed a judgement call
+
+These are documented rather than silently decided — all three are
+adjustable:
+
+1. **A house's own lord never afflicts it.** Read literally, "Mars sitting
+   in your 6th house" would make every Mars-ruled house self-afflicting the
+   moment Mars occupies its own sign — classically the opposite of the
+   truth. The lord's condition is judged separately by
+   `houseLordAnalysis()`; the affliction test is about intruders only.
+2. **"Heavily afflicted" needs a threshold.** Mars alone aspects three
+   houses, so a literal reading would deny most charts. Heavy = a malefic
+   actually *occupying* the house, or two or more bearing on it.
+3. **A weak ruler delays, it does not deny.** The material puts "the target
+   house ruler is weak" under *Delayed* ("it WILL happen, but only after
+   strict corrections") and reserves denial for malefic affliction. Denial
+   is therefore reachable only through rung 1.
+
+## Planetary friendship — a labelled classical default
+
+The material supplies the rule and two examples (Sun/Saturn = enemies,
+Moon/Jupiter = friendly) but not the full table. `planetaryRelations.ts`
+uses the standard classical *naisargika maitri* set, which reproduces both
+examples exactly. The classical table is directional (Jupiter counts the
+Moon a friend; the Moon counts Jupiter neutral), so `relationBetween()`
+combines the two directions: enmity from either side wins, then friendship
+from either side, else neutral — which is what makes Moon/Jupiter come out
+"friendly" as the material states.
+
+**Rahu and Ketu are neutral to everything.** Classical sources disagree on
+natural friendships for the shadow grahas and the RKP material gives none,
+so none was invented. Their malefic role is captured separately by the
+triad's affliction test.
+
+## RKP's material remedies
+
+`rkpRemedy.ts` implements the material's three micro-remedies as structured
+facts (no prose — that stays in the presentation layer):
+
+1. **Clock acceleration** — the fixed 2–3 minute advance, plus the derived
+   `minutesToNextBucket` so the presentation layer can tell whether that
+   advance would actually cross into the next Lagna segment right now.
+2. **Material clearance** — the physical direction of the target house, the
+   blocking planets bearing on it, and the object categories to clear.
+3. **Planetary timing window** — the Lagna lord (and its weekday), the
+   11th lord, the current hora lord, and whether the action planet's own
+   hora is running now.
+
+⚠ **Two open items on this module:**
+
+- The material names object mappings for **only three planets** ("rusted
+  iron for Saturn, faulty wiring for Mars, cluttered paper for Mercury").
+  Sun, Moon, Jupiter, Venus, Rahu and Ketu fall through to the material's
+  own general list rather than getting invented mappings. Needs owner input.
+- The material **forbids** gemstones, fasts, mantras and ritual donations —
+  which would rule out the app's existing Qur'an/Asmā'/zikr/sadaqah remedy
+  track. Both are emitted side by side (`remedy` and `materialRemedy`) and
+  the choice is left to the presentation layer. Needs an owner decision.
 
 ## The one confirmed-default piece
 
@@ -155,6 +261,15 @@ Implemented and wired in (see `computeConfidence()` / `buildNarration()` in
   rotates which house is "self") — product/UX feature, not yet built.
 - **Multi-Cusp Agreement and Chart Cleanliness confidence factors** — part
   of the documented model, blocked on the strictures work above.
+- **Confidence factors for the triad** — the confidence model predates the
+  triad protocol and still scores only the target house's clarity. The
+  ruler clash and the 11th-house condition do not yet move the number.
+- **The intent→house table.** The material's coarse intent list disagrees
+  with the owner-signed `HOUSE_MATRIX` in three places (loans → 6th vs.
+  `finance`→2nd; education → 5th vs. 4th; "liquid cash" → 11th). The
+  owner-signed table is authoritative and was not changed. The 11th house
+  is now always read as the fulfilment point regardless of question type,
+  which covers the material's "desires fulfilled → 11th" rule implicitly.
 
 ## Production wiring
 

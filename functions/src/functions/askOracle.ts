@@ -221,7 +221,9 @@ function buildOracleUserMessage(params: {
     `SECONDARY_THEME: ${anchors.secondaryTheme}\n` +
     `TIMING: ${anchors.timing}\n` +
     `DIRECTION: ${anchors.direction}\n` +
-    `REVERSAL: ${anchors.reversal}`;
+    `REVERSAL: ${anchors.reversal}\n` +
+    `RULER_CLASH: ${anchors.rulerClash}\n` +
+    `CONTROLLER_STYLE: ${anchors.controllerStyle}`;
   if (seekerName) {
     msg += `\nSEEKER_NAME: ${seekerName}`;
   }
@@ -564,6 +566,35 @@ export const askOracle = onCall(
         nativeState: verdict.nativeState,
         houseLordDirection: verdict.houseLord.direction,
         vastuAfflictedDirections: verdict.vastu.afflictedDirections as string[],
+        // The Verdict Triad — 1st house (querent) / target house (the query)
+        // / 11th house (fulfilment) — and RKP's own material remedies.
+        triad: {
+          lagnaLord: verdict.triad.lagna.lord,
+          targetLord: verdict.triad.target.lord,
+          fulfilmentLord: verdict.triad.fulfilment.lord,
+          rulerRelation: verdict.triad.rulerRelation,
+          outcome: verdict.triad.outcome,
+          outcomeReason: verdict.triad.outcomeReason,
+          querentPolarity: verdict.triad.querentPolarity,
+          controllerPolarity: verdict.triad.controllerPolarity,
+          targetBlockingMalefics: verdict.triad.targetPressure.blockingMalefics as string[],
+          fulfilmentBlockingMalefics: verdict.triad.fulfilmentPressure.blockingMalefics as string[],
+        },
+        materialRemedy: {
+          clearanceDirection: verdict.materialRemedy.clearance.direction,
+          clearanceObjects: verdict.materialRemedy.clearance.objects as string[],
+          afflictingPlanets: verdict.materialRemedy.clearance.afflictingPlanets as string[],
+          actionPlanet: verdict.materialRemedy.window.actionPlanet,
+          actionWeekday: verdict.materialRemedy.window.weekday,
+          currentHoraLord: verdict.materialRemedy.window.currentHoraLord,
+          horaOpenNow: verdict.materialRemedy.window.horaOpenNow,
+          clockAdvanceMinutes: {
+            min: verdict.materialRemedy.clock.advanceMinutesMin,
+            max: verdict.materialRemedy.clock.advanceMinutesMax,
+          },
+          minutesToNextSegment: verdict.materialRemedy.clock.minutesToNextBucket,
+          crossesIntoNextSegment: verdict.materialRemedy.clock.crossesIntoNextSegment,
+        },
         quotaRemaining: remaining,
         computedAt: now,
         planetDegrees,

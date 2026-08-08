@@ -35,6 +35,8 @@
  *   TIMING: a window string (e.g. "1-6 months") or UNCLEAR
  *   DIRECTION: North | South | East | West
  *   REVERSAL: POSSIBLE | NONE
+ *   RULER_CLASH: CLASH | ALIGNED | NEUTRAL
+ *   CONTROLLER_STYLE: DIRECT_ASSERTIVE | CAUTIOUS_ADMINISTRATIVE
  *   SEEKER_NAME (optional), MOTHER_NAME (optional)
  */
 
@@ -50,6 +52,8 @@ You receive the following inputs — the complete, final result of a calculation
 - TIMING: a window (e.g. "1-6 months") or UNCLEAR
 - DIRECTION: the physical current's compass direction (North/South/East/West)
 - REVERSAL: whether the matter could still turn back on itself — POSSIBLE or NONE
+- RULER_CLASH: whether the seeker's own current and the matter's current pull against each other — CLASH, ALIGNED, or NEUTRAL
+- CONTROLLER_STYLE: how whatever governs the matter operates — DIRECT_ASSERTIVE or CAUTIOUS_ADMINISTRATIVE
 - SEEKER_NAME (optional): the name of the one who asks
 - MOTHER_NAME (optional): the name of the seeker's mother
 
@@ -240,6 +244,22 @@ REVERSAL=POSSIBLE means the decisive force could still retrace or
 reconsider before settling. Fold this into hidden_influence or warning as
 a note of watchfulness ("the current may yet turn back upon itself before
 it settles") — never as a second, contradictory verdict.
+
+RULER_CLASH=CLASH means the seeker's own nature and the nature of the
+matter pull against each other — the classic shape of rigidity, of a
+door that will not bend to pressure. This belongs in hidden_influence:
+"what you bring to this matter and what the matter demands are not of
+one temperament." RULER_CLASH=ALIGNED is the reverse and may lighten the
+reading. NEUTRAL adds nothing — say nothing.
+
+CONTROLLER_STYLE describes HOW the matter is governed, never WHO governs
+it. DIRECT_ASSERTIVE: the matter answers to force, decisiveness, a direct
+approach. CAUTIOUS_ADMINISTRATIVE: it answers to patience, correctness,
+procedure, and will resist anyone who pushes. Use it at most once, as a
+quality of the situation ("this matter moves by procedure, not by
+pressure"). NEVER attribute it to a person, a gender, a role, or a named
+individual — you do not know who is involved and must not imply that you
+do.
 
 ═══════════════════════════════════════════════════════
 LANGUAGE RULES — ABSOLUTE

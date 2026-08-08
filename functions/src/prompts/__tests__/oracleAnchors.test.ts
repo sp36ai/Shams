@@ -18,6 +18,9 @@ function makeVerdict(overrides: {
   denialWitnesses?: string[];
   afflictedDirections?: string[];
   timing?: { window: string; range: { min: number; max: number } };
+  targetBlockingMalefics?: string[];
+  rulerRelation?: 'friend' | 'neutral' | 'enemy';
+  controllerPolarity?: 'masculine' | 'feminine';
 }): WatchVerdict {
   return {
     nativeState: overrides.nativeState ?? 'YES_STRONG',
@@ -37,6 +40,13 @@ function makeVerdict(overrides: {
     },
     vastu: {
       afflictedDirections: overrides.afflictedDirections ?? [],
+    },
+    triad: {
+      targetPressure: {
+        blockingMalefics: overrides.targetBlockingMalefics ?? [],
+      },
+      rulerRelation: overrides.rulerRelation ?? 'neutral',
+      controllerPolarity: overrides.controllerPolarity ?? 'masculine',
     },
     timing: overrides.timing,
   } as unknown as WatchVerdict;
@@ -145,5 +155,35 @@ describe('deriveOracleAnchors', () => {
 
     const withoutTiming = deriveOracleAnchors(makeVerdict({ timing: undefined }));
     expect(withoutTiming.timing).toBe('UNCLEAR');
+  });
+
+  it('a malefic on the house of the matter outranks one troubling its lord', () => {
+    const anchors = deriveOracleAnchors(
+      makeVerdict({
+        nativeState: 'NO_DENIED',
+        targetBlockingMalefics: ['Rahu'],
+        conjunctObstruction: ['Saturn'],
+      }),
+    );
+    expect(anchors.obstruction).toBe('Rahu');
+  });
+
+  it('rulerClash maps the natural friendship of the two rulers', () => {
+    expect(deriveOracleAnchors(makeVerdict({ rulerRelation: 'enemy' })).rulerClash).toBe('CLASH');
+    expect(deriveOracleAnchors(makeVerdict({ rulerRelation: 'friend' })).rulerClash).toBe(
+      'ALIGNED',
+    );
+    expect(deriveOracleAnchors(makeVerdict({ rulerRelation: 'neutral' })).rulerClash).toBe(
+      'NEUTRAL',
+    );
+  });
+
+  it('controllerStyle carries only the behavioural half of the polarity profile', () => {
+    expect(
+      deriveOracleAnchors(makeVerdict({ controllerPolarity: 'masculine' })).controllerStyle,
+    ).toBe('DIRECT_ASSERTIVE');
+    expect(
+      deriveOracleAnchors(makeVerdict({ controllerPolarity: 'feminine' })).controllerStyle,
+    ).toBe('CAUTIOUS_ADMINISTRATIVE');
   });
 });

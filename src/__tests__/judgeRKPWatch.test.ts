@@ -110,6 +110,14 @@ function makeChart(
   };
 }
 
+const PROPERTY_Q: ClassifiedQuestion = {
+  text: 'Will the house purchase go through?',
+  lang: 'en',
+  qType: 'property',
+  confidence: 0.95,
+  matchedKeywords: ['house', 'property'],
+};
+
 const CAREER_Q: ClassifiedQuestion = {
   text: 'Will I get the promotion this year?',
   lang: 'en',
@@ -155,17 +163,36 @@ describe('judgeRKPWatch — Vastu scan', () => {
   });
 });
 
-describe('judgeRKPWatch — house-lord dignity drives the base direction', () => {
-  test('YES_STRONG: Mars own-sign, Moon sub-lord agrees, ruling planets favor', () => {
+/**
+ * The Verdict Triad now drives the native state (rkpTriad.ts). All expected
+ * values below were verified empirically against the real engine before
+ * being hardcoded — same convention as the rest of this file.
+ *
+ * On this Aquarius wheel the Lagna lord is always Saturn, so a CAREER
+ * question (house 10 = Scorpio, lord Mars) always carries the Saturn/Mars
+ * natural enmity the material calls a "hard bureaucratic delay". A PROPERTY
+ * question (house 4 = Taurus, lord Venus) is the clean counterpart:
+ * Saturn and Venus are natural friends.
+ */
+describe('judgeRKPWatch — the Verdict Triad drives the native state', () => {
+  test('YES_STRONG: friendly rulers, strong target lord, 11th clear, witnesses agree', () => {
+    // Sun -> Cancer (h6) and Saturn -> Sagittarius (h11) lift the two aspects
+    // that were obstructing Venus, leaving the 4th lord clean in its own sign.
     const chart = makeChart(
-      { Saturn: 255, Mercury: 105 },
-      {
-        Moon: { subLord: 'Jupiter', nakshatraLord: 'Mercury' },
-      },
+      { Sun: 105, Saturn: 260 },
+      { Moon: { subLord: 'Jupiter', nakshatraLord: 'Mercury' } },
     );
-    const verdict = judgeRKPWatch(chart, CAREER_Q, { timezoneOffsetMinutes: 0 });
-    expect(verdict.houseLord.dignity).toBe('own');
-    expect(verdict.houseLord.verdict).toBe('supported');
+    const verdict = judgeRKPWatch(chart, PROPERTY_Q, { timezoneOffsetMinutes: 0 });
+
+    expect(verdict.triad.lagna.lord).toBe('Saturn');
+    expect(verdict.triad.target.lord).toBe('Venus');
+    expect(verdict.triad.fulfilment.lord).toBe('Jupiter');
+    expect(verdict.triad.rulerRelation).toBe('friend');
+    expect(verdict.triad.target.dignity).toBe('own');
+    expect(verdict.triad.target.verdict).toBe('supported');
+    expect(verdict.triad.fulfilmentPressure.heavilyAfflicted).toBe(false);
+    expect(verdict.triad.outcome).toBe('positive');
+
     expect(verdict.moonConfirmation.agreement).toBe('agrees');
     expect(verdict.rulingConfirmation.favorableWitnesses.length).toBeGreaterThan(
       verdict.rulingConfirmation.denialWitnesses.length,
@@ -173,44 +200,132 @@ describe('judgeRKPWatch — house-lord dignity drives the base direction', () =>
     expect(verdict.nativeState).toBe('YES_STRONG');
     expect(verdict.verdict).toBe('YES');
     expect(verdict.timing).toBeDefined();
-    // 50 base + 20 (unambiguous) + 15 (agrees) + 15 (3 favorable witnesses) + 0 (not retrograde) + 5 (GPS) = 105 -> clamped 100
+    // 50 base + 20 (unambiguous) + 15 (agrees) + 15 (2 favorable witnesses ->
+    // overlap 2 scores 10) ... verified as 100 (clamped) against the engine.
     expect(verdict.confidence).toBe(100);
-    expect(verdict.narration.en).toContain('career');
-    expect(verdict.remedy?.planet).toBe('Mars');
+    expect(verdict.remedy?.planet).toBe('Venus');
   });
 
-  test('DELAY: same as YES_STRONG but Mars (the house lord) is retrograde', () => {
-    const chart = makeChart(
-      { Saturn: 255, Mercury: 105 },
-      {
-        Moon: { subLord: 'Jupiter', nakshatraLord: 'Mercury' },
-        Mars: { isRetrograde: true },
-      },
-    );
+  test('DELAY: enemy rulers (Saturn vs Mars) delay an otherwise strong target lord', () => {
+    // The material's signature case: "Enemy Relationship (e.g. Sun vs.
+    // Saturn): hard bureaucratic delay, rigid rules, refusal to adjust."
+    const chart = makeChart();
     const verdict = judgeRKPWatch(chart, CAREER_Q, { timezoneOffsetMinutes: 0 });
-    expect(verdict.houseLord.verdict).toBe('supported');
-    expect(verdict.houseLord.retrograde).toBe(true);
+
+    expect(verdict.triad.rulerRelation).toBe('enemy');
+    expect(verdict.triad.target.verdict).toBe('supported'); // Mars is in its own sign
+    expect(verdict.triad.outcome).toBe('delayed');
+    expect(verdict.triad.outcomeReason).toContain('ruler clash');
     expect(verdict.nativeState).toBe('DELAY');
     expect(verdict.verdict).toBe('DELAYED');
-    // Same as YES_STRONG but retrogradeAffliction kicks in: 105 - 5 = 100 (still clamped)
-    expect(verdict.confidenceFactors.retrogradeAffliction).toBe(-5);
+    expect(verdict.confidence).toBe(65);
     expect(verdict.narration.en).toContain('deferred');
   });
 
-  test('NO_DENIED: Mars debilitated in the house-10 sign', () => {
-    // Mars debilitated in Cancer (sign 4) instead of its own Scorpio placement.
-    const chart = makeChart({ Mars: 105 });
+  test('DELAY: a retrograde target lord outranks the ruler clash as the reason', () => {
+    const chart = makeChart({}, { Mars: { isRetrograde: true } });
+    const verdict = judgeRKPWatch(chart, CAREER_Q, { timezoneOffsetMinutes: 0 });
+    expect(verdict.houseLord.retrograde).toBe(true);
+    expect(verdict.triad.outcome).toBe('delayed');
+    expect(verdict.triad.outcomeReason).toContain('retrograde');
+    expect(verdict.nativeState).toBe('DELAY');
+  });
+
+  test('DELAY, not denial: a weak (debilitated) target lord only defers the matter', () => {
+    // Explicit regression guard on the material's own wording — "the target
+    // house ruler is weak, retrograde, or under the aspect of Saturn. It
+    // WILL happen, but only after strict corrections." Denial is reserved
+    // for malefic affliction of the target or 11th house.
+    const chart = makeChart({ Mars: 105 }); // Mars debilitated in Cancer
     const verdict = judgeRKPWatch(chart, CAREER_Q, { timezoneOffsetMinutes: 0 });
     expect(verdict.houseLord.dignity).toBe('debilitated');
     expect(verdict.houseLord.verdict).toBe('obstructed');
+    expect(verdict.triad.outcome).toBe('delayed');
+    expect(verdict.triad.outcomeReason).toContain('debilitated');
+    expect(verdict.nativeState).toBe('DELAY');
+    expect(verdict.verdict).toBe('DELAYED');
+    expect(verdict.confidence).toBe(95);
+    expect(verdict.timing).toBeDefined();
+  });
+
+  test('NO_DENIED: Rahu occupying the target house with no benefic on it', () => {
+    // "If Rahu, Ketu, or Mars are sitting in or aspecting your 6th house on
+    // the clock face, it indicates ... eventual rejection." Jupiter is moved
+    // off house 11 so nothing rescues the matter.
+    const chart = makeChart({ Rahu: 225, Jupiter: 15 });
+    const verdict = judgeRKPWatch(chart, CAREER_Q, { timezoneOffsetMinutes: 0 });
+    expect(verdict.triad.targetPressure.occupyingMalefics).toContain('Rahu');
+    expect(verdict.triad.targetPressure.supportingBenefics).toEqual([]);
+    expect(verdict.triad.targetPressure.afflicted).toBe(true);
+    expect(verdict.triad.outcome).toBe('blocked');
     expect(verdict.nativeState).toBe('NO_DENIED');
     expect(verdict.verdict).toBe('NO');
-    // 50 base + 20 (unambiguous, obstruction still counts as clear) + 15 (moon
-    // agrees the matter is denied) + 5 (1 favorable, 1 denial witness -> overlap 1)
-    // + 0 (not retrograde) + 5 (GPS) = 95
-    expect(verdict.confidence).toBe(95);
-    expect(verdict.remedy?.planet).toBe('Mars');
+    expect(verdict.confidence).toBe(65);
     expect(verdict.timing).toBeUndefined();
+  });
+
+  test('a lord sitting in its own house never counts as afflicting it', () => {
+    // Mars rules house 10 (Scorpio) and occupies it. Read literally the
+    // affliction rule would deny every such chart; classically a lord in its
+    // own domain is at its strongest.
+    const chart = makeChart();
+    const verdict = judgeRKPWatch(chart, CAREER_Q, { timezoneOffsetMinutes: 0 });
+    expect(verdict.triad.target.lord).toBe('Mars');
+    expect(verdict.triad.target.lordHouse).toBe(10);
+    expect(verdict.triad.targetPressure.blockingMalefics).not.toContain('Mars');
+  });
+
+  test('a single distant malefic aspect is pressure, not heavy affliction', () => {
+    // Mars in house 10 casts its 7th aspect onto house 4 (the property
+    // house) and nothing else malefic touches it.
+    const chart = makeChart();
+    const verdict = judgeRKPWatch(chart, PROPERTY_Q, { timezoneOffsetMinutes: 0 });
+    expect(verdict.triad.targetPressure.blockingMalefics).toEqual(['Mars']);
+    expect(verdict.triad.targetPressure.occupyingMalefics).toEqual([]);
+    expect(verdict.triad.targetPressure.heavilyAfflicted).toBe(false);
+    expect(verdict.triad.outcome).not.toBe('blocked');
+  });
+
+  test('polarity profiles: odd Lagna sign = masculine querent, even target sign = feminine controller', () => {
+    const chart = makeChart();
+    const verdict = judgeRKPWatch(chart, CAREER_Q, { timezoneOffsetMinutes: 0 });
+    expect(verdict.watch.lagnaSign).toBe(11); // Aquarius, odd
+    expect(verdict.triad.querentPolarity).toBe('masculine');
+    expect(verdict.triad.target.sign).toBe(8); // Scorpio, even
+    expect(verdict.triad.controllerPolarity).toBe('feminine');
+  });
+});
+
+describe('judgeRKPWatch — RKP material remedies', () => {
+  test('emits corner direction, planet-keyed objects, and the action window', () => {
+    const chart = makeChart();
+    const verdict = judgeRKPWatch(chart, PROPERTY_Q, { timezoneOffsetMinutes: 0 });
+    const { clock, clearance, window } = verdict.materialRemedy;
+
+    // House 4 is Taurus -> earth -> South, and Mars is the planet bearing on it.
+    expect(clearance.direction).toBe('South');
+    expect(clearance.afflictingPlanets).toEqual(['Mars']);
+    expect(clearance.objects).toEqual(['faulty wiring', 'broken glass']);
+
+    // Lagna is Aquarius -> Saturn -> Saturday.
+    expect(window.actionPlanet).toBe('Saturn');
+    expect(window.weekday).toBe('Saturday');
+    expect(window.fulfilmentPlanet).toBe('Jupiter');
+
+    // Local minute 51 -> 4 minutes remain in the Aquarius segment, so the
+    // material's 2-3 minute advance does NOT cross into the next one.
+    expect(clock.advanceMinutesMin).toBe(2);
+    expect(clock.advanceMinutesMax).toBe(3);
+    expect(clock.minutesToNextBucket).toBe(4);
+    expect(clock.crossesIntoNextSegment).toBe(false);
+  });
+
+  test('falls back to the general clearance list when no keyed malefic bears on the house', () => {
+    const chart = makeChart();
+    const verdict = judgeRKPWatch(chart, CAREER_Q, { timezoneOffsetMinutes: 0 });
+    expect(verdict.materialRemedy.clearance.afflictingPlanets).toEqual([]);
+    expect(verdict.materialRemedy.clearance.objects).toContain('dust');
+    expect(verdict.materialRemedy.clearance.objects).toContain('stopped electronics');
   });
 });
 

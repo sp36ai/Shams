@@ -135,6 +135,32 @@ export async function askOracle(args: AskOracleInput): Promise<AskOracleResult> 
     houseLordDirection?: string;
     /** Directions currently holding a natural malefic — household Vastu scan. */
     vastuAfflictedDirections?: string[];
+    /** The RKP Verdict Triad — 1st house / target house / 11th house. */
+    triad?: {
+      lagnaLord: string;
+      targetLord: string;
+      fulfilmentLord: string;
+      rulerRelation: 'friend' | 'neutral' | 'enemy';
+      outcome: 'positive' | 'delayed' | 'blocked' | 'mixed';
+      outcomeReason: string;
+      querentPolarity: 'masculine' | 'feminine';
+      controllerPolarity: 'masculine' | 'feminine';
+      targetBlockingMalefics: string[];
+      fulfilmentBlockingMalefics: string[];
+    };
+    /** RKP's own material remedies — corner clearance, action window, clock advance. */
+    materialRemedy?: {
+      clearanceDirection: string;
+      clearanceObjects: string[];
+      afflictingPlanets: string[];
+      actionPlanet: string;
+      actionWeekday?: string;
+      currentHoraLord: string;
+      horaOpenNow: boolean;
+      clockAdvanceMinutes: { min: number; max: number };
+      minutesToNextSegment: number;
+      crossesIntoNextSegment: boolean;
+    };
   };
 
   const reading: Reading = {
@@ -167,6 +193,8 @@ export async function askOracle(args: AskOracleInput): Promise<AskOracleResult> 
       nativeState: data.nativeState,
       houseLordDirection: data.houseLordDirection,
       vastuAfflictedDirections: data.vastuAfflictedDirections,
+      triad: data.triad,
+      materialRemedy: data.materialRemedy,
     },
   };
 

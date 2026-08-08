@@ -16,6 +16,7 @@ import {
   directionOfHouse,
   houseDirections,
   localMinuteOfHour,
+  polarityOfSign,
 } from '../watchChart';
 import type { HouseIndex, SignIndex } from '@astrology/types/chart';
 
@@ -177,5 +178,18 @@ describe('directionOfSign / directionOfHouse — Vastu mapping', () => {
     expect(dirs).toHaveLength(12);
     expect(dirs[0]).toBe(directionOfHouse(1 as HouseIndex, watch));
     expect(dirs[9]).toBe(directionOfHouse(10 as HouseIndex, watch));
+  });
+});
+
+describe('polarityOfSign — RKP odd/even gender profiles', () => {
+  test('odd signs are masculine, even signs feminine', () => {
+    // Aries(1), Gemini(3), Leo(5), Libra(7), Sagittarius(9), Aquarius(11)
+    for (const s of [1, 3, 5, 7, 9, 11] as const) {
+      expect(polarityOfSign(s)).toBe('masculine');
+    }
+    // Taurus(2), Cancer(4), Virgo(6), Scorpio(8), Capricorn(10), Pisces(12)
+    for (const s of [2, 4, 6, 8, 10, 12] as const) {
+      expect(polarityOfSign(s)).toBe('feminine');
+    }
   });
 });

@@ -17,6 +17,8 @@ import type {
   VerdictRemedy,
 } from './verdict';
 import type { VastuDirection, WatchChart } from '../primitives/watchChart';
+import type { TriadAnalysis } from '../kp/judgment/rkpTriad';
+import type { RKPMaterialRemedy } from '../kp/judgment/rkpRemedy';
 
 export type { VastuDirection };
 
@@ -113,10 +115,27 @@ export interface WatchVerdict {
   readonly denialHouses: readonly HouseIndex[];
   readonly primaryHouse: HouseIndex;
 
+  /**
+   * The target house's lord condition. Identical to `triad.target` — kept as
+   * a top-level field because it predates the triad protocol and the rest of
+   * the app reads it.
+   */
   readonly houseLord: HouseLordAnalysis;
+  /**
+   * The RKP Verdict Triad: 1st house (querent) / target house (the query) /
+   * 11th house (fulfilment), plus the ruler friendship clash and the actor
+   * polarity profiles. This is what now drives `nativeState`.
+   */
+  readonly triad: TriadAnalysis;
   readonly moonConfirmation: MoonConfirmation;
   readonly rulingConfirmation: RulingConfirmation;
   readonly vastu: VastuScan;
+  /**
+   * RKP's own material remedies (clock advance, corner clearance, planetary
+   * action window). Structured facts only — see rkpRemedy.ts on how these
+   * relate to the spiritual `remedy` field below.
+   */
+  readonly materialRemedy: RKPMaterialRemedy;
 
   readonly verdict: VerdictKind;
   readonly nativeState: WatchVerdictState;
