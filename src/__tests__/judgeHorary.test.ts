@@ -263,77 +263,22 @@ describe('judgeHorary — determinism', () => {
     expect(a.id).toBe(b.id);
     expect(a.verdict).toBe(b.verdict);
   });
-
-  test('same chart + question + horaryNumber always produces the same verdict', () => {
-    const chart = makeChart('Mars', { Mars: 10, Mercury: 6 });
-    const a = judgeHorary(chart, CAREER_Q, 10);
-    const b = judgeHorary(chart, CAREER_Q, 10);
-    expect(a.verdict).toBe(b.verdict);
-    expect(a.confidence).toBe(b.confidence);
-    expect(a.horarySubLord).toBe(b.horarySubLord);
-    expect(a.horarySubLordHouse).toBe(b.horarySubLordHouse);
-  });
 });
 
-describe('judgeHorary — horary number witness (optional, additive)', () => {
-  // Probed: horaryNumber 10 → sub-lord 'Mercury' (via getSubLords on the
-  // 360°/249 mapping). Placing Mercury at different houses in the fixture
-  // lets us hit the favorable/denial/neutral branches deterministically.
+describe('judgeHorary — no horary-number witness (moved to judgeKP, see judgeKP.test.ts)', () => {
+  // The 1–249 numbered-horary technique is classical KP's own method
+  // (Krishnamurti's numbered-horary system), not an RKP concept — RKP
+  // never used it. See docs/KP_RULES_CLASSICAL.md §11.
+  test('judgeHorary accepts exactly (chart, question) — no third parameter', () => {
+    expect(judgeHorary.length).toBe(2);
+  });
 
-  test('omitting horaryNumber leaves scoring and output fields untouched', () => {
+  test('output never carries horaryNumber/horarySubLord fields', () => {
     const chart = makeChart('Mars', { Mars: 10, Sun: 6, Mercury: 6, Jupiter: 11 });
     const verdict = judgeHorary(chart, CAREER_Q);
     expect(verdict.horaryNumber).toBeUndefined();
     expect(verdict.horarySubLord).toBeUndefined();
     expect(verdict.horarySubLordHouse).toBeUndefined();
-    // Confidence formula must still use maxScore=8 (unchanged from before
-    // this feature existed) when no horary number is supplied.
-    expect(verdict.verdict).toBe('YES');
-  });
-
-  test('horary number witness in a favorable house adds +1 and is recorded', () => {
-    // Mercury (horaryNumber=10's sub-lord) placed at house 6 — favorable for career.
-    const withWitness = makeChart('Saturn', { Mercury: 6 });
-    const verdict = judgeHorary(withWitness, CAREER_Q, 10);
-    expect(verdict.horaryNumber).toBe(10);
-    expect(verdict.horarySubLord).toBe('Mercury');
-    expect(verdict.horarySubLordHouse).toBe(6);
-    expect(
-      verdict.reasoning.some(r => r.description.includes('Horary №10') && r.weight === 1),
-    ).toBe(true);
-  });
-
-  test('horary number witness in a denial house subtracts 1 and is recorded', () => {
-    // Mercury placed at house 8 — denial for career.
-    const withWitness = makeChart('Saturn', { Mercury: 8 });
-    const verdict = judgeHorary(withWitness, CAREER_Q, 10);
-    expect(verdict.horarySubLordHouse).toBe(8);
-    expect(
-      verdict.reasoning.some(r => r.description.includes('Horary №10') && r.weight === -1),
-    ).toBe(true);
-  });
-
-  test('a favorable horary witness can tip a CONDITIONAL chart to YES', () => {
-    // Without the witness: MSL(+2 favorable) + 1 confirmed RP(+1) = +3 → YES already,
-    // so instead construct a chart that lands at CONDITIONAL without the witness,
-    // and confirm adding a favorable witness moves the score up by exactly 1.
-    const chart = makeChart('Saturn', { Mercury: 6 }); // Moon Sub-Lord Saturn → neutral house
-    const without = judgeHorary(chart, CAREER_Q);
-    const withWitness = judgeHorary(chart, CAREER_Q, 10); // Mercury@6 favorable → +1
-    expect(withWitness.reasoning.length).toBeGreaterThan(without.reasoning.length);
-    // Every other input is identical, so any score movement is solely the
-    // horary witness's ±1 contribution.
-    const scoreOf = (v: typeof without) =>
-      v.reasoning.find(r => r.description.includes('Total score'))?.weight ?? 0;
-    expect(scoreOf(withWitness)).toBe(scoreOf(without) + 1);
-  });
-
-  test('out-of-range horary numbers are clamped, not thrown', () => {
-    const chart = makeChart('Mars', { Mars: 10 });
-    expect(() => judgeHorary(chart, CAREER_Q, 0)).not.toThrow();
-    expect(() => judgeHorary(chart, CAREER_Q, 999)).not.toThrow();
-    expect(judgeHorary(chart, CAREER_Q, 0).horaryNumber).toBe(0); // raw input preserved for display
-    expect(judgeHorary(chart, CAREER_Q, 0).horarySubLordHouse).toBeDefined(); // clamped internally to 1
   });
 });
 

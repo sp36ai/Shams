@@ -105,10 +105,12 @@ export interface OracleResponse {
   };
 
   /**
-   * KP horary number (1–249) generated server-side for this reading — an
-   * additive witness signal, not part of the owner's original 5-step
-   * rules. Surfaced so the reading can display it for authenticity/
-   * traceability. See judgeHorary.ts module docstring for rationale.
+   * KP horary number (1–249) generated server-side for this reading.
+   * Classical KP's own horary technique (Krishnamurti's numbered-horary
+   * system) — NOT an RKP concept, so this is the number the KP engine
+   * used as its 6th witness (see docs/KP_RULES_CLASSICAL.md §11 and
+   * judgeKP.ts's module docstring), mirrored here at the top level too
+   * for the existing client display that already reads this field.
    */
   horaryNumber?: number;
 
@@ -117,7 +119,8 @@ export interface OracleResponse {
    * chart — see docs/KP_RULES_CLASSICAL.md. Always populated server-side
    * once deployed; optional here only as a wire-format safety net for
    * older cached client bundles hitting a new function version mid-rollout.
-   * No `remedy` key — remedy is an RKP/product addition, never a KP output.
+   * Includes `remedy` — shared with RKP (same Moon's-Sub-Lord basis), see
+   * docs/KP_RULES_CLASSICAL.md.
    */
   kp?: {
     verdict: VerdictKind;
@@ -139,6 +142,10 @@ export interface OracleResponse {
       moonSignLord: string;
       moonStarLord: string;
     };
+    remedy?: OracleResponse['remedy'];
+    horaryNumber?: number;
+    horarySubLord?: string;
+    horarySubLordHouse?: number;
     reasoning: OracleResponse['reasoning'];
   };
 }
@@ -179,15 +186,17 @@ export interface ReadingDoc {
 
   /**
    * Classical KP engine's verdict for this reading — trimmed subset of
-   * OracleResponse['kp'] (no significators/rulingPlanets persisted), matching
-   * the existing pattern where ReadingDoc stores a smaller slice than
-   * OracleResponse returns. No remedy — see OracleResponse['kp'] doc.
+   * OracleResponse['kp'] (no significators/rulingPlanets/horary sub-lord
+   * detail persisted — the raw horaryNumber above already covers it),
+   * matching the existing pattern where ReadingDoc stores a smaller slice
+   * than OracleResponse returns.
    */
   kp?: {
     verdict: VerdictKind;
     confidence: number;
     narration: Record<LangCode, string>;
     timing?: OracleResponse['timing'];
+    remedy: OracleResponse['remedy'] | null;
     reasoning: OracleResponse['reasoning'];
   };
 }

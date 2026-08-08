@@ -379,17 +379,19 @@ export const askOracle = onCall(
       };
 
       // 7b. Horary number witness — server-generated, never client-supplied
-      // (keeps judgeHorary itself pure/deterministic; see its module doc).
-      // Distinguishes readings whose chart-derived signal would otherwise be
-      // identical for two questions asked seconds apart.
+      // (keeps judgeKP itself pure/deterministic; see its module doc).
+      // Classical KP's own horary technique — NOT an RKP concept, so it is
+      // passed to judgeKP only. Distinguishes readings whose chart-derived
+      // signal would otherwise be identical for two questions asked seconds
+      // apart.
       const horaryNumber = 1 + Math.floor(Math.random() * 249);
 
       // 8. Judge horary — proprietary RKP algorithm runs here, server-only
-      const verdict = judgeHorary(chart, classified, horaryNumber);
+      const verdict = judgeHorary(chart, classified);
 
-      // 8b. Classical KP engine — independent verdict, SAME chart, no
-      // horaryNumber (KP has no such witness — see judgeKP module docstring).
-      const kpVerdict = judgeKP(chart, classified);
+      // 8b. Classical KP engine — independent verdict, SAME chart, with the
+      // horary number witness (classical KP's own technique).
+      const kpVerdict = judgeKP(chart, classified, horaryNumber);
 
       // 9+10. Persist reading + quota update in a batch
       const readingRef = db.collection('readings').doc(verdict.id);
@@ -407,6 +409,7 @@ export const askOracle = onCall(
         timing: kpVerdict.timing
           ? { window: kpVerdict.timing.window, range: kpVerdict.timing.range }
           : undefined,
+        remedy: kpVerdict.remedy ?? null,
         reasoning: kpReasoning,
       };
       const readingDoc: Omit<ReadingDoc, 'createdAt'> = {
@@ -613,6 +616,10 @@ export const askOracle = onCall(
             moonSignLord: kpVerdict.rulingPlanets.moonSignLord as string,
             moonStarLord: kpVerdict.rulingPlanets.moonStarLord as string,
           },
+          remedy: kpVerdict.remedy,
+          horaryNumber: kpVerdict.horaryNumber,
+          horarySubLord: kpVerdict.horarySubLord as string | undefined,
+          horarySubLordHouse: kpVerdict.horarySubLordHouse,
           reasoning: kpReasoning,
         },
         quotaRemaining: remaining,

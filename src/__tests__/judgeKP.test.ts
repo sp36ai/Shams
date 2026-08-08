@@ -316,35 +316,105 @@ describe('judgeKP — retrograde → DELAYED modifier', () => {
   });
 });
 
-describe('judgeKP — no remedy, ever', () => {
-  test.each(['YES', 'NO', 'CONDITIONAL', 'DELAYED', 'DENIED'])(
-    'remedy is always undefined (case leading to %s-ish chart)',
-    () => {
-      const charts = [
-        makeChart('Mars', { Mars: 8 }), // DENIED
-        makeChart('Mars', { Mars: 10, Sun: 6, Mercury: 6, Jupiter: 11 }), // YES
-        makeChart('Mars', { Mars: 10, Sun: 5, Mercury: 8, Venus: 2 }), // NO
-        makeChart('Saturn', { Mars: 10, Saturn: 7 }), // CONDITIONAL
-        makeChart('Mars', { Mars: 10, Sun: 6, Mercury: 6, Jupiter: 11 }, { Jupiter: true }), // DELAYED
-      ];
-      for (const chart of charts) {
-        expect(judgeKP(chart, CAREER_Q).remedy).toBeUndefined();
-      }
+describe('judgeKP — remedy (shared with RKP, same Moon-Sub-Lord basis)', () => {
+  test.each<['YES' | 'NO' | 'CONDITIONAL' | 'DELAYED', Chart, Planet]>([
+    ['YES', makeChart('Mars', { Mars: 10, Sun: 6, Mercury: 6, Jupiter: 11 }), 'Mars'],
+    ['NO', makeChart('Mars', { Mars: 10, Sun: 5, Mercury: 8, Venus: 2 }), 'Mars'],
+    ['CONDITIONAL', makeChart('Saturn', { Mars: 10, Saturn: 7 }), 'Saturn'],
+    [
+      'DELAYED',
+      makeChart('Mars', { Mars: 10, Sun: 6, Mercury: 6, Jupiter: 11 }, { Jupiter: true }),
+      'Mars',
+    ],
+  ])(
+    'remedy is populated for a %s verdict (planet = Moon Sub-Lord)',
+    (_kind, chart, moonSubLord) => {
+      const verdict = judgeKP(chart, CAREER_Q);
+      expect(verdict.remedy).toBeDefined();
+      expect(verdict.remedy?.planet).toBe(moonSubLord);
+      expect(verdict.remedy?.action.length).toBeGreaterThan(0);
     },
   );
+
+  test('remedy is absent for a DENIED verdict (promise failed before remedy is computed)', () => {
+    const chart = makeChart('Mars', { Mars: 8 });
+    const verdict = judgeKP(chart, CAREER_Q);
+    expect(verdict.verdict).toBe('DENIED');
+    expect(verdict.remedy).toBeUndefined();
+  });
 });
 
-describe('judgeKP — no horary-number witness', () => {
-  test('judgeKP accepts exactly (chart, question) — no third parameter', () => {
-    // Type-level guarantee: judgeKP has no horaryNumber parameter at all,
-    // unlike judgeHorary. This test documents that via the runtime arity.
-    expect(judgeKP.length).toBe(2);
+describe("judgeKP — horary number witness (classical KP's own technique)", () => {
+  // Probed: horaryNumber 13 → sub-lord 'Mars' (via getSubLords on the
+  // 360°/249 mapping) — 5 → sub-lord 'Rahu'. Neither Mars nor Rahu is one
+  // of the 5 Classical Witnesses, so moving them doesn't also change the
+  // ordinary STEP 3 witness/significator scoring — a clean, isolated way
+  // to test the horary witness's own ±1 contribution to the majority count.
+
+  test('judgeKP accepts (chart, question, horaryNumber?) — horaryNumber is optional', () => {
+    // TS `?` params without a default still count toward runtime .length
+    // (unlike default-valued params) — 3 here just confirms the parameter
+    // exists at all; the real "optional" behavior is exercised by the
+    // "omitting horaryNumber" test below.
+    expect(judgeKP.length).toBe(3);
   });
 
-  test('output never carries horaryNumber/horarySubLord fields', () => {
+  test('omitting horaryNumber leaves output fields untouched', () => {
     const chart = makeChart('Mars', { Mars: 10, Sun: 6, Mercury: 6, Jupiter: 11 });
     const verdict = judgeKP(chart, CAREER_Q);
     expect(verdict.horaryNumber).toBeUndefined();
+    expect(verdict.horarySubLord).toBeUndefined();
+    expect(verdict.horarySubLordHouse).toBeUndefined();
+  });
+
+  test('a favorable horary witness tips a CONDITIONAL (tied) chart to YES', () => {
+    // Base tie fixture (confirmed=0, denied=0 → CONDITIONAL, per the
+    // "fructification" describe block above). Mars already sits at house
+    // 10 (favorable) to hold the promise — horaryNumber 13 resolves to
+    // Mars too, so its house (10, favorable) becomes a confirm vote.
+    const chart = makeChart('Saturn', { Mars: 10, Saturn: 7 });
+    const without = judgeKP(chart, CAREER_Q);
+    expect(without.verdict).toBe('CONDITIONAL');
+
+    const withWitness = judgeKP(chart, CAREER_Q, 13);
+    expect(withWitness.horaryNumber).toBe(13);
+    expect(withWitness.horarySubLord).toBe('Mars');
+    expect(withWitness.horarySubLordHouse).toBe(10);
+    expect(
+      withWitness.reasoning.some(r => r.description.includes('Horary №13') && r.weight === 1),
+    ).toBe(true);
+    expect(withWitness.verdict).toBe('YES');
+  });
+
+  test('a denial horary witness tips a CONDITIONAL (tied) chart to NO', () => {
+    // Same tie base, Rahu moved to house 8 (denial) — horaryNumber 5
+    // resolves to Rahu.
+    const chart = makeChart('Saturn', { Mars: 10, Saturn: 7, Rahu: 8 });
+    const without = judgeKP(chart, CAREER_Q);
+    expect(without.verdict).toBe('CONDITIONAL');
+
+    const withWitness = judgeKP(chart, CAREER_Q, 5);
+    expect(withWitness.horarySubLord).toBe('Rahu');
+    expect(withWitness.horarySubLordHouse).toBe(8);
+    expect(
+      withWitness.reasoning.some(r => r.description.includes('Horary №5') && r.weight === -1),
+    ).toBe(true);
+    expect(withWitness.verdict).toBe('NO');
+  });
+
+  test('out-of-range horary numbers are clamped, not thrown', () => {
+    const chart = makeChart('Mars', { Mars: 10 });
+    expect(() => judgeKP(chart, CAREER_Q, 0)).not.toThrow();
+    expect(() => judgeKP(chart, CAREER_Q, 999)).not.toThrow();
+    expect(judgeKP(chart, CAREER_Q, 0).horaryNumber).toBe(0); // raw input preserved for display
+    expect(judgeKP(chart, CAREER_Q, 0).horarySubLordHouse).toBeDefined(); // clamped internally to 1
+  });
+
+  test('DENIED path still passes horaryNumber through (raw), no sub-lord computed', () => {
+    const chart = makeChart('Mars', { Mars: 8 });
+    const verdict = judgeKP(chart, CAREER_Q, 13);
+    expect(verdict.verdict).toBe('DENIED');
+    expect(verdict.horaryNumber).toBe(13);
     expect(verdict.horarySubLord).toBeUndefined();
     expect(verdict.horarySubLordHouse).toBeUndefined();
   });

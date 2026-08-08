@@ -15,10 +15,15 @@
 `docs/RKP_RULES_FROM_SARFARAZ.md` documents this app's original engine —
 Astro Sarfaraz's RKP method: Moon's sub-lord scored as a numeric ±2
 contributor, ±1 per ruling-planet witness, fixed thresholds (≥3 YES, ≤−2
-NO), a 6th "confirmatory" Hora Lord witness, an optional horary-number
-witness. That is authentic *to itself* — the engine faithfully executes
-what Astro Sarfaraz specified — but it is not classical Krishnamurti
-Paddhati (see `RKP_KP_FORENSIC_AUDIT.md` §B, §L.4).
+NO), a 6th "confirmatory" Hora Lord witness. That is authentic *to itself*
+— the engine faithfully executes what Astro Sarfaraz specified — but it is
+not classical Krishnamurti Paddhati (see `RKP_KP_FORENSIC_AUDIT.md` §B, §L.4).
+
+Correction (owner feedback): an earlier revision of this document and of
+`judgeHorary.ts` had the horary-number (1–249) witness backwards, treating
+it as an "RKP-only additive witness." The numbered-horary technique is in
+fact Krishnamurti's own classical method — RKP never used it. It has been
+moved to `judgeKP.ts` (§11) and removed from `judgeHorary.ts` entirely.
 
 This document specifies the second, independent engine: textbook classical
 KP horary judgment, with no numeric scoring and no RKP-specific additions.
@@ -45,12 +50,12 @@ What genuinely diverges between the two engines:
    weighted numeric score against fixed thresholds. Classical KP has no
    concept of "+2 for the Moon's sub-lord" as a scored input — the Moon's
    sub-lord is tracked for timing/display, not judgment (§3).
-3. **No remedy.** Remedy guidance is an RKP/product addition, not a KP
-   output (`RKP_KP_FORENSIC_AUDIT.md` §B: "Remedy from Moon's sub-lord
-   planet — a spiritual addition, not a KP output"). `judgeKP` never
-   populates `Verdict.remedy`.
-4. **No horary-number witness.** That witness is explicitly RKP-only per
-   `judgeHorary.ts`'s own module docstring; classical KP has no equivalent.
+3. **Horary Number witness (§11).** The 1–249 numbered-horary technique is
+   classical KP's own method (Krishnamurti's numbered-horary system) — used
+   by `judgeKP`, not by RKP. `judgeHorary.ts` has no such parameter.
+4. **Remedy** (§9) uses the same selection basis and table as RKP (Moon's
+   Sub-Lord → `src/astrology/kp/judgment/remedy.ts`) — shared product logic
+   applied identically by both engines, not itself KP or RKP doctrine.
 
 ## 2. House Matrix
 
@@ -160,10 +165,16 @@ flagged in code as a presentation-layer convenience, matching
 `RKP_KP_FORENSIC_AUDIT.md`'s own callout that "numeric confidence scoring
 applied to sub-lord analysis" is not an authentic KP output.
 
-## 9. No remedy
+## 9. Remedy — shared with RKP
 
-`judgeKP` never populates `Verdict.remedy`. Enforced by unit test, not a
-type-level fork (see `judgeKP.ts` module docstring for the reasoning).
+Remedy guidance is a spiritual/product addition, not itself KP or RKP
+doctrine (`RKP_KP_FORENSIC_AUDIT.md` §B: "Remedy from Moon's sub-lord
+planet — a spiritual addition, not a KP output"). Precisely *because* it
+isn't doctrine specific to either tradition, both engines apply it
+identically: same selection basis (the Moon's Sub-Lord) and the same table,
+shared in `src/astrology/kp/judgment/remedy.ts` so it can never drift
+between engines. `judgeKP` populates `Verdict.remedy` exactly as
+`judgeHorary` does.
 
 ## 10. Narration
 
@@ -175,3 +186,24 @@ language" test — free of raw KP/Vedic jargon (no "significator",
 (witness table, cuspal sub-lord, significator counts) belongs in the
 structured `Verdict` fields for an expert-mode UI panel, not the narrative
 sentence.
+
+## 11. Horary Number Witness — classical KP's own technique, used by `judgeKP` only
+
+Krishnamurti's classical horary system is itself built around the querent
+choosing a number from 1–249 at the moment of asking — this is a
+foundational classical-KP technique, not an RKP invention. (An earlier
+revision of this codebase had this backwards — see the correction note in
+§0.) `judgeKP(chart, question, horaryNumber?)` accepts an optional
+1–249 number, server-generated per reading (never client-supplied, to keep
+the engine itself pure/deterministic — see `functions/src/functions/askOracle.ts`).
+
+Mapping: the number is spread across the zodiac via an equal 360°/249
+division (`src/astrology/kp/judgment/judgeKP.ts::horaryNumberToLongitude`)
+— **not** a reproduction of Krishnamurti's historical printed horary-number
+table, which this codebase does not have; this is a fresh,
+internally-consistent mapping built on the same real KP sub-lord machinery
+used everywhere else in the engine. That longitude's sub-lord becomes a 6th
+witness in the majority count (§5): it adds one vote to `confirmedCount` if
+it occupies a favorable house, one vote to `deniedCount` if denial, zero
+otherwise. Optional — omitting `horaryNumber` reproduces the exact 5-witness
+scoring. `judgeHorary` (RKP) has no `horaryNumber` parameter at all.
