@@ -19,8 +19,12 @@ function makeVerdict(overrides: {
   afflictedDirections?: string[];
   timing?: { window: string; range: { min: number; max: number } };
   targetBlockingMalefics?: string[];
+  targetSaturnPressure?: boolean;
   rulerRelation?: 'friend' | 'neutral' | 'enemy';
   controllerPolarity?: 'masculine' | 'feminine';
+  conditionState?: string;
+  lagnaRetrograde?: boolean;
+  fulfilmentRetrograde?: boolean;
 }): WatchVerdict {
   return {
     nativeState: overrides.nativeState ?? 'YES_STRONG',
@@ -41,12 +45,17 @@ function makeVerdict(overrides: {
     vastu: {
       afflictedDirections: overrides.afflictedDirections ?? [],
     },
+    conditionState: overrides.conditionState ?? 'Gati',
     triad: {
       targetPressure: {
         blockingMalefics: overrides.targetBlockingMalefics ?? [],
+        saturnPressure: overrides.targetSaturnPressure ?? false,
       },
       rulerRelation: overrides.rulerRelation ?? 'neutral',
       controllerPolarity: overrides.controllerPolarity ?? 'masculine',
+      lagna: { retrograde: overrides.lagnaRetrograde ?? false },
+      target: { retrograde: overrides.retrograde ?? false },
+      fulfilment: { retrograde: overrides.fulfilmentRetrograde ?? false },
     },
     timing: overrides.timing,
   } as unknown as WatchVerdict;
@@ -117,14 +126,64 @@ describe('deriveOracleAnchors', () => {
 
   it('obstruction falls back to INNER_HESITATION when Moon disagrees and no planet blocks', () => {
     const anchors = deriveOracleAnchors(makeVerdict({ moonAgreement: 'disagrees' }));
-    expect(anchors.obstruction).toBe('INNER_HESITATION');
+    expect(anchors.obstruction).toBe('MOON_DISAGREEMENT');
   });
 
-  it('obstruction falls back to a denial ruling witness when Moon is neutral', () => {
+  it('obstruction collapses a denial ruling witness to the closed enum value', () => {
+    // The witness's identity is not one of the four planets the material's
+    // enum names, so it reports as DENIAL_WITNESS rather than leaking a
+    // name the prompt has no rule for.
     const anchors = deriveOracleAnchors(
-      makeVerdict({ moonAgreement: 'neutral', denialWitnesses: ['Mars'] }),
+      makeVerdict({ moonAgreement: 'neutral', denialWitnesses: ['Venus'] }),
     );
-    expect(anchors.obstruction).toBe('Mars');
+    expect(anchors.obstruction).toBe('DENIAL_WITNESS');
+  });
+
+  it('obstruction follows the material Saturn -> Mars -> Rahu -> Ketu order', () => {
+    expect(
+      deriveOracleAnchors(
+        makeVerdict({ targetSaturnPressure: true, targetBlockingMalefics: ['Mars', 'Rahu'] }),
+      ).obstruction,
+    ).toBe('Saturn');
+    expect(
+      deriveOracleAnchors(makeVerdict({ targetBlockingMalefics: ['Ketu', 'Mars'] })).obstruction,
+    ).toBe('Mars');
+    expect(
+      deriveOracleAnchors(makeVerdict({ targetBlockingMalefics: ['Ketu', 'Rahu'] })).obstruction,
+    ).toBe('Rahu');
+  });
+
+  it('an exalted lord on an open matter reads as RAPID_RESOLUTION', () => {
+    expect(
+      deriveOracleAnchors(makeVerdict({ nativeState: 'YES_STRONG', dignity: 'exalted' }))
+        .primaryTheme,
+    ).toBe('RAPID_RESOLUTION');
+    expect(
+      deriveOracleAnchors(makeVerdict({ nativeState: 'YES_STRONG', dignity: 'own' })).primaryTheme,
+    ).toBe('STRONG_OPENING');
+  });
+
+  it('reversal is POSSIBLE when any triad ruler is retrograde, not just the target', () => {
+    expect(deriveOracleAnchors(makeVerdict({ lagnaRetrograde: true })).reversal).toBe('POSSIBLE');
+    expect(deriveOracleAnchors(makeVerdict({ fulfilmentRetrograde: true })).reversal).toBe(
+      'POSSIBLE',
+    );
+    expect(deriveOracleAnchors(makeVerdict({ retrograde: true })).reversal).toBe('POSSIBLE');
+  });
+
+  it('reversal is IMPOSSIBLE only when a denial has nothing in motion to undo it', () => {
+    expect(deriveOracleAnchors(makeVerdict({ nativeState: 'NO_DENIED' })).reversal).toBe(
+      'IMPOSSIBLE',
+    );
+    // A denial with a retrograde ruler can still be overturned on appeal.
+    expect(
+      deriveOracleAnchors(makeVerdict({ nativeState: 'NO_DENIED', retrograde: true })).reversal,
+    ).toBe('POSSIBLE');
+    expect(deriveOracleAnchors(makeVerdict({ nativeState: 'WAIT' })).reversal).toBe('NONE');
+  });
+
+  it('carries the condition state through untouched', () => {
+    expect(deriveOracleAnchors(makeVerdict({ conditionState: 'Kshaya' })).condition).toBe('Kshaya');
   });
 
   it('secondaryTheme is ENVIRONMENTAL_FRICTION when the activated house direction is afflicted', () => {

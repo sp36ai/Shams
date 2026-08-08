@@ -44,6 +44,7 @@ import {
   seekerProfileModifier,
 } from '../prompts/oracleSynthesisPrompt';
 import { deriveOracleAnchors, type OracleAnchors } from '../prompts/oracleAnchors';
+import { validateOracleAnchors } from '../prompts/oracleAnchorsSchema';
 import { runSafetyValidator } from './safetyValidator';
 import { getManzila, getManzilaOracleLine } from '../engine/manazil';
 import { houseForLongitude } from '../engine/primitives/chartBuilder';
@@ -513,6 +514,9 @@ export const askOracle = onCall(
         verdict.verdict === 'YES' || verdict.verdict === 'CONDITIONAL' ? 'CONFIRMED' : 'DENIED';
       const manzilaLine = getManzilaOracleLine(moonLongitude, verdictBinary);
       const oracleAnchors = deriveOracleAnchors(verdict);
+      // Runtime guard between calculation and text generation — see
+      // oracleAnchorsSchema.ts. Fail-open: logs and continues.
+      validateOracleAnchors(oracleAnchors, verdict.id);
 
       const oracleRaw = apiKey
         ? await synthesiseOracleVoice({
@@ -564,6 +568,7 @@ export const askOracle = onCall(
         // Watch-engine-specific facts, new in this response — see
         // docs/RKP_WATCH_ENGINE.md.
         nativeState: verdict.nativeState,
+        conditionState: verdict.conditionState,
         houseLordDirection: verdict.houseLord.direction,
         vastuAfflictedDirections: verdict.vastu.afflictedDirections as string[],
         // The Verdict Triad — 1st house (querent) / target house (the query)

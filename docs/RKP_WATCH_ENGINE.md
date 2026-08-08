@@ -122,6 +122,69 @@ adjustable:
    strict corrections") and reserves denial for malefic affliction. Denial
    is therefore reachable only through rung 1.
 
+## The condition state — a second, parallel classification
+
+`rkpConditionState.ts` classifies the *mechanism* the matter is in, using
+the material's Sanskrit six. This is **additive**: it does not replace
+`nativeState`.
+
+| Field | Set | Role |
+|---|---|---|
+| `nativeState` | YES_STRONG / YES_CONDITIONAL / DELAY / WAIT / NO_DENIED / INCONCLUSIVE | what to TELL the seeker — drives the UI, share text and the oracle's unveiling heading |
+| `conditionState` | Siddhi / Stambhana / Gati / Vakra / Kshaya / Bija | what MECHANISM the matter is in — diagnostic |
+
+A seeker is never shown "Stambhana". Collapsing to one set is
+[open question 6](RKP_OPEN_QUESTIONS.md).
+
+The precedence ladder follows the reference implementation exactly where it
+is explicit — Saturn before Mars/Rahu before exaltation — and the prose
+definitions for the two states that implementation never reaches:
+
+1. **Stambhana** — Saturn bears on the house of the matter.
+2. **Kshaya** — a Rahu/Ketu eclipse point on that house, then Mars on it,
+   then a debilitated ruler. These sit *above* the generic blocked check:
+   when a block is caused by an eclipse point, the material calls it decay,
+   not blockage.
+3. **Stambhana (residual)** — blocked by something other than those, e.g.
+   affliction of the 11th rather than the target.
+4. **Vakra** — any of the three triad rulers retrograde.
+5. **Siddhi** — positive triad, dignified ruler, and *no* blocking malefic
+   on either the target or the 11th ("clean connectivity").
+6. **Gati** — the matter is in motion without that unbroken connectivity.
+7. **Bija** — terminal: a genuine question whose timing has not matured.
+
+## The anchor validation layer
+
+`functions/src/prompts/oracleAnchorsSchema.ts` is a Zod schema sitting
+between calculation and text generation — the material's Pydantic layer,
+in this stack. `deriveOracleAnchors()` is already statically typed, so the
+schema exists for what types cannot catch at runtime: an engine change that
+starts emitting an out-of-range value, or a malformed timing string that
+would otherwise reach the prompt and become a fabricated date.
+
+It **fails open** — logs and continues, rather than the hard throw the
+material describes. A seeker who has already spent quota should still get
+their reading, and every anchor has a safe fallback in the prompt.
+`parseOracleAnchors()` throws if a hard failure is ever wanted.
+
+## Confidence — conflicting signals now downgrade the score
+
+"If the AI detects conflicting aspects (e.g. Jupiter blessing a house, but
+Saturn aspecting the ruler), it automatically downgrades the confidence
+level to MODERATE or LOW, alerting the user to hidden variables."
+
+A `triadConflict` factor now costs **-10 per conflict**, alongside
+`conflictNotes` recording which fired:
+
+- the target house is both afflicted and rescued
+- the 11th house is both afflicted and rescued
+- the rulers clash despite a strong target lord
+- the matter is open but fulfilment is under malefic pressure
+
+The magnitude is set so two conflicts drop an otherwise VERY_HIGH reading
+into HIGH/MODERATE, which is the behaviour the rule describes. The material
+gives no per-signal weight, so all four are equal.
+
 ## Planetary friendship — a labelled classical default
 
 The material supplies the rule and two examples (Sun/Saturn = enemies,

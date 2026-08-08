@@ -133,6 +133,7 @@ import { toArabic } from './arabicNames';
 import { BENEFICS } from './classicalToolkit';
 import { analyseTriad, type TriadAnalysis } from './rkpTriad';
 import { computeRKPMaterialRemedy } from './rkpRemedy';
+import { classifyCondition } from './rkpConditionState';
 import { ENGINE_VERSION } from '@astrology/primitives/chartBuilder';
 
 // Re-exported for callers that analysed a single house before the triad
@@ -328,6 +329,7 @@ function computeConfidence(
   houseLord: HouseLordAnalysis,
   moon: MoonConfirmation,
   ruling: RulingConfirmation,
+  triad: TriadAnalysis,
 ): { confidence: number; factors: ConfidenceFactors } {
   const subLordClarity = houseLord.verdict === 'mixed' ? -10 : 20;
 
@@ -345,16 +347,55 @@ function computeConfidence(
   // "GPS-timed" case in the source model.
   const timestampPrecision = 5;
 
+  // Triad conflict — "If the AI detects conflicting aspects (e.g. Jupiter
+  // blessing a house, but Saturn aspecting the ruler), it automatically
+  // downgrades the confidence level to MODERATE or LOW, alerting the user
+  // to hidden variables" (source material).
+  //
+  // A conflict is a house pulled in both directions at once, or a chart
+  // whose own parts disagree. Each costs 10 points; the material gives no
+  // per-signal weight, so they are equal and the magnitude is set so that
+  // two conflicts drop an otherwise VERY_HIGH reading into HIGH/MODERATE,
+  // which is exactly the behaviour the rule describes.
+  const conflicts: string[] = [];
+  if (
+    triad.targetPressure.blockingMalefics.length > 0 &&
+    triad.targetPressure.rescuingBenefics.length > 0
+  ) {
+    conflicts.push('target house both afflicted and rescued');
+  }
+  if (
+    triad.fulfilmentPressure.blockingMalefics.length > 0 &&
+    triad.fulfilmentPressure.rescuingBenefics.length > 0
+  ) {
+    conflicts.push('fulfilment house both afflicted and rescued');
+  }
+  if (triad.rulerRelation === 'enemy' && triad.target.verdict === 'supported') {
+    conflicts.push('ruler clash despite a strong target lord');
+  }
+  if (triad.outcome === 'positive' && triad.fulfilmentPressure.blockingMalefics.length > 0) {
+    conflicts.push('matter open but fulfilment under malefic pressure');
+  }
+  const triadConflict = -10 * conflicts.length;
+
   const factors: ConfidenceFactors = {
     subLordClarity,
     moonAgreement,
     rulingOverlap,
     retrogradeAffliction,
     timestampPrecision,
+    triadConflict,
+    conflictNotes: Object.freeze(conflicts),
   };
 
   const raw =
-    50 + subLordClarity + moonAgreement + rulingOverlap + retrogradeAffliction + timestampPrecision;
+    50 +
+    subLordClarity +
+    moonAgreement +
+    rulingOverlap +
+    retrogradeAffliction +
+    timestampPrecision +
+    triadConflict;
   const confidence = Math.round(Math.min(100, Math.max(0, raw)));
 
   return { confidence, factors };
@@ -508,6 +549,9 @@ export function judgeRKPWatch(
   const verdict = NATIVE_TO_VERDICT_KIND[nativeState];
   reasoning.push(step('VERDICT', `triad=${triad.outcome} -> ${nativeState} -> ${verdict}`));
 
+  const condition = classifyCondition(triad);
+  reasoning.push(step('CONDITION', `${condition.state} — ${condition.reason}`));
+
   const confirmedSignificators = ruling.favorableWitnesses;
   const timing =
     nativeState === 'NO_DENIED' || nativeState === 'INCONCLUSIVE'
@@ -522,13 +566,23 @@ export function judgeRKPWatch(
     );
   }
 
-  const { confidence, factors: confidenceFactors } = computeConfidence(houseLord, moon, ruling);
+  const { confidence, factors: confidenceFactors } = computeConfidence(
+    houseLord,
+    moon,
+    ruling,
+    triad,
+  );
   reasoning.push(
     step(
       'CONFIDENCE',
       `subLordClarity=${confidenceFactors.subLordClarity} moonAgreement=${confidenceFactors.moonAgreement} ` +
         `rulingOverlap=${confidenceFactors.rulingOverlap} retrogradeAffliction=${confidenceFactors.retrogradeAffliction} ` +
-        `timestampPrecision=${confidenceFactors.timestampPrecision} -> ${confidence}`,
+        `timestampPrecision=${confidenceFactors.timestampPrecision} ` +
+        `triadConflict=${confidenceFactors.triadConflict}` +
+        (confidenceFactors.conflictNotes.length > 0
+          ? ` [${confidenceFactors.conflictNotes.join('; ')}]`
+          : '') +
+        ` -> ${confidence}`,
     ),
   );
 
@@ -577,6 +631,7 @@ export function judgeRKPWatch(
     materialRemedy,
     verdict,
     nativeState,
+    conditionState: condition.state,
     confidence,
     confidenceFactors,
     narration,

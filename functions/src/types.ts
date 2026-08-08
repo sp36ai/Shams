@@ -67,6 +67,8 @@ export interface OracleResponse {
   }>;
   /** RKP watch engine's finer 6-state verdict (YES_STRONG/.../INCONCLUSIVE) — see docs/RKP_WATCH_ENGINE.md. */
   nativeState?: string;
+  /** RKP condition classification — Siddhi/Stambhana/Gati/Vakra/Kshaya/Bija. */
+  conditionState?: string;
   /** Physical direction (Vastu) of the activated house right now. */
   houseLordDirection?: string;
   /** Directions currently holding a natural malefic — household Vastu scan. */

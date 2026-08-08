@@ -218,7 +218,14 @@ describe('judgeRKPWatch — the Verdict Triad drives the native state', () => {
     expect(verdict.triad.outcomeReason).toContain('ruler clash');
     expect(verdict.nativeState).toBe('DELAY');
     expect(verdict.verdict).toBe('DELAYED');
-    expect(verdict.confidence).toBe(65);
+    // A strong target lord that nonetheless clashes with the Lagna ruler is
+    // a chart disagreeing with itself — the material's "conflicting aspects
+    // downgrade confidence" rule costs 10 points here (65 -> 55).
+    expect(verdict.confidenceFactors.triadConflict).toBe(-10);
+    expect(verdict.confidenceFactors.conflictNotes).toEqual([
+      'ruler clash despite a strong target lord',
+    ]);
+    expect(verdict.confidence).toBe(55);
     expect(verdict.narration.en).toContain('deferred');
   });
 
@@ -260,7 +267,7 @@ describe('judgeRKPWatch — the Verdict Triad drives the native state', () => {
     expect(verdict.triad.outcome).toBe('blocked');
     expect(verdict.nativeState).toBe('NO_DENIED');
     expect(verdict.verdict).toBe('NO');
-    expect(verdict.confidence).toBe(65);
+    expect(verdict.confidence).toBe(55); // 65, less the ruler-clash conflict
     expect(verdict.timing).toBeUndefined();
   });
 
@@ -293,6 +300,36 @@ describe('judgeRKPWatch — the Verdict Triad drives the native state', () => {
     expect(verdict.triad.querentPolarity).toBe('masculine');
     expect(verdict.triad.target.sign).toBe(8); // Scorpio, even
     expect(verdict.triad.controllerPolarity).toBe('feminine');
+  });
+});
+
+describe('judgeRKPWatch — condition state (Siddhi/Stambhana/Gati/Vakra/Kshaya/Bija)', () => {
+  test('runs alongside nativeState rather than replacing it', () => {
+    const chart = makeChart();
+    const verdict = judgeRKPWatch(chart, CAREER_Q, { timezoneOffsetMinutes: 0 });
+    // The seeker is told DELAY; the mechanism underneath is Gati (in motion).
+    expect(verdict.nativeState).toBe('DELAY');
+    expect(verdict.conditionState).toBe('Gati');
+  });
+
+  test('Kshaya when an eclipse point occupies the house of the matter', () => {
+    const chart = makeChart({ Rahu: 225, Jupiter: 15 });
+    const verdict = judgeRKPWatch(chart, CAREER_Q, { timezoneOffsetMinutes: 0 });
+    expect(verdict.conditionState).toBe('Kshaya');
+  });
+
+  test('Vakra when a triad ruler is retrograde', () => {
+    const chart = makeChart({}, { Mars: { isRetrograde: true } });
+    const verdict = judgeRKPWatch(chart, CAREER_Q, { timezoneOffsetMinutes: 0 });
+    expect(verdict.conditionState).toBe('Vakra');
+  });
+
+  test('the reasoning trace records the condition and its cause', () => {
+    const chart = makeChart();
+    const verdict = judgeRKPWatch(chart, CAREER_Q, { timezoneOffsetMinutes: 0 });
+    const condStep = verdict.reasoning.find(r => r.ruleId === 'WATCH_CONDITION');
+    expect(condStep).toBeDefined();
+    expect(condStep?.description).toContain('Gati');
   });
 });
 

@@ -18,6 +18,7 @@ import type {
 } from './verdict';
 import type { VastuDirection, WatchChart } from '../primitives/watchChart';
 import type { TriadAnalysis } from '../kp/judgment/rkpTriad';
+import type { RKPConditionState } from '../kp/judgment/rkpConditionState';
 import type { RKPMaterialRemedy } from '../kp/judgment/rkpRemedy';
 
 export type { VastuDirection };
@@ -101,6 +102,16 @@ export interface ConfidenceFactors {
   readonly rulingOverlap: number;
   readonly retrogradeAffliction: number;
   readonly timestampPrecision: number;
+  /**
+   * Penalty for a chart whose own parts disagree — "if the AI detects
+   * conflicting aspects (e.g. Jupiter blessing a house, but Saturn
+   * aspecting the ruler), it automatically downgrades the confidence
+   * level, alerting the user to hidden variables" (source material).
+   * -10 per conflict detected.
+   */
+  readonly triadConflict: number;
+  /** Human-readable list of the conflicts behind `triadConflict`. */
+  readonly conflictNotes: readonly string[];
 }
 
 export interface WatchVerdict {
@@ -138,7 +149,14 @@ export interface WatchVerdict {
   readonly materialRemedy: RKPMaterialRemedy;
 
   readonly verdict: VerdictKind;
+  /** What to TELL the seeker — drives the UI and the oracle's heading. */
   readonly nativeState: WatchVerdictState;
+  /**
+   * What MECHANISM the matter is in — Siddhi / Stambhana / Gati / Vakra /
+   * Kshaya / Bija. A parallel diagnostic classification, not a replacement
+   * for `nativeState`; see rkpConditionState.ts.
+   */
+  readonly conditionState: RKPConditionState;
 
   /** 0-100, base-50 model — see ConfidenceFactors docstring for what's supported. */
   readonly confidence: number;

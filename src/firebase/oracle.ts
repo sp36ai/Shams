@@ -131,6 +131,8 @@ export async function askOracle(args: AskOracleInput): Promise<AskOracleResult> 
     horaryNumber?: number;
     /** RKP watch engine's finer 6-state verdict (YES_STRONG/.../INCONCLUSIVE). */
     nativeState?: string;
+    /** RKP condition classification — Siddhi/Stambhana/Gati/Vakra/Kshaya/Bija. */
+    conditionState?: string;
     /** Physical direction (Vastu) of the activated house right now. */
     houseLordDirection?: string;
     /** Directions currently holding a natural malefic — household Vastu scan. */
@@ -191,6 +193,7 @@ export async function askOracle(args: AskOracleInput): Promise<AskOracleResult> 
       oracle: data.oracle,
       horaryNumber: data.horaryNumber,
       nativeState: data.nativeState,
+      conditionState: data.conditionState,
       houseLordDirection: data.houseLordDirection,
       vastuAfflictedDirections: data.vastuAfflictedDirections,
       triad: data.triad,
