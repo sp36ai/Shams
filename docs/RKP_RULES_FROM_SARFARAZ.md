@@ -3,6 +3,12 @@
 > Status: aligned to the current runtime engine
 > Origin: Astro Sarfaraz's rule intake plus Phase 2 Forensic Audit updates (Promise + 5 RP)
 > Owner: Astro Sarfaraz
+>
+> This document describes the **RKP engine** (`judgeHorary()`) specifically,
+> not classical KP. A separate classical KP engine (`judgeKP()`) now exists
+> alongside it with its own, non-interchangeable logic — see
+> `docs/RKP_VS_KP_SEPARATION.md` for what each engine owns and why they are
+> allowed to disagree on the same chart.
 
 ---
 

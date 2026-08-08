@@ -2,6 +2,13 @@
 
 > This is the spec for the runtime judgment engine.
 > Source rules: `docs/RKP_RULES_FROM_SARFARAZ.md`
+>
+> **This is the RKP engine's original contract and predates the current
+> 6-ruling-planet / significator-intersection scoring in `judgeHorary.ts`**
+> (it still describes a 3-RP Day/Hora/Minute-Lord model). Read the current
+> `judgeHorary.ts` module docstring for the algorithm as actually
+> implemented. For the separate classical KP engine, see `judgeKP.ts` and
+> `docs/RKP_VS_KP_SEPARATION.md` — the two are not the same algorithm.
 
 ---
 

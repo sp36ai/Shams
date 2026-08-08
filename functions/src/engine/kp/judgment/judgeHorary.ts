@@ -315,9 +315,9 @@ function buildMoonSubLordSnapshot(
   const planetData = chart.planets[moonSubLord];
   return {
     planet: moonSubLord,
-    nakshatraLord: planetData.nakshatraLord,
-    subLord: planetData.subLord,
-    subSubLord: planetData.subSubLord, // Precision Layer
+    nakshatraLord: planetData.nakshatraLord as Planet,
+    subLord: planetData.subLord as Planet,
+    subSubLord: planetData.subSubLord as Planet, // Precision Layer
     occupiedHouse: moonSubLordHouse,
     signifiedHouses: [moonSubLordHouse],
     favHits,
@@ -377,7 +377,7 @@ function checkPromise(
     return { denied: false };
   }
 
-  const cuspSubLord = primaryCusp.subLord;
+  const cuspSubLord = primaryCusp.subLord as Planet;
   const cuspSubLordHouse = houseOfPlanet(cuspSubLord, chart);
 
   if ((denial as number[]).includes(cuspSubLordHouse)) {
@@ -423,7 +423,7 @@ export function judgeHorary(
   const { favorable, denial, primary } = matrix;
 
   // ── PROMISE CHECK — fires before Kotamraju, before any scoring ───────────
-  const promise = checkPromise(chart, denial, primary);
+  const promise = checkPromise(chart, denial, primary as number);
   if (promise.denied) {
     const deniedReasoning: ReasoningStep[] = [
       step(
@@ -444,7 +444,7 @@ export function judgeHorary(
       promise.cuspSubLordHouse,
       0,
     );
-    const moonSubLordForDenied = moonPos.subLord;
+    const moonSubLordForDenied = moonPos.subLord as Planet;
     const moonSubLordHouseForDenied = houseOfPlanet(moonSubLordForDenied, chart);
     return Object.freeze({
       id: deterministicId(chart, question),
@@ -508,7 +508,8 @@ export function judgeHorary(
   );
 
   // ── STEP 4: Ruling Planets × Significator intersection (Phase D) ─────────
-  const allWitnesses = (chart.rulingPlanets as Planet[]).filter(Boolean);
+  // horaLord is at index 1 — witness-only display field, not a scoring RP.
+  const allWitnesses = (chart.rulingPlanets as Planet[]).filter((_, i) => i !== 1).filter(Boolean);
 
   const filteredRulingPlanets = applyKotamrajuFilter(allWitnesses, favorable, denial, chart);
 
@@ -621,7 +622,7 @@ export function judgeHorary(
   );
 
   // ── Timing ────────────────────────────────────────────────────────────────
-  const timing = computeConvergenceTiming(chart, confirmedSignificators);
+  const timing = computeConvergenceTiming(chart, confirmedSignificators as Planet[]);
   reasoning.push(
     step(
       5,
@@ -681,8 +682,8 @@ export function judgeHorary(
     stage: 'fructification' as const,
     reasoning: Object.freeze(reasoning),
     significators,
-    confirmedSignificators: Object.freeze(confirmedSignificators),
-    deniedSignificators: Object.freeze(deniedSignificators),
+    confirmedSignificators: Object.freeze(confirmedSignificators as Planet[]),
+    deniedSignificators: Object.freeze(deniedSignificators as Planet[]),
     timing,
     remedy,
     narration,
