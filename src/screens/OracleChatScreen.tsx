@@ -115,6 +115,7 @@ interface VjExtended extends VjShape {
   significators?: { favorable: string[]; denial: string[]; neutral: string[] };
   confirmedSignificators?: string[];
   deniedSignificators?: string[];
+  reasoning?: Array<{ ruleId: string; description: string; weight: number }>;
   planetDegrees?: Record<string, number>;
   cuspDegrees?: Record<number, number>;
   cuspSigns?: Record<number, string>;
@@ -203,6 +204,7 @@ function readingToAstroResult(reading: Reading): AstroVerdictResult {
     significators: vj?.significators,
     confirmedSignificators: vj?.confirmedSignificators,
     deniedSignificators: vj?.deniedSignificators,
+    reasoning: vj?.reasoning,
     planetDegrees: vj?.planetDegrees,
     cuspDegrees: vj?.cuspDegrees,
     cuspSigns: vj?.cuspSigns,

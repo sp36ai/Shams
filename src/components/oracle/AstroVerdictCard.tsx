@@ -77,6 +77,48 @@ export function buildShareText(result: AstroVerdictResult): string {
   return lines.join('\n');
 }
 
+/**
+ * Technical export of the engine's raw scoring trace — every step
+ * judgeHorary() used to reach this verdict, in evaluation order. Meant to
+ * be pasted into an independent KP-rules check (by a human astrologer or
+ * an AI) rather than read as a normal reading. Absent when the reading
+ * predates this field or a follow-up message has no attached reading.
+ */
+export function buildReasoningShareText(result: AstroVerdictResult): string {
+  const lines: string[] = [];
+
+  lines.push('✦ Shams al-Asrār — Reasoning Trace (technical)');
+  lines.push('');
+  if (result.question !== undefined && result.question.length > 0) {
+    lines.push(`Question: ${result.question}`);
+  }
+  lines.push(`Category: ${result.category}`);
+  lines.push(`Chart moment: ${result.createdAt}`);
+  lines.push(
+    `Verdict: ${VERDICT_LABEL[result.verdict] ?? result.verdict} (${result.confidence}% confidence)`,
+  );
+  lines.push(`Moon's Sub-Lord: ${result.subLord} — occupies house ${result.subLordHouse}`);
+  if (result.rulingPlanets.length > 0) {
+    lines.push(
+      `Ruling planets: ${result.rulingPlanets.map(rp => `${rp.role}=${rp.planet}`).join(', ')}`,
+    );
+  }
+  lines.push('');
+  lines.push('Engine steps (in evaluation order):');
+
+  const reasoning = result.reasoning ?? [];
+  if (reasoning.length === 0) {
+    lines.push('(no reasoning trace attached to this reading)');
+  } else {
+    for (const step of reasoning) {
+      const sign = step.weight > 0 ? '+' : '';
+      lines.push(`[${step.ruleId}] ${step.description} (${sign}${step.weight})`);
+    }
+  }
+
+  return lines.join('\n');
+}
+
 // ── House pill ────────────────────────────────────────────────────────────────
 
 const HousePillView: React.FC<{ pill: HousePill }> = ({ pill }) => {
@@ -664,6 +706,55 @@ const AstroVerdictCard: React.FC<AstroVerdictCardProps> = ({
                   </View>
                 </View>
               )}
+
+              {/* Reasoning trace — the engine's own scoring steps, for
+                  anyone who wants to independently verify the verdict
+                  against classical KP rules. Technical/expert data, so it
+                  lives here alongside the rest of the chart details. */}
+              {result.reasoning !== undefined && result.reasoning.length > 0 && (
+                <View style={[styles.pillsBlock, { borderTopColor: colors.border }]}>
+                  <View style={styles.reasoningHeaderRow}>
+                    <Text style={[typography('caption'), { color: colors.textMuted }]}>
+                      REASONING TRACE
+                    </Text>
+                    <Pressable
+                      onPress={() => {
+                        Share.share({ message: buildReasoningShareText(result) }).catch(() => {});
+                      }}
+                      accessibilityRole="button"
+                      accessibilityLabel="Share reasoning trace"
+                      hitSlop={8}
+                    >
+                      <Text style={[typography('caption'), { color: colors.amber, fontSize: 10 }]}>
+                        ↗ SHARE
+                      </Text>
+                    </Pressable>
+                  </View>
+                  {result.reasoning.map((step, idx) => (
+                    <Text
+                      key={`${step.ruleId}-${idx}`}
+                      selectable
+                      style={[
+                        typography('caption'),
+                        {
+                          color:
+                            step.weight > 0
+                              ? colors.positive
+                              : step.weight < 0
+                                ? colors.negative
+                                : colors.textFaint,
+                          fontSize: 11,
+                          lineHeight: 16,
+                          marginTop: 4,
+                        },
+                      ]}
+                    >
+                      [{step.ruleId}] {step.description} ({step.weight > 0 ? '+' : ''}
+                      {step.weight})
+                    </Text>
+                  ))}
+                </View>
+              )}
             </>
           )}
 
@@ -1052,6 +1143,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 8,
+  },
+  reasoningHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 4,
   },
   housePill: {
     alignItems: 'center',
