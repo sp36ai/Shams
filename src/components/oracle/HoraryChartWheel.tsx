@@ -30,6 +30,10 @@ const VB_H = 370;
 const VB_X = -165;
 const VB_Y = -185;
 
+// The shadow nodes are keyed here as 'Ras'/'Dhanab' because that is what the
+// server sends: planetDegrees/planetChain object keys and the significator
+// lists are boundary-mapped from Rahu/Ketu before the response ever reaches
+// the client — see functions/src/utils/planetBoundaryName.ts.
 const PLANET_ORDER = [
   'Sun',
   'Moon',
@@ -38,8 +42,8 @@ const PLANET_ORDER = [
   'Jupiter',
   'Venus',
   'Saturn',
-  'Rahu',
-  'Ketu',
+  'Ras',
+  'Dhanab',
 ] as const;
 
 const PLANET_ABBR: Record<string, string> = {
@@ -50,8 +54,8 @@ const PLANET_ABBR: Record<string, string> = {
   Jupiter: '♃',
   Venus: '♀',
   Saturn: '♄',
-  Rahu: 'Ra',
-  Ketu: 'Ke',
+  Ras: 'Ra',
+  Dhanab: 'Dh',
 };
 
 const SIGN_SYMBOLS: Record<string, string> = {

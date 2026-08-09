@@ -17,7 +17,7 @@
  */
 
 import { regionalFunctions } from './functionsRegion';
-import type { WatchVerdict } from '@astrology/rkp/watchJudgment';
+import type { DisplayWatchVerdict } from '@astrology/rkp/watchJudgment';
 
 export interface AskWatchOracleInput {
   question: string;
@@ -36,7 +36,7 @@ export interface WatchReading {
   lagnaSignName: string;
   /** e.g. "Utarid". */
   lagnaRulerName: string;
-  verdict: WatchVerdict;
+  verdict: DisplayWatchVerdict;
 }
 
 export interface AskWatchOracleResult {

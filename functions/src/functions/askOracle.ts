@@ -44,6 +44,7 @@ import {
   seekerProfileModifier,
 } from '../prompts/oracleSynthesisPrompt';
 import { runSafetyValidator } from './safetyValidator';
+import { toBoundaryPlanetName, toBoundaryPlanetNames } from '../utils/planetBoundaryName';
 import { getManzila, getManzilaOracleLine } from '../engine/manazil';
 import { houseForLongitude } from '../engine/primitives/chartBuilder';
 import { HOUSE_MATRIX } from '../engine/kp/rules/houseMatrix';
@@ -386,6 +387,13 @@ export const askOracle = onCall(
       // 8. Judge horary — proprietary RKP algorithm runs here, server-only
       const verdict = judgeHorary(chart, classified, horaryNumber);
 
+      // Shadow-node boundary mapping — everything written to Firestore or
+      // returned to the client from here on names Rahu/Ketu exclusively as
+      // Ras/Dhanab. See utils/planetBoundaryName.ts.
+      const remedyForOutput = verdict.remedy
+        ? { ...verdict.remedy, planet: toBoundaryPlanetName(verdict.remedy.planet) }
+        : undefined;
+
       // 9+10. Persist reading + quota update in a batch
       const readingRef = db.collection('readings').doc(verdict.id);
       const readingDoc: Omit<ReadingDoc, 'createdAt'> = {
@@ -399,7 +407,7 @@ export const askOracle = onCall(
         timing: verdict.timing
           ? { window: verdict.timing.window, range: verdict.timing.range }
           : undefined,
-        remedy: verdict.remedy ?? null,
+        remedy: remedyForOutput ?? null,
         reasoning: verdict.reasoning.map(
           (r: { ruleId: string; description: string; weight: number }) => ({
             ruleId: r.ruleId,
@@ -458,11 +466,12 @@ export const askOracle = onCall(
       for (const p of DISPLAY_PLANETS) {
         const pos = chart.planets[p];
         if (pos !== undefined) {
-          planetDegrees[p] = pos.siderealLongitude;
-          planetChain[p] = {
-            manzilLord: String(pos.nakshatraLord),
-            subLord: String(pos.subLord),
-            subSubLord: String(pos.subSubLord),
+          const key = toBoundaryPlanetName(p);
+          planetDegrees[key] = pos.siderealLongitude;
+          planetChain[key] = {
+            manzilLord: toBoundaryPlanetName(String(pos.nakshatraLord)),
+            subLord: toBoundaryPlanetName(String(pos.subLord)),
+            subSubLord: toBoundaryPlanetName(String(pos.subSubLord)),
           };
         }
       }
@@ -499,7 +508,7 @@ export const askOracle = onCall(
                 return null;
               }
               const slHouse = houseForLongitude(slPos.siderealLongitude, cuspLons) as number;
-              return { house: h, subLord: sl as string, subLordHouse: slHouse };
+              return { house: h, subLord: toBoundaryPlanetName(sl), subLordHouse: slHouse };
             })
             .filter(Boolean) as Array<{ house: number; subLord: string; subLordHouse: number }>;
         }
@@ -549,23 +558,32 @@ export const askOracle = onCall(
           : undefined,
         cuspSubLords,
         rulingPlanets: {
-          dayLord: verdict.rulingPlanets.dayLord as string,
-          ascSignLord: verdict.rulingPlanets.ascSignLord as string,
-          ascStarLord: verdict.rulingPlanets.ascStarLord as string,
-          moonSignLord: verdict.rulingPlanets.moonSignLord as string,
-          moonStarLord: verdict.rulingPlanets.moonStarLord as string,
-          horaLord: verdict.rulingPlanets.horaLord as string | undefined,
+          dayLord: toBoundaryPlanetName(verdict.rulingPlanets.dayLord as string),
+          ascSignLord: toBoundaryPlanetName(verdict.rulingPlanets.ascSignLord as string),
+          ascStarLord: toBoundaryPlanetName(verdict.rulingPlanets.ascStarLord as string),
+          moonSignLord: toBoundaryPlanetName(verdict.rulingPlanets.moonSignLord as string),
+          moonStarLord: toBoundaryPlanetName(verdict.rulingPlanets.moonStarLord as string),
+          horaLord:
+            verdict.rulingPlanets.horaLord !== undefined
+              ? toBoundaryPlanetName(verdict.rulingPlanets.horaLord as string)
+              : undefined,
         },
         significators: verdict.significators
           ? {
-              favorable: verdict.significators.favorable as string[],
-              denial: verdict.significators.denial as string[],
-              neutral: verdict.significators.neutral as string[],
+              favorable: toBoundaryPlanetNames(verdict.significators.favorable as string[]),
+              denial: toBoundaryPlanetNames(verdict.significators.denial as string[]),
+              neutral: toBoundaryPlanetNames(verdict.significators.neutral as string[]),
             }
           : undefined,
-        confirmedSignificators: verdict.confirmedSignificators as string[] | undefined,
-        deniedSignificators: verdict.deniedSignificators as string[] | undefined,
-        remedy: verdict.remedy,
+        confirmedSignificators:
+          verdict.confirmedSignificators !== undefined
+            ? toBoundaryPlanetNames(verdict.confirmedSignificators as string[])
+            : undefined,
+        deniedSignificators:
+          verdict.deniedSignificators !== undefined
+            ? toBoundaryPlanetNames(verdict.deniedSignificators as string[])
+            : undefined,
+        remedy: remedyForOutput,
         reasoning: readingDoc.reasoning,
         horaryNumber,
         quotaRemaining: remaining,
