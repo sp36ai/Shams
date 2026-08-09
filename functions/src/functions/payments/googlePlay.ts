@@ -25,6 +25,7 @@ import { FieldValue } from 'firebase-admin/firestore';
 import { db, auth } from '../../utils/admin';
 import { verifyAuth } from '../../middleware/auth';
 import { parse, VerifyGooglePlaySchema } from '../../middleware/validate';
+import { enforceRateLimit } from '../../middleware/rateLimit';
 import { logger } from '../../utils/logger';
 import { requestMetaFromCallable } from '../../utils/requestMeta';
 import {
@@ -172,6 +173,7 @@ export const verifyGooglePlayPurchase = onCall(
     const startedAt = Date.now();
     const requestMeta = requestMetaFromCallable(request);
     const { userId } = verifyAuth(request);
+    await enforceRateLimit(userId);
     const input = parse(VerifyGooglePlaySchema, request.data);
 
     try {
