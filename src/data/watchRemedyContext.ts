@@ -20,7 +20,7 @@
  * below is that correspondence, not a claim that a planet causes a state.
  */
 
-import type { WatchVerdict } from '@astrology/rkp/watchJudgment';
+import type { DisplayWatchVerdict } from '@astrology/rkp/watchJudgment';
 import type { Direction } from '@astrology/rkp/nomenclature';
 import type { SeekerProfile } from '../stores/settingsStore';
 import type { RemedyTag } from './remedyLibrary';
@@ -38,7 +38,7 @@ type SpiritualState = RankingContext['spiritualState'];
  * DELAYED and REVERSING are deliberately NEUTRAL rather than DENIED: both say
  * the matter still stands, only not on the timeline the querent wanted.
  */
-function classificationOf(verdict: WatchVerdict): OracleClassification {
+function classificationOf(verdict: DisplayWatchVerdict): OracleClassification {
   switch (verdict.state) {
     case 'FULFILLED':
     case 'MOVING':
@@ -57,7 +57,7 @@ function classificationOf(verdict: WatchVerdict): OracleClassification {
  * reaches for the deep ones. A settled, favourable chart should not hand the
  * querent a heavy prescription.
  */
-function severityOf(verdict: WatchVerdict): Severity {
+function severityOf(verdict: DisplayWatchVerdict): Severity {
   switch (verdict.state) {
     case 'BLOCKED':
       return 'high';
@@ -79,17 +79,26 @@ function severityOf(verdict: WatchVerdict): Severity {
 /*  Obstruction → themes and inner state                                      */
 /* -------------------------------------------------------------------------- */
 
-/** The shape of difficulty each obstructing agent describes. */
+/**
+ * The shape of difficulty each obstructing agent describes.
+ *
+ * Keyed by BOTH the engine's internal node names (Rahu/Ketu — used by tests
+ * and any caller working directly off judgeWatchChart) and their boundary
+ * name (Ras/Dhanab — what a verdict received from askWatchOracle actually
+ * carries). Same themes either way; only the lookup key differs.
+ */
 const OBSTRUCTION_THEMES: Readonly<Record<string, readonly RemedyTag[]>> = Object.freeze({
   Saturn: ['DELAY', 'STAGNATION', 'OBSTRUCTION'],
   Mars: ['CONFLICT', 'HASTE', 'FORCING'],
   Rahu: ['DOUBT', 'DISTRACTION', 'MATERIAL_ANXIETY'],
+  Ras: ['DOUBT', 'DISTRACTION', 'MATERIAL_ANXIETY'],
   Ketu: ['ESTRANGEMENT', 'SPIRITUAL_NEGLECT', 'GRIEF'],
+  Dhanab: ['ESTRANGEMENT', 'SPIRITUAL_NEGLECT', 'GRIEF'],
   MoonDisagreement: ['RESTLESSNESS', 'DOUBT', 'ANXIETY'],
 });
 
 /** Themes carried by the state itself, independent of any obstruction. */
-const STATE_THEMES: Readonly<Record<WatchVerdict['state'], readonly RemedyTag[]>> = Object.freeze({
+const STATE_THEMES: Readonly<Record<DisplayWatchVerdict['state'], readonly RemedyTag[]>> = Object.freeze({
   FULFILLED: ['ABUNDANCE'],
   MOVING: ['ABUNDANCE', 'DOUBT'],
   DELAYED: ['DELAY', 'OBSTRUCTION'],
@@ -104,7 +113,7 @@ const STATE_THEMES: Readonly<Record<WatchVerdict['state'], readonly RemedyTag[]>
  * Qamar carries the mind, so its disagreement outranks the verdict: a settled
  * chart read by an unsettled questioner is still an unsettled reading.
  */
-function spiritualStateOf(verdict: WatchVerdict): SpiritualState {
+function spiritualStateOf(verdict: DisplayWatchVerdict): SpiritualState {
   if (verdict.obstruction === 'MoonDisagreement') {
     return 'restless';
   }
@@ -135,7 +144,7 @@ function spiritualStateOf(verdict: WatchVerdict): SpiritualState {
  * stands), and the question type (what domain it lives in).
  */
 export function watchVerdictToRankingContext(
-  verdict: WatchVerdict,
+  verdict: DisplayWatchVerdict,
   seekerProfile?: SeekerProfile | null,
 ): RankingContext {
   const themes: RemedyTag[] = [
@@ -172,7 +181,7 @@ export interface DirectionalFocus {
  * Returns null when the chart names no obstruction, or names one with no
  * physical seat (Qamar's disagreement is interior, not environmental).
  */
-export function directionalFocusFor(verdict: WatchVerdict): DirectionalFocus | null {
+export function directionalFocusFor(verdict: DisplayWatchVerdict): DirectionalFocus | null {
   if (verdict.afflictedDirection === null) {
     return null;
   }
@@ -183,9 +192,13 @@ export function directionalFocusFor(verdict: WatchVerdict): DirectionalFocus | n
   return { direction: verdict.afflictedDirection, focus };
 }
 
+// Keyed by both the internal node names and their boundary name — see
+// OBSTRUCTION_THEMES above for why.
 const PHYSICAL_CORRESPONDENCE: Readonly<Record<string, string>> = Object.freeze({
   Saturn: 'Stalled and accumulated things — unsorted paperwork, rust, items long unmoved.',
   Mars: 'Heat and breakage — faulty wiring, cracked glass, anything sharp left exposed.',
   Rahu: 'Disorder and excess — tangled cables, dead electronics, clutter with no owner.',
+  Ras: 'Disorder and excess — tangled cables, dead electronics, clutter with no owner.',
   Ketu: 'The forgotten — possessions kept without purpose, or left behind by someone gone.',
+  Dhanab: 'The forgotten — possessions kept without purpose, or left behind by someone gone.',
 });

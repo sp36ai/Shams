@@ -19,7 +19,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import { useColors } from '@theme/ThemeProvider';
 import { useTypography } from '@theme/useTypography';
 import { HOUSE_META, PLANET_NAME } from '@astrology/rkp/nomenclature';
-import type { WatchState, WatchVerdict } from '@astrology/rkp/watchJudgment';
+import type { DisplayWatchVerdict, WatchState } from '@astrology/rkp/watchJudgment';
 import type { DirectionalFocus } from '../../data/watchRemedyContext';
 
 /* -------------------------------------------------------------------------- */
@@ -55,18 +55,24 @@ const STATE_TONE: Readonly<Record<WatchState, ToneKey>> = Object.freeze({
 /**
  * How an obstruction should read in a sentence. Qamar's disagreement is a state
  * of mind rather than an agent standing in the way, so it is worded differently.
+ *
+ * `verdict.obstruction` is already boundary-mapped for the shadow nodes (see
+ * DisplayWatchVerdict above), so it is either a display name straight from
+ * the server (Ras/Dhanab) or an internal Planet key for the other seven —
+ * PLANET_NAME resolves those, and unresolved values (already display-ready)
+ * pass through as-is.
  */
-export function obstructionLabel(verdict: WatchVerdict): string | null {
+export function obstructionLabel(verdict: DisplayWatchVerdict): string | null {
   if (verdict.obstruction === 'None') {
     return null;
   }
   if (verdict.obstruction === 'MoonDisagreement') {
     return 'Qamar disagrees — the mind behind the question is unsettled';
   }
-  return PLANET_NAME[verdict.obstruction];
+  return PLANET_NAME[verdict.obstruction as keyof typeof PLANET_NAME] ?? verdict.obstruction;
 }
 
-export function timingLabel(verdict: WatchVerdict): string {
+export function timingLabel(verdict: DisplayWatchVerdict): string {
   if (verdict.timing === null) {
     return 'Unclear';
   }
@@ -95,7 +101,7 @@ export interface RkpWatchCardProps {
   lagnaSignName: string;
   /** e.g. "Utarid" — classical name of the querent's own ruler. */
   lagnaRulerName: string;
-  verdict: WatchVerdict;
+  verdict: DisplayWatchVerdict;
   /** Optional physical correspondence, from data/watchRemedyContext.ts. */
   directionalFocus?: DirectionalFocus | null;
   /** Shown when the host screen offers a switch to the Astronomical Oracle. */

@@ -49,6 +49,7 @@ import { parse, AskWatchOracleSchema } from '../middleware/validate';
 import { measure } from '../middleware/telemetry';
 import { logger, hashText } from '../utils/logger';
 import { localIsoFromOffset } from '../utils/localTime';
+import { toBoundaryPlanetName } from '../utils/planetBoundaryName';
 import { FUNCTION_OPTS } from '../config';
 import { claimQuotaSlot } from './askOracle';
 import type { AuditLogDoc, ReadingDoc } from '../types';
@@ -90,6 +91,20 @@ const CONFIDENCE_NUMERIC: Readonly<Record<WatchVerdict['confidence'], number>> =
   UNCERTAIN: 0.2,
 });
 
+/**
+ * WatchVerdict as it crosses the boundary to the client: `obstruction`,
+ * `targetRuler` and `lagnaRuler` carry the raw internal Planet identifier
+ * inside the engine, but the shadow nodes (Rahu/Ketu) are renamed to their
+ * classical Arabic/Urdu short forms (Ras/Dhanab) before the response leaves
+ * the server — see utils/planetBoundaryName.ts. Every other field is already
+ * a plain display string (e.g. targetRulerName) and needs no translation.
+ */
+export type PublicWatchVerdict = Omit<WatchVerdict, 'obstruction' | 'targetRuler' | 'lagnaRuler'> & {
+  obstruction: string;
+  targetRuler: string;
+  lagnaRuler: string;
+};
+
 export interface WatchOracleResponse {
   readingId: string;
   /** Server instant the reading was computed at, UTC. */
@@ -99,7 +114,7 @@ export interface WatchOracleResponse {
   window: { startMinute: number; endMinute: number; minute: number };
   lagnaSignName: string;
   lagnaRulerName: string;
-  verdict: WatchVerdict;
+  verdict: PublicWatchVerdict;
   quotaRemaining: number | null;
 }
 
@@ -185,7 +200,15 @@ export const askWatchOracle = onCall(
         },
         lagnaSignName: chart.lagnaSignName,
         lagnaRulerName: chart.planets[chart.lagnaRuler].name,
-        verdict,
+        // Shadow-node boundary mapping — obstruction/targetRuler/lagnaRuler
+        // are the only raw Planet identifiers left in the verdict; everything
+        // else (targetRulerName etc.) already went through nomenclature.ts.
+        verdict: {
+          ...verdict,
+          obstruction: toBoundaryPlanetName(verdict.obstruction),
+          targetRuler: toBoundaryPlanetName(verdict.targetRuler),
+          lagnaRuler: toBoundaryPlanetName(verdict.lagnaRuler),
+        },
         quotaRemaining: remaining,
       };
     });

@@ -92,6 +92,24 @@ export interface WatchVerdict {
   readonly factors: readonly string[];
 }
 
+/**
+ * WatchVerdict as it actually arrives over the wire from askWatchOracle.
+ *
+ * The server boundary-maps the shadow nodes before the response leaves it
+ * (see functions/src/utils/planetBoundaryName.ts): `obstruction`,
+ * `targetRuler` and `lagnaRuler` carry 'Ras'/'Dhanab' instead of the engine's
+ * internal 'Rahu'/'Ketu' whenever a node is the answer. Every other field —
+ * including the *Name companions, which already resolve through
+ * nomenclature.ts — is unaffected. Client code that consumes a reading
+ * received from the server (not one built locally via judgeWatchChart)
+ * should type against this, not WatchVerdict.
+ */
+export type DisplayWatchVerdict = Omit<WatchVerdict, 'obstruction' | 'targetRuler' | 'lagnaRuler'> & {
+  readonly obstruction: string;
+  readonly targetRuler: string;
+  readonly lagnaRuler: string;
+};
+
 /* -------------------------------------------------------------------------- */
 /*  Timing baselines                                                          */
 /* -------------------------------------------------------------------------- */
