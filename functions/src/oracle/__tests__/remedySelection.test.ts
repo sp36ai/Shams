@@ -108,9 +108,7 @@ describe('selection quality', () => {
 describe('determinism and serialisation', () => {
   it('produces the same protocol for the same diagnosis', () => {
     const d = diagnose({ ...CLEAN, obstruction: 'Saturn' });
-    expect(JSON.stringify(selectRemedyProtocol(d))).toBe(
-      JSON.stringify(selectRemedyProtocol(d)),
-    );
+    expect(JSON.stringify(selectRemedyProtocol(d))).toBe(JSON.stringify(selectRemedyProtocol(d)));
   });
 
   it('scores every step as a finite number', () => {

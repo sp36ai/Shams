@@ -40,9 +40,7 @@ describe('outcome classification', () => {
   });
 
   it('reads a long-horizon delay as prematurity rather than obstruction', () => {
-    const d = diagnose(
-      verdict({ state: 'DELAYED', timing: { minDays: 60, maxDays: 90 } }),
-    );
+    const d = diagnose(verdict({ state: 'DELAYED', timing: { minDays: 60, maxDays: 90 } }));
     expect(d.outcome).toBe('PREMATURE');
     expect(d.timingPosture).toBe('WAIT_LONG');
   });

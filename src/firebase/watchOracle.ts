@@ -18,6 +18,7 @@
 
 import { regionalFunctions } from './functionsRegion';
 import type { DisplayWatchVerdict } from '@astrology/rkp/watchJudgment';
+import type { WatchOracleComposition } from '../types/watchOracle';
 
 export interface AskWatchOracleInput {
   question: string;
@@ -37,6 +38,12 @@ export interface WatchReading {
   /** e.g. "Utarid". */
   lagnaRulerName: string;
   verdict: DisplayWatchVerdict;
+  /**
+   * Diagnosis, remedy protocol and narration. Absent only if the server could
+   * not compose one at all; `oracle.narration` being null is the ordinary
+   * degraded case, where the protocol is intact but the prose is missing.
+   */
+  oracle?: WatchOracleComposition;
 }
 
 export interface AskWatchOracleResult {
@@ -81,6 +88,7 @@ export async function askWatchOracle(args: AskWatchOracleInput): Promise<AskWatc
       lagnaSignName: data.lagnaSignName,
       lagnaRulerName: data.lagnaRulerName,
       verdict: data.verdict,
+      ...(data.oracle !== undefined ? { oracle: data.oracle } : {}),
     },
     quotaRemaining: data.quotaRemaining,
   };
