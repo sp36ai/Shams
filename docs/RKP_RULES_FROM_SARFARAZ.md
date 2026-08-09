@@ -1,4 +1,10 @@
-# RKP Rules - Source of Truth from Astro Sarfaraz
+# KP Judgment Rules - Source of Truth from Astro Sarfaraz
+
+> NAMING: this document was formerly titled "RKP Rules". It describes the
+> **KP (astronomical) engine** — the app's SECONDARY engine. "RKP" now refers
+> exclusively to the Ratan Kotamraju Paddhati watch engine in
+> `src/astrology/rkp/`, which is the primary engine and does not use any rule
+> in this document. See the README's "Two engines, never blended".
 
 > Status: aligned to the current runtime engine
 > Origin: Astro Sarfaraz's rule intake plus Phase 2 Forensic Audit updates (Promise + 5 RP)
@@ -8,7 +14,7 @@
 
 ## 1. Core engine model
 
-This engine now uses the 5-step Moon-Sub-Lord RKP flow.
+This engine uses the 5-step Moon-Sub-Lord KP flow.
 
 It uses Cusp Sub-Lords as a primary "Promise Layer" gatekeeper (Step 0) and 4-tier Significator Ranking (Phase B/D) for the scoring pass.
 

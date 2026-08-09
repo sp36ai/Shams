@@ -7,13 +7,13 @@
 
 import { create } from 'zustand';
 
-import type { QuestionType } from '@astrology/kp/rules/houseMatrix';
+import type { QuestionType } from '@astrology/questions/topics';
 import { storage, KEYS } from '@storage/mmkv';
 
 /**
  * Catalog of question categories the engine supports.
  *
- * SOURCE OF TRUTH: `QuestionType` in `@astrology/kp/rules/houseMatrix`,
+ * SOURCE OF TRUTH: `QuestionType` in `@astrology/questions/topics`,
  * which is the owner-provided RKP rule set from Astro Sarfaraz. We import
  * it once and alias as `QuestionCategory` so the readings cache and filter
  * UI stay locked to the engine's category vocabulary — any new category
@@ -21,7 +21,7 @@ import { storage, KEYS } from '@storage/mmkv';
  * app. The alias is also exported so screens (History, Oracle) can import
  * `QuestionCategory` from this store without reaching into the engine module.
  *
- * Drift policy: NEVER define category strings outside houseMatrix.ts.
+ * Drift policy: NEVER define category strings outside questions/topics.ts.
  */
 export type QuestionCategory = QuestionType;
 

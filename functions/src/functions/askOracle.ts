@@ -91,7 +91,7 @@ const { buildChart } =
 const { judgeHorary } =
   require('../engine/kp/judgment/judgeHorary') as typeof import('../engine/kp/judgment/judgeHorary');
 const { classifyQuestion } =
-  require('../engine/kp/rules/questionKeywords') as typeof import('../engine/kp/rules/questionKeywords');
+  require('../engine/questions/classify') as typeof import('../engine/questions/classify');
 /* eslint-enable @typescript-eslint/no-var-requires */
 
 // ── Quota helpers ────────────────────────────────────────────────────────────

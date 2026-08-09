@@ -19,7 +19,7 @@
  * ════════════════════════════════════════════════════════════════════
  */
 
-import type { QuestionType } from './houseMatrix';
+import type { QuestionType } from './topics';
 
 export const QUESTION_KEYWORDS: Readonly<Record<QuestionType, readonly string[]>> = Object.freeze({
   career: [

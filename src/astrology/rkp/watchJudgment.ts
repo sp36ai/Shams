@@ -1,11 +1,11 @@
 /**
  * RKP watch judgment — the verdict layer over the watch chart.
  * --------------------------------------------------------------------------
- * Routing uses the owner's existing house matrix (`kp/rules/houseMatrix.ts`,
- * sourced from docs/RKP_RULES_FROM_SARFARAZ.md) rather than a parallel intent
- * table: that matrix already carries primary / favorable / denial houses per
- * question type, which is strictly richer than a flat intent→house map, and
- * keeping one copy means the owner's rules stay the single source of truth.
+ * This engine is self-contained. It routes through its OWN house table in
+ * rkp/houseRouting.ts and never reads the KP engine's matrix — the two are
+ * independent calculation systems and a reading comes from one or the other,
+ * never from a blend. The only thing shared is the neutral subject vocabulary
+ * in questions/topics.ts, which is a word list, not astrology.
  *
  * The judgment is a deterministic weighted reading, not a black box. Every
  * contribution is recorded in `factors`, so narration speaks from actual chart
@@ -15,9 +15,10 @@
  * and cosmic markers use the classical Arabic/Urdu names from nomenclature.ts.
  */
 
-import { HOUSE_MATRIX, type QuestionType } from '@astrology/kp/rules/houseMatrix';
+import type { QuestionType } from '@astrology/questions/topics';
 import type { Planet } from '@astrology/types/chart';
 
+import { FULFILMENT_GHAR, routingFor } from './houseRouting';
 import { SIGN_META, type Direction, type HouseNumber } from './nomenclature';
 import { isBenefic, isMalefic, isStrong, isWeak, relationBetween, type Relation } from './rules';
 import { houseOf, type WatchChart } from './watchChart';
@@ -112,8 +113,6 @@ const BASE_TIMING: Readonly<Record<Planet, TimingWindow>> = Object.freeze({
   Ketu: { minDays: 45, maxDays: 90 },
 });
 
-const FULFILMENT_HOUSE: HouseNumber = 11;
-
 /* -------------------------------------------------------------------------- */
 /*  Judgment                                                                  */
 /* -------------------------------------------------------------------------- */
@@ -125,10 +124,10 @@ const FULFILMENT_HOUSE: HouseNumber = 11;
  * @param qType  Classified question type — the owner's taxonomy.
  */
 export function judgeWatchChart(chart: WatchChart, qType: QuestionType): WatchVerdict {
-  const matrix = HOUSE_MATRIX[qType];
-  const targetHouse = matrix.primary as HouseNumber;
+  const routing = routingFor(qType);
+  const targetHouse = routing.ghar;
   const target = houseOf(chart, targetHouse);
-  const fulfilment = houseOf(chart, FULFILMENT_HOUSE);
+  const fulfilment = houseOf(chart, FULFILMENT_GHAR);
 
   const targetRuler = target.ruler;
   const rulerPos = chart.planets[targetRuler];
@@ -200,12 +199,12 @@ export function judgeWatchChart(chart: WatchChart, qType: QuestionType): WatchVe
   }
 
   // ── 5. Where the matter's ruler has landed ───────────────────────────────
-  if (matrix.favorable.includes(rulerPos.house)) {
+  if (routing.supporting.includes(rulerPos.house)) {
     score += 1;
     factors.push(
       `${rulerPos.name} has landed in the ${rulerPos.house}th Ghar, a supporting house for this question.`,
     );
-  } else if (matrix.denial.includes(rulerPos.house)) {
+  } else if (routing.denying.includes(rulerPos.house)) {
     score -= 1;
     factors.push(
       `${rulerPos.name} has landed in the ${rulerPos.house}th Ghar, a denying house for this question.`,
@@ -265,7 +264,7 @@ export function judgeWatchChart(chart: WatchChart, qType: QuestionType): WatchVe
     targetSignName: target.signName,
     targetRuler,
     targetRulerName: rulerPos.name,
-    fulfilmentHouse: FULFILMENT_HOUSE,
+    fulfilmentHouse: FULFILMENT_GHAR,
     lagnaRuler,
     rulerRelation,
     state,

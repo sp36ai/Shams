@@ -652,12 +652,14 @@ const OracleChatScreen: React.FC = () => {
   const [input, setInput] = useState('');
 
   /**
-   * Which engine answers the next question.
-   *   'astronomical' — true Ascendant from the local horizon; needs location.
-   *   'watch'        — Digital Watch Oracle; needs nothing from the querent.
-   * Two distinct readings, not two views of one — see README.
+   * Which engine answers the next question. Two independent systems — a
+   * reading comes from one or the other, never a blend.
+   *   'watch'        — RKP, the primary engine. Needs nothing from the
+   *                    querent: no birth data, no location.
+   *   'astronomical' — KP, the secondary engine. True Ascendant from the
+   *                    local horizon, so it needs a location fix.
    */
-  const [oracleMode, setOracleMode] = useState<'astronomical' | 'watch'>('astronomical');
+  const [oracleMode, setOracleMode] = useState<'astronomical' | 'watch'>('watch');
   const [inputFocused, setInputFocused] = useState(false);
   const [sending, setSending] = useState(false);
   const sendingRef = useRef(false);
@@ -1272,8 +1274,8 @@ const OracleChatScreen: React.FC = () => {
           <View style={styles.modeRow}>
             {(
               [
-                ['astronomical', 'Astronomical'],
                 ['watch', 'Digital Watch'],
+                ['astronomical', 'Astronomical'],
               ] as const
             ).map(([mode, label]) => {
               const active = oracleMode === mode;

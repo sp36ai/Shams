@@ -12,13 +12,13 @@ For seekers with real questions. People in transition. Those facing genuine choi
 
 Five celestial powers converge at the instant of your question — the cosmic validators. When these forces align, the truth is certain. When they scatter, the answer grows complex — but it is still true.
 
-## Two Oracle Modes
+## Two Oracles
 
-**Digital Watch Oracle** — Answers anchored to your precise timestamp alone.
+**Digital Watch Oracle (RKP)** — the primary reading. Answers anchored to the moment of asking. Asks nothing of you: no birth details, no location.
 
-**Astronomical Oracle** — Answers grounded in the actual planetary positions at your moment of asking.
+**Astronomical Oracle (KP)** — the secondary reading, grounded in the true horizon at your place of asking. Needs your location.
 
-Both reveal the same truth. The difference is the depth of celestial witness you seek.
+Two separate systems, each answering in its own voice. A reading comes from one or the other — never a blend.
 
 ## Subscription Tiers
 
@@ -37,7 +37,7 @@ Built by **Astro Sarfaraz** — a solo developer, owner, and practicing celestia
 ## Architecture
 
 **Frontend**: React Native Android app with local MMKV cache and Zustand state management.  
-**Backend**: Cloud Functions (TypeScript) performing server-side RKP chart judgment.  
+**Backend**: Cloud Functions (TypeScript) performing server-side chart judgment for both engines.  
 **Database**: Firestore with deny-by-default security rules and user-scoped data isolation.  
 **Auth**: Firebase Authentication (email/password, Google sign-in).  
 **Quotas**: Server-enforced daily limits (free: 100/day, mureed: unlimited, khass: unlimited).  
@@ -70,7 +70,8 @@ Built by **Astro Sarfaraz** — a solo developer, owner, and practicing celestia
 
 ### User-Facing Callable Functions
 
-- **`askOracle`** — Horary judgment: validates input, enforces quota, builds chart, calls celestial engine, returns verdict
+- **`askWatchOracle`** — RKP (primary): validates input, enforces quota, builds the watch chart, returns verdict. No location required
+- **`askOracle`** — KP (secondary): validates input, enforces quota, builds the astronomical chart, returns verdict
 - **`getQuota`** — Returns user's plan, daily usage, and remaining questions
 - **`syncReadings`** — Bulk fetch readings from Firestore
 - **`deleteReading`** — Delete reading by ID
@@ -86,7 +87,7 @@ Built by **Astro Sarfaraz** — a solo developer, owner, and practicing celestia
 
 The authoritative algorithm documents:
 
-- `docs/RKP_RULES_FROM_SARFARAZ.md` — Judgment rules and horary methodology
+- `docs/RKP_RULES_FROM_SARFARAZ.md` — the KP (secondary) engine's judgment rules
 - `src/astrology/kp/judgment/JUDGMENT_ALGORITHM.md` — Implementation details
 
 The engine code:
@@ -95,42 +96,59 @@ The engine code:
 src/astrology/
   ├── primitives/       Ephemeris, ayanamsa, sidereal time, house cusps, sub-lords
   │   └── moshier/      Meeus/VSOP87 sun, moon and planet series
-  ├── kp/
+  ├── rkp/              PRIMARY engine — watch-selected house frame, own routing
+  ├── kp/               SECONDARY engine — true Ascendant
   │   ├── judgment/     Verdict logic + timing + remedy
-  │   └── rules/        House matrix, nakshatras, vimshottari, keywords
-  ├── rkp/              Digital Watch Oracle — watch-selected house frame
+  │   └── rules/        House matrix, nakshatras, vimshottari
+  ├── questions/        Shared subject vocabulary + classifier (no astrology)
   └── types/            Chart, question and verdict contracts
 ```
 
-### The two modes share one sky
+### Two engines, never blended
 
-Both oracle modes read the **same real ephemeris** — Meeus/VSOP87 series with
-heliocentric→geocentric conversion, Lahiri ayanamsa, genuine retrograde and
-combustion state. They differ only in where the **house frame** comes from:
+Shams runs **two independent calculation systems**. A reading comes from one or
+the other — there is no hybrid mode and no combining of their rules.
 
-| | Astronomical Oracle | Digital Watch Oracle |
+| | **RKP** — primary | **KP** — secondary |
 |---|---|---|
-| Entry point | `primitives/chartBuilder.ts` | `rkp/watchChart.ts` |
-| 1st house from | True Ascendant — RAMC, obliquity, latitude (Placidus) | The 5-minute bracket of the querent's local watch minute |
-| Needs location | Yes — the horizon is local | No |
-| Planets | Real | Real |
+| Full name | Ratan Kotamraju Paddhati | Krishnamurti Paddhati |
+| Code | `src/astrology/rkp/` | `src/astrology/kp/` |
+| Callable | `askWatchOracle` | `askOracle` |
+| 1st house from | The 5-minute bracket of the querent's local watch minute | True Ascendant — RAMC, obliquity, latitude (Placidus) |
+| House rules | `rkp/houseRouting.ts` | `kp/rules/houseMatrix.ts` |
+| Needs birth data | No | No |
+| Needs location | **No** | Yes — the horizon is local |
+| Vocabulary | Arabic/Urdu — Burj, Ghar, Zuhal | KP terminology |
+| Verdicts | FULFILLED / MOVING / DELAYED / BLOCKED / REVERSING / UNFORMED | YES / NO / CONDITIONAL / DELAYED / UNCLEAR |
 
-The watch frame is a **moment-selected** house frame, of the same class as KP's
-1–249 number method, where a querent-chosen number rather than the local horizon
-fixes the Ascendant. It is not a horizon computation and must never be described
-as one, or substituted behind the Astronomical Oracle — the two are surfaced
-separately to the user for exactly that reason. See the header of
-`src/astrology/rkp/watchGrid.ts`.
+**RKP is the primary engine** and the app's default. Because its house frame is
+watch-derived and planetary positions are location-invariant, an RKP reading
+needs nothing at all from the querent — it can run the moment the app opens.
 
-Because the watch frame replaces the cusps and planetary positions are
-location-invariant, a Watch reading needs nothing from the querent — no birth
-data, and no location either. It can run the moment the app opens.
+**KP is the secondary engine**, for seekers who want the reading grounded in the
+true local horizon. It requires a location fix.
 
-Both modes feed the **same remedy layer** — the 38 tagged practices in
-`src/data/remedyLibrary.ts` (salawat, dua, istikhara, sadaqa, fasting, Qur'an,
-dhikr, charity, night prayer, silence, tawbah). `src/data/watchRemedyContext.ts`
-translates a watch verdict into the ranker's vocabulary: the obstructing planet
-describes the *shape* of the difficulty, which is what selects an apt response.
+Both read the **same real ephemeris** — Meeus/VSOP87 with heliocentric→geocentric
+conversion, Lahiri ayanamsa, genuine retrograde and combustion state. Sharing the
+astronomy is not blending the engines: the sky is the sky. What must never be
+shared is the *judgment* — each engine owns its own house rules and its own
+verdict logic.
+
+The one other shared item is `src/astrology/questions/topics.ts`, the app's
+subject vocabulary (career, marriage, finance …). It is a word list with no
+houses, planets or judgment in it, so both engines and the readings store can
+read it without either depending on the other.
+
+`src/astrology/__tests__/engineIndependence.test.ts` enforces all of this: it
+fails the build if either engine ever imports the other.
+
+#### A note on the name "RKP"
+
+In older documents in this repo, "RKP" was also used for the interpretation
+layer over the KP core, and for the owner-provided judgment ruleset. **Both of
+those usages are retired.** RKP now means one thing only: the Ratan Kotamraju
+Paddhati watch engine in `src/astrology/rkp/`. The owner-provided house matrix
+is the KP engine's ruleset and is named as such.
 
 ## Build & Run
 

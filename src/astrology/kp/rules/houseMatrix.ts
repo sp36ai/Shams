@@ -1,12 +1,16 @@
 /**
  * ════════════════════════════════════════════════════════════════════
- * RKP House Matrix — Question Type → Favorable / Denial Houses
+ * KP House Matrix — Question Type → Favorable / Denial Houses
  * ════════════════════════════════════════════════════════════════════
  *
  * Source of truth: docs/RKP_RULES_FROM_SARFARAZ.md §1
  * Provided by: Astro Sarfaraz (project owner) during Phase 1 intake.
  *
- * USED BY:  Phase 3 engine — src/astrology/kp/judgment/judgeHorary.ts
+ * SCOPE: these are the ASTRONOMICAL (KP) engine's house rules and nothing
+ * else. The RKP watch engine keeps its own routing in rkp/houseRouting.ts.
+ * Neither engine reads the other's table — they are separate systems.
+ *
+ * USED BY:  src/astrology/kp/judgment/judgeHorary.ts
  *
  * EDIT POLICY:
  *   This file is a faithful transcription of the owner-provided rules.
@@ -16,21 +20,12 @@
  * ════════════════════════════════════════════════════════════════════
  */
 
-export type QuestionType =
-  | 'career'
-  | 'marriage'
-  | 'finance'
-  | 'health'
-  | 'property'
-  | 'travel'
-  | 'legal'
-  | 'education'
-  | 'business'
-  | 'children'
-  | 'lostitem'
-  | 'enemies'
-  | 'spiritual'
-  | 'general';
+import type { QuestionType } from '@astrology/questions/topics';
+
+// Re-exported so existing importers keep working. The vocabulary itself is
+// shared, neutral ground — see questions/topics.ts.
+export type { QuestionType };
+export { ALL_QUESTION_TYPES, isQuestionType } from '@astrology/questions/topics';
 
 export interface HouseMatrixEntry {
   /** Houses whose involvement strengthens the YES verdict. */
@@ -59,15 +54,3 @@ export const HOUSE_MATRIX: Readonly<Record<QuestionType, HouseMatrixEntry>> = Ob
   spiritual: { favorable: [5, 9, 12], denial: [6, 8], primary: 9, secondary: [5, 12] },
   general: { favorable: [1, 11], denial: [8, 12], primary: 1, secondary: [11] },
 }) as Readonly<Record<QuestionType, HouseMatrixEntry>>;
-
-/** All 14 supported question types, in declaration order. */
-export const ALL_QUESTION_TYPES: readonly QuestionType[] = Object.keys(
-  HOUSE_MATRIX,
-) as QuestionType[];
-
-/**
- * Type guard — narrows an arbitrary string to QuestionType if valid.
- */
-export function isQuestionType(value: string): value is QuestionType {
-  return value in HOUSE_MATRIX;
-}

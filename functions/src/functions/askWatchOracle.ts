@@ -1,7 +1,11 @@
 /**
  * askWatchOracle — the Digital Watch Oracle callable.
  *
- * Sibling of askOracle. Same security pipeline, same quota, different engine:
+ * Sibling of askOracle. Same security pipeline, same quota, and a completely
+ * separate engine — the RKP watch system, which shares no astrological rule
+ * with the KP astronomical engine. A reading comes from one system or the
+ * other, never a blend.
+ *
  *   1. Firebase App Check  — enforced by runtime
  *   2. Firebase Auth       — request.auth UID verified by the runtime
  *   3. Input validation    — Zod, strict
@@ -10,7 +14,7 @@
  *                            so a watch reading costs exactly what an
  *                            astronomical one costs. No free side door.
  *   6. Build watch chart   — server-side; the APK still contains zero engine
- *   7. Classify question   — shared keyword matcher
+ *   7. Classify question   — shared keyword matcher (neutral, not KP)
  *   8. Judge               — RKP watch judgment
  *   9. Persist reading     — /readings/{id}, so watch readings appear in the
  *                            same history as astronomical ones
@@ -60,7 +64,7 @@ const { buildWatchChart } =
 const { judgeWatchChart } =
   require('../engine/rkp/watchJudgment') as typeof import('../engine/rkp/watchJudgment');
 const { classifyQuestion } =
-  require('../engine/kp/rules/questionKeywords') as typeof import('../engine/kp/rules/questionKeywords');
+  require('../engine/questions/classify') as typeof import('../engine/questions/classify');
 /* eslint-enable @typescript-eslint/no-var-requires */
 
 import type { WatchState, WatchVerdict } from '../engine/rkp/watchJudgment';
