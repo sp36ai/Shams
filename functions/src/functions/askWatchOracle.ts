@@ -99,7 +99,10 @@ const CONFIDENCE_NUMERIC: Readonly<Record<WatchVerdict['confidence'], number>> =
  * the server — see utils/planetBoundaryName.ts. Every other field is already
  * a plain display string (e.g. targetRulerName) and needs no translation.
  */
-export type PublicWatchVerdict = Omit<WatchVerdict, 'obstruction' | 'targetRuler' | 'lagnaRuler'> & {
+export type PublicWatchVerdict = Omit<
+  WatchVerdict,
+  'obstruction' | 'targetRuler' | 'lagnaRuler'
+> & {
   obstruction: string;
   targetRuler: string;
   lagnaRuler: string;

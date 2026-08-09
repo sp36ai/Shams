@@ -104,7 +104,10 @@ export interface WatchVerdict {
  * received from the server (not one built locally via judgeWatchChart)
  * should type against this, not WatchVerdict.
  */
-export type DisplayWatchVerdict = Omit<WatchVerdict, 'obstruction' | 'targetRuler' | 'lagnaRuler'> & {
+export type DisplayWatchVerdict = Omit<
+  WatchVerdict,
+  'obstruction' | 'targetRuler' | 'lagnaRuler'
+> & {
   readonly obstruction: string;
   readonly targetRuler: string;
   readonly lagnaRuler: string;
