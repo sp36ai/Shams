@@ -321,6 +321,71 @@ const KPReadingScreen: React.FC<RootStackScreenProps<'KPReading'>> = ({ route, n
                 )}
               </View>
             )}
+
+            {/* Expert detail — promise layer + significators, see
+                RKP_KP_FORENSIC_AUDIT.md §I on default vs. expert fields */}
+            {(result.cuspSubLords?.length ?? 0) > 0 && (
+              <View
+                style={[
+                  styles.card,
+                  { borderColor: colors.border, backgroundColor: colors.surface },
+                ]}
+              >
+                <Text style={[typography('caption'), { color: colors.textMuted, marginBottom: 4 }]}>
+                  {'PROMISE LAYER — CUSPAL SUB-LORDS'}
+                </Text>
+                <Text
+                  style={[typography('caption'), { color: colors.textFaint, marginBottom: 10 }]}
+                >
+                  {
+                    'Expert detail. The cusp sub-lord of the relevant house must not occupy a denial house, or the chart cannot address the question — checked before any witness is examined.'
+                  }
+                </Text>
+                {result.cuspSubLords?.map(c => (
+                  <Text
+                    key={c.house}
+                    style={[typography('body'), { color: colors.text, marginBottom: 4 }]}
+                  >
+                    {`House ${c.house} → sub-lord ${c.subLord} (house ${c.subLordHouse})`}
+                  </Text>
+                ))}
+              </View>
+            )}
+
+            {result.significators && (
+              <View
+                style={[
+                  styles.card,
+                  { borderColor: colors.border, backgroundColor: colors.surface },
+                ]}
+              >
+                <Text style={[typography('caption'), { color: colors.textMuted, marginBottom: 4 }]}>
+                  {'SIGNIFICATORS'}
+                </Text>
+                <Text
+                  style={[typography('caption'), { color: colors.textFaint, marginBottom: 10 }]}
+                >
+                  {
+                    'Expert detail. The 4-tier ranked planets speaking for (favorable) or against (denial) this question — the witness table above is these lists intersected with the 5 Classical Witnesses.'
+                  }
+                </Text>
+                {result.significators.favorable.length > 0 && (
+                  <Text style={[typography('body'), { color: colors.positive, marginBottom: 6 }]}>
+                    {`Favorable: ${result.significators.favorable.join(', ')}`}
+                  </Text>
+                )}
+                {result.significators.denial.length > 0 && (
+                  <Text style={[typography('body'), { color: colors.negative, marginBottom: 6 }]}>
+                    {`Denial: ${result.significators.denial.join(', ')}`}
+                  </Text>
+                )}
+                {result.significators.neutral.length > 0 && (
+                  <Text style={[typography('body'), { color: colors.textFaint }]}>
+                    {`Neutral (signifies both sides): ${result.significators.neutral.join(', ')}`}
+                  </Text>
+                )}
+              </View>
+            )}
           </>
         )}
       </ScrollView>

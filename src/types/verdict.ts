@@ -108,6 +108,23 @@ export interface KpVerdictResult {
   horarySubLord?: string;
   horarySubLordHouse?: number;
   reasoning?: ReadonlyArray<{ ruleId: string; description: string; weight: number }>;
+
+  /**
+   * 4-tier significator lists (favorable/denial/neutral) — the classical KP
+   * mechanism §5 verdicts are actually derived from. "Expert" detail per
+   * RKP_KP_FORENSIC_AUDIT.md §I — opaque to a general reader, but the core
+   * of what a KP practitioner would want to verify.
+   */
+  significators?: { favorable: string[]; denial: string[]; neutral: string[] };
+
+  /**
+   * Cuspal sub-lords (promise layer) for the question's primary + secondary
+   * houses — same shared computation RKP's reading already carries
+   * (favorable/denial houses come from the one HOUSE_MATRIX both engines
+   * use), surfaced here too since it's the literal "promise" gate KP
+   * judgment starts from. "Expert" detail, see above.
+   */
+  cuspSubLords?: Array<{ house: number; subLord: string; subLordHouse: number }>;
 }
 
 export interface AstroVerdictResult {

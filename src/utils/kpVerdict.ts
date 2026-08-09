@@ -33,11 +33,18 @@ interface KpVjRemedy {
   charity?: string;
 }
 
+interface KpVjSignificators {
+  favorable?: string[];
+  denial?: string[];
+  neutral?: string[];
+}
+
 interface KpVj {
   verdict?: string;
   confidence?: number;
   narration?: Partial<Record<'en' | 'ur' | 'hi', string>>;
   timing?: KpVjTiming;
+  significators?: KpVjSignificators;
   confirmedSignificators?: string[];
   deniedSignificators?: string[];
   rulingPlanets?: KpVjRulingPlanets;
@@ -50,6 +57,12 @@ interface KpVj {
 
 interface VjWithKp {
   kp?: KpVj;
+  /**
+   * Cuspal sub-lords (promise layer) — computed once, shared by both engines
+   * (same HOUSE_MATRIX-derived houses), stored at the TOP level of
+   * verdictJson rather than under `kp`. See src/firebase/oracle.ts.
+   */
+  cuspSubLords?: Array<{ house: number; subLord: string; subLordHouse: number }>;
 }
 
 const WITNESS_ROLE_ORDER: KpWitnessEntry['role'][] = [
@@ -112,5 +125,13 @@ export function readingToKpResult(reading: Reading): KpVerdictResult | undefined
     horarySubLord: kp.horarySubLord,
     horarySubLordHouse: kp.horarySubLordHouse,
     reasoning: kp.reasoning,
+    significators: kp.significators
+      ? {
+          favorable: kp.significators.favorable ?? [],
+          denial: kp.significators.denial ?? [],
+          neutral: kp.significators.neutral ?? [],
+        }
+      : undefined,
+    cuspSubLords: vj?.cuspSubLords,
   };
 }
