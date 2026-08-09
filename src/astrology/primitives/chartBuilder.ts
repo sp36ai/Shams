@@ -388,7 +388,7 @@ export function buildChart(iso8601: string, lat: number, lon: number): Chart {
     ayanamsaValue,
     houseSystem: cuspResult.system === 'Porphyry' ? 'porphyry' : 'placidus',
     planets: Object.freeze(planetsRecord),
-    cusps: Object.freeze(houseObjects) as Chart['cusps'],
+    cusps: Object.freeze(houseObjects),
     ascendant: houseObjects[0],
     midheaven: houseObjects[9],
     rulingPlanets: rp.set as Planet[],

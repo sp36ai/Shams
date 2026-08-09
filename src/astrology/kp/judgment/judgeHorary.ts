@@ -315,9 +315,9 @@ function buildMoonSubLordSnapshot(
   const planetData = chart.planets[moonSubLord];
   return {
     planet: moonSubLord,
-    nakshatraLord: planetData.nakshatraLord as Planet,
-    subLord: planetData.subLord as Planet,
-    subSubLord: planetData.subSubLord as Planet, // Precision Layer
+    nakshatraLord: planetData.nakshatraLord,
+    subLord: planetData.subLord,
+    subSubLord: planetData.subSubLord, // Precision Layer
     occupiedHouse: moonSubLordHouse,
     signifiedHouses: [moonSubLordHouse],
     favHits,
@@ -377,7 +377,7 @@ function checkPromise(
     return { denied: false };
   }
 
-  const cuspSubLord = primaryCusp.subLord as Planet;
+  const cuspSubLord = primaryCusp.subLord;
   const cuspSubLordHouse = houseOfPlanet(cuspSubLord, chart);
 
   if ((denial as number[]).includes(cuspSubLordHouse)) {
@@ -423,7 +423,7 @@ export function judgeHorary(
   const { favorable, denial, primary } = matrix;
 
   // ── PROMISE CHECK — fires before Kotamraju, before any scoring ───────────
-  const promise = checkPromise(chart, denial, primary as number);
+  const promise = checkPromise(chart, denial, primary);
   if (promise.denied) {
     const deniedReasoning: ReasoningStep[] = [
       step(
@@ -444,7 +444,7 @@ export function judgeHorary(
       promise.cuspSubLordHouse,
       0,
     );
-    const moonSubLordForDenied = moonPos.subLord as Planet;
+    const moonSubLordForDenied = moonPos.subLord;
     const moonSubLordHouseForDenied = houseOfPlanet(moonSubLordForDenied, chart);
     return Object.freeze({
       id: deterministicId(chart, question),
@@ -622,7 +622,7 @@ export function judgeHorary(
   );
 
   // ── Timing ────────────────────────────────────────────────────────────────
-  const timing = computeConvergenceTiming(chart, confirmedSignificators as Planet[]);
+  const timing = computeConvergenceTiming(chart, confirmedSignificators);
   reasoning.push(
     step(
       5,
@@ -682,8 +682,8 @@ export function judgeHorary(
     stage: 'fructification' as const,
     reasoning: Object.freeze(reasoning),
     significators,
-    confirmedSignificators: Object.freeze(confirmedSignificators as Planet[]),
-    deniedSignificators: Object.freeze(deniedSignificators as Planet[]),
+    confirmedSignificators: Object.freeze(confirmedSignificators),
+    deniedSignificators: Object.freeze(deniedSignificators),
     timing,
     remedy,
     narration,

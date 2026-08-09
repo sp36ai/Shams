@@ -66,6 +66,8 @@ const { composeWatchOracleResponse } =
   require('../oracle/responseComposer') as typeof import('../oracle/responseComposer');
 /* eslint-enable @typescript-eslint/no-var-requires */
 
+import type { WatchOracleComposition } from '../oracle/responseComposer';
+
 import type { WatchState, WatchVerdict } from '../engine/rkp/watchJudgment';
 
 /**
@@ -120,13 +122,14 @@ export interface WatchOracleResponse {
   lagnaSignName: string;
   lagnaRulerName: string;
   verdict: PublicWatchVerdict;
-  /** The mystical oracle response in Shams al-Asrār voice. */
-  oracle?: {
-    opening: string;
-    interpretation: string;
-    spiritual_layer: string;
-    signature: string;
-  };
+  /**
+   * Diagnosis, remedy protocol and narration.
+   *
+   * The diagnosis and protocol are computed deterministically and are always
+   * present; `narration` is null when Claude synthesis failed, which costs the
+   * reading its prose but not its substance.
+   */
+  oracle?: WatchOracleComposition;
   quotaRemaining: number | null;
 }
 
@@ -162,11 +165,23 @@ export const askWatchOracle = onCall(
       const qType = classifyQuestion(input.question);
       const verdict = judgeWatchChart(chart, qType);
 
-      // ── Compose mystical oracle response ─────────────────────────────────
-      let oracleResponse;
+      // Shadow-node boundary mapping — obstruction/targetRuler/lagnaRuler are
+      // the only raw Planet identifiers left in the verdict; everything else
+      // (targetRulerName etc.) already went through nomenclature.ts. Done once
+      // here so the diagnosis names the obstructing agent exactly as the client
+      // will display it.
+      const publicVerdict: PublicWatchVerdict = {
+        ...verdict,
+        obstruction: toBoundaryPlanetName(verdict.obstruction),
+        targetRuler: toBoundaryPlanetName(verdict.targetRuler),
+        lagnaRuler: toBoundaryPlanetName(verdict.lagnaRuler),
+      };
+
+      // ── Diagnosis → remedy protocol → narration ──────────────────────────
+      let oracleResponse: WatchOracleComposition | null = null;
       try {
         oracleResponse = await composeWatchOracleResponse({
-          verdict,
+          verdict: publicVerdict,
           seekerName: input.seekerName,
           motherName: input.motherName,
         });
@@ -175,12 +190,12 @@ export const askWatchOracle = onCall(
           err: String(err),
           userId,
         });
-        // Composition failure is not fatal; proceed without oracle response
+        // Non-fatal: the reading still stands on its verdict.
         oracleResponse = null;
       }
 
       const readingRef = db.collection('readings').doc();
-      const narration = oracleResponse?.interpretation || verdict.factors.join(' ');
+      const narration = oracleResponse?.narration?.interpretation || verdict.factors.join(' ');
       const readingDoc: Omit<ReadingDoc, 'createdAt'> = {
         userId,
         question: input.question,
@@ -193,14 +208,16 @@ export const askWatchOracle = onCall(
           ur: narration,
           hi: narration,
         },
-        remedy: null,
         reasoning: verdict.factors.map((description, i) => ({
           ruleId: `rkp.watch.${i + 1}`,
           description,
           weight: 1,
         })),
-        // Store oracle response if composition succeeded
-        ...(oracleResponse ? { oracle: oracleResponse } : {}),
+        // Kept null: ReadingDoc.remedy carries the astronomical path's shape
+        // (planet/action/avoid), which does not describe an RKP protocol. The
+        // watch protocol is persisted in full under `watchOracle` instead.
+        remedy: null,
+        ...(oracleResponse ? { watchOracle: oracleResponse } : {}),
       };
 
       await readingRef.set({
@@ -233,15 +250,7 @@ export const askWatchOracle = onCall(
         },
         lagnaSignName: chart.lagnaSignName,
         lagnaRulerName: chart.planets[chart.lagnaRuler].name,
-        // Shadow-node boundary mapping — obstruction/targetRuler/lagnaRuler
-        // are the only raw Planet identifiers left in the verdict; everything
-        // else (targetRulerName etc.) already went through nomenclature.ts.
-        verdict: {
-          ...verdict,
-          obstruction: toBoundaryPlanetName(verdict.obstruction),
-          targetRuler: toBoundaryPlanetName(verdict.targetRuler),
-          lagnaRuler: toBoundaryPlanetName(verdict.lagnaRuler),
-        },
+        verdict: publicVerdict,
         ...(oracleResponse ? { oracle: oracleResponse } : {}),
         quotaRemaining: remaining,
       };

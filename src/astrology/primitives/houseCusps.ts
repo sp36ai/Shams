@@ -74,7 +74,7 @@ export function ascendant(ramcDeg: number, obliquityDeg: number, latDeg: number)
   // Meeus 14.4 — Asc = atan2(cos(RAMC), -(sin(RAMC)·cos(ε) + tan(φ)·sin(ε)))
   const y = Math.cos(ramcRad);
   const x = -(Math.sin(ramcRad) * Math.cos(epsRad) + Math.tan(latRad) * Math.sin(epsRad));
-  let asc = Math.atan2(y, x) * RAD_TO_DEG;
+  const asc = Math.atan2(y, x) * RAD_TO_DEG;
   return normalize360(asc);
 }
 
