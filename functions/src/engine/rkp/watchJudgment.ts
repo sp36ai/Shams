@@ -18,7 +18,7 @@
 import type { QuestionType } from '../questions/topics';
 import type { Planet } from '../types/chart';
 
-import { FULFILMENT_GHAR, routingFor } from './houseRouting';
+import { DENYING_GHARS, FULFILMENT_GHAR, routingFor } from './houseRouting';
 import { SIGN_META, type Direction, type HouseNumber } from './nomenclature';
 import { isBenefic, isMalefic, isStrong, isWeak, relationBetween, type Relation } from './rules';
 import { houseOf, type WatchChart } from './watchChart';
@@ -199,15 +199,18 @@ export function judgeWatchChart(chart: WatchChart, qType: QuestionType): WatchVe
   }
 
   // ── 5. Where the matter's ruler has landed ───────────────────────────────
-  if (routing.supporting.includes(rulerPos.house)) {
+  // The triad: landing on fulfilment carries a matter, landing in the houses of
+  // loss undoes it. Applied uniformly — RKP reads 1st / target / 11th, not a
+  // per-topic table of favourable houses.
+  if (rulerPos.house === FULFILMENT_GHAR) {
     score += 1;
     factors.push(
-      `${rulerPos.name} has landed in the ${rulerPos.house}th Ghar, a supporting house for this question.`,
+      `${rulerPos.name} has landed in the 11th Ghar, the house of answered desire — the matter carries its own fulfilment.`,
     );
-  } else if (routing.denying.includes(rulerPos.house)) {
+  } else if (DENYING_GHARS.includes(rulerPos.house)) {
     score -= 1;
     factors.push(
-      `${rulerPos.name} has landed in the ${rulerPos.house}th Ghar, a denying house for this question.`,
+      `${rulerPos.name} has landed in the ${rulerPos.house}th Ghar, a house of loss — the matter drains rather than delivers.`,
     );
   }
 

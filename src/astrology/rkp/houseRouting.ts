@@ -14,10 +14,10 @@
  * has governed standing and profession for as long as the houses have been
  * counted. Agreement on a classical signification is not a dependency.
  *
- * Structure per topic:
- *   ghar       the Ghar the matter is read from
- *   supporting Ghars whose involvement strengthens the matter
- *   denying    Ghars whose involvement undermines it
+ * One Ghar per topic. RKP judges on the triad — the querent (1st), the matter
+ * (this Ghar), and fulfilment (11th) — so there is deliberately no per-topic
+ * table of favourable and denying houses here. That structure belongs to the
+ * KP engine, and importing its shape was how a hybrid crept in once already.
  */
 
 import type { QuestionType } from '@astrology/questions/topics';
@@ -27,11 +27,15 @@ import type { HouseNumber } from './nomenclature';
 export interface GharRouting {
   /** The Ghar the matter is judged from. */
   readonly ghar: HouseNumber;
-  /** Ghars whose support carries the matter. */
-  readonly supporting: readonly HouseNumber[];
-  /** Ghars whose involvement denies it. */
-  readonly denying: readonly HouseNumber[];
 }
+
+/**
+ * Ghars that undo a matter wherever it sits — the classical houses of loss and
+ * undoing. RKP applies these universally rather than per topic: the spec judges
+ * on the 1st / target / 11th triad plus malefic affliction, not on a
+ * topic-by-topic table of favourable and denying houses.
+ */
+export const DENYING_GHARS: readonly HouseNumber[] = Object.freeze([8, 12]);
 
 /**
  * The 11th Ghar — Bait-ul-Raja, the house of gains and answered desire —
@@ -41,34 +45,36 @@ export interface GharRouting {
 export const FULFILMENT_GHAR: HouseNumber = 11;
 
 export const RKP_HOUSE_ROUTING: Readonly<Record<QuestionType, GharRouting>> = Object.freeze({
-  // Bait-ul-Izzat — standing, honour, profession.
-  career: { ghar: 10, supporting: [6, 11], denying: [5, 8, 12] },
-  // Bait-ul-Zaujah — the partner, and the contract that binds two parties.
-  marriage: { ghar: 7, supporting: [2, 11], denying: [6, 8, 12] },
-  // Bait-ul-Maal — accumulated wealth and what is already held.
-  finance: { ghar: 2, supporting: [6, 11], denying: [8, 12] },
-  // Bait-ul-Nafs — the body itself; vitality is read from the querent's Ghar.
-  health: { ghar: 1, supporting: [5, 11], denying: [6, 8, 12] },
-  // Bait-ul-Arz — land, dwelling, and the peace of the home.
-  property: { ghar: 4, supporting: [2, 11], denying: [8, 12] },
-  // Bait-ul-Safar — the long journey and the fortune that attends it.
-  travel: { ghar: 9, supporting: [3, 12], denying: [] },
-  // Bait-ul-Marz — dispute, debt, and the adversary across the table.
-  legal: { ghar: 6, supporting: [11], denying: [8, 12] },
-  // Learning read from the seat of the home that shelters it.
-  education: { ghar: 4, supporting: [9, 11], denying: [8, 12] },
+  // Bait-ul-Izzat — profession, promotion, launching a venture.
+  career: { ghar: 10 },
+  // Bait-ul-Zaujah — the partner, and the contract binding two parties.
+  marriage: { ghar: 7 },
+  // Bait-ul-Raja — realised gains, salary, the wish granted. Money ARRIVING
+  // is read here, not from the 2nd, which holds what is already banked.
+  finance: { ghar: 11 },
+  // Bait-ul-Nafs — the body itself.
+  health: { ghar: 1 },
+  // Bait-ul-Arz — land, dwelling, vehicles, the peace of the home.
+  property: { ghar: 4 },
+  // Bait-ul-Safar — the long journey.
+  travel: { ghar: 9 },
+  // Bait-ul-Marz — debt, dispute, the adversary across the table.
+  legal: { ghar: 6 },
+  // Bait-ul-Awlad — examinations, study, speculation. The house of what the
+  // mind produces, not the house of the home that shelters the student.
+  education: { ghar: 5 },
   // A venture is a partnership before it is a profession.
-  business: { ghar: 7, supporting: [10, 11], denying: [6, 8, 12] },
-  // Bait-ul-Awlad — offspring and the creative issue of the self.
-  children: { ghar: 5, supporting: [2, 11], denying: [1, 4, 10] },
-  // What is lost is read from the Ghar of holdings, not of loss.
-  lostitem: { ghar: 2, supporting: [4, 11], denying: [8, 12] },
-  // The open adversary shares the Ghar of dispute.
-  enemies: { ghar: 6, supporting: [11], denying: [8, 12] },
-  // Bait-ul-Safar again — the road outward is also the road inward.
-  spiritual: { ghar: 9, supporting: [5, 12], denying: [6, 8] },
+  business: { ghar: 7 },
+  // Bait-ul-Awlad — offspring.
+  children: { ghar: 5 },
+  // What is lost is read from the house of holdings.
+  lostitem: { ghar: 2 },
+  // The open adversary shares the house of dispute.
+  enemies: { ghar: 6 },
+  // The road outward is also the road inward.
+  spiritual: { ghar: 9 },
   // With no stated subject, the matter is read from the querent themselves.
-  general: { ghar: 1, supporting: [11], denying: [8, 12] },
+  general: { ghar: 1 },
 });
 
 /** Routing for a topic. Every topic has one, so this never returns undefined. */
