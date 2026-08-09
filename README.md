@@ -58,7 +58,7 @@ Built by **Astro Sarfaraz** — a solo developer, owner, and practicing celestia
 
 ### Customization
 - **Theme**: Light/dark + 5 aesthetic themes (Shams, Falak, Dasha, Maqbool, Mardood)
-- **Language**: EN (English), UR (اردو), HI (हिन्दी)
+- **Language**: EN (English), UR (اردو) actively maintained; HI (हिन्दी) frozen — see Roadmap
 - **Location**: Capture via GPS during onboarding; fall back to last known location
 
 ### Premium (In-App Subscription)
@@ -93,12 +93,44 @@ The engine code:
 
 ```
 src/astrology/
-  ├── engine/           Core celestial calculations
+  ├── primitives/       Ephemeris, ayanamsa, sidereal time, house cusps, sub-lords
+  │   └── moshier/      Meeus/VSOP87 sun, moon and planet series
   ├── kp/
   │   ├── judgment/     Verdict logic + timing + remedy
-  │   └── charts/       Chart construction, aspects, yoga
-  └── utils/            Ephemeris, coordinates, time math
+  │   └── rules/        House matrix, nakshatras, vimshottari, keywords
+  ├── rkp/              Digital Watch Oracle — watch-selected house frame
+  └── types/            Chart, question and verdict contracts
 ```
+
+### The two modes share one sky
+
+Both oracle modes read the **same real ephemeris** — Meeus/VSOP87 series with
+heliocentric→geocentric conversion, Lahiri ayanamsa, genuine retrograde and
+combustion state. They differ only in where the **house frame** comes from:
+
+| | Astronomical Oracle | Digital Watch Oracle |
+|---|---|---|
+| Entry point | `primitives/chartBuilder.ts` | `rkp/watchChart.ts` |
+| 1st house from | True Ascendant — RAMC, obliquity, latitude (Placidus) | The 5-minute bracket of the querent's local watch minute |
+| Needs location | Yes — the horizon is local | No |
+| Planets | Real | Real |
+
+The watch frame is a **moment-selected** house frame, of the same class as KP's
+1–249 number method, where a querent-chosen number rather than the local horizon
+fixes the Ascendant. It is not a horizon computation and must never be described
+as one, or substituted behind the Astronomical Oracle — the two are surfaced
+separately to the user for exactly that reason. See the header of
+`src/astrology/rkp/watchGrid.ts`.
+
+Because the watch frame replaces the cusps and planetary positions are
+location-invariant, a Watch reading needs nothing from the querent — no birth
+data, and no location either. It can run the moment the app opens.
+
+Both modes feed the **same remedy layer** — the 38 tagged practices in
+`src/data/remedyLibrary.ts` (salawat, dua, istikhara, sadaqa, fasting, Qur'an,
+dhikr, charity, night prayer, silence, tawbah). `src/data/watchRemedyContext.ts`
+translates a watch verdict into the ranker's vocabulary: the obstructing planet
+describes the *shape* of the difficulty, which is what selects an apt response.
 
 ## Build & Run
 
@@ -250,7 +282,13 @@ See [ARCHITECTURE_AND_FLOWS_REPORT.md](./ARCHITECTURE_AND_FLOWS_REPORT.md) for:
 - **iOS**: Not yet implemented
 - **Offline verdict**: Not yet implemented (Cloud Functions required)
 - **Cloud Functions tests**: Minimal coverage (PR welcome)
-- **Localization**: Partial (EN complete, UR/HI interface only)
+- **Localization**: EN complete, UR interface complete and actively maintained
+- **Hindi (hi) is frozen, not removed**: as the product focuses on its Urdu/Arabic-speaking
+  audience, `hi` is no longer backfilled with new strings. It remains a valid language —
+  persisted `hi` still loads and renders, new keys fall back to English, and users already on
+  Hindi keep a working picker control (and a way to switch away). New users are not offered it.
+  To resume support, flip `status` back to `'active'` in `src/i18n/types.ts` and backfill
+  `src/i18n/strings/hi.ts`; no other code changes are needed.
 
 ---
 

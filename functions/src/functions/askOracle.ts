@@ -107,7 +107,7 @@ const { classifyQuestion } =
  * limit is TRIAL_DAILY_LIMIT (5) instead of FREE_LIMIT (3). This is
  * enforced server-side so reinstalling the app cannot reset the trial.
  */
-async function claimQuotaSlot(
+export async function claimQuotaSlot(
   userId: string,
 ): Promise<{ plan: PlanTier; remaining: number | null; trialActive: boolean }> {
   const quotaRef = db.collection('quotas').doc(userId);

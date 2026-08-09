@@ -148,8 +148,12 @@ function mergeThemes(
   return [...new Set([...chartThemes, ...topicThemes])];
 }
 
-/** Map oracle category string to dominant themes for ranking. */
-function categoryToThemes(category: string): RankingContext['dominantThemes'] {
+/**
+ * Map oracle category string to dominant themes for ranking.
+ * Exported so the Watch Oracle bridge reuses this mapping rather than keeping
+ * a second copy that could drift — see data/watchRemedyContext.ts.
+ */
+export function categoryToThemes(category: string): RankingContext['dominantThemes'] {
   const map: Record<string, RankingContext['dominantThemes']> = {
     marriage: ['ATTACHMENT', 'DOUBT'],
     career: ['MATERIAL_ANXIETY', 'DELAY'],

@@ -54,6 +54,14 @@ function syncDir(src, dest) {
     const destPath = path.join(dest, entry.name);
 
     if (entry.isDirectory()) {
+      // Test directories stay in src/. They are jest suites run by the app's
+      // own runner; the functions package uses vitest, never compiles them
+      // (nothing imports them), and copying them only leaves an untracked
+      // tree behind after every build.
+      if (entry.name === '__tests__') {
+        skipped++;
+        continue;
+      }
       syncDir(srcPath, destPath);
       continue;
     }
