@@ -50,7 +50,7 @@ import { measure } from '../middleware/telemetry';
 import { logger, hashText } from '../utils/logger';
 import { localIsoFromOffset } from '../utils/localTime';
 import { toBoundaryPlanetName } from '../utils/planetBoundaryName';
-import { FUNCTION_OPTS } from '../config';
+import { ORACLE_FUNCTION_OPTS, ANTHROPIC_API_KEY } from '../config';
 import { claimQuotaSlot } from './askOracle';
 import type { AuditLogDoc, ReadingDoc } from '../types';
 import type { VerdictKind } from '../engine/types/verdict';
@@ -63,7 +63,7 @@ const { judgeWatchChart } =
 const { classifyQuestion } =
   require('../engine/kp/rules/questionKeywords') as typeof import('../engine/kp/rules/questionKeywords');
 const { composeWatchOracleResponse } =
-  require('../engine/rkp/responseComposer') as typeof import('../engine/rkp/responseComposer');
+  require('../oracle/responseComposer') as typeof import('../oracle/responseComposer');
 /* eslint-enable @typescript-eslint/no-var-requires */
 
 import type { WatchState, WatchVerdict } from '../engine/rkp/watchJudgment';
@@ -136,9 +136,11 @@ export interface WatchOracleResponse {
 
 export const askWatchOracle = onCall(
   {
-    ...FUNCTION_OPTS,
-    // No Anthropic call and no ephemeris-heavy synthesis, so the default
-    // timeout is ample — this path is pure computation.
+    ...ORACLE_FUNCTION_OPTS,
+    // The judgment itself is pure computation, but the oracle voice is
+    // synthesised by Anthropic (up to 25s) — so this needs the same headroom
+    // and the same secret binding as askOracle.
+    secrets: [ANTHROPIC_API_KEY],
     enforceAppCheck: process.env.FUNCTIONS_EMULATOR !== 'true',
   },
   async (request): Promise<WatchOracleResponse> => {
