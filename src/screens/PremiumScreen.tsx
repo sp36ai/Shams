@@ -53,7 +53,7 @@ const PLANS: PlanCard[] = [
     annualNote: 'save 2 months',
     features: [
       'Unlimited consultations',
-      'Both oracle modes',
+      'Priority celestial windows',
       'Full celestial confidence',
       'Sacred session PDF',
       'Priority synthesis',

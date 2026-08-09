@@ -1,20 +1,22 @@
 /**
- * askWatchOracle — the Digital Watch Oracle callable.
+ * askWatchOracle — the Digital Watch Oracle callable, and the app's sole
+ * oracle entry point.
  *
- * Sibling of askOracle. Same security pipeline, same quota, different engine:
+ * Security + delivery pipeline:
  *   1. Firebase App Check  — enforced by runtime
  *   2. Firebase Auth       — request.auth UID verified by the runtime
  *   3. Input validation    — Zod, strict
  *   4. Rate limit          — shared limiter, per user
- *   5. Quota check         — claimQuotaSlot(), the SAME helper askOracle uses,
- *                            so a watch reading costs exactly what an
- *                            astronomical one costs. No free side door.
+ *   5. Quota check         — claimQuotaSlot(), the same ledger every oracle
+ *                            reading has ever used, so a watch reading costs
+ *                            exactly what a reading always has
  *   6. Build watch chart   — server-side; the APK still contains zero engine
  *   7. Classify question   — shared keyword matcher
- *   8. Judge               — RKP watch judgment
- *   9. Persist reading     — /readings/{id}, so watch readings appear in the
- *                            same history as astronomical ones
- *  10. Audit log           — no PII
+ *   8. Judge               — RKP watch judgment (src/astrology/rkp/)
+ *   9. Oracle voice        — Claude prose synthesis, same voice layer the
+ *                            app has always spoken in (see oracleVoice.ts)
+ *  10. Persist reading     — /readings/{id}
+ *  11. Audit log           — no PII
  *
  * WHY THERE IS NO lat/lon
  *   The watch frame replaces the house cusps, and planetary positions are
@@ -41,18 +43,21 @@
  *   the offset for a trusted value.
  */
 
-import { onCall } from 'firebase-functions/v2/https';
+import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import { db } from '../utils/admin';
 import { verifyAuth } from '../middleware/auth';
 import { enforceRateLimit } from '../middleware/rateLimit';
 import { parse, AskWatchOracleSchema } from '../middleware/validate';
 import { measure } from '../middleware/telemetry';
 import { logger, hashText } from '../utils/logger';
+import { requestMetaFromCallable } from '../utils/requestMeta';
 import { localIsoFromOffset } from '../utils/localTime';
-import { FUNCTION_OPTS } from '../config';
-import { claimQuotaSlot } from './askOracle';
-import type { AuditLogDoc, ReadingDoc } from '../types';
-import type { VerdictKind } from '../engine/types/verdict';
+import { ORACLE_FUNCTION_OPTS, ANTHROPIC_API_KEY } from '../config';
+import { claimQuotaSlot } from './quotaSlot';
+import { synthesiseOracleVoice, ORACLE_FALLBACK } from './oracleVoice';
+import { runSafetyValidator } from './safetyValidator';
+import { getManzila, getManzilaOracleLine } from '../engine/manazil';
+import type { AuditLogDoc, ReadingDoc, OracleResponse, VerdictKind } from '../types';
 
 /* eslint-disable @typescript-eslint/no-var-requires */
 const { buildWatchChart } =
@@ -60,7 +65,7 @@ const { buildWatchChart } =
 const { judgeWatchChart } =
   require('../engine/rkp/watchJudgment') as typeof import('../engine/rkp/watchJudgment');
 const { classifyQuestion } =
-  require('../engine/kp/rules/questionKeywords') as typeof import('../engine/kp/rules/questionKeywords');
+  require('../engine/rules/questionKeywords') as typeof import('../engine/rules/questionKeywords');
 /* eslint-enable @typescript-eslint/no-var-requires */
 
 import type { WatchState, WatchVerdict } from '../engine/rkp/watchJudgment';
@@ -90,6 +95,33 @@ const CONFIDENCE_NUMERIC: Readonly<Record<WatchVerdict['confidence'], number>> =
   UNCERTAIN: 0.2,
 });
 
+/**
+ * Buckets the watch engine's day-precision timing window into the coarser
+ * days/weeks/months/years vocabulary the oracle voice prompt and the rest of
+ * the app already speak in.
+ */
+function bucketTiming(
+  timing: WatchVerdict['timing'],
+): { window: 'days' | 'weeks' | 'months'; range: { min: number; max: number } } | undefined {
+  if (timing === null) {
+    return undefined;
+  }
+  const { minDays, maxDays } = timing;
+  if (maxDays <= 14) {
+    return { window: 'days', range: { min: minDays, max: maxDays } };
+  }
+  if (maxDays <= 60) {
+    return {
+      window: 'weeks',
+      range: { min: Math.round(minDays / 7), max: Math.round(maxDays / 7) },
+    };
+  }
+  return {
+    window: 'months',
+    range: { min: Math.round(minDays / 30), max: Math.round(maxDays / 30) },
+  };
+}
+
 export interface WatchOracleResponse {
   readingId: string;
   /** Server instant the reading was computed at, UTC. */
@@ -101,6 +133,10 @@ export interface WatchOracleResponse {
   lagnaRulerName: string;
   verdict: WatchVerdict;
   quotaRemaining: number | null;
+  /** al-Qamar's Arabic lunar mansion at the chart moment — display only. */
+  manzila: OracleResponse['manzila'];
+  /** Oracle voice (Claude prose synthesis) — same layer every reading gets. */
+  oracle: OracleResponse['oracle'];
 }
 
 /* -------------------------------------------------------------------------- */
@@ -109,12 +145,13 @@ export interface WatchOracleResponse {
 
 export const askWatchOracle = onCall(
   {
-    ...FUNCTION_OPTS,
-    // No Anthropic call and no ephemeris-heavy synthesis, so the default
-    // timeout is ample — this path is pure computation.
+    ...ORACLE_FUNCTION_OPTS,
     enforceAppCheck: process.env.FUNCTIONS_EMULATOR !== 'true',
+    secrets: [ANTHROPIC_API_KEY],
   },
   async (request): Promise<WatchOracleResponse> => {
+    const startedAt = Date.now();
+    const requestMeta = requestMetaFromCallable(request);
     const { userId } = verifyAuth(request);
 
     return measure('askWatchOracle', userId, async () => {
@@ -122,7 +159,7 @@ export const askWatchOracle = onCall(
 
       await enforceRateLimit(userId);
 
-      // Costs the same as an astronomical reading — same helper, same ledger.
+      // Costs the same as any oracle reading has always cost — same ledger.
       const { plan, remaining } = await claimQuotaSlot(userId);
 
       // Instant is ours; only the zone comes from the caller.
@@ -166,13 +203,48 @@ export const askWatchOracle = onCall(
         questionHash: hashText(input.question),
         verdict: STATE_TO_VERDICT[verdict.state],
         plan,
-        source: 'callable',
+        source: requestMeta.source,
+        ipAddress: requestMeta.ipAddress,
+        ipHash: requestMeta.ipHash,
+        userAgent: requestMeta.userAgent,
+        durationMs: Date.now() - startedAt,
       };
       try {
         await db.collection('auditLogs').add({ ...audit, ts: new Date() });
       } catch (err) {
         logger.warn('askWatchOracle: audit log write failed', { err: String(err) });
       }
+
+      // ── Oracle voice synthesis — same Claude layer every reading has had ──
+      const moonLongitude = (chart.planets.Moon.sign - 1) * 30 + chart.planets.Moon.degreeInSign;
+      const manzila = getManzila(moonLongitude);
+      const verdictBinary =
+        STATE_TO_VERDICT[verdict.state] === 'YES' ||
+        STATE_TO_VERDICT[verdict.state] === 'CONDITIONAL'
+          ? 'CONFIRMED'
+          : 'DENIED';
+      const manzilaLine = getManzilaOracleLine(moonLongitude, verdictBinary);
+      const bucketedTiming = bucketTiming(verdict.timing);
+      const confidenceNumeric = Math.round(CONFIDENCE_NUMERIC[verdict.confidence] * 100);
+
+      const apiKey = ANTHROPIC_API_KEY.value();
+      const oracleRaw = apiKey
+        ? await synthesiseOracleVoice({
+            verdict: STATE_TO_VERDICT[verdict.state],
+            confidence: confidenceNumeric,
+            timingWindow: bucketedTiming?.window,
+            timingRange: bucketedTiming?.range,
+            manzilaLine,
+            seekerProfile: input.seekerProfile,
+            apiKey,
+            seekerName: input.seekerName,
+            motherName: input.motherName,
+          })
+        : ORACLE_FALLBACK;
+
+      const oracle = apiKey
+        ? await runSafetyValidator(oracleRaw, readingRef.id, apiKey)
+        : oracleRaw;
 
       return {
         readingId: readingRef.id,
@@ -187,7 +259,35 @@ export const askWatchOracle = onCall(
         lagnaRulerName: chart.planets[chart.lagnaRuler].name,
         verdict,
         quotaRemaining: remaining,
+        manzila: {
+          number: manzila.number,
+          name: manzila.name,
+          arabic: manzila.arabic,
+          nature: manzila.nature,
+          element: manzila.element,
+          oracleDescriptor: manzila.oracleDescriptor,
+        },
+        oracle,
       };
+    }).catch(err => {
+      const code = err instanceof HttpsError ? err.code : 'internal';
+
+      logger.error('askWatchOracle unexpected error', {
+        userId,
+        code,
+        err: err instanceof Error ? err.message : String(err),
+        stack: err instanceof Error ? err.stack : undefined,
+        durationMs: Date.now() - startedAt,
+        ipHash: requestMeta.ipHash,
+      });
+
+      if (err instanceof HttpsError) {
+        throw err;
+      }
+      throw new HttpsError(
+        'internal',
+        'The oracle could not complete this reading. Please try again.',
+      );
     });
   },
 );

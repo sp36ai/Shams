@@ -1,7 +1,8 @@
 appId: com.astrosarfaraz.shamsalasrar
 name: "Oracle — Ask a horary question"
 ---
-# Assumes authenticated + onboarding complete + location set
+# Assumes authenticated + onboarding complete. New RKP (Digital Watch
+# Oracle) needs no location, so none is required before this flow.
 
 - launchApp
 

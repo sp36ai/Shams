@@ -77,8 +77,48 @@ interface VerdictJson {
   };
 }
 
+/** Confidence band → percentage, matching CONFIDENCE_NUMERIC in askWatchOracle.ts. */
+const WATCH_CONFIDENCE_PERCENT: Readonly<Record<string, number>> = Object.freeze({
+  VERY_HIGH: 95,
+  HIGH: 80,
+  MODERATE: 60,
+  LOW: 40,
+  UNCERTAIN: 20,
+});
+
+/**
+ * A New RKP (watch) reading nests its verdict object rather than storing a
+ * flat confidence/reasoning pair — see WatchVerdictJson in firebase/watchOracle.ts.
+ * This narrows the persisted `verdictJson` and normalizes it into the same
+ * flat shape the detail view already renders, so watch readings show a real
+ * confidence bar and reasoning trace instead of silently reading as 0%/empty.
+ */
+interface RawVerdictJson {
+  verdict?: unknown;
+  narration?: VerdictJson['narration'];
+  [key: string]: unknown;
+}
+
 function extractVerdict(reading: Reading): VerdictJson {
-  return (reading.verdictJson as VerdictJson) ?? { verdict: reading.verdict, confidence: 0 };
+  const raw = reading.verdictJson as RawVerdictJson | undefined;
+  const watchVerdict = raw?.verdict as
+    | { state?: string; confidence?: string; factors?: string[] }
+    | undefined;
+
+  if (watchVerdict !== undefined && typeof watchVerdict === 'object' && watchVerdict !== null) {
+    return {
+      verdict: reading.verdict,
+      confidence: WATCH_CONFIDENCE_PERCENT[watchVerdict.confidence ?? ''] ?? 0,
+      narration: raw?.narration,
+      reasoning: (watchVerdict.factors ?? []).map((description, i) => ({
+        ruleId: `rkp.watch.${i + 1}`,
+        description,
+        weight: 1,
+      })),
+    };
+  }
+
+  return (raw as VerdictJson | undefined) ?? { verdict: reading.verdict, confidence: 0 };
 }
 
 /* -------------------------------------------------------------------------- */

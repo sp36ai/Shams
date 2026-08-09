@@ -3,7 +3,8 @@
  *
  * The library stores no descriptions — titles come from the library,
  * descriptions are derived at render time from effectDimensionLabel.
- * This module maps selected TaggedRemedy objects to the shape AstroVerdictCard expects.
+ * This module maps selected TaggedRemedy objects to the shape the Oracle
+ * chat's remedy list expects.
  */
 
 import { REMEDY_LIBRARY, type RemedyTag, type TaggedRemedy } from './remedyLibrary';

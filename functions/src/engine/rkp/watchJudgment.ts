@@ -1,11 +1,11 @@
 /**
  * RKP watch judgment — the verdict layer over the watch chart.
  * --------------------------------------------------------------------------
- * Routing uses the owner's existing house matrix (`kp/rules/houseMatrix.ts`,
- * sourced from docs/RKP_RULES_FROM_SARFARAZ.md) rather than a parallel intent
- * table: that matrix already carries primary / favorable / denial houses per
- * question type, which is strictly richer than a flat intent→house map, and
- * keeping one copy means the owner's rules stay the single source of truth.
+ * Routing uses the owner's existing house matrix (`rules/houseMatrix.ts`)
+ * rather than a parallel intent table: that matrix already carries primary /
+ * favorable / denial houses per question type, which is strictly richer than
+ * a flat intent→house map, and keeping one copy means the owner's rules stay
+ * the single source of truth.
  *
  * The judgment is a deterministic weighted reading, not a black box. Every
  * contribution is recorded in `factors`, so narration speaks from actual chart
@@ -15,7 +15,7 @@
  * and cosmic markers use the classical Arabic/Urdu names from nomenclature.ts.
  */
 
-import { HOUSE_MATRIX, type QuestionType } from '../kp/rules/houseMatrix';
+import { HOUSE_MATRIX, type QuestionType } from '../rules/houseMatrix';
 import type { Planet } from '../types/chart';
 
 import { SIGN_META, type Direction, type HouseNumber } from './nomenclature';

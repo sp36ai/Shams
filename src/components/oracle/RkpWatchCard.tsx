@@ -1,12 +1,8 @@
 /**
- * RkpWatchCard — renders a Digital Watch Oracle verdict.
+ * RkpWatchCard — renders a Digital Watch Oracle (New RKP) verdict.
  * --------------------------------------------------------------------------
- * NAMING: this is deliberately NOT called WatchVerdictCard. That name is
- * already taken by a component which renders an `AstroVerdictResult` (the
- * ruling-planets view of an Astronomical Oracle reading) — it is a second
- * presentation of the astronomical reading, not a second engine. This card is
- * the one backed by the actual watch engine in `src/astrology/rkp/`, and takes
- * a `WatchVerdict`.
+ * This is the app's only verdict card: it is backed by the watch engine in
+ * `src/astrology/rkp/`, and takes a `WatchVerdict` straight from the server.
  *
  * The card is presentation only. Every value shown is read straight off the
  * verdict; nothing is recomputed here, so what the user sees is exactly what
@@ -98,8 +94,6 @@ export interface RkpWatchCardProps {
   verdict: WatchVerdict;
   /** Optional physical correspondence, from data/watchRemedyContext.ts. */
   directionalFocus?: DirectionalFocus | null;
-  /** Shown when the host screen offers a switch to the Astronomical Oracle. */
-  onSwitchMode?: () => void;
 }
 
 const RkpWatchCard: React.FC<RkpWatchCardProps> = ({
@@ -108,7 +102,6 @@ const RkpWatchCard: React.FC<RkpWatchCardProps> = ({
   lagnaRulerName,
   verdict,
   directionalFocus,
-  onSwitchMode,
 }) => {
   const colors = useColors();
   const typography = useTypography();
@@ -196,16 +189,6 @@ const RkpWatchCard: React.FC<RkpWatchCardProps> = ({
           </Text>
         </View>
       ))}
-
-      {onSwitchMode !== undefined && (
-        <Text
-          onPress={onSwitchMode}
-          accessibilityRole="button"
-          style={[typography('caption'), styles.switch, { color: colors.accent }]}
-        >
-          {'View the Astronomical Oracle instead'}
-        </Text>
-      )}
     </View>
   );
 };
@@ -267,10 +250,6 @@ const styles = StyleSheet.create({
   },
   factorText: {
     flex: 1,
-  },
-  switch: {
-    marginTop: 14,
-    textDecorationLine: 'underline',
   },
 });
 

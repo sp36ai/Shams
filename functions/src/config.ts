@@ -28,7 +28,7 @@ export const FUNCTION_OPTS = {
   // enforceAppCheck is set per-function — see individual function files.
 } as const;
 
-// askOracle calls Anthropic (up to 25s) + safety validation (up to 24s) + cold start overhead.
+// askWatchOracle calls Anthropic (up to 25s) + safety validation (up to 24s) + cold start overhead.
 // 120s prevents timeout on cold starts.
 export const ORACLE_FUNCTION_OPTS = {
   ...FUNCTION_OPTS,

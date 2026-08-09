@@ -3,7 +3,8 @@
  * Nakshatras (Lunar Mansions) — Names + Lords (Vimshottari order)
  * ════════════════════════════════════════════════════════════════════
  *
- * Source of truth: docs/RKP_RULES_FROM_SARFARAZ.md §4
+ * Source of truth: classical nakshatra/lord tables, as provided by
+ * Astro Sarfaraz (project owner) during rules intake.
  *
  * 27 nakshatras span the 360° zodiac. Each spans 13°20' (NAKSHATRA_SPAN_DEG).
  * Lord sequence is Vimshottari (Ketu → Mercury), repeating every 9.

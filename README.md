@@ -12,21 +12,22 @@ For seekers with real questions. People in transition. Those facing genuine choi
 
 Five celestial powers converge at the instant of your question — the cosmic validators. When these forces align, the truth is certain. When they scatter, the answer grows complex — but it is still true.
 
-## Two Oracle Modes
+## The Engine: New RKP
 
-**Digital Watch Oracle** — Answers anchored to your precise timestamp alone.
-
-**Astronomical Oracle** — Answers grounded in the actual planetary positions at your moment of asking.
-
-Both reveal the same truth. The difference is the depth of celestial witness you seek.
+Shams al-Asrār speaks through a single oracle: the **Digital Watch Oracle** — New RKP.
+Your question arrives at a precise moment, and the 5-minute bracket of your own
+watch face at that instant fixes the 1st Ghar (house). The twelve signs rotate
+from there, and the real planets — genuine sidereal positions, real retrograde
+and combustion state — drop into that frame. No birth data, no location, no
+waiting: the reading can run the second the app opens.
 
 ## Subscription Tiers
 
-**Free Trial:** 7 days full access to both oracle modes.
+**Free Trial:** 7 days full access.
 
-**Mureed (₹249/month):** 3 questions per day, single oracle mode. Perfect for regular seekers. Annual: ₹2,490 (2 months free).
+**Mureed (₹249/month):** 3 questions per day. Perfect for regular seekers. Annual: ₹2,490 (2 months free).
 
-**Khass (₹699/month):** Unlimited questions, both oracle modes, exportable reports, reading archive, direct feedback channel. Annual: ₹6,990 (2 months free).
+**Khass (₹699/month):** Unlimited questions, exportable reports, reading archive, direct feedback channel. Annual: ₹6,990 (2 months free).
 
 ## The Brand
 
@@ -37,7 +38,7 @@ Built by **Astro Sarfaraz** — a solo developer, owner, and practicing celestia
 ## Architecture
 
 **Frontend**: React Native Android app with local MMKV cache and Zustand state management.  
-**Backend**: Cloud Functions (TypeScript) performing server-side RKP chart judgment.  
+**Backend**: Cloud Functions (TypeScript) performing server-side New RKP chart judgment.  
 **Database**: Firestore with deny-by-default security rules and user-scoped data isolation.  
 **Auth**: Firebase Authentication (email/password, Google sign-in).  
 **Quotas**: Server-enforced daily limits (free: 100/day, mureed: unlimited, khass: unlimited).  
@@ -59,7 +60,6 @@ Built by **Astro Sarfaraz** — a solo developer, owner, and practicing celestia
 ### Customization
 - **Theme**: Light/dark + 5 aesthetic themes (Shams, Falak, Dasha, Maqbool, Mardood)
 - **Language**: EN (English), UR (اردو) actively maintained; HI (हिन्दी) frozen — see Roadmap
-- **Location**: Capture via GPS during onboarding; fall back to last known location
 
 ### Premium (In-App Subscription)
 - **Mureed (₹249/month or ₹2,490/year)**: 3 questions/day + full history + remedies
@@ -70,7 +70,7 @@ Built by **Astro Sarfaraz** — a solo developer, owner, and practicing celestia
 
 ### User-Facing Callable Functions
 
-- **`askOracle`** — Horary judgment: validates input, enforces quota, builds chart, calls celestial engine, returns verdict
+- **`askWatchOracle`** — New RKP horary judgment: validates input, enforces quota, builds the watch chart, judges it, synthesizes the oracle voice, returns verdict
 - **`getQuota`** — Returns user's plan, daily usage, and remaining questions
 - **`syncReadings`** — Bulk fetch readings from Firestore
 - **`deleteReading`** — Delete reading by ID
@@ -82,12 +82,7 @@ Built by **Astro Sarfaraz** — a solo developer, owner, and practicing celestia
 - **`setAdminClaim`** — Admin privilege management (admin-only, requires existing admin status)
 - **`health`** — Readiness/liveness check (public, no auth required)
 
-## Celestial Engine
-
-The authoritative algorithm documents:
-
-- `docs/RKP_RULES_FROM_SARFARAZ.md` — Judgment rules and horary methodology
-- `src/astrology/kp/judgment/JUDGMENT_ALGORITHM.md` — Implementation details
+## Celestial Engine — New RKP
 
 The engine code:
 
@@ -95,42 +90,41 @@ The engine code:
 src/astrology/
   ├── primitives/       Ephemeris, ayanamsa, sidereal time, house cusps, sub-lords
   │   └── moshier/      Meeus/VSOP87 sun, moon and planet series
-  ├── kp/
-  │   ├── judgment/     Verdict logic + timing + remedy
-  │   └── rules/        House matrix, nakshatras, vimshottari, keywords
-  ├── rkp/              Digital Watch Oracle — watch-selected house frame
+  ├── rules/            House matrix, nakshatras, vimshottari, question keywords
+  ├── rkp/              New RKP — the Digital Watch Oracle engine
+  │   ├── watchGrid.ts     The 5-minute watch-selected house frame
+  │   ├── watchChart.ts    Real planets placed into that frame
+  │   ├── watchJudgment.ts Verdict logic — dignity, rulership, aspects, obstruction
+  │   ├── rules.ts          Dignities and aspect tables
+  │   └── nomenclature.ts   Classical Arabic/Urdu names for planets, houses, signs
   └── types/            Chart, question and verdict contracts
 ```
 
-### The two modes share one sky
+### How a reading is judged
 
-Both oracle modes read the **same real ephemeris** — Meeus/VSOP87 series with
+New RKP reads the **real ephemeris** — Meeus/VSOP87 series with
 heliocentric→geocentric conversion, Lahiri ayanamsa, genuine retrograde and
-combustion state. They differ only in where the **house frame** comes from:
+combustion state — the same primitives layer every part of the app's sky
+display uses. Its house frame is **moment-selected**: the hour is divided into
+twelve 5-minute brackets, and the bracket containing the moment of asking fixes
+the 1st Ghar; the remaining eleven signs follow in zodiacal order. This is not
+a horizon computation (it does not use Placidus cusps), and it needs no
+location or birth data — planetary positions are location-invariant, so a
+reading can run the instant the app opens. See the header of
+`src/astrology/rkp/watchGrid.ts` for the full mechanism.
 
-| | Astronomical Oracle | Digital Watch Oracle |
-|---|---|---|
-| Entry point | `primitives/chartBuilder.ts` | `rkp/watchChart.ts` |
-| 1st house from | True Ascendant — RAMC, obliquity, latitude (Placidus) | The 5-minute bracket of the querent's local watch minute |
-| Needs location | Yes — the horizon is local | No |
-| Planets | Real | Real |
+The verdict itself weighs: the strength (dignity) of the ruler of the question's
+own Ghar, how the querent's own ruler regards that ruler, which planets sit on
+or aspect the question's Ghar and the 11th Ghar of fulfilment, and retrograde/
+combustion state — see `src/astrology/rkp/watchJudgment.ts`.
 
-The watch frame is a **moment-selected** house frame, of the same class as KP's
-1–249 number method, where a querent-chosen number rather than the local horizon
-fixes the Ascendant. It is not a horizon computation and must never be described
-as one, or substituted behind the Astronomical Oracle — the two are surfaced
-separately to the user for exactly that reason. See the header of
-`src/astrology/rkp/watchGrid.ts`.
-
-Because the watch frame replaces the cusps and planetary positions are
-location-invariant, a Watch reading needs nothing from the querent — no birth
-data, and no location either. It can run the moment the app opens.
-
-Both modes feed the **same remedy layer** — the 38 tagged practices in
+Every reading feeds the **same remedy layer** — the 38 tagged practices in
 `src/data/remedyLibrary.ts` (salawat, dua, istikhara, sadaqa, fasting, Qur'an,
 dhikr, charity, night prayer, silence, tawbah). `src/data/watchRemedyContext.ts`
 translates a watch verdict into the ranker's vocabulary: the obstructing planet
 describes the *shape* of the difficulty, which is what selects an apt response.
+The same Claude-synthesized "oracle voice" prose layer (`functions/src/functions/oracleVoice.ts`)
+narrates every verdict in Shams al-Asrār's voice, regardless of question type.
 
 ## Build & Run
 
@@ -195,7 +189,7 @@ firebase deploy --only functions,firestore --project shams-app-4d0e7
 ### Client Tests
 
 ```bash
-npm test                    # Jest: quotaSelectors, judgeHorary
+npm test                    # Jest: quotaSelectors, watch engine (rkp/)
 npm run test:rules         # Firestore rules: ~59 suites, needs emulator
 ```
 
@@ -214,7 +208,7 @@ npm test                    # Vitest (currently minimal coverage)
 ├── android/               Android project (gradle, manifests, resources)
 ├── functions/             Cloud Functions (TypeScript)
 │   ├── src/
-│   │   ├── engine/        Shared celestial engine (symlinked from src/)
+│   │   ├── engine/        Celestial engine, generated from src/astrology/ by scripts/sync-engine.mjs
 │   │   ├── functions/     Callable and HTTP endpoints
 │   │   └── utils/         Firebase admin, validation, logging
 │   └── firebase.json      Functions config (region: asia-south1)

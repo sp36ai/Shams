@@ -177,10 +177,9 @@ export const en: StringTable = {
     starterPeriod: 'per month',
     premiumPeriod: 'per month',
     consultationPeriod: 'per year',
-    starterDescription:
-      '3 questions per day, single oracle mode access. Perfect for regular seekers.',
+    starterDescription: '3 questions per day. Perfect for regular seekers.',
     premiumDescription:
-      'Unlimited questions, both oracle modes, exportable reports, reading archive, direct feedback channel.',
+      'Unlimited questions, exportable reports, reading archive, direct feedback channel.',
     consultationDescription: 'Everything in Khass at an annual rate, with 2 months free.',
     selectPlan: 'Select',
     currentPlan: 'Current path',
@@ -191,7 +190,7 @@ export const en: StringTable = {
     feature_full_history: 'Full reading archive',
     feature_remedies: 'Spiritual remedies',
     feature_pdf_export: 'Exportable reports',
-    feature_priority_windows: 'Both oracle modes',
+    feature_priority_windows: 'Priority celestial windows',
     feature_strategic_sessions: 'Direct feedback channel',
   },
 

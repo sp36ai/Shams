@@ -7,6 +7,9 @@
  * logic. The home dashboard (OracleScreen) stays a lightweight status
  * surface — HORA/DAY LORD/QUESTIONS, quota, location, today's sky — and
  * never renders a conversation itself.
+ *
+ * Engine: New RKP (Digital Watch Oracle) only — see @firebase/watchOracle.
+ * No location is requested or required; the watch frame needs none.
  */
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -26,7 +29,6 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { acquireLocation } from '@utils/acquireLocation';
 import crashlytics from '@react-native-firebase/crashlytics';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -42,15 +44,15 @@ import { useQuota } from '@hooks/useQuota';
 import { useTimingStrip } from '@hooks/useTimingStrip';
 import { classifyIntent } from '@hooks/useIntentClassifier';
 import { classifyQuestion } from '@hooks/useQuestionGate';
-import { askOracle as callOracleFunction } from '../firebase/oracle';
+import { askWatchOracle as callWatchOracleFunction } from '../firebase/watchOracle';
+import type { WatchVerdictJson } from '../firebase/watchOracle';
 import StarfieldBackground from '@components/StarfieldBackground';
 import { displayLonSidereal, PLANET_GLYPHS } from '@utils/siderealPositions';
 import { getSignLordByLongitude } from '@astrology/primitives/rulingPlanets';
-import AstroVerdictCard from '../components/oracle/AstroVerdictCard';
-import WatchVerdictCard from '../components/oracle/WatchVerdictCard';
+import RkpWatchCard, { obstructionLabel, timingLabel } from '../components/oracle/RkpWatchCard';
 import CastingAstrolabe from '../components/oracle/CastingAstrolabe';
-import type { AstroVerdictResult } from '../types/verdict';
-import { selectRemedies, contextFromReading } from '../data/remedySelector';
+import { selectRemedies } from '../data/remedySelector';
+import { watchVerdictToRankingContext, directionalFocusFor } from '../data/watchRemedyContext';
 import type { RenderedRemedy } from '../data/remedyRenderer';
 import { INITIAL_CHIPS, FOLLOWUP_CHIPS } from '../data/oracleChips';
 
@@ -68,167 +70,41 @@ interface ChatMessage {
   createdAt: string;
 }
 
-// ── Verdict JSON shape helpers ────────────────────────────────────────────────
+// ── Reading → watch card props ────────────────────────────────────────────────
 
-interface VjTiming {
-  window?: 'days' | 'weeks' | 'months' | 'years';
-  range?: { min?: number; max?: number };
-  activeDasha?: string;
-  activeAntardasha?: string;
-  activePratyantardasha?: string;
-}
-
-interface VjRemedy {
-  planet?: string;
-  action?: string;
-  avoid?: string;
-  zikr?: string;
-  charity?: string;
-}
-
-interface VjShape {
-  confidence?: number;
-  timing?: VjTiming;
-  remedy?: VjRemedy;
-  moonSubLord?: { planet?: string; occupiedHouse?: number };
-  rulingPlanets?: { dayLord?: string; horaLord?: string; minuteLord?: string };
-}
-
-// ── Reading → AstroVerdictResult mapper ───────────────────────────────────────
-
-interface VjExtended extends VjShape {
-  moonSubLord?: {
-    planet?: string;
-    occupiedHouse?: number;
-    favHits?: number[];
-    denHits?: number[];
-  };
-  rulingPlanets?: {
-    dayLord?: string;
-    horaLord?: string;
-    ascSignLord?: string;
-    ascStarLord?: string;
-    moonSignLord?: string;
-    moonStarLord?: string;
-  };
-  narration?: Partial<Record<'en' | 'ur' | 'hi', string>>;
-  significators?: { favorable: string[]; denial: string[]; neutral: string[] };
-  confirmedSignificators?: string[];
-  deniedSignificators?: string[];
-  reasoning?: Array<{ ruleId: string; description: string; weight: number }>;
-  planetDegrees?: Record<string, number>;
-  cuspDegrees?: Record<number, number>;
-  cuspSigns?: Record<number, string>;
-  planetChain?: Record<string, { manzilLord: string; subLord: string; subSubLord: string }>;
-  /** KP horary number (1–249) — additive witness, see judgeHorary.ts docstring. */
-  horaryNumber?: number;
-  oracle?: {
-    opening: string;
-    interpretation: string;
-    spiritual_layer: string;
-    hidden_influence: string;
-    timing?: string | null;
-    warning?: string;
-    remedy: {
-      quran_verse?: string;
-      asma?: string;
-      dua?: string;
-      zikr?: string;
-      sadaqah?: string;
-    };
-    signature: string;
-  };
-}
-
-function readingToAstroResult(reading: Reading): AstroVerdictResult {
-  const vj = reading.verdictJson as VjExtended | null;
-  const msl = vj?.moonSubLord;
-  const rp = vj?.rulingPlanets;
-
-  const houses: AstroVerdictResult['houses'] = [
-    ...(msl?.favHits ?? []).map(h => ({ house: h, label: 'Fav', favorable: true })),
-    ...(msl?.denHits ?? []).map(h => ({ house: h, label: 'Den', favorable: false })),
-  ];
-
-  const rulingPlanets: AstroVerdictResult['rulingPlanets'] = [];
-  if (rp?.dayLord) {
-    rulingPlanets.push({ planet: rp.dayLord, role: 'dayLord', matching: false });
+/**
+ * Extracts RkpWatchCard's props from a persisted reading. Returns null for
+ * anything that isn't a watch-verdict reading — e.g. a "no location" stub
+ * from before this app spoke only New RKP, or a malformed cache entry —
+ * so the bubble degrades to plain narration text instead of crashing.
+ */
+function readingToWatchProps(
+  reading: Reading,
+): {
+  window: WatchVerdictJson['window'];
+  lagnaSignName: string;
+  lagnaRulerName: string;
+  verdict: WatchVerdictJson['verdict'];
+  directionalFocus: ReturnType<typeof directionalFocusFor>;
+} | null {
+  const vj = reading.verdictJson as Partial<WatchVerdictJson> | null;
+  const verdict = vj?.verdict;
+  if (verdict?.state === undefined) {
+    return null;
   }
-  if (rp?.horaLord) {
-    rulingPlanets.push({ planet: rp.horaLord, role: 'horaLord', matching: false });
-  }
-  if (rp?.ascSignLord) {
-    rulingPlanets.push({ planet: rp.ascSignLord, role: 'ascSignLord', matching: false });
-  }
-  if (rp?.ascStarLord) {
-    rulingPlanets.push({ planet: rp.ascStarLord, role: 'ascStarLord', matching: false });
-  }
-  if (rp?.moonSignLord) {
-    rulingPlanets.push({ planet: rp.moonSignLord, role: 'moonSignLord', matching: false });
-  }
-  if (rp?.moonStarLord) {
-    rulingPlanets.push({ planet: rp.moonStarLord, role: 'moonStarLord', matching: false });
-  }
-
-  const narrative = vj?.narration?.[reading.questionLang] ?? vj?.narration?.en ?? '';
-
   return {
-    mode: 'astro',
-    verdict: reading.verdict,
-    confidence: vj?.confidence ?? 0,
-    subLord: msl?.planet ?? '—',
-    subLordHouse: msl?.occupiedHouse ?? 0,
-    houses,
-    rulingPlanets,
-    timing: vj?.timing?.window
-      ? {
-          window: vj.timing.window,
-          range: { min: vj.timing.range?.min ?? 0, max: vj.timing.range?.max ?? 1 },
-          activeDasha: vj.timing.activeDasha,
-          activeAntardasha: vj.timing.activeAntardasha,
-        }
-      : undefined,
-    remedy: vj?.remedy?.action
-      ? {
-          planet: vj.remedy.planet ?? '—',
-          action: vj.remedy.action,
-          avoid: vj.remedy.avoid ?? '',
-          zikr: vj.remedy.zikr,
-          charity: vj.remedy.charity,
-        }
-      : undefined,
-    narrative,
-    createdAt: reading.createdAt,
-    category: reading.category,
-    question: reading.question,
-    significators: vj?.significators,
-    confirmedSignificators: vj?.confirmedSignificators,
-    deniedSignificators: vj?.deniedSignificators,
-    reasoning: vj?.reasoning,
-    planetDegrees: vj?.planetDegrees,
-    cuspDegrees: vj?.cuspDegrees,
-    cuspSigns: vj?.cuspSigns,
-    planetChain: vj?.planetChain,
-    oracle: vj?.oracle,
+    window: vj?.window ?? { startMinute: 0, endMinute: 5, minute: 0 },
+    lagnaSignName: vj?.lagnaSignName ?? '—',
+    lagnaRulerName: vj?.lagnaRulerName ?? '—',
+    verdict,
+    directionalFocus: directionalFocusFor(verdict),
   };
 }
 
 // ── Followup response builders ────────────────────────────────────────────────
 
-const ARABIC_PLANET_NAME: Record<string, string> = {
-  Sun: 'Shams',
-  Moon: 'al-Qamar',
-  Mars: 'al-Mirrikh',
-  Mercury: 'Utarid',
-  Jupiter: 'Mushtari',
-  Venus: 'Zuhra',
-  Saturn: 'Zuhal',
-  Rahu: "al-Ra's",
-  Ketu: 'al-Dhanab',
-};
-
 function timingResponse(reading: Reading, lang: 'en' | 'ur' | 'hi'): string {
-  const vj = reading.verdictJson as VjExtended | null;
+  const vj = reading.verdictJson as Partial<WatchVerdictJson> | null;
 
   // Prefer oracle prose timing — already in oracle voice
   const oracleTiming = vj?.oracle?.timing;
@@ -236,34 +112,26 @@ function timingResponse(reading: Reading, lang: 'en' | 'ur' | 'hi'): string {
     return oracleTiming;
   }
 
-  const t = vj?.timing;
-  if (!t) {
+  const verdict = vj?.verdict;
+  if (verdict === undefined) {
     return lang === 'ur'
-      ? 'اس زائچے میں وقت کا تعین ممکن نہیں۔ جب چاند اپنی موجودہ منزل سے گزرے تو دوبارہ پوچھیں۔'
+      ? 'اس زائچے میں وقت کا تعین ممکن نہیں۔ دوبارہ پوچھیں۔'
       : lang === 'hi'
         ? 'اس زائچے میں وقت واضح نہیں ہے۔'
         : 'The zaaiche does not name a day. Watch for the sign the celestial witnesses have described.';
   }
-  const max = t.range?.max ?? 1;
-  const win = t.window ?? 'weeks';
-  const winLabel: Record<string, Record<'en' | 'ur' | 'hi', string>> = {
-    days: { en: 'days', ur: 'دن', hi: 'दिन' },
-    weeks: { en: 'weeks', ur: 'ہفتے', hi: 'सप्ताह' },
-    months: { en: 'months', ur: 'مہینے', hi: 'महीने' },
-    years: { en: 'years', ur: 'سال', hi: 'वर्ष' },
-  };
-  const wl = winLabel[win]?.[lang] ?? win;
+  const label = timingLabel(verdict);
   if (lang === 'ur') {
-    return `آسمانی گواہ **${max} ${wl}** کی کھڑکی اشارہ کرتے ہیں۔\n\nستارے وقت کی کھڑکیاں دیتے ہیں، تقرریاں نہیں۔`;
+    return `آسمانی گواہ **${label}** کی کھڑکی اشارہ کرتے ہیں۔\n\nستارے وقت کی کھڑکیاں دیتے ہیں، تقرریاں نہیں۔`;
   }
   if (lang === 'hi') {
-    return `آسمانی گواہ **${max} ${wl}** کی کھڑکی اشارہ کرتے ہیں۔\n\nستارے وقت کی کھڑکیاں دیتے ہیں، تقرریاں نہیں۔`;
+    return `آسمانی گواہ **${label}** کی کھڑکی اشارہ کرتے ہیں۔\n\nستارے وقت کی کھڑکیاں دیتے ہیں، تقرریاں نہیں۔`;
   }
-  return `The celestial witnesses point to a window of **${max} ${wl}**.\n\nThe stars offer windows, not appointments.`;
+  return `The celestial witnesses point to a window of **${label}**.\n\nThe stars offer windows, not appointments.`;
 }
 
 function whyResponse(reading: Reading, lang: 'en' | 'ur' | 'hi'): string {
-  const vj = reading.verdictJson as VjExtended | null;
+  const vj = reading.verdictJson as Partial<WatchVerdictJson> | null;
 
   // Oracle interpretation is the best "why" answer — already in oracle voice
   const interpretation = vj?.oracle?.interpretation;
@@ -271,26 +139,33 @@ function whyResponse(reading: Reading, lang: 'en' | 'ur' | 'hi'): string {
     return interpretation;
   }
 
-  // Fallback: celestial witness description — no KP jargon
-  const msl = vj?.moonSubLord;
-  const rawPlanet = msl?.planet ?? '';
-  const planet = ARABIC_PLANET_NAME[rawPlanet] ?? (rawPlanet || '—');
-  const conf = vj?.confidence ?? 0;
+  // Fallback: celestial witness description — no engine jargon
+  const verdict = vj?.verdict;
+  if (verdict === undefined) {
+    return lang === 'ur'
+      ? 'اس زائچے کی گواہی واضح نہیں ہے۔'
+      : lang === 'hi'
+        ? 'اس زائچے کی گواہی واضح نہیں ہے۔'
+        : 'The witness for this zaaiche is not clear.';
+  }
+  const ruler = verdict.targetRulerName;
+  const obstruction = obstructionLabel(verdict);
   if (lang === 'ur') {
-    return `فیصلہ **آسمانی گواہ ${planet}** کی شہادت پر منحصر ہے۔\n\nیقین: **${conf}%**`;
+    return `فیصلہ **${ruler}** کی شہادت پر منحصر ہے۔${obstruction ? ` رکاوٹ: ${obstruction}۔` : ''}`;
   }
   if (lang === 'hi') {
-    return `یہ فیصلہ **آسمانی گواہ ${planet}** کی گواہی پر منحصر ہے۔\n\nیقین: **${conf}%**`;
+    return `یہ فیصلہ **${ruler}** کی گواہی پر منحصر ہے۔${obstruction ? ` رکاوٹ: ${obstruction}۔` : ''}`;
   }
-  return `The verdict rests on the testimony of **${planet}**, the celestial witness appointed to this zaaiche.\n\nConfidence: **${conf}%**`;
+  return `The verdict rests on the testimony of **${ruler}**, ruler of the matter's own Ghar.${
+    obstruction ? ` Held by: ${obstruction}.` : ''
+  }`;
 }
 
 function remedyResponse(reading: Reading, lang: 'en' | 'ur' | 'hi'): string {
-  const vj = reading.verdictJson as VjExtended | null;
+  const vj = reading.verdictJson as Partial<WatchVerdictJson> | null;
   const oracleRemedy = vj?.oracle?.remedy;
-  const verdictRemedy = vj?.remedy;
 
-  if (!oracleRemedy && !verdictRemedy) {
+  if (!oracleRemedy) {
     return lang === 'ur'
       ? 'اس زائچے کے لیے کوئی مخصوص علاج نہیں ملا۔'
       : lang === 'hi'
@@ -300,32 +175,21 @@ function remedyResponse(reading: Reading, lang: 'en' | 'ur' | 'hi'): string {
 
   const lines: string[] = [];
 
-  // Oracle remedy — primary (verse + asma + dua + zikr + sadaqah)
-  if (oracleRemedy?.quran_verse) {
+  if (oracleRemedy.quran_verse) {
     lines.push(`📖 ${oracleRemedy.quran_verse}`);
   }
-  if (oracleRemedy?.asma) {
+  if (oracleRemedy.asma) {
     lines.push(`• ${oracleRemedy.asma}`);
   }
-  if (oracleRemedy?.dua) {
+  if (oracleRemedy.dua) {
     lines.push(`• ${oracleRemedy.dua}`);
   }
-  if (oracleRemedy?.zikr) {
+  if (oracleRemedy.zikr) {
     lines.push(lang === 'ur' ? `• ذکر: *${oracleRemedy.zikr}*` : `• Zikr: *${oracleRemedy.zikr}*`);
   }
-  if (oracleRemedy?.sadaqah) {
+  if (oracleRemedy.sadaqah) {
     lines.push(
       lang === 'ur' ? `• صدقہ: ${oracleRemedy.sadaqah}` : `• Sadaqah: ${oracleRemedy.sadaqah}`,
-    );
-  }
-
-  // Verdict remedy — supplementary (planet-specific action + avoid)
-  if (verdictRemedy?.action) {
-    lines.push(`• ${verdictRemedy.action}`);
-  }
-  if (verdictRemedy?.avoid) {
-    lines.push(
-      lang === 'ur' ? `• پرہیز: ${verdictRemedy.avoid}` : `• Avoid: ${verdictRemedy.avoid}`,
     );
   }
 
@@ -335,7 +199,7 @@ function remedyResponse(reading: Reading, lang: 'en' | 'ur' | 'hi'): string {
 }
 
 function elaborationResponse(reading: Reading, lang: 'en' | 'ur' | 'hi'): string {
-  const vj = reading.verdictJson as VjExtended | null;
+  const vj = reading.verdictJson as Partial<WatchVerdictJson> | null;
   const oracle = vj?.oracle;
 
   // spiritual_layer is the "deeper why" — designed for follow-up questions
@@ -377,7 +241,7 @@ function formatHiddenScroll(
   motherName: string | null,
   locationLabel: string | null,
 ): string {
-  const vj = reading.verdictJson as VjExtended | null;
+  const vj = reading.verdictJson as Partial<WatchVerdictJson> | null;
   const oracle = vj?.oracle;
 
   if (!oracle) {
@@ -411,9 +275,6 @@ function formatHiddenScroll(
     }
   } else {
     lines.push(`The Hidden Scroll has been opened at ${timeStr} in ${city}.`);
-  }
-  if (vj?.horaryNumber !== undefined) {
-    lines.push(`Horary №${vj.horaryNumber}.`);
   }
   lines.push('');
 
@@ -489,43 +350,15 @@ function formatHiddenScroll(
 async function runEngine(args: {
   question: string;
   questionLang: 'en' | 'ur' | 'hi';
-  lat: number | null;
-  lon: number | null;
-  locationRequiredText: string;
   seekerProfile?: 'clarity' | 'comfort' | 'action' | 'surrender';
   seekerName?: string;
   motherName?: string;
 }): Promise<Reading> {
-  const now = new Date().toISOString();
-
-  if (args.lat === null || args.lon === null) {
-    return {
-      id: `r_${now}`,
-      question: args.question,
-      questionLang: args.questionLang,
-      category: 'general',
-      verdict: 'UNCLEAR',
-      createdAt: now,
-      chartJson: { phase: 'no-location', moment: now },
-      verdictJson: {
-        verdict: 'UNCLEAR',
-        confidence: 0,
-        reasoning: [],
-        narration: {
-          en: args.locationRequiredText,
-          ur: args.locationRequiredText,
-          hi: args.locationRequiredText,
-        },
-      },
-    };
-  }
-
-  // Engine runs server-side only — zero algorithm code in the APK.
-  const { reading } = await callOracleFunction({
+  // Engine runs server-side only — zero algorithm code in the APK. New RKP
+  // (Digital Watch Oracle) needs no location, so this can run immediately.
+  const { reading } = await callWatchOracleFunction({
     question: args.question,
     questionLang: args.questionLang,
-    lat: args.lat,
-    lon: args.lon,
     seekerProfile: args.seekerProfile,
     seekerName: args.seekerName,
     motherName: args.motherName,
@@ -762,41 +595,6 @@ const OracleChatScreen: React.FC = () => {
 
       const now = new Date().toISOString();
 
-      // ── Resolve coordinates — BEFORE consumeOne so quota is never burned ────
-      // If no stored location, attempt a live GPS fix (covers first launch / DEV builds
-      // that bypass LocationPermissionScreen). We work with explicit lat/lon variables
-      // so the closure doesn't need to re-read the store after the async fix.
-      let resolvedLat: number | null = lastLocation?.lat ?? null;
-      let resolvedLon: number | null = lastLocation?.lon ?? null;
-
-      if (resolvedLat === null || resolvedLon === null) {
-        // Precise fix first, then coarse/network fallback (resolves indoors
-        // where high-accuracy GPS times out) so a granted user is not stuck.
-        const liveCoords = await acquireLocation();
-
-        if (liveCoords === null) {
-          const userMsg: ChatMessage = { id: `u_${now}`, sender: 'user', text, createdAt: now };
-          const locationMsg: ChatMessage = {
-            id: `s_noloc_${now}`,
-            sender: 'shams',
-            text: t('errors.locationRequired'),
-            createdAt: now,
-          };
-          setMessages(prev => [locationMsg, userMsg, ...prev]);
-          return;
-        }
-
-        resolvedLat = liveCoords.lat;
-        resolvedLon = liveCoords.lon;
-        // Persist for subsequent questions — stable store action, safe outside deps array
-        useSettingsStore.getState().setLastLocation({
-          lat: resolvedLat,
-          lon: resolvedLon,
-          label: null,
-          capturedAt: Date.now(),
-        });
-      }
-
       if (!consumeOne()) {
         if (quotaExhaustedAt.current === 0) {
           quotaExhaustedAt.current = Date.now();
@@ -851,9 +649,6 @@ const OracleChatScreen: React.FC = () => {
         const reading = await runEngine({
           question: text,
           questionLang: lang,
-          lat: resolvedLat, // guaranteed non-null by the gate above
-          lon: resolvedLon,
-          locationRequiredText: t('errors.locationRequired'),
           seekerProfile: seekerProfile ?? undefined,
           seekerName: seekerName ?? undefined,
           motherName: motherName ?? undefined,
@@ -866,22 +661,19 @@ const OracleChatScreen: React.FC = () => {
         // Phase 3 — library-backed remedy selection. Fire-and-forget: never
         // awaited, never blocks render, selectionReason logged to Firestore by CF.
         {
-          const vj = reading.verdictJson as { confidence?: number } | null;
-          const confidence = vj?.confidence ?? 0;
-          const severity: 'low' | 'moderate' | 'high' =
-            confidence >= 70 ? 'low' : confidence >= 40 ? 'moderate' : 'high';
-          const selCtx = contextFromReading({
-            readingId: reading.id,
-            verdict: reading.verdict,
-            category: reading.category ?? 'general',
-            severity,
-            oracleSummary: narrationForReading(reading)?.slice(0, 200) ?? '',
-            questionText: text,
-            seekerProfile,
-          });
-          selectRemedies(selCtx)
-            .then(result => setSelectedRemedies(result.selectedRemedies))
-            .catch(() => undefined);
+          const vj = reading.verdictJson as Partial<WatchVerdictJson> | null;
+          const vjVerdict = vj?.verdict;
+          if (vjVerdict !== undefined) {
+            const rankingCtx = watchVerdictToRankingContext(vjVerdict, seekerProfile);
+            selectRemedies({
+              readingId: reading.id,
+              ...rankingCtx,
+              oracleSummary: narrationForReading(reading)?.slice(0, 200) ?? '',
+              questionText: text,
+            })
+              .then(result => setSelectedRemedies(result.selectedRemedies))
+              .catch(() => undefined);
+          }
         }
 
         const shamsMsg: ChatMessage = {
@@ -1405,10 +1197,16 @@ const Bubble: React.FC<{
   const t = useTranslation();
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const isUser = message.sender === 'user';
-  const [showWatch, setShowWatch] = useState(false);
 
   const accentColor = isUser ? colors.chatUserBorder : colors.chatShamsBorder;
   const bubbleBg = isUser ? colors.chatUserBg : colors.chatShamsBg;
+
+  const watchProps = message.reading !== undefined ? readingToWatchProps(message.reading) : null;
+  const showRemedies =
+    message.reading !== undefined &&
+    message.reading.id === currentReadingId &&
+    selectedRemedies !== undefined &&
+    selectedRemedies.length > 0;
 
   // Render the Hidden Scroll format with Bismillah, ✧ headers, blockquotes, bold
   const renderText = (raw: string) => {
@@ -1562,21 +1360,37 @@ const Bubble: React.FC<{
         ]}
       >
         {renderText(message.text)}
-        {message.reading !== undefined &&
-          (showWatch ? (
-            <WatchVerdictCard
-              result={readingToAstroResult(message.reading)}
-              onSwitchMode={() => setShowWatch(false)}
-            />
-          ) : (
-            <AstroVerdictCard
-              result={readingToAstroResult(message.reading)}
-              onSwitchMode={() => setShowWatch(true)}
-              selectedRemedies={
-                message.reading.id === currentReadingId ? selectedRemedies : undefined
-              }
-            />
-          ))}
+        {watchProps !== null && (
+          <RkpWatchCard
+            window={watchProps.window}
+            lagnaSignName={watchProps.lagnaSignName}
+            lagnaRulerName={watchProps.lagnaRulerName}
+            verdict={watchProps.verdict}
+            directionalFocus={watchProps.directionalFocus}
+          />
+        )}
+        {showRemedies && (
+          <View style={bubbleStyles.remedyBlock}>
+            <Text style={[typography('label'), { color: colors.goldBright, marginBottom: 6 }]}>
+              {'Suggested practice'}
+            </Text>
+            {selectedRemedies!.map(remedy => (
+              <View key={remedy.id} style={bubbleStyles.remedyRow}>
+                <Text style={[typography('caption'), { color: colors.goldBright }]}>{'✦'}</Text>
+                <View style={bubbleStyles.remedyTextWrap}>
+                  <Text style={[typography('body'), { color: colors.text }]}>{remedy.title}</Text>
+                  {remedy.description !== undefined && (
+                    <Text
+                      style={[typography('caption'), { color: colors.textMuted, marginTop: 2 }]}
+                    >
+                      {remedy.description}
+                    </Text>
+                  )}
+                </View>
+              </View>
+            ))}
+          </View>
+        )}
         {message.isUpgradeCta === true && (
           <Pressable
             onPress={() => navigation.navigate('Premium')}
@@ -1745,6 +1559,17 @@ const bubbleStyles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 10,
     borderRadius: 12,
+  },
+  remedyBlock: {
+    marginTop: 12,
+  },
+  remedyRow: {
+    flexDirection: 'row',
+    gap: 8,
+    marginBottom: 6,
+  },
+  remedyTextWrap: {
+    flex: 1,
   },
   upgradeBtn: {
     marginTop: 12,

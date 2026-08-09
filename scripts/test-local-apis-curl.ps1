@@ -99,28 +99,28 @@ $quotaReq = @{ data = @{} } | ConvertTo-Json -Compress
 $quota = Invoke-CurlRequest -Name 'getQuota' -Method 'POST' -Url "$functionsBase/getQuota" -Body $quotaReq -Headers $callHeaders
 Add-Result -List $results -Resp $quota
 
-# 2) askOracle valid payload (happy path — full oracle computation)
+# 2) askWatchOracle valid payload (happy path — New RKP watch computation).
+#    No lat/lon: the watch frame needs no location. utcOffsetMinutes uses the
+#    sign convention the server expects (+05:30 -> 330).
 $askValidReq = @{
   data = @{
     question = 'Will my business launch succeed this year?'
-    lat = 28.6139
-    lon = 77.2090
     questionLang = 'en'
+    utcOffsetMinutes = 330
   }
 } | ConvertTo-Json -Compress
-$askValid = Invoke-CurlRequest -Name 'askOracle.valid' -Method 'POST' -Url "$functionsBase/askOracle" -Body $askValidReq -Headers $callHeaders
+$askValid = Invoke-CurlRequest -Name 'askWatchOracle.valid' -Method 'POST' -Url "$functionsBase/askWatchOracle" -Body $askValidReq -Headers $callHeaders
 Add-Result -List $results -Resp $askValid
 
-# 3) askOracle invalid payload (fast schema validation)
+# 3) askWatchOracle invalid payload (fast schema validation)
 $askInvalidReq = @{
   data = @{
     question = 'bad'
-    lat = 91
-    lon = 181
     questionLang = 'xx'
+    utcOffsetMinutes = 9999
   }
 } | ConvertTo-Json -Compress
-$askInvalid = Invoke-CurlRequest -Name 'askOracle.invalid' -Method 'POST' -Url "$functionsBase/askOracle" -Body $askInvalidReq -Headers $callHeaders
+$askInvalid = Invoke-CurlRequest -Name 'askWatchOracle.invalid' -Method 'POST' -Url "$functionsBase/askWatchOracle" -Body $askInvalidReq -Headers $callHeaders
 Add-Result -List $results -Resp $askInvalid
 
 # 3) syncReadings valid mock payload

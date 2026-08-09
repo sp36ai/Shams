@@ -18,7 +18,7 @@ $requiredSecrets = @(
   'GOOGLE_PLAY_PRIVATE_KEY'
 )
 $requiredCallableFiles = @(
-  'functions/src/functions/askOracle.ts',
+  'functions/src/functions/askWatchOracle.ts',
   'functions/src/functions/quota.ts',
   'functions/src/functions/readings.ts',
   'functions/src/functions/payments/googlePlay.ts'

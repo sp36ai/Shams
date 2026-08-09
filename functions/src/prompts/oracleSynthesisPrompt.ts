@@ -4,7 +4,7 @@
  * ORACLE_SYNTHESIS_SYSTEM_PROMPT
  * The system prompt for Claude Opus oracle synthesis in Shams al-Asrār.
  *
- * USAGE in askOracle.ts:
+ * USAGE in askWatchOracle.ts (via oracleVoice.ts):
  *
  *   import { ORACLE_SYNTHESIS_SYSTEM_PROMPT } from '../prompts/oracleSynthesisPrompt';
  *

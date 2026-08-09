@@ -26,7 +26,8 @@
  *
  * References:
  *   - Krishnamurti, *KP Reader II* — sub-lord tables                 [KP]
- *   - docs/RKP_RULES_FROM_SARFARAZ.md §4
+ *   - Classical Vimshottari proportions, as provided by Astro Sarfaraz
+ *     (project owner) during rules intake
  */
 
 import {
@@ -35,8 +36,8 @@ import {
   NAKSHATRA_SPAN_DEG,
   TOTAL_DASHA_YEARS,
   type Graha,
-} from '../kp/rules/vimshottari';
-import { nakshatraIndexFromLongitude, NAKSHATRA_LORDS } from '../kp/rules/nakshatras';
+} from '../rules/vimshottari';
+import { nakshatraIndexFromLongitude, NAKSHATRA_LORDS } from '../rules/nakshatras';
 import { normalize360 } from './angles';
 
 // ────────────────────────────────────────────────────────────────────────────

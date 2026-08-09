@@ -3,8 +3,8 @@
  * RKP Question Classification — Multilingual Keyword Matrix
  * ════════════════════════════════════════════════════════════════════
  *
- * Source of truth: docs/RKP_RULES_FROM_SARFARAZ.md §2
- * Provided by: Astro Sarfaraz.
+ * Source of truth: provided by Astro Sarfaraz (project owner) during
+ * rules intake; this file is the canonical transcription.
  *
  * Detection rule (per owner spec):
  *   - Normalize the question text (lowercase, trim, collapse whitespace).
@@ -365,7 +365,7 @@ export function normalizeQuestion(text: string): string {
  * No randomness, no locale-dependent collation beyond `toLocaleLowerCase`.
  *
  * Phase 1 caller: src/screens/OracleScreen.tsx (engine stub).
- * Phase 3 caller: src/astrology/kp/judgment/judgeHorary.ts (real engine).
+ * Caller: src/astrology/rkp/watchJudgment.ts (New RKP judgment).
  */
 export function classifyQuestion(text: string): QuestionType {
   const normalized = normalizeQuestion(text);

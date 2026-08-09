@@ -19,39 +19,17 @@ export type VerdictKind =
   | 'DENIED';
 export type LangCode = 'en' | 'ur' | 'hi';
 
-/** Response from askOracle. */
+/** Response from askWatchOracle (the oracle field + shared display fields). */
 export interface OracleResponse {
   readingId: string;
   verdict: VerdictKind;
   confidence: number; // 0-100
   category: string; // question type, e.g. "career"
   narration: Record<LangCode, string>;
-  /** Absent when verdict is DENIED — chart lacks the promise to answer. */
   timing?: {
     window: 'days' | 'weeks' | 'months' | 'years';
     range: { min: number; max: number };
   };
-  /** Sub-lord of each relevant cusp for expert inspection. */
-  cuspSubLords?: Array<{ house: number; subLord: string; subLordHouse: number }>;
-  /** All 5 ruling planets at the chart moment. */
-  rulingPlanets?: {
-    dayLord: string;
-    ascSignLord: string;
-    ascStarLord: string;
-    moonSignLord: string;
-    moonStarLord: string;
-    horaLord?: string;
-  };
-  /** KP significator sets: which planets speak for/against the question. */
-  significators?: {
-    favorable: string[];
-    denial: string[];
-    neutral: string[];
-  };
-  /** Ruling planets confirmed as favorable significators — primary decisive witnesses. */
-  confirmedSignificators?: string[];
-  /** Ruling planets confirmed as denial significators — opposing witnesses. */
-  deniedSignificators?: string[];
   remedy?: {
     planet: string;
     action: string;
@@ -67,15 +45,6 @@ export interface OracleResponse {
   quotaRemaining: number | null; // null = unlimited plan
   computedAt: string; // ISO 8601
 
-  // ── Display-layer geometry (chart wheel) ─────────────────────────────────
-  /** Sidereal longitudes 0–360 for all 9 grahas — display geometry only. */
-  planetDegrees?: Record<string, number>;
-  /** Sidereal longitudes 0–360 for all 12 Placidus cusps, 1-indexed — display only. */
-  cuspDegrees?: Record<number, number>;
-  /** Zodiac sign name for each cusp (1-indexed) — display only. */
-  cuspSigns?: Record<number, string>;
-  /** Per-planet nakshatra-lord / sub-lord / sub-sub-lord chain — display only. */
-  planetChain?: Record<string, { manzilLord: string; subLord: string; subSubLord: string }>;
   /** al-Qamar's Arabic lunar mansion at the chart moment — display only. */
   manzila?: {
     number: number;
@@ -103,14 +72,6 @@ export interface OracleResponse {
     };
     signature: string;
   };
-
-  /**
-   * KP horary number (1–249) generated server-side for this reading — an
-   * additive witness signal, not part of the owner's original 5-step
-   * rules. Surfaced so the reading can display it for authenticity/
-   * traceability. See judgeHorary.ts module docstring for rationale.
-   */
-  horaryNumber?: number;
 }
 
 /** Response from getQuota. */

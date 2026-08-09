@@ -3,7 +3,8 @@
  * Vimshottari Dasha Constants
  * ════════════════════════════════════════════════════════════════════
  *
- * Source of truth: docs/RKP_RULES_FROM_SARFARAZ.md §3
+ * Source of truth: classical Vimshottari dasha proportions, as provided
+ * by Astro Sarfaraz (project owner) during rules intake.
  *
  * USED BY: Phase 2 (dasha calc primitive), Phase 3 (timing layer).
  *

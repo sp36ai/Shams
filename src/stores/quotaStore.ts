@@ -185,7 +185,7 @@ export const useQuotaStore = create<QuotaState>((set, get) => ({
     // already exists — reconcile the local countdown to it so a reinstall
     // cannot show a fresh 7 days over a server-side window that already
     // started (or expired). Server also enforces the limit independently via
-    // /trials/{userId} on every askOracle call.
+    // /trials/{userId} on every oracle call.
     void activateTrialOnServer()
       .then(res => get().reconcileTrialFromServer(res.startedAt))
       .catch(err => console.warn('[quotaStore] trial server registration failed', err));

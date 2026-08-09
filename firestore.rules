@@ -66,7 +66,7 @@ service cloud.firestore {
     // ── /readings/{readingId} ────────────────────────────────────────────────
     // Readings are created and enriched by Cloud Functions.
     // Users may read/delete their own readings.
-    // Direct create is blocked — must go through askOracle function.
+    // Direct create is blocked — must go through the askWatchOracle function.
 
     match /readings/{readingId} {
       allow read:   if isSignedIn() && resource.data.userId == request.auth.uid;

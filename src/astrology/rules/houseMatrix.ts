@@ -3,10 +3,10 @@
  * RKP House Matrix — Question Type → Favorable / Denial Houses
  * ════════════════════════════════════════════════════════════════════
  *
- * Source of truth: docs/RKP_RULES_FROM_SARFARAZ.md §1
- * Provided by: Astro Sarfaraz (project owner) during Phase 1 intake.
+ * Source of truth: provided by Astro Sarfaraz (project owner) during rules
+ * intake; this file is the canonical transcription.
  *
- * USED BY:  Phase 3 engine — src/astrology/kp/judgment/judgeHorary.ts
+ * USED BY: src/astrology/rkp/watchJudgment.ts (New RKP judgment)
  *
  * EDIT POLICY:
  *   This file is a faithful transcription of the owner-provided rules.

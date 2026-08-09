@@ -29,7 +29,7 @@ const App: React.FC = () => {
   }, []);
 
   // 2. Initialize Firebase App Check
-  // Required to satisfy backend enforcement for Cloud Functions (e.g., askOracle).
+  // Required to satisfy backend enforcement for Cloud Functions (e.g., askWatchOracle).
   useEffect(() => {
     try {
       initializeAppCheckService();
