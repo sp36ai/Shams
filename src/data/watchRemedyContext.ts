@@ -98,16 +98,15 @@ const OBSTRUCTION_THEMES: Readonly<Record<string, readonly RemedyTag[]>> = Objec
 });
 
 /** Themes carried by the state itself, independent of any obstruction. */
-const STATE_THEMES: Readonly<
-  Record<DisplayWatchVerdict['state'], readonly RemedyTag[]>
-> = Object.freeze({
-  FULFILLED: ['ABUNDANCE'],
-  MOVING: ['ABUNDANCE', 'DOUBT'],
-  DELAYED: ['DELAY', 'OBSTRUCTION'],
-  BLOCKED: ['OBSTRUCTION', 'STAGNATION'],
-  REVERSING: ['DOUBT', 'ATTACHMENT'],
-  UNFORMED: ['DOUBT', 'RESTLESSNESS'],
-});
+const STATE_THEMES: Readonly<Record<DisplayWatchVerdict['state'], readonly RemedyTag[]>> =
+  Object.freeze({
+    FULFILLED: ['ABUNDANCE'],
+    MOVING: ['ABUNDANCE', 'DOUBT'],
+    DELAYED: ['DELAY', 'OBSTRUCTION'],
+    BLOCKED: ['OBSTRUCTION', 'STAGNATION'],
+    REVERSING: ['DOUBT', 'ATTACHMENT'],
+    UNFORMED: ['DOUBT', 'RESTLESSNESS'],
+  });
 
 /**
  * Inner state of the querent, as the chart reports it.
