@@ -43,11 +43,13 @@ import { useTimingStrip } from '@hooks/useTimingStrip';
 import { classifyIntent } from '@hooks/useIntentClassifier';
 import { classifyQuestion } from '@hooks/useQuestionGate';
 import { askOracle as callOracleFunction } from '../firebase/oracle';
+import { askWatchOracle, type WatchReading } from '../firebase/watchOracle';
 import StarfieldBackground from '@components/StarfieldBackground';
 import { displayLonSidereal, PLANET_GLYPHS } from '@utils/siderealPositions';
 import { getSignLordByLongitude } from '@astrology/primitives/rulingPlanets';
 import AstroVerdictCard from '../components/oracle/AstroVerdictCard';
 import WatchVerdictCard from '../components/oracle/WatchVerdictCard';
+import RkpWatchCard from '../components/oracle/RkpWatchCard';
 import CastingAstrolabe from '../components/oracle/CastingAstrolabe';
 import type { AstroVerdictResult } from '../types/verdict';
 import { selectRemedies, contextFromReading } from '../data/remedySelector';
@@ -64,6 +66,12 @@ interface ChatMessage {
   sender: Sender;
   text: string;
   reading?: Reading;
+  /**
+   * Present instead of `reading` when the answer came from the Digital Watch
+   * Oracle. The two engines return different shapes and are rendered by
+   * different cards; a message carries one or the other, never both.
+   */
+  watchReading?: WatchReading;
   isUpgradeCta?: boolean;
   createdAt: string;
 }
@@ -642,6 +650,14 @@ const OracleChatScreen: React.FC = () => {
 
   const [messages, setMessages] = useState<ChatMessage[]>([initialGreeting]);
   const [input, setInput] = useState('');
+
+  /**
+   * Which engine answers the next question.
+   *   'astronomical' — true Ascendant from the local horizon; needs location.
+   *   'watch'        — Digital Watch Oracle; needs nothing from the querent.
+   * Two distinct readings, not two views of one — see README.
+   */
+  const [oracleMode, setOracleMode] = useState<'astronomical' | 'watch'>('astronomical');
   const [inputFocused, setInputFocused] = useState(false);
   const [sending, setSending] = useState(false);
   const sendingRef = useRef(false);
@@ -671,6 +687,9 @@ const OracleChatScreen: React.FC = () => {
       if (!text || sendingRef.current) {
         return;
       }
+      // In-flight guard. EVERY exit from here on must release it — an early
+      // return that forgets leaves the composer latched shut for the rest of
+      // the screen's life, since the check above then rejects every send.
       sendingRef.current = true;
 
       // Followup path — free, no quota
@@ -688,6 +707,7 @@ const OracleChatScreen: React.FC = () => {
         // NEW_QUESTION with HIGH confidence → surface prompt, don't answer
         if (intent.class === 'NEW_QUESTION' && intent.confidence === 'HIGH') {
           setShowNewQuestionModal(true);
+          sendingRef.current = false;
           return;
         }
 
@@ -733,10 +753,12 @@ const OracleChatScreen: React.FC = () => {
       const questionClass = await classifyQuestion(text);
       if (questionClass === 'CONVERSATIONAL') {
         setRedirectMessage('conversational');
+        sendingRef.current = false;
         return;
       }
       if (questionClass === 'AMBIGUOUS') {
         setRedirectMessage('ambiguous');
+        sendingRef.current = false;
         return;
       }
       // VALID_HORARY falls through — clear any previous redirect
@@ -746,6 +768,7 @@ const OracleChatScreen: React.FC = () => {
       if (plan === 'free') {
         if (trialExpired) {
           navigation.navigate('Premium');
+          sendingRef.current = false;
           return;
         }
         if (!trialActive) {
@@ -756,11 +779,67 @@ const OracleChatScreen: React.FC = () => {
             quotaExhaustedAt.current = Date.now();
           }
           setShowQuotaModal(true);
+          sendingRef.current = false;
           return;
         }
       }
 
       const now = new Date().toISOString();
+
+      // ── Digital Watch Oracle path ──────────────────────────────────────────
+      // Deliberately ahead of the location gate: this engine's house frame comes
+      // from the querent's watch minute and planetary positions are
+      // location-invariant, so a watch reading needs no coordinates at all and
+      // must not be blocked waiting for a GPS fix.
+      if (oracleMode === 'watch') {
+        if (!consumeOne()) {
+          if (quotaExhaustedAt.current === 0) {
+            quotaExhaustedAt.current = Date.now();
+          }
+          setShowQuotaModal(true);
+          sendingRef.current = false;
+          return;
+        }
+
+        setMessages(prev => [{ id: `u_${now}`, sender: 'user', text, createdAt: now }, ...prev]);
+        setSending(true);
+
+        try {
+          const { reading: watchReading } = await askWatchOracle({
+            question: text,
+            questionLang: lang,
+            seekerProfile: seekerProfile ?? undefined,
+          });
+
+          setMessages(prev => [
+            {
+              id: `s_watch_${Date.now()}`,
+              sender: 'shams',
+              text: watchReading.verdict.factors[0] ?? '',
+              watchReading,
+              createdAt: new Date().toISOString(),
+            },
+            ...prev,
+          ]);
+        } catch (err) {
+          setMessages(prev => [
+            {
+              id: `s_watch_err_${Date.now()}`,
+              sender: 'shams',
+              text:
+                err instanceof Error && err.message.includes('resource-exhausted')
+                  ? 'The gate has closed for today.'
+                  : t('errors.unknown'),
+              createdAt: new Date().toISOString(),
+            },
+            ...prev,
+          ]);
+        } finally {
+          setSending(false);
+          sendingRef.current = false;
+        }
+        return;
+      }
 
       // ── Resolve coordinates — BEFORE consumeOne so quota is never burned ────
       // If no stored location, attempt a live GPS fix (covers first launch / DEV builds
@@ -783,6 +862,9 @@ const OracleChatScreen: React.FC = () => {
             createdAt: now,
           };
           setMessages(prev => [locationMsg, userMsg, ...prev]);
+          // Release the in-flight guard, or the composer stays latched shut for
+          // the rest of the screen's life. Same below on the quota wall.
+          sendingRef.current = false;
           return;
         }
 
@@ -802,6 +884,7 @@ const OracleChatScreen: React.FC = () => {
           quotaExhaustedAt.current = Date.now();
         }
         setShowQuotaModal(true);
+        sendingRef.current = false;
         return;
       }
 
@@ -933,6 +1016,7 @@ const OracleChatScreen: React.FC = () => {
       consumeOne,
       lang,
       lastLocation,
+      oracleMode,
       lastReading,
       messages,
       motherName,
@@ -1183,6 +1267,44 @@ const OracleChatScreen: React.FC = () => {
                 : 'The stars hear your intent — but need more. Who or what does your question concern?'}
             </Text>
           )}
+
+          {/* Oracle mode — which engine answers the next question */}
+          <View style={styles.modeRow}>
+            {(
+              [
+                ['astronomical', 'Astronomical'],
+                ['watch', 'Digital Watch'],
+              ] as const
+            ).map(([mode, label]) => {
+              const active = oracleMode === mode;
+              return (
+                <Pressable
+                  key={mode}
+                  onPress={() => setOracleMode(mode)}
+                  accessibilityRole="button"
+                  accessibilityState={{ selected: active }}
+                  accessibilityLabel={`${label} Oracle`}
+                  style={({ pressed }) => [
+                    styles.modeChip,
+                    {
+                      backgroundColor: active ? colors.accent : 'transparent',
+                      borderColor: active ? colors.accent : colors.border,
+                      opacity: pressed ? 0.75 : 1,
+                    },
+                  ]}
+                >
+                  <Text
+                    style={[
+                      typography('caption'),
+                      { color: active ? colors.textOnPrimary : colors.textMuted },
+                    ]}
+                  >
+                    {label}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </View>
 
           {/* Composer */}
           <View style={styles.composer}>
@@ -1562,6 +1684,14 @@ const Bubble: React.FC<{
         ]}
       >
         {renderText(message.text)}
+        {message.watchReading !== undefined && (
+          <RkpWatchCard
+            window={message.watchReading.window}
+            lagnaSignName={message.watchReading.lagnaSignName}
+            lagnaRulerName={message.watchReading.lagnaRulerName}
+            verdict={message.watchReading.verdict}
+          />
+        )}
         {message.reading !== undefined &&
           (showWatch ? (
             <WatchVerdictCard
@@ -1670,6 +1800,18 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 4,
     backgroundColor: '#FFFFFF08',
+  },
+  modeRow: {
+    flexDirection: 'row',
+    gap: 8,
+    paddingHorizontal: 12,
+    paddingBottom: 6,
+  },
+  modeChip: {
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+    borderRadius: 999,
+    borderWidth: 1,
   },
   composer: {
     flexDirection: 'row',
