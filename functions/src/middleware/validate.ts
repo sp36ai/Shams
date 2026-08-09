@@ -31,6 +31,28 @@ export const AskOracleSchema = z
 
 export type AskOracleInput = z.infer<typeof AskOracleSchema>;
 
+/**
+ * askWatchOracle input.
+ *
+ * No lat/lon: the Digital Watch Oracle needs no location (its house frame is
+ * watch-derived and planetary positions are location-invariant).
+ *
+ * `utcOffsetMinutes` names the querent's timezone so the server can derive the
+ * minute showing on THEIR watch from its own authoritative instant. Bounded to
+ * the real range of civil offsets (-12:00 .. +14:00) and to quarter-hour steps,
+ * which covers every zone in use including the :30 and :45 ones.
+ */
+export const AskWatchOracleSchema = z
+  .object({
+    question: z.string().trim().min(5).max(500),
+    questionLang: LangSchema,
+    utcOffsetMinutes: z.number().int().min(-720).max(840).multipleOf(15),
+    seekerProfile: z.enum(['clarity', 'comfort', 'action', 'surrender']).optional(),
+  })
+  .strict();
+
+export type AskWatchOracleInput = z.infer<typeof AskWatchOracleSchema>;
+
 export const SyncReadingsSchema = z
   .object({
     readings: z

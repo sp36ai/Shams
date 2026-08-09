@@ -19,7 +19,6 @@ import { StyleSheet, Text, View } from 'react-native';
 import { useColors } from '@theme/ThemeProvider';
 import { useTypography } from '@theme/useTypography';
 import { HOUSE_META, PLANET_NAME } from '@astrology/rkp/nomenclature';
-import type { WatchChart } from '@astrology/rkp/watchChart';
 import type { WatchState, WatchVerdict } from '@astrology/rkp/watchJudgment';
 import type { DirectionalFocus } from '../../data/watchRemedyContext';
 
@@ -90,7 +89,12 @@ function pad2(n: number): string {
 /* -------------------------------------------------------------------------- */
 
 export interface RkpWatchCardProps {
-  chart: WatchChart;
+  /** The 5-minute bracket the question fell in. */
+  window: { readonly startMinute: number; readonly endMinute: number };
+  /** e.g. "Burj Jauza" — the sign on the 1st Ghar. */
+  lagnaSignName: string;
+  /** e.g. "Utarid" — classical name of the querent's own ruler. */
+  lagnaRulerName: string;
   verdict: WatchVerdict;
   /** Optional physical correspondence, from data/watchRemedyContext.ts. */
   directionalFocus?: DirectionalFocus | null;
@@ -99,7 +103,9 @@ export interface RkpWatchCardProps {
 }
 
 const RkpWatchCard: React.FC<RkpWatchCardProps> = ({
-  chart,
+  window,
+  lagnaSignName,
+  lagnaRulerName,
   verdict,
   directionalFocus,
   onSwitchMode,
@@ -123,9 +129,9 @@ const RkpWatchCard: React.FC<RkpWatchCardProps> = ({
     >
       {/* ── The window this reading was taken in ─────────────────────────── */}
       <Text style={[typography('caption'), { color: colors.textFaint, letterSpacing: 1.5 }]}>
-        {`WATCH WINDOW  :${pad2(chart.window.startMinute)}–:${pad2(
-          chart.window.endMinute % 60,
-        )}  ·  ${chart.lagnaSignName}`}
+        {`WATCH WINDOW  :${pad2(window.startMinute)}–:${pad2(
+          window.endMinute % 60,
+        )}  ·  ${lagnaSignName}`}
       </Text>
 
       {/* ── The answer ───────────────────────────────────────────────────── */}
@@ -147,9 +153,7 @@ const RkpWatchCard: React.FC<RkpWatchCardProps> = ({
       />
       <Row
         label="Ruled by"
-        value={`${verdict.targetRulerName}, which your ruler ${
-          chart.planets[verdict.lagnaRuler].name
-        } counts ${verdict.rulerRelation.toLowerCase()}`}
+        value={`${verdict.targetRulerName}, which your ruler ${lagnaRulerName} counts ${verdict.rulerRelation.toLowerCase()}`}
         colors={colors}
         typography={typography}
       />
