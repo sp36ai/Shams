@@ -62,6 +62,8 @@ const { judgeWatchChart } =
   require('../engine/rkp/watchJudgment') as typeof import('../engine/rkp/watchJudgment');
 const { classifyQuestion } =
   require('../engine/kp/rules/questionKeywords') as typeof import('../engine/kp/rules/questionKeywords');
+const { composeWatchOracleResponse } =
+  require('../engine/rkp/responseComposer') as typeof import('../engine/rkp/responseComposer');
 /* eslint-enable @typescript-eslint/no-var-requires */
 
 import type { WatchState, WatchVerdict } from '../engine/rkp/watchJudgment';
@@ -118,6 +120,13 @@ export interface WatchOracleResponse {
   lagnaSignName: string;
   lagnaRulerName: string;
   verdict: PublicWatchVerdict;
+  /** The mystical oracle response in Shams al-Asrār voice. */
+  oracle?: {
+    opening: string;
+    interpretation: string;
+    spiritual_layer: string;
+    signature: string;
+  };
   quotaRemaining: number | null;
 }
 
@@ -151,8 +160,25 @@ export const askWatchOracle = onCall(
       const qType = classifyQuestion(input.question);
       const verdict = judgeWatchChart(chart, qType);
 
+      // ── Compose mystical oracle response ─────────────────────────────────
+      let oracleResponse;
+      try {
+        oracleResponse = await composeWatchOracleResponse({
+          verdict,
+          seekerName: input.seekerName,
+          motherName: input.motherName,
+        });
+      } catch (err) {
+        logger.warn('askWatchOracle: oracle composition failed', {
+          err: String(err),
+          userId,
+        });
+        // Composition failure is not fatal; proceed without oracle response
+        oracleResponse = null;
+      }
+
       const readingRef = db.collection('readings').doc();
-      const narration = verdict.factors.join(' ');
+      const narration = oracleResponse?.interpretation || verdict.factors.join(' ');
       const readingDoc: Omit<ReadingDoc, 'createdAt'> = {
         userId,
         question: input.question,
@@ -171,6 +197,8 @@ export const askWatchOracle = onCall(
           description,
           weight: 1,
         })),
+        // Store oracle response if composition succeeded
+        ...(oracleResponse ? { oracle: oracleResponse } : {}),
       };
 
       await readingRef.set({
@@ -212,6 +240,7 @@ export const askWatchOracle = onCall(
           targetRuler: toBoundaryPlanetName(verdict.targetRuler),
           lagnaRuler: toBoundaryPlanetName(verdict.lagnaRuler),
         },
+        ...(oracleResponse ? { oracle: oracleResponse } : {}),
         quotaRemaining: remaining,
       };
     });
