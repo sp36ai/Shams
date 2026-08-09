@@ -461,3 +461,73 @@ describe('judgeHorary — oracle narration language', () => {
     }
   });
 });
+
+describe('judgeHorary — Watch of Currents (verdict.current)', () => {
+  // See src/astrology/kp/judgment/currentReading.ts for the algorithm and
+  // src/astrology/kp/judgment/__tests__/currentReading.test.ts for full unit
+  // coverage of computeCurrentReading() in isolation. These are integration
+  // checks confirming judgeHorary() actually wires it up end to end.
+
+  test('DENIED verdict → structural block reading', () => {
+    // Same denied chart as the "same chart under RKP" scenarios above:
+    // cusp 10 sub-lord fixture is always 'Mars', which lands in a denial
+    // house for career (houses [5,8,12]) whenever Mars occupies one of them.
+    const chart = makeChart('Mars', { Mars: 8 });
+    const verdict = judgeHorary(chart, CAREER_Q);
+    expect(verdict.verdict).toBe('DENIED');
+    expect(verdict.current.flow).toBe('blocked');
+    expect(verdict.current.structural).toBe(true);
+    expect(verdict.current.label).toBe('current is blocked');
+  });
+
+  test('YES verdict → open current, no interference', () => {
+    const chart = makeChart('Mars', { Moon: 1, Mars: 10, Sun: 6, Mercury: 6, Jupiter: 11 }, {}, [
+      'Sun',
+      'Saturn',
+      'Mercury',
+      'Jupiter',
+      'Moon',
+      'Venus',
+    ]);
+    const verdict = judgeHorary(chart, CAREER_Q);
+    expect(verdict.verdict).toBe('YES');
+    expect(verdict.current.flow).toBe('open');
+    expect(verdict.current.structural).toBe(false);
+    expect(verdict.current.interference).toHaveLength(0);
+  });
+
+  test('DELAYED verdict → open current with interference ("favorable but delayed")', () => {
+    const chart = makeChart(
+      'Mars',
+      { Moon: 1, Mars: 10, Sun: 6, Mercury: 6, Jupiter: 11 },
+      { Jupiter: true },
+      ['Sun', 'Saturn', 'Mercury', 'Jupiter', 'Moon', 'Venus'],
+    );
+    const verdict = judgeHorary(chart, CAREER_Q);
+    expect(verdict.verdict).toBe('DELAYED');
+    expect(verdict.current.flow).toBe('open');
+    expect(verdict.current.interference).toContain('Jupiter');
+    expect(verdict.current.label).toBe('current is favorable but delayed');
+  });
+
+  test('NO verdict → blocked current, not structural', () => {
+    const chart = makeChart('Venus', { Moon: 1, Venus: 12, Sun: 5, Mercury: 8, Jupiter: 12 }, {}, [
+      'Sun',
+      'Saturn',
+      'Mercury',
+      'Jupiter',
+      'Moon',
+      'Venus',
+    ]);
+    const verdict = judgeHorary(chart, CAREER_Q);
+    expect(verdict.verdict).toBe('NO');
+    expect(verdict.current.flow).toBe('blocked');
+    expect(verdict.current.structural).toBe(false);
+  });
+
+  test('current reasoning is always present and non-empty', () => {
+    const chart = makeChart('Mars', { Mars: 10 });
+    const verdict = judgeHorary(chart, CAREER_Q);
+    expect(verdict.current.reasoning.length).toBeGreaterThan(0);
+  });
+});

@@ -9,7 +9,7 @@
  *   5. Quota check         — atomic Firestore transaction (Sunday-week rolling)
  *   6. Build chart         — server-side ephemeris (client never touches this)
  *   7. Classify question   — keyword matcher
- *   8. Judge horary        — full RKP 5-step algorithm
+ *   8. Judge horary        — RKP watch engine (judgeRKPWatch.ts) — see docs/RKP_WATCH_ENGINE.md
  *   9. Persist reading     — /readings/{id} in Firestore
  *  10. Decrement quota     — inside the same Firestore batch
  *  11. Audit log           — /auditLogs/{id}, no PII
@@ -43,6 +43,8 @@ import {
   TONE_GUARDRAILS,
   seekerProfileModifier,
 } from '../prompts/oracleSynthesisPrompt';
+import { deriveOracleAnchors, type OracleAnchors } from '../prompts/oracleAnchors';
+import { sanitiseOracleAnchors } from '../prompts/oracleAnchorsSchema';
 import { runSafetyValidator } from './safetyValidator';
 import { getManzila, getManzilaOracleLine } from '../engine/manazil';
 import { houseForLongitude } from '../engine/primitives/chartBuilder';
@@ -88,8 +90,8 @@ const DISPLAY_PLANETS: Planet[] = [
 /* eslint-disable @typescript-eslint/no-var-requires */
 const { buildChart } =
   require('../engine/primitives/chartBuilder') as typeof import('../engine/primitives/chartBuilder');
-const { judgeHorary } =
-  require('../engine/kp/judgment/judgeHorary') as typeof import('../engine/kp/judgment/judgeHorary');
+const { judgeRKPWatch } =
+  require('../engine/kp/judgment/judgeRKPWatch') as typeof import('../engine/kp/judgment/judgeRKPWatch');
 const { classifyQuestion } =
   require('../engine/kp/rules/questionKeywords') as typeof import('../engine/kp/rules/questionKeywords');
 /* eslint-enable @typescript-eslint/no-var-requires */
@@ -187,6 +189,7 @@ async function writeAuditLog(entry: Omit<AuditLogDoc, 'ts'>): Promise<void> {
 type OracleVoiceResult = OracleResponse['oracle'];
 
 const ORACLE_FALLBACK: NonNullable<OracleVoiceResult> = {
+  unveiling: 'The Unveiling: The Hour Is Not Clear',
   opening: "The scrolls of this moment have not opened their seal to the oracle's eye.",
   interpretation:
     'In the sacred tradition of Shams al-Asrar, silence is not an absence of answer — it is an answer of a different kind. Return at the next appointed hour.',
@@ -205,31 +208,23 @@ const ORACLE_FALLBACK: NonNullable<OracleVoiceResult> = {
 };
 
 function buildOracleUserMessage(params: {
-  verdict: string;
-  stage?: 'promise_failed' | 'fructification';
-  confidence: number;
-  timingWindow?: string;
-  timingRange?: { min: number; max: number };
+  anchors: OracleAnchors;
   seekerName?: string;
   motherName?: string;
 }): string {
-  const { verdict, stage, confidence, timingWindow, timingRange, seekerName, motherName } = params;
+  const { anchors, seekerName, motherName } = params;
 
-  // Map verdict to CONFIRMED / DENIED
-  const verdictBinary = verdict === 'YES' || verdict === 'CONDITIONAL' ? 'CONFIRMED' : 'DENIED';
-
-  // Map confidence to HIGH / MEDIUM / LOW
-  const confidenceLevel = confidence >= 75 ? 'HIGH' : confidence >= 50 ? 'MEDIUM' : 'LOW';
-
-  // Build timing string
-  let timingStr = 'UNCLEAR';
-  if (stage === 'promise_failed') {
-    timingStr = 'UNCLEAR';
-  } else if (timingWindow !== undefined && timingRange !== undefined) {
-    timingStr = `${timingRange.min}–${timingRange.max} ${timingWindow}`;
-  }
-
-  let msg = `VERDICT: ${verdictBinary}\nCONFIDENCE: ${confidenceLevel}\nTIMING: ${timingStr}`;
+  let msg =
+    `VERDICT: ${anchors.verdict}\n` +
+    `CONFIDENCE: ${anchors.confidence}\n` +
+    `PRIMARY_THEME: ${anchors.primaryTheme}\n` +
+    `OBSTRUCTION: ${anchors.obstruction}\n` +
+    `SECONDARY_THEME: ${anchors.secondaryTheme}\n` +
+    `TIMING: ${anchors.timing}\n` +
+    `DIRECTION: ${anchors.direction}\n` +
+    `REVERSAL: ${anchors.reversal}\n` +
+    `RULER_CLASH: ${anchors.rulerClash}\n` +
+    `CONTROLLER_STYLE: ${anchors.controllerStyle}`;
   if (seekerName) {
     msg += `\nSEEKER_NAME: ${seekerName}`;
   }
@@ -240,11 +235,7 @@ function buildOracleUserMessage(params: {
 }
 
 async function synthesiseOracleVoice(params: {
-  verdict: string;
-  stage?: 'promise_failed' | 'fructification';
-  confidence: number;
-  timingWindow?: string;
-  timingRange?: { min: number; max: number };
+  anchors: OracleAnchors;
   manzilaLine: string;
   seekerProfile?: 'clarity' | 'comfort' | 'action' | 'surrender';
   apiKey: string;
@@ -308,6 +299,7 @@ async function synthesiseOracleVoice(params: {
     const r = (parsed.remedy ?? {}) as Record<string, unknown>;
 
     return {
+      unveiling: typeof parsed.unveiling === 'string' ? parsed.unveiling : undefined,
       opening: String(parsed.opening ?? ''),
       interpretation: String(parsed.interpretation ?? ''),
       spiritual_layer: String(parsed.spiritual_layer ?? ''),
@@ -377,14 +369,14 @@ export const askOracle = onCall(
         matchedKeywords: [] as string[],
       };
 
-      // 7b. Horary number witness — server-generated, never client-supplied
-      // (keeps judgeHorary itself pure/deterministic; see its module doc).
-      // Distinguishes readings whose chart-derived signal would otherwise be
-      // identical for two questions asked seconds apart.
-      const horaryNumber = 1 + Math.floor(Math.random() * 249);
-
-      // 8. Judge horary — proprietary RKP algorithm runs here, server-only
-      const verdict = judgeHorary(chart, classified, horaryNumber);
+      // 8. Judge horary — the clock-based RKP watch engine runs here, server-only.
+      // timezoneOffsetMinutes is the querent's real civil clock reading
+      // (what this engine's "watch" actually means); older clients that
+      // don't send it fall back to local-solar-time approximation — see
+      // watchChart.ts's localMinuteOfHour() module doc.
+      const verdict = judgeRKPWatch(chart, classified, {
+        timezoneOffsetMinutes: input.timezoneOffsetMinutes,
+      });
 
       // 9+10. Persist reading + quota update in a batch
       const readingRef = db.collection('readings').doc(verdict.id);
@@ -407,7 +399,6 @@ export const askOracle = onCall(
             weight: r.weight,
           }),
         ),
-        horaryNumber,
       };
 
       const batch = db.batch();
@@ -440,10 +431,11 @@ export const askOracle = onCall(
       logger.info('oracle computed', {
         userId,
         verdict: verdict.verdict,
-        stage: verdict.stage ?? 'unknown',
+        nativeState: verdict.nativeState,
         confidence: verdict.confidence,
-        confirmedSignificators: verdict.confirmedSignificators ?? [],
-        deniedSignificators: verdict.deniedSignificators ?? [],
+        houseLordVerdict: verdict.houseLord.verdict,
+        favorableWitnesses: verdict.rulingConfirmation.favorableWitnesses,
+        denialWitnesses: verdict.rulingConfirmation.denialWitnesses,
         plan,
         durationMs: Date.now() - startedAt,
         ipHash: requestMeta.ipHash,
@@ -511,20 +503,28 @@ export const askOracle = onCall(
       }
 
       // 12. Oracle synthesis — Claude adds voice layer (fire with timeout, fallback on error)
+      // The language model never recalculates and never sees the engine
+      // internals — only the structured anchors derived below. See
+      // oracleAnchors.ts's module doc: "RKP calculates. Shams al-Asrār
+      // interprets. Astro Sarfaraz presents."
       const apiKey = ANTHROPIC_API_KEY.value();
       const moonLongitude = chart.planets.Moon?.siderealLongitude ?? 0;
       const manzila = getManzila(moonLongitude);
       const verdictBinary =
         verdict.verdict === 'YES' || verdict.verdict === 'CONDITIONAL' ? 'CONFIRMED' : 'DENIED';
       const manzilaLine = getManzilaOracleLine(moonLongitude, verdictBinary);
+      // Runtime guard between calculation and text generation — see
+      // oracleAnchorsSchema.ts. Fail-SAFE: the request still succeeds, but
+      // any malformed anchor is replaced with a cautious default rather
+      // than reaching the language model and becoming an invented claim.
+      const { anchors: oracleAnchors } = sanitiseOracleAnchors(
+        deriveOracleAnchors(verdict),
+        verdict.id,
+      );
 
       const oracleRaw = apiKey
         ? await synthesiseOracleVoice({
-            verdict: verdict.verdict,
-            stage: verdict.stage,
-            confidence: verdict.confidence,
-            timingWindow: verdict.timing?.window,
-            timingRange: verdict.timing?.range,
+            anchors: oracleAnchors,
             manzilaLine,
             seekerProfile: input.seekerProfile,
             apiKey,
@@ -549,25 +549,66 @@ export const askOracle = onCall(
           : undefined,
         cuspSubLords,
         rulingPlanets: {
-          dayLord: verdict.rulingPlanets.dayLord as string,
-          ascSignLord: verdict.rulingPlanets.ascSignLord as string,
-          ascStarLord: verdict.rulingPlanets.ascStarLord as string,
-          moonSignLord: verdict.rulingPlanets.moonSignLord as string,
-          moonStarLord: verdict.rulingPlanets.moonStarLord as string,
-          horaLord: verdict.rulingPlanets.horaLord as string | undefined,
+          dayLord: verdict.rulingConfirmation.dayLord as string,
+          ascSignLord: verdict.rulingConfirmation.ascSignLord as string,
+          // ascStarLord and horaLord don't apply under the whole-sign watch
+          // Lagna (no continuous ascending degree, no hora concept here) —
+          // see judgeRKPWatch.ts module doc. Omitted rather than faked.
+          ascStarLord: undefined,
+          moonSignLord: verdict.rulingConfirmation.moonSignLord as string,
+          moonStarLord: verdict.rulingConfirmation.moonStarLord as string,
+          horaLord: undefined,
         },
-        significators: verdict.significators
-          ? {
-              favorable: verdict.significators.favorable as string[],
-              denial: verdict.significators.denial as string[],
-              neutral: verdict.significators.neutral as string[],
-            }
-          : undefined,
-        confirmedSignificators: verdict.confirmedSignificators as string[] | undefined,
-        deniedSignificators: verdict.deniedSignificators as string[] | undefined,
+        // KP-style favorable/denial/neutral significator sets don't exist in
+        // this engine's model (see judgeRKPWatch.ts) — omitted rather than
+        // fabricated. confirmedSignificators/deniedSignificators below are
+        // this engine's closest honest analog: the ruling witnesses that
+        // actually landed in a favorable/denial clock-house.
+        significators: undefined,
+        confirmedSignificators: verdict.rulingConfirmation.favorableWitnesses as string[],
+        deniedSignificators: verdict.rulingConfirmation.denialWitnesses as string[],
         remedy: verdict.remedy,
         reasoning: readingDoc.reasoning,
-        horaryNumber,
+        // Watch-engine-specific facts, new in this response — see
+        // docs/RKP_WATCH_ENGINE.md.
+        nativeState: verdict.nativeState,
+        conditionState: verdict.conditionState,
+        // The two anchors the client-side remedy ranker keys off, so it
+        // scores against what is actually obstructing the matter rather
+        // than re-deriving anything. Already computed above.
+        oracleObstruction: oracleAnchors.obstruction,
+        oracleSecondaryTheme: oracleAnchors.secondaryTheme,
+        houseLordDirection: verdict.houseLord.direction,
+        vastuAfflictedDirections: verdict.vastu.afflictedDirections as string[],
+        // The Verdict Triad — 1st house (querent) / target house (the query)
+        // / 11th house (fulfilment) — and RKP's own material remedies.
+        triad: {
+          lagnaLord: verdict.triad.lagna.lord,
+          targetLord: verdict.triad.target.lord,
+          fulfilmentLord: verdict.triad.fulfilment.lord,
+          rulerRelation: verdict.triad.rulerRelation,
+          outcome: verdict.triad.outcome,
+          outcomeReason: verdict.triad.outcomeReason,
+          querentPolarity: verdict.triad.querentPolarity,
+          controllerPolarity: verdict.triad.controllerPolarity,
+          targetBlockingMalefics: verdict.triad.targetPressure.blockingMalefics as string[],
+          fulfilmentBlockingMalefics: verdict.triad.fulfilmentPressure.blockingMalefics as string[],
+        },
+        materialRemedy: {
+          clearanceDirection: verdict.materialRemedy.clearance.direction,
+          clearanceObjects: verdict.materialRemedy.clearance.objects as string[],
+          afflictingPlanets: verdict.materialRemedy.clearance.afflictingPlanets as string[],
+          actionPlanet: verdict.materialRemedy.window.actionPlanet,
+          actionWeekday: verdict.materialRemedy.window.weekday,
+          currentHoraLord: verdict.materialRemedy.window.currentHoraLord,
+          horaOpenNow: verdict.materialRemedy.window.horaOpenNow,
+          clockAdvanceMinutes: {
+            min: verdict.materialRemedy.clock.advanceMinutesMin,
+            max: verdict.materialRemedy.clock.advanceMinutesMax,
+          },
+          minutesToNextSegment: verdict.materialRemedy.clock.minutesToNextBucket,
+          crossesIntoNextSegment: verdict.materialRemedy.clock.crossesIntoNextSegment,
+        },
         quotaRemaining: remaining,
         computedAt: now,
         planetDegrees,

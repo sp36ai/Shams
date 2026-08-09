@@ -74,6 +74,9 @@ import { getSubLords } from '../../primitives/subLord';
 import { houseOfPlanet } from './significations';
 import { computeSignificatorSets } from './significators';
 import { computeConvergenceTiming } from './timing';
+import { computeCurrentReading } from './currentReading';
+import { remedyForPlanet } from './remedyTable';
+import { toArabic } from './arabicNames';
 import { ENGINE_VERSION } from '../../primitives/chartBuilder';
 
 // ── Horary number witness (optional additive signal) ──────────────────────────
@@ -120,69 +123,11 @@ function step(n: number, msg: string, weight = 0): ReasoningStep {
 
 // ── Timing ────────────────────────────────────────────────────────────────────
 // ── Remedy ────────────────────────────────────────────────────────────────────
-
-const REMEDY_TABLE: Readonly<
-  Record<Planet, { action: string; avoid: string; zikr?: string; charity?: string }>
-> = {
-  Sun: {
-    action: 'Recite Surah Ad-Duha (93) after Fajr for 7 days',
-    avoid: 'Avoid arrogance and heedlessness in speech',
-    zikr: 'Ya Nur × 100 daily',
-    charity: 'Give sadaqah to an orphan or the poor on Sunday',
-  },
-  Moon: {
-    action: 'Recite Ayat al-Kursi (2:255) before sleeping',
-    avoid: 'Avoid emotional decisions at night',
-    zikr: 'Ya Quddus × 100 daily',
-    charity: 'Offer food or water to someone in need',
-  },
-  Mars: {
-    action: 'Recite Surah Al-Falaq (113) and Al-Nas (114) seven times',
-    avoid: 'Avoid anger, haste, and confrontation',
-    zikr: 'Ya Matin × 100 daily',
-    charity: 'Give sadaqah to protect against harm',
-  },
-  Mercury: {
-    action: 'Recite Surah Al-Qalam (68:1) for clarity of mind and speech',
-    avoid: 'Avoid falsehood and idle talk',
-    zikr: 'Ya Alim × 100 daily',
-    charity: 'Donate books or support education',
-  },
-  Jupiter: {
-    action: 'Recite Surah Al-Fath (48:1) after Fajr',
-    avoid: 'Avoid disrespecting scholars and elders',
-    zikr: 'Ya Fattah × 70 daily',
-    charity: 'Give sadaqah to a student or one seeking knowledge',
-  },
-  Venus: {
-    action: 'Recite Surah Al-Room (30:21) on Friday after Jumuah',
-    avoid: 'Avoid excess and heedlessness on Fridays',
-    zikr: 'Ya Wadud × 100 daily',
-    charity: 'Offer food or gifts to the needy on Friday',
-  },
-  Saturn: {
-    action: 'Recite Surah Al-Inshirah (94) with patience each morning',
-    avoid: 'Avoid complaining and ingratitude',
-    zikr: 'Ya Sabur × 100 daily',
-    charity: 'Give sadaqah to the elderly or those in hardship',
-  },
-  Rahu: {
-    action: 'Recite Surah Al-Ikhlas (112) forty times after Isha',
-    avoid: 'Avoid confusion, deception, and impulsive decisions',
-    zikr: 'Ya Ahad × 100 daily',
-    charity: 'Give sadaqah in secret to purify intention',
-  },
-  Ketu: {
-    action: 'Recite Surah Al-Kafirun (109) each morning for clarity of purpose',
-    avoid: 'Avoid doubt and spiritual neglect',
-    zikr: 'Ya Hadi × 100 daily',
-    charity: 'Give sadaqah to a traveller or wayfarer',
-  },
-};
+// REMEDY_TABLE lives in remedyTable.ts — shared with judgeRKPWatch.ts.
 
 function buildRemedy(moonSubLord: Planet, reasoning: ReasoningStep[]): VerdictRemedy | undefined {
-  const r = REMEDY_TABLE[moonSubLord];
-  if (r === undefined) {
+  const remedy = remedyForPlanet(moonSubLord);
+  if (remedy === undefined) {
     return undefined;
   }
   reasoning.push(
@@ -192,7 +137,7 @@ function buildRemedy(moonSubLord: Planet, reasoning: ReasoningStep[]): VerdictRe
       0,
     ),
   );
-  return { planet: moonSubLord, ...r };
+  return remedy;
 }
 
 // ── Narration ─────────────────────────────────────────────────────────────────
@@ -208,22 +153,6 @@ function buildNarration(
   const ur = buildUr(verdict, qType);
   const hi = buildHi(verdict, qType);
   return { en, ur, hi };
-}
-
-const ARABIC_PLANET: Readonly<Record<string, string>> = {
-  Sun: 'Shams',
-  Moon: 'al-Qamar',
-  Mars: 'al-Mirrikh',
-  Mercury: 'Utarid',
-  Jupiter: 'Mushtari',
-  Venus: 'Zuhra',
-  Saturn: 'Zuhal',
-  Rahu: "al-Ra's",
-  Ketu: 'al-Dhanab',
-};
-
-function toArabic(planet: string): string {
-  return ARABIC_PLANET[planet] ?? planet;
 }
 
 function buildEn(
@@ -466,6 +395,15 @@ export function judgeHorary(
       verdict: 'DENIED' as VerdictKind,
       confidence: 0,
       stage: 'promise_failed' as const,
+      current: computeCurrentReading({
+        verdict: 'DENIED',
+        stage: 'promise_failed',
+        moonSubLord: moonSubLordForDenied,
+        confirmedSignificators: [],
+        deniedSignificators: [],
+        retrogradeFlags: [],
+        combustFlags: [],
+      }),
       horaryNumber,
       reasoning: Object.freeze(deniedReasoning),
       narration: deniedNarration,
@@ -665,6 +603,18 @@ export function judgeHorary(
   const remedy = buildRemedy(moonSubLord, reasoning);
   const narration = buildNarration(verdict, qType, moonSubLord, moonSubLordHouse, score);
 
+  // ── Watch of Currents — RKP's situational-momentum reading ────────────────
+  const current = computeCurrentReading({
+    verdict,
+    stage: 'fructification',
+    moonSubLord,
+    confirmedSignificators: confirmedSignificators as Planet[],
+    deniedSignificators: deniedSignificators as Planet[],
+    retrogradeFlags,
+    combustFlags,
+    timing,
+  });
+
   // ── Final Verdict ─────────────────────────────────────────────────────────
   return Object.freeze({
     id: deterministicId(chart, question),
@@ -680,6 +630,7 @@ export function judgeHorary(
     verdict,
     confidence,
     stage: 'fructification' as const,
+    current,
     reasoning: Object.freeze(reasoning),
     significators,
     confirmedSignificators: Object.freeze(confirmedSignificators as Planet[]),

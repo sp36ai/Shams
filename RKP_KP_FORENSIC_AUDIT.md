@@ -2,6 +2,15 @@
 
 **Shams al-Asrār | Engine v2.0.0-moshier | Audit date: 2026-05-09**
 
+> **Update note:** this audit's recommendation to separate KP and RKP into
+> distinct layers has since been acted on — a standalone classical KP engine
+> (`judgeKP()`) now exists next to the RKP engine (`judgeHorary()`) described
+> throughout this document. See `docs/RKP_VS_KP_SEPARATION.md` for the
+> current state; treat the specific gaps this audit lists (§E, §L.5) as
+> historical unless re-verified against `judgeKP.ts`, since several — cusp
+> sub-lords, significator computation, dasha-convergence timing — are now
+> implemented.
+
 ---
 
 ## A. What True KP Actually Is

@@ -14,6 +14,7 @@
 import type { Chart, HouseIndex, Planet, Pada, NakshatraIndex, SignIndex } from './chart';
 import type { ClassifiedQuestion, QuestionType } from './question';
 import type { SignificatorSets } from '../kp/judgment/significators';
+import type { CurrentReading } from '../kp/judgment/currentReading';
 import type { LangCode } from '@i18n/types';
 
 // ── Verdict enum ───────────────────────────────────────────────────────────
@@ -227,6 +228,14 @@ export interface Verdict {
 
   /** Stage of evaluation that produced the verdict. */
   readonly stage: 'promise_failed' | 'fructification';
+
+  /**
+   * RKP's "Watch of Currents" reading — situational momentum around the
+   * question (open/blocked/turning/unstable, drift, interference) as
+   * distinct from the static YES/NO/CONDITIONAL/DELAYED/DENIED seal above.
+   * Always present; see currentReading.ts module docstring.
+   */
+  readonly current: CurrentReading;
 
   /** Ordered trace of rules that produced the verdict. */
   readonly reasoning: readonly ReasoningStep[];

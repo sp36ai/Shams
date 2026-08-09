@@ -29,5 +29,16 @@ module.exports = {
     node: true,
     es2021: true,
   },
-  ignorePatterns: ['node_modules/', 'build/', 'dist/', 'lib/', '*.config.js', 'vitest.config.ts'],
+  ignorePatterns: [
+    'node_modules/',
+    'build/',
+    'dist/',
+    'lib/',
+    '*.config.js',
+    'vitest.config.ts',
+    // Generated sync-mirror of src/astrology (see scripts/sync-engine.mjs) —
+    // not the source of truth, and already excluded from tsconfig.json's
+    // type-checking project. Lint the client copy instead.
+    'src/engine/',
+  ],
 };

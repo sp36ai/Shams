@@ -1,15 +1,16 @@
 /**
- * RKP house-placement helpers.
+ * Shared house-placement helper — used by BOTH judgment engines.
  *
- * The ONLY question the RKP engine asks about a planet is:
- *   "Which Placidus house does this planet occupy?"
+ * The single question this module answers about a planet (or a raw
+ * longitude) is: "Which Placidus house does this occupy?" That lookup is
+ * pure astronomy, not judgment logic, so both judgeHorary.ts (RKP) and
+ * judgeKP.ts (classical KP) depend on it identically. See
+ * docs/RKP_VS_KP_SEPARATION.md for what each engine builds on top of it:
  *
- * That is it. No 4-level CSL chain. No classic-KP significator weighting.
- * No pratyantar aggregation. Those belong to classic KP, not RKP.
- *
- * `houseOfPlanet` is used by judgeHorary to check:
- *   - Which house Moon's Sub-Lord occupies (primary signal)
- *   - Which house each Ruling Planet occupies (RP verification)
+ *   - judgeHorary (RKP): uses `houseOfPlanet` directly on Moon's Sub-Lord
+ *     and each Ruling Planet for its house-placement scoring.
+ *   - judgeKP (classical KP): uses `houseOfPlanet` inside the significator
+ *     computation (significators.ts) and the Kotamraju filter.
  */
 
 import type { Chart, Planet, HouseIndex } from '@astrology/types/chart';

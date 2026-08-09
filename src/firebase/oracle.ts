@@ -35,11 +35,22 @@ export async function askOracle(args: AskOracleInput): Promise<AskOracleResult> 
 
   const fn = functionsInstance.httpsCallable('askOracle');
 
+  // The RKP watch engine's Lagna is the querent's REAL civil clock reading —
+  // "wherever the minute hand rests at the precise second a client asks a
+  // question" — not an approximation from longitude. Date.prototype.
+  // getTimezoneOffset() returns (UTC − local) in minutes (e.g. −330 for
+  // IST); the engine's convention is the opposite sign (positive = ahead of
+  // UTC, e.g. IST = +330 — see watchChart.ts's localMinuteOfHour()), hence
+  // the negation. This reads the device's current timezone/DST state at the
+  // moment of asking, same as a real wristwatch.
+  const timezoneOffsetMinutes = -new Date().getTimezoneOffset();
+
   const payload: Record<string, unknown> = {
     question: args.question,
     questionLang: args.questionLang,
     lat: args.lat,
     lon: args.lon,
+    timezoneOffsetMinutes,
     ...(args.seekerProfile !== undefined ? { seekerProfile: args.seekerProfile } : {}),
   };
   if (args.seekerName) {
@@ -68,7 +79,8 @@ export async function askOracle(args: AskOracleInput): Promise<AskOracleResult> 
     rulingPlanets?: {
       dayLord: string;
       ascSignLord: string;
-      ascStarLord: string;
+      /** Absent under the RKP watch engine — whole-sign Lagna has no ascending degree to derive a nakshatra from. */
+      ascStarLord?: string;
       moonSignLord: string;
       moonStarLord: string;
       horaLord?: string;
@@ -99,6 +111,8 @@ export async function askOracle(args: AskOracleInput): Promise<AskOracleResult> 
       oracleDescriptor: string;
     };
     oracle?: {
+      /** The verdict heading, e.g. "The Unveiling: YES — but with Delay". */
+      unveiling?: string;
       opening: string;
       interpretation: string;
       spiritual_layer: string;
@@ -115,6 +129,44 @@ export async function askOracle(args: AskOracleInput): Promise<AskOracleResult> 
       signature: string;
     };
     horaryNumber?: number;
+    /** RKP watch engine's finer 6-state verdict (YES_STRONG/.../INCONCLUSIVE). */
+    nativeState?: string;
+    /** RKP condition classification — Siddhi/Stambhana/Gati/Vakra/Kshaya/Bija. */
+    conditionState?: string;
+    /** Closed-enum obstruction anchor — drives client-side remedy ranking. */
+    oracleObstruction?: string;
+    /** ENVIRONMENTAL_FRICTION / INNER_CONFLICT / NONE — drives remedy ranking. */
+    oracleSecondaryTheme?: string;
+    /** Physical direction (Vastu) of the activated house right now. */
+    houseLordDirection?: string;
+    /** Directions currently holding a natural malefic — household Vastu scan. */
+    vastuAfflictedDirections?: string[];
+    /** The RKP Verdict Triad — 1st house / target house / 11th house. */
+    triad?: {
+      lagnaLord: string;
+      targetLord: string;
+      fulfilmentLord: string;
+      rulerRelation: 'friend' | 'neutral' | 'enemy';
+      outcome: 'positive' | 'delayed' | 'blocked' | 'mixed';
+      outcomeReason: string;
+      querentPolarity: 'masculine' | 'feminine';
+      controllerPolarity: 'masculine' | 'feminine';
+      targetBlockingMalefics: string[];
+      fulfilmentBlockingMalefics: string[];
+    };
+    /** RKP's own material remedies — corner clearance, action window, clock advance. */
+    materialRemedy?: {
+      clearanceDirection: string;
+      clearanceObjects: string[];
+      afflictingPlanets: string[];
+      actionPlanet: string;
+      actionWeekday?: string;
+      currentHoraLord: string;
+      horaOpenNow: boolean;
+      clockAdvanceMinutes: { min: number; max: number };
+      minutesToNextSegment: number;
+      crossesIntoNextSegment: boolean;
+    };
   };
 
   const reading: Reading = {
@@ -144,6 +196,14 @@ export async function askOracle(args: AskOracleInput): Promise<AskOracleResult> 
       manzila: data.manzila,
       oracle: data.oracle,
       horaryNumber: data.horaryNumber,
+      nativeState: data.nativeState,
+      conditionState: data.conditionState,
+      oracleObstruction: data.oracleObstruction,
+      oracleSecondaryTheme: data.oracleSecondaryTheme,
+      houseLordDirection: data.houseLordDirection,
+      vastuAfflictedDirections: data.vastuAfflictedDirections,
+      triad: data.triad,
+      materialRemedy: data.materialRemedy,
     },
   };
 

@@ -10,8 +10,9 @@
  */
 
 import { regionalFunctions } from '../firebase/functionsRegion';
-import { getCandidates, type RankingContext } from './rankCandidates';
+import { getCandidates, type OracleClassification, type RankingContext } from './rankCandidates';
 import { renderRemedies, type RenderedRemedy } from './remedyRenderer';
+import type { RemedyTag } from './remedyLibrary';
 import type { SeekerProfile } from '../stores/settingsStore';
 
 export interface SelectionResult {
@@ -34,6 +35,117 @@ function verdictToClassification(verdict: string): RankingContext['oracleClassif
     return 'DENIED';
   }
   return 'NEUTRAL';
+}
+
+/**
+ * Chart-derived remedy themes — the RKP signals the ranker used to ignore.
+ * --------------------------------------------------------------------------
+ * Until now `dominantThemes` came from the question TOPIC alone: every
+ * career question got MATERIAL_ANXIETY + DELAY whether the chart showed a
+ * clean opening or a Rahu-blocked denial. The engine now knows what is
+ * actually in the way, so the ranker can use it.
+ *
+ * ⚠ NO NEW DEVOTIONAL CONTENT IS INTRODUCED HERE. These map the engine's
+ * enums onto the EXISTING 18-tag vocabulary in remedyLibrary.ts, so remedy
+ * selection still draws from the same owner-provided 39-remedy library.
+ * Only the ranking inputs change.
+ *
+ * Provenance of each mapping:
+ *   - Saturn -> DELAY/STAGNATION — the RKP material's own signature for
+ *     Saturn ("brings delays and rigid structures", "hard bureaucratic
+ *     delay").
+ *   - Mars -> CONFLICT/HASTE — the material's "friction, anger, and sudden
+ *     action", matching remedyTable.ts's own Mars line ("avoid anger,
+ *     haste, and confrontation").
+ *   - Rahu -> DOUBT/RESTLESSNESS — remedyTable.ts's Rahu line ("avoid
+ *     confusion, deception, and impulsive decisions").
+ *   - Ketu -> SPIRITUAL_NEGLECT/DOUBT — remedyTable.ts's Ketu line ("avoid
+ *     doubt and spiritual neglect").
+ * The condition-state mappings follow each state's own definition.
+ */
+const OBSTRUCTION_THEMES: Readonly<Record<string, readonly RemedyTag[]>> = Object.freeze({
+  Saturn: ['DELAY', 'STAGNATION'],
+  Mars: ['CONFLICT', 'HASTE'],
+  Rahu: ['DOUBT', 'RESTLESSNESS'],
+  Ketu: ['SPIRITUAL_NEGLECT', 'DOUBT'],
+  MOON_DISAGREEMENT: ['ANXIETY', 'DOUBT'],
+  DENIAL_WITNESS: ['OBSTRUCTION'],
+  NONE: [],
+});
+
+const CONDITION_THEMES: Readonly<Record<string, readonly RemedyTag[]>> = Object.freeze({
+  /** Structurally blocked. */
+  Stambhana: ['OBSTRUCTION', 'STAGNATION'],
+  /** Decaying, failing. */
+  Kshaya: ['GRIEF', 'SUPPRESSION'],
+  /** Reversing, rework required. */
+  Vakra: ['DOUBT', 'RESTLESSNESS'],
+  /** Unformed, premature — the timing has not matured. */
+  Bija: ['DOUBT', 'STAGNATION'],
+  /** Fully resolved. */
+  Siddhi: ['ABUNDANCE'],
+  /** In motion — carries no obstruction of its own. */
+  Gati: [],
+});
+
+const SECONDARY_THEMES: Readonly<Record<string, readonly RemedyTag[]>> = Object.freeze({
+  ENVIRONMENTAL_FRICTION: ['STAGNATION'],
+  INNER_CONFLICT: ['DOUBT', 'RESTLESSNESS'],
+  NONE: [],
+});
+
+/**
+ * The six native states, collapsed onto the three effect-dimension buckets
+ * the ranker weights by (see CONFIRMED_DIMENSIONS / DENIED_DIMENSIONS in
+ * rankCandidates.ts).
+ *
+ * DELAY and WAIT stay NEUTRAL deliberately: they are not refusals, and
+ * routing them to DENIED would flood a "yes, but later" reading with
+ * surrender-and-grief remedies. Their patience signal is carried by the
+ * DELAY/STAGNATION tags instead, which is the finer instrument.
+ */
+function nativeStateToClassification(nativeState: string): OracleClassification | undefined {
+  switch (nativeState) {
+    case 'YES_STRONG':
+    case 'YES_CONDITIONAL':
+      return 'CONFIRMED';
+    case 'NO_DENIED':
+      return 'DENIED';
+    case 'DELAY':
+    case 'WAIT':
+    case 'INCONCLUSIVE':
+      return 'NEUTRAL';
+    default:
+      return undefined; // unrecognised — fall back to the verdict mapping
+  }
+}
+
+/** Signals the RKP engine now returns, all optional for older readings. */
+export interface RKPRemedySignals {
+  /** Six-state verdict — YES_STRONG … INCONCLUSIVE. */
+  nativeState?: string;
+  /** Condition classification — Siddhi / Stambhana / Gati / Vakra / Kshaya / Bija. */
+  conditionState?: string;
+  /** Closed-enum obstruction — Saturn / Mars / Rahu / Ketu / MOON_DISAGREEMENT / … */
+  obstruction?: string;
+  /** ENVIRONMENTAL_FRICTION / INNER_CONFLICT / NONE. */
+  secondaryTheme?: string;
+}
+
+/**
+ * Merge the chart-derived themes with the topic-derived ones.
+ *
+ * The topic themes are kept as a floor rather than replaced: a marriage
+ * question is still about ATTACHMENT even when the chart is clean. Chart
+ * themes lead, so tag-overlap scoring in rankCandidates() favours what is
+ * actually obstructing the matter. Order is preserved and duplicates
+ * removed, keeping the whole thing deterministic.
+ */
+function mergeThemes(
+  chartThemes: readonly RemedyTag[],
+  topicThemes: readonly RemedyTag[],
+): RemedyTag[] {
+  return [...new Set([...chartThemes, ...topicThemes])];
 }
 
 /**
@@ -233,11 +345,28 @@ export function contextFromReading(params: {
   oracleSummary: string;
   questionText: string;
   seekerProfile?: SeekerProfile | null;
+  /**
+   * RKP chart signals. Optional throughout: readings persisted before the
+   * watch engine landed carry none of them, and must keep ranking exactly
+   * as they did — so every one of these falls back to the topic-and-verdict
+   * behaviour when absent.
+   */
+  rkp?: RKPRemedySignals;
 }): SelectionContext {
+  const rkp = params.rkp ?? {};
+
+  const chartThemes: RemedyTag[] = [
+    ...(rkp.obstruction ? (OBSTRUCTION_THEMES[rkp.obstruction] ?? []) : []),
+    ...(rkp.conditionState ? (CONDITION_THEMES[rkp.conditionState] ?? []) : []),
+    ...(rkp.secondaryTheme ? (SECONDARY_THEMES[rkp.secondaryTheme] ?? []) : []),
+  ];
+
   return {
     readingId: params.readingId,
-    oracleClassification: verdictToClassification(params.verdict),
-    dominantThemes: categoryToThemes(params.category),
+    oracleClassification:
+      (rkp.nativeState !== undefined ? nativeStateToClassification(rkp.nativeState) : undefined) ??
+      verdictToClassification(params.verdict),
+    dominantThemes: mergeThemes(chartThemes, categoryToThemes(params.category)),
     spiritualState: deriveSpiritualState(params.verdict, params.category),
     severity: params.severity,
     oracleSummary: params.oracleSummary,

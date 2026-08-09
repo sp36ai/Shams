@@ -122,6 +122,15 @@ interface VjExtended extends VjShape {
   planetChain?: Record<string, { manzilLord: string; subLord: string; subSubLord: string }>;
   /** KP horary number (1–249) — additive witness, see judgeHorary.ts docstring. */
   horaryNumber?: number;
+  // ── RKP watch-engine signals, absent on pre-watch-engine readings ────────
+  /** Six-state verdict — YES_STRONG … INCONCLUSIVE. */
+  nativeState?: string;
+  /** Condition classification — Siddhi/Stambhana/Gati/Vakra/Kshaya/Bija. */
+  conditionState?: string;
+  /** Closed-enum obstruction anchor. */
+  oracleObstruction?: string;
+  /** ENVIRONMENTAL_FRICTION / INNER_CONFLICT / NONE. */
+  oracleSecondaryTheme?: string;
   oracle?: {
     opening: string;
     interpretation: string;
@@ -866,7 +875,7 @@ const OracleChatScreen: React.FC = () => {
         // Phase 3 — library-backed remedy selection. Fire-and-forget: never
         // awaited, never blocks render, selectionReason logged to Firestore by CF.
         {
-          const vj = reading.verdictJson as { confidence?: number } | null;
+          const vj = reading.verdictJson as VjExtended | null;
           const confidence = vj?.confidence ?? 0;
           const severity: 'low' | 'moderate' | 'high' =
             confidence >= 70 ? 'low' : confidence >= 40 ? 'moderate' : 'high';
@@ -878,6 +887,16 @@ const OracleChatScreen: React.FC = () => {
             oracleSummary: narrationForReading(reading)?.slice(0, 200) ?? '',
             questionText: text,
             seekerProfile,
+            // RKP chart signals — let the ranker choose remedies from what
+            // is actually obstructing the matter, not just its topic.
+            // Absent on readings persisted before the watch engine landed,
+            // which keep the old topic-only ranking.
+            rkp: {
+              nativeState: vj?.nativeState,
+              conditionState: vj?.conditionState,
+              obstruction: vj?.oracleObstruction,
+              secondaryTheme: vj?.oracleSecondaryTheme,
+            },
           });
           selectRemedies(selCtx)
             .then(result => setSelectedRemedies(result.selectedRemedies))
