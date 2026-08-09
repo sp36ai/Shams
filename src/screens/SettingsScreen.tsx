@@ -2,7 +2,7 @@
  * SettingsScreen — appearance, language, location, and account settings.
  */
 
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import {
   Alert,
   Image,
@@ -24,7 +24,7 @@ import { ThemeSwitcher } from '@components/ThemeSwitcher';
 import { useColors, useTheme } from '@theme/ThemeProvider';
 import { useTypography } from '@theme/useTypography';
 import { useI18n, useTranslation } from '@i18n/I18nProvider';
-import { LANG_CODES, LANG_META, type LangCode } from '@i18n/types';
+import { LANG_META, languagePickerCodes, type LangCode } from '@i18n/types';
 import { useSettingsStore } from '@stores/settingsStore';
 import { useAuthStore, selectUserName, selectUserEmail } from '@stores/authStore';
 import { useReadingsStore, type VerdictKind } from '@stores/readingsStore';
@@ -109,6 +109,11 @@ const SettingsScreen: React.FC = () => {
     [lang, switchLanguage, t],
   );
 
+  // Active languages, plus the current one if it happens to be frozen — so a
+  // user already on a frozen language keeps a working control and a way out.
+  const pickerCodes = useMemo(() => languagePickerCodes(lang), [lang]);
+  const langIsFrozen = LANG_META[lang].status === 'frozen';
+
   const handleOpenSettings = useCallback(() => {
     void Linking.openSettings();
   }, []);
@@ -168,7 +173,7 @@ const SettingsScreen: React.FC = () => {
 
           <Row label={t('settings.languageLabel')} colors={colors} typography={typography}>
             <View style={styles.langRow}>
-              {LANG_CODES.map(code => {
+              {pickerCodes.map(code => {
                 const meta = LANG_META[code];
                 const selected = code === lang;
                 return (
@@ -200,6 +205,14 @@ const SettingsScreen: React.FC = () => {
               })}
             </View>
           </Row>
+
+          {langIsFrozen ? (
+            <Text
+              style={[typography('caption'), styles.langFrozenNotice, { color: colors.textMuted }]}
+            >
+              {t('settings.languageFrozenNotice')}
+            </Text>
+          ) : null}
         </Section>
 
         <Section title="Seeker Identity">
@@ -609,6 +622,10 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     borderRadius: 999,
     borderWidth: 1,
+  },
+  langFrozenNotice: {
+    marginTop: 8,
+    paddingHorizontal: 4,
   },
   identityCard: {
     padding: 16,

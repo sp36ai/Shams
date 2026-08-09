@@ -2,13 +2,26 @@
  * i18n type contracts — Shams al-Asrār
  * --------------------------------------------------------------------------
  * Three-language scope (locked, do not extend without product sign-off):
- *   - en  : English (LTR, default)
- *   - ur  : Urdu    (RTL, Nastaliq)
- *   - hi  : Hindi   (LTR, Devanagari)
+ *   - en  : English (LTR, default)          — active
+ *   - ur  : Urdu    (RTL, Nastaliq)         — active
+ *   - hi  : Hindi   (LTR, Devanagari)       — frozen (see below)
  *
- * Engine narration produces three SEPARATE templates per verdict — never
+ * Engine narration produces SEPARATE templates per verdict — never
  * machine-translated. Strings file shape is identical across languages so
  * TS catches missing keys at compile time (see StringTable type below).
+ *
+ * Maintenance status (product decision, not a technical limit):
+ *   As the product focuses on its Urdu/Arabic-speaking audience, Hindi is
+ *   FROZEN rather than removed. Concretely:
+ *     - `hi` remains a valid LangCode. Persisted 'hi' in MMKV still loads,
+ *       still renders, and is never silently rewritten. No user data breaks.
+ *     - `hi.ts` is kept at its current coverage. New keys are NOT translated
+ *       into it; they fall through to English via I18nProvider's fallback.
+ *     - The Settings picker offers only ACTIVE languages to new users, but
+ *       still shows a frozen language to a user already on it, so they keep
+ *       a visible control and can switch away.
+ *   To thaw a language, flip its `status` back to 'active' and backfill the
+ *   missing keys — nothing else needs to change.
  */
 
 export type LangCode = 'en' | 'ur' | 'hi';
@@ -16,6 +29,14 @@ export type LangCode = 'en' | 'ur' | 'hi';
 export const LANG_CODES: readonly LangCode[] = ['en', 'ur', 'hi'];
 
 export const DEFAULT_LANG: LangCode = 'en';
+
+/**
+ * Translation-maintenance state.
+ *   'active' — kept in sync with `en`; offered to everyone in the picker.
+ *   'frozen' — kept working, no longer backfilled; offered only to users
+ *              already on it. New strings fall back to English.
+ */
+export type LangStatus = 'active' | 'frozen';
 
 /** Display metadata for the language picker UI */
 export interface LangMeta {
@@ -26,16 +47,41 @@ export interface LangMeta {
   englishName: string;
   /** Layout direction */
   isRTL: boolean;
+  /** Translation-maintenance state. Drives picker prominence — see file header. */
+  status: LangStatus;
 }
 
 export const LANG_META: Readonly<Record<LangCode, LangMeta>> = Object.freeze({
-  en: { code: 'en', nativeName: 'English', englishName: 'English', isRTL: false },
-  ur: { code: 'ur', nativeName: 'اردو', englishName: 'Urdu', isRTL: true },
-  hi: { code: 'hi', nativeName: 'हिन्दी', englishName: 'Hindi', isRTL: false },
+  en: {
+    code: 'en',
+    nativeName: 'English',
+    englishName: 'English',
+    isRTL: false,
+    status: 'active',
+  },
+  ur: { code: 'ur', nativeName: 'اردو', englishName: 'Urdu', isRTL: true, status: 'active' },
+  hi: {
+    code: 'hi',
+    nativeName: 'हिन्दी',
+    englishName: 'Hindi',
+    isRTL: false,
+    status: 'frozen',
+  },
 });
 
 export function isValidLang(value: unknown): value is LangCode {
   return typeof value === 'string' && (LANG_CODES as readonly string[]).includes(value);
+}
+
+/**
+ * Codes a language picker should render, in canonical order.
+ *
+ * Active languages always. A frozen language appears ONLY when it is the
+ * user's current one — so existing speakers keep a working, visible control
+ * (and a way out), while new users are never offered a frozen language.
+ */
+export function languagePickerCodes(current: LangCode): readonly LangCode[] {
+  return LANG_CODES.filter(code => LANG_META[code].status === 'active' || code === current);
 }
 
 /**
@@ -223,6 +269,8 @@ export interface StringTable {
     legalSection: string;
     themeLabel: string;
     languageLabel: string;
+    /** Shown under the picker when the active language is frozen (see LangStatus). */
+    languageFrozenNotice: string;
     notificationsLabel: string;
     notificationsHint: string;
     subscriptionLabel: string;

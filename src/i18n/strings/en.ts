@@ -204,6 +204,8 @@ export const en: StringTable = {
     legalSection: 'Legal',
     themeLabel: 'Theme',
     languageLabel: 'Language',
+    languageFrozenNotice:
+      'This language is no longer actively updated. New text appears in English.',
     notificationsLabel: 'Notifications',
     notificationsHint: 'Get reminders when planetary windows align with your questions.',
     subscriptionLabel: 'Subscription',
