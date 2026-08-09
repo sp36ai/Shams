@@ -6,13 +6,26 @@
  *   WatchVerdict → Lookup Spiritual Remedy → Prompt Claude → Return Oracle Response
  *
  * This is the final layer that wraps raw celestial calculation in the mystical voice.
+ *
+ * API Key Management:
+ *   The Anthropic API key is loaded from Firebase Secret Manager (ANTHROPIC_API_KEY).
+ *   Never hardcode or commit secrets to the repository.
+ *   See: https://firebase.google.com/docs/functions/config-env
  */
 
+import { defineSecret } from 'firebase-functions/params';
 import { Anthropic } from '@anthropic-ai/sdk';
 import { WATCH_ORACLE_SYNTHESIS_PROMPT } from '../../prompts/watchOracleSynthesisPrompt';
 import { REMEDY_MAP } from './spiritualRepository';
 import type { WatchVerdict, WatchState, Confidence } from './watchJudgment';
 import type { TimingWindow } from './watchJudgment';
+
+/**
+ * Load Anthropic API key from Firebase Secret Manager.
+ * Set this via Firebase CLI:
+ *   firebase functions:secrets:set ANTHROPIC_API_KEY
+ */
+const ANTHROPIC_API_KEY = defineSecret('ANTHROPIC_API_KEY');
 
 export interface OracleResponse {
   opening: string;
@@ -86,7 +99,9 @@ CONTROL_PROFILE: ${verdict.controllerProfile}
 `;
 
   // ── 3. Call Claude Opus ──────────────────────────────────────────────────
-  const client = new Anthropic();
+  const client = new Anthropic({
+    apiKey: ANTHROPIC_API_KEY.value(), // Load from Firebase Secret Manager
+  });
 
   let responseText = '';
   try {
