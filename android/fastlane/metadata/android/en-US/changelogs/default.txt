@@ -1,5 +1,8 @@
-Initial release of Shams al-Asrār — KP horary astrology oracle.
+🌙 Watch Oracle Mode is here
 
-- Ask any horary question and receive a full KP chart reading
-- Supports English, Urdu, and Hindi
-- Secure sign-in with email or Google
+• Instant 5-minute bracket verdicts — no location needed
+• Personalized remedy protocol with clear reasoning
+• Professional referrals for health & legal questions
+• Refined visual design throughout
+
+Toggle between Astronomical and Watch Oracle views anytime.
