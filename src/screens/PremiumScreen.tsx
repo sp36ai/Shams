@@ -9,6 +9,7 @@ import { useQuotaStore } from '@stores/quotaStore';
 import { usePurchase, type PurchasePlan } from '@hooks/usePurchase';
 import type { RootStackParamList } from '@navigation/types';
 import StarfieldBackground from '@components/StarfieldBackground';
+import { DepthPressable, FloatingLayer, Tilt3DCard } from '@components/ui3d';
 
 const KHASS_GOLD = '#B8952A';
 
@@ -197,7 +198,7 @@ const PremiumScreen: React.FC = () => {
             const priceLabel = currentBilling === 'monthly' ? plan.monthlyPrice : plan.annualPrice;
 
             return (
-              <Pressable
+              <Tilt3DCard
                 key={plan.key}
                 onPress={() => setSelectedPlan(plan.key)}
                 style={[
@@ -214,6 +215,10 @@ const PremiumScreen: React.FC = () => {
                     elevation: isKhass ? 8 : 1,
                   },
                 ]}
+                glassTint={isKhass ? KHASS_GOLD : colors.text}
+                sheenColor={isKhass ? KHASS_GOLD : undefined}
+                sheenLoop={isKhass}
+                tiltDeg={isKhass ? 5 : 4}
                 accessibilityRole="button"
                 accessibilityLabel={`Select ${plan.title} plan`}
               >
@@ -225,9 +230,11 @@ const PremiumScreen: React.FC = () => {
                     {plan.title}
                   </Text>
                   {plan.badge !== undefined && (
-                    <Text style={[typography('body'), { color: KHASS_GOLD, marginLeft: 6 }]}>
-                      {plan.badge}
-                    </Text>
+                    <FloatingLayer amplitude={2} periodMs={2600}>
+                      <Text style={[typography('body'), { color: KHASS_GOLD, marginLeft: 6 }]}>
+                        {plan.badge}
+                      </Text>
+                    </FloatingLayer>
                   )}
                 </View>
                 <Text style={[typography('caption'), { color: colors.textMuted, marginBottom: 8 }]}>
@@ -330,29 +337,35 @@ const PremiumScreen: React.FC = () => {
                     ]}
                   />
                 )}
-              </Pressable>
+              </Tilt3DCard>
             );
           })}
         </View>
 
-        {/* CTA */}
-        <Pressable
+        {/* CTA — the purchase decision, given the same tactile "keycap" depth
+            press as the Oracle home screen's primary CTA for a consistent
+            premium feel across the app. */}
+        <DepthPressable
           onPress={handleCta}
           disabled={purchasing}
-          style={({ pressed }) => [
-            styles.cta,
-            {
-              backgroundColor: selectedPlan === 'khass' ? KHASS_GOLD : colors.primary,
-              opacity: pressed || purchasing ? 0.8 : 1,
-            },
-          ]}
+          plateColor={selectedPlan === 'khass' ? colors.brass : colors.border}
+          liftHeight={4}
+          borderRadius={16}
+          style={styles.ctaWrap}
           accessibilityRole="button"
           accessibilityLabel={ctaLabel}
         >
-          <Text style={[typography('button'), { color: colors.textOnPrimary }]}>
-            {purchasing ? 'Processing…' : ctaLabel}
-          </Text>
-        </Pressable>
+          <View
+            style={[
+              styles.cta,
+              { backgroundColor: selectedPlan === 'khass' ? KHASS_GOLD : colors.primary },
+            ]}
+          >
+            <Text style={[typography('button'), { color: colors.textOnPrimary }]}>
+              {purchasing ? 'Processing…' : ctaLabel}
+            </Text>
+          </View>
+        </DepthPressable>
 
         {/* Restore */}
         <Pressable onPress={handleRestore} style={styles.restoreBtn} hitSlop={8}>
@@ -449,15 +462,17 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     marginTop: 10,
   },
-  cta: {
-    paddingVertical: 16,
-    borderRadius: 16,
-    alignItems: 'center',
+  ctaWrap: {
     shadowColor: '#000',
     shadowOpacity: 0.12,
     shadowRadius: 12,
     shadowOffset: { width: 0, height: 6 },
     elevation: 3,
+  },
+  cta: {
+    paddingVertical: 16,
+    borderRadius: 16,
+    alignItems: 'center',
   },
   restoreBtn: {
     paddingVertical: 8,

@@ -34,7 +34,15 @@ import TabIcon from '@components/TabIcon';
 import HoraBadge from '@components/home/HoraBadge';
 import ManzilEmblem from '@components/home/ManzilEmblem';
 import CornerBrackets from '@components/home/CornerBrackets';
-import GlowWash from '@components/home/GlowWash';
+import {
+  DepthPressable,
+  FloatingLayer,
+  GlassCard,
+  GlassPanel,
+  OrbitRing,
+  SpecularSheen,
+  Tilt3DCard,
+} from '@components/ui3d';
 import { buildDailySkyMessage } from '@utils/dailySkyMessage';
 import { favoredChipForPlanet } from '../data/favoredQuestion';
 import { PLANET_DHIKR } from '../data/dailyDhikr';
@@ -89,8 +97,8 @@ const OracleScreen: React.FC = () => {
   // ── Trial day banners — Day 6 passive strip, Day 7 once-per-day soft prompt ─
   const [trialBannerKind, setTrialBannerKind] = useState<'day6' | 'day7' | null>(null);
 
-  // Measured once via onLayout so the "Ask New Question" glow wash clips
-  // exactly to the button's real rendered size (its width isn't known statically).
+  // Measured once via onLayout so the "Ask New Question" glass finish + sheen
+  // clip exactly to the button's real rendered size (its width isn't known statically).
   const [askBtnSize, setAskBtnSize] = useState<{ width: number; height: number } | null>(null);
 
   const evaluateTrialBanner = useCallback(() => {
@@ -252,12 +260,13 @@ const OracleScreen: React.FC = () => {
         )}
 
         {/* Current Hora — compact readout, seal as a small badge (not the hero) */}
-        <Pressable
+        <Tilt3DCard
           onPress={() => tabNavigation.navigate('AlFalak')}
           style={[
             styles.heroCard,
             { backgroundColor: colors.surface, borderColor: colors.borderAccent + '55' },
           ]}
+          glassTint={colors.goldBright}
           accessibilityRole="button"
           accessibilityLabel="Open Al-Falak — Sky State timing panel"
         >
@@ -281,7 +290,10 @@ const OracleScreen: React.FC = () => {
               </Text>
             </View>
             <View style={styles.heroSealBadge}>
-              <HoraBadge glyph={PLANET_GLYPHS[horaLord]} size={84} />
+              <OrbitRing size={104} color={colors.goldBright} dotCount={10} />
+              <FloatingLayer amplitude={3} periodMs={4200}>
+                <HoraBadge glyph={PLANET_GLYPHS[horaLord]} size={84} />
+              </FloatingLayer>
             </View>
           </View>
           <View style={styles.heroFooterRow}>
@@ -297,11 +309,12 @@ const OracleScreen: React.FC = () => {
               Al-Falak ›
             </Text>
           </View>
-        </Pressable>
+        </Tilt3DCard>
 
         {/* Quota + Tier pills */}
         <View style={styles.pillRow}>
-          <View
+          <GlassCard
+            glassTint={colors.goldBright}
             style={[
               styles.infoPill,
               { backgroundColor: colors.surface, borderColor: colors.border },
@@ -315,8 +328,9 @@ const OracleScreen: React.FC = () => {
                 ? '∞'
                 : `${questionsLeft} / ${trialActive ? TRIAL_DAILY_LIMIT : FREE_DAILY_LIMIT}`}
             </Text>
-          </View>
-          <View
+          </GlassCard>
+          <GlassCard
+            glassTint={colors.goldBright}
             style={[
               styles.infoPill,
               styles.tierPill,
@@ -331,12 +345,15 @@ const OracleScreen: React.FC = () => {
                 {tierLabel.toUpperCase()}
               </Text>
             </View>
-            <Image source={SEAL_IMAGE} style={styles.tierSealImage} resizeMode="contain" />
-          </View>
+            <FloatingLayer amplitude={2} periodMs={3600}>
+              <Image source={SEAL_IMAGE} style={styles.tierSealImage} resizeMode="contain" />
+            </FloatingLayer>
+          </GlassCard>
         </View>
 
         {/* Moon Manzil — the current lunar mansion (Manazil al-Qamar) */}
-        <View
+        <GlassCard
+          glassTint={colors.goldBright}
           style={[
             styles.card,
             styles.manzilCard,
@@ -348,7 +365,9 @@ const OracleScreen: React.FC = () => {
             {t('oracle.moonManzilTitle').toUpperCase()}
           </Text>
           <View style={styles.manzilRow}>
-            <ManzilEmblem size={80} />
+            <FloatingLayer amplitude={4} periodMs={3800}>
+              <ManzilEmblem size={80} />
+            </FloatingLayer>
             <View style={styles.manzilTextCol}>
               <Text
                 style={{
@@ -386,60 +405,72 @@ const OracleScreen: React.FC = () => {
               {t('oracle.sunsetLabel')} {formatClockTime(skyExtras.sunTimes.sunsetMs)}
             </Text>
           )}
-        </View>
+        </GlassCard>
 
-        {/* Ask New Question — opens the oracle chat conversation */}
-        <Pressable
+        {/* Ask New Question — opens the oracle chat conversation. The app's single
+            highest-value CTA: full depth-press tactility + a looping specular
+            sheen, reserved for this button alone. */}
+        <DepthPressable
           testID="ask-shams-btn"
           onPress={() => tabNavigation.navigate('Ask')}
-          onLayout={e => {
-            const { width, height } = e.nativeEvent.layout;
-            setAskBtnSize({ width, height });
-          }}
-          style={({ pressed }) => [
-            styles.actionBtn,
-            {
-              backgroundColor: colors.surface,
-              borderColor: colors.borderAccent + '55',
-              opacity: pressed ? 0.85 : 1,
-            },
-          ]}
+          plateColor={colors.brass}
+          liftHeight={5}
+          borderRadius={18}
+          style={styles.actionBtnWrap}
           accessibilityRole="button"
           accessibilityLabel={t('oracle.askNewQuestionCta')}
         >
-          {askBtnSize !== null && (
-            <GlowWash
-              width={askBtnSize.width}
-              height={askBtnSize.height}
-              color={colors.goldBright}
-              opacity={0.35}
-            />
-          )}
-          <View style={[styles.actionIconWrap, { borderColor: colors.borderAccent }]}>
-            <Text style={{ fontSize: 18 }}>{'✦'}</Text>
-          </View>
-          <View style={styles.actionTextCol}>
-            <Text style={[typography('button'), { color: colors.goldBright, fontSize: 16 }]}>
-              {t('oracle.askNewQuestionCta')}
+          <View
+            onLayout={e => {
+              const { width, height } = e.nativeEvent.layout;
+              setAskBtnSize({ width, height });
+            }}
+            style={[
+              styles.actionBtn,
+              { backgroundColor: colors.surface, borderColor: colors.borderAccent + '55' },
+            ]}
+          >
+            {askBtnSize !== null && (
+              <>
+                <GlassPanel
+                  width={askBtnSize.width}
+                  height={askBtnSize.height}
+                  tint={colors.goldBright}
+                />
+                <SpecularSheen
+                  width={askBtnSize.width}
+                  height={askBtnSize.height}
+                  color={colors.goldBright}
+                  loop
+                />
+              </>
+            )}
+            <View style={[styles.actionIconWrap, { borderColor: colors.borderAccent }]}>
+              <Text style={{ fontSize: 18 }}>{'✦'}</Text>
+            </View>
+            <View style={styles.actionTextCol}>
+              <Text style={[typography('button'), { color: colors.goldBright, fontSize: 16 }]}>
+                {t('oracle.askNewQuestionCta')}
+              </Text>
+              <Text style={[typography('caption'), { color: colors.textMuted, marginTop: 2 }]}>
+                {t('oracle.consultOracleSubtitle')}
+              </Text>
+            </View>
+            <Text style={[typography('label'), { color: colors.goldBright, opacity: 0.85 }]}>
+              ›
             </Text>
-            <Text style={[typography('caption'), { color: colors.textMuted, marginTop: 2 }]}>
-              {t('oracle.consultOracleSubtitle')}
-            </Text>
           </View>
-          <Text style={[typography('label'), { color: colors.goldBright, opacity: 0.85 }]}>›</Text>
-        </Pressable>
+        </DepthPressable>
 
         {/* Reading History */}
-        <Pressable
+        <Tilt3DCard
           onPress={() => tabNavigation.navigate('History')}
-          style={({ pressed }) => [
+          style={[
             styles.actionBtnSecondary,
-            {
-              backgroundColor: colors.surface,
-              borderColor: colors.border,
-              opacity: pressed ? 0.85 : 1,
-            },
+            { backgroundColor: colors.surface, borderColor: colors.border },
           ]}
+          glassTint={colors.text}
+          tiltDeg={4}
           accessibilityRole="button"
           accessibilityLabel={t('oracle.readingHistoryCta')}
         >
@@ -455,10 +486,11 @@ const OracleScreen: React.FC = () => {
             </Text>
           </View>
           <Text style={[typography('label'), { color: colors.textMuted }]}>›</Text>
-        </Pressable>
+        </Tilt3DCard>
 
         {/* Today's Sky — daily personalized readout, based on saved profile */}
-        <View
+        <GlassCard
+          glassTint={colors.goldBright}
           style={[
             styles.card,
             { backgroundColor: colors.surface, borderColor: colors.borderAccent + '44' },
@@ -489,10 +521,11 @@ const OracleScreen: React.FC = () => {
               {dailySky.guidance}
             </Text>
           )}
-        </View>
+        </GlassCard>
 
         {/* Favored Now — which chip category the current hora lord favors */}
-        <View
+        <GlassCard
+          glassTint={colors.goldBright}
           style={[
             styles.card,
             { backgroundColor: colors.surface, borderColor: colors.borderAccent + '44' },
@@ -505,11 +538,12 @@ const OracleScreen: React.FC = () => {
             {t('oracle.favoredNowBody')}{' '}
             <Text style={{ fontWeight: '700', color: colors.accent }}>{favoredChip}</Text>
           </Text>
-        </View>
+        </GlassCard>
 
         {/* Daily Dhikr — a Name of Allah tied to today's day lord */}
         {dhikr !== undefined && (
-          <View
+          <GlassCard
+            glassTint={colors.goldBright}
             style={[
               styles.card,
               { backgroundColor: colors.surface, borderColor: colors.borderAccent + '44' },
@@ -551,11 +585,12 @@ const OracleScreen: React.FC = () => {
             >
               {dhikr.intention[lang]}
             </Text>
-          </View>
+          </GlassCard>
         )}
 
         {/* Today's Blessing — Islamic day-of-week note */}
-        <View
+        <GlassCard
+          glassTint={colors.goldBright}
           style={[
             styles.card,
             { backgroundColor: colors.surface, borderColor: colors.borderAccent + '44' },
@@ -571,7 +606,7 @@ const OracleScreen: React.FC = () => {
             {' — '}
             {islamicNote.note[lang]}
           </Text>
-        </View>
+        </GlassCard>
       </ScrollView>
 
       {/* Trial day banners — thin gold strip, max 44px, above tab bar */}
@@ -699,6 +734,10 @@ const styles = StyleSheet.create({
   },
   heroSealBadge: {
     marginLeft: 12,
+    width: 104,
+    height: 104,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   heroFooterRow: {
     flexDirection: 'row',
@@ -755,22 +794,24 @@ const styles = StyleSheet.create({
   manzilTextCol: {
     flex: 1,
   },
-  actionBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+  actionBtnWrap: {
     marginHorizontal: 16,
-    marginBottom: 10,
-    paddingVertical: 16,
-    paddingHorizontal: 18,
-    borderRadius: 18,
-    borderWidth: StyleSheet.hairlineWidth,
-    overflow: 'hidden',
+    marginBottom: 14,
     shadowColor: '#000',
     shadowOpacity: 0.14,
     shadowRadius: 14,
     shadowOffset: { width: 0, height: 6 },
     elevation: 3,
+  },
+  actionBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 16,
+    paddingHorizontal: 18,
+    borderRadius: 18,
+    borderWidth: StyleSheet.hairlineWidth,
+    overflow: 'hidden',
   },
   actionBtnSecondary: {
     flexDirection: 'row',
@@ -782,6 +823,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 18,
     borderRadius: 18,
     borderWidth: StyleSheet.hairlineWidth,
+    overflow: 'hidden',
   },
   actionIconWrap: {
     width: 44,
