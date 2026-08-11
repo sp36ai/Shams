@@ -47,13 +47,33 @@ const RAW_BASE = 'https://raw.githubusercontent.com/google/fonts/main';
 // filename the code references; RN keys on the filename, and the variable file's
 // default instance renders — acceptable, and matches the prior provisioning.
 const MANIFEST = [
-  { name: 'Cinzel-SemiBold.ttf', url: `${RAW_BASE}/ofl/cinzel/Cinzel%5Bwght%5D.ttf`, minSize: 50_000 },
+  {
+    name: 'Cinzel-SemiBold.ttf',
+    url: `${RAW_BASE}/ofl/cinzel/Cinzel%5Bwght%5D.ttf`,
+    minSize: 50_000,
+  },
   { name: 'Cinzel-Bold.ttf', url: `${RAW_BASE}/ofl/cinzel/Cinzel%5Bwght%5D.ttf`, minSize: 50_000 },
 
-  { name: 'Spectral-Regular.ttf', url: `${RAW_BASE}/ofl/spectral/Spectral-Regular.ttf`, minSize: 60_000 },
-  { name: 'Spectral-Medium.ttf', url: `${RAW_BASE}/ofl/spectral/Spectral-Medium.ttf`, minSize: 60_000 },
-  { name: 'Spectral-SemiBold.ttf', url: `${RAW_BASE}/ofl/spectral/Spectral-SemiBold.ttf`, minSize: 60_000 },
-  { name: 'Spectral-Italic.ttf', url: `${RAW_BASE}/ofl/spectral/Spectral-Italic.ttf`, minSize: 60_000 },
+  {
+    name: 'Spectral-Regular.ttf',
+    url: `${RAW_BASE}/ofl/spectral/Spectral-Regular.ttf`,
+    minSize: 60_000,
+  },
+  {
+    name: 'Spectral-Medium.ttf',
+    url: `${RAW_BASE}/ofl/spectral/Spectral-Medium.ttf`,
+    minSize: 60_000,
+  },
+  {
+    name: 'Spectral-SemiBold.ttf',
+    url: `${RAW_BASE}/ofl/spectral/Spectral-SemiBold.ttf`,
+    minSize: 60_000,
+  },
+  {
+    name: 'Spectral-Italic.ttf',
+    url: `${RAW_BASE}/ofl/spectral/Spectral-Italic.ttf`,
+    minSize: 60_000,
+  },
 
   { name: 'Amiri-Regular.ttf', url: `${RAW_BASE}/ofl/amiri/Amiri-Regular.ttf`, minSize: 300_000 },
   { name: 'Amiri-Bold.ttf', url: `${RAW_BASE}/ofl/amiri/Amiri-Bold.ttf`, minSize: 300_000 },

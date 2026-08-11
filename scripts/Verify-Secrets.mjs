@@ -13,7 +13,7 @@ const requiredSecrets = [
   'RAZORPAY_WEBHOOK_SECRET',
   'GOOGLE_PLAY_CLIENT_EMAIL',
   'GOOGLE_PLAY_PRIVATE_KEY',
-  'ANTHROPIC_API_KEY'
+  'ANTHROPIC_API_KEY',
 ];
 
 async function verify() {
@@ -25,7 +25,7 @@ async function verify() {
     try {
       const [secret] = await client.getSecret({ name });
       const [version] = await client.getSecretVersion({ name: `${name}/versions/latest` });
-      
+
       console.log(`✅ ${secretName.padEnd(25)} : OK (State: ${version.state})`);
     } catch (err) {
       allPassed = false;

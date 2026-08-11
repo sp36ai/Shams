@@ -33,20 +33,22 @@
 In Firebase Console, under "Build":
 
 - [ ] **Authentication**
+
   - Click "Authentication"
   - Click "Get started"
   - Enable: Email/Password
   - Enable: Google (optional for social login)
   - Enable: Anonymous (for testing)
   - [ ] **Set the server-side password policy** (Authentication → Settings →
-    Password policy, requires Identity Platform). The app enforces a minimum of
-    8 characters client-side in `AuthScreen.tsx`, but that is bypassable by
-    anyone calling the Auth REST API directly. Set the minimum length to **8**
-    here so the floor is enforced server-side too. This is the only remaining
-    piece of the "client-only password policy" audit finding — it cannot be set
-    from code (Auth blocking functions never receive the raw password).
+        Password policy, requires Identity Platform). The app enforces a minimum of
+        8 characters client-side in `AuthScreen.tsx`, but that is bypassable by
+        anyone calling the Auth REST API directly. Set the minimum length to **8**
+        here so the floor is enforced server-side too. This is the only remaining
+        piece of the "client-only password policy" audit finding — it cannot be set
+        from code (Auth blocking functions never receive the raw password).
 
 - [ ] **Firestore Database**
+
   - Click "Firestore Database"
   - Click "Create database"
   - Start in: **Production mode** (we'll set RLS rules)

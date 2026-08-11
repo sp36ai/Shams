@@ -17,19 +17,23 @@ Current state: **feature-rich beta / pre-production**.
 Implemented screens and flows:
 
 1. **Splash + Security Gate**
+
    - Splash with animation and min duration.
    - Integrity checks before mounting app.
 
 2. **Auth**
+
    - Email/password sign-in and sign-up.
    - Google sign-in integration in UI/store.
    - Auth bootstrap and session restore via Firebase Auth.
 
 3. **Location Permission Onboarding**
+
    - Android runtime permission flow.
    - Capture and persistence of last known coordinates.
 
 4. **Oracle (Primary Ask Surface)**
+
    - Chat-style question flow.
    - Calls `askOracle` cloud function.
    - Verdict narration + confidence + timing/remedy/reasoning display.
@@ -37,15 +41,18 @@ Implemented screens and flows:
    - Quota gating in UI.
 
 5. **Sky Clock**
+
    - Rotating visual clock + live cards.
    - Planet/sign/nakshatra display logic and local calculations.
 
 6. **History**
+
    - Persisted local reading cache (MMKV).
    - Filter/sort/list/detail modal.
    - Local delete.
 
 7. **Settings**
+
    - Theme switching.
    - Language switching (EN/UR/HI).
    - Profile snapshot + location/settings actions.
@@ -62,6 +69,7 @@ Implemented screens and flows:
 Implemented functions:
 
 1. **`askOracle`** (callable)
+
    - Auth verify.
    - Input validation (Zod).
    - Rate limiting.
@@ -71,12 +79,15 @@ Implemented functions:
    - Audit logging.
 
 2. **`getQuota`** (callable)
+
    - Returns plan/usage/remaining.
 
 3. **`syncReadings` / `deleteReading`** (callable)
+
    - Server-side sync/delete APIs exist.
 
 4. **Payments**
+
    - `verifyGooglePlayPurchase` callable implemented.
    - `razorpayWebhook` HTTP webhook implemented.
 
@@ -103,12 +114,15 @@ Security and platform controls present:
 ### Implemented but Not Fully Wired / Not Production Complete
 
 1. **Premium purchase UX -> real purchase flow**
+
    - Premium screen CTA is placeholder (no direct purchase trigger from UI).
 
 2. **Cloud support functions not fully consumed by app shell**
+
    - `getQuota`, `syncReadings`, `deleteReading`, payment verification paths exist but are not comprehensively wired in visible client workflows.
 
 3. **Security hardening toggles**
+
    - Certificate pinning config is present but disabled and uses placeholder hashes.
 
 4. **State/documentation drift**

@@ -1,5 +1,5 @@
 appId: com.astrosarfaraz.shamsalasrar
-name: "Settings — plan display and sign out"
+name: 'Settings — plan display and sign out'
 ---
 # Runs after 02_signup_journey: reuses its signed-in session state.
 
@@ -9,30 +9,30 @@ name: "Settings — plan display and sign out"
 # a gear icon in the Home header, not a tab.
 - extendedWaitUntil:
     visible:
-      id: "settings-gear-btn"
+      id: 'settings-gear-btn'
     timeout: 20000
 
 - tapOn:
-    id: "settings-gear-btn"
-- assertVisible: "AL-DAFTAR"
+    id: 'settings-gear-btn'
+- assertVisible: 'AL-DAFTAR'
 
 # Free plan shown for the fresh account
-- assertVisible: "Free"
+- assertVisible: 'Free'
 
 # Sign out — cancel first, then confirm
-- tapOn: "Sign Out"
-- assertVisible: "Sign out of Shams al-Asrar?"
-- tapOn: "Cancel"
-- assertVisible: "AL-DAFTAR"
+- tapOn: 'Sign Out'
+- assertVisible: 'Sign out of Shams al-Asrar?'
+- tapOn: 'Cancel'
+- assertVisible: 'AL-DAFTAR'
 
-- tapOn: "Sign Out"
-- assertVisible: "Sign out of Shams al-Asrar?"
+- tapOn: 'Sign Out'
+- assertVisible: 'Sign out of Shams al-Asrar?'
 - tapOn:
-    text: "Sign Out"
+    text: 'Sign Out'
     index: 1
 
 # Back at the Auth gate
 - extendedWaitUntil:
     visible:
-      id: "auth-tab-signin"
+      id: 'auth-tab-signin'
     timeout: 10000

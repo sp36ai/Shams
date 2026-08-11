@@ -9,9 +9,11 @@ Your Shams al-Asrār app has been transformed from a generic multi-theme system 
 ## Files Modified
 
 ### 1. `src/theme/themes.ts`
+
 **Before:** 5 switchable themes (Teal, Midnight Gold, Royal Violet, Crimson Dusk, Arctic Silver)
 
 **After:** Single canonical theme with:
+
 - Obsidian manuscript black backgrounds
 - Illuminated gold accent system
 - MAQBOOL/MARDOOD verdict states
@@ -20,9 +22,11 @@ Your Shams al-Asrār app has been transformed from a generic multi-theme system 
 - Ceremonial motion timing (including 8-second breathing pulse)
 
 ### 2. `src/theme/typography.ts`
+
 **Before:** Cinzel + Cormorant Garamond (Latin), Noto Nastaliq Urdu (Arabic)
 
-**After:** 
+**After:**
+
 - **Latin:** Cinzel (engraved headings) + Spectral (manuscript body)
 - **Arabic:** Amiri (Quranic, stable, reverent)
 - **Devanagari:** Noto Sans Devanagari (unchanged)
@@ -34,7 +38,9 @@ Your Shams al-Asrār app has been transformed from a generic multi-theme system 
 ## New Documentation
 
 ### 1. `docs/DAR_AL_SHAMS_DESIGN_SYSTEM.md`
+
 Complete design system covering:
+
 - Visual philosophy
 - Material language (obsidian black, illuminated gold)
 - Texture system
@@ -49,7 +55,9 @@ Complete design system covering:
 - Implementation patterns
 
 ### 2. `docs/COMPONENT_IMPLEMENTATION_GUIDE.md`
+
 Sacred UI component patterns:
+
 - Sacred Button (seal press feeling)
 - Verdict Seals (MAQBOOL/MARDOOD)
 - Manuscript Cards
@@ -68,12 +76,14 @@ Sacred UI component patterns:
 ## Color System Changes
 
 ### Removed
+
 - `primary`, `accent`, `amber` (generic brand colors)
 - `positive`, `negative` (generic states)
 - `chatShamsBg`, `chatUserBg` (chat-specific)
 - `starfield`, `nebula1/2/3` (generic space theme)
 
 ### Added
+
 - `gold`, `goldBright`, `brass` (illuminated gold hierarchy)
 - `maqbool`, `maqboolGlow` (YES verdict state)
 - `mardood`, `mardoodGlow` (NO verdict state)
@@ -90,12 +100,14 @@ Sacred UI component patterns:
 ## Motion System Changes
 
 ### Before
+
 - `fast: 120ms`
 - `base: 220ms`
 - `slow: 380ms`
 - `splash: 2500ms`
 
 ### After
+
 - `fast: 180ms` (seal press, subtle resonance)
 - `base: 320ms` (fade, drift, breathing)
 - `slow: 480ms` (orbital motion, celestial rotation)
@@ -107,25 +119,28 @@ Sacred UI component patterns:
 ## Typography Changes
 
 ### Font Families
-| Script | Before | After |
-|--------|--------|-------|
-| Latin Body | Cormorant Garamond | Spectral |
-| Arabic | Noto Nastaliq Urdu | Amiri |
-| Latin Display | Cinzel | Cinzel (unchanged) |
+
+| Script        | Before             | After              |
+| ------------- | ------------------ | ------------------ |
+| Latin Body    | Cormorant Garamond | Spectral           |
+| Arabic        | Noto Nastaliq Urdu | Amiri              |
+| Latin Display | Cinzel             | Cinzel (unchanged) |
 
 ### Size Scale
-| Variant | Before | After | Change |
-|---------|--------|-------|--------|
-| hero | 48dp | 52dp | +4dp |
-| title | 28dp | 30dp | +2dp |
-| heading | 20dp | 22dp | +2dp |
-| subheading | 17dp | 18dp | +1dp |
-| body | 16dp | 17dp | +1dp |
-| caption | 13dp | 14dp | +1dp |
-| label | 12dp | 13dp | +1dp |
-| button | 16dp | 17dp | +1dp |
+
+| Variant    | Before | After | Change |
+| ---------- | ------ | ----- | ------ |
+| hero       | 48dp   | 52dp  | +4dp   |
+| title      | 28dp   | 30dp  | +2dp   |
+| heading    | 20dp   | 22dp  | +2dp   |
+| subheading | 17dp   | 18dp  | +1dp   |
+| body       | 16dp   | 17dp  | +1dp   |
+| caption    | 13dp   | 14dp  | +1dp   |
+| label      | 12dp   | 13dp  | +1dp   |
+| button     | 16dp   | 17dp  | +1dp   |
 
 ### Letter Spacing
+
 Increased across all variants for engraved, ceremonial feel.
 
 ---
@@ -133,6 +148,7 @@ Increased across all variants for engraved, ceremonial feel.
 ## What This Achieves
 
 ### Visual Identity
+
 - Logo feels native to the environment
 - Engine feels ancient yet computational
 - Oracle feels authoritative
@@ -140,6 +156,7 @@ Increased across all variants for engraved, ceremonial feel.
 - UI gains spiritual gravity without kitsch
 
 ### User Experience
+
 - Screens behave like manuscript pages
 - Motion behaves like breath
 - Gold behaves like illuminated ink
@@ -147,12 +164,15 @@ Increased across all variants for engraved, ceremonial feel.
 - Nothing snaps harshly, flashes, or scrolls aggressively
 
 ### Emotional Positioning
+
 The app now sits between:
+
 - An illuminated Islamic manuscript
 - An astronomical observatory
 - A sacred oracle engine
 
 NOT:
+
 - Meditation app
 - AI chatbot
 - Horoscope app
@@ -163,23 +183,28 @@ NOT:
 ## Next Steps
 
 ### 1. Font Assets
+
 You need to add these font files to `assets/fonts/`:
 
 **Latin:**
+
 - `Spectral-Regular.ttf`
 - `Spectral-Medium.ttf`
 - `Spectral-SemiBold.ttf`
 - `Spectral-Italic.ttf`
 
 **Arabic:**
+
 - `Amiri-Regular.ttf`
 - `Amiri-Bold.ttf`
 
 **Keep existing:**
+
 - Cinzel family (already present)
 - Noto Sans Devanagari family (already present)
 
 ### 2. Update react-native.config.js
+
 Ensure the new fonts are registered:
 
 ```javascript
@@ -193,32 +218,38 @@ module.exports = {
 ```
 
 Then run:
+
 ```bash
 npx react-native-asset
 ```
 
 ### 3. Update Components
+
 Gradually update your screens to use the new color tokens:
 
 **Old:**
+
 ```typescript
-colors.primary    // Replace with colors.gold
-colors.accent     // Replace with colors.goldBright
-colors.positive   // Replace with colors.maqbool
-colors.negative   // Replace with colors.mardood
+colors.primary; // Replace with colors.gold
+colors.accent; // Replace with colors.goldBright
+colors.positive; // Replace with colors.maqbool
+colors.negative; // Replace with colors.mardood
 ```
 
 **New:**
+
 ```typescript
-colors.gold           // Primary sacred accent
-colors.goldBright     // Active glow state
-colors.maqbool        // YES verdict
-colors.mardood        // NO verdict
-colors.sacredGlow     // Breathing pulse
+colors.gold; // Primary sacred accent
+colors.goldBright; // Active glow state
+colors.maqbool; // YES verdict
+colors.mardood; // NO verdict
+colors.sacredGlow; // Breathing pulse
 ```
 
 ### 4. Implement Sacred Components
+
 Use the patterns from `COMPONENT_IMPLEMENTATION_GUIDE.md`:
+
 - Replace spinners with celestial loading
 - Add breathing glow to sacred elements
 - Update buttons to feel like seal presses
@@ -226,7 +257,9 @@ Use the patterns from `COMPONENT_IMPLEMENTATION_GUIDE.md`:
 - Implement slow, ceremonial animations
 
 ### 5. Update Splash Screen
+
 Transform the splash into a ritual awakening:
+
 1. Black void
 2. Gold dust emergence
 3. Medallion slowly revealed
@@ -237,14 +270,18 @@ Transform the splash into a ritual awakening:
 Duration: 2.8–3.5 seconds (use `MOTION.splash`)
 
 ### 6. Update Loading States
+
 Replace all spinner components with:
+
 - Rotating astrolabe
 - Orbiting planetary glyphs
 - Breathing seal
 - Celestial calculations text
 
 ### 7. Implement Verdict Screens
+
 Create MAQBOOL and MARDOOD verdict components with:
+
 - Appropriate atmosphere (warm gold vs cool moonlight)
 - Breathing glow on seals
 - Manuscript dividers between content blocks
@@ -255,13 +292,17 @@ Create MAQBOOL and MARDOOD verdict components with:
 ## Breaking Changes
 
 ### Theme Switching Removed
+
 The app now has a single canonical theme. If you had theme picker UI in Settings, you can:
+
 - Remove it entirely, OR
 - Keep the UI but disable switching, OR
 - Repurpose it for future variants (not recommended for v1)
 
 ### Color Token Names Changed
+
 Any components using old color tokens will need updates:
+
 - `colors.primary` → `colors.gold`
 - `colors.accent` → `colors.goldBright`
 - `colors.positive` → `colors.maqbool`
@@ -269,6 +310,7 @@ Any components using old color tokens will need updates:
 - `colors.textOnPrimary` → `colors.textOnGold`
 
 ### Font Family Changed
+
 If any components hardcoded `CormorantGaramond`, update to `Spectral`.
 
 ---
@@ -323,6 +365,7 @@ Dār al-Shams Master Theme
 ## Support
 
 All design decisions are documented in:
+
 - `docs/DAR_AL_SHAMS_DESIGN_SYSTEM.md` — Complete design system
 - `docs/COMPONENT_IMPLEMENTATION_GUIDE.md` — Component patterns
 - `src/theme/themes.ts` — Color tokens and motion timing

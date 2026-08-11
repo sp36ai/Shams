@@ -92,6 +92,7 @@ Then set `.firebaserc`:
 ```
 
 **Expected output:**
+
 ```
 ✓ Node.js v22.x.x
 ✓ firebase-tools ...
@@ -201,6 +202,7 @@ chmod +x scripts/deploy/build-android.sh
 ```
 
 **Expected output:**
+
 ```
 BUILD SUCCESSFUL in Xs
 
@@ -227,6 +229,7 @@ docker-compose down
 ### Step 6.1: Start Emulator or Connect Device
 
 **Option A: Android Emulator**
+
 ```bash
 # List emulators
 emulator -list-avds
@@ -239,6 +242,7 @@ adb devices
 ```
 
 **Option B: Physical Device**
+
 ```bash
 # Enable USB debugging on device
 # Connect via USB
@@ -339,6 +343,7 @@ git push origin main
 ## Troubleshooting
 
 ### "Firebase project not found"
+
 ```bash
 # Verify project exists
 firebase projects:list
@@ -349,6 +354,7 @@ firebase use shams-app-4d0e7
 ```
 
 ### "Permission denied" deploying functions
+
 ```bash
 # Check IAM roles
 gcloud projects get-iam-policy shams-app-4d0e7
@@ -360,6 +366,7 @@ gcloud projects add-iam-policy-binding shams-app-4d0e7 \
 ```
 
 ### APK installation fails
+
 ```bash
 # Uninstall previous version
 adb uninstall com.astrosarfaraz.shamsalasrar
@@ -372,12 +379,14 @@ adb install -r android/app/build/outputs/apk/debug/app-debug.apk
 ```
 
 ### Cloud Functions timeout during deployment
+
 ```bash
 # Increase timeout
 firebase deploy --only functions --project shams-app-4d0e7 --timeout=600
 ```
 
 ### Health endpoint not accessible
+
 ```bash
 # Wait a few seconds, then try again
 sleep 10

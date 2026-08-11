@@ -8,6 +8,8 @@
 import { create } from 'zustand';
 
 import type { QuestionType } from '@astrology/kp/rules/houseMatrix';
+import type { DisplayWatchVerdict } from '@astrology/rkp/watchJudgment';
+import type { WatchOracleComposition } from '../types/watchOracle';
 import { storage, KEYS } from '@storage/mmkv';
 
 /**
@@ -56,6 +58,22 @@ export interface Reading {
    * Phase 3 will type this as `Verdict`.
    */
   verdictJson: unknown;
+  /**
+   * Watch oracle composition (diagnosis, protocol, and narration) when available.
+   * Computed in parallel with astronomical oracle; absent if askWatchOracle fails.
+   */
+  watch_oracle?: {
+    /** The raw watch verdict from the 5-minute bracket judgment. */
+    verdict: DisplayWatchVerdict;
+    /** Diagnosis, protocol, and optional narration. */
+    composition: WatchOracleComposition;
+    /** The 5-minute bracket the question fell in. */
+    window: { readonly startMinute: number; readonly endMinute: number };
+    /** e.g. "Burj Jauza" — the sign on the 1st Ghar. */
+    lagnaSignName: string;
+    /** e.g. "Utarid" — classical name of the querent's own ruler. */
+    lagnaRulerName: string;
+  };
 }
 
 export type ReadingFilter = 'all' | VerdictKind;

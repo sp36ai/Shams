@@ -50,7 +50,7 @@ import { measure } from '../middleware/telemetry';
 import { logger, hashText } from '../utils/logger';
 import { localIsoFromOffset } from '../utils/localTime';
 import { toBoundaryPlanetName } from '../utils/planetBoundaryName';
-import { FUNCTION_OPTS } from '../config';
+import { ORACLE_FUNCTION_OPTS, ANTHROPIC_API_KEY } from '../config';
 import { claimQuotaSlot } from './askOracle';
 import type { AuditLogDoc, ReadingDoc } from '../types';
 import type { VerdictKind } from '../engine/types/verdict';
@@ -62,7 +62,11 @@ const { judgeWatchChart } =
   require('../engine/rkp/watchJudgment') as typeof import('../engine/rkp/watchJudgment');
 const { classifyQuestion } =
   require('../engine/kp/rules/questionKeywords') as typeof import('../engine/kp/rules/questionKeywords');
+const { composeWatchOracleResponse } =
+  require('../oracle/responseComposer') as typeof import('../oracle/responseComposer');
 /* eslint-enable @typescript-eslint/no-var-requires */
+
+import type { WatchOracleComposition } from '../oracle/responseComposer';
 
 import type { WatchState, WatchVerdict } from '../engine/rkp/watchJudgment';
 
@@ -118,6 +122,14 @@ export interface WatchOracleResponse {
   lagnaSignName: string;
   lagnaRulerName: string;
   verdict: PublicWatchVerdict;
+  /**
+   * Diagnosis, remedy protocol and narration.
+   *
+   * The diagnosis and protocol are computed deterministically and are always
+   * present; `narration` is null when Claude synthesis failed, which costs the
+   * reading its prose but not its substance.
+   */
+  oracle?: WatchOracleComposition;
   quotaRemaining: number | null;
 }
 
@@ -127,9 +139,11 @@ export interface WatchOracleResponse {
 
 export const askWatchOracle = onCall(
   {
-    ...FUNCTION_OPTS,
-    // No Anthropic call and no ephemeris-heavy synthesis, so the default
-    // timeout is ample — this path is pure computation.
+    ...ORACLE_FUNCTION_OPTS,
+    // The judgment itself is pure computation, but the oracle voice is
+    // synthesised by Anthropic (up to 25s) — so this needs the same headroom
+    // and the same secret binding as askOracle.
+    secrets: [ANTHROPIC_API_KEY],
     enforceAppCheck: process.env.FUNCTIONS_EMULATOR !== 'true',
   },
   async (request): Promise<WatchOracleResponse> => {
@@ -151,8 +165,37 @@ export const askWatchOracle = onCall(
       const qType = classifyQuestion(input.question);
       const verdict = judgeWatchChart(chart, qType);
 
+      // Shadow-node boundary mapping — obstruction/targetRuler/lagnaRuler are
+      // the only raw Planet identifiers left in the verdict; everything else
+      // (targetRulerName etc.) already went through nomenclature.ts. Done once
+      // here so the diagnosis names the obstructing agent exactly as the client
+      // will display it.
+      const publicVerdict: PublicWatchVerdict = {
+        ...verdict,
+        obstruction: toBoundaryPlanetName(verdict.obstruction),
+        targetRuler: toBoundaryPlanetName(verdict.targetRuler),
+        lagnaRuler: toBoundaryPlanetName(verdict.lagnaRuler),
+      };
+
+      // ── Diagnosis → remedy protocol → narration ──────────────────────────
+      let oracleResponse: WatchOracleComposition | null = null;
+      try {
+        oracleResponse = await composeWatchOracleResponse({
+          verdict: publicVerdict,
+          seekerName: input.seekerName,
+          motherName: input.motherName,
+        });
+      } catch (err) {
+        logger.warn('askWatchOracle: oracle composition failed', {
+          err: String(err),
+          userId,
+        });
+        // Non-fatal: the reading still stands on its verdict.
+        oracleResponse = null;
+      }
+
       const readingRef = db.collection('readings').doc();
-      const narration = verdict.factors.join(' ');
+      const narration = oracleResponse?.narration?.interpretation || verdict.factors.join(' ');
       const readingDoc: Omit<ReadingDoc, 'createdAt'> = {
         userId,
         question: input.question,
@@ -165,12 +208,16 @@ export const askWatchOracle = onCall(
           ur: narration,
           hi: narration,
         },
-        remedy: null,
         reasoning: verdict.factors.map((description, i) => ({
           ruleId: `rkp.watch.${i + 1}`,
           description,
           weight: 1,
         })),
+        // Kept null: ReadingDoc.remedy carries the astronomical path's shape
+        // (planet/action/avoid), which does not describe an RKP protocol. The
+        // watch protocol is persisted in full under `watchOracle` instead.
+        remedy: null,
+        ...(oracleResponse ? { watchOracle: oracleResponse } : {}),
       };
 
       await readingRef.set({
@@ -203,15 +250,8 @@ export const askWatchOracle = onCall(
         },
         lagnaSignName: chart.lagnaSignName,
         lagnaRulerName: chart.planets[chart.lagnaRuler].name,
-        // Shadow-node boundary mapping — obstruction/targetRuler/lagnaRuler
-        // are the only raw Planet identifiers left in the verdict; everything
-        // else (targetRulerName etc.) already went through nomenclature.ts.
-        verdict: {
-          ...verdict,
-          obstruction: toBoundaryPlanetName(verdict.obstruction),
-          targetRuler: toBoundaryPlanetName(verdict.targetRuler),
-          lagnaRuler: toBoundaryPlanetName(verdict.lagnaRuler),
-        },
+        verdict: publicVerdict,
+        ...(oracleResponse ? { oracle: oracleResponse } : {}),
         quotaRemaining: remaining,
       };
     });

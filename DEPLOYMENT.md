@@ -300,6 +300,7 @@ Or via [Cloud Logging Console](https://console.cloud.google.com/logs)
 ### Firestore
 
 Monitor:
+
 - Quota checks (quotas collection)
 - Failed payment verifications (audit logs)
 - Abuse patterns (rate limit collection)
@@ -327,6 +328,7 @@ firebase validate-rules firestore.rules
 ### Payment Verification Fails
 
 **Check**:
+
 1. Are secrets set in GCP Secret Manager?
 2. Is the service account granted `secretmanager.secretAccessor` role?
 3. Do Google Play/Razorpay credentials work locally?
@@ -341,6 +343,7 @@ npm run serve  # Start emulator
 ### App Check Mismatch
 
 If app fails with "App Check failed", ensure:
+
 1. Android app is registered in Firebase Console
 2. `google-services.json` has correct SHA-1
 3. App Check debug token is set (local dev only)

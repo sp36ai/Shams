@@ -48,6 +48,8 @@ export const AskWatchOracleSchema = z
     questionLang: LangSchema,
     utcOffsetMinutes: z.number().int().min(-720).max(840).multipleOf(15),
     seekerProfile: z.enum(['clarity', 'comfort', 'action', 'surrender']).optional(),
+    seekerName: z.string().trim().max(100).optional(),
+    motherName: z.string().trim().max(100).optional(),
   })
   .strict();
 

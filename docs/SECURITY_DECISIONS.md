@@ -29,7 +29,7 @@ Option C: Rust + Actix-web
 └─ Best for: Ultra-high security & performance
 ```
 
-**Your Choice**: ****\*\*****\_\_\_****\*\*****
+**Your Choice**: \***\*\*\*\*\***\_\_\_\***\*\*\*\*\***
 
 ---
 
@@ -63,7 +63,7 @@ Option D: Keep all on Supabase (No separate backend)
 └─ Best for: If we use edge functions securely
 ```
 
-**Your Choice**: ****\*\*****\_\_\_****\*\*****
+**Your Choice**: \***\*\*\*\*\***\_\_\_\***\*\*\*\*\***
 
 ---
 
@@ -100,7 +100,7 @@ Option C: Current (Client-side TypeScript)
 └─ Recommendation: ❌ NOT ACCEPTABLE for production
 ```
 
-**Your Choice**: ****\*\*****\_\_\_****\*\*****
+**Your Choice**: \***\*\*\*\*\***\_\_\_\***\*\*\*\*\***
 
 ---
 
@@ -122,7 +122,7 @@ Option B: Online-Only (Recommended)
 └─ Timeline Impact: None
 ```
 
-**Your Choice**: ****\*\*****\_\_\_****\*\*****
+**Your Choice**: \***\*\*\*\*\***\_\_\_\***\*\*\*\*\***
 
 ---
 
@@ -150,7 +150,7 @@ Option C: Hybrid (Both)
 └─ Monetization: $9.99/month subscription
 ```
 
-**Your Choice**: ****\*\*****\_\_\_****\*\*****
+**Your Choice**: \***\*\*\*\*\***\_\_\_\***\*\*\*\*\***
 
 ---
 
@@ -178,7 +178,7 @@ Option B: Internal Review Only
 └─ Recommendation: NOT RECOMMENDED
 ```
 
-**Your Choice**: ****\*\*****\_\_\_****\*\*****
+**Your Choice**: \***\*\*\*\*\***\_\_\_\***\*\*\*\*\***
 
 ---
 
@@ -206,7 +206,7 @@ Phase 3 (Medium-term): Week 5-8
 └─ Developer availability: _____ developers for _____ weeks
 ```
 
-**Timeline Preference**: ****\*\*****\_\_\_****\*\*****
+**Timeline Preference**: \***\*\*\*\*\***\_\_\_\***\*\*\*\*\***
 
 ---
 
@@ -231,7 +231,7 @@ Option C: No Pinning (Current)
 ├─ Recommended: ❌ Not acceptable
 ```
 
-**Your Choice**: ****\*\*****\_\_\_****\*\*****
+**Your Choice**: \***\*\*\*\*\***\_\_\_\***\*\*\*\*\***
 
 ---
 
@@ -257,7 +257,7 @@ Option C: Hybrid
 └─ Complexity: Medium
 ```
 
-**Your Choice**: ****\*\*****\_\_\_****\*\*****
+**Your Choice**: \***\*\*\*\*\***\_\_\_\***\*\*\*\*\***
 
 ---
 
@@ -282,7 +282,7 @@ Option C: None
 └─ Recommended: ❌ Not for production
 ```
 
-**Your Choice**: ****\*\*****\_\_\_****\*\*****
+**Your Choice**: \***\*\*\*\*\***\_\_\_\***\*\*\*\*\***
 
 ---
 

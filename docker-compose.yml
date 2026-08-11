@@ -7,10 +7,10 @@ services:
     container_name: shams-firebase-emulator
     working_dir: /app
     ports:
-      - "4000:4000"    # Emulator UI
-      - "5000:5000"    # Functions
-      - "9099:9099"    # Firestore
-      - "9199:9199"    # Auth
+      - '4000:4000' # Emulator UI
+      - '5000:5000' # Functions
+      - '9099:9099' # Firestore
+      - '9199:9199' # Auth
     volumes:
       - .:/app
       - firebase-cache:/app/node_modules
@@ -24,7 +24,7 @@ services:
       firebase emulators:start --project=demo-project --import=./firebase-data --export-on-exit
       "
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:4000"]
+      test: ['CMD', 'curl', '-f', 'http://localhost:4000']
       interval: 10s
       timeout: 5s
       retries: 5
@@ -54,7 +54,7 @@ services:
     image: postgres:16-alpine
     container_name: shams-postgres
     ports:
-      - "5432:5432"
+      - '5432:5432'
     volumes:
       - postgres-data:/var/lib/postgresql/data
     environment:
@@ -62,7 +62,7 @@ services:
       POSTGRES_USER: ${POSTGRES_USER:-shams_user}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-shams_dev_pass}
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-shams_user}"]
+      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER:-shams_user}']
       interval: 10s
       timeout: 5s
       retries: 5

@@ -325,6 +325,7 @@ gcloud secrets versions list RAZORPAY_WEBHOOK_SECRET
    ```
 
 2. **Verify in production:**
+
    - Monitor Cloud Logs for any App Check errors
    - Test Razorpay webhook by simulating payment event
    - Verify Promise Layer catches denial cases (check /readings)

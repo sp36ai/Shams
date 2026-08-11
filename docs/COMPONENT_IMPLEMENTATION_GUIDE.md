@@ -13,6 +13,7 @@ Sacred UI component patterns for the manuscript chamber aesthetic.
 The Ask button must feel like **a sacred seal being pressed**.
 
 ### Visual Requirements
+
 - Illuminated gold border
 - Engraved text (Cinzel Bold)
 - Subtle breathing glow
@@ -29,7 +30,7 @@ import { MOTION, SPACING, RADIUS } from '@theme/themes';
 const SacredButton = ({ onPress, children }) => {
   const colors = useColors();
   const typography = useTypography();
-  
+
   return (
     <Pressable
       onPress={onPress}
@@ -66,7 +67,7 @@ The verdict must appear like **opening a sealed manuscript**.
 const MaqboolSeal = ({ question }) => {
   const colors = useColors();
   const typography = useTypography();
-  
+
   return (
     <View style={{
       backgroundColor: colors.maqboolGlow,
@@ -93,7 +94,7 @@ const MaqboolSeal = ({ question }) => {
 const MardoodSeal = ({ question }) => {
   const colors = useColors();
   const typography = useTypography();
-  
+
   return (
     <View style={{
       backgroundColor: colors.mardoodGlow,
@@ -123,7 +124,7 @@ Cards should feel like **parchment strips with wax-seal energy**.
 ```typescript
 const ManuscriptCard = ({ children, elevated = false }) => {
   const colors = useColors();
-  
+
   return (
     <View style={{
       backgroundColor: elevated ? colors.surfaceElevated : colors.surface,
@@ -152,7 +153,7 @@ Geometric separators between oracle content blocks.
 ```typescript
 const ManuscriptDivider = () => {
   const colors = useColors();
-  
+
   return (
     <View style={{
       height: 1,
@@ -169,7 +170,7 @@ const ManuscriptDivider = () => {
 ```typescript
 const OrnamentalDivider = () => {
   const colors = useColors();
-  
+
   return (
     <View style={{
       flexDirection: 'row',
@@ -198,7 +199,7 @@ import { Animated } from 'react-native';
 
 const BreathingGlow = ({ children }) => {
   const opacity = useRef(new Animated.Value(1)).current;
-  
+
   useEffect(() => {
     Animated.loop(
       Animated.sequence([
@@ -215,7 +216,7 @@ const BreathingGlow = ({ children }) => {
       ])
     ).start();
   }, []);
-  
+
   return (
     <Animated.View style={{ opacity }}>
       {children}
@@ -235,7 +236,7 @@ const CelestialLoading = () => {
   const colors = useColors();
   const typography = useTypography();
   const rotation = useRef(new Animated.Value(0)).current;
-  
+
   useEffect(() => {
     Animated.loop(
       Animated.timing(rotation, {
@@ -246,12 +247,12 @@ const CelestialLoading = () => {
       })
     ).start();
   }, []);
-  
+
   const rotate = rotation.interpolate({
     inputRange: [0, 1],
     outputRange: ['0deg', '360deg'],
   });
-  
+
   return (
     <View style={{ alignItems: 'center', justifyContent: 'center', flex: 1 }}>
       <Animated.View style={{ transform: [{ rotate }] }}>
@@ -278,7 +279,7 @@ Current hora should feel like **a living celestial marker**.
 const HoraIndicator = ({ planet, timeRemaining }) => {
   const colors = useColors();
   const typography = useTypography();
-  
+
   return (
     <BreathingGlow>
       <View style={{
@@ -315,7 +316,7 @@ const HoraIndicator = ({ planet, timeRemaining }) => {
 const MoonMansionDisplay = ({ arabicName, transliteration, description }) => {
   const colors = useColors();
   const typography = useTypography();
-  
+
   return (
     <ManuscriptCard elevated>
       <Text style={[typography.caption, { color: colors.textMuted }]}>
@@ -343,15 +344,15 @@ const MoonMansionDisplay = ({ arabicName, transliteration, description }) => {
 const TierBadge = ({ tier }) => {
   const colors = useColors();
   const typography = useTypography();
-  
+
   const tierConfig = {
     wanderer: { label: 'WANDERER', color: colors.textMuted },
     mureed: { label: 'MUREED', color: colors.gold },
     khass: { label: 'KHASS', color: colors.goldBright },
   };
-  
+
   const config = tierConfig[tier];
-  
+
   return (
     <View style={{
       backgroundColor: colors.surface,
@@ -379,7 +380,7 @@ The input field should resemble **an engraved manuscript strip, not a chat textb
 const QuestionInput = ({ value, onChangeText, placeholder }) => {
   const colors = useColors();
   const typography = useTypography();
-  
+
   return (
     <View style={{
       backgroundColor: colors.surface,
@@ -418,9 +419,9 @@ Cards should feel like **archival registry entries with wax-seal energy**.
 const HistoryCard = ({ question, verdict, timestamp, hora, onPress }) => {
   const colors = useColors();
   const typography = useTypography();
-  
+
   const verdictColor = verdict === 'MAQBOOL' ? colors.maqbool : colors.mardood;
-  
+
   return (
     <Pressable onPress={onPress}>
       <ManuscriptCard>
@@ -432,14 +433,14 @@ const HistoryCard = ({ question, verdict, timestamp, hora, onPress }) => {
             {hora} Hora
           </Text>
         </View>
-        
-        <Text 
+
+        <Text
           style={[typography.body, { color: colors.text, marginTop: SPACING.md }]}
           numberOfLines={2}
         >
           {question}
         </Text>
-        
+
         <Text style={[typography.caption, { color: colors.textMuted, marginTop: SPACING.sm }]}>
           {timestamp}
         </Text>
@@ -458,7 +459,7 @@ Every screen should have the base manuscript chamber atmosphere.
 ```typescript
 const ScreenContainer = ({ children }) => {
   const colors = useColors();
-  
+
   return (
     <View style={{
       flex: 1,
@@ -470,14 +471,14 @@ const ScreenContainer = ({ children }) => {
         backgroundColor: colors.vellumOverlay,
         pointerEvents: 'none',
       }} />
-      
+
       {/* Manuscript fog */}
       <View style={{
         ...StyleSheet.absoluteFillObject,
         backgroundColor: colors.manuscriptFog,
         pointerEvents: 'none',
       }} />
-      
+
       {/* Content */}
       <SafeAreaView style={{ flex: 1 }}>
         {children}
@@ -492,6 +493,7 @@ const ScreenContainer = ({ children }) => {
 ## USAGE RULES
 
 ### DO:
+
 - Use breathing glow on sacred elements
 - Apply manuscript texture overlays
 - Use slow, ceremonial animations
@@ -500,6 +502,7 @@ const ScreenContainer = ({ children }) => {
 - Use proper typography variants
 
 ### DON'T:
+
 - Use spinners for loading
 - Apply bounce animations
 - Use bright colors
@@ -512,6 +515,7 @@ const ScreenContainer = ({ children }) => {
 ## ACCESSIBILITY
 
 All components must maintain:
+
 - Minimum contrast ratio 4.5:1 for body text
 - Minimum contrast ratio 3:1 for large text
 - Touch targets minimum 44x44dp

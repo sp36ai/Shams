@@ -105,6 +105,18 @@ export interface OracleResponse {
   };
 
   /**
+   * RKP watch path only. Carries the deterministic diagnosis and the remedy
+   * protocol selected from the controlled library, plus the model's prose.
+   *
+   * Kept separate from `oracle` above rather than widening it: that field
+   * describes the astronomical synthesis, and the two have genuinely different
+   * shapes. Typed as unknown here so the shared type file stays free of a
+   * dependency on the oracle module — askWatchOracle writes a
+   * WatchOracleComposition and is the only writer.
+   */
+  watchOracle?: unknown;
+
+  /**
    * KP horary number (1–249) generated server-side for this reading — an
    * additive witness signal, not part of the owner's original 5-step
    * rules. Surfaced so the reading can display it for authenticity/
