@@ -9,7 +9,6 @@
  * and verifies that type definitions align.
  */
 
-import { describe, it, expect } from 'vitest';
 import type { Reading } from '@stores/readingsStore';
 import type { DisplayWatchVerdict } from '@astrology/rkp/watchJudgment';
 import type { WatchOracleComposition, OracleProtocolStep } from '@types/watchOracle';
