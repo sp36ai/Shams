@@ -27,6 +27,7 @@ Complete toolkit for deploying Shams al-Asrār to Firebase and Google Cloud.
 Automates Cloud Functions and Firestore rules deployment.
 
 **Usage:**
+
 ```bash
 ./scripts/deploy/deploy.sh [options]
 
@@ -40,6 +41,7 @@ Options:
 ```
 
 **Examples:**
+
 ```bash
 # Deploy everything
 ./scripts/deploy/deploy.sh
@@ -55,6 +57,7 @@ Options:
 ```
 
 **What it does:**
+
 1. ✅ Verifies Node.js, firebase-tools, gcloud are installed
 2. ✅ Checks Firebase authentication
 3. ✅ Verifies Firebase project exists
@@ -71,11 +74,13 @@ Options:
 Interactively creates secrets for payment verification.
 
 **Usage:**
+
 ```bash
 ./scripts/deploy/setup-secrets.sh [--project PROJECT_ID]
 ```
 
 **Examples:**
+
 ```bash
 # Default project
 ./scripts/deploy/setup-secrets.sh
@@ -85,12 +90,14 @@ Interactively creates secrets for payment verification.
 ```
 
 **What it does:**
+
 1. ✅ Prompts for credentials (Google Play, Razorpay)
 2. ✅ Creates secrets in GCP Secret Manager
 3. ✅ Grants Cloud Functions service account access
 4. ✅ Documents secret names for reference
 
 **Secrets created:**
+
 - `GOOGLE_PLAY_CLIENT_EMAIL` — Google Play service account email
 - `GOOGLE_PLAY_PRIVATE_KEY` — Google Play private key (JSON)
 - `RAZORPAY_KEY_ID` — Razorpay API key
@@ -104,6 +111,7 @@ Interactively creates secrets for payment verification.
 Builds debug or release APKs.
 
 **Usage:**
+
 ```bash
 ./scripts/deploy/build-android.sh [--release] [--docker]
 
@@ -113,6 +121,7 @@ Options:
 ```
 
 **Examples:**
+
 ```bash
 # Build debug APK (default)
 ./scripts/deploy/build-android.sh
@@ -125,6 +134,7 @@ Options:
 ```
 
 **What it does:**
+
 1. ✅ Checks Java, Android SDK, gradle
 2. ✅ Runs `./gradlew assembleDebug` (or `assembleRelease`)
 3. ✅ Reports APK location and size
@@ -137,11 +147,13 @@ Options:
 Comprehensive deployment verification.
 
 **Usage:**
+
 ```bash
 ./scripts/deploy/test-deployment.sh [--project PROJECT_ID]
 ```
 
 **Examples:**
+
 ```bash
 # Test default project
 ./scripts/deploy/test-deployment.sh
@@ -151,6 +163,7 @@ Comprehensive deployment verification.
 ```
 
 **What it checks:**
+
 1. ✅ Cloud Functions are deployed
 2. ✅ Health endpoint is accessible
 3. ✅ Firestore rules are valid

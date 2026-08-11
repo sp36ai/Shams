@@ -5,11 +5,13 @@ This status reflects the current repo after applying code/config fixes on **May 
 ## Critical
 
 - `API key exposed in android/app/google-services.json` -> **manual action still required**
+
   - Rotate the key in Google Cloud Console.
   - Restrict it to Android app + required Firebase APIs only.
   - Download a fresh `google-services.json` after rotation.
 
 - `Cloud Functions secrets missing` -> **repo-side fix added; secret creation still required**
+
   - Code now binds secrets via Firebase v2 `defineSecret` and function-level `secrets`.
   - Helper script added:
     - [Setup-FirebaseSecrets.ps1](C:/Users/Sarfaraz/Desktop/shams-al-asrar/scripts/Setup-FirebaseSecrets.ps1)
@@ -19,6 +21,7 @@ This status reflects the current repo after applying code/config fixes on **May 
     - `GOOGLE_PLAY_PRIVATE_KEY`
 
 - `App Check not initialized` -> **fixed in app code**
+
   - App Check is initialized in `src/App.tsx`.
   - Debug token is no longer hardcoded; optional env support added:
     - `FIREBASE_APP_CHECK_DEBUG_TOKEN_ANDROID`
@@ -32,12 +35,15 @@ This status reflects the current repo after applying code/config fixes on **May 
 ## High Priority
 
 - `Google Play service account not configured` -> **manual action required**
+
   - Create service account key and set the two secrets above.
 
 - `Firebase billing not verified` -> **manual action required**
+
   - Confirm Blaze plan and budget alerts in Firebase/GCP billing console.
 
 - `Firestore security rules not tested` -> **partially improved**
+
   - Local API test script now includes a health endpoint smoke check.
   - Full Firestore rules emulator tests should still be added before production launch.
 
@@ -49,15 +55,19 @@ This status reflects the current repo after applying code/config fixes on **May 
 ## Medium Priority
 
 - `No debug token support for local testing` -> **fixed**
+
   - Added env-driven App Check debug token support.
 
 - `Rate limiting hardcoded` -> **fixed**
+
   - Added configurable `RATE_LIMIT_PER_MINUTE` parameter.
 
 - `IP address not logged in audit trails` -> **fixed (privacy-safe)**
+
   - Added hashed IP (`ipHash`) + `userAgent` + request `source` metadata in key audit logs.
 
 - `No health check endpoint` -> **fixed**
+
   - Added HTTP function: `health`.
 
 - `No certificate pinning for API calls` -> **still pending**
@@ -67,9 +77,11 @@ This status reflects the current repo after applying code/config fixes on **May 
 ## Low Priority
 
 - `No performance metrics logging` -> **partially improved**
+
   - Added `durationMs` to key success/failure logs for callable/payment paths.
 
 - `Missing CORS configuration` -> **improved**
+
   - Explicit CORS options added to HTTP functions:
     - `health` (`cors: true`)
     - `razorpayWebhook` (`cors: false`)

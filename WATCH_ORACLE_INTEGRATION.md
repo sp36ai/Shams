@@ -54,15 +54,18 @@ Users can toggle between modes via `onSwitchMode()` callbacks on each card.
 ## Components
 
 ### RkpWatchCard
+
 **File**: `src/components/oracle/RkpWatchCard.tsx`
 
 Displays the raw 5-minute bracket judgment:
+
 - Verdict headline (e.g., "The matter completes")
 - Obstruction (if present)
 - Timing range (e.g., "3–7 days")
 - Confidence level
 
 **Props**:
+
 - `window`: { startMinute, endMinute } — the 5-minute bracket
 - `lagnaSignName`: "Burj Jauza" — sign on ascendant
 - `lagnaRulerName`: "Utarid" — classical name of ascendant ruler
@@ -71,9 +74,11 @@ Displays the raw 5-minute bracket judgment:
 - `onSwitchMode?`: callback to toggle to astronomical oracle
 
 ### RemedyProtocolCard
+
 **File**: `src/components/oracle/RemedyProtocolCard.tsx`
 
 Displays the selected remedy protocol and narration:
+
 - The reading headline (diagnosis in plain language)
 - Timing posture (ACT_NOW, WAIT, etc.)
 - Confidence phrasing
@@ -84,6 +89,7 @@ Displays the selected remedy protocol and narration:
 - "Why this was chosen" explanation
 
 **Props**:
+
 - `composition`: WatchOracleComposition — diagnosis, protocol, and narration
 
 ## Type Extensions
@@ -93,7 +99,7 @@ Displays the selected remedy protocol and narration:
 ```typescript
 interface Reading {
   // ... existing astronomical oracle fields ...
-  
+
   watch_oracle?: {
     verdict: DisplayWatchVerdict;
     composition: WatchOracleComposition;
@@ -109,6 +115,7 @@ interface Reading {
 ### runEngine() in `OracleChatScreen.tsx`
 
 The engine now:
+
 1. Calls `callOracleFunction()` for astronomical oracle (requires lat/lon)
 2. Calls `askWatchOracle()` for watch oracle in parallel (no location needed)
 3. Stores both results in the same Reading object
@@ -122,6 +129,7 @@ The engine now:
 **File**: `src/firebase/watchOracle.ts`
 
 Exposes `askWatchOracle()` function:
+
 - Takes question, questionLang, and optional seekerProfile
 - No location needed (watch frame is location-invariant)
 - Returns WatchReading with verdict, composition, and metadata
@@ -136,6 +144,7 @@ Exposes `askWatchOracle()` function:
 ## Testing
 
 Tests verify:
+
 - Diagnosis engine (RkpOutcome classification, imbalance pattern recognition, timing posture)
 - Remedy selection (no-remedy results, safety escalation, selection quality)
 - Component presentation (outcome headlines, evidence labels, step numbering)
@@ -143,6 +152,7 @@ Tests verify:
 - Library integrity (no duplicate IDs, proper evidence types, all category levels covered)
 
 **Test files**:
+
 - `src/astrology/rkp/__tests__/diagnosis.test.ts` (13 tests)
 - `functions/src/oracle/__tests__/remedySelection.test.ts` (19 tests)
 - `src/components/oracle/__tests__/RemedyProtocolCard.test.ts` (14 tests)
@@ -171,6 +181,7 @@ Tests verify:
 ## Future Extensions
 
 ### Possible enhancements:
+
 - **Dedicated Watch Oracle Screen**: Separate from astronomical oracle (if product prioritizes it)
 - **Watch Oracle Library**: Let users save/review watch oracle readings separately
 - **Timing Integration**: Display timing posture alerts (e.g., "Act now" highlights)
@@ -190,4 +201,4 @@ Tests verify:
 ✅ All existing tests pass  
 ✅ Parallel API calls execute correctly  
 ✅ Graceful degradation on watch oracle failure  
-✅ UI toggle works between astronomical and watch oracle views  
+✅ UI toggle works between astronomical and watch oracle views

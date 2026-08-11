@@ -227,7 +227,7 @@ describe('Watch Oracle UI Integration', () => {
             rkp_finding: 'The matter advances, but slowly.',
             interpretation: 'Saturn teaches through delay.',
             recommended_approach: 'Use this time for preparation.',
-            why_this_remedy: 'Discipline aligns with Saturn\'s lesson.',
+            why_this_remedy: "Discipline aligns with Saturn's lesson.",
             signature: 'Shams al-Asrār',
           },
           diagnosis: {

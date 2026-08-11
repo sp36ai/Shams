@@ -706,18 +706,21 @@ Security Layers:
 **Priority**: Critical for current security posture
 
 - [ ] **Build Configuration**
+
   - [ ] Enable code obfuscation in metro.config.js
   - [ ] Strip console logs from release builds
   - [ ] Remove source maps from production APK/IPA
   - [ ] Update `.gitignore` to exclude sensitive files
 
 - [ ] **API Hardening**
+
   - [ ] Add request validation on all endpoints
   - [ ] Implement rate limiting (100 requests/minute per user)
   - [ ] Add HTTPS requirement (redirect HTTP → HTTPS)
   - [ ] Implement CORS restrictions
 
 - [ ] **Storage Security**
+
   - [ ] Audit MMKV configuration (ensure encryption enabled)
   - [ ] Move sensitive tokens to Keychain/Keystore
   - [ ] Remove hardcoded secrets from code
@@ -736,6 +739,7 @@ Security Layers:
 **Priority**: Essential for production-grade security
 
 - [ ] **Backend Calculation Engine Migration**
+
   - [ ] Create Node.js backend service
   - [ ] Move `judgeHorary()` to backend
   - [ ] Create `/api/v1/judge-horary` endpoint
@@ -743,12 +747,14 @@ Security Layers:
   - [ ] Add comprehensive logging
 
 - [ ] **Certificate Pinning**
+
   - [ ] Implement Android certificate pinning (Network Security Config)
   - [ ] Implement iOS certificate pinning (URLSession)
   - [ ] Test with SSL bypass attempts
   - [ ] Add pinning validation tests
 
 - [ ] **JWT Implementation**
+
   - [ ] Implement JWT token generation (15-min expiry)
   - [ ] Implement refresh token flow (7-day expiry)
   - [ ] Secure token storage (Keychain/Keystore)
@@ -768,17 +774,20 @@ Security Layers:
 **Priority**: Premium-grade security features
 
 - [ ] **Advanced Threat Detection**
+
   - [ ] Implement device jailbreak/root detection
   - [ ] Add MITM proxy detection
   - [ ] Implement app signature verification
   - [ ] Add anomaly detection (unusual access patterns)
 
 - [ ] **Encryption Enhancement**
+
   - [ ] Implement field-level encryption for PII
   - [ ] Add end-to-end encryption option for users
   - [ ] Implement encrypted audit logs
 
 - [ ] **Compliance & Documentation**
+
   - [ ] Complete GDPR compliance checklist
   - [ ] Implement data retention policies
   - [ ] Add privacy policy to app
@@ -799,12 +808,14 @@ Security Layers:
 **Priority**: Premium tier differentiator & continuous improvement
 
 - [ ] **Premium Features**
+
   - [ ] Premium-only high-volume quota (500+ calculations/month)
   - [ ] Premium-only offline mode with encrypted cache
   - [ ] Premium-only detailed reasoning (more verbose explanations)
   - [ ] Premium-only advanced timing analysis
 
 - [ ] **Continuous Monitoring**
+
   - [ ] Real-time security monitoring dashboard
   - [ ] Automated vulnerability scanning
   - [ ] Regular penetration testing (quarterly)
@@ -843,6 +854,7 @@ Security Layers:
 ### Pre-Launch Security Review
 
 - [ ] **Code Review**
+
   - [ ] All calculation logic moved to backend
   - [ ] No hardcoded secrets in repository
   - [ ] No console.log in production builds
@@ -851,6 +863,7 @@ Security Layers:
   - [ ] All outputs encoded/escaped
 
 - [ ] **Infrastructure**
+
   - [ ] HTTPS/TLS 1.3 enabled
   - [ ] Certificate pinning implemented
   - [ ] Rate limiting configured
@@ -859,6 +872,7 @@ Security Layers:
   - [ ] DDoS protection enabled
 
 - [ ] **Authentication & Authorization**
+
   - [ ] JWT tokens properly signed
   - [ ] Refresh token flow tested
   - [ ] Session timeout implemented
@@ -866,6 +880,7 @@ Security Layers:
   - [ ] Permission checks on all endpoints
 
 - [ ] **Data Protection**
+
   - [ ] Sensitive data encrypted at rest
   - [ ] Sensitive data encrypted in transit
   - [ ] Backup encryption enabled
@@ -873,6 +888,7 @@ Security Layers:
   - [ ] GDPR compliance verified
 
 - [ ] **Monitoring & Logging**
+
   - [ ] Audit logging enabled
   - [ ] Error tracking configured
   - [ ] Performance monitoring active

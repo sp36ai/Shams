@@ -47,21 +47,25 @@ Built by **Astro Sarfaraz** — a solo developer, owner, and practicing celestia
 ## Features
 
 ### Judgment (Oracle)
+
 - **Ask**: Capture question → build celestial chart for current moment/saved location → server judgment → narrated verdict with timing/remedy/reasoning
 - **Intents**: Follow-up questions (timing, remedy, why) repurpose the chart without recalculating
 - **Confidence**: Verdict confidence level with detailed breakdown by judgment phase
 
 ### Data & History
+
 - **Local cache**: MMKV stores last N readings for offline access
 - **Firestore sync**: Readings automatically sync to user account; deletable on-device or via server
 - **History browse**: Filter/sort/detail modal with full reading metadata
 
 ### Customization
+
 - **Theme**: Light/dark + 5 aesthetic themes (Shams, Falak, Dasha, Maqbool, Mardood)
 - **Language**: EN (English), UR (اردو) actively maintained; HI (हिन्दी) frozen — see Roadmap
 - **Location**: Capture via GPS during onboarding; fall back to last known location
 
 ### Premium (In-App Subscription)
+
 - **Mureed (₹249/month or ₹2,490/year)**: 3 questions/day + full history + remedies
 - **Khass (₹699/month or ₹6,990/year)**: Unlimited + confidence breakdown + PDF reports
 - **Trial**: 7 days free with 5 questions/day after sign-up
@@ -108,12 +112,12 @@ Both oracle modes read the **same real ephemeris** — Meeus/VSOP87 series with
 heliocentric→geocentric conversion, Lahiri ayanamsa, genuine retrograde and
 combustion state. They differ only in where the **house frame** comes from:
 
-| | Astronomical Oracle | Digital Watch Oracle |
-|---|---|---|
-| Entry point | `primitives/chartBuilder.ts` | `rkp/watchChart.ts` |
+|                | Astronomical Oracle                                   | Digital Watch Oracle                                     |
+| -------------- | ----------------------------------------------------- | -------------------------------------------------------- |
+| Entry point    | `primitives/chartBuilder.ts`                          | `rkp/watchChart.ts`                                      |
 | 1st house from | True Ascendant — RAMC, obliquity, latitude (Placidus) | The 5-minute bracket of the querent's local watch minute |
-| Needs location | Yes — the horizon is local | No |
-| Planets | Real | Real |
+| Needs location | Yes — the horizon is local                            | No                                                       |
+| Planets        | Real                                                  | Real                                                     |
 
 The watch frame is a **moment-selected** house frame, of the same class as KP's
 1–249 number method, where a querent-chosen number rather than the local horizon
@@ -130,7 +134,7 @@ Both modes feed the **same remedy layer** — the 38 tagged practices in
 `src/data/remedyLibrary.ts` (salawat, dua, istikhara, sadaqa, fasting, Qur'an,
 dhikr, charity, night prayer, silence, tawbah). `src/data/watchRemedyContext.ts`
 translates a watch verdict into the ranker's vocabulary: the obstructing planet
-describes the *shape* of the difficulty, which is what selects an apt response.
+describes the _shape_ of the difficulty, which is what selects an apt response.
 
 ## Build & Run
 

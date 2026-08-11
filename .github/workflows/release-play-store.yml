@@ -65,7 +65,6 @@ jobs:
         run: |
           echo "${{ secrets.BASE64_KEYSTORE }}" | base64 -di > android/app/shams-upload-key.jks
 
-
       - name: List keystore aliases (diagnostic)
         run: |
           keytool -list -storetype PKCS12 -keystore android/app/shams-upload-key.jks -storepass "${{ secrets.SHAMS_UPLOAD_STORE_PASSWORD }}" 2>&1 || echo 'keytool failed'

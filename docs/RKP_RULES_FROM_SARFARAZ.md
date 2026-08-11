@@ -33,26 +33,26 @@ Primary judgment signal:
 The following entries mirror the exact owner-provided 5-step table.
 
 | Question Type | Favorable Houses | Denial Houses | Primary | Secondary |
-|---|---|---|---|---|
-| career | 6, 10, 11 | 5, 8, 12 | 10 | 6, 11 |
-| marriage | 7, 11, 2 | 6, 8, 12 | 7 | 2, 11 |
-| finance | 2, 6, 11 | 8, 12 | 2 | 6, 11 |
-| health | 1, 5, 11 | 6, 8, 12 | 1 | 5, 11 |
-| property | 4, 11, 2 | 8, 12 | 4 | 11, 2 |
-| travel | 3, 9, 12 | — | 9 | 3, 12 |
-| business | 7, 10, 11 | 6, 8, 12 | 7 | 10, 11 |
-| legal | 6, 11 | 8, 12 | 6 | 11 |
-| children | 5, 11, 2 | 1, 4, 10 | 5 | 2, 11 |
-| education | 4, 9, 11 | 8, 12 | 4 | 9, 11 |
-| lostitem | 2, 4, 11 | 8, 12 | 2 | 4, 11 |
+| ------------- | ---------------- | ------------- | ------- | --------- |
+| career        | 6, 10, 11        | 5, 8, 12      | 10      | 6, 11     |
+| marriage      | 7, 11, 2         | 6, 8, 12      | 7       | 2, 11     |
+| finance       | 2, 6, 11         | 8, 12         | 2       | 6, 11     |
+| health        | 1, 5, 11         | 6, 8, 12      | 1       | 5, 11     |
+| property      | 4, 11, 2         | 8, 12         | 4       | 11, 2     |
+| travel        | 3, 9, 12         | —             | 9       | 3, 12     |
+| business      | 7, 10, 11        | 6, 8, 12      | 7       | 10, 11    |
+| legal         | 6, 11            | 8, 12         | 6       | 11        |
+| children      | 5, 11, 2         | 1, 4, 10      | 5       | 2, 11     |
+| education     | 4, 9, 11         | 8, 12         | 4       | 9, 11     |
+| lostitem      | 2, 4, 11         | 8, 12         | 2       | 4, 11     |
 
 App-retained extension categories that are not part of the owner's exact pasted table:
 
 | Question Type | Favorable Houses | Denial Houses | Primary | Secondary |
-|---|---|---|---|---|
-| enemies | 6, 11 | 8, 12 | 6 | 11 |
-| spiritual | 5, 9, 12 | 6, 8 | 9 | 5, 12 |
-| general | 1, 11 | 8, 12 | 1 | 11 |
+| ------------- | ---------------- | ------------- | ------- | --------- |
+| enemies       | 6, 11            | 8, 12         | 6       | 11        |
+| spiritual     | 5, 9, 12         | 6, 8          | 9       | 5, 12     |
+| general       | 1, 11            | 8, 12         | 1       | 11        |
 
 Code: `src/astrology/kp/rules/houseMatrix.ts`
 
@@ -130,7 +130,7 @@ function judgeHorary(chart, question):
     { favorable, denial, primary } = HOUSE_MATRIX[qType]
     primaryCuspSubLord = chart.cusps[primary].subLord
     cslHouse = houseOfPlanet(primaryCuspSubLord, chart)
-    
+
     if cslHouse in denial: return DENIED (Matter not promised in this chart)
 
   STEP 1 - Read Moon's sidereal nakshatra and sub-lord

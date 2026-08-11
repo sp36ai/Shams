@@ -264,11 +264,13 @@ firebase functions logs read razorpayWebhook --region=asia-south1 --limit=10
 ## Next Steps
 
 1. **Immediate (Today)**
+
    - [x] Review all changes
    - [x] Verify files are in place
    - [ ] Deploy to staging environment
 
 2. **Short-term (This Week)**
+
    - [ ] Verify all three features work in staging
    - [ ] Test Razorpay webhook with real payment event
    - [ ] Test Promise Layer with various question types

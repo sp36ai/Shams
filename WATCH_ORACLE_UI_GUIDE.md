@@ -125,15 +125,15 @@ interface Reading {
   createdAt: string;
   chartJson: unknown; // Astronomical chart
   verdictJson: unknown; // Astronomical verdict
-  
+
   // NEW: Watch oracle data
   watch_oracle?: {
     // Raw 5-minute bracket judgment
     verdict: DisplayWatchVerdict;
-    
+
     // Diagnosis, protocol, and narration
     composition: WatchOracleComposition;
-    
+
     // Bracket metadata
     window: { startMinute: number; endMinute: number };
     lagnaSignName: string; // "Burj Jauza"
@@ -147,7 +147,7 @@ interface Reading {
 ```typescript
 interface WatchOracleComposition {
   narration: OracleNarration | null;
-  
+
   diagnosis: {
     outcome: RkpOutcome; // FAVOURABLE | UNFAVOURABLE | DELAYED | etc.
     primaryPattern: ImbalancePattern; // OBSTRUCTION | CONFLICT | etc.
@@ -157,7 +157,7 @@ interface WatchOracleComposition {
     obstructingAgent: string | null; // Planet name
     rationale: string[]; // Audit trail
   };
-  
+
   protocol: {
     interventionRequired: boolean;
     guidance: string | null;
@@ -170,28 +170,34 @@ interface WatchOracleComposition {
 ## Key Features
 
 ### 1. Parallel Execution
+
 - Astronomical oracle and watch oracle are called in parallel via `Promise.all()`
 - No waiting for one to complete before starting the other
 - Reduces perceived latency
 
 ### 2. Graceful Degradation
+
 - If watch oracle fails → astronomical oracle still works
 - If astronomical oracle fails → watch oracle still works (no location needed)
 - If narration synthesis fails → diagnosis and protocol remain intact
 
 ### 3. Evidence Transparency
+
 Every remedy step shows:
+
 - **Category**: Contemplative / Devotional / Astrological / Behavioral / Professional
 - **Evidence Type**: Scriptural / Traditional / Astrological / Behavioral
 - Users know exactly what kind of authority each remedy carries
 
 ### 4. Safety Escalation
+
 - Health questions always refer to doctor
 - Legal questions always refer to lawyer
 - Financial questions conditionally refer to advisor (only if reading is adverse)
 - Referrals are shown first, ahead of practices
 
 ### 5. No-Remedy Result
+
 - Clean charts don't get unnecessary prescriptions
 - Instead shown guidance: "No remedy needed"
 - Seeker understands the chart is favorable and no action is required
@@ -199,6 +205,7 @@ Every remedy step shows:
 ## User Flow
 
 ### Scenario 1: User Asks a Question
+
 ```
 1. User types question in OracleChatScreen composer
 2. Taps "Ask" button
@@ -211,6 +218,7 @@ Every remedy step shows:
 ```
 
 ### Scenario 2: Toggle Between Modes
+
 ```
 Initial state: showWatch = false
 ├─ Screen shows AstroVerdictCard
@@ -229,6 +237,7 @@ User taps "Switch mode" again
 ```
 
 ### Scenario 3: Health Question
+
 ```
 User: "Will my surgery go well?"
     ↓
@@ -254,6 +263,7 @@ RemedyProtocolCard shows:
 ## Testing Verification
 
 All tests pass:
+
 - ✅ 13 diagnosis tests (outcome classification, imbalance patterns, timing posture)
 - ✅ 19 remedy selection tests (no-remedy, safety escalation, quality checks)
 - ✅ 14 component tests (headlines, labels, numbering, confidence phrasing)
@@ -262,17 +272,18 @@ All tests pass:
 
 ## File Modifications Summary
 
-| File | Change | Purpose |
-|------|--------|---------|
-| `src/stores/readingsStore.ts` | Extended Reading type | Store watch_oracle data alongside astronomical |
-| `src/screens/OracleChatScreen.tsx` | Updated imports, runEngine(), rendering logic | Wire askWatchOracle call and component rendering |
-| `src/firebase/watchOracle.ts` | Already existed | Client wrapper for askWatchOracle |
-| `src/components/oracle/RkpWatchCard.tsx` | Already existed | Render watch verdict |
-| `src/components/oracle/RemedyProtocolCard.tsx` | Already existed | Render protocol & narration |
+| File                                           | Change                                        | Purpose                                          |
+| ---------------------------------------------- | --------------------------------------------- | ------------------------------------------------ |
+| `src/stores/readingsStore.ts`                  | Extended Reading type                         | Store watch_oracle data alongside astronomical   |
+| `src/screens/OracleChatScreen.tsx`             | Updated imports, runEngine(), rendering logic | Wire askWatchOracle call and component rendering |
+| `src/firebase/watchOracle.ts`                  | Already existed                               | Client wrapper for askWatchOracle                |
+| `src/components/oracle/RkpWatchCard.tsx`       | Already existed                               | Render watch verdict                             |
+| `src/components/oracle/RemedyProtocolCard.tsx` | Already existed                               | Render protocol & narration                      |
 
 ## API Integration Points
 
 ### `askWatchOracle()`
+
 **Location**: `src/firebase/watchOracle.ts`  
 **Purpose**: Call watch oracle Cloud Function  
 **Params**: question, questionLang, seekerProfile  
@@ -280,6 +291,7 @@ All tests pass:
 **Error handling**: Non-fatal (caught in Promise.all, reading falls back to astro only)
 
 ### `callOracleFunction()` (existing)
+
 **Location**: `src/firebase/oracle.ts`  
 **Purpose**: Call astronomical oracle Cloud Function  
 **Params**: question, lat, lon, questionLang, seekerProfile, seekerName, motherName  

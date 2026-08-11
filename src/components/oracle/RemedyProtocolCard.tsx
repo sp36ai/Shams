@@ -148,45 +148,75 @@ const RemedyProtocolCard: React.FC<RemedyProtocolCardProps> = ({ composition }) 
   };
   const outcomeColor = tone[OUTCOME_TONE[diagnosis.outcome]];
 
+  // Determine reading section background based on outcome tone
+  const readingBg = outcomeColor + '08'; // Very subtle tint (5% opacity)
+
   return (
     <View
       style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border }]}
       accessibilityRole="summary"
     >
       {/* ── The finding ──────────────────────────────────────────────────── */}
-      <Text style={[typography('caption'), { color: colors.textFaint, letterSpacing: 1.5 }]}>
-        {'THE READING'}
-      </Text>
-      <Text style={[typography('heading'), styles.headline, { color: outcomeColor }]}>
-        {OUTCOME_HEADLINE[diagnosis.outcome]}
-      </Text>
-      <Text style={[typography('caption'), { color: colors.textMuted }]}>
-        {`${POSTURE_LABEL[diagnosis.timingPosture]} · ${confidenceLabel(diagnosis.confidence)}`}
-      </Text>
+      <View style={[styles.readingSection, { backgroundColor: readingBg }]}>
+        <Text
+          style={[typography('caption'), styles.eyebrow, { color: outcomeColor, opacity: 0.7 }]}
+        >
+          {'✧ THE READING'}
+        </Text>
+        <Text style={[typography('heading'), styles.headline, { color: outcomeColor }]}>
+          {OUTCOME_HEADLINE[diagnosis.outcome]}
+        </Text>
+        <Text style={[typography('caption'), styles.subtiming, { color: colors.textMuted }]}>
+          {`${POSTURE_LABEL[diagnosis.timingPosture]} • ${confidenceLabel(diagnosis.confidence)}`}
+        </Text>
+      </View>
 
       {/* ── Narration, when synthesis succeeded ──────────────────────────── */}
       {narration !== null && (
-        <>
-          <View style={[styles.rule, { backgroundColor: colors.border }]} />
-          <Text style={[typography('body'), styles.prose, { color: colors.text }]}>
+        <View style={styles.narrativeSection}>
+          <Text style={[typography('body'), styles.prose, { color: colors.text, lineHeight: 22 }]}>
             {narration.rkp_finding}
           </Text>
-          <Text style={[typography('body'), styles.prose, { color: colors.text }]}>
+          <Text style={[typography('body'), styles.prose, { color: colors.text, lineHeight: 22 }]}>
             {narration.interpretation}
           </Text>
-          <Text style={[typography('body'), styles.prose, { color: colors.textMuted }]}>
+          <Text
+            style={[
+              typography('body'),
+              styles.proseSubtle,
+              { color: colors.textMuted, lineHeight: 21 },
+            ]}
+          >
             {narration.recommended_approach}
           </Text>
-        </>
+        </View>
       )}
-
-      <View style={[styles.rule, { backgroundColor: colors.border }]} />
 
       {/* ── No-remedy result — a finding, not an empty state ─────────────── */}
       {!protocol.interventionRequired && protocol.guidance !== null && (
-        <View style={[styles.guidance, { borderColor: colors.border }]}>
-          <Text style={[typography('label'), { color: colors.maqbool }]}>{'No remedy needed'}</Text>
-          <Text style={[typography('caption'), styles.guidanceText, { color: colors.textMuted }]}>
+        <View
+          style={[
+            styles.guidance,
+            { backgroundColor: colors.maqbool + '08', borderColor: colors.maqbool + '30' },
+          ]}
+        >
+          <View style={styles.guidanceHeader}>
+            <Text
+              style={[
+                typography('label'),
+                { color: colors.maqbool, fontSize: 12, fontWeight: '600' },
+              ]}
+            >
+              {'✓ No remedy needed'}
+            </Text>
+          </View>
+          <Text
+            style={[
+              typography('caption'),
+              styles.guidanceText,
+              { color: colors.textMuted, lineHeight: 20 },
+            ]}
+          >
             {protocol.guidance}
           </Text>
         </View>
@@ -194,29 +224,41 @@ const RemedyProtocolCard: React.FC<RemedyProtocolCardProps> = ({ composition }) 
 
       {/* ── The protocol ─────────────────────────────────────────────────── */}
       {protocol.steps.length > 0 && (
-        <>
-          <Text style={[typography('label'), { color: colors.text, marginBottom: 10 }]}>
-            {protocol.interventionRequired ? 'What is counselled' : 'Also noted'}
+        <View style={styles.protocolSection}>
+          <Text style={[typography('label'), styles.protocolLabel, { color: colors.text }]}>
+            {protocol.interventionRequired ? '✧ What is counselled' : '✧ Also noted'}
           </Text>
-          {numberSteps(protocol.steps).map(({ step, index }) => (
-            <ProtocolStep
-              key={step.id}
-              step={step}
-              index={index}
-              colors={colors}
-              typography={typography}
-            />
-          ))}
-        </>
+          <View style={styles.stepsContainer}>
+            {numberSteps(protocol.steps).map(({ step, index }) => (
+              <ProtocolStep
+                key={step.id}
+                step={step}
+                index={index}
+                colors={colors}
+                typography={typography}
+              />
+            ))}
+          </View>
+        </View>
       )}
 
       {/* ── Why these, in the oracle's own words ─────────────────────────── */}
       {narration?.why_this_remedy !== null && narration?.why_this_remedy !== undefined && (
-        <View style={[styles.why, { borderColor: colors.border }]}>
-          <Text style={[typography('label'), { color: colors.goldBright }]}>
+        <View
+          style={[
+            styles.why,
+            { backgroundColor: colors.goldBright + '06', borderColor: colors.goldBright + '25' },
+          ]}
+        >
+          <Text
+            style={[
+              typography('label'),
+              { color: colors.goldBright, fontSize: 12, fontWeight: '600', marginBottom: 6 },
+            ]}
+          >
             {'Why this was chosen'}
           </Text>
-          <Text style={[typography('caption'), styles.guidanceText, { color: colors.textMuted }]}>
+          <Text style={[typography('caption'), { color: colors.textMuted, lineHeight: 20 }]}>
             {narration.why_this_remedy}
           </Text>
         </View>
@@ -244,22 +286,28 @@ const ProtocolStep: React.FC<StepProps> = ({ step, index, colors, typography }) 
   // A referral is bordered and tinted apart from the practices — it is advice
   // of a different kind, not a stronger version of the same thing.
   const accent = step.isEscalation ? colors.caution : colors.goldBright;
+  const bgColor = step.isEscalation ? colors.caution + '10' : colors.surfaceElevated;
+  const borderColor = step.isEscalation ? colors.caution + '40' : colors.border + '40';
 
   return (
     <View
       style={[
         styles.step,
         {
-          borderColor: step.isEscalation ? colors.caution : colors.border,
-          backgroundColor: step.isEscalation ? colors.surfaceElevated : 'transparent',
+          borderColor,
+          backgroundColor: bgColor,
         },
       ]}
     >
       <View style={styles.stepHead}>
-        <Text style={[typography('caption'), { color: accent }]}>
-          {index !== null ? `${index}.` : '!'}
-        </Text>
-        <Text style={[typography('label'), styles.stepName, { color: colors.text }]}>
+        <View style={[styles.stepIndex, { backgroundColor: accent + '15' }]}>
+          <Text style={[typography('caption'), { color: accent, fontWeight: '600', fontSize: 13 }]}>
+            {index !== null ? `${index}` : '⚡'}
+          </Text>
+        </View>
+        <Text
+          style={[typography('label'), styles.stepName, { color: colors.text, fontWeight: '600' }]}
+        >
           {step.name}
         </Text>
       </View>
@@ -276,18 +324,34 @@ const ProtocolStep: React.FC<StepProps> = ({ step, index, colors, typography }) 
         )}
       </View>
 
-      <Text style={[typography('caption'), styles.stepText, { color: colors.textMuted }]}>
+      <Text
+        style={[
+          typography('caption'),
+          styles.stepText,
+          { color: colors.textMuted, lineHeight: 20 },
+        ]}
+      >
         {step.explanation}
       </Text>
 
-      {step.instructions.map((line, i) => (
-        <View key={`${step.id}-${i}`} style={styles.instructionRow}>
-          <Text style={[typography('caption'), { color: accent }]}>{'·'}</Text>
-          <Text style={[typography('caption'), styles.stepText, { color: colors.text }]}>
-            {line}
-          </Text>
+      {step.instructions.length > 0 && (
+        <View style={styles.instructionsContainer}>
+          {step.instructions.map((line, i) => (
+            <View key={`${step.id}-${i}`} style={styles.instructionRow}>
+              <Text style={[typography('caption'), { color: accent, opacity: 0.6 }]}>{'—'}</Text>
+              <Text
+                style={[
+                  typography('caption'),
+                  styles.stepText,
+                  { color: colors.text, lineHeight: 20 },
+                ]}
+              >
+                {line}
+              </Text>
+            </View>
+          ))}
         </View>
-      ))}
+      )}
     </View>
   );
 };
@@ -299,7 +363,11 @@ interface BadgeProps {
 }
 
 const Badge: React.FC<BadgeProps> = ({ text, color, typography }) => (
-  <Text style={[typography('caption'), styles.badge, { color, borderColor: color }]}>{text}</Text>
+  <View
+    style={[styles.badgeContainer, { borderColor: color + '50', backgroundColor: color + '10' }]}
+  >
+    <Text style={[typography('caption'), styles.badge, { color, fontWeight: '500' }]}>{text}</Text>
+  </View>
 );
 
 const styles = StyleSheet.create({
@@ -308,71 +376,172 @@ const styles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth,
     padding: 16,
     marginTop: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 3,
+    elevation: 2,
+  },
+
+  /* ── Reading Section ──── */
+  readingSection: {
+    paddingHorizontal: 12,
+    paddingVertical: 14,
+    borderRadius: 12,
+    marginBottom: 16,
+  },
+  eyebrow: {
+    fontSize: 10,
+    letterSpacing: 1.2,
+    marginBottom: 6,
+    textTransform: 'uppercase',
   },
   headline: {
-    marginTop: 6,
-    marginBottom: 2,
+    marginTop: 0,
+    marginBottom: 8,
+    fontSize: 18,
+    fontWeight: '600',
+    letterSpacing: -0.3,
   },
-  rule: {
-    height: StyleSheet.hairlineWidth,
-    marginVertical: 12,
+  subtiming: {
+    fontSize: 11,
+    letterSpacing: 0.3,
+  },
+
+  /* ── Narrative Section ──– */
+  narrativeSection: {
+    marginBottom: 16,
+    paddingBottom: 12,
+    borderBottomWidth: StyleSheet.hairlineWidth,
   },
   prose: {
-    marginBottom: 8,
+    marginBottom: 10,
+    fontSize: 14,
+    letterSpacing: -0.2,
   },
+  proseSubtle: {
+    marginBottom: 0,
+    fontSize: 13,
+    opacity: 0.85,
+  },
+
+  /* ── Guidance (No Remedy) ──– */
   guidance: {
     padding: 12,
-    borderRadius: 10,
-    borderWidth: StyleSheet.hairlineWidth,
-    marginBottom: 4,
+    borderRadius: 12,
+    borderWidth: 1,
+    marginBottom: 16,
+  },
+  guidanceHeader: {
+    marginBottom: 6,
   },
   guidanceText: {
-    marginTop: 4,
+    marginTop: 0,
+    lineHeight: 20,
+    fontSize: 12,
   },
+
+  /* ── Protocol Section ──– */
+  protocolSection: {
+    marginBottom: 12,
+  },
+  protocolLabel: {
+    fontSize: 12,
+    fontWeight: '600',
+    letterSpacing: 0.5,
+    marginBottom: 12,
+    textTransform: 'uppercase',
+    opacity: 0.75,
+  },
+  stepsContainer: {
+    gap: 10,
+  },
+
+  /* ── Step Card ──– */
   step: {
     borderRadius: 12,
-    borderWidth: StyleSheet.hairlineWidth,
+    borderWidth: 1,
     padding: 12,
-    marginBottom: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.03,
+    shadowRadius: 2,
+    elevation: 1,
   },
   stepHead: {
     flexDirection: 'row',
-    gap: 8,
+    alignItems: 'center',
+    gap: 10,
+    marginBottom: 10,
+  },
+  stepIndex: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+    minWidth: 32,
   },
   stepName: {
     flex: 1,
+    fontSize: 14,
   },
+
+  /* ── Badges ──– */
   badges: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 6,
-    marginTop: 6,
-    marginBottom: 8,
+    marginTop: 8,
+    marginBottom: 10,
+  },
+  badgeContainer: {
+    borderRadius: 6,
+    borderWidth: 1,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
   },
   badge: {
-    borderWidth: StyleSheet.hairlineWidth,
-    borderRadius: 6,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    letterSpacing: 0.3,
+    fontSize: 10,
+    letterSpacing: 0.2,
   },
+
+  /* ── Instructions ──– */
   stepText: {
+    fontSize: 12,
     flex: 1,
+  },
+  instructionsContainer: {
+    marginTop: 8,
+    paddingLeft: 2,
   },
   instructionRow: {
     flexDirection: 'row',
     gap: 8,
-    marginTop: 4,
-  },
-  why: {
     marginTop: 6,
-    padding: 12,
-    borderRadius: 10,
-    borderWidth: StyleSheet.hairlineWidth,
+    alignItems: 'flex-start',
   },
+
+  /* ── Why Section ──– */
+  why: {
+    marginTop: 12,
+    marginBottom: 12,
+    padding: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.02,
+    shadowRadius: 2,
+    elevation: 1,
+  },
+
+  /* ── Signature ──– */
   signature: {
     marginTop: 14,
     fontStyle: 'italic',
+    fontSize: 12,
+    letterSpacing: 0.1,
   },
 });
 

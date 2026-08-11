@@ -1,6 +1,7 @@
 # Start Firebase Emulators for Local Testing
 
 ## Prerequisites
+
 1. Firebase CLI installed: `npm install -g firebase-tools`
 2. Functions dependencies installed: `cd functions && npm install`
 
