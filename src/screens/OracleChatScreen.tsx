@@ -43,11 +43,14 @@ import { useTimingStrip } from '@hooks/useTimingStrip';
 import { classifyIntent } from '@hooks/useIntentClassifier';
 import { classifyQuestion } from '@hooks/useQuestionGate';
 import { askOracle as callOracleFunction } from '../firebase/oracle';
+import { askWatchOracle } from '../firebase/watchOracle';
 import StarfieldBackground from '@components/StarfieldBackground';
 import { displayLonSidereal, PLANET_GLYPHS } from '@utils/siderealPositions';
 import { getSignLordByLongitude } from '@astrology/primitives/rulingPlanets';
 import AstroVerdictCard from '../components/oracle/AstroVerdictCard';
 import WatchVerdictCard from '../components/oracle/WatchVerdictCard';
+import RkpWatchCard from '../components/oracle/RkpWatchCard';
+import RemedyProtocolCard from '../components/oracle/RemedyProtocolCard';
 import CastingAstrolabe from '../components/oracle/CastingAstrolabe';
 import type { AstroVerdictResult } from '../types/verdict';
 import { selectRemedies, contextFromReading } from '../data/remedySelector';
@@ -521,15 +524,36 @@ async function runEngine(args: {
   }
 
   // Engine runs server-side only — zero algorithm code in the APK.
-  const { reading } = await callOracleFunction({
-    question: args.question,
-    questionLang: args.questionLang,
-    lat: args.lat,
-    lon: args.lon,
-    seekerProfile: args.seekerProfile,
-    seekerName: args.seekerName,
-    motherName: args.motherName,
-  });
+  // Call both astronomical oracle and watch oracle in parallel.
+  const [astroResult, watchResult] = await Promise.all([
+    callOracleFunction({
+      question: args.question,
+      questionLang: args.questionLang,
+      lat: args.lat,
+      lon: args.lon,
+      seekerProfile: args.seekerProfile,
+      seekerName: args.seekerName,
+      motherName: args.motherName,
+    }),
+    askWatchOracle({
+      question: args.question,
+      questionLang: args.questionLang,
+      seekerProfile: args.seekerProfile,
+    }).catch(() => null), // Watch oracle failures are degraded, not fatal
+  ]);
+
+  const reading = astroResult.reading;
+
+  // Attach watch oracle composition if it succeeded
+  if (watchResult !== null && watchResult.reading.oracle) {
+    reading.watch_oracle = {
+      verdict: watchResult.reading.verdict,
+      composition: watchResult.reading.oracle,
+      window: watchResult.reading.window,
+      lagnaSignName: watchResult.reading.lagnaSignName,
+      lagnaRulerName: watchResult.reading.lagnaRulerName,
+    };
+  }
 
   return reading;
 }
@@ -1562,21 +1586,38 @@ const Bubble: React.FC<{
         ]}
       >
         {renderText(message.text)}
-        {message.reading !== undefined &&
-          (showWatch ? (
-            <WatchVerdictCard
-              result={readingToAstroResult(message.reading)}
-              onSwitchMode={() => setShowWatch(false)}
-            />
-          ) : (
-            <AstroVerdictCard
-              result={readingToAstroResult(message.reading)}
-              onSwitchMode={() => setShowWatch(true)}
-              selectedRemedies={
-                message.reading.id === currentReadingId ? selectedRemedies : undefined
-              }
-            />
-          ))}
+        {message.reading !== undefined && (
+          <>
+            {/* Show RKP watch oracle when available */}
+            {message.reading.watch_oracle && showWatch ? (
+              <View>
+                <RkpWatchCard
+                  window={message.reading.watch_oracle.window}
+                  lagnaSignName={message.reading.watch_oracle.lagnaSignName}
+                  lagnaRulerName={message.reading.watch_oracle.lagnaRulerName}
+                  verdict={message.reading.watch_oracle.verdict}
+                  onSwitchMode={() => setShowWatch(false)}
+                />
+                <RemedyProtocolCard composition={message.reading.watch_oracle.composition} />
+              </View>
+            ) : showWatch ? (
+              // Fallback to old WatchVerdictCard for readings without oracle composition
+              <WatchVerdictCard
+                result={readingToAstroResult(message.reading)}
+                onSwitchMode={() => setShowWatch(false)}
+              />
+            ) : (
+              // Show astronomical verdict
+              <AstroVerdictCard
+                result={readingToAstroResult(message.reading)}
+                onSwitchMode={() => setShowWatch(true)}
+                selectedRemedies={
+                  message.reading.id === currentReadingId ? selectedRemedies : undefined
+                }
+              />
+            )}
+          </>
+        )}
         {message.isUpgradeCta === true && (
           <Pressable
             onPress={() => navigation.navigate('Premium')}
