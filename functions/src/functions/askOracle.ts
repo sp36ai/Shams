@@ -262,7 +262,11 @@ async function synthesiseOracleVoice(params: {
     profileBlock +
     TONE_GUARDRAILS;
 
-  const timeoutMs = 25_000;
+  // Raised from 25s: Claude Opus 5 thinks by default, so a synthesis call
+  // takes longer than it did on the non-thinking Opus 4.1. The enclosing
+  // function budget is 120s (ORACLE_FUNCTION_OPTS) and safety validation
+  // takes up to 24s, so 40s here still leaves cold-start headroom.
+  const timeoutMs = 40_000;
   const controller = new AbortController();
   const timer = setTimeout(() => {
     controller.abort();
@@ -277,10 +281,20 @@ async function synthesiseOracleVoice(params: {
         'x-api-key': params.apiKey,
       },
       body: JSON.stringify({
-        // Was 'claude-opus-4-7' (not a valid Anthropic model id → 404 → every
-        // reading fell back to canned ORACLE_FALLBACK text).
-        model: 'claude-opus-4-1-20250805',
-        max_tokens: 4096,
+        // Model id must be a CURRENT Anthropic model. This call has silently
+        // degraded twice before: first on 'claude-opus-4-7' (never a valid id),
+        // then on 'claude-opus-4-1-20250805', which reached its retirement date
+        // on 2026-08-05. Both 404 → every reading served canned ORACLE_FALLBACK
+        // text instead of a real synthesis. Pin only to ids that are listed as
+        // Active, and re-check before a release.
+        model: 'claude-opus-5',
+        // Opus 5 thinks by default and max_tokens caps thinking + response
+        // text together, so the old 4096 (sized for a non-thinking model)
+        // would truncate the JSON mid-object and fail the parse below.
+        max_tokens: 8192,
+        // Opus 5 is strong at low effort; this path is latency-sensitive and
+        // only has to emit a fixed JSON object.
+        output_config: { effort: 'low' },
         system: systemPrompt,
         messages: [{ role: 'user', content: userMessage }],
       }),
