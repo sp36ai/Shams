@@ -50,10 +50,10 @@ function readPlan(): PlanTier {
 }
 
 function readCount(): number {
-  const storedDay = storage.getString(KEYS.QUOTA_WEEK);
+  const storedDay = storage.getString(KEYS.QUOTA_DAY);
   const currentDay = todayKey();
   if (storedDay !== currentDay) {
-    storage.set(KEYS.QUOTA_WEEK, currentDay);
+    storage.set(KEYS.QUOTA_DAY, currentDay);
     storage.set(KEYS.QUOTA_COUNT, 0);
     return 0;
   }
@@ -159,7 +159,7 @@ export const useQuotaStore = create<QuotaState>((set, get) => ({
     }
     const next = questionsToday + 1;
     storage.set(KEYS.QUOTA_COUNT, next);
-    storage.set(KEYS.QUOTA_WEEK, todayKey());
+    storage.set(KEYS.QUOTA_DAY, todayKey());
     set({ questionsToday: next });
     return true;
   },
@@ -222,7 +222,7 @@ export const useQuotaStore = create<QuotaState>((set, get) => ({
 
   reset(): void {
     storage.set(KEYS.QUOTA_COUNT, 0);
-    storage.set(KEYS.QUOTA_WEEK, todayKey());
+    storage.set(KEYS.QUOTA_DAY, todayKey());
     storage.set(KEYS.QUOTA_PLAN, 'free');
     storage.delete(KEYS.QUOTA_PLAN_EXPIRY);
     storage.delete(KEYS.TRIAL_START);

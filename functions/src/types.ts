@@ -175,7 +175,6 @@ export interface AuditLogDoc {
   verdict?: VerdictKind;
   plan?: PlanTier;
   source?: 'callable' | 'http';
-  ipAddress?: string;
   ipHash?: string; // SHA-256 hash prefix of caller IP, never raw IP
   userAgent?: string;
   durationMs?: number;

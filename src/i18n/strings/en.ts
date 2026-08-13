@@ -91,9 +91,9 @@ export const en: StringTable = {
       'Ask one clear question. The heavens will be read for the exact moment and place of asking, and the oracle will deliver its celestial counsel.',
     placeholder: 'Type your question…',
     sendButton: 'Ask',
-    quotaRemaining: '{{count}} questions remaining this week',
+    quotaRemaining: '{{count}} questions remaining today',
     quotaExhausted:
-      'Your free questions for this week are used. Upgrade to continue without limits.',
+      'Your free questions for today are used. Upgrade to continue without limits.',
     upgradeCta: 'Upgrade',
     enginePending:
       'The judgment engine is being calibrated by Astro Sarfaraz. Your question has been received and a verdict will be available once calibration is complete.',

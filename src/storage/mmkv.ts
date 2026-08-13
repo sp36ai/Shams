@@ -46,8 +46,9 @@ export const KEYS = Object.freeze({
   LOCATION_LAST_LABEL: 'location.lastLabel.v1',
   LOCATION_LAST_TIMESTAMP: 'location.lastTimestamp.v1',
 
-  // Quota domain
-  QUOTA_WEEK: 'quota.week.v1',
+  // Quota domain — resets daily; key name kept as 'quota.week.v1' on disk
+  // to avoid discarding existing users' stored data on update.
+  QUOTA_DAY: 'quota.week.v1',
   QUOTA_COUNT: 'quota.count.v1',
   QUOTA_PLAN: 'quota.plan.v1',
   QUOTA_PLAN_EXPIRY: 'quota.planExpiry.v1',
