@@ -96,13 +96,25 @@ Revisit this file before every production release.
 Required secrets for CI/CD:
 
 - [ ] `GOOGLE_SERVICES_JSON` — base64-encoded google-services.json ✅ (already done)
-- [ ] `SHAMS_UPLOAD_KEYSTORE` — base64-encoded upload keystore (.jks)
+- [ ] `SHAMS_UPLOAD_KEYSTORE` — base64-encoded upload keystore (.jks).
+      The release workflow also accepts the older name `BASE64_KEYSTORE`;
+      set **one** of the two. If neither is set the workflow now fails fast
+      with an explicit message instead of building an unsigned bundle.
 - [ ] `SHAMS_UPLOAD_STORE_PASSWORD`
-- [ ] `SHAMS_UPLOAD_KEY_ALIAS`
+- [ ] `SHAMS_UPLOAD_KEY_ALIAS` — must be an alias that actually exists in the
+      keystore; the workflow verifies this before building.
 - [ ] `SHAMS_UPLOAD_KEY_PASSWORD`
 - [ ] `GOOGLE_PLAY_SERVICE_ACCOUNT_JSON`
 - [ ] `RAZORPAY_WEBHOOK_SECRET`
 - [ ] `ANTHROPIC_API_KEY` (for E2E tests in ci.yml)
+
+> **Secret Manager is separate from GitHub Secrets.** The runtime keys the
+> deployed Cloud Functions read (`ANTHROPIC_API_KEY`, `GOOGLE_PLAY_CLIENT_EMAIL`,
+> `GOOGLE_PLAY_PRIVATE_KEY`, `RAZORPAY_WEBHOOK_SECRET`) are bound via
+> `defineSecret` in `functions/src/config.ts` and must exist in **GCP Secret
+> Manager** (steps 3 and 5 above). Setting them only as GitHub Secrets leaves
+> the deployed functions without them — `askOracle` will serve its canned
+> fallback text rather than a real reading.
 
 ---
 
