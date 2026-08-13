@@ -2,7 +2,7 @@
  * Shams al-Asrār — DĀR AL-SHAMS Master Theme System
  * "The House of the Hidden Sun"
  * --------------------------------------------------------------------------
- * Five canonical themes. Single theme per session, MMKV-persisted.
+ * Six canonical themes. Single theme per session, MMKV-persisted.
  *
  * VISUAL PHILOSOPHY:
  * - Obsidian manuscript black / illuminated gold (darAlShams)
@@ -10,9 +10,20 @@
  * - Iron-black / crimson (narAlHadid)
  * - Dawn parchment / antique gold (subhAlWahy — light)
  * - Sage garden / olive ink (zaytunAlHikma — light)
+ * - Violet secret / indigo dusk (sirrAlBanafsaj)
+ *
+ * NOTE — confidence/verdict color is NOT a theme token. CONFIRMED-HIGH gold,
+ * CONFIRMED-MEDIUM, CONFIRMED-LOW, and DENIED all render identically no
+ * matter which theme below is active — see theme/semanticColors.ts.
  */
 
-export type ThemeId = 'darAlShams' | 'laylAlBahr' | 'narAlHadid' | 'subhAlWahy' | 'zaytunAlHikma';
+export type ThemeId =
+  | 'darAlShams'
+  | 'laylAlBahr'
+  | 'narAlHadid'
+  | 'subhAlWahy'
+  | 'zaytunAlHikma'
+  | 'sirrAlBanafsaj';
 
 export interface ThemeColors {
   /** Deepest background */
@@ -117,6 +128,20 @@ export interface ThemeColors {
    * Hora card background gradient — two-stop array [start, end].
    */
   horaGradient: [string, string];
+
+  /**
+   * Primary-action button gradient — two-stop array [start, end], applied
+   * 135deg. Optional: only themes with a gradient CTA (currently
+   * sirrAlBanafsaj) populate this; other themes render `primary` as a flat
+   * fill same as before.
+   */
+  primaryGradient?: [string, string];
+  /**
+   * Flat (non-gradient) icon/logo accent color, for themes whose accent is
+   * defined as a gradient elsewhere. Optional — falls back to `accent` when
+   * absent.
+   */
+  iconAccent?: string;
 }
 
 export interface Theme {
@@ -470,6 +495,85 @@ const zaytunAlHikma: Theme = {
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
+// 6. SIRR AL-BANAFSAJ — Violet Secret · Indigo Dusk  (dark)
+// ─────────────────────────────────────────────────────────────────────────────
+// Color-only theme — typography (Cinzel / Cormorant Garamond / Amiri) is
+// untouched, same as every other theme here. Confidence/verdict color is
+// NOT part of this palette — see theme/semanticColors.ts.
+const sirrAlBanafsaj: Theme = {
+  id: 'sirrAlBanafsaj',
+  labelKey: 'theme.sirrAlBanafsaj',
+  name: 'Sirr al-Banafsaj',
+  subtitle: 'Violet Secret · Indigo Dusk',
+  isDark: true,
+  colors: {
+    bg: '#0B0A14',
+    surface: '#141225',
+    surfaceElevated: '#1C1938',
+    border: '#3D3A55',
+    borderAccent: '#7C3AED',
+
+    gold: '#A78BFA',
+    goldBright: '#C4B5FD',
+    brass: '#5B5478',
+
+    maqbool: '#4ADE80',
+    maqboolGlow: 'rgba(74, 222, 128, 0.22)',
+    mardood: '#6B6478',
+    mardoodGlow: 'rgba(107, 100, 120, 0.18)',
+    caution: '#818CF8',
+
+    text: '#F4F4F8',
+    textMuted: '#9490A8',
+    textFaint: '#7D7892',
+    textOnGold: '#1E1B2E',
+
+    celestialDust: '#C4B5FD',
+    vellumOverlay: 'rgba(244, 244, 248, 0.03)',
+    manuscriptFog: 'rgba(124, 58, 237, 0.08)',
+    sacredGlow: '#7C3AED',
+    lunarReflection: '#A9B4E0',
+    candlelight: '#60A5FA',
+
+    accent: '#A78BFA',
+    amber: '#C4B5FD',
+    primary: '#7C3AED',
+    textOnPrimary: '#F4F4F8',
+    positive: '#4ADE80',
+    negative: '#6B6478',
+
+    starfield: '#C4B5FD',
+    nebula1: 'rgba(124, 58, 237, 0.08)',
+    nebula2: 'rgba(124, 58, 237, 0.05)',
+    nebula3: 'rgba(196, 181, 253, 0.03)',
+
+    chatUserBg: '#1C1938',
+    chatUserBorder: '#3D3A55',
+    chatShamsBg: 'rgba(124, 58, 237, 0.07)',
+    chatShamsBorder: '#7C3AED',
+
+    statusBar: '#0B0A14',
+    statusBarStyle: 'light-content',
+
+    atmTop: 'rgba(124, 58, 237, 0.07)',
+    atmBot: 'rgba(11, 10, 20, 0.0)',
+    jaliStroke: '#7C3AED',
+    jaliOpacity: 0.055,
+    sealGradient: ['#7C3AED', '#3B82F6'],
+    horaGradient: ['rgba(124, 58, 237, 0.12)', 'rgba(124, 58, 237, 0.04)'],
+
+    // Buttons only — primary CTAs (e.g. "Seal & Ask the Oracle" / "Ask New
+    // Question") render this gradient where a gradient renderer is
+    // available; `primary` above is the flat 135deg-start fallback used
+    // everywhere else in the app today (no gradient dependency installed).
+    primaryGradient: ['#7C3AED', '#3B82F6'],
+    // Flat, non-gradient icon/logo accent (same value as `gold`/`accent`,
+    // named separately per the design brief).
+    iconAccent: '#A78BFA',
+  },
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Registry
 // ─────────────────────────────────────────────────────────────────────────────
 export const THEMES: Readonly<Record<ThemeId, Theme>> = Object.freeze({
@@ -478,6 +582,7 @@ export const THEMES: Readonly<Record<ThemeId, Theme>> = Object.freeze({
   narAlHadid,
   subhAlWahy,
   zaytunAlHikma,
+  sirrAlBanafsaj,
 });
 
 export const THEME_IDS: readonly ThemeId[] = [
@@ -486,6 +591,7 @@ export const THEME_IDS: readonly ThemeId[] = [
   'narAlHadid',
   'subhAlWahy',
   'zaytunAlHikma',
+  'sirrAlBanafsaj',
 ];
 
 export const DEFAULT_THEME_ID: ThemeId = 'darAlShams';

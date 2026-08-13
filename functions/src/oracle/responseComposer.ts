@@ -31,7 +31,10 @@ import type { DisplayWatchVerdict } from '../engine/rkp/watchJudgment';
 import { selectRemedyProtocol, type RemedyProtocol } from './remedySelection';
 import type { Tradition } from './remedyLibrary';
 
-const SYNTHESIS_TIMEOUT_MS = 25_000;
+// Raised from 25s — Claude Opus 5 thinks by default, so synthesis is slower
+// than it was on the non-thinking Opus 4.1. askWatchOracle runs under
+// ORACLE_FUNCTION_OPTS (120s), so this stays well inside the function budget.
+const SYNTHESIS_TIMEOUT_MS = 40_000;
 
 /** The prose Claude is permitted to write. No remedy content appears here. */
 interface NarrationFields {
@@ -232,8 +235,16 @@ async function narrate(
         'x-api-key': apiKey,
       },
       body: JSON.stringify({
-        model: 'claude-opus-4-1-20250805',
-        max_tokens: 1500,
+        // Must be a CURRENT Anthropic model id — 'claude-opus-4-1-20250805'
+        // reached its retirement date on 2026-08-05 and 404s, which silently
+        // dropped narration from every watch reading (narrate() returns null
+        // on a non-OK response).
+        model: 'claude-opus-5',
+        // Opus 5 thinks by default and max_tokens bounds thinking + response
+        // together; 1500 was sized for a non-thinking model and would truncate
+        // the JSON before the required fields were emitted.
+        max_tokens: 4096,
+        output_config: { effort: 'low' },
         system: WATCH_ORACLE_SYNTHESIS_PROMPT,
         messages: [
           {

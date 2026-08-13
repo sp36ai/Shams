@@ -3,6 +3,7 @@ import { Animated, Easing, Pressable, StyleSheet, Text, View } from 'react-nativ
 
 import { useColors } from '@theme/ThemeProvider';
 import { useTypography } from '@theme/useTypography';
+import { SEMANTIC_COLORS, confidenceBucket, confirmedConfidenceColor } from '@theme/semanticColors';
 import type { AstroVerdictResult, RulingPlanetEntry } from '../../types/verdict';
 
 // ── Agreement logic ───────────────────────────────────────────────────────────
@@ -179,12 +180,16 @@ const WatchVerdictCard: React.FC<WatchVerdictCardProps> = ({ result, onSwitchMod
           ? colors.negative
           : colors.textMuted;
 
+  // CONFIRMED / DENIED coloring is a fixed confidence signal (see
+  // theme/semanticColors.ts), not a theme token — this must render
+  // identically no matter which theme is active.
   const verdictColor: string = (() => {
     switch (result.verdict) {
       case 'YES':
-        return colors.positive;
+        return confirmedConfidenceColor(confidenceBucket(result.confidence));
       case 'NO':
-        return colors.negative;
+      case 'DENIED':
+        return SEMANTIC_COLORS.denied;
       case 'CONDITIONAL':
       case 'DELAYED':
         return colors.caution;
