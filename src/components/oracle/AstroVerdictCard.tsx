@@ -5,6 +5,7 @@ import Svg, { Circle, Line } from 'react-native-svg';
 
 import { useColors } from '@theme/ThemeProvider';
 import { useTypography } from '@theme/useTypography';
+import { SEMANTIC_COLORS, confidenceBucket, confirmedConfidenceColor } from '@theme/semanticColors';
 import type {
   AstroVerdictResult,
   HousePill,
@@ -223,16 +224,6 @@ function confidencePhrase(confidence: number): string {
   return 'The stars speak softly — listen closely';
 }
 
-function confidenceBucket(confidence: number): 'HIGH' | 'MEDIUM' | 'LOW' {
-  if (confidence >= 70) {
-    return 'HIGH';
-  }
-  if (confidence >= 40) {
-    return 'MEDIUM';
-  }
-  return 'LOW';
-}
-
 // ── CrescentGlow — the verdict reveal's crescent + radiating glow icon ────────
 // A small "casting the chart" flourish above the sacred-term pill, matching
 // the reference verdict card: a thin gold crescent under a burst of light.
@@ -397,17 +388,19 @@ const AstroVerdictCard: React.FC<AstroVerdictCardProps> = ({
     }
   }, [result.confidence, barContainerWidth, barAnim]);
 
+  // CONFIRMED / DENIED coloring is a fixed confidence signal (see
+  // theme/semanticColors.ts), not a theme token — this must render
+  // identically no matter which theme is active.
   const verdictColor: string = (() => {
     switch (result.verdict) {
       case 'YES':
-        return colors.positive;
+        return confirmedConfidenceColor(confidenceBucket(result.confidence));
       case 'NO':
-        return colors.negative;
+      case 'DENIED':
+        return SEMANTIC_COLORS.denied;
       case 'CONDITIONAL':
       case 'DELAYED':
         return colors.caution;
-      case 'DENIED':
-        return colors.textMuted;
       default:
         return colors.textMuted;
     }

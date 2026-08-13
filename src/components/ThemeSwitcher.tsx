@@ -20,6 +20,7 @@ const THEME_DOT_COLORS: Record<ThemeId, [string, string]> = {
   narAlHadid: ['#F09060', '#0C0806'],
   subhAlWahy: ['#C49020', '#F5EDD8'],
   zaytunAlHikma: ['#4A8840', '#EEF0E8'],
+  sirrAlBanafsaj: ['#A78BFA', '#0B0A14'],
 };
 
 export function ThemeSwitcher() {

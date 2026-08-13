@@ -13,6 +13,7 @@ import React, { useEffect, useRef } from 'react';
 import { View, Text, Animated, StyleSheet, Platform } from 'react-native';
 import { useColors } from '@theme/ThemeProvider';
 import { RADIUS, MOTION } from '@theme/themes';
+import { SEMANTIC_COLORS, confirmedConfidenceColor } from '@theme/semanticColors';
 
 export type PillVerdictKind =
   | 'YES'
@@ -58,11 +59,15 @@ export function VerdictPill({ verdict, confidence = 'HIGH', arabicLabel }: Props
   const c = useColors();
 
   const isFavorable = verdict === 'YES';
+  // CONFIRMED / DENIED coloring is a fixed confidence signal, not a theme
+  // token — it must render the same regardless of the active theme. See
+  // theme/semanticColors.ts. Only CONDITIONAL/DELAYED/UNCLEAR/PENDING fall
+  // back to the theme's own caution/muted hue.
   const accentColor =
     verdict === 'YES'
-      ? c.maqbool
+      ? confirmedConfidenceColor(confidence)
       : verdict === 'NO' || verdict === 'DENIED'
-        ? c.mardood
+        ? SEMANTIC_COLORS.denied
         : verdict === 'CONDITIONAL' || verdict === 'DELAYED'
           ? c.caution
           : c.textMuted;
