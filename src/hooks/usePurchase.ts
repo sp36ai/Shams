@@ -15,6 +15,9 @@ import {
 import { regionalFunctions } from '../firebase/functionsRegion';
 import { useQuotaStore } from '@stores/quotaStore';
 import type { PlanTier } from '@stores/quotaStore';
+import { createLogger } from '@utils/logger';
+
+const log = createLogger('usePurchase');
 
 type AndroidSubscriptionProduct = {
   subscriptionOfferDetails?: Array<{ offerToken: string; basePlanId: string }>;
@@ -103,7 +106,13 @@ export function usePurchase(): PurchaseState {
         })
         .catch(() => undefined);
     });
-    const errorSub = purchaseErrorListener((_e: PurchaseError) => undefined);
+    // Surfaces background billing failures (e.g. a renewal declined by the
+    // user's bank) that don't flow through the purchase()/restore() promises
+    // below. Previously silently dropped — logged so support can correlate
+    // reports with actual billing errors instead of guessing.
+    const errorSub = purchaseErrorListener((e: PurchaseError) => {
+      log.warn('background purchase error', { code: e.code, message: e.message });
+    });
 
     return () => {
       updateSub.remove();
