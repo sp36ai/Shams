@@ -37,6 +37,8 @@ import {
   type VerdictKind,
 } from '@stores/readingsStore';
 import StarfieldBackground from '@components/StarfieldBackground';
+import RkpWatchCard from '@components/oracle/RkpWatchCard';
+import RemedyProtocolCard from '@components/oracle/RemedyProtocolCard';
 
 /* -------------------------------------------------------------------------- */
 /*  Verdict types from the persisted verdictJson                              */
@@ -446,6 +448,23 @@ const ReadingDetailModal: React.FC<{
                 {narration}
               </Text>
             </View>
+          )}
+
+          {/* RKP Watch detail — the current engine. Reuses the same two cards
+              the chat renders, so a reading reads identically whether it is
+              opened fresh or months later from History. The KP blocks below
+              stay for readings taken before the engine changed; they are
+              already absent on watch readings, which carry no moonSubLord. */}
+          {reading.watch_oracle !== undefined && (
+            <>
+              <RkpWatchCard
+                window={reading.watch_oracle.window}
+                lagnaSignName={reading.watch_oracle.lagnaSignName}
+                lagnaRulerName={reading.watch_oracle.lagnaRulerName}
+                verdict={reading.watch_oracle.verdict}
+              />
+              <RemedyProtocolCard composition={reading.watch_oracle.composition} />
+            </>
           )}
 
           {/* Moon Sub-Lord + RPs */}
