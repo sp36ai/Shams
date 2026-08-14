@@ -108,19 +108,28 @@ jobs:
         run: |
           echo "Listing keystore entries. Nothing here fails the build;"
           echo "the Build step below is what actually verifies signing."
+          # Capture keytool's own exit status. Piping straight into grep would
+          # report grep's status instead, which is how run #76's real failure
+          # ("keytool could not list this keystore") was reduced to a single
+          # line with no cause attached.
+          set +e
           keytool -list -v -storetype PKCS12 \
             -keystore android/app/shams-upload-key.jks \
-            -storepass "${{ secrets.SHAMS_UPLOAD_STORE_PASSWORD }}" 2>&1 \
-            | grep -E 'Alias name:|Entry type:|Valid from:|SHA1:' \
-            > /tmp/keystore-entries.txt || true
-          cat /tmp/keystore-entries.txt || true
+            -storepass "${{ secrets.SHAMS_UPLOAD_STORE_PASSWORD }}" \
+            > /tmp/keytool-out.txt 2>&1
+          KEYTOOL_RC=$?
+          set -e
 
-          # Early warning only. `Failed to read key <alias> from store: null`
-          # at :app:signReleaseBundle means the alias or key password does not
-          # belong to this keystore -- surfaced here in seconds rather than
-          # after a five-minute build.
-          if [ -n "${WANT_ALIAS}" ] && ! grep -qiF "Alias name: ${WANT_ALIAS}" /tmp/keystore-entries.txt; then
-            echo "::warning::SHAMS_UPLOAD_KEY_ALIAS was not found among this keystore's aliases (listed above). If the build fails at signReleaseBundle, the keystore secret and the alias/key-password secrets are from different keystores."
+          if [ "${KEYTOOL_RC}" -ne 0 ]; then
+            # The keystore could not even be opened. Distinct from "opened but
+            # the alias is missing", and the two have different fixes.
+            echo "::warning::keytool could NOT open this keystore (exit ${KEYTOOL_RC}). Either the decoded keystore secret and SHAMS_UPLOAD_STORE_PASSWORD are from different keystores, or the decoded bytes are not a valid PKCS12. Expect :app:signReleaseBundle to fail. keytool said:"
+            sed -n '1,12p' /tmp/keytool-out.txt || true
+          else
+            grep -E 'Alias name:|Entry type:|Valid from:|SHA1:' /tmp/keytool-out.txt || true
+            if [ -n "${WANT_ALIAS}" ] && ! grep -qiF "Alias name: ${WANT_ALIAS}" /tmp/keytool-out.txt; then
+              echo "::warning::The keystore opened, but SHAMS_UPLOAD_KEY_ALIAS is not among its aliases (listed above). Expect :app:signReleaseBundle to fail with 'Failed to read key <alias> from store'."
+            fi
           fi
 
       - name: Cache Gradle
