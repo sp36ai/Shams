@@ -122,7 +122,42 @@ Required secrets for CI/CD:
 
 Project: `shams-app-4d0e7` · Package: `com.astrosarfaraz.shamsalasrar` · Region: `asia-south1`
 
-### 8a. Generate the upload keystore (step 7)
+### 8a. Upload keystore (step 7) — you already have one
+
+> ## ⛔ Do NOT generate a new upload key for this app.
+>
+> This app has already been built and uploaded to Play by the release
+> workflow — runs #61–#74 completed successfully, including the
+> "Deploy to Play Store" step, and the `Decode keystore` step still
+> succeeds today. **The keystore and its four secrets already exist in
+> GitHub Secrets.**
+>
+> Signing a new bundle with a *different* key makes Play reject the upload
+> outright: *"Your Android App Bundle is signed with the wrong key."*
+> Recovering from that requires a Play App Signing upload-key reset, which
+> Google must approve and which takes days.
+>
+> There is nothing to do in this section unless a secret is actually
+> missing. It is not.
+
+**The one thing worth doing:** make sure the original `.jks` file is backed up
+somewhere outside GitHub Secrets. A GitHub secret is write-only — you cannot
+read it back out. If the local copy is lost, the value in CI keeps working but
+you can never move it to another CI system or sign locally again.
+
+Recover the SHA-1 (needed for step 1's API key restriction and for Google
+Sign-In) from your local copy, or from **Play Console → Release → Setup → App
+signing**, which lists both the app-signing and upload-key fingerprints without
+needing the file:
+
+```bash
+keytool -list -v -storetype PKCS12 -keystore shams-upload-key.jks | grep -A1 'Alias name:'
+```
+
+---
+
+<details>
+<summary>Only if you are starting a brand-new listing with no prior upload (not this app)</summary>
 
 `android/app/build.gradle` declares `storeType "PKCS12"`. **PKCS12 does not support a
 key password that differs from the store password** — use the same value for both
@@ -134,29 +169,16 @@ keytool -genkeypair -v \
   -keystore shams-upload-key.jks \
   -alias shams-upload \
   -keyalg RSA -keysize 4096 -validity 10000
-```
 
-Store it somewhere durable and backed up. **If this file is lost you can no longer
-ship updates to the same Play listing** (recoverable only via Play App Signing key
-reset, which Google must approve).
-
-Then set the GitHub secrets (`gh auth login` first):
-
-```bash
 # Linux. On macOS use: base64 -i shams-upload-key.jks
 base64 -w0 shams-upload-key.jks | gh secret set SHAMS_UPLOAD_KEYSTORE
-
 gh secret set SHAMS_UPLOAD_STORE_PASSWORD   # same value ...
 gh secret set SHAMS_UPLOAD_KEY_PASSWORD     # ... as this one
-gh secret set SHAMS_UPLOAD_KEY_ALIAS        # "shams-upload" if you used the command above
+gh secret set SHAMS_UPLOAD_KEY_ALIAS
 gh secret set GOOGLE_PLAY_SERVICE_ACCOUNT_JSON < play-service-account.json
 ```
 
-Record the SHA-1 — step 1 (API key restriction) and Google Sign-In both need it:
-
-```bash
-keytool -list -v -storetype PKCS12 -keystore shams-upload-key.jks -alias shams-upload | grep SHA1
-```
+</details>
 
 ### 8b. Create the GCP Secret Manager secrets (steps 3 and 5)
 
