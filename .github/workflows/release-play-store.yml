@@ -62,17 +62,26 @@ jobs:
           echo "${{ secrets.GOOGLE_SERVICES_JSON }}" | base64 -di > android/app/google-services.json
 
       - name: Decode keystore
-        # Accepts either secret name: SHAMS_UPLOAD_KEYSTORE (matches the other
-        # three SHAMS_UPLOAD_* secrets and MANUAL_ACTIONS_REQUIRED.md) or the
-        # older BASE64_KEYSTORE. Setting either one works, so following the
-        # docs no longer produces an empty keystore and a confusing Gradle
-        # failure several minutes into the build.
+        # PRECEDENCE IS LOAD-BEARING — BASE64_KEYSTORE must win.
+        #
+        # Runs #61-#74 signed and shipped successfully reading BASE64_KEYSTORE.
+        # A previous revision reordered this to prefer SHAMS_UPLOAD_KEYSTORE,
+        # on the assumption that only one of the two secrets was ever set. If
+        # both are set and they hold different keystores, that reordering
+        # silently swaps which key signs the bundle: the store opens (so the
+        # keystore looks fine) but Gradle then fails at :app:signReleaseBundle
+        # with `Failed to read key <alias> from store: null`, because the alias
+        # and key password belong to the other keystore. That is what broke
+        # run #76.
+        #
+        # Keep the proven secret first. SHAMS_UPLOAD_KEYSTORE remains accepted
+        # so a fresh setup that only sets that name still works.
         env:
-          KEYSTORE_B64: ${{ secrets.SHAMS_UPLOAD_KEYSTORE || secrets.BASE64_KEYSTORE }}
+          KEYSTORE_B64: ${{ secrets.BASE64_KEYSTORE || secrets.SHAMS_UPLOAD_KEYSTORE }}
         run: |
           set -euo pipefail
           if [ -z "${KEYSTORE_B64}" ]; then
-            echo "::error::No upload keystore secret set. Add the base64-encoded .jks as SHAMS_UPLOAD_KEYSTORE (preferred) or BASE64_KEYSTORE."
+            echo "::error::No upload keystore secret set. Add the base64-encoded .jks as BASE64_KEYSTORE (what this project already uses) or SHAMS_UPLOAD_KEYSTORE."
             exit 1
           fi
           printf '%s' "${KEYSTORE_B64}" | base64 -di > android/app/shams-upload-key.jks
@@ -94,14 +103,25 @@ jobs:
         # The failure actually worth gating on — a missing or undecodable
         # keystore secret — is handled in the Decode step above.
         continue-on-error: true
+        env:
+          WANT_ALIAS: ${{ secrets.SHAMS_UPLOAD_KEY_ALIAS }}
         run: |
-          echo "Listing keystore entries. A failure here is informational;"
+          echo "Listing keystore entries. Nothing here fails the build;"
           echo "the Build step below is what actually verifies signing."
           keytool -list -v -storetype PKCS12 \
             -keystore android/app/shams-upload-key.jks \
             -storepass "${{ secrets.SHAMS_UPLOAD_STORE_PASSWORD }}" 2>&1 \
             | grep -E 'Alias name:|Entry type:|Valid from:|SHA1:' \
-            || echo "keytool could not list this keystore — continuing anyway."
+            > /tmp/keystore-entries.txt || true
+          cat /tmp/keystore-entries.txt || true
+
+          # Early warning only. `Failed to read key <alias> from store: null`
+          # at :app:signReleaseBundle means the alias or key password does not
+          # belong to this keystore -- surfaced here in seconds rather than
+          # after a five-minute build.
+          if [ -n "${WANT_ALIAS}" ] && ! grep -qiF "Alias name: ${WANT_ALIAS}" /tmp/keystore-entries.txt; then
+            echo "::warning::SHAMS_UPLOAD_KEY_ALIAS was not found among this keystore's aliases (listed above). If the build fails at signReleaseBundle, the keystore secret and the alias/key-password secrets are from different keystores."
+          fi
 
       - name: Cache Gradle
         uses: actions/cache@v4
