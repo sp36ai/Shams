@@ -42,13 +42,12 @@ import { useQuota } from '@hooks/useQuota';
 import { useTimingStrip } from '@hooks/useTimingStrip';
 import { classifyIntent } from '@hooks/useIntentClassifier';
 import { classifyQuestion } from '@hooks/useQuestionGate';
-import { askOracle as callOracleFunction } from '../firebase/oracle';
 import { askWatchOracle } from '../firebase/watchOracle';
+import type { WatchState } from '@astrology/rkp/watchJudgment';
 import StarfieldBackground from '@components/StarfieldBackground';
 import { displayLonSidereal, PLANET_GLYPHS } from '@utils/siderealPositions';
 import { getSignLordByLongitude } from '@astrology/primitives/rulingPlanets';
 import AstroVerdictCard from '../components/oracle/AstroVerdictCard';
-import WatchVerdictCard from '../components/oracle/WatchVerdictCard';
 import RkpWatchCard from '../components/oracle/RkpWatchCard';
 import RemedyProtocolCard from '../components/oracle/RemedyProtocolCard';
 import CastingAstrolabe from '../components/oracle/CastingAstrolabe';
@@ -489,69 +488,94 @@ function formatHiddenScroll(
 
 // ── Engine ────────────────────────────────────────────────────────────────────
 
+/**
+ * WatchState → the sacred-term verdict vocabulary the rest of the app already
+ * speaks (History filters, badges, remedy context). The watch engine's own
+ * `state` is authoritative; this is a display projection, not a re-judgment.
+ */
+const WATCH_STATE_TO_VERDICT: Readonly<Record<WatchState, Reading['verdict']>> = Object.freeze({
+  FULFILLED: 'YES',
+  MOVING: 'YES',
+  DELAYED: 'DELAYED',
+  BLOCKED: 'NO',
+  REVERSING: 'CONDITIONAL',
+  UNFORMED: 'UNCLEAR',
+});
+
+/**
+ * The watch engine reports confidence as a band. Several call sites downstream
+ * (remedy severity, the confidence bar) expect a 0–100 number, so the band is
+ * projected onto one. Midpoints, not boundaries — this is for display and
+ * bucketing only and never feeds back into judgment.
+ */
+const WATCH_CONFIDENCE_TO_NUMBER: Readonly<Record<string, number>> = Object.freeze({
+  VERY_HIGH: 90,
+  HIGH: 75,
+  MODERATE: 55,
+  LOW: 35,
+  UNCERTAIN: 15,
+});
+
+/**
+ * runEngine — RKP Watch is the engine.
+ *
+ * The KP horary path (askOracle) was retired here: it required a location the
+ * watch frame does not need, it produced the verdict while the watch reading
+ * was demoted to an optional attachment, and because both callables claim a
+ * quota slot, running the pair charged the querent twice for one question.
+ *
+ * The engine still runs server-side only — no algorithm code ships in the APK.
+ */
 async function runEngine(args: {
   question: string;
   questionLang: 'en' | 'ur' | 'hi';
-  lat: number | null;
-  lon: number | null;
-  locationRequiredText: string;
   seekerProfile?: 'clarity' | 'comfort' | 'action' | 'surrender';
-  seekerName?: string;
-  motherName?: string;
 }): Promise<Reading> {
-  const now = new Date().toISOString();
+  const { reading: watch } = await askWatchOracle({
+    question: args.question,
+    questionLang: args.questionLang,
+    seekerProfile: args.seekerProfile,
+  });
 
-  if (args.lat === null || args.lon === null) {
-    return {
-      id: `r_${now}`,
-      question: args.question,
-      questionLang: args.questionLang,
-      category: 'general',
-      verdict: 'UNCLEAR',
-      createdAt: now,
-      chartJson: { phase: 'no-location', moment: now },
-      verdictJson: {
-        verdict: 'UNCLEAR',
-        confidence: 0,
-        reasoning: [],
-        narration: {
-          en: args.locationRequiredText,
-          ur: args.locationRequiredText,
-          hi: args.locationRequiredText,
-        },
-      },
-    };
-  }
+  const narration = watch.oracle?.narration ?? null;
+  const prose = narration
+    ? [narration.rkp_finding, narration.interpretation, narration.recommended_approach]
+        .filter(s => s.length > 0)
+        .join('\n\n')
+    : '';
 
-  // Engine runs server-side only — zero algorithm code in the APK.
-  // Call both astronomical oracle and watch oracle in parallel.
-  const [astroResult, watchResult] = await Promise.all([
-    callOracleFunction({
-      question: args.question,
-      questionLang: args.questionLang,
-      lat: args.lat,
-      lon: args.lon,
-      seekerProfile: args.seekerProfile,
-      seekerName: args.seekerName,
-      motherName: args.motherName,
-    }),
-    askWatchOracle({
-      question: args.question,
-      questionLang: args.questionLang,
-      seekerProfile: args.seekerProfile,
-    }).catch(() => null), // Watch oracle failures are degraded, not fatal
-  ]);
+  const confidence = WATCH_CONFIDENCE_TO_NUMBER[watch.verdict.confidence] ?? 50;
 
-  const reading = astroResult.reading;
+  const reading: Reading = {
+    id: watch.readingId,
+    question: args.question,
+    questionLang: args.questionLang,
+    category: 'general',
+    verdict: WATCH_STATE_TO_VERDICT[watch.verdict.state],
+    createdAt: watch.computedAt,
+    chartJson: {
+      engine: 'rkpWatch',
+      localMoment: watch.localMoment,
+      window: watch.window,
+      lagnaSignName: watch.lagnaSignName,
+      lagnaRulerName: watch.lagnaRulerName,
+    },
+    verdictJson: {
+      engine: 'rkpWatch',
+      state: watch.verdict.state,
+      confidence,
+      confidenceBand: watch.verdict.confidence,
+      narration: { en: prose, ur: prose, hi: prose },
+    },
+  };
 
-  // Attach watch oracle composition if it succeeded
-  if (watchResult !== null && watchResult.reading.oracle) {
+  if (watch.oracle) {
     reading.watch_oracle = {
-      verdict: watchResult.reading.verdict,
-      composition: watchResult.reading.oracle,
-      window: watchResult.reading.window,
-      lagnaSignName: watchResult.reading.lagnaSignName,
-      lagnaRulerName: watchResult.reading.lagnaRulerName,
+      verdict: watch.verdict,
+      composition: watch.oracle,
+      window: watch.window,
+      lagnaSignName: watch.lagnaSignName,
+      lagnaRulerName: watch.lagnaRulerName,
     };
   }
 
@@ -786,39 +810,27 @@ const OracleChatScreen: React.FC = () => {
 
       const now = new Date().toISOString();
 
-      // ── Resolve coordinates — BEFORE consumeOne so quota is never burned ────
-      // If no stored location, attempt a live GPS fix (covers first launch / DEV builds
-      // that bypass LocationPermissionScreen). We work with explicit lat/lon variables
-      // so the closure doesn't need to re-read the store after the async fix.
-      let resolvedLat: number | null = lastLocation?.lat ?? null;
-      let resolvedLon: number | null = lastLocation?.lon ?? null;
-
-      if (resolvedLat === null || resolvedLon === null) {
-        // Precise fix first, then coarse/network fallback (resolves indoors
-        // where high-accuracy GPS times out) so a granted user is not stuck.
+      // ── Opportunistic location — NEVER blocks a reading ────────────────────
+      // The RKP Watch frame is location-invariant: the 5-minute bracket and the
+      // planetary positions it judges are the same wherever the querent stands,
+      // which is what lets a reading run the moment the app opens. Only the
+      // ambient surfaces (hora strip, sky clock, and the location label on the
+      // scroll) want coordinates.
+      //
+      // This used to be a hard gate that returned "location required" and threw
+      // the question away. That dead-end belonged to the retired KP engine,
+      // which needed cusps and therefore a place. Keep the fix attempt, drop
+      // the block.
+      if (lastLocation?.lat === undefined || lastLocation?.lon === undefined) {
         const liveCoords = await acquireLocation();
-
-        if (liveCoords === null) {
-          const userMsg: ChatMessage = { id: `u_${now}`, sender: 'user', text, createdAt: now };
-          const locationMsg: ChatMessage = {
-            id: `s_noloc_${now}`,
-            sender: 'shams',
-            text: t('errors.locationRequired'),
-            createdAt: now,
-          };
-          setMessages(prev => [locationMsg, userMsg, ...prev]);
-          return;
+        if (liveCoords !== null) {
+          useSettingsStore.getState().setLastLocation({
+            lat: liveCoords.lat,
+            lon: liveCoords.lon,
+            label: null,
+            capturedAt: Date.now(),
+          });
         }
-
-        resolvedLat = liveCoords.lat;
-        resolvedLon = liveCoords.lon;
-        // Persist for subsequent questions — stable store action, safe outside deps array
-        useSettingsStore.getState().setLastLocation({
-          lat: resolvedLat,
-          lon: resolvedLon,
-          label: null,
-          capturedAt: Date.now(),
-        });
       }
 
       if (!consumeOne()) {
@@ -875,12 +887,7 @@ const OracleChatScreen: React.FC = () => {
         const reading = await runEngine({
           question: text,
           questionLang: lang,
-          lat: resolvedLat, // guaranteed non-null by the gate above
-          lon: resolvedLon,
-          locationRequiredText: t('errors.locationRequired'),
           seekerProfile: seekerProfile ?? undefined,
-          seekerName: seekerName ?? undefined,
-          motherName: motherName ?? undefined,
         });
 
         await addReading(reading);
@@ -1429,7 +1436,6 @@ const Bubble: React.FC<{
   const t = useTranslation();
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const isUser = message.sender === 'user';
-  const [showWatch, setShowWatch] = useState(false);
 
   const accentColor = isUser ? colors.chatUserBorder : colors.chatShamsBorder;
   const bubbleBg = isUser ? colors.chatUserBg : colors.chatShamsBg;
@@ -1588,29 +1594,25 @@ const Bubble: React.FC<{
         {renderText(message.text)}
         {message.reading !== undefined && (
           <>
-            {/* Show RKP watch oracle when available */}
-            {message.reading.watch_oracle && showWatch ? (
+            {/* RKP Watch is the engine, so its card is the reading.
+                AstroVerdictCard is retained ONLY to render KP readings taken
+                before the engine changed — those are already in History and in
+                MMKV, and must not become unreadable. New readings always carry
+                watch_oracle and never reach that branch. */}
+            {message.reading.watch_oracle ? (
               <View>
                 <RkpWatchCard
                   window={message.reading.watch_oracle.window}
                   lagnaSignName={message.reading.watch_oracle.lagnaSignName}
                   lagnaRulerName={message.reading.watch_oracle.lagnaRulerName}
                   verdict={message.reading.watch_oracle.verdict}
-                  onSwitchMode={() => setShowWatch(false)}
                 />
                 <RemedyProtocolCard composition={message.reading.watch_oracle.composition} />
               </View>
-            ) : showWatch ? (
-              // Fallback to old WatchVerdictCard for readings without oracle composition
-              <WatchVerdictCard
-                result={readingToAstroResult(message.reading)}
-                onSwitchMode={() => setShowWatch(false)}
-              />
             ) : (
-              // Show astronomical verdict
+              // Legacy KP reading (pre-engine-change). Read-only history.
               <AstroVerdictCard
                 result={readingToAstroResult(message.reading)}
-                onSwitchMode={() => setShowWatch(true)}
                 selectedRemedies={
                   message.reading.id === currentReadingId ? selectedRemedies : undefined
                 }
