@@ -9,6 +9,8 @@ import { useQuotaStore } from '@stores/quotaStore';
 import { usePurchase, type PurchasePlan } from '@hooks/usePurchase';
 import type { RootStackParamList } from '@navigation/types';
 import StarfieldBackground from '@components/StarfieldBackground';
+import PremiumSurface from '@components/premium/PremiumSurface';
+import SealMedallion from '@components/premium/SealMedallion';
 
 const KHASS_GOLD = '#B8952A';
 
@@ -197,23 +199,16 @@ const PremiumScreen: React.FC = () => {
             const priceLabel = currentBilling === 'monthly' ? plan.monthlyPrice : plan.annualPrice;
 
             return (
-              <Pressable
+              <PremiumSurface
                 key={plan.key}
                 onPress={() => setSelectedPlan(plan.key)}
-                style={[
-                  styles.card,
-                  isKhass && styles.cardKhass,
-                  {
-                    backgroundColor: isKhass ? colors.surfaceElevated : colors.surface,
-                    borderColor,
-                    borderWidth,
-                    shadowColor: isKhass ? KHASS_GOLD : colors.border,
-                    shadowOpacity: isKhass ? 0.45 : 0.1,
-                    shadowRadius: isKhass ? 14 : 4,
-                    shadowOffset: { width: 0, height: isKhass ? 6 : 2 },
-                    elevation: isKhass ? 8 : 1,
-                  },
-                ]}
+                variant={isKhass ? 'hero' : 'plaque'}
+                pulsing={isKhass && isSelected}
+                radius={22}
+                accentColor={isKhass ? KHASS_GOLD : colors.borderAccent}
+                backgroundColor={isKhass ? colors.surfaceElevated : colors.surface}
+                brackets={isKhass}
+                style={[styles.card, isKhass && styles.cardKhass, { borderColor, borderWidth }]}
                 accessibilityRole="button"
                 accessibilityLabel={`Select ${plan.title} plan`}
               >
@@ -330,29 +325,30 @@ const PremiumScreen: React.FC = () => {
                     ]}
                   />
                 )}
-              </Pressable>
+              </PremiumSurface>
             );
           })}
         </View>
 
         {/* CTA */}
-        <Pressable
+        <PremiumSurface
           onPress={handleCta}
           disabled={purchasing}
-          style={({ pressed }) => [
-            styles.cta,
-            {
-              backgroundColor: selectedPlan === 'khass' ? KHASS_GOLD : colors.primary,
-              opacity: pressed || purchasing ? 0.8 : 1,
-            },
-          ]}
+          variant="hero"
+          radius={16}
+          accentColor={selectedPlan === 'khass' ? KHASS_GOLD : colors.primary}
+          backgroundColor={selectedPlan === 'khass' ? KHASS_GOLD : colors.primary}
+          style={styles.cta}
           accessibilityRole="button"
           accessibilityLabel={ctaLabel}
         >
+          <SealMedallion size={28} ringStyle="plain" accentColor={colors.textOnPrimary}>
+            <Text style={{ fontSize: 13, color: colors.textOnPrimary }}>{'✦'}</Text>
+          </SealMedallion>
           <Text style={[typography('button'), { color: colors.textOnPrimary }]}>
             {purchasing ? 'Processing…' : ctaLabel}
           </Text>
-        </Pressable>
+        </PremiumSurface>
 
         {/* Restore */}
         <Pressable onPress={handleRestore} style={styles.restoreBtn} hitSlop={8}>
@@ -401,15 +397,8 @@ const styles = StyleSheet.create({
   },
   card: {
     flex: 1,
-    borderRadius: 22,
     padding: 18,
     gap: 0,
-    overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOpacity: 0.08,
-    shadowRadius: 16,
-    shadowOffset: { width: 0, height: 8 },
-    elevation: 3,
   },
   cardKhass: {
     paddingTop: 24,
@@ -450,14 +439,11 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
   cta: {
+    flexDirection: 'row',
     paddingVertical: 16,
-    borderRadius: 16,
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOpacity: 0.12,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 6 },
-    elevation: 3,
+    justifyContent: 'center',
+    gap: 10,
   },
   restoreBtn: {
     paddingVertical: 8,
