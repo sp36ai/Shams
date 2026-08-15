@@ -16,15 +16,22 @@ scoped to package `com.astrosarfaraz.shamsalasrar` with 3 SHA-1 fingerprints
 registered (debug/upload/release), API restrictions scoped to ~25 named
 Firebase/GCP APIs. Restriction is in place — this item is done.
 
-**Follow-up worth doing:** this key's literal value sat in plaintext in this file
-in git history since commit `3884e1d`, and a fresh `google-services.json` download
-on 2026-08-15 confirmed it is still the *current* key — i.e. it was never actually
-rotated (a separate "Browser key" was rotated instead; the two are independent).
-Restriction is Google's real mitigation for a client-embedded key like this one,
-so this isn't an active exposure, but consider rotating it in GCP Console anyway
-now that it's been sitting in tracked docs — remember a rotation invalidates the
-key in every already-shipped build until you redeploy with the refreshed
-`google-services.json`.
+**Rotation — DONE (2026-08-15).** This key's literal value had sat in plaintext in
+this file in git history since commit `3884e1d` (still recoverable there — a
+history rewrite was considered and deliberately skipped in favor of rotation,
+since restriction was already covering the practical risk and a rewrite would've
+force-pushed over shared history with no guarantee of full removal anyway).
+Rotated in GCP Console via "Rotate key"; restrictions (package + all 3 SHA-1s +
+API scope) carried over automatically onto the new key, as GCP's rotation flow
+does. Confirmed shipped via `release-play-store.yml` run #79 (2026-08-15,
+`internal` track, all steps green) — the new key is what's embedded in the
+current build.
+
+GCP's rotation is two-step (create new + separately delete old); the *previous*
+key ("New Browser key", created 2026-05-02) is still active and not yet deleted.
+Leave it active until the new key has rolled out to **every** track this app
+ships to, not just `internal` — deleting it early breaks Firebase calls on any
+already-installed copy that hasn't picked up the new `google-services.json` yet.
 
 **Steps (if restriction is ever lost, e.g. after a rotation):**
 
@@ -260,4 +267,4 @@ model id that was serving canned fallback text. Confirm on a real device from th
 
 ---
 
-_Last updated: 2026-08-15_
+_Last updated: 2026-08-15 (key rotation completed and shipped)_
