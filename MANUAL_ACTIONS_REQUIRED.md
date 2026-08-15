@@ -5,11 +5,28 @@ Revisit this file before every production release.
 
 ---
 
-## 1. Google Cloud Console — Restrict Firebase API Key
+## 1. Google Cloud Console — Restrict Firebase API Key ✅ CONFIRMED (2026-08-15)
 
-**Key:** `AIzaSyB-c1iC5716lyvonB8N6wGyI4SRgaPCH5U`
+**Key:** the Android app's auto-created Firebase key (see `google-services.json` →
+`client[].api_key[].current_key` — do not paste the literal value into this file;
+a prior revision of this doc did, which is how it ended up committed to git history).
 
-**Steps:**
+**Verified in GCP Console (2026-08-15):** Application restrictions = Android apps,
+scoped to package `com.astrosarfaraz.shamsalasrar` with 3 SHA-1 fingerprints
+registered (debug/upload/release), API restrictions scoped to ~25 named
+Firebase/GCP APIs. Restriction is in place — this item is done.
+
+**Follow-up worth doing:** this key's literal value sat in plaintext in this file
+in git history since commit `3884e1d`, and a fresh `google-services.json` download
+on 2026-08-15 confirmed it is still the *current* key — i.e. it was never actually
+rotated (a separate "Browser key" was rotated instead; the two are independent).
+Restriction is Google's real mitigation for a client-embedded key like this one,
+so this isn't an active exposure, but consider rotating it in GCP Console anyway
+now that it's been sitting in tracked docs — remember a rotation invalidates the
+key in every already-shipped build until you redeploy with the refreshed
+`google-services.json`.
+
+**Steps (if restriction is ever lost, e.g. after a rotation):**
 
 1. Go to https://console.cloud.google.com → APIs & Services → Credentials
 2. Click the key → Application restrictions → Android apps
@@ -243,4 +260,4 @@ model id that was serving canned fallback text. Confirm on a real device from th
 
 ---
 
-_Last updated: 2026-08-13_
+_Last updated: 2026-08-15_
