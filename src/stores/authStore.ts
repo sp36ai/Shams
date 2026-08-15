@@ -16,6 +16,7 @@
  */
 
 import { create } from 'zustand';
+import crashlytics from '@react-native-firebase/crashlytics';
 import auth from '@react-native-firebase/auth';
 import type { FirebaseAuthTypes } from '@react-native-firebase/auth';
 import {
@@ -209,6 +210,13 @@ export const useAuthStore = create<AuthState>(set => ({
         storage.set(KEYS.AUTH_FAILED_ATTEMPTS, attempts);
       }
       const msg = err instanceof Error ? err.message : 'Sign in failed';
+      // AuthScreen's normaliseAuthError() deliberately discards this raw
+      // message in production ([auth/<code>] ...) once none of its known
+      // substrings match, showing only a generic "unexpected error" — which
+      // means an unrecognized/new Firebase Auth error code would otherwise
+      // vanish with no record anywhere. Crashlytics is the only place it
+      // survives to be diagnosed from.
+      crashlytics().recordError(err instanceof Error ? err : new Error(msg));
       set({ isLoading: false, error: msg, lockoutUntil: nextLockout });
       return err instanceof Error ? err : new Error(msg);
     }
@@ -231,6 +239,7 @@ export const useAuthStore = create<AuthState>(set => ({
       return null;
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Sign up failed';
+      crashlytics().recordError(err instanceof Error ? err : new Error(msg));
       set({ isLoading: false, error: msg });
       return err instanceof Error ? err : new Error(msg);
     }
@@ -256,6 +265,7 @@ export const useAuthStore = create<AuthState>(set => ({
         return null;
       }
       const msg = err instanceof Error ? err.message : 'Google sign-in failed';
+      crashlytics().recordError(err instanceof Error ? err : new Error(msg));
       set({ isLoading: false, error: msg });
       return err instanceof Error ? err : new Error(msg);
     }
