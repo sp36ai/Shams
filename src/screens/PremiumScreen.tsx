@@ -379,7 +379,16 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 4 },
     elevation: 2,
   },
-  backBtn: { width: 40 },
+  // Sized as a real touch target (was `{ width: 40 }` with no height, sitting
+  // in a `flex-start` row — the tappable area collapsed to the `←` glyph's
+  // own text line pinned to the header's top edge, well under the ~44pt
+  // minimum, so taps at a natural finger position on the icon often missed.
+  backBtn: {
+    width: 40,
+    minHeight: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   headerTextWrap: { flex: 1, paddingHorizontal: 8 },
   scroll: {
     padding: 16,
