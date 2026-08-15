@@ -3,6 +3,19 @@ name: Release to Play Store
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
 
+# Google Play's Edits API allows exactly one open edit per app at a time,
+# across every track. Merging several PRs in quick succession — each one
+# independently matching the push trigger below — used to fire that many
+# concurrent runs, and every run after the first to reach the upload step
+# got "This edit has expired, please create a new Edit." from
+# r0adkll/upload-google-play: a real, silent release failure, not a flake.
+# Queue instead of racing: don't cancel a run mid-upload (that could leave
+# Play Console with a half-finished edit), just make the next one wait for
+# the current one to fully commit its edit before starting.
+concurrency:
+  group: release-play-store
+  cancel-in-progress: false
+
 on:
   push:
     branches: [main]
