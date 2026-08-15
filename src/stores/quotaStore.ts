@@ -106,6 +106,15 @@ export interface QuotaState {
   canAsk: () => boolean;
   /** Record one question asked. Returns false if quota is already exhausted. */
   consumeOne: () => boolean;
+  /**
+   * Give back a question consumeOne() charged for an attempt that never
+   * produced a reading (the engine call threw). This counter is local to
+   * the device and entirely separate from the server's Firestore ledger —
+   * refunding one does not touch the other, and vice versa. Without this,
+   * every failed attempt permanently ate into the day's quota as displayed
+   * here, even once the server itself started refunding its own copy.
+   */
+  refundOne: () => void;
   /** Upgrade plan (called after successful purchase). Optional expiry is the ISO string from server. */
   setPlan: (plan: PlanTier, expiry?: string) => void;
   /** Start the 7-day trial (no-op if already started). */
@@ -162,6 +171,16 @@ export const useQuotaStore = create<QuotaState>((set, get) => ({
     storage.set(KEYS.QUOTA_WEEK, todayKey());
     set({ questionsToday: next });
     return true;
+  },
+
+  refundOne(): void {
+    const { questionsToday } = get();
+    if (questionsToday <= 0) {
+      return;
+    }
+    const next = questionsToday - 1;
+    storage.set(KEYS.QUOTA_COUNT, next);
+    set({ questionsToday: next });
   },
 
   setPlan(plan: PlanTier, expiry?: string): void {
