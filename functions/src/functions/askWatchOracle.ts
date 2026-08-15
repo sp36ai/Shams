@@ -42,6 +42,7 @@
  */
 
 import { onCall } from 'firebase-functions/v2/https';
+import type { DocumentReference } from 'firebase-admin/firestore';
 import { db } from '../utils/admin';
 import { verifyAuth } from '../middleware/auth';
 import { enforceRateLimit } from '../middleware/rateLimit';
@@ -51,7 +52,7 @@ import { logger, hashText } from '../utils/logger';
 import { localIsoFromOffset } from '../utils/localTime';
 import { toBoundaryPlanetName } from '../utils/planetBoundaryName';
 import { ORACLE_FUNCTION_OPTS, ANTHROPIC_API_KEY } from '../config';
-import { claimQuotaSlot } from './askOracle';
+import { claimQuotaSlot, refundQuotaSlot } from './askOracle';
 import type { AuditLogDoc, ReadingDoc } from '../types';
 import type { VerdictKind } from '../engine/types/verdict';
 
@@ -157,73 +158,111 @@ export const askWatchOracle = onCall(
       // Costs the same as an astronomical reading — same helper, same ledger.
       const { plan, remaining } = await claimQuotaSlot(userId);
 
-      // Instant is ours; only the zone comes from the caller.
-      const instant = new Date();
-      const localMoment = localIsoFromOffset(instant, input.utcOffsetMinutes);
-
-      const chart = buildWatchChart(localMoment);
-      const qType = classifyQuestion(input.question);
-      const verdict = judgeWatchChart(chart, qType);
-
-      // Shadow-node boundary mapping — obstruction/targetRuler/lagnaRuler are
-      // the only raw Planet identifiers left in the verdict; everything else
-      // (targetRulerName etc.) already went through nomenclature.ts. Done once
-      // here so the diagnosis names the obstructing agent exactly as the client
-      // will display it.
-      const publicVerdict: PublicWatchVerdict = {
-        ...verdict,
-        obstruction: toBoundaryPlanetName(verdict.obstruction),
-        targetRuler: toBoundaryPlanetName(verdict.targetRuler),
-        lagnaRuler: toBoundaryPlanetName(verdict.lagnaRuler),
-      };
-
-      // ── Diagnosis → remedy protocol → narration ──────────────────────────
+      // Everything below spends the slot just claimed. If any of it throws —
+      // a chart/judgment edge case, a Firestore write failure — the querent
+      // must not lose one of their daily questions for a reading that never
+      // happened. refundQuotaSlot() gives the slot back before the error
+      // propagates to the client.
+      let instant: Date;
+      let localMoment: string;
+      let chart: ReturnType<typeof buildWatchChart>;
+      let qType: ReturnType<typeof classifyQuestion>;
+      let verdict: WatchVerdict;
+      let publicVerdict: PublicWatchVerdict;
       let oracleResponse: WatchOracleComposition | null = null;
+      let readingRef: DocumentReference;
+
       try {
-        oracleResponse = await composeWatchOracleResponse({
-          verdict: publicVerdict,
-          seekerName: input.seekerName,
-          motherName: input.motherName,
+        // Instant is ours; only the zone comes from the caller.
+        instant = new Date();
+        localMoment = localIsoFromOffset(instant, input.utcOffsetMinutes);
+
+        chart = buildWatchChart(localMoment);
+        qType = classifyQuestion(input.question);
+        verdict = judgeWatchChart(chart, qType);
+
+        // Shadow-node boundary mapping — obstruction/targetRuler/lagnaRuler are
+        // the only raw Planet identifiers left in the verdict; everything else
+        // (targetRulerName etc.) already went through nomenclature.ts. Done once
+        // here so the diagnosis names the obstructing agent exactly as the client
+        // will display it.
+        publicVerdict = {
+          ...verdict,
+          obstruction: toBoundaryPlanetName(verdict.obstruction),
+          targetRuler: toBoundaryPlanetName(verdict.targetRuler),
+          lagnaRuler: toBoundaryPlanetName(verdict.lagnaRuler),
+        };
+
+        // ── Diagnosis → remedy protocol → narration ──────────────────────────
+        try {
+          oracleResponse = await composeWatchOracleResponse({
+            verdict: publicVerdict,
+            seekerName: input.seekerName,
+            motherName: input.motherName,
+          });
+        } catch (err) {
+          logger.warn('askWatchOracle: oracle composition failed', {
+            err: String(err),
+            userId,
+          });
+          // Non-fatal: the reading still stands on its verdict.
+          oracleResponse = null;
+        }
+
+        readingRef = db.collection('readings').doc();
+        const narration = oracleResponse?.narration?.interpretation || verdict.factors.join(' ');
+        const readingDoc: Omit<ReadingDoc, 'createdAt'> = {
+          userId,
+          question: input.question,
+          questionLang: input.questionLang,
+          category: qType,
+          verdict: STATE_TO_VERDICT[verdict.state],
+          confidence: CONFIDENCE_NUMERIC[verdict.confidence],
+          narration: {
+            en: narration,
+            ur: narration,
+            hi: narration,
+          },
+          reasoning: verdict.factors.map((description, i) => ({
+            ruleId: `rkp.watch.${i + 1}`,
+            description,
+            weight: 1,
+          })),
+          // Kept null: ReadingDoc.remedy carries the astronomical path's shape
+          // (planet/action/avoid), which does not describe an RKP protocol. The
+          // watch protocol is persisted in full under `watchOracle` instead.
+          remedy: null,
+          ...(oracleResponse ? { watchOracle: oracleResponse } : {}),
+        };
+
+        await readingRef.set({
+          ...readingDoc,
+          createdAt: new Date(),
         });
       } catch (err) {
-        logger.warn('askWatchOracle: oracle composition failed', {
+        // The one explicit log line for this failure category. Firestore
+        // errors and non-fatal oracle-composition failures are already
+        // logged at their own catch sites above; an uncaught chart/judgment
+        // bug previously left nothing but Firebase's own generic uncaught-
+        // exception record, which is hard to find and carries no userId to
+        // correlate against a report. Cloud Functions v2 sanitizes any
+        // non-HttpsError into a bare 'internal' error before it reaches the
+        // client regardless of what's logged here — the stack trace below
+        // is only visible in Cloud Logging (Firebase Console → Functions →
+        // Logs, filter on "askWatchOracle: engine failure"), not to the app.
+        logger.error('askWatchOracle: engine failure', {
           err: String(err),
+          stack: err instanceof Error ? err.stack : undefined,
           userId,
         });
-        // Non-fatal: the reading still stands on its verdict.
-        oracleResponse = null;
+        await refundQuotaSlot(userId).catch(refundErr => {
+          logger.warn('askWatchOracle: quota refund failed after engine error', {
+            err: String(refundErr),
+            userId,
+          });
+        });
+        throw err;
       }
-
-      const readingRef = db.collection('readings').doc();
-      const narration = oracleResponse?.narration?.interpretation || verdict.factors.join(' ');
-      const readingDoc: Omit<ReadingDoc, 'createdAt'> = {
-        userId,
-        question: input.question,
-        questionLang: input.questionLang,
-        category: qType,
-        verdict: STATE_TO_VERDICT[verdict.state],
-        confidence: CONFIDENCE_NUMERIC[verdict.confidence],
-        narration: {
-          en: narration,
-          ur: narration,
-          hi: narration,
-        },
-        reasoning: verdict.factors.map((description, i) => ({
-          ruleId: `rkp.watch.${i + 1}`,
-          description,
-          weight: 1,
-        })),
-        // Kept null: ReadingDoc.remedy carries the astronomical path's shape
-        // (planet/action/avoid), which does not describe an RKP protocol. The
-        // watch protocol is persisted in full under `watchOracle` instead.
-        remedy: null,
-        ...(oracleResponse ? { watchOracle: oracleResponse } : {}),
-      };
-
-      await readingRef.set({
-        ...readingDoc,
-        createdAt: new Date(),
-      });
 
       const audit: Omit<AuditLogDoc, 'ts'> = {
         userId,
