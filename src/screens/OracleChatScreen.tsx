@@ -937,18 +937,37 @@ const OracleChatScreen: React.FC = () => {
         let errText =
           'The scrolls of this moment have not opened their seal. Return at the next appointed hour.';
 
-        if (err instanceof Error) {
-          if (err.message.includes('resource-exhausted') || err.message.includes('quota')) {
-            errText =
-              'The gate has closed for today. The oracle speaks three times a day to the free seeker.';
-          } else if (err.message.includes('unauthenticated')) {
-            errText = 'The oracle requires a known face. Please sign in to continue.';
-          } else if (err.message.includes('app-check')) {
-            errText = 'The seal of verification is absent. Please reinstall and try again.';
-          } else if (err.message.includes('ECONNREFUSED') || err.message.includes('network')) {
-            errText =
-              'The channel to the oracle is interrupted. Check your connection and try again.';
-          }
+        // Firebase callable errors carry the real signal in `.code` — a
+        // stable FunctionsErrorCode like 'resource-exhausted' or
+        // 'unauthenticated' — never in `.message`, which is just the
+        // developer-authored human text and never contains the code name.
+        // Checking `.message` for those code strings (as this used to) only
+        // ever matched the quota case, and only by coincidence: its message
+        // happens to contain the word "quota". Every other real failure —
+        // auth, rate limits, App Check, network — silently fell through to
+        // the generic fallback below, which is what QA was seeing.
+        const code =
+          typeof err === 'object' && err !== null && 'code' in err
+            ? String((err as { code: unknown }).code)
+            : '';
+        const message = err instanceof Error ? err.message.toLowerCase() : '';
+
+        if (code === 'resource-exhausted') {
+          errText = message.includes('too many requests')
+            ? 'The oracle needs a moment of quiet. Please wait briefly and ask again.'
+            : 'The gate has closed for today. The oracle speaks three times a day to the free seeker.';
+        } else if (message.includes('app-check') || message.includes('app check')) {
+          errText = 'The seal of verification is absent. Please reinstall and try again.';
+        } else if (code === 'unauthenticated' || code === 'permission-denied') {
+          errText = 'The oracle requires a known face. Please sign in to continue.';
+        } else if (
+          code === 'unavailable' ||
+          code === 'deadline-exceeded' ||
+          message.includes('network') ||
+          message.includes('econnrefused')
+        ) {
+          errText =
+            'The channel to the oracle is interrupted. Check your connection and try again.';
         }
 
         setMessages(prev => [
