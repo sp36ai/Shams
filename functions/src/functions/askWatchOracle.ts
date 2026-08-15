@@ -240,6 +240,21 @@ export const askWatchOracle = onCall(
           createdAt: new Date(),
         });
       } catch (err) {
+        // The one explicit log line for this failure category. Firestore
+        // errors and non-fatal oracle-composition failures are already
+        // logged at their own catch sites above; an uncaught chart/judgment
+        // bug previously left nothing but Firebase's own generic uncaught-
+        // exception record, which is hard to find and carries no userId to
+        // correlate against a report. Cloud Functions v2 sanitizes any
+        // non-HttpsError into a bare 'internal' error before it reaches the
+        // client regardless of what's logged here — the stack trace below
+        // is only visible in Cloud Logging (Firebase Console → Functions →
+        // Logs, filter on "askWatchOracle: engine failure"), not to the app.
+        logger.error('askWatchOracle: engine failure', {
+          err: String(err),
+          stack: err instanceof Error ? err.stack : undefined,
+          userId,
+        });
         await refundQuotaSlot(userId).catch(refundErr => {
           logger.warn('askWatchOracle: quota refund failed after engine error', {
             err: String(refundErr),
