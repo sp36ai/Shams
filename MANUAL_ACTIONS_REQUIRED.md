@@ -27,11 +27,22 @@ does. Confirmed shipped via `release-play-store.yml` run #79 (2026-08-15,
 `internal` track, all steps green) — the new key is what's embedded in the
 current build.
 
-GCP's rotation is two-step (create new + separately delete old); the *previous*
-key ("New Browser key", created 2026-05-02) is still active and not yet deleted.
-Leave it active until the new key has rolled out to **every** track this app
-ships to, not just `internal` — deleting it early breaks Firebase calls on any
-already-installed copy that hasn't picked up the new `google-services.json` yet.
+**Old key deleted — CLOSED (2026-08-15).** Before deleting, confirmed the new key
+had also shipped to every other track this app actually uses: `alpha` (Closed
+testing, 2 testers, previously stuck on a stale 0.1.4 build from June) via
+`release-play-store.yml` run #80, in addition to `internal` via run #79.
+Production is inactive (0 opted-in testers, unreachable) so it wasn't a factor.
+Also confirmed via repo-wide grep that no other surface (the web test harness,
+`.env.example`, hosting) embeds this key — `android/app/google-services.json`
+was the only real consumer.
+
+The old key ("New Browser key", created 2026-05-02) was then deleted in GCP
+Console. Its deletion dialog reported 653 requests against it in the trailing
+30 days — plausible for 1-2 active testers given a single app session fans out
+across the ~25 covered APIs (Firestore, App Check, FCM, etc.), and consistent
+with the codebase check finding no other consumer. Noted for the record, not
+treated as a blocker. GCP retains deleted keys recoverable for 30 days if
+anything unexpected surfaces.
 
 **Steps (if restriction is ever lost, e.g. after a rotation):**
 
@@ -119,7 +130,8 @@ already-installed copy that hasn't picked up the new `google-services.json` yet.
 
 Required secrets for CI/CD:
 
-- [ ] `GOOGLE_SERVICES_JSON` — base64-encoded google-services.json ✅ (already done)
+- [x] `GOOGLE_SERVICES_JSON` — base64-encoded google-services.json ✅ (refreshed
+      2026-08-15 with the rotated key from item 1 above)
 - [ ] `SHAMS_UPLOAD_KEYSTORE` — base64-encoded upload keystore (.jks).
       The release workflow also accepts the older name `BASE64_KEYSTORE`;
       set **one** of the two. If neither is set the workflow now fails fast
