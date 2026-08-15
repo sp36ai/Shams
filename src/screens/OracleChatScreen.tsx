@@ -934,6 +934,16 @@ const OracleChatScreen: React.FC = () => {
         setMessages(prev => [shamsMsg, ...prev]);
       } catch (err) {
         console.error('[OracleChatScreen] Engine error:', err);
+
+        // consumeOne() already charged this attempt against the LOCAL quota
+        // counter before the network call was made — this is a separate,
+        // device-only tally from the server's own Firestore ledger (which
+        // the Cloud Function refunds on its side for the same reason). No
+        // reading came back, so give the local slot back too; otherwise a
+        // string of failed attempts permanently exhausts the badge shown
+        // here even once the server-side count is healthy again.
+        useQuotaStore.getState().refundOne();
+
         let errText =
           'The scrolls of this moment have not opened their seal. Return at the next appointed hour.';
 
