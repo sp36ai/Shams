@@ -11,6 +11,7 @@
 
 import React, { useEffect, useMemo, useRef } from 'react';
 import { Animated, Easing, Platform, StyleSheet, View, useWindowDimensions } from 'react-native';
+import { useIsFocused } from '@react-navigation/native';
 
 type Dimensions = { W: number; H: number };
 
@@ -128,6 +129,14 @@ const StarfieldBackground: React.FC<StarfieldBackgroundProps> = ({
 }) => {
   const { width: W, height: H } = useWindowDimensions();
   const dims: Dimensions = useMemo(() => ({ W, H }), [W, H]);
+  // Several tab screens stay mounted in the background once visited (React
+  // Navigation's bottom-tabs default). Without this gate every one of them
+  // keeps its own set of native-driver star/shooting-star loops ticking at
+  // once, which is UI-thread work the device pays for on every screen even
+  // though only the focused tab is visible — the likely source of the "taps
+  // feel laggy" complaint on Home/Ask/Al-Falak/History. Pausing the loops
+  // when unfocused keeps only the visible screen's starfield animating.
+  const isFocused = useIsFocused();
 
   const stars = useMemo<StarSpec[]>(() => makeStars(dims), [dims]);
   const shooting = useMemo<ShootingSpec[]>(() => makeShooting(dims), [dims]);
@@ -143,8 +152,11 @@ const StarfieldBackground: React.FC<StarfieldBackgroundProps> = ({
     [W, H, nebula1, nebula2, nebula3],
   );
 
-  // Star twinkle loops
+  // Star twinkle loops — only while this screen is the focused tab.
   useEffect(() => {
+    if (!isFocused) {
+      return undefined;
+    }
     const anims = stars.map(s =>
       Animated.loop(
         Animated.sequence([
@@ -166,11 +178,14 @@ const StarfieldBackground: React.FC<StarfieldBackgroundProps> = ({
     );
     anims.forEach(a => a.start());
     return () => anims.forEach(a => a.stop());
-  }, [stars]);
+  }, [stars, isFocused]);
 
-  // Shooting star animations
+  // Shooting star animations — only while this screen is the focused tab.
   const shootingRef = useRef<Animated.CompositeAnimation[]>([]);
   useEffect(() => {
+    if (!isFocused) {
+      return undefined;
+    }
     const composites: Animated.CompositeAnimation[] = shooting.map(s => {
       const oneCycle = Animated.sequence([
         Animated.delay(s.triggerMs),
@@ -194,7 +209,7 @@ const StarfieldBackground: React.FC<StarfieldBackgroundProps> = ({
     shootingRef.current = composites;
     composites.forEach(c => c.start());
     return () => composites.forEach(c => c.stop());
-  }, [shooting]);
+  }, [shooting, isFocused]);
 
   return (
     <View style={StyleSheet.absoluteFill} pointerEvents="none">

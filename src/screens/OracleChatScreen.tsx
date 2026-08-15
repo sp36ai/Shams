@@ -736,6 +736,7 @@ const OracleChatScreen: React.FC = () => {
         // NEW_QUESTION with HIGH confidence → surface prompt, don't answer
         if (intent.class === 'NEW_QUESTION' && intent.confidence === 'HIGH') {
           setShowNewQuestionModal(true);
+          sendingRef.current = false;
           return;
         }
 
@@ -781,10 +782,12 @@ const OracleChatScreen: React.FC = () => {
       const questionClass = await classifyQuestion(text);
       if (questionClass === 'CONVERSATIONAL') {
         setRedirectMessage('conversational');
+        sendingRef.current = false;
         return;
       }
       if (questionClass === 'AMBIGUOUS') {
         setRedirectMessage('ambiguous');
+        sendingRef.current = false;
         return;
       }
       // VALID_HORARY falls through — clear any previous redirect
@@ -794,6 +797,7 @@ const OracleChatScreen: React.FC = () => {
       if (plan === 'free') {
         if (trialExpired) {
           navigation.navigate('Premium');
+          sendingRef.current = false;
           return;
         }
         if (!trialActive) {
@@ -804,6 +808,7 @@ const OracleChatScreen: React.FC = () => {
             quotaExhaustedAt.current = Date.now();
           }
           setShowQuotaModal(true);
+          sendingRef.current = false;
           return;
         }
       }
@@ -838,6 +843,7 @@ const OracleChatScreen: React.FC = () => {
           quotaExhaustedAt.current = Date.now();
         }
         setShowQuotaModal(true);
+        sendingRef.current = false;
         return;
       }
 
