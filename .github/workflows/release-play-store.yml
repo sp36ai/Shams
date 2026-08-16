@@ -74,6 +74,26 @@ jobs:
         run: |
           echo "${{ secrets.GOOGLE_SERVICES_JSON }}" | base64 -di > android/app/google-services.json
 
+      - name: Fingerprint google-services.json (diagnostic, no secret exposure)
+        # Prints only the first/last few characters of the API key and its
+        # length -- enough to compare against the real value in GCP Console
+        # without ever putting the full key in CI logs. Added after a build
+        # kept authenticating with a key GCP's own traffic logs reported as
+        # apikey:UNKNOWN -- there was no way to tell from a log line alone
+        # whether the secret held the current key or a stale local copy.
+        run: |
+          node -e '
+            const fs = require("fs");
+            const data = JSON.parse(fs.readFileSync("android/app/google-services.json", "utf8"));
+            const key = data.client?.[0]?.api_key?.[0]?.current_key ?? "(missing)";
+            const projectNumber = data.project_info?.project_number ?? "(missing)";
+            const appId = data.client?.[0]?.client_info?.mobilesdk_app_id ?? "(missing)";
+            const fp = key.length > 18 ? `${key.slice(0, 10)}...${key.slice(-6)}` : "(too short to fingerprint)";
+            console.log(`google-services.json api_key fingerprint: ${fp} (length=${key.length})`);
+            console.log(`project_number: ${projectNumber}`);
+            console.log(`mobilesdk_app_id: ${appId}`);
+          '
+
       - name: Decode keystore
         # PRECEDENCE IS LOAD-BEARING — BASE64_KEYSTORE must win.
         #
