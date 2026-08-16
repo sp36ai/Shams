@@ -28,6 +28,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import auth from '@react-native-firebase/auth';
+import crashlytics from '@react-native-firebase/crashlytics';
 
 import { useColors, useTheme } from '@theme/ThemeProvider';
 import { useTypography } from '@theme/useTypography';
@@ -267,6 +268,13 @@ const AuthScreen: React.FC = () => {
       await auth().sendPasswordResetEmail(form.email.trim());
     } catch (error) {
       const msg = error instanceof Error ? error.message : '';
+      // This call bypasses authStore.ts entirely (calls auth() directly), so
+      // it never got the Crashlytics reporting added there for the same
+      // reason — normaliseAuthError() discards the raw code once it doesn't
+      // recognize it, with nothing left to diagnose from otherwise.
+      crashlytics().recordError(
+        error instanceof Error ? error : new Error(msg || 'Password reset failed'),
+      );
       setServerError(msg ? normaliseAuthError(msg, t) : t('errors.unknown'));
       return;
     }
