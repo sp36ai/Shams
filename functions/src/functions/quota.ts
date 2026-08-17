@@ -6,9 +6,9 @@
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import { db } from '../utils/admin';
 import { verifyAuth } from '../middleware/auth';
-import { FUNCTION_OPTS, UNLIMITED_PLANS, FREE_LIMIT, todayKey } from '../config';
+import { FUNCTION_OPTS, UNLIMITED_PLANS, FREE_LIMIT, TRIAL_DAILY_LIMIT, todayKey } from '../config';
 import { measure } from '../middleware/telemetry';
-import type { QuotaResponse, QuotaDoc } from '../types';
+import type { QuotaResponse, QuotaDoc, TrialDoc } from '../types';
 
 export const getQuota = onCall(
   { ...FUNCTION_OPTS, enforceAppCheck: process.env.FUNCTIONS_EMULATOR !== 'true' },
@@ -16,22 +16,39 @@ export const getQuota = onCall(
     const { userId } = verifyAuth(request);
 
     return measure<QuotaResponse>('getQuota', userId, async () => {
-      const snap = await db.collection('quotas').doc(userId).get();
+      const [snap, trialSnap] = await Promise.all([
+        db.collection('quotas').doc(userId).get(),
+        db.collection('trials').doc(userId).get(),
+      ]);
+
+      // Trial takes precedence over the free limit — must mirror askOracle's
+      // claimQuotaSlot() exactly. This used to always report FREE_LIMIT (3)
+      // here regardless of an active trial, so a trial user (limit 5) who had
+      // already asked their 4th question saw the client compute
+      // `serverRemaining = max(0, 3 - 4) = 0` and lock the Ask button, even
+      // though the server would have happily granted questions 4 and 5.
+      const currentDay = todayKey();
+      let dailyLimit = FREE_LIMIT;
+      if (trialSnap.exists) {
+        const trial = trialSnap.data() as TrialDoc;
+        if (Date.now() < new Date(trial.expiresAt).getTime()) {
+          dailyLimit = TRIAL_DAILY_LIMIT;
+        }
+      }
 
       if (!snap.exists) {
         return {
           plan: 'free',
           used: 0,
-          limit: FREE_LIMIT,
-          remaining: FREE_LIMIT,
-          dayKey: todayKey(),
+          limit: dailyLimit,
+          remaining: dailyLimit,
+          dayKey: currentDay,
           planExpiry: null,
         };
       }
 
       const d = snap.data() as Partial<QuotaDoc>;
       const plan = d.plan ?? 'free';
-      const currentDay = todayKey();
       const storedDay = d.dayKey ?? '';
       const used = storedDay === currentDay ? (d.used ?? 0) : 0;
       const planExpiry = d.planExpiry ?? null;
@@ -54,8 +71,8 @@ export const getQuota = onCall(
       }
 
       const unlimited = UNLIMITED_PLANS.includes(effectivePlan);
-      const limit = unlimited ? null : FREE_LIMIT;
-      const remaining = unlimited ? null : Math.max(0, FREE_LIMIT - used);
+      const limit = unlimited ? null : dailyLimit;
+      const remaining = unlimited ? null : Math.max(0, dailyLimit - used);
 
       return { plan: effectivePlan, used, limit, remaining, dayKey: currentDay, planExpiry };
     }).catch(err => {
