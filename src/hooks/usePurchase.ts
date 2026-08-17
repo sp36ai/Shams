@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import crashlytics from '@react-native-firebase/crashlytics';
 import {
   initConnection,
   endConnection,
@@ -75,7 +76,18 @@ export function usePurchase(): PurchaseState {
           return { verified: true, planExpiry: data.planExpiry };
         }
         return { verified: false };
-      } catch {
+      } catch (err) {
+        // A real money purchase that reaches here has already been charged
+        // by Google — the only thing that failed is OUR verification call
+        // (Cloud Function down, App Check/auth rejection, network). That
+        // used to vanish with nothing logged anywhere, surfacing to the
+        // paying customer only as the generic "verification_failed" reason,
+        // indistinguishable from Google actually declining the purchase.
+        // Record it so a support ticket about a charged-but-unverified
+        // purchase is diagnosable instead of a dead end.
+        crashlytics().recordError(
+          err instanceof Error ? err : new Error(`verifyGooglePlayPurchase failed: ${String(err)}`),
+        );
         return { verified: false };
       }
     },
