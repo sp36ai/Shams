@@ -30,12 +30,19 @@ const App: React.FC = () => {
 
   // 2. Initialize Firebase App Check
   // Required to satisfy backend enforcement for Cloud Functions (e.g., askOracle).
+  // MUST be awaited/caught here — initializeAppCheckService() previously fired
+  // this without awaiting it at all, so a rejected native init became a
+  // silent unhandled promise rejection: nothing logged, App Check left
+  // uninitialized for the whole session, and every callable Cloud Function
+  // (askWatchOracle, getQuota, purchases, trial activation — all of them
+  // enforce App Check) failed as an 'unauthenticated' rejection with no
+  // record anywhere of why. crashlytics().recordError() runs inside the
+  // service itself; this catch just stops it from being a truly silent,
+  // untracked promise rejection at the call site too.
   useEffect(() => {
-    try {
-      initializeAppCheckService();
-    } catch (e) {
+    initializeAppCheckService().catch(e => {
       console.error('App Check Initialization Failed:', e);
-    }
+    });
   }, []);
 
   // Terminal Safety Gate: If integrity fails, we show a non-bypassable error view.
