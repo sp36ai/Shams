@@ -28,6 +28,8 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { acquireLocation } from '@utils/acquireLocation';
 import crashlytics from '@react-native-firebase/crashlytics';
+import auth from '@react-native-firebase/auth';
+import { getAppCheckToken } from '../firebase/appCheck';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '@navigation/types';
@@ -962,6 +964,38 @@ const OracleChatScreen: React.FC = () => {
             : '';
         const message = err instanceof Error ? err.message.toLowerCase() : '';
 
+        // DIAGNOSTIC — Cloud Functions' callable SDK rejects with the SAME
+        // 'unauthenticated' code whether the ID token is missing/expired OR
+        // the App Check token failed validation (askWatchOracle runs with
+        // enforceAppCheck: true). The client cannot tell those apart from
+        // `err.code` alone, and this ambiguity is exactly what was routing
+        // real App Check/Play-Integrity failures into the "please sign in"
+        // branch below even for signed-in users. Probe both token sources
+        // independently right here, at the moment of failure — synchronously,
+        // so the result can ride along in the SAME bubble the seeker already
+        // knows to screenshot, instead of waiting on Crashlytics console
+        // propagation. TEMPORARY: remove this whole block plus the debugSuffix
+        // once App Check is confirmed healthy in production.
+        let debugSuffix = '';
+        if (code === 'unauthenticated' || code === 'permission-denied') {
+          const idTokenStatus = await auth()
+            .currentUser?.getIdToken(true)
+            .then(tok => (tok ? `ok(len=${tok.length})` : 'empty'))
+            .catch(e => `FAILED: ${e instanceof Error ? e.message : String(e)}`);
+          const appCheckStatus = await getAppCheckToken(true)
+            .then(tok => (tok ? `ok(len=${tok.length})` : 'FAILED: empty/undefined'))
+            .catch(e => `FAILED: ${e instanceof Error ? e.message : String(e)}`);
+          debugSuffix =
+            `\n\n[debug] signedIn=${auth().currentUser !== null} ` +
+            `idToken=${idTokenStatus ?? 'no-current-user'} appCheck=${appCheckStatus}`;
+          crashlytics().log(
+            `[askWatchOracle unauthenticated] code=${code} message=${message} ${debugSuffix}`,
+          );
+          crashlytics().recordError(
+            new Error(`askWatchOracle rejected: code=${code}${debugSuffix}`),
+          );
+        }
+
         if (code === 'resource-exhausted') {
           errText = message.includes('too many requests')
             ? 'The oracle needs a moment of quiet. Please wait briefly and ask again.'
@@ -984,7 +1018,7 @@ const OracleChatScreen: React.FC = () => {
           {
             id: `s_err_${now}`,
             sender: 'shams',
-            text: errText,
+            text: errText + debugSuffix,
             createdAt: new Date().toISOString(),
           },
           ...prev,
