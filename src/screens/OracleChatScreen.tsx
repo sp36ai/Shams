@@ -977,6 +977,12 @@ const OracleChatScreen: React.FC = () => {
         // propagation. TEMPORARY: remove this whole block plus the debugSuffix
         // once App Check is confirmed healthy in production.
         let debugSuffix = '';
+        // Set once the diagnostic below actually runs, so the branches after
+        // it can trust the *measured* App Check state instead of re-deriving
+        // it from the raw rejection message (see note below on why that
+        // re-derivation never worked).
+        let diagnosedAppCheckFailed = false;
+        let diagnosedSignedIn = false;
         if (code === 'unauthenticated' || code === 'permission-denied') {
           const idTokenStatus = await auth()
             .currentUser?.getIdToken(true)
@@ -985,8 +991,10 @@ const OracleChatScreen: React.FC = () => {
           const appCheckStatus = await getAppCheckToken(true)
             .then(tok => (tok ? `ok(len=${tok.length})` : 'FAILED: empty/undefined'))
             .catch(e => `FAILED: ${e instanceof Error ? e.message : String(e)}`);
+          diagnosedSignedIn = auth().currentUser !== null;
+          diagnosedAppCheckFailed = appCheckStatus.startsWith('FAILED');
           debugSuffix =
-            `\n\n[debug] signedIn=${auth().currentUser !== null} ` +
+            `\n\n[debug] signedIn=${diagnosedSignedIn} ` +
             `idToken=${idTokenStatus ?? 'no-current-user'} appCheck=${appCheckStatus}`;
           crashlytics().log(
             `[askWatchOracle unauthenticated] code=${code} message=${message} ${debugSuffix}`,
@@ -1000,7 +1008,20 @@ const OracleChatScreen: React.FC = () => {
           errText = message.includes('too many requests')
             ? 'The oracle needs a moment of quiet. Please wait briefly and ask again.'
             : 'The gate has closed for today. The oracle speaks three times a day to the free seeker.';
-        } else if (message.includes('app-check') || message.includes('app check')) {
+        } else if (
+          message.includes('app-check') ||
+          message.includes('app check') ||
+          // The callable SDK collapses "missing/invalid App Check token" into
+          // the SAME generic 'unauthenticated' rejection as "not signed in",
+          // and its message text never actually contains "app-check" — so
+          // that string check above never fired in practice. The synchronous
+          // probe above just measured the real cause directly: trust it. A
+          // signed-in user (valid idToken) hitting 'unauthenticated' with a
+          // failed App Check probe is an App Check failure, not a sign-in
+          // problem — telling them to "sign in" here was actively wrong and
+          // unactionable, since they already are.
+          (diagnosedSignedIn && diagnosedAppCheckFailed)
+        ) {
           errText = 'The seal of verification is absent. Please reinstall and try again.';
         } else if (code === 'unauthenticated' || code === 'permission-denied') {
           errText = 'The oracle requires a known face. Please sign in to continue.';
