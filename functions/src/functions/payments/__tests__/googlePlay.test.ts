@@ -41,7 +41,7 @@ describe('assertSubscriptionActive', () => {
     expect(expiresAt).toEqual(new Date(Number(FUTURE)));
   });
 
-  it('rejects an active subscription with no purchaseState field — the actual bug', () => {
+  it('accepts an active subscription with no purchaseState field at all — the actual bug', () => {
     // Real v3 subscriptions.get responses never carry purchaseState at all;
     // this is what "undefined !== 0, always true" looked like in practice.
     // paymentState IS present here (a real active subscription), and that
