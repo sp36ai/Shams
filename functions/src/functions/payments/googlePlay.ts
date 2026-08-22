@@ -5,7 +5,7 @@
  *   1. App Check + Firebase Auth (request.auth — enforced by callable runtime)
  *   2. Validate input (purchaseToken, productId, packageName)
  *   3. Call Google Play Developer API via service account credentials
- *   4. Verify purchase is PURCHASED state (0) and not consumed
+ *   4. Verify the subscription is active (paymentState) and unexpired
  *   5. Map productId → PlanTier
  *   6. Update Firestore /quotas/{userId} + set Firebase Auth custom claims
  *   7. Acknowledge the purchase (to prevent auto-refund)
@@ -15,7 +15,10 @@
  *   - GOOGLE_PLAY_CLIENT_EMAIL — service account email
  *   - GOOGLE_PLAY_PRIVATE_KEY  — service account private key (PEM)
  *
- * Reference: https://developers.google.com/android-publisher/api-ref/rest/v3/purchases.products/get
+ * Reference: https://developers.google.com/android-publisher/api-ref/rest/v3/purchases.subscriptions/get
+ * (NOT purchases.products/get — that's the one-time-purchase resource, and
+ * its `purchaseState` field does not exist on this one. See the note on
+ * SubscriptionPurchase below — this file used to link the wrong reference.)
  */
 
 import * as https from 'https';
@@ -43,11 +46,39 @@ interface GoogleAccessToken {
 }
 
 interface SubscriptionPurchase {
-  purchaseState: number; // 0 = purchased, 1 = cancelled
+  // purchases.subscriptions (v3) — the endpoint this file actually calls, see
+  // apiUrl below — has NO `purchaseState` field. That field belongs to the
+  // *products* resource (purchases.products.get, for one-time purchases);
+  // reading it off a subscription response always yields `undefined`. This
+  // interface used to declare it anyway, so `purchase.purchaseState !== 0`
+  // was `undefined !== 0`, always true, and every real subscription was
+  // rejected as "not active" unconditionally. Active status on this resource
+  // is derived from paymentState instead: 0 = pending, 1 = received,
+  // 2 = free trial, 3 = deferred.
+  paymentState?: number;
   acknowledgementState: number; // 0 = not acknowledged, 1 = acknowledged
   orderId: string;
   startTimeMillis: string;
   expiryTimeMillis: string; // authoritative expiry from Play Store
+}
+
+/**
+ * Determine whether a purchases.subscriptions (v3) resource represents an
+ * active, unexpired subscription, returning its authoritative expiry.
+ * Exported for unit testing.
+ */
+export function assertSubscriptionActive(purchase: SubscriptionPurchase, now: number): Date {
+  const active = purchase.paymentState === 1 || purchase.paymentState === 2;
+  if (!active) {
+    throw new HttpsError('failed-precondition', 'Subscription is not in an active state');
+  }
+
+  // Use Play Store's authoritative expiry — this handles monthly vs annual correctly.
+  const expiryMs = parseInt(purchase.expiryTimeMillis, 10);
+  if (Number.isNaN(expiryMs) || expiryMs <= now) {
+    throw new HttpsError('failed-precondition', 'Subscription has already expired');
+  }
+  return new Date(expiryMs);
 }
 
 function httpsPost(url: string, body: string, headers: Record<string, string>): Promise<string> {
@@ -202,17 +233,7 @@ export const verifyGooglePlayPurchase = onCall(
 
       const purchase = JSON.parse(body) as SubscriptionPurchase;
 
-      // purchaseState 0 = active subscription
-      if (purchase.purchaseState !== 0) {
-        throw new HttpsError('failed-precondition', 'Subscription is not in an active state');
-      }
-
-      // Use Play Store's authoritative expiry — this handles monthly vs annual correctly
-      const expiryMs = parseInt(purchase.expiryTimeMillis, 10);
-      if (isNaN(expiryMs) || expiryMs <= Date.now()) {
-        throw new HttpsError('failed-precondition', 'Subscription has already expired');
-      }
-      const expiresAt = new Date(expiryMs);
+      const expiresAt = assertSubscriptionActive(purchase, Date.now());
 
       // Bind this purchase token to the redeeming account. A subscription's
       // token stays valid for as long as the subscription is active, so
