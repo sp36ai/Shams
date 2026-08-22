@@ -51,15 +51,37 @@ export const initializeAppCheckService = async (): Promise<void> => {
 };
 
 /**
+ * Result of a getAppCheckToken() call. Discriminated on `ok` so callers can
+ * tell "no token, no error" apart from "token fetch threw: <reason>" instead
+ * of both collapsing into a bare `undefined` — see the note below.
+ */
+export type AppCheckTokenResult = { ok: true; token: string } | { ok: false; error: string };
+
+/**
  * Manually retrieves the current App Check token.
  * Useful for debugging or forcing a refresh if a request fails.
+ *
+ * This used to swallow any rejection from getToken() into a bare
+ * `console.error` + `undefined` return — invisible in a production build
+ * (no Crashlytics record, no console access on a shipped APK), and
+ * indistinguishable from "App Check hasn't produced a token yet" to any
+ * caller. That is exactly what was collapsing real Play Integrity/
+ * attestation rejections into the generic "empty/undefined" reading in the
+ * askWatchOracle diagnostic probe (OracleChatScreen.tsx), even after
+ * initializeAppCheckService() was fixed to stop swallowing its own init
+ * rejection (see appCheck.ts init above) — that fix only covers the
+ * initializeAppCheck() call, not this separate getToken() call. Mirror the
+ * same pattern here: record the real error to Crashlytics and hand callers
+ * the actual reason instead of throwing it away.
  */
-export const getAppCheckToken = async (forceRefresh = false): Promise<string | undefined> => {
+export const getAppCheckToken = async (forceRefresh = false): Promise<AppCheckTokenResult> => {
   try {
     const result = await firebase.appCheck().getToken(forceRefresh);
-    return result.token;
+    return { ok: true, token: result.token };
   } catch (error) {
-    console.error('[App Check] Failed to get token:', error);
-    return undefined;
+    const err = error instanceof Error ? error : new Error(String(error));
+    crashlytics().log('[App Check] getToken() rejected — see recorded error for the reason');
+    crashlytics().recordError(err);
+    return { ok: false, error: err.message };
   }
 };
