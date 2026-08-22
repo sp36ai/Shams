@@ -415,243 +415,265 @@ export const askOracle = onCall(
       // 5. Quota (atomic)
       const { plan, remaining } = await claimQuotaSlot(userId);
 
-      // 6. Build chart server-side — client has ZERO involvement in ephemeris
-      const now = new Date().toISOString();
-      const chart = buildChart(now, input.lat, input.lon);
-
-      // 7. Classify question
-      const classified = {
-        text: input.question,
-        lang: input.questionLang,
-        qType: classifyQuestion(input.question),
-        confidence: 1.0,
-        matchedKeywords: [] as string[],
-      };
-
-      // 7b. Horary number witness — server-generated, never client-supplied
-      // (keeps judgeHorary itself pure/deterministic; see its module doc).
-      // Distinguishes readings whose chart-derived signal would otherwise be
-      // identical for two questions asked seconds apart.
-      const horaryNumber = 1 + Math.floor(Math.random() * 249);
-
-      // 8. Judge horary — proprietary RKP algorithm runs here, server-only
-      const verdict = judgeHorary(chart, classified, horaryNumber);
-
-      // Shadow-node boundary mapping — everything written to Firestore or
-      // returned to the client from here on names Rahu/Ketu exclusively as
-      // Ras/Dhanab. See utils/planetBoundaryName.ts.
-      const remedyForOutput = verdict.remedy
-        ? { ...verdict.remedy, planet: toBoundaryPlanetName(verdict.remedy.planet) }
-        : undefined;
-
-      // 9+10. Persist reading + quota update in a batch
-      const readingRef = db.collection('readings').doc(verdict.id);
-      const readingDoc: Omit<ReadingDoc, 'createdAt'> = {
-        userId,
-        question: input.question,
-        questionLang: input.questionLang,
-        category: verdict.qType,
-        verdict: verdict.verdict,
-        confidence: verdict.confidence,
-        narration: verdict.narration,
-        timing: verdict.timing
-          ? { window: verdict.timing.window, range: verdict.timing.range }
-          : undefined,
-        remedy: remedyForOutput ?? null,
-        reasoning: verdict.reasoning.map(
-          (r: { ruleId: string; description: string; weight: number }) => ({
-            ruleId: r.ruleId,
-            description: r.description,
-            weight: r.weight,
-          }),
-        ),
-        horaryNumber,
-      };
-
-      const batch = db.batch();
-      batch.set(readingRef, { ...readingDoc, createdAt: FieldValue.serverTimestamp() });
+      // Everything below spends the slot just claimed. If any of it throws —
+      // a chart/judgment edge case, an unexpected engine error — the querent
+      // must not lose one of their daily questions for a reading that never
+      // happened. refundQuotaSlot() gives the slot back before the error
+      // reaches the outer .catch() below. Mirrors the fix already applied to
+      // askWatchOracle (#75); it was missed here even though refundQuotaSlot()
+      // is defined in this very file.
       try {
-        await batch.commit();
-      } catch (persistErr) {
-        // The verdict is already computed; persistence is not worth failing the
-        // whole reading over. Log and continue so the seeker still gets an answer.
-        logger.error('reading persist failed (non-fatal)', {
+        // 6. Build chart server-side — client has ZERO involvement in ephemeris
+        const now = new Date().toISOString();
+        const chart = buildChart(now, input.lat, input.lon);
+
+        // 7. Classify question
+        const classified = {
+          text: input.question,
+          lang: input.questionLang,
+          qType: classifyQuestion(input.question),
+          confidence: 1.0,
+          matchedKeywords: [] as string[],
+        };
+
+        // 7b. Horary number witness — server-generated, never client-supplied
+        // (keeps judgeHorary itself pure/deterministic; see its module doc).
+        // Distinguishes readings whose chart-derived signal would otherwise be
+        // identical for two questions asked seconds apart.
+        const horaryNumber = 1 + Math.floor(Math.random() * 249);
+
+        // 8. Judge horary — proprietary RKP algorithm runs here, server-only
+        const verdict = judgeHorary(chart, classified, horaryNumber);
+
+        // Shadow-node boundary mapping — everything written to Firestore or
+        // returned to the client from here on names Rahu/Ketu exclusively as
+        // Ras/Dhanab. See utils/planetBoundaryName.ts.
+        const remedyForOutput = verdict.remedy
+          ? { ...verdict.remedy, planet: toBoundaryPlanetName(verdict.remedy.planet) }
+          : undefined;
+
+        // 9+10. Persist reading + quota update in a batch
+        const readingRef = db.collection('readings').doc(verdict.id);
+        const readingDoc: Omit<ReadingDoc, 'createdAt'> = {
           userId,
-          err: persistErr instanceof Error ? persistErr.message : String(persistErr),
+          question: input.question,
+          questionLang: input.questionLang,
+          category: verdict.qType,
+          verdict: verdict.verdict,
+          confidence: verdict.confidence,
+          narration: verdict.narration,
+          timing: verdict.timing
+            ? { window: verdict.timing.window, range: verdict.timing.range }
+            : undefined,
+          remedy: remedyForOutput ?? null,
+          reasoning: verdict.reasoning.map(
+            (r: { ruleId: string; description: string; weight: number }) => ({
+              ruleId: r.ruleId,
+              description: r.description,
+              weight: r.weight,
+            }),
+          ),
+          horaryNumber,
+        };
+
+        const batch = db.batch();
+        batch.set(readingRef, { ...readingDoc, createdAt: FieldValue.serverTimestamp() });
+        try {
+          await batch.commit();
+        } catch (persistErr) {
+          // The verdict is already computed; persistence is not worth failing the
+          // whole reading over. Log and continue so the seeker still gets an answer.
+          logger.error('reading persist failed (non-fatal)', {
+            userId,
+            err: persistErr instanceof Error ? persistErr.message : String(persistErr),
+          });
+        }
+
+        // 11. Audit (fire-and-forget)
+        void writeAuditLog({
+          userId,
+          action: 'oracle_computed',
+          questionHash: hashText(input.question),
+          verdict: verdict.verdict,
+          plan,
+          source: requestMeta.source,
+          ipAddress: requestMeta.ipAddress,
+          ipHash: requestMeta.ipHash,
+          userAgent: requestMeta.userAgent,
+          durationMs: Date.now() - startedAt,
         });
-      }
 
-      // 11. Audit (fire-and-forget)
-      void writeAuditLog({
-        userId,
-        action: 'oracle_computed',
-        questionHash: hashText(input.question),
-        verdict: verdict.verdict,
-        plan,
-        source: requestMeta.source,
-        ipAddress: requestMeta.ipAddress,
-        ipHash: requestMeta.ipHash,
-        userAgent: requestMeta.userAgent,
-        durationMs: Date.now() - startedAt,
-      });
+        logger.info('oracle computed', {
+          userId,
+          verdict: verdict.verdict,
+          stage: verdict.stage ?? 'unknown',
+          confidence: verdict.confidence,
+          confirmedSignificators: verdict.confirmedSignificators ?? [],
+          deniedSignificators: verdict.deniedSignificators ?? [],
+          plan,
+          durationMs: Date.now() - startedAt,
+          ipHash: requestMeta.ipHash,
+        });
 
-      logger.info('oracle computed', {
-        userId,
-        verdict: verdict.verdict,
-        stage: verdict.stage ?? 'unknown',
-        confidence: verdict.confidence,
-        confirmedSignificators: verdict.confirmedSignificators ?? [],
-        deniedSignificators: verdict.deniedSignificators ?? [],
-        plan,
-        durationMs: Date.now() - startedAt,
-        ipHash: requestMeta.ipHash,
-      });
-
-      // ── Display-layer geometry (chart wheel) — no engine logic ─────────────
-      const planetDegrees: Record<string, number> = {};
-      const planetChain: Record<
-        string,
-        { manzilLord: string; subLord: string; subSubLord: string }
-      > = {};
-      for (const p of DISPLAY_PLANETS) {
-        const pos = chart.planets[p];
-        if (pos !== undefined) {
-          const key = toBoundaryPlanetName(p);
-          planetDegrees[key] = pos.siderealLongitude;
-          planetChain[key] = {
-            manzilLord: toBoundaryPlanetName(String(pos.nakshatraLord)),
-            subLord: toBoundaryPlanetName(String(pos.subLord)),
-            subSubLord: toBoundaryPlanetName(String(pos.subSubLord)),
-          };
+        // ── Display-layer geometry (chart wheel) — no engine logic ─────────────
+        const planetDegrees: Record<string, number> = {};
+        const planetChain: Record<
+          string,
+          { manzilLord: string; subLord: string; subSubLord: string }
+        > = {};
+        for (const p of DISPLAY_PLANETS) {
+          const pos = chart.planets[p];
+          if (pos !== undefined) {
+            const key = toBoundaryPlanetName(p);
+            planetDegrees[key] = pos.siderealLongitude;
+            planetChain[key] = {
+              manzilLord: toBoundaryPlanetName(String(pos.nakshatraLord)),
+              subLord: toBoundaryPlanetName(String(pos.subLord)),
+              subSubLord: toBoundaryPlanetName(String(pos.subSubLord)),
+            };
+          }
         }
-      }
 
-      const cuspDegrees: Record<number, number> = {};
-      const cuspSigns: Record<number, string> = {};
-      for (let i = 0; i < 12; i++) {
-        const c = chart.cusps[i];
-        if (c !== undefined) {
-          cuspDegrees[i + 1] = c.siderealLongitude;
-          cuspSigns[i + 1] = signNameAt(c.siderealLongitude);
+        const cuspDegrees: Record<number, number> = {};
+        const cuspSigns: Record<number, string> = {};
+        for (let i = 0; i < 12; i++) {
+          const c = chart.cusps[i];
+          if (c !== undefined) {
+            cuspDegrees[i + 1] = c.siderealLongitude;
+            cuspSigns[i + 1] = signNameAt(c.siderealLongitude);
+          }
         }
-      }
 
-      // Cusp sub-lords for the 2-3 most relevant houses (expert panel data).
-      // Non-essential display data — guard every lookup so an unknown qType
-      // (missing HOUSE_MATRIX entry) or an absent sub-lord planet degrades to an
-      // empty list instead of throwing the whole reading into an internal error.
-      let cuspSubLords: Array<{ house: number; subLord: string; subLordHouse: number }> = [];
-      try {
-        const matrixEntry = HOUSE_MATRIX[classified.qType];
-        if (matrixEntry !== undefined) {
-          const relevantHouses = [matrixEntry.primary, ...matrixEntry.secondary.slice(0, 2)];
-          const cuspLons = chart.cusps.map(c => c.siderealLongitude);
-          cuspSubLords = relevantHouses
-            .map(h => {
-              const cusp = chart.cusps[h - 1];
-              if (cusp === undefined) {
-                return null;
-              }
-              const sl = cusp.subLord;
-              const slPos = chart.planets[sl];
-              if (slPos === undefined) {
-                return null;
-              }
-              const slHouse = houseForLongitude(slPos.siderealLongitude, cuspLons) as number;
-              return { house: h, subLord: toBoundaryPlanetName(sl), subLordHouse: slHouse };
+        // Cusp sub-lords for the 2-3 most relevant houses (expert panel data).
+        // Non-essential display data — guard every lookup so an unknown qType
+        // (missing HOUSE_MATRIX entry) or an absent sub-lord planet degrades to an
+        // empty list instead of throwing the whole reading into an internal error.
+        let cuspSubLords: Array<{ house: number; subLord: string; subLordHouse: number }> = [];
+        try {
+          const matrixEntry = HOUSE_MATRIX[classified.qType];
+          if (matrixEntry !== undefined) {
+            const relevantHouses = [matrixEntry.primary, ...matrixEntry.secondary.slice(0, 2)];
+            const cuspLons = chart.cusps.map(c => c.siderealLongitude);
+            cuspSubLords = relevantHouses
+              .map(h => {
+                const cusp = chart.cusps[h - 1];
+                if (cusp === undefined) {
+                  return null;
+                }
+                const sl = cusp.subLord;
+                const slPos = chart.planets[sl];
+                if (slPos === undefined) {
+                  return null;
+                }
+                const slHouse = houseForLongitude(slPos.siderealLongitude, cuspLons) as number;
+                return { house: h, subLord: toBoundaryPlanetName(sl), subLordHouse: slHouse };
+              })
+              .filter(Boolean) as Array<{ house: number; subLord: string; subLordHouse: number }>;
+          }
+        } catch (dispErr) {
+          logger.error('cuspSubLords computation failed (non-fatal)', {
+            userId,
+            err: dispErr instanceof Error ? dispErr.message : String(dispErr),
+          });
+        }
+
+        // 12. Oracle synthesis — Claude adds voice layer (fire with timeout, fallback on error)
+        const apiKey = ANTHROPIC_API_KEY.value();
+        const moonLongitude = chart.planets.Moon?.siderealLongitude ?? 0;
+        const manzila = getManzila(moonLongitude);
+        const verdictBinary =
+          verdict.verdict === 'YES' || verdict.verdict === 'CONDITIONAL' ? 'CONFIRMED' : 'DENIED';
+        const manzilaLine = getManzilaOracleLine(moonLongitude, verdictBinary);
+
+        const oracleRaw = apiKey
+          ? await synthesiseOracleVoice({
+              verdict: verdict.verdict,
+              stage: verdict.stage,
+              confidence: verdict.confidence,
+              timingWindow: verdict.timing?.window,
+              timingRange: verdict.timing?.range,
+              manzilaLine,
+              seekerProfile: input.seekerProfile,
+              apiKey,
+              seekerName: input.seekerName,
+              motherName: input.motherName,
             })
-            .filter(Boolean) as Array<{ house: number; subLord: string; subLordHouse: number }>;
-        }
-      } catch (dispErr) {
-        logger.error('cuspSubLords computation failed (non-fatal)', {
-          userId,
-          err: dispErr instanceof Error ? dispErr.message : String(dispErr),
-        });
-      }
+          : ORACLE_FALLBACK;
 
-      // 12. Oracle synthesis — Claude adds voice layer (fire with timeout, fallback on error)
-      const apiKey = ANTHROPIC_API_KEY.value();
-      const moonLongitude = chart.planets.Moon?.siderealLongitude ?? 0;
-      const manzila = getManzila(moonLongitude);
-      const verdictBinary =
-        verdict.verdict === 'YES' || verdict.verdict === 'CONDITIONAL' ? 'CONFIRMED' : 'DENIED';
-      const manzilaLine = getManzilaOracleLine(moonLongitude, verdictBinary);
+        const oracle = apiKey ? await runSafetyValidator(oracleRaw, verdict.id, apiKey) : oracleRaw;
 
-      const oracleRaw = apiKey
-        ? await synthesiseOracleVoice({
-            verdict: verdict.verdict,
-            stage: verdict.stage,
-            confidence: verdict.confidence,
-            timingWindow: verdict.timing?.window,
-            timingRange: verdict.timing?.range,
-            manzilaLine,
-            seekerProfile: input.seekerProfile,
-            apiKey,
-            seekerName: input.seekerName,
-            motherName: input.motherName,
-          })
-        : ORACLE_FALLBACK;
+        logger.info('oracle synthesis', { userId, oracle });
 
-      const oracle = apiKey ? await runSafetyValidator(oracleRaw, verdict.id, apiKey) : oracleRaw;
-
-      logger.info('oracle synthesis', { userId, oracle });
-
-      // 13. Return minimal response — no chart internals, no algorithm state
-      return {
-        readingId: verdict.id,
-        verdict: verdict.verdict,
-        confidence: verdict.confidence,
-        category: verdict.qType,
-        narration: verdict.narration,
-        timing: verdict.timing
-          ? { window: verdict.timing.window, range: verdict.timing.range }
-          : undefined,
-        cuspSubLords,
-        rulingPlanets: {
-          dayLord: toBoundaryPlanetName(verdict.rulingPlanets.dayLord as string),
-          ascSignLord: toBoundaryPlanetName(verdict.rulingPlanets.ascSignLord as string),
-          ascStarLord: toBoundaryPlanetName(verdict.rulingPlanets.ascStarLord as string),
-          moonSignLord: toBoundaryPlanetName(verdict.rulingPlanets.moonSignLord as string),
-          moonStarLord: toBoundaryPlanetName(verdict.rulingPlanets.moonStarLord as string),
-          horaLord:
-            verdict.rulingPlanets.horaLord !== undefined
-              ? toBoundaryPlanetName(verdict.rulingPlanets.horaLord as string)
+        // 13. Return minimal response — no chart internals, no algorithm state
+        return {
+          readingId: verdict.id,
+          verdict: verdict.verdict,
+          confidence: verdict.confidence,
+          category: verdict.qType,
+          narration: verdict.narration,
+          timing: verdict.timing
+            ? { window: verdict.timing.window, range: verdict.timing.range }
+            : undefined,
+          cuspSubLords,
+          rulingPlanets: {
+            dayLord: toBoundaryPlanetName(verdict.rulingPlanets.dayLord as string),
+            ascSignLord: toBoundaryPlanetName(verdict.rulingPlanets.ascSignLord as string),
+            ascStarLord: toBoundaryPlanetName(verdict.rulingPlanets.ascStarLord as string),
+            moonSignLord: toBoundaryPlanetName(verdict.rulingPlanets.moonSignLord as string),
+            moonStarLord: toBoundaryPlanetName(verdict.rulingPlanets.moonStarLord as string),
+            horaLord:
+              verdict.rulingPlanets.horaLord !== undefined
+                ? toBoundaryPlanetName(verdict.rulingPlanets.horaLord as string)
+                : undefined,
+          },
+          significators: verdict.significators
+            ? {
+                favorable: toBoundaryPlanetNames(verdict.significators.favorable as string[]),
+                denial: toBoundaryPlanetNames(verdict.significators.denial as string[]),
+                neutral: toBoundaryPlanetNames(verdict.significators.neutral as string[]),
+              }
+            : undefined,
+          confirmedSignificators:
+            verdict.confirmedSignificators !== undefined
+              ? toBoundaryPlanetNames(verdict.confirmedSignificators as string[])
               : undefined,
-        },
-        significators: verdict.significators
-          ? {
-              favorable: toBoundaryPlanetNames(verdict.significators.favorable as string[]),
-              denial: toBoundaryPlanetNames(verdict.significators.denial as string[]),
-              neutral: toBoundaryPlanetNames(verdict.significators.neutral as string[]),
-            }
-          : undefined,
-        confirmedSignificators:
-          verdict.confirmedSignificators !== undefined
-            ? toBoundaryPlanetNames(verdict.confirmedSignificators as string[])
-            : undefined,
-        deniedSignificators:
-          verdict.deniedSignificators !== undefined
-            ? toBoundaryPlanetNames(verdict.deniedSignificators as string[])
-            : undefined,
-        remedy: remedyForOutput,
-        reasoning: readingDoc.reasoning,
-        horaryNumber,
-        quotaRemaining: remaining,
-        computedAt: now,
-        planetDegrees,
-        cuspDegrees,
-        cuspSigns,
-        planetChain,
-        manzila: {
-          number: manzila.number,
-          name: manzila.name,
-          arabic: manzila.arabic,
-          nature: manzila.nature,
-          element: manzila.element,
-          oracleDescriptor: manzila.oracleDescriptor,
-        },
-        oracle,
-      };
+          deniedSignificators:
+            verdict.deniedSignificators !== undefined
+              ? toBoundaryPlanetNames(verdict.deniedSignificators as string[])
+              : undefined,
+          remedy: remedyForOutput,
+          reasoning: readingDoc.reasoning,
+          horaryNumber,
+          quotaRemaining: remaining,
+          computedAt: now,
+          planetDegrees,
+          cuspDegrees,
+          cuspSigns,
+          planetChain,
+          manzila: {
+            number: manzila.number,
+            name: manzila.name,
+            arabic: manzila.arabic,
+            nature: manzila.nature,
+            element: manzila.element,
+            oracleDescriptor: manzila.oracleDescriptor,
+          },
+          oracle,
+        };
+      } catch (err) {
+        logger.error('askOracle: engine failure', {
+          err: String(err),
+          stack: err instanceof Error ? err.stack : undefined,
+          userId,
+        });
+        await refundQuotaSlot(userId).catch(refundErr => {
+          logger.warn('askOracle: quota refund failed after engine error', {
+            err: String(refundErr),
+            userId,
+          });
+        });
+        throw err;
+      }
     }).catch(err => {
       const code = err instanceof HttpsError ? err.code : 'internal';
 
