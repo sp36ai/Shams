@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, StatusBar } from 'react-native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { runSecurityChecks, INTEGRITY_FAIL_MESSAGE } from '@utils/security';
 import { initializeAppCheckService } from './firebase/appCheck';
@@ -60,15 +61,24 @@ const App: React.FC = () => {
   }
 
   return (
-    <ErrorBoundary>
-      <ThemeProvider>
-        <SafeAreaProvider>
-          <I18nProvider>
-            <RootNavigator />
-          </I18nProvider>
-        </SafeAreaProvider>
-      </ThemeProvider>
-    </ErrorBoundary>
+    // react-native-gesture-handler v2 requires the app root to be wrapped in
+    // GestureHandlerRootView on Android — without it, react-native-screens
+    // (which both @react-navigation/native-stack and bottom-tabs use under
+    // the hood) can silently stop delivering touch events to JS entirely:
+    // no crash, no error, screens keep rendering, nothing responds to taps.
+    // This was missing, which is consistent with reports of the whole app
+    // (tab bar included) going dead on an Android release build.
+    <GestureHandlerRootView style={styles.gestureRoot}>
+      <ErrorBoundary>
+        <ThemeProvider>
+          <SafeAreaProvider>
+            <I18nProvider>
+              <RootNavigator />
+            </I18nProvider>
+          </SafeAreaProvider>
+        </ThemeProvider>
+      </ErrorBoundary>
+    </GestureHandlerRootView>
   );
 };
 
@@ -76,6 +86,9 @@ const App: React.FC = () => {
 // Colors are pinned to the canonical darAlShams palette (src/theme/themes.ts)
 // so even the integrity-failure screen reads as the obsidian / gold manuscript.
 const styles = StyleSheet.create({
+  gestureRoot: {
+    flex: 1,
+  },
   errorContainer: {
     flex: 1,
     backgroundColor: '#0A0A0F', // darAlShams.bg
