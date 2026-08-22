@@ -733,89 +733,140 @@ const OracleChatScreen: React.FC = () => {
       }
       sendingRef.current = true;
 
-      // Followup path — free, no quota
-      if (stage === 'answered' && lastReading !== null) {
-        // Cloud Function intent classifier — no API key needed on the client
-        const recentMessages = messages.slice(0, 3).map(m => m.text);
+      // Everything below — the whole rest of this function — used to run
+      // uncaught: only the engine call further down (runEngine()) had its
+      // own try/catch/finally. Every gate before it (classifyQuestion,
+      // classifyIntent, startTrial, acquireLocation, consumeOne) was
+      // presumed safe because each one individually catches its own known
+      // failure modes — but "presumed safe" isn't "provably safe", and
+      // this function had already been caught out twice before by a
+      // different unbounded/uncaught path leaving sendingRef.current stuck
+      // true forever with zero visible sign anything went wrong (no
+      // spinner, no modal, no error — the very first tap after the guard
+      // jams just silently does nothing, forever, until the app restarts).
+      // Wrapping the entire body closes that off structurally instead of
+      // trusting every current and future gate to individually get it
+      // right: whatever throws, wherever it throws, the outer catch/finally
+      // below guarantees this is never silent and the guard always resets.
+      try {
+        // Followup path — free, no quota
+        if (stage === 'answered' && lastReading !== null) {
+          // Cloud Function intent classifier — no API key needed on the client
+          const recentMessages = messages.slice(0, 3).map(m => m.text);
 
-        const intent = await classifyIntent({
-          userMessage: text,
-          lockedQuestion: lastReading.question,
-          verdictDirection: lastReading.verdict,
-          recentMessages,
-        });
+          const intent = await classifyIntent({
+            userMessage: text,
+            lockedQuestion: lastReading.question,
+            verdictDirection: lastReading.verdict,
+            recentMessages,
+          });
 
-        // NEW_QUESTION with HIGH confidence → surface prompt, don't answer
-        if (intent.class === 'NEW_QUESTION' && intent.confidence === 'HIGH') {
-          setShowNewQuestionModal(true);
+          // NEW_QUESTION with HIGH confidence → surface prompt, don't answer
+          if (intent.class === 'NEW_QUESTION' && intent.confidence === 'HIGH') {
+            setShowNewQuestionModal(true);
+            sendingRef.current = false;
+            return;
+          }
+
+          // All other intents → elaboration with intent-aware routing
+          const userMsg: ChatMessage = {
+            id: `u_${Date.now()}`,
+            sender: 'user',
+            text,
+            createdAt: new Date().toISOString(),
+          };
+          setMessages(prev => [userMsg, ...prev]);
+
+          setSending(true);
+          await new Promise<void>(resolve => setTimeout(() => resolve(), 700));
+
+          let responseText = '';
+          if (intent.class === 'TIMING') {
+            responseText = timingResponse(lastReading, lang);
+          } else if (intent.class === 'CLARIFY') {
+            responseText = whyResponse(lastReading, lang);
+          } else if (intent.class === 'REMEDY') {
+            responseText = remedyResponse(lastReading, lang);
+          } else {
+            responseText = elaborationResponse(lastReading, lang);
+          }
+
+          const shamsMsg: ChatMessage = {
+            id: `s_fu_${Date.now()}`,
+            sender: 'shams',
+            text: responseText,
+            createdAt: new Date().toISOString(),
+          };
+          setMessages(prev => [shamsMsg, ...prev]);
+          setSending(false);
           sendingRef.current = false;
           return;
         }
 
-        // All other intents → elaboration with intent-aware routing
-        const userMsg: ChatMessage = {
-          id: `u_${Date.now()}`,
-          sender: 'user',
-          text,
-          createdAt: new Date().toISOString(),
-        };
-        setMessages(prev => [userMsg, ...prev]);
-
-        setSending(true);
-        await new Promise<void>(resolve => setTimeout(() => resolve(), 700));
-
-        let responseText = '';
-        if (intent.class === 'TIMING') {
-          responseText = timingResponse(lastReading, lang);
-        } else if (intent.class === 'CLARIFY') {
-          responseText = whyResponse(lastReading, lang);
-        } else if (intent.class === 'REMEDY') {
-          responseText = remedyResponse(lastReading, lang);
-        } else {
-          responseText = elaborationResponse(lastReading, lang);
-        }
-
-        const shamsMsg: ChatMessage = {
-          id: `s_fu_${Date.now()}`,
-          sender: 'shams',
-          text: responseText,
-          createdAt: new Date().toISOString(),
-        };
-        setMessages(prev => [shamsMsg, ...prev]);
-        setSending(false);
-        sendingRef.current = false;
-        return;
-      }
-
-      // ── Layer 1 — Question Intent Gate (pre-quota) ─────────────────────────
-      // Runs before consumeOne(). CONVERSATIONAL and AMBIGUOUS return early with
-      // a soft inline redirect — no quota burn, no modal, no error state.
-      // API failure always defaults to VALID_HORARY so real questions are never blocked.
-      const questionClass = await classifyQuestion(text);
-      if (questionClass === 'CONVERSATIONAL') {
-        setRedirectMessage('conversational');
-        sendingRef.current = false;
-        return;
-      }
-      if (questionClass === 'AMBIGUOUS') {
-        setRedirectMessage('ambiguous');
-        sendingRef.current = false;
-        return;
-      }
-      // VALID_HORARY falls through — clear any previous redirect
-      setRedirectMessage(null);
-
-      // ── Engine path — paywall gate ──────────────────────────────────────────
-      if (plan === 'free') {
-        if (trialExpired) {
-          navigation.navigate('Premium');
+        // ── Layer 1 — Question Intent Gate (pre-quota) ─────────────────────────
+        // Runs before consumeOne(). CONVERSATIONAL and AMBIGUOUS return early with
+        // a soft inline redirect — no quota burn, no modal, no error state.
+        // API failure always defaults to VALID_HORARY so real questions are never blocked.
+        const questionClass = await classifyQuestion(text);
+        if (questionClass === 'CONVERSATIONAL') {
+          setRedirectMessage('conversational');
           sendingRef.current = false;
           return;
         }
-        if (!trialActive) {
-          startTrial();
+        if (questionClass === 'AMBIGUOUS') {
+          setRedirectMessage('ambiguous');
+          sendingRef.current = false;
+          return;
         }
-        if (questionsToday >= (trialActive ? TRIAL_DAILY_LIMIT : FREE_DAILY_LIMIT)) {
+        // VALID_HORARY falls through — clear any previous redirect
+        setRedirectMessage(null);
+
+        // ── Engine path — paywall gate ──────────────────────────────────────────
+        if (plan === 'free') {
+          if (trialExpired) {
+            navigation.navigate('Premium');
+            sendingRef.current = false;
+            return;
+          }
+          if (!trialActive) {
+            startTrial();
+          }
+          if (questionsToday >= (trialActive ? TRIAL_DAILY_LIMIT : FREE_DAILY_LIMIT)) {
+            if (quotaExhaustedAt.current === 0) {
+              quotaExhaustedAt.current = Date.now();
+            }
+            setShowQuotaModal(true);
+            sendingRef.current = false;
+            return;
+          }
+        }
+
+        const now = new Date().toISOString();
+
+        // ── Opportunistic location — NEVER blocks a reading ────────────────────
+        // The RKP Watch frame is location-invariant: the 5-minute bracket and the
+        // planetary positions it judges are the same wherever the querent stands,
+        // which is what lets a reading run the moment the app opens. Only the
+        // ambient surfaces (hora strip, sky clock, and the location label on the
+        // scroll) want coordinates.
+        //
+        // This used to be a hard gate that returned "location required" and threw
+        // the question away. That dead-end belonged to the retired KP engine,
+        // which needed cusps and therefore a place. Keep the fix attempt, drop
+        // the block.
+        if (lastLocation?.lat === undefined || lastLocation?.lon === undefined) {
+          const liveCoords = await acquireLocation();
+          if (liveCoords !== null) {
+            useSettingsStore.getState().setLastLocation({
+              lat: liveCoords.lat,
+              lon: liveCoords.lon,
+              label: null,
+              capturedAt: Date.now(),
+            });
+          }
+        }
+
+        if (!consumeOne()) {
           if (quotaExhaustedAt.current === 0) {
             quotaExhaustedAt.current = Date.now();
           }
@@ -823,263 +874,255 @@ const OracleChatScreen: React.FC = () => {
           sendingRef.current = false;
           return;
         }
-      }
 
-      const now = new Date().toISOString();
+        const userMsg: ChatMessage = {
+          id: `u_${now}`,
+          sender: 'user',
+          text,
+          createdAt: now,
+        };
+        setMessages(prev => [userMsg, ...prev]);
+        setSending(true);
 
-      // ── Opportunistic location — NEVER blocks a reading ────────────────────
-      // The RKP Watch frame is location-invariant: the 5-minute bracket and the
-      // planetary positions it judges are the same wherever the querent stands,
-      // which is what lets a reading run the moment the app opens. Only the
-      // ambient surfaces (hora strip, sky clock, and the location label on the
-      // scroll) want coordinates.
-      //
-      // This used to be a hard gate that returned "location required" and threw
-      // the question away. That dead-end belonged to the retired KP engine,
-      // which needed cusps and therefore a place. Keep the fix attempt, drop
-      // the block.
-      if (lastLocation?.lat === undefined || lastLocation?.lon === undefined) {
-        const liveCoords = await acquireLocation();
-        if (liveCoords !== null) {
-          useSettingsStore.getState().setLastLocation({
-            lat: liveCoords.lat,
-            lon: liveCoords.lon,
-            label: null,
-            capturedAt: Date.now(),
+        // ── 60-second dedup guard — same question within one minute returns cache ──
+        const minuteBucket = Math.floor(Date.now() / 60000);
+        const dedupKey = `${text.trim().toLowerCase()}_${minuteBucket}`;
+        const cachedReading = readings.find(r => {
+          const rBucket = Math.floor(new Date(r.createdAt).getTime() / 60000);
+          return `${r.question.trim().toLowerCase()}_${rBucket}` === dedupKey;
+        });
+        if (cachedReading) {
+          setLastReading(cachedReading);
+          setStage('answered');
+          setMessages(prev => [
+            {
+              id: `s_cached_${Date.now()}`,
+              sender: 'shams',
+              text:
+                formatHiddenScroll(
+                  cachedReading,
+                  seekerName,
+                  motherName,
+                  lastLocation?.label ?? null,
+                ) ||
+                narrationForReading(cachedReading) ||
+                t('errors.unknown'),
+              reading: cachedReading,
+              createdAt: new Date().toISOString(),
+            },
+            ...prev,
+          ]);
+          setSending(false);
+          sendingRef.current = false;
+          return;
+        }
+
+        try {
+          const reading = await runEngine({
+            question: text,
+            questionLang: lang,
+            seekerProfile: seekerProfile ?? undefined,
           });
-        }
-      }
 
-      if (!consumeOne()) {
-        if (quotaExhaustedAt.current === 0) {
-          quotaExhaustedAt.current = Date.now();
-        }
-        setShowQuotaModal(true);
-        sendingRef.current = false;
-        return;
-      }
+          await addReading(reading);
+          setLastReading(reading);
+          setStage('answered');
 
-      const userMsg: ChatMessage = {
-        id: `u_${now}`,
-        sender: 'user',
-        text,
-        createdAt: now,
-      };
-      setMessages(prev => [userMsg, ...prev]);
-      setSending(true);
-
-      // ── 60-second dedup guard — same question within one minute returns cache ──
-      const minuteBucket = Math.floor(Date.now() / 60000);
-      const dedupKey = `${text.trim().toLowerCase()}_${minuteBucket}`;
-      const cachedReading = readings.find(r => {
-        const rBucket = Math.floor(new Date(r.createdAt).getTime() / 60000);
-        return `${r.question.trim().toLowerCase()}_${rBucket}` === dedupKey;
-      });
-      if (cachedReading) {
-        setLastReading(cachedReading);
-        setStage('answered');
-        setMessages(prev => [
+          // Phase 3 — library-backed remedy selection. Fire-and-forget: never
+          // awaited, never blocks render, selectionReason logged to Firestore by CF.
           {
-            id: `s_cached_${Date.now()}`,
+            const vj = reading.verdictJson as { confidence?: number } | null;
+            const confidence = vj?.confidence ?? 0;
+            const severity: 'low' | 'moderate' | 'high' =
+              confidence >= 70 ? 'low' : confidence >= 40 ? 'moderate' : 'high';
+            const selCtx = contextFromReading({
+              readingId: reading.id,
+              verdict: reading.verdict,
+              category: reading.category ?? 'general',
+              severity,
+              oracleSummary: narrationForReading(reading)?.slice(0, 200) ?? '',
+              questionText: text,
+              seekerProfile,
+            });
+            selectRemedies(selCtx)
+              .then(result => setSelectedRemedies(result.selectedRemedies))
+              .catch(() => undefined);
+          }
+
+          const shamsMsg: ChatMessage = {
+            id: `s_${reading.id}`,
             sender: 'shams',
             text:
-              formatHiddenScroll(
-                cachedReading,
-                seekerName,
-                motherName,
-                lastLocation?.label ?? null,
-              ) ||
-              narrationForReading(cachedReading) ||
+              formatHiddenScroll(reading, seekerName, motherName, lastLocation?.label ?? null) ||
+              narrationForReading(reading) ||
               t('errors.unknown'),
-            reading: cachedReading,
+            reading,
             createdAt: new Date().toISOString(),
-          },
-          ...prev,
-        ]);
-        setSending(false);
-        sendingRef.current = false;
-        return;
-      }
+          };
+          setMessages(prev => [shamsMsg, ...prev]);
+        } catch (err) {
+          console.error('[OracleChatScreen] Engine error:', err);
 
-      try {
-        const reading = await runEngine({
-          question: text,
-          questionLang: lang,
-          seekerProfile: seekerProfile ?? undefined,
-        });
+          // consumeOne() already charged this attempt against the LOCAL quota
+          // counter before the network call was made — this is a separate,
+          // device-only tally from the server's own Firestore ledger (which
+          // the Cloud Function refunds on its side for the same reason). No
+          // reading came back, so give the local slot back too; otherwise a
+          // string of failed attempts permanently exhausts the badge shown
+          // here even once the server-side count is healthy again.
+          useQuotaStore.getState().refundOne();
 
-        await addReading(reading);
-        setLastReading(reading);
-        setStage('answered');
+          let errText =
+            'The scrolls of this moment have not opened their seal. Return at the next appointed hour.';
 
-        // Phase 3 — library-backed remedy selection. Fire-and-forget: never
-        // awaited, never blocks render, selectionReason logged to Firestore by CF.
-        {
-          const vj = reading.verdictJson as { confidence?: number } | null;
-          const confidence = vj?.confidence ?? 0;
-          const severity: 'low' | 'moderate' | 'high' =
-            confidence >= 70 ? 'low' : confidence >= 40 ? 'moderate' : 'high';
-          const selCtx = contextFromReading({
-            readingId: reading.id,
-            verdict: reading.verdict,
-            category: reading.category ?? 'general',
-            severity,
-            oracleSummary: narrationForReading(reading)?.slice(0, 200) ?? '',
-            questionText: text,
-            seekerProfile,
-          });
-          selectRemedies(selCtx)
-            .then(result => setSelectedRemedies(result.selectedRemedies))
-            .catch(() => undefined);
-        }
+          // Firebase callable errors carry the real signal in `.code` — a
+          // stable FunctionsErrorCode like 'resource-exhausted' or
+          // 'unauthenticated' — never in `.message`, which is just the
+          // developer-authored human text and never contains the code name.
+          // Checking `.message` for those code strings (as this used to) only
+          // ever matched the quota case, and only by coincidence: its message
+          // happens to contain the word "quota". Every other real failure —
+          // auth, rate limits, App Check, network — silently fell through to
+          // the generic fallback below, which is what QA was seeing.
+          const code =
+            typeof err === 'object' && err !== null && 'code' in err
+              ? String((err as { code: unknown }).code)
+              : '';
+          const message = err instanceof Error ? err.message.toLowerCase() : '';
 
-        const shamsMsg: ChatMessage = {
-          id: `s_${reading.id}`,
-          sender: 'shams',
-          text:
-            formatHiddenScroll(reading, seekerName, motherName, lastLocation?.label ?? null) ||
-            narrationForReading(reading) ||
-            t('errors.unknown'),
-          reading,
-          createdAt: new Date().toISOString(),
-        };
-        setMessages(prev => [shamsMsg, ...prev]);
-      } catch (err) {
-        console.error('[OracleChatScreen] Engine error:', err);
+          // DIAGNOSTIC — Cloud Functions' callable SDK rejects with the SAME
+          // 'unauthenticated' code whether the ID token is missing/expired OR
+          // the App Check token failed validation (askWatchOracle runs with
+          // enforceAppCheck: true). The client cannot tell those apart from
+          // `err.code` alone, and this ambiguity is exactly what was routing
+          // real App Check/Play-Integrity failures into the "please sign in"
+          // branch below even for signed-in users. Probe both token sources
+          // independently right here, at the moment of failure — synchronously,
+          // so the result can ride along in the SAME bubble the seeker already
+          // knows to screenshot, instead of waiting on Crashlytics console
+          // propagation. TEMPORARY: remove this whole block plus the debugSuffix
+          // once App Check is confirmed healthy in production.
+          let debugSuffix = '';
+          // Set once the diagnostic below actually runs, so the branches after
+          // it can trust the *measured* App Check state instead of re-deriving
+          // it from the raw rejection message (see note below on why that
+          // re-derivation never worked).
+          let diagnosedAppCheckFailed = false;
+          let diagnosedSignedIn = false;
+          if (code === 'unauthenticated' || code === 'permission-denied') {
+            // Both probes below are native module round-trips (ID token refresh,
+            // Play Integrity/App Attest attestation) that can hang indefinitely
+            // on some devices instead of ever resolving or rejecting. This whole
+            // diagnostic sits inside the outer catch, ahead of the `finally`
+            // that resets sendingRef.current — an unbounded await here means the
+            // finally never runs and the Send button stays dead for the rest of
+            // the sitting. Each is bounded so this block always settles — and
+            // both are started before either is awaited, so the two 8s
+            // timeouts run concurrently (worst case ~8s total) rather than
+            // stacking into a ~16s wait if a device manages to hang on both.
+            const idTokenPromise = auth()
+              .currentUser?.getIdToken(true)
+              .then(tok => (tok ? `ok(len=${tok.length})` : 'empty'))
+              .catch(e => `FAILED: ${e instanceof Error ? e.message : String(e)}`);
+            const idTokenStatusPromise =
+              idTokenPromise === undefined
+                ? Promise.resolve('no-current-user')
+                : withTimeout(idTokenPromise, DIAGNOSTIC_PROBE_TIMEOUT_MS).then(
+                    v => v ?? 'TIMEOUT',
+                  );
+            // getAppCheckToken() no longer throws — it returns a typed result
+            // so the real rejection reason (Play Integrity/attestation error,
+            // etc.) reaches this bubble instead of collapsing into
+            // "empty/undefined" the way it used to.
+            const appCheckResultPromise = withTimeout(
+              getAppCheckToken(true),
+              DIAGNOSTIC_PROBE_TIMEOUT_MS,
+            );
 
-        // consumeOne() already charged this attempt against the LOCAL quota
-        // counter before the network call was made — this is a separate,
-        // device-only tally from the server's own Firestore ledger (which
-        // the Cloud Function refunds on its side for the same reason). No
-        // reading came back, so give the local slot back too; otherwise a
-        // string of failed attempts permanently exhausts the badge shown
-        // here even once the server-side count is healthy again.
-        useQuotaStore.getState().refundOne();
+            const [idTokenStatus, appCheckResult] = await Promise.all([
+              idTokenStatusPromise,
+              appCheckResultPromise,
+            ]);
+            const appCheckStatus =
+              appCheckResult === undefined
+                ? 'TIMEOUT'
+                : appCheckResult.ok
+                  ? `ok(len=${appCheckResult.token.length})`
+                  : `FAILED: ${appCheckResult.error}`;
+            diagnosedSignedIn = auth().currentUser !== null;
+            diagnosedAppCheckFailed = appCheckResult === undefined || !appCheckResult.ok;
+            debugSuffix =
+              `\n\n[debug] signedIn=${diagnosedSignedIn} ` +
+              `idToken=${idTokenStatus} appCheck=${appCheckStatus}`;
+            crashlytics().log(
+              `[askWatchOracle unauthenticated] code=${code} message=${message} ${debugSuffix}`,
+            );
+            crashlytics().recordError(
+              new Error(`askWatchOracle rejected: code=${code}${debugSuffix}`),
+            );
+          }
 
-        let errText =
-          'The scrolls of this moment have not opened their seal. Return at the next appointed hour.';
+          if (code === 'resource-exhausted') {
+            errText = message.includes('too many requests')
+              ? 'The oracle needs a moment of quiet. Please wait briefly and ask again.'
+              : 'The gate has closed for today. The oracle speaks three times a day to the free seeker.';
+          } else if (
+            message.includes('app-check') ||
+            message.includes('app check') ||
+            // The callable SDK collapses "missing/invalid App Check token" into
+            // the SAME generic 'unauthenticated' rejection as "not signed in",
+            // and its message text never actually contains "app-check" — so
+            // that string check above never fired in practice. The synchronous
+            // probe above just measured the real cause directly: trust it. A
+            // signed-in user (valid idToken) hitting 'unauthenticated' with a
+            // failed App Check probe is an App Check failure, not a sign-in
+            // problem — telling them to "sign in" here was actively wrong and
+            // unactionable, since they already are.
+            (diagnosedSignedIn && diagnosedAppCheckFailed)
+          ) {
+            errText = 'The seal of verification is absent. Please reinstall and try again.';
+          } else if (code === 'unauthenticated' || code === 'permission-denied') {
+            errText = 'The oracle requires a known face. Please sign in to continue.';
+          } else if (
+            code === 'unavailable' ||
+            code === 'deadline-exceeded' ||
+            message.includes('network') ||
+            message.includes('econnrefused')
+          ) {
+            errText =
+              'The channel to the oracle is interrupted. Check your connection and try again.';
+          }
 
-        // Firebase callable errors carry the real signal in `.code` — a
-        // stable FunctionsErrorCode like 'resource-exhausted' or
-        // 'unauthenticated' — never in `.message`, which is just the
-        // developer-authored human text and never contains the code name.
-        // Checking `.message` for those code strings (as this used to) only
-        // ever matched the quota case, and only by coincidence: its message
-        // happens to contain the word "quota". Every other real failure —
-        // auth, rate limits, App Check, network — silently fell through to
-        // the generic fallback below, which is what QA was seeing.
-        const code =
-          typeof err === 'object' && err !== null && 'code' in err
-            ? String((err as { code: unknown }).code)
-            : '';
-        const message = err instanceof Error ? err.message.toLowerCase() : '';
-
-        // DIAGNOSTIC — Cloud Functions' callable SDK rejects with the SAME
-        // 'unauthenticated' code whether the ID token is missing/expired OR
-        // the App Check token failed validation (askWatchOracle runs with
-        // enforceAppCheck: true). The client cannot tell those apart from
-        // `err.code` alone, and this ambiguity is exactly what was routing
-        // real App Check/Play-Integrity failures into the "please sign in"
-        // branch below even for signed-in users. Probe both token sources
-        // independently right here, at the moment of failure — synchronously,
-        // so the result can ride along in the SAME bubble the seeker already
-        // knows to screenshot, instead of waiting on Crashlytics console
-        // propagation. TEMPORARY: remove this whole block plus the debugSuffix
-        // once App Check is confirmed healthy in production.
-        let debugSuffix = '';
-        // Set once the diagnostic below actually runs, so the branches after
-        // it can trust the *measured* App Check state instead of re-deriving
-        // it from the raw rejection message (see note below on why that
-        // re-derivation never worked).
-        let diagnosedAppCheckFailed = false;
-        let diagnosedSignedIn = false;
-        if (code === 'unauthenticated' || code === 'permission-denied') {
-          // Both probes below are native module round-trips (ID token refresh,
-          // Play Integrity/App Attest attestation) that can hang indefinitely
-          // on some devices instead of ever resolving or rejecting. This whole
-          // diagnostic sits inside the outer catch, ahead of the `finally`
-          // that resets sendingRef.current — an unbounded await here means the
-          // finally never runs and the Send button stays dead for the rest of
-          // the sitting. Each is bounded so this block always settles — and
-          // both are started before either is awaited, so the two 8s
-          // timeouts run concurrently (worst case ~8s total) rather than
-          // stacking into a ~16s wait if a device manages to hang on both.
-          const idTokenPromise = auth()
-            .currentUser?.getIdToken(true)
-            .then(tok => (tok ? `ok(len=${tok.length})` : 'empty'))
-            .catch(e => `FAILED: ${e instanceof Error ? e.message : String(e)}`);
-          const idTokenStatusPromise =
-            idTokenPromise === undefined
-              ? Promise.resolve('no-current-user')
-              : withTimeout(idTokenPromise, DIAGNOSTIC_PROBE_TIMEOUT_MS).then(v => v ?? 'TIMEOUT');
-          // getAppCheckToken() no longer throws — it returns a typed result
-          // so the real rejection reason (Play Integrity/attestation error,
-          // etc.) reaches this bubble instead of collapsing into
-          // "empty/undefined" the way it used to.
-          const appCheckResultPromise = withTimeout(
-            getAppCheckToken(true),
-            DIAGNOSTIC_PROBE_TIMEOUT_MS,
-          );
-
-          const [idTokenStatus, appCheckResult] = await Promise.all([
-            idTokenStatusPromise,
-            appCheckResultPromise,
+          setMessages(prev => [
+            {
+              id: `s_err_${now}`,
+              sender: 'shams',
+              text: errText + debugSuffix,
+              createdAt: new Date().toISOString(),
+            },
+            ...prev,
           ]);
-          const appCheckStatus =
-            appCheckResult === undefined
-              ? 'TIMEOUT'
-              : appCheckResult.ok
-                ? `ok(len=${appCheckResult.token.length})`
-                : `FAILED: ${appCheckResult.error}`;
-          diagnosedSignedIn = auth().currentUser !== null;
-          diagnosedAppCheckFailed = appCheckResult === undefined || !appCheckResult.ok;
-          debugSuffix =
-            `\n\n[debug] signedIn=${diagnosedSignedIn} ` +
-            `idToken=${idTokenStatus} appCheck=${appCheckStatus}`;
-          crashlytics().log(
-            `[askWatchOracle unauthenticated] code=${code} message=${message} ${debugSuffix}`,
-          );
-          crashlytics().recordError(
-            new Error(`askWatchOracle rejected: code=${code}${debugSuffix}`),
-          );
+        } finally {
+          setSending(false);
+          sendingRef.current = false;
         }
-
-        if (code === 'resource-exhausted') {
-          errText = message.includes('too many requests')
-            ? 'The oracle needs a moment of quiet. Please wait briefly and ask again.'
-            : 'The gate has closed for today. The oracle speaks three times a day to the free seeker.';
-        } else if (
-          message.includes('app-check') ||
-          message.includes('app check') ||
-          // The callable SDK collapses "missing/invalid App Check token" into
-          // the SAME generic 'unauthenticated' rejection as "not signed in",
-          // and its message text never actually contains "app-check" — so
-          // that string check above never fired in practice. The synchronous
-          // probe above just measured the real cause directly: trust it. A
-          // signed-in user (valid idToken) hitting 'unauthenticated' with a
-          // failed App Check probe is an App Check failure, not a sign-in
-          // problem — telling them to "sign in" here was actively wrong and
-          // unactionable, since they already are.
-          (diagnosedSignedIn && diagnosedAppCheckFailed)
-        ) {
-          errText = 'The seal of verification is absent. Please reinstall and try again.';
-        } else if (code === 'unauthenticated' || code === 'permission-denied') {
-          errText = 'The oracle requires a known face. Please sign in to continue.';
-        } else if (
-          code === 'unavailable' ||
-          code === 'deadline-exceeded' ||
-          message.includes('network') ||
-          message.includes('econnrefused')
-        ) {
-          errText =
-            'The channel to the oracle is interrupted. Check your connection and try again.';
-        }
-
+      } catch (err) {
+        // Catch-all for the outer try above — anything that throws in a
+        // gate this function trusted to be safe (classifyQuestion,
+        // classifyIntent, startTrial, acquireLocation, consumeOne, the
+        // follow-up response builders) lands here instead of leaving
+        // sendingRef.current stuck true with no visible sign anything
+        // happened. The inner try/catch around runEngine() above already
+        // handles that specific, expected failure with detailed messaging;
+        // this is deliberately generic because reaching it at all means
+        // something NOT already anticipated went wrong.
+        console.error('[OracleChatScreen] Unexpected sendMessage failure:', err);
+        crashlytics().recordError(err instanceof Error ? err : new Error(String(err)));
         setMessages(prev => [
           {
-            id: `s_err_${now}`,
+            id: `s_unexpected_${Date.now()}`,
             sender: 'shams',
-            text: errText + debugSuffix,
+            text: 'The scrolls of this moment have not opened their seal. Return at the next appointed hour.',
             createdAt: new Date().toISOString(),
           },
           ...prev,
