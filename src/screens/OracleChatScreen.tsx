@@ -988,11 +988,16 @@ const OracleChatScreen: React.FC = () => {
             .currentUser?.getIdToken(true)
             .then(tok => (tok ? `ok(len=${tok.length})` : 'empty'))
             .catch(e => `FAILED: ${e instanceof Error ? e.message : String(e)}`);
-          const appCheckStatus = await getAppCheckToken(true)
-            .then(tok => (tok ? `ok(len=${tok.length})` : 'FAILED: empty/undefined'))
-            .catch(e => `FAILED: ${e instanceof Error ? e.message : String(e)}`);
+          // getAppCheckToken() no longer throws — it returns a typed result
+          // so the real rejection reason (Play Integrity/attestation error,
+          // etc.) reaches this bubble instead of collapsing into
+          // "empty/undefined" the way it used to.
+          const appCheckResult = await getAppCheckToken(true);
+          const appCheckStatus = appCheckResult.ok
+            ? `ok(len=${appCheckResult.token.length})`
+            : `FAILED: ${appCheckResult.error}`;
           diagnosedSignedIn = auth().currentUser !== null;
-          diagnosedAppCheckFailed = appCheckStatus.startsWith('FAILED');
+          diagnosedAppCheckFailed = !appCheckResult.ok;
           debugSuffix =
             `\n\n[debug] signedIn=${diagnosedSignedIn} ` +
             `idToken=${idTokenStatus ?? 'no-current-user'} appCheck=${appCheckStatus}`;
