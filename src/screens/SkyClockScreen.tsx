@@ -366,22 +366,14 @@ const SkyClockScreen: React.FC = () => {
                       },
                     ]}
                   >
-                    <Text
-                      style={[typography('caption'), styles.colPlanet, { color: colors.text }]}
-                    >
+                    <Text style={[typography('caption'), styles.colPlanet, { color: colors.text }]}>
                       {glyph} {name}
                     </Text>
-                    <Text
-                      style={[typography('caption'), styles.colData, { color: colors.accent }]}
-                    >
+                    <Text style={[typography('caption'), styles.colData, { color: colors.accent }]}>
                       {sign}
                     </Text>
                     <Text
-                      style={[
-                        typography('caption'),
-                        styles.colData,
-                        { color: colors.textMuted },
-                      ]}
+                      style={[typography('caption'), styles.colData, { color: colors.textMuted }]}
                     >
                       {degreeStr}
                     </Text>
