@@ -30,6 +30,7 @@ import { useQuotaStore, type PlanTier } from './quotaStore';
 import { useReadingsStore } from './readingsStore';
 import { useSettingsStore } from './settingsStore';
 import { invalidateQuotaCache } from '@hooks/useQuota';
+import { withTimeout } from '@utils/withTimeout';
 
 // Web client ID from Firebase Console → Authentication → Google → Web SDK configuration
 export const GOOGLE_WEB_CLIENT_ID =
@@ -74,29 +75,6 @@ const SIGNIN_LOCKOUT_MS = 30_000;
 function readLockoutUntil(): number | null {
   const v = storage.getNumber(KEYS.AUTH_LOCKOUT_UNTIL);
   return v !== undefined && v > Date.now() ? v : null;
-}
-
-/**
- * Resolves with `promise`'s value, or `undefined` after `ms` — whichever comes
- * first. Some real devices' network stacks let getIdTokenResult() hang
- * indefinitely (no resolve, no reject) rather than time out on their own,
- * which would otherwise leave the app on the Splash screen forever, since
- * nothing downstream ever flips `isLoading` back to false.
- */
-function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T | undefined> {
-  return new Promise<T | undefined>(resolve => {
-    const timer = setTimeout(() => resolve(undefined), ms);
-    promise.then(
-      value => {
-        clearTimeout(timer);
-        resolve(value);
-      },
-      () => {
-        clearTimeout(timer);
-        resolve(undefined);
-      },
-    );
-  });
 }
 
 /* -------------------------------------------------------------------------- */

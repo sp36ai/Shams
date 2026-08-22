@@ -27,6 +27,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { acquireLocation } from '@utils/acquireLocation';
+import { withTimeout } from '@utils/withTimeout';
 import crashlytics from '@react-native-firebase/crashlytics';
 import auth from '@react-native-firebase/auth';
 import { getAppCheckToken } from '../firebase/appCheck';
@@ -489,6 +490,15 @@ function formatHiddenScroll(
 }
 
 // ── Engine ────────────────────────────────────────────────────────────────────
+
+/**
+ * Cap on the ID-token/App-Check diagnostic probes fired from the send-error
+ * handler below. Those are native round-trips (token refresh, Play Integrity/
+ * App Attest attestation) that can hang forever on some devices instead of
+ * settling — see the withTimeout() call sites for the failure this guards
+ * against.
+ */
+const DIAGNOSTIC_PROBE_TIMEOUT_MS = 8000;
 
 /**
  * WatchState → the sacred-term verdict vocabulary the rest of the app already
@@ -984,23 +994,40 @@ const OracleChatScreen: React.FC = () => {
         let diagnosedAppCheckFailed = false;
         let diagnosedSignedIn = false;
         if (code === 'unauthenticated' || code === 'permission-denied') {
-          const idTokenStatus = await auth()
+          // Both probes below are native module round-trips (ID token refresh,
+          // Play Integrity/App Attest attestation) that can hang indefinitely
+          // on some devices instead of ever resolving or rejecting. This whole
+          // diagnostic sits inside the outer catch, ahead of the `finally`
+          // that resets sendingRef.current — an unbounded await here means the
+          // finally never runs and the Send button stays dead for the rest of
+          // the sitting. Bound each probe so this block always settles.
+          const idTokenPromise = auth()
             .currentUser?.getIdToken(true)
             .then(tok => (tok ? `ok(len=${tok.length})` : 'empty'))
             .catch(e => `FAILED: ${e instanceof Error ? e.message : String(e)}`);
+          const idTokenStatus =
+            idTokenPromise === undefined
+              ? 'no-current-user'
+              : ((await withTimeout(idTokenPromise, DIAGNOSTIC_PROBE_TIMEOUT_MS)) ?? 'TIMEOUT');
           // getAppCheckToken() no longer throws — it returns a typed result
           // so the real rejection reason (Play Integrity/attestation error,
           // etc.) reaches this bubble instead of collapsing into
           // "empty/undefined" the way it used to.
-          const appCheckResult = await getAppCheckToken(true);
-          const appCheckStatus = appCheckResult.ok
-            ? `ok(len=${appCheckResult.token.length})`
-            : `FAILED: ${appCheckResult.error}`;
+          const appCheckResult = await withTimeout(
+            getAppCheckToken(true),
+            DIAGNOSTIC_PROBE_TIMEOUT_MS,
+          );
+          const appCheckStatus =
+            appCheckResult === undefined
+              ? 'TIMEOUT'
+              : appCheckResult.ok
+                ? `ok(len=${appCheckResult.token.length})`
+                : `FAILED: ${appCheckResult.error}`;
           diagnosedSignedIn = auth().currentUser !== null;
-          diagnosedAppCheckFailed = !appCheckResult.ok;
+          diagnosedAppCheckFailed = appCheckResult === undefined || !appCheckResult.ok;
           debugSuffix =
             `\n\n[debug] signedIn=${diagnosedSignedIn} ` +
-            `idToken=${idTokenStatus ?? 'no-current-user'} appCheck=${appCheckStatus}`;
+            `idToken=${idTokenStatus} appCheck=${appCheckStatus}`;
           crashlytics().log(
             `[askWatchOracle unauthenticated] code=${code} message=${message} ${debugSuffix}`,
           );
