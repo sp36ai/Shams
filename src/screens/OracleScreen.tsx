@@ -20,7 +20,7 @@ import type { RootStackParamList } from '@navigation/types';
 
 import { useColors, useTheme } from '@theme/ThemeProvider';
 import { useTypography } from '@theme/useTypography';
-import { RADIUS } from '@theme/themes';
+import { RADIUS, SPACING } from '@theme/themes';
 import { useTranslation, useI18n } from '@i18n/I18nProvider';
 import { useSettingsStore } from '@stores/settingsStore';
 import { useQuotaStore, FREE_DAILY_LIMIT, TRIAL_DAILY_LIMIT } from '@stores/quotaStore';
@@ -638,7 +638,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 20,
+    paddingHorizontal: SPACING.xl,
     paddingVertical: 12,
     borderBottomWidth: StyleSheet.hairlineWidth,
     gap: 12,
@@ -669,7 +669,7 @@ const styles = StyleSheet.create({
     paddingBottom: 24,
   },
   vocBanner: {
-    marginHorizontal: 16,
+    marginHorizontal: SPACING.xl,
     marginTop: 10,
     paddingHorizontal: 14,
     paddingVertical: 8,
@@ -677,7 +677,7 @@ const styles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth,
   },
   heroCard: {
-    marginHorizontal: 16,
+    marginHorizontal: SPACING.xl,
     marginTop: 14,
     marginBottom: 12,
     paddingVertical: 14,
@@ -712,7 +712,7 @@ const styles = StyleSheet.create({
   pillRow: {
     flexDirection: 'row',
     gap: 10,
-    marginHorizontal: 16,
+    marginHorizontal: SPACING.xl,
     marginBottom: 12,
   },
   infoPill: {
@@ -738,7 +738,7 @@ const styles = StyleSheet.create({
     opacity: 0.9,
   },
   card: {
-    marginHorizontal: 16,
+    marginHorizontal: SPACING.xl,
     marginBottom: 14,
     padding: 16,
     borderRadius: RADIUS.xl,
@@ -760,7 +760,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginHorizontal: 16,
+    marginHorizontal: SPACING.xl,
     marginBottom: 10,
     paddingVertical: 16,
     paddingHorizontal: 18,
@@ -777,7 +777,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginHorizontal: 16,
+    marginHorizontal: SPACING.xl,
     marginBottom: 14,
     paddingVertical: 14,
     paddingHorizontal: 18,
