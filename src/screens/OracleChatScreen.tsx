@@ -1000,23 +1000,31 @@ const OracleChatScreen: React.FC = () => {
           // diagnostic sits inside the outer catch, ahead of the `finally`
           // that resets sendingRef.current — an unbounded await here means the
           // finally never runs and the Send button stays dead for the rest of
-          // the sitting. Bound each probe so this block always settles.
+          // the sitting. Each is bounded so this block always settles — and
+          // both are started before either is awaited, so the two 8s
+          // timeouts run concurrently (worst case ~8s total) rather than
+          // stacking into a ~16s wait if a device manages to hang on both.
           const idTokenPromise = auth()
             .currentUser?.getIdToken(true)
             .then(tok => (tok ? `ok(len=${tok.length})` : 'empty'))
             .catch(e => `FAILED: ${e instanceof Error ? e.message : String(e)}`);
-          const idTokenStatus =
+          const idTokenStatusPromise =
             idTokenPromise === undefined
-              ? 'no-current-user'
-              : ((await withTimeout(idTokenPromise, DIAGNOSTIC_PROBE_TIMEOUT_MS)) ?? 'TIMEOUT');
+              ? Promise.resolve('no-current-user')
+              : withTimeout(idTokenPromise, DIAGNOSTIC_PROBE_TIMEOUT_MS).then(v => v ?? 'TIMEOUT');
           // getAppCheckToken() no longer throws — it returns a typed result
           // so the real rejection reason (Play Integrity/attestation error,
           // etc.) reaches this bubble instead of collapsing into
           // "empty/undefined" the way it used to.
-          const appCheckResult = await withTimeout(
+          const appCheckResultPromise = withTimeout(
             getAppCheckToken(true),
             DIAGNOSTIC_PROBE_TIMEOUT_MS,
           );
+
+          const [idTokenStatus, appCheckResult] = await Promise.all([
+            idTokenStatusPromise,
+            appCheckResultPromise,
+          ]);
           const appCheckStatus =
             appCheckResult === undefined
               ? 'TIMEOUT'
