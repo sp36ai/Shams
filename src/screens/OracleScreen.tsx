@@ -20,6 +20,7 @@ import type { RootStackParamList } from '@navigation/types';
 
 import { useColors, useTheme } from '@theme/ThemeProvider';
 import { useTypography } from '@theme/useTypography';
+import { RADIUS } from '@theme/themes';
 import { useTranslation, useI18n } from '@i18n/I18nProvider';
 import { useSettingsStore } from '@stores/settingsStore';
 import { useQuotaStore, FREE_DAILY_LIMIT, TRIAL_DAILY_LIMIT } from '@stores/quotaStore';
@@ -416,7 +417,7 @@ const OracleScreen: React.FC = () => {
             />
           )}
           <View style={[styles.actionIconWrap, { borderColor: colors.borderAccent }]}>
-            <Text style={{ fontSize: 18 }}>{'✦'}</Text>
+            <Text style={{ fontSize: 18, color: colors.goldBright }}>{'✦'}</Text>
           </View>
           <View style={styles.actionTextCol}>
             <Text style={[typography('button'), { color: colors.goldBright, fontSize: 16 }]}>
@@ -681,7 +682,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     paddingVertical: 14,
     paddingHorizontal: 16,
-    borderRadius: 20,
+    borderRadius: RADIUS.xl,
     borderWidth: StyleSheet.hairlineWidth,
     shadowColor: '#000',
     shadowOpacity: 0.08,
@@ -718,7 +719,7 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     paddingVertical: 12,
-    borderRadius: 16,
+    borderRadius: RADIUS.lg,
     borderWidth: StyleSheet.hairlineWidth,
   },
   tierPill: {
@@ -740,7 +741,7 @@ const styles = StyleSheet.create({
     marginHorizontal: 16,
     marginBottom: 14,
     padding: 16,
-    borderRadius: 18,
+    borderRadius: RADIUS.xl,
     borderWidth: StyleSheet.hairlineWidth,
   },
   manzilCard: {
@@ -763,7 +764,7 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     paddingVertical: 16,
     paddingHorizontal: 18,
-    borderRadius: 18,
+    borderRadius: RADIUS.xl,
     borderWidth: StyleSheet.hairlineWidth,
     overflow: 'hidden',
     shadowColor: '#000',
@@ -780,7 +781,7 @@ const styles = StyleSheet.create({
     marginBottom: 14,
     paddingVertical: 14,
     paddingHorizontal: 18,
-    borderRadius: 18,
+    borderRadius: RADIUS.xl,
     borderWidth: StyleSheet.hairlineWidth,
   },
   actionIconWrap: {
