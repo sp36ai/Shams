@@ -8,6 +8,10 @@
  *   3. CollapsibleCosmicClock — collapsed by default.
  *      CosmicClock's setInterval runs only when focused AND expanded.
  *   4. PlanetTable — Planet | Sign | Degree | Status
+ *      Each row also carries a dignity note (Exalted/OwnSign/FriendlySign/
+ *      EnemySign/Debilitated) beneath it when the placement is notable —
+ *      motion status (Direct/Retrograde/Combust) and dignity are independent
+ *      axes, so e.g. Venus can read "Direct" AND "Debilitated in Virgo".
  *      Disclaimer: approximate display only, not used for horary judgment.
  */
 
@@ -22,6 +26,7 @@ import { useTypography } from '@theme/useTypography';
 import { useSettingsStore } from '@stores/settingsStore';
 import { dayLordAtMoment, horaLordAtMoment } from '@astrology/primitives/rulingPlanets';
 import { buildChart } from '@astrology/primitives/chartBuilder';
+import { dignityOf, type Dignity } from '@astrology/rkp/rules';
 import StarfieldBackground from '@components/StarfieldBackground';
 import CosmicClock from '@components/home/CosmicClock';
 import type { RootStackParamList } from '@navigation/types';
@@ -73,12 +78,58 @@ function computeTiming(lonDeg: number): TimingState {
 const STATUS_RETROGRADE = '#8C7A9A'; // muted violet — retrograde motion restrained
 const STATUS_COMBUST = '#B8952A'; // aged brass — combustion, closeness to the Sun
 
+// Dignity colors — a second, independent axis from motion/combustion above.
+// A planet can be Direct *and* Debilitated (Venus in Virgo) or Retrograde
+// *and* Exalted at once; these badges never replace the STATUS word, they
+// sit alongside it.
+const DIGNITY_EXALTED = '#D4AF37'; // bright gold — full strength
+const DIGNITY_OWN_SIGN = '#6FA787'; // sage green — at home
+const DIGNITY_FRIENDLY = '#7FA3B0'; // soft teal — welcomed by the sign's lord
+const DIGNITY_ENEMY = '#B8735A'; // muted terracotta — hosted by a foe
+const DIGNITY_DEBILITATED = '#A85C5C'; // muted rust — weakened
+
+const DIGNITY_ICON: Readonly<Record<Dignity, string>> = {
+  Exalted: '↑',
+  OwnSign: '⌂',
+  FriendlySign: '◇',
+  NeutralSign: '',
+  EnemySign: '⚔',
+  Debilitated: '↓',
+};
+
+const DIGNITY_LABEL: Readonly<Record<Dignity, string>> = {
+  Exalted: 'Exalted',
+  OwnSign: 'Own Sign',
+  FriendlySign: 'Friendly Sign',
+  NeutralSign: '',
+  EnemySign: 'Enemy Sign',
+  Debilitated: 'Debilitated',
+};
+
+function dignityColor(dignity: Dignity): string {
+  switch (dignity) {
+    case 'Exalted':
+      return DIGNITY_EXALTED;
+    case 'OwnSign':
+      return DIGNITY_OWN_SIGN;
+    case 'FriendlySign':
+      return DIGNITY_FRIENDLY;
+    case 'EnemySign':
+      return DIGNITY_ENEMY;
+    case 'Debilitated':
+      return DIGNITY_DEBILITATED;
+    case 'NeutralSign':
+      return '';
+  }
+}
+
 interface PlanetRow {
   name: PlanetName;
   glyph: string;
   sign: string;
   degreeStr: string;
   status: 'Retrograde' | 'Combust' | 'Direct';
+  dignity: Dignity;
 }
 
 // Uses the same Moshier-ephemeris chart engine that powers real horary
@@ -107,7 +158,9 @@ function computePlanetRows(nowMs: number, latDeg: number, lonDeg: number): Plane
       status = 'Direct';
     }
 
-    return { name, glyph: PLANET_GLYPHS[name], sign, degreeStr, status };
+    const dignity = dignityOf(name, p.sign);
+
+    return { name, glyph: PLANET_GLYPHS[name], sign, degreeStr, status, dignity };
   });
 }
 
@@ -300,44 +353,98 @@ const SkyClockScreen: React.FC = () => {
               ))}
             </View>
             {/* Data rows */}
-            {planetRows.map(({ name, glyph, sign, degreeStr, status }, i) => (
-              <View
-                key={name}
-                style={[
-                  styles.tableRow,
-                  {
-                    borderBottomColor: colors.border,
-                    backgroundColor: i % 2 === 1 ? colors.surfaceElevated : 'transparent',
-                  },
-                ]}
-              >
-                <Text style={[typography('caption'), styles.colPlanet, { color: colors.text }]}>
-                  {glyph} {name}
-                </Text>
-                <Text style={[typography('caption'), styles.colData, { color: colors.accent }]}>
-                  {sign}
-                </Text>
-                <Text style={[typography('caption'), styles.colData, { color: colors.textMuted }]}>
-                  {degreeStr}
-                </Text>
-                <Text
-                  style={[
-                    typography('caption'),
-                    styles.colData,
-                    {
-                      color:
-                        status === 'Retrograde'
-                          ? STATUS_RETROGRADE
-                          : status === 'Combust'
-                            ? STATUS_COMBUST
-                            : colors.textMuted,
-                    },
-                  ]}
-                >
-                  {status}
-                </Text>
-              </View>
-            ))}
+            {planetRows.map(({ name, glyph, sign, degreeStr, status, dignity }, i) => {
+              const hasDignityNote = dignity !== 'NeutralSign';
+              const rowBg = i % 2 === 1 ? colors.surfaceElevated : 'transparent';
+              return (
+                <View key={name} style={{ backgroundColor: rowBg }}>
+                  <View
+                    style={[
+                      styles.tableRow,
+                      {
+                        borderBottomColor: hasDignityNote ? 'transparent' : colors.border,
+                      },
+                    ]}
+                  >
+                    <Text
+                      style={[typography('caption'), styles.colPlanet, { color: colors.text }]}
+                    >
+                      {glyph} {name}
+                    </Text>
+                    <Text
+                      style={[typography('caption'), styles.colData, { color: colors.accent }]}
+                    >
+                      {sign}
+                    </Text>
+                    <Text
+                      style={[
+                        typography('caption'),
+                        styles.colData,
+                        { color: colors.textMuted },
+                      ]}
+                    >
+                      {degreeStr}
+                    </Text>
+                    <Text
+                      style={[
+                        typography('caption'),
+                        styles.colData,
+                        {
+                          color:
+                            status === 'Retrograde'
+                              ? STATUS_RETROGRADE
+                              : status === 'Combust'
+                                ? STATUS_COMBUST
+                                : colors.textMuted,
+                        },
+                      ]}
+                    >
+                      {status}
+                    </Text>
+                  </View>
+                  {/* Dignity note — a second, independent axis from motion/combustion
+                      above: exaltation, own sign, friendly/enemy sign, or debilitation.
+                      A planet can be Direct and Debilitated at once (Venus in Virgo),
+                      so this never replaces the STATUS word, it sits below it. Silent
+                      for NeutralSign — most placements are unremarkable, and calling
+                      that out on every row would bury the ones that matter. */}
+                  {hasDignityNote && (
+                    <View style={[styles.dignityRow, { borderBottomColor: colors.border }]}>
+                      <Text
+                        style={[
+                          typography('caption'),
+                          styles.dignityText,
+                          { color: dignityColor(dignity) },
+                        ]}
+                      >
+                        {DIGNITY_ICON[dignity]} {DIGNITY_LABEL[dignity]} in {sign}
+                      </Text>
+                    </View>
+                  )}
+                </View>
+              );
+            })}
+          </View>
+
+          {/* Dignity legend — decodes the icons on rows carrying a dignity note. */}
+          <View style={styles.legend}>
+            <Text style={[typography('caption'), styles.legendItem, { color: DIGNITY_EXALTED }]}>
+              ↑ Exalted
+            </Text>
+            <Text style={[typography('caption'), styles.legendItem, { color: DIGNITY_OWN_SIGN }]}>
+              ⌂ Own Sign
+            </Text>
+            <Text style={[typography('caption'), styles.legendItem, { color: DIGNITY_FRIENDLY }]}>
+              ◇ Friendly
+            </Text>
+            <Text style={[typography('caption'), styles.legendItem, { color: DIGNITY_ENEMY }]}>
+              ⚔ Enemy
+            </Text>
+            <Text
+              style={[typography('caption'), styles.legendItem, { color: DIGNITY_DEBILITATED }]}
+            >
+              ↓ Debilitated
+            </Text>
           </View>
         </View>
 
@@ -479,6 +586,28 @@ const styles = StyleSheet.create({
   },
   colData: {
     flex: 1.5,
+  },
+  dignityRow: {
+    paddingHorizontal: 14,
+    paddingBottom: 8,
+    paddingTop: 1,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+  },
+  dignityText: {
+    fontSize: 9,
+    fontStyle: 'italic',
+    letterSpacing: 0.2,
+  },
+  legend: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginTop: 8,
+    marginLeft: 2,
+  },
+  legendItem: {
+    fontSize: 9,
+    marginRight: 12,
+    marginBottom: 4,
   },
   disclaimer: {
     marginHorizontal: 16,
