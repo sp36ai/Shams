@@ -25,6 +25,8 @@
 import React from 'react';
 import { screen, userEvent, waitFor } from '@testing-library/react-native';
 import { useNavigation } from '@react-navigation/native';
+import { useSettingsStore } from '@stores/settingsStore';
+import { useQuotaStore } from '@stores/quotaStore';
 import { renderScreen } from '../../test-utils/renderScreen';
 import OracleChatScreen from '../OracleChatScreen';
 
@@ -36,6 +38,14 @@ jest.mock('../../firebase/watchOracle', () => ({
     return Promise.reject(err);
   }),
   deviceUtcOffsetMinutes: jest.fn(() => 330),
+}));
+
+jest.mock('@utils/acquireLocation', () => ({
+  // Default matches production behavior on a fresh settingsStore (no
+  // lastLocation yet) — resolves to a real coordinate, same as the
+  // @react-native-community/geolocation mock in jest.setup.js. Overridden
+  // per-test below to exercise the "unexpected exception" safety net.
+  acquireLocation: jest.fn(() => Promise.resolve({ lat: 31.634, lon: 74.3587 })),
 }));
 
 jest.mock('../../firebase/appCheck', () => ({
@@ -55,6 +65,28 @@ jest.mock('../../firebase/trial', () => ({
 
 describe('OracleChatScreen — Send button re-entrancy guard', () => {
   beforeEach(() => {
+    // These are module-level zustand singletons — state set by one test
+    // (e.g. lastLocation via sendMessage's opportunistic location fetch, or
+    // questionsToday via consumeOne()) otherwise leaks into the next test
+    // in this file, since __mocks__/react-native-mmkv.js only resets the
+    // underlying storage, not the already-constructed store's in-memory
+    // state. Force both back to a clean, predictable "fresh install" shape
+    // before every test.
+    useSettingsStore.setState({ lastLocation: null });
+    useQuotaStore.setState({
+      questionsToday: 0,
+      plan: 'free',
+      trialStartDate: null,
+      trialActive: false,
+      trialExpired: false,
+      planExpiry: null,
+    });
+
+    // jest.mock()'d fns at the top of this file are module singletons too —
+    // call counts from one test otherwise carry into the next.
+    jest.requireMock('../../firebase/watchOracle').askWatchOracle.mockClear();
+    jest.requireMock('@utils/acquireLocation').acquireLocation.mockClear();
+
     (useNavigation as jest.Mock).mockReturnValue({
       navigate: jest.fn(),
       goBack: jest.fn(),
@@ -104,4 +136,45 @@ describe('OracleChatScreen — Send button re-entrancy guard', () => {
 
     await waitFor(() => expect(askWatchOracle).toHaveBeenCalledTimes(2));
   }, 20000);
+
+  it('shows a visible error and re-enables Send when a gate before the engine call throws unexpectedly', async () => {
+    // Simulates the class of bug this safety net exists for: something in a
+    // gate that isn't the engine call itself (here, the opportunistic
+    // location fetch) throws instead of degrading gracefully. Before the
+    // whole-function try/catch/finally, this would have left sendingRef.current
+    // stuck true with zero visible sign anything went wrong — no spinner, no
+    // modal, no error, forever, exactly matching real-world reports of the
+    // Ask screen going silently dead on the very first attempt.
+    const { acquireLocation } = jest.requireMock('@utils/acquireLocation');
+    const { askWatchOracle } = jest.requireMock('../../firebase/watchOracle');
+    acquireLocation.mockRejectedValueOnce(new Error('unexpected native failure'));
+
+    await renderScreen(<OracleChatScreen />);
+    const user = userEvent.setup();
+
+    const input = screen.getByTestId('oracle-input');
+    await user.type(input, 'Will the job offer come through?');
+    await user.press(screen.getByTestId('oracle-send-btn'));
+
+    // The generic fallback message from the new outer catch — proof the
+    // failure is visible rather than silent.
+    await waitFor(() =>
+      expect(
+        screen.getByText(
+          'The scrolls of this moment have not opened their seal. Return at the next appointed hour.',
+        ),
+      ).toBeTruthy(),
+    );
+
+    // The engine call must never have been reached — the throw happened
+    // upstream of it.
+    expect(askWatchOracle).not.toHaveBeenCalled();
+
+    // And the guard must be clear: a second, unaffected attempt goes through.
+    await waitFor(() => expect(input.props.editable).toBe(true));
+    await user.type(screen.getByTestId('oracle-input'), 'Will the job offer come through?');
+    await user.press(screen.getByTestId('oracle-send-btn'));
+
+    await waitFor(() => expect(askWatchOracle).toHaveBeenCalledTimes(1));
+  });
 });
