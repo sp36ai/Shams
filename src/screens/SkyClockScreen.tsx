@@ -123,6 +123,13 @@ function dignityColor(dignity: Dignity): string {
   }
 }
 
+// A soft 15%-alpha tint of the dignity color, for the badge's fill — the
+// border and text stay at full color so the badge reads as "highlighted",
+// not just colored italic text.
+function dignityBg(dignity: Dignity): string {
+  return dignity === 'NeutralSign' ? 'transparent' : `${dignityColor(dignity)}26`;
+}
+
 interface PlanetRow {
   name: PlanetName;
   glyph: string;
@@ -402,15 +409,25 @@ const SkyClockScreen: React.FC = () => {
                       that out on every row would bury the ones that matter. */}
                   {hasDignityNote && (
                     <View style={[styles.dignityRow, { borderBottomColor: colors.border }]}>
-                      <Text
+                      <View
                         style={[
-                          typography('caption'),
-                          styles.dignityText,
-                          { color: dignityColor(dignity) },
+                          styles.dignityBadge,
+                          {
+                            backgroundColor: dignityBg(dignity),
+                            borderColor: dignityColor(dignity),
+                          },
                         ]}
                       >
-                        {DIGNITY_ICON[dignity]} {DIGNITY_LABEL[dignity]} in {sign}
-                      </Text>
+                        <Text
+                          style={[
+                            typography('caption'),
+                            styles.dignityText,
+                            { color: dignityColor(dignity) },
+                          ]}
+                        >
+                          {DIGNITY_ICON[dignity]} {DIGNITY_LABEL[dignity]} in {sign}
+                        </Text>
+                      </View>
                     </View>
                   )}
                 </View>
@@ -418,25 +435,60 @@ const SkyClockScreen: React.FC = () => {
             })}
           </View>
 
-          {/* Dignity legend — decodes the icons on rows carrying a dignity note. */}
+          {/* Dignity legend — decodes the badges on rows carrying a dignity note. */}
           <View style={styles.legend}>
-            <Text style={[typography('caption'), styles.legendItem, { color: DIGNITY_EXALTED }]}>
-              ↑ Exalted
-            </Text>
-            <Text style={[typography('caption'), styles.legendItem, { color: DIGNITY_OWN_SIGN }]}>
-              ⌂ Own Sign
-            </Text>
-            <Text style={[typography('caption'), styles.legendItem, { color: DIGNITY_FRIENDLY }]}>
-              ◇ Friendly
-            </Text>
-            <Text style={[typography('caption'), styles.legendItem, { color: DIGNITY_ENEMY }]}>
-              ⚔ Enemy
-            </Text>
-            <Text
-              style={[typography('caption'), styles.legendItem, { color: DIGNITY_DEBILITATED }]}
+            <View
+              style={[
+                styles.legendBadge,
+                { backgroundColor: `${DIGNITY_EXALTED}26`, borderColor: DIGNITY_EXALTED },
+              ]}
             >
-              ↓ Debilitated
-            </Text>
+              <Text style={[typography('caption'), styles.legendText, { color: DIGNITY_EXALTED }]}>
+                ↑ Exalted
+              </Text>
+            </View>
+            <View
+              style={[
+                styles.legendBadge,
+                { backgroundColor: `${DIGNITY_OWN_SIGN}26`, borderColor: DIGNITY_OWN_SIGN },
+              ]}
+            >
+              <Text style={[typography('caption'), styles.legendText, { color: DIGNITY_OWN_SIGN }]}>
+                ⌂ Own Sign
+              </Text>
+            </View>
+            <View
+              style={[
+                styles.legendBadge,
+                { backgroundColor: `${DIGNITY_FRIENDLY}26`, borderColor: DIGNITY_FRIENDLY },
+              ]}
+            >
+              <Text style={[typography('caption'), styles.legendText, { color: DIGNITY_FRIENDLY }]}>
+                ◇ Friendly
+              </Text>
+            </View>
+            <View
+              style={[
+                styles.legendBadge,
+                { backgroundColor: `${DIGNITY_ENEMY}26`, borderColor: DIGNITY_ENEMY },
+              ]}
+            >
+              <Text style={[typography('caption'), styles.legendText, { color: DIGNITY_ENEMY }]}>
+                ⚔ Enemy
+              </Text>
+            </View>
+            <View
+              style={[
+                styles.legendBadge,
+                { backgroundColor: `${DIGNITY_DEBILITATED}26`, borderColor: DIGNITY_DEBILITATED },
+              ]}
+            >
+              <Text
+                style={[typography('caption'), styles.legendText, { color: DIGNITY_DEBILITATED }]}
+              >
+                ↓ Debilitated
+              </Text>
+            </View>
           </View>
         </View>
 
@@ -580,26 +632,42 @@ const styles = StyleSheet.create({
     flex: 1.5,
   },
   dignityRow: {
+    flexDirection: 'row',
     paddingHorizontal: 14,
     paddingBottom: 8,
-    paddingTop: 1,
+    paddingTop: 2,
     borderBottomWidth: StyleSheet.hairlineWidth,
+  },
+  dignityBadge: {
+    flexDirection: 'row',
+    alignSelf: 'flex-start',
+    borderRadius: 8,
+    borderWidth: 1,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
   },
   dignityText: {
     fontSize: 9,
-    fontStyle: 'italic',
+    fontWeight: '600',
     letterSpacing: 0.2,
   },
   legend: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    marginTop: 8,
+    marginTop: 10,
     marginLeft: 2,
   },
-  legendItem: {
+  legendBadge: {
+    borderRadius: 8,
+    borderWidth: 1,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    marginRight: 8,
+    marginBottom: 6,
+  },
+  legendText: {
     fontSize: 9,
-    marginRight: 12,
-    marginBottom: 4,
+    fontWeight: '600',
   },
   disclaimer: {
     marginHorizontal: 16,
