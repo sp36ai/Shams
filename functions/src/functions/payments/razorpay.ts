@@ -77,6 +77,49 @@ const RAZORPAY_PLAN_MAP: Record<string, PlanTier> = {
   plan_khass_annual: 'khass',
 };
 
+/**
+ * Atomically claims a Razorpay event for processing, keyed by event type +
+ * the entity's own id (Razorpay guarantees payment/subscription ids are
+ * unique — no assumption about a webhook-envelope-level id is needed).
+ * Returns true if this call is the one that should process the event; false
+ * if another delivery (a concurrent retry, or Razorpay's own redelivery)
+ * already claimed it.
+ *
+ * Replaces two prior gaps:
+ *   - payment.captured deduped by querying /auditLogs for a matching
+ *     razorpayPaymentId, then writing the upgrade separately — read, then
+ *     write, not atomic. Two concurrent deliveries could both observe "not
+ *     yet processed" before either recorded it.
+ *   - subscription.activated had no dedup at all.
+ * Both now go through this single transactional claim.
+ */
+async function claimWebhookEvent(key: string): Promise<boolean> {
+  const ref = db.collection('webhookEvents').doc(key);
+  return db.runTransaction(async tx => {
+    const snap = await tx.get(ref);
+    if (snap.exists) {
+      return false;
+    }
+    tx.set(ref, { claimedAt: FieldValue.serverTimestamp(), source: 'razorpay' });
+    return true;
+  });
+}
+
+/**
+ * Releases a claim taken by claimWebhookEvent() when processing failed after
+ * the claim succeeded. Without this, a transient failure (a Firestore write
+ * blip, a downed Auth API call) would permanently block any future retry —
+ * including a manual "resend webhook" from the Razorpay dashboard, which is
+ * a real support-recovery path — from ever processing that event.
+ */
+async function releaseWebhookEvent(key: string): Promise<void> {
+  await db
+    .collection('webhookEvents')
+    .doc(key)
+    .delete()
+    .catch(() => undefined);
+}
+
 function getRazorpaySecret(): string {
   const s = RAZORPAY_WEBHOOK_SECRET.value();
   if (!s) {
@@ -277,14 +320,12 @@ export const razorpayWebhook = onRequest(
           return;
         }
 
-        // Idempotency: skip if this payment has already been processed
+        // Idempotency: atomically claim this payment id before processing it.
+        // A missing paymentId can't be deduped meaningfully — process it
+        // (rare; Razorpay always includes entity.id for a real payment).
         if (paymentId) {
-          const existing = await db
-            .collection('auditLogs')
-            .where('razorpayPaymentId', '==', paymentId)
-            .limit(1)
-            .get();
-          if (!existing.empty) {
+          const claimed = await claimWebhookEvent(`payment.captured:${paymentId}`);
+          if (!claimed) {
             logger.info('razorpay: duplicate payment event, skipping', {
               paymentId,
               ipHash: requestMeta.ipHash,
@@ -294,7 +335,14 @@ export const razorpayWebhook = onRequest(
           }
         }
 
-        await upgradePlan(userId, plan, requestMeta, paymentId);
+        try {
+          await upgradePlan(userId, plan, requestMeta, paymentId);
+        } catch (err) {
+          if (paymentId) {
+            await releaseWebhookEvent(`payment.captured:${paymentId}`);
+          }
+          throw err;
+        }
       } else if (eventType === 'subscription.activated') {
         const sub = (event.payload as Record<string, unknown>)?.subscription as
           | Record<string, unknown>
@@ -304,9 +352,10 @@ export const razorpayWebhook = onRequest(
 
         const userId = notes?.userId;
         const razorPlan = entity?.plan_id as string | undefined;
+        const subscriptionId = entity?.id as string | undefined;
 
-        if (!userId || !razorPlan) {
-          logger.warn('razorpay subscription.activated: missing userId or plan_id', {
+        if (!userId || !razorPlan || !subscriptionId) {
+          logger.warn('razorpay subscription.activated: missing userId, plan_id, or entity id', {
             ipHash: requestMeta.ipHash,
             durationMs: Date.now() - startedAt,
           });
@@ -316,7 +365,26 @@ export const razorpayWebhook = onRequest(
 
         const plan = RAZORPAY_PLAN_MAP[razorPlan];
         if (plan) {
-          await upgradePlan(userId, plan, requestMeta);
+          // Same atomic claim as payment.captured — this event type previously
+          // had no dedup at all, so a Razorpay redelivery would silently
+          // re-run upgradePlan (harmless here since it recomputes the same
+          // expiry rather than stacking it, but inconsistent and unobserved).
+          const claimKey = `subscription.activated:${subscriptionId}`;
+          const claimed = await claimWebhookEvent(claimKey);
+          if (!claimed) {
+            logger.info('razorpay: duplicate subscription.activated event, skipping', {
+              subscriptionId,
+              ipHash: requestMeta.ipHash,
+            });
+            res.status(200).send('OK');
+            return;
+          }
+          try {
+            await upgradePlan(userId, plan, requestMeta);
+          } catch (err) {
+            await releaseWebhookEvent(claimKey);
+            throw err;
+          }
         }
       }
       // All other event types: acknowledge silently

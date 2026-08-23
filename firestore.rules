@@ -121,6 +121,15 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    // ── /webhookEvents/{key} ─────────────────────────────────────────────────
+    // Idempotency claims for payment-provider webhooks (razorpayWebhook).
+    // Written exclusively by Cloud Functions via the Admin SDK. No client
+    // access — these are internal dedup markers, not user-facing data.
+
+    match /webhookEvents/{key} {
+      allow read, write: if false;
+    }
+
     // ── /_system/{document} ──────────────────────────────────────────────────
     // Internal configuration (feature flags, app signatures). Admin only.
 
