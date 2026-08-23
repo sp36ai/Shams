@@ -215,6 +215,11 @@ export const en: StringTable = {
     versionLabel: 'Version',
     signOut: 'Sign Out',
     signOutConfirm: 'Sign out of Shams al-Asrar?',
+    deleteAccount: 'Delete Account',
+    deleteAccountConfirmTitle: 'Permanently delete your account?',
+    deleteAccountConfirmBody:
+      'This deletes your account, every reading, and your subscription status. This cannot be undone.',
+    deleteAccountError: 'Account deletion failed. Please try again or contact support.',
   },
 
   theme: {

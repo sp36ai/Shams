@@ -222,6 +222,11 @@ export const ur: StringTable = {
     versionLabel: 'ورژن',
     signOut: 'باہر نکلیں',
     signOutConfirm: 'شمسُ الاسرار سے باہر نکلیں؟',
+    deleteAccount: 'اکاؤنٹ حذف کریں',
+    deleteAccountConfirmTitle: 'کیا آپ اپنا اکاؤنٹ مستقل طور پر حذف کرنا چاہتے ہیں؟',
+    deleteAccountConfirmBody:
+      'اس سے آپ کا اکاؤنٹ، تمام زائچے، اور آپ کی سبسکرپشن کی صورتحال حذف ہو جائے گی۔ اسے واپس نہیں کیا جا سکتا۔',
+    deleteAccountError: 'اکاؤنٹ حذف نہیں ہو سکا۔ براہ کرم دوبارہ کوشش کریں یا سپورٹ سے رابطہ کریں۔',
   },
 
   theme: {
