@@ -193,12 +193,19 @@ export const askWatchOracle = onCall(
           lagnaRuler: toBoundaryPlanetName(verdict.lagnaRuler),
         };
 
+        // Allocated here (not after composition, as before) so its id can be
+        // passed into composeWatchOracleResponse — the safety validator logs
+        // its result under readings/{readingId}/validationLog, and needs the
+        // id before the reading document itself is written.
+        readingRef = db.collection('readings').doc();
+
         // ── Diagnosis → remedy protocol → narration ──────────────────────────
         try {
           oracleResponse = await composeWatchOracleResponse({
             verdict: publicVerdict,
             seekerName: input.seekerName,
             motherName: input.motherName,
+            readingId: readingRef.id,
           });
         } catch (err) {
           logger.warn('askWatchOracle: oracle composition failed', {
@@ -209,7 +216,6 @@ export const askWatchOracle = onCall(
           oracleResponse = null;
         }
 
-        readingRef = db.collection('readings').doc();
         const narration = oracleResponse?.narration?.interpretation || verdict.factors.join(' ');
         const readingDoc: Omit<ReadingDoc, 'createdAt'> = {
           userId,
