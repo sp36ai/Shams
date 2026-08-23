@@ -23,6 +23,18 @@ complete verdict table across the full priority framework, including the areas �
 originally called out of scope that turned out to be partially checkable from source
 after all (reliability, cost controls, backup/DR, performance, observability).
 
+**Then read §17 for the current headline** — six of §16's P0/P1 findings (account
+deletion, RKP regression coverage, payment idempotency, AI defense-in-depth, prompt
+sanitization, and the `functions/` critical CVE from §10) were fixed and pushed in this
+same session, not left as recommendations. The honest verdict as of the latest commit is:
+**production-ready software controls, substantially remediated; two infrastructure/
+decommissioning controls remain OPEN** — Backup/DR (policy and runbook complete, not yet
+enabled or restore-tested — a runbook is not a working control until someone runs it) and
+the legacy `askOracle` endpoint (deprecated, not deleted — needs a production-traffic
+check, not more source review, before it can go). Neither of those two is a code
+defect; both require access this session doesn't have. Do not report either as PASS or
+CLOSED until §17's own OPEN items are actually resolved by whoever holds that access.
+
 ---
 
 ## 1. Scorecard
@@ -775,7 +787,24 @@ the next observability investment once the P0s above are closed.
 ## 17. Addendum — release-gate items closed this session
 
 Six of the eight must-fix items from the release gate were implemented and verified in
-this session (not just written up as findings). Two remain, for the reasons below.
+this session (not just written up as findings). Two remain — deliberately, not from
+running out of time — because closing them requires access and evidence this session
+does not have: live GCP infrastructure control, and production traffic telemetry. Both
+are control-completion gaps, not code gaps, and both stay **OPEN** until someone with
+that access executes and records the missing step. Precise status, not to be rounded up:
+
+| Item | Status |
+|---|---|
+| Account deletion | **CLOSED** |
+| RKP golden-value regression tests | **CLOSED** |
+| Payment webhook idempotency | **CLOSED** |
+| AI output defense-in-depth | **CLOSED** |
+| Prompt-field sanitization | **CLOSED** |
+| Stale documentation | **PARTIALLY CLOSED** (`AUDIT_PROGRESS.md` only — see item 8) |
+| Backup / disaster recovery | **OPEN — requires GCP execution.** Policy and runbook are complete (`BACKUP_AND_DISASTER_RECOVERY.md`); the backup schedule itself is not enabled, no backup has been verified to exist, and no restore has been tested. A written runbook is not a working control — it becomes one only after someone with project-owner access to `shams-app-4d0e7` runs §2 of that document, confirms a backup exists, executes a real restore per §4/§5, and records the result in the drill table. Do not report this as PASS or "done" until that record exists. |
+| Legacy `askOracle` path | **OPEN — requires production traffic verification.** Deprecated in code and docs, not deleted. `src/` proves the current client doesn't call it; it does not prove no previously-released client still can. Closing this requires checking `askOracle`'s actual Cloud Functions invocation count over a recent window, confirming zero, only then separating `claimQuotaSlot()`/`refundQuotaSlot()` out (they're live, shared with `askWatchOracle`), then removing the endpoint and redeploying. |
+
+Detail on each item:
 
 | # | Item | Status |
 |---|---|---|
