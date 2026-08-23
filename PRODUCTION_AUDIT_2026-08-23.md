@@ -631,10 +631,10 @@ matter are the live function's — so both were re-verified directly against
   live path too** — `buildUserPrompt` interpolates them directly (`responseComposer.ts:148-149`).
   Same low-severity assessment as before.
 
-**Recommendation**: either delete `askOracle.ts` (and its client-facing types) or
-explicitly document it as an intentionally-retained legacy/fallback path — right now
-nothing marks it as dead, so a future contributor has no signal not to build on it, and
-`AUDIT_PROGRESS.md`'s own CP-05 notes still describe it as live.
+**Recommendation, actioned in §17**: `askOracle.ts` now carries an explicit deprecation
+header rather than being silently left to look live, and `AUDIT_PROGRESS.md` carries a
+drift notice pointing at this document. It was deliberately not deleted outright — see
+§17 item 7 for why, and what to check before doing so.
 
 ---
 
@@ -642,6 +642,12 @@ nothing marks it as dead, so a future contributor has no signal not to build on 
 
 Mapping every row of the requested priority framework to what was actually checked this
 session, correcting §1's scope to the live `askWatchOracle` path per §15.
+
+**This table reflects the as-found state.** §17 records what was actually fixed in this
+same session afterward: account deletion, backup/DR (policy written, not yet enabled),
+RKP golden tests, payment webhook idempotency, AI defense-in-depth, and prompt-field
+sanitization are no longer open the way this table describes them below — check §17
+before treating any P0/P1 row here as still outstanding.
 
 | Pri | Area | Verdict | Basis |
 |---|---|---|---|
@@ -763,3 +769,31 @@ telemetry (screen-load time, time-to-first-reading, funnel drop-off) visible in 
 "why is engagement/conversion at X%" would currently need to be answered from Firestore
 business data alone, not from an analytics layer. Not a P0/P1 item, but worth naming as
 the next observability investment once the P0s above are closed.
+
+---
+
+## 17. Addendum — release-gate items closed this session
+
+Six of the eight must-fix items from the release gate were implemented and verified in
+this session (not just written up as findings). Two remain, for the reasons below.
+
+| # | Item | Status |
+|---|---|---|
+| 1 | Account deletion | **Closed.** `functions/src/functions/account.ts` (`deleteAccount` callable) + Settings-screen entry point (`src/screens/SettingsScreen.tsx`) + `src/firebase/account.ts` client wrapper. Deletes `/users`, `/quotas`, `/trials`, every `/readings` doc for the caller, and the Firebase Auth user; idempotent (safe to call twice). Deliberately retains `/purchaseTokens` and `/auditLogs`/`/securityEvents` — fraud-prevention records, no raw PII — and `privacy-policy.html` §5/§6 now states that exception explicitly, so policy text matches actual behavior. |
+| 2 | Backup/disaster recovery | **Policy + runbook written, not enabled.** `BACKUP_AND_DISASTER_RECOVERY.md` — RPO ≤24h / RTO ≤4h targets, exact `gcloud firestore backups schedules create` commands, restore procedure, quarterly drill checklist. **Not executed**: enabling it requires GCP project-owner access to `shams-app-4d0e7` this session doesn't have. Whoever holds that access needs to run §2 of that document. |
+| 3 | RKP golden-value regression tests | **Closed.** Three new test files under `functions/src/engine/`, previously empty: `primitives/__tests__/julianDay.test.ts` (pins published Espenak-Meeus ΔT reference values and the J2000.0 epoch — independently verifiable, not just self-referential), `primitives/__tests__/chartBuilder.test.ts` (characterization tests — real engine output captured and pinned, honestly labeled as regression protection rather than independently-verified astronomy; ordinary/leap-day/UTC-midnight-boundary cases), `kp/judgment/__tests__/judgeHorary.test.ts` (proves the "no `Date.now()`, no `Math.random()`" determinism claim by calling it, not just reading the comment). All values were computed by actually running the engine via `ts-node` against the real source in this session, not invented. Wired into the existing CI gate automatically (`functions-quality` job already runs `npm test -- --run` against `src/**/*.test.ts`) — no CI config change needed. **Related finding surfaced while doing this**: `functions/vitest.config.ts` already declares a 95%-coverage gate scoped to `src/engine/**`, but `npm test` runs `vitest --passWithNoTests` (not the separate `test:coverage` script), and CI never invokes coverage — so that gate has never actually been enforced. These three files are a real start, not a claim of meeting that 95% target across the whole engine tree. |
+| 4 | Payment webhook idempotency | **Closed.** `payments/razorpay.ts` — both `payment.captured` and `subscription.activated` now go through an atomic `claimWebhookEvent()` (Firestore transaction: read-claim-or-reject in one op, not the prior read-then-write-elsewhere pattern), with the claim released on downstream failure so a legitimate retry isn't permanently blocked. New `/webhookEvents/{key}` collection, admin-only in `firestore.rules` (same pattern as `rateLimits`/`purchaseTokens`). |
+| 5 | AI output defense-in-depth | **Closed.** `safetyValidator.ts`'s per-field validation engine was generalized (`runFieldValidation`) and a new `runWatchNarrationSafetyValidator` wraps it for `askWatchOracle`'s narration fields. Wired into `oracle/responseComposer.ts`'s `narrate()` — the live path now gets the same independent post-generation re-check `askOracle` always had; fails open on its own error/timeout so an unreachable validator can't turn a working reading into a broken one. Required threading a `readingId` through `askWatchOracle.ts` → `composeWatchOracleResponse` (the reading doc's ref is now allocated before composition instead of after, specifically so the validator's log entry can be correlated to it). |
+| 6 | Prompt-field sanitization | **Closed.** `middleware/validate.ts`: `seekerName`/`motherName` now go through a `NameSchema` (Zod `.transform`) before reaching either oracle function — Unicode-normalizes, strips control characters (via `\p{Cc}`, not a hand-rolled byte range — see the note below), strips the handful of quoting/bracketing characters with no legitimate place in a name, collapses whitespace. Applies at the schema boundary, so it protects the field regardless of which client version populates it — the currently-shipped client doesn't actually send these fields to `askWatchOracle` yet (grep-confirmed: `src/firebase/watchOracle.ts`'s `AskWatchOracleInput` doesn't include them), but the server-side schema accepts and would forward them if sent, so this is real defense-in-depth against the API contract, not a fix for an actively-exploited path. |
+| 7 | Dead `askOracle` path | **Deprecated in code and docs, not deleted.** Loud deprecation header added to `askOracle.ts` and `index.ts`'s function-list comment; `AUDIT_PROGRESS.md` (the one doc in the 14 that reference `askOracle` written as a living status doc rather than a dated snapshot) got a drift notice at the top. **Deliberately not deleted**: `askOracle` was deployed and reachable at audit time; this session found the retirement commit (`33fc6d5`, 2026-08-14 — nine days before this audit, `versionCode` only 4) but has no visibility into whether any straggling pre-retirement app install is still calling it. Physically removing a live, deployed API endpoint without confirming zero real traffic is exactly the kind of hard-to-reverse production action this session shouldn't take unilaterally — the deprecation comment tells whoever has Cloud Console access exactly what to check (`askOracle`'s invocation metrics) before deleting it. **Also caught while doing this**: `claimQuotaSlot()`/`refundQuotaSlot()` are defined in this same file and imported directly by the live `askWatchOracle.ts` — deleting the file wholesale would have broken the live path. Flagged explicitly in the deprecation comment so a future cleanup doesn't make that mistake. |
+| 8 | Stale documentation | **Partially closed.** `AUDIT_PROGRESS.md` corrected (see #7). The other 13 docs referencing `askOracle` were deliberately left alone — most are dated point-in-time snapshots (e.g. `APP_PRESENT_STATUS_2026-05-05.md`) where rewriting would erase legitimate historical record rather than fix a live inaccuracy. A full "one canonical architecture doc" consolidation, as suggested, is real follow-up work but wasn't attempted here — it's a documentation-architecture decision (what to keep, merge, or archive across 20+ files) better made by the team than imposed unilaterally in this session. |
+
+**A process note on this session's own work, in the spirit of the audit itself:** an early
+attempt at the `sanitizeName` control-character regex was miswritten and silently
+corrupted on write (a JSON-escape-decoding issue in the edit tool, not a logic bug) into a
+regex that would have stripped nearly all characters from any name. It was caught before
+being tested against real input — `\p{Cc}` (a Unicode property escape) was used instead
+of a hand-written byte range specifically so the fix doesn't depend on getting raw control
+bytes through cleanly again — and every file touched this session was swept for stray
+control bytes before committing. Noted here rather than quietly fixed, on the same
+"evidence over assertion" standard the rest of this document holds the codebase to.
