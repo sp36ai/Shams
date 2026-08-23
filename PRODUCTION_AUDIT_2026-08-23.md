@@ -13,6 +13,16 @@ This supersedes nothing in `AUDIT_PROGRESS.md` / `PRODUCTION_READINESS_AUDIT.md`
 adds the gaps those passes didn't cover (test coverage on the engine itself, current
 dependency CVEs, account-deletion enforcement).
 
+**Read §15 before trusting §1's scorecard on its own** — §1-§14 were written against
+`askOracle`, which turned out on further inspection to be dead code the shipped app never
+calls (see §15). The properties described there (determinism, no-raw-question-to-Claude,
+secret handling) were re-verified directly against the actual live function
+(`askWatchOracle`) in §15 and hold, with one real difference: the live path has one layer
+of output-safety defense, not the two `askOracle` had. §16 gives the corrected,
+complete verdict table across the full priority framework, including the areas §13
+originally called out of scope that turned out to be partially checkable from source
+after all (reliability, cost controls, backup/DR, performance, observability).
+
 ---
 
 ## 1. Scorecard
@@ -567,3 +577,189 @@ opinions"):
 
 *This audit reflects HEAD `21a7667` on `claude/shams-audit-framework-yz73bg` as of
 2026-08-23. Re-run against a fresh HEAD before treating any PASS above as still current.*
+
+---
+
+## 15. Addendum — live-path correction
+
+**`askOracle` is dead code from the client's perspective.** A repo-wide search
+(`grep -rn "'askOracle'" src`) returns zero matches — no screen, hook, or store in `src/`
+calls it. `OracleChatScreen.tsx:522-528` documents why: *"The KP horary path (askOracle)
+was retired here: it required a location the watch frame does not need... and because
+both callables claim a quota slot, running the pair charged the querent twice for one
+question."* The live, shipped flow is **`askWatchOracle`** exclusively. `askOracle`
+remains exported and deployed (`functions/src/index.ts:23`) — so it is not a dangling
+security hole, it still enforces App Check/Auth/rate-limit/quota like everything else —
+but it is unreachable dead weight: unused attack surface and unused maintenance burden,
+and itself a fossil of a real prior cost bug (double quota-charge). §6 and §8 of this
+report describe real, verified properties of the *codebase*, but the properties that
+matter are the live function's — so both were re-verified directly against
+`askWatchOracle.ts` and its composition path, `oracle/responseComposer.ts`:
+
+- **Determinism / no client ephemeris involvement**: holds identically.
+  `buildWatchChart(localMoment)` runs server-side; the instant is always the server's own
+  `Date.now()` (`askWatchOracle.ts:177`, comment: *"a querent cannot replay or hand-pick a
+  moment to re-roll a reading"*). Only the UTC-offset (which timezone bracket to read) is
+  client-asserted, and this is explicitly documented as an accepted, bounded risk, not an
+  oversight: *"a determined caller could assert a false offset to land in a chosen
+  bracket... the quota is still charged, and no privilege boundary is crossed"*
+  (`:37-41`). That's an honest, correctly-scoped risk acceptance, not a gap.
+- **Claude cannot invent the diagnosis or the remedy — structurally, not just by
+  instruction.** This is actually a *stronger* guarantee than `askOracle`'s. In
+  `responseComposer.ts`, remedy names/instructions are copied verbatim from
+  `REMEDY_LIBRARY` into the response *after* the model returns (`:14-16`) — the model
+  never names a remedy, so it structurally cannot invent one, versus `askOracle` which
+  only told Claude not to via prompt instructions. The diagnosis is likewise handed to
+  Claude as "settled — explain, do not revise" (`buildUserPrompt`, `:128`).
+- **Raw question text still never reaches Claude** — confirmed the same way: zero
+  references to `input.question`/`args.question` anywhere in `responseComposer.ts`.
+- **Real finding: the second-layer output safety validator does not carry over to the
+  live path.** `askOracle.ts` ran every prose field through an independent Haiku
+  `runSafetyValidator` pass after synthesis (§8). `askWatchOracle` → `narrate()`
+  (`responseComposer.ts:212-297`) has no equivalent second pass — output is parsed,
+  required-field-checked, and returned. It is **not undefended**: the live system prompt
+  (`watchOracleSynthesisPrompt.ts`) bakes in the same class of first-line guardrails —
+  *"Never promise, guarantee or predict with certainty"*, *"Never give medical, legal or
+  financial direction of your own... say plainly that a reading does not substitute for
+  qualified advice"* (`:74-75`) — so this is "one layer of defense instead of two," not
+  "no defense." Given the live path's remedy content is already structurally locked to a
+  vetted library (arguably the harder problem), the missing second pass matters mainly for
+  free-text tone/certainty drift in `interpretation`/`recommended_approach`. Worth porting
+  `runSafetyValidator` (or an equivalent lightweight re-check) onto this path for parity —
+  P1, not P0.
+- **`seekerName`/`motherName` unsanitized-into-prompt finding (§8) is confirmed on the
+  live path too** — `buildUserPrompt` interpolates them directly (`responseComposer.ts:148-149`).
+  Same low-severity assessment as before.
+
+**Recommendation**: either delete `askOracle.ts` (and its client-facing types) or
+explicitly document it as an intentionally-retained legacy/fallback path — right now
+nothing marks it as dead, so a future contributor has no signal not to build on it, and
+`AUDIT_PROGRESS.md`'s own CP-05 notes still describe it as live.
+
+---
+
+## 16. Full priority table — verdicts
+
+Mapping every row of the requested priority framework to what was actually checked this
+session, correcting §1's scope to the live `askWatchOracle` path per §15.
+
+| Pri | Area | Verdict | Basis |
+|---|---|---|---|
+| 🔴 P0 | Firebase/Firestore security | **PASS** | §2 — deny-by-default rules + adversarial emulator test suite, CI-gated |
+| 🔴 P0 | API/Claude secret protection | **PASS** | §3 — zero keys in client/APK-reachable code; Secret Manager only |
+| 🔴 P0 | Authentication/authorization | **PASS** | §4 — every callable: App Check + Auth + ownership check, verified line-by-line |
+| 🔴 P0 | Payment/entitlement security | **PASS**, 1 low gap | §5 — server-verified against Play/Razorpay directly, token-replay bound to account; `subscription.activated` lacks the idempotency dedup `payment.captured` has |
+| 🔴 P0 | RKP calculation integrity | **PASS** on architecture/determinism-by-construction, **FAIL** on verification | §6, re-confirmed live in §15 — no golden-value regression tests anywhere under `functions/src/engine/` |
+| 🔴 P0 | User-data privacy | **FAIL** | §7 — Privacy Policy promises 30-day deletion; zero deletion code exists (no callable, no cascade, no UI entry point) |
+| 🔴 P0 | Production crash/reliability | **PASS**, 2 gaps | New evidence below |
+| 🟠 P1 | AI prompt/output security | **PASS**, 2 findings | §8, corrected in §15 — live path has one guardrail layer (system prompt) not two (no output re-validator); `seekerName`/`motherName` unsanitized into prompt |
+| 🟠 P1 | Abuse/rate limiting | **PASS** | §9 — per-user + per-IP limiters, atomic transactions, layered under App Check |
+| 🟠 P1 | Cost controls | **PASS** (code-level), unverifiable at billing level | New evidence below |
+| 🟠 P1 | Backup/disaster recovery | **FAIL** — no policy found | New evidence below |
+| 🟠 P1 | Dependency vulnerabilities | **FIXED** (prod critical), tracked (prod moderate, dev critical) | §10 |
+| 🟠 P1 | Performance | **PASS** (code-level), unmeasured live | New evidence below |
+| 🟡 P2 | CI/CD | **PASS** | §11 — real gate: lint → typecheck → unit → E2E, split from deploy workflows |
+| 🟡 P2 | Code quality | **PASS**, minor | `any` usage: 2 hits in `src/`, 1 in `functions/src/` (near-zero); `tsconfig.json` targets deprecated `moduleResolution: node10` (TS 5.5 accepts it, will break on a future TS major — track, not urgent) |
+| 🟡 P2 | Analytics/observability | **PASS** (Cloud side), gap (client side) | New evidence below |
+| 🟡 P2 | Documentation | **PASS**, one accuracy gap | 20+ markdown docs at repo root — thorough, but `AUDIT_PROGRESS.md` (CP-05) still documents `askOracle` as the live path per §15; worth a pass to retire/update docs that describe the pre-`askWatchOracle` architecture so they stop contradicting the current code |
+
+### Production crash/reliability — evidence
+
+`App.tsx` wraps the entire tree in a real `ErrorBoundary`
+(`src/components/ErrorBoundary.tsx`) that catches render-phase errors, reports them to
+Crashlytics (`componentDidCatch`, `:34-36`), and shows a **recoverable** fallback — a
+"Return" button that resets local state and remounts the tree, plus an on-demand raw
+error/stack view so a field crash can be read without a debug build
+(`:56-61`, a documented fix for a prior "diagnostic gap that let this fallback recur").
+This is a genuine "no white screen" control, not a stub. There's also a pre-mount device
+integrity gate (`runSecurityChecks()` in `src/utils/security.ts`) with root/jailbreak,
+emulator, debug-mode, and Hermes-engine detection — documented with its own honest
+limitations section (*"A sufficiently determined attacker with a rooted device can bypass
+these checks... These checks deter casual/script-kiddie reverse engineering, not a funded
+adversary"*, `:24-28`) — a reasonable, non-overclaimed layer on top of Hermes bytecode
+compilation for protecting the RKP formula from casual extraction.
+
+**Two gaps**, both real:
+1. **No global unhandled-promise-rejection / non-render error handler.**
+   `ErrorBoundary.componentDidCatch` only catches errors thrown during React's render
+   phase. An unhandled rejection inside an async event handler (a failed Firestore call, a
+   callable invocation that throws outside a local `try/catch`) is not caught by it and
+   won't route to the fallback UI or necessarily to Crashlytics — nothing in `src/`
+   installs `ErrorUtils.setGlobalHandler` or an unhandled-rejection tracker
+   (`grep -rn "ErrorUtils\|unhandledrejection\|setGlobalHandler" src` → 0 hits). Given
+   the brief's own note that reliability "deserves particular attention" for this app
+   specifically, and that individual screens already show a careful, defensive pattern of
+   wrapping async calls in local `try/catch` + `crashlytics().recordError()`
+   (`OracleChatScreen.tsx:124-165` is a good example), the residual risk is a call site
+   that *doesn't* follow that local pattern failing silently rather than visibly. A global
+   handler closes that gap categorically instead of relying on every call site remembering.
+2. **No proactive offline/network-state detection.** `@react-native-community/netinfo` is
+   not a dependency and `NetInfo`/`isConnected` appears nowhere in `src/`. The app can only
+   discover it's offline when a request actually fails (reactive), not warn the user before
+   they spend a quota slot on a doomed reading (proactive). Individual screens do have
+   local `try/catch` around calls, so a failure won't crash — but the brief's specific test
+   matrix ("No internet / Slow internet") implies a UX expectation (an offline banner, a
+   disabled submit button) that isn't implemented here.
+
+### Cost controls — evidence
+
+Code-level controls are real and layered, not asserted: the same atomic per-minute
+rate-limit + daily-quota gates that block abuse (§9) are the same gates that cap Claude
+spend per user before a single request reaches Anthropic. Model selection is
+cost-conscious by design — `claude-opus-5` only for the one user-facing narration call per
+reading, `output_config: { effort: 'low' }` explicitly set to bound reasoning cost
+(`responseComposer.ts:247`), `max_tokens: 4096` caps worst-case spend per call, and every
+Claude call has a hard timeout (`SYNTHESIS_TIMEOUT_MS = 40_000`) so a hung request can't
+run up cost or hold a Cloud Function instance indefinitely. The historical double-quota
+bug that got `askOracle` retired (§15) is itself evidence the team has already hit and
+fixed one real cost-control failure mode. **What is not verifiable from source**: actual
+₹/reading, ₹/user, or ₹/1000-users figures — those need live Anthropic + Firebase billing
+data, not code. Recommend: a GCP budget alert on the Anthropic-spend-adjacent Cloud
+Functions invocation/duration metrics, if one doesn't already exist (not visible from
+source).
+
+### Backup/disaster recovery — evidence
+
+Searched all 20+ root-level markdown docs for backup/DR/RPO/RTO content. The only hit is a
+manual, one-off command in `MANUAL_ACTIONS_REQUIRED.md:268` —
+`firebase auth:export users.json --project shams-app-4d0e7` — a documented *ad hoc* export
+step, not a scheduled backup policy. No `firestore.indexes.json`-adjacent backup
+config, no mention of Firestore PITR (point-in-time recovery) or scheduled exports, no
+stated RPO/RTO target anywhere in the repo. This may well be configured in the live GCP
+console (Firestore backup schedules are a project-level setting, not something that shows
+up in this repository) — but nothing in-repo documents it, so from a repo-audit
+standpoint there is no evidence of a backup strategy, and no team member reading this repo
+alone would know one exists or what to do to restore. **Verdict: FAIL as a documentation/
+process gap at minimum; genuinely unknown whether a live GCP-console backup policy exists
+— needs direct confirmation from whoever administers the Firebase project.**
+
+### Performance — evidence
+
+`android/gradle.properties:16` — `hermesEnabled=true` (bytecode compilation, not
+interpreted JS, standard for RN performance). `metro.config.js` release-build hardening
+doubles as a perf win: `inlineRequires: true` (`:43`, lazy module evaluation — faster cold
+start), Terser identifier-mangling and `console.*` stripped from release bundles (smaller
+bundle, no dev-time overhead in production). Server-side function timeouts are sized
+deliberately from measured behavior, not guessed — `ORACLE_FUNCTION_OPTS.timeoutSeconds =
+120` with an inline justification (*"Claude Opus 5 thinks by default... 40s here still
+leaves cold-start headroom,"* `config.ts:31-36`, `askOracle.ts:301-305`). **What is not
+verifiable from source**: actual cold-start time, screen-render latency, live
+Firestore/Cloud-Function/Claude p50/p95 latency, APK/AAB size, memory/battery impact — all
+need a built app and instrumented device/emulator run, not available in this session.
+
+### Analytics/observability — evidence
+
+Server side is real: `functions/src/middleware/telemetry.ts`'s `measure()` wraps every
+major callable (`askOracle`, `askWatchOracle`, `activateTrial`) and logs structured
+`perf:<name>` entries with `durationMs` to Cloud Logging. `logger.ts` (§7 of the original
+audit) enforces structured, PII-free logging (hashed question text, opaque UIDs only) —
+this is a deliberate, stated policy in the file header, not incidental. `/auditLogs` and
+`/securityEvents` Firestore collections capture business events (oracle computed, payment
+outcomes, purchase-token reuse attempts) for later query. Client side: Crashlytics is
+wired for both the `ErrorBoundary` and the App Check init path, plus ad hoc
+`crashlytics().recordError()` calls at individual async call sites. **Gap**: there is no
+client-side equivalent of the server's `measure()` — no structured client performance/UX
+telemetry (screen-load time, time-to-first-reading, funnel drop-off) visible in `src/`, so
+"why is engagement/conversion at X%" would currently need to be answered from Firestore
+business data alone, not from an analytics layer. Not a P0/P1 item, but worth naming as
+the next observability investment once the P0s above are closed.
