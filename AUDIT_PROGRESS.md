@@ -5,6 +5,15 @@
 LAST_COMPLETED: CP-12
 NEXT: DONE
 
+> **Drift notice (2026-08-23):** this document predates commit `33fc6d5`
+> ("Make RKP Watch the engine; retire the KP path from the client",
+> 2026-08-14). The `askOracle` references below (data-flow diagram, security
+> pipeline checkpoint) describe the KP horary path, which the shipped app no
+> longer calls — `askWatchOracle` is the sole live Oracle path today. Kept
+> here as a historical record rather than rewritten; see
+> `functions/src/functions/askOracle.ts`'s own header for the current status
+> and `PRODUCTION_AUDIT_2026-08-23.md` §15 for the full account.
+
 ## CP-00 — Permissions Audit (COMPLETE)
 
 ### PERMISSIONS_DECLARED (final)

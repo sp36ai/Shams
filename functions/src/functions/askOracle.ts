@@ -1,5 +1,38 @@
 /**
- * askOracle — the primary callable Cloud Function.
+ * askOracle — DEPRECATED. The shipped app no longer calls this function.
+ *
+ * As of commit 33fc6d5 ("Make RKP Watch the engine; retire the KP path from
+ * the client", 2026-08-14) the client calls askWatchOracle exclusively (see
+ * askWatchOracle.ts, and OracleChatScreen.tsx's runEngine() on the client —
+ * its own comment documents why: this KP horary path required a location
+ * the watch frame doesn't need, and running both callables for one question
+ * double-charged the querent's quota). A repo-wide search confirms zero
+ * references to 'askOracle' anywhere under src/.
+ *
+ * This function is still exported and deployed (see index.ts) and still
+ * fully enforces App Check + Auth + rate limit + quota like every other
+ * callable — it is not a security gap, just unreachable from the current
+ * app. It has NOT been deleted: this was still deployed and reachable at
+ * audit time, and there is no visibility from source alone into whether a
+ * straggling older app install (pre-33fc6d5) is still calling it. Before
+ * deleting the export entirely, check the askOracle Cloud Function's actual
+ * invocation count over a recent window (Cloud Console → Functions →
+ * askOracle → Metrics) to confirm zero real traffic, then remove this file
+ * and its export from index.ts.
+ *
+ * PRODUCTION_AUDIT_2026-08-23.md §15 has the full account, including why
+ * the live path (askWatchOracle → oracle/responseComposer.ts) was
+ * separately re-verified rather than assumed to inherit this file's
+ * properties.
+ *
+ * NOT dead: claimQuotaSlot() and refundQuotaSlot(), defined below in this
+ * same file, are imported directly by askWatchOracle.ts and are on the live
+ * path — they are the shared quota ledger both callables use ("a watch
+ * reading costs exactly what an astronomical one costs", per
+ * askWatchOracle.ts's own comment). Deleting this file means moving those
+ * two functions somewhere else first, not deleting them along with it.
+ *
+ * Everything else below describes this file's own (now-unused) pipeline:
  *
  * Security pipeline (in order):
  *   1. Firebase App Check  — enforced by runtime (enforceAppCheck: true)
