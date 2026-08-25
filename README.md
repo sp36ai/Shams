@@ -73,7 +73,6 @@ Built by **Astro Sarfaraz** — a solo developer, owner, and practicing celestia
 ### User-Facing Callable Functions
 
 - **`askWatchOracle`** — the live judgment endpoint: validates input, enforces quota, builds the watch-frame chart, calls the RKP celestial engine, returns verdict + remedy composition
-- **`askOracle`** — the retired KP/Astronomical horary judgment endpoint. Still deployed and functional, but no longer called by the client — see "Celestial Engine" below
 - **`classifyQuestion`** / **`classifyIntent`** — Layer-1 question gate and follow-up intent classification (Claude Haiku)
 - **`getQuota`** — Returns user's plan, daily usage, and remaining questions
 - **`syncReadings`** — Bulk fetch readings from Firestore
@@ -88,10 +87,9 @@ Built by **Astro Sarfaraz** — a solo developer, owner, and practicing celestia
 
 ## Celestial Engine
 
-The authoritative algorithm documents:
+The authoritative algorithm document:
 
 - `docs/RKP_RULES_FROM_SARFARAZ.md` — Judgment rules and horary methodology
-- `src/astrology/kp/judgment/JUDGMENT_ALGORITHM.md` — Implementation details
 
 The engine code:
 
@@ -100,13 +98,13 @@ src/astrology/
   ├── primitives/       Ephemeris, ayanamsa, sidereal time, house cusps, sub-lords
   │   └── moshier/      Meeus/VSOP87 sun, moon and planet series
   ├── kp/
-  │   ├── judgment/     Verdict logic + timing + remedy
-  │   └── rules/        House matrix, nakshatras, vimshottari, keywords
-  ├── rkp/              Digital Watch Oracle — watch-selected house frame
+  │   └── rules/        House matrix, nakshatras, vimshottari, keywords — shared
+  │                      with the RKP engine below, not KP-exclusive
+  ├── rkp/              Digital Watch Oracle — the only judgment engine that ships
   └── types/            Chart, question and verdict contracts
 ```
 
-### One engine ships; the astronomical (KP) path is retired, not deleted
+### One engine, ever since the astronomical (KP) path was deleted
 
 The client ships a single oracle mode — the **Digital Watch Oracle**
 (`rkp/watchChart.ts`). Its house frame comes from the 5-minute bracket of the
@@ -122,17 +120,23 @@ data, and no location either. It can run the moment the app opens.
 
 An earlier **Astronomical Oracle** mode — a true-Ascendant chart built by
 `primitives/chartBuilder.ts` (RAMC, obliquity, latitude, Placidus houses,
-location required) — was retired from `OracleChatScreen`'s `runEngine()`:
-it needed a location the watch frame doesn't, and running both per question
-would have double-charged the querent's quota for one question. Its engine
-code (`src/astrology/kp/`) and the `askOracle` Cloud Function are still in
-the codebase as the KP reference implementation — nothing was deleted —
-but the client no longer calls either.
+location required) — was retired from `OracleChatScreen`'s `runEngine()`
+first (it needed a location the watch frame doesn't, and running both per
+question would have double-charged the querent's quota for one question),
+then deleted outright once confirmed unreachable: the `judgeHorary()`
+judgment function and its helpers (`kp/judgment/`), the `askOracle` Cloud
+Function, and its dedicated LLM synthesis prompt are gone. `AstroVerdictCard`
+and the `AstroVerdictResult`/`SignificatorSets` types in `types/verdict.ts`
+are kept — deliberately, not an oversight — purely to render readings taken
+before the migration; nothing live produces that shape anymore. The
+`kp/rules/` tables (house matrix, nakshatras, vimshottari, question
+keywords) and the whole `primitives/` layer survive because the RKP engine
+itself depends on them — they were never KP-exclusive.
 
-Where both engines run, they read the **same real ephemeris** —
+The engine reads a real ephemeris —
 Meeus/VSOP87 series with heliocentric→geocentric conversion, Lahiri
-ayanamsa, genuine retrograde and combustion state — and feed the **same
-remedy layer** — the 38 tagged practices in
+ayanamsa, genuine retrograde and combustion state — and feeds the remedy
+layer — the 38 tagged practices in
 `src/data/remedyLibrary.ts` (salawat, dua, istikhara, sadaqa, fasting, Qur'an,
 dhikr, charity, night prayer, silence, tawbah). `src/data/watchRemedyContext.ts`
 translates a watch verdict into the ranker's vocabulary: the obstructing planet

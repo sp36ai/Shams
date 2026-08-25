@@ -21,8 +21,8 @@ export const getQuota = onCall(
         db.collection('trials').doc(userId).get(),
       ]);
 
-      // Trial takes precedence over the free limit — must mirror askOracle's
-      // claimQuotaSlot() exactly. This used to always report FREE_LIMIT (3)
+      // Trial takes precedence over the free limit — must mirror
+      // utils/quotaSlots.ts's claimQuotaSlot() exactly. This used to always report FREE_LIMIT (3)
       // here regardless of an active trial, so a trial user (limit 5) who had
       // already asked their 4th question saw the client compute
       // `serverRemaining = max(0, 3 - 4) = 0` and lock the Ask button, even

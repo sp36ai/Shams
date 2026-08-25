@@ -2,7 +2,6 @@
  * Cloud Functions entry point — Shams al-Asrar
  *
  * Exported functions:
- *   askOracle                — callable — compute horary reading (server builds chart)
  *   askWatchOracle           — callable — Digital Watch Oracle reading (no location)
  *   activateTrial            — callable — idempotent server-side trial registration
  *   getQuota                 — callable — get caller's quota status
@@ -22,7 +21,6 @@
 // Shared admin initialisation — must be imported first
 import './utils/admin';
 
-export { askOracle } from './functions/askOracle';
 export { askWatchOracle } from './functions/askWatchOracle';
 export { activateTrial } from './functions/activateTrial';
 export { getQuota } from './functions/quota';

@@ -11,25 +11,9 @@ import { HttpsError } from 'firebase-functions/v2/https';
 
 // ── Shared primitives ────────────────────────────────────────────────────────
 
-const LatSchema = z.number().min(-90).max(90);
-const LonSchema = z.number().min(-180).max(180);
 const LangSchema = z.enum(['en', 'ur', 'hi']);
 
 // ── Function-specific schemas ────────────────────────────────────────────────
-
-export const AskOracleSchema = z
-  .object({
-    question: z.string().trim().min(5).max(500),
-    lat: LatSchema,
-    lon: LonSchema,
-    questionLang: LangSchema,
-    seekerProfile: z.enum(['clarity', 'comfort', 'action', 'surrender']).optional(),
-    seekerName: z.string().trim().min(1).max(100).optional(),
-    motherName: z.string().trim().min(1).max(100).optional(),
-  })
-  .strict();
-
-export type AskOracleInput = z.infer<typeof AskOracleSchema>;
 
 /**
  * askWatchOracle input.

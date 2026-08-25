@@ -29,5 +29,22 @@ module.exports = {
     node: true,
     es2021: true,
   },
-  ignorePatterns: ['node_modules/', 'build/', 'dist/', 'lib/', '*.config.js', 'vitest.config.ts'],
+  ignorePatterns: [
+    'node_modules/',
+    'build/',
+    'dist/',
+    'lib/',
+    '*.config.js',
+    'vitest.config.ts',
+    // Generated mirror of ../src/astrology (see scripts/sync-engine.mjs) —
+    // already excluded from tsconfig.json's project. It happened to lint
+    // clean before only because some of its files were incidentally pulled
+    // into the TS program's import graph via a since-deleted callable
+    // (askOracle.ts); anything genuinely unreachable from an in-project
+    // root has always failed typed-linting here with a "file not included
+    // in the TSConfig" parsing error. Ignoring the whole directory (like
+    // tsconfig already does) is correct regardless of which files happen
+    // to be transitively reachable at any given moment.
+    'src/engine/',
+  ],
 };
