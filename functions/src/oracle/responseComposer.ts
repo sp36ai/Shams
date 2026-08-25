@@ -25,6 +25,7 @@
 
 import { ANTHROPIC_API_KEY } from '../config';
 import { logger } from '../utils/logger';
+import { runWatchNarrationSafetyValidator } from '../functions/safetyValidator';
 import { WATCH_ORACLE_SYNTHESIS_PROMPT } from '../prompts/watchOracleSynthesisPrompt';
 import { diagnose, type RkpDiagnosis } from '../engine/rkp/diagnosis';
 import type { DisplayWatchVerdict } from '../engine/rkp/watchJudgment';
@@ -83,6 +84,12 @@ export interface CompositionInput {
   readonly seekerName?: string;
   readonly motherName?: string;
   readonly traditions?: readonly Tradition[];
+  /**
+   * The reading document's id, assigned by the caller before this runs.
+   * Used only to correlate a safety-validator log entry with the reading it
+   * screened (readings/{readingId}/validationLog) — see narrate() below.
+   */
+  readonly readingId: string;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -165,7 +172,7 @@ MOTHER_NAME: ${motherName || 'not provided'}
 export async function composeWatchOracleResponse(
   input: CompositionInput,
 ): Promise<WatchOracleComposition> {
-  const { verdict, seekerName, motherName, traditions } = input;
+  const { verdict, seekerName, motherName, traditions, readingId } = input;
 
   // ── 1. Diagnosis (deterministic) ─────────────────────────────────────────
   const diagnosis = diagnose(verdict);
@@ -204,7 +211,7 @@ export async function composeWatchOracleResponse(
   };
 
   // ── 3. Narration (best effort) ───────────────────────────────────────────
-  const narration = await narrate(diagnosis, protocol, seekerName, motherName);
+  const narration = await narrate(diagnosis, protocol, readingId, seekerName, motherName);
 
   return Object.freeze({ narration, ...base });
 }
@@ -212,6 +219,7 @@ export async function composeWatchOracleResponse(
 async function narrate(
   diagnosis: RkpDiagnosis,
   protocol: RemedyProtocol,
+  readingId: string,
   seekerName?: string,
   motherName?: string,
 ): Promise<NarrationFields | null> {
@@ -280,7 +288,7 @@ async function narrate(
       return null;
     }
 
-    return {
+    const drafted: NarrationFields = {
       rkp_finding: parsed.rkp_finding,
       interpretation: parsed.interpretation,
       recommended_approach: parsed.recommended_approach,
@@ -288,6 +296,22 @@ async function narrate(
       why_this_remedy: protocol.interventionRequired ? (parsed.why_this_remedy ?? null) : null,
       signature: parsed.signature,
     };
+
+    // Second defense layer — independent post-generation re-check of the
+    // free-prose fields (medical/financial/legal claims, false-certainty
+    // language, fear amplification — see safetyValidator.ts's prompt). The
+    // system prompt above is the first layer; this is what askOracle always
+    // had and askWatchOracle, the function actually shipping to users, did
+    // not. Fail-open on its own errors/timeout — an unreachable validator
+    // must not turn a working reading into a broken one.
+    try {
+      return await runWatchNarrationSafetyValidator(drafted, readingId, apiKey);
+    } catch (validatorErr) {
+      logger.warn('watch oracle narration: safety validator failed, using unvalidated text', {
+        err: String(validatorErr),
+      });
+      return drafted;
+    }
   } catch (err) {
     logger.warn('watch oracle narration failed', { err: String(err) });
     return null;

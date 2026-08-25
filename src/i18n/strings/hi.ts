@@ -221,6 +221,11 @@ export const hi: StringTable = {
     versionLabel: 'संस्करण',
     signOut: 'साइन आउट',
     signOutConfirm: 'शम्सुल असरार से साइन आउट करें?',
+    deleteAccount: 'खाता हटाएं',
+    deleteAccountConfirmTitle: 'क्या आप अपना खाता स्थायी रूप से हटाना चाहते हैं?',
+    deleteAccountConfirmBody:
+      'इससे आपका खाता, हर रीडिंग, और आपकी सदस्यता स्थिति हट जाएगी। इसे पूर्ववत नहीं किया जा सकता।',
+    deleteAccountError: 'खाता हटाया नहीं जा सका। कृपया पुनः प्रयास करें या सहायता से संपर्क करें।',
   },
 
   theme: {

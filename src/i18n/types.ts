@@ -280,6 +280,10 @@ export interface StringTable {
     versionLabel: string;
     signOut: string;
     signOutConfirm: string;
+    deleteAccount: string;
+    deleteAccountConfirmTitle: string;
+    deleteAccountConfirmBody: string;
+    deleteAccountError: string;
   };
   theme: {
     darAlShams: string;

@@ -142,27 +142,40 @@ function logValidationResult(
     .catch(() => undefined); // non-critical — silently discard secondary failures
 }
 
-export async function runSafetyValidator(
-  oracle: OracleVoice,
+/**
+ * Generic engine behind runSafetyValidator: validates an arbitrary set of
+ * named prose fields on a record, in parallel, fail-open per field.
+ *
+ * Extracted so a second call site (askWatchOracle's narration — see
+ * runWatchNarrationSafetyValidator below) gets the identical second-defense
+ * layer this file was originally written for askOracle alone. Before this,
+ * askWatchOracle — the function the shipped app actually calls — had only
+ * the system-prompt guardrails as its one line of defense; askOracle's
+ * independent post-generation re-check never ran on the live path.
+ */
+async function runFieldValidation<F extends string>(
+  fields: Partial<Record<F, string | null | undefined>>,
+  fieldNames: readonly F[],
   readingId: string,
   apiKey: string,
-): Promise<OracleVoice> {
+): Promise<{ updated: Partial<Record<F, string>>; fieldsModified: F[]; issues: string[] }> {
   const results = await Promise.all(
-    FIELDS_TO_VALIDATE.map(field => validateField(field, oracle[field], apiKey, readingId)),
+    fieldNames.map(field => validateField(field, fields[field], apiKey, readingId)),
   );
 
-  const fieldsModified: string[] = [];
+  const fieldsModified: F[] = [];
   const allIssues: string[] = [];
-  const updated: Partial<OracleVoice> = {};
+  const updated: Partial<Record<F, string>> = {};
 
-  FIELDS_TO_VALIDATE.forEach((field, i) => {
+  fieldNames.forEach((field, i) => {
     const r = results[i]!;
     if (r.modified) {
       fieldsModified.push(field);
       allIssues.push(...r.issues);
     }
-    if (oracle[field] !== undefined) {
-      (updated as Record<string, unknown>)[field] = r.text;
+    const original = fields[field];
+    if (original !== undefined && original !== null) {
+      updated[field] = r.text;
     }
   });
 
@@ -178,5 +191,53 @@ export async function runSafetyValidator(
     }).catch(() => undefined);
   }
 
+  return { updated, fieldsModified, issues: allIssues };
+}
+
+export async function runSafetyValidator(
+  oracle: OracleVoice,
+  readingId: string,
+  apiKey: string,
+): Promise<OracleVoice> {
+  const { updated } = await runFieldValidation(oracle, FIELDS_TO_VALIDATE, readingId, apiKey);
   return { ...oracle, ...updated };
+}
+
+/**
+ * The watch-oracle narration fields worth screening for the same violation
+ * classes as askOracle's four fields (medical/financial/legal claims,
+ * false-certainty language, fear amplification, etc.) — see VALIDATOR_PROMPT
+ * above, which is field-name-agnostic already. `signature` is excluded: it's
+ * a fixed brand line, not free prose the model is reasoning about.
+ */
+const WATCH_NARRATION_FIELDS = [
+  'rkp_finding',
+  'interpretation',
+  'recommended_approach',
+  'why_this_remedy',
+] as const;
+
+export type WatchNarrationValidatable = Record<
+  (typeof WATCH_NARRATION_FIELDS)[number],
+  string | null
+>;
+
+/**
+ * Second-defense output re-check for askWatchOracle's narration — the live
+ * counterpart of runSafetyValidator above. Called from
+ * oracle/responseComposer.ts after Claude returns, before the narration
+ * reaches the client.
+ */
+export async function runWatchNarrationSafetyValidator<T extends WatchNarrationValidatable>(
+  narration: T,
+  readingId: string,
+  apiKey: string,
+): Promise<T> {
+  const { updated } = await runFieldValidation(
+    narration,
+    WATCH_NARRATION_FIELDS,
+    readingId,
+    apiKey,
+  );
+  return { ...narration, ...updated };
 }

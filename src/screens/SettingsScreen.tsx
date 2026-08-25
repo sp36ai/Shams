@@ -4,6 +4,7 @@
 
 import React, { useCallback, useMemo, useState } from 'react';
 import {
+  ActivityIndicator,
   Alert,
   Image,
   Linking,
@@ -15,6 +16,7 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import crashlytics from '@react-native-firebase/crashlytics';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '@navigation/types';
@@ -29,6 +31,7 @@ import { useSettingsStore } from '@stores/settingsStore';
 import { useAuthStore, selectUserName, selectUserEmail } from '@stores/authStore';
 import { useReadingsStore, type VerdictKind } from '@stores/readingsStore';
 import { useQuotaStore, FREE_DAILY_LIMIT, type PlanTier } from '@stores/quotaStore';
+import { deleteAccount } from '../firebase/account';
 
 const SEAL_IMAGE = require('@assets/images/sky-clock-disk.png');
 
@@ -43,9 +46,12 @@ const SettingsScreen: React.FC = () => {
   const lastLocation = useSettingsStore(s => s.lastLocation);
   const seekerProfile = useSettingsStore(s => s.seekerProfile);
   const resetProfile = useSettingsStore(s => s.resetProfile);
+  const resetForNewAccount = useSettingsStore(s => s.resetForNewAccount);
   const storedSeekerName = useSettingsStore(s => s.seekerName);
   const storedMotherName = useSettingsStore(s => s.motherName);
   const setSeekerIdentity = useSettingsStore(s => s.setSeekerIdentity);
+
+  const [isDeletingAccount, setIsDeletingAccount] = useState(false);
 
   const [seekerNameInput, setSeekerNameInput] = useState(storedSeekerName ?? '');
   const [motherNameInput, setMotherNameInput] = useState(storedMotherName ?? '');
@@ -84,6 +90,49 @@ const SettingsScreen: React.FC = () => {
       },
     ]);
   }, [signOut, t]);
+
+  // Two-step confirmation: the destructive Alert itself is step one; step
+  // two (this handler's own guard against double-tap via isDeletingAccount)
+  // stands in for a second prompt without adding a whole extra screen for an
+  // action every other destructive control in this screen (sign-out, reset
+  // profile) handles with a single Alert.
+  const handleDeleteAccount = useCallback(() => {
+    Alert.alert(
+      t('settings.deleteAccountConfirmTitle'),
+      t('settings.deleteAccountConfirmBody'),
+      [
+        { text: t('common.cancel'), style: 'cancel' },
+        {
+          text: t('settings.deleteAccount'),
+          style: 'destructive',
+          onPress: () => {
+            void (async (): Promise<void> => {
+              setIsDeletingAccount(true);
+              try {
+                await deleteAccount();
+                // Account and all server-side data are gone at this point.
+                // Clear the per-account local slate (seeker identity,
+                // onboarding flags) the same way a different-account sign-in
+                // does, then run the normal sign-out path to drop the now-
+                // invalid Firebase Auth session and local quota/readings
+                // cache. Order matters: reset local state before signOut()
+                // clears `user`, so nothing here reads a stale uid.
+                resetForNewAccount();
+                await signOut();
+              } catch (err) {
+                crashlytics().recordError(err instanceof Error ? err : new Error(String(err)));
+                Alert.alert(t('settings.deleteAccountError'), '', [
+                  { text: t('common.ok'), style: 'default' },
+                ]);
+              } finally {
+                setIsDeletingAccount(false);
+              }
+            })();
+          },
+        },
+      ],
+    );
+  }, [t, resetForNewAccount, signOut]);
 
   const handleLanguageChange = useCallback(
     (next: LangCode) => {
@@ -352,6 +401,24 @@ const SettingsScreen: React.FC = () => {
             <Text style={[typography('button'), { color: colors.negative }]}>
               {t('settings.signOut')}
             </Text>
+          </Pressable>
+
+          <Pressable
+            onPress={handleDeleteAccount}
+            disabled={isDeletingAccount}
+            accessibilityRole="button"
+            style={({ pressed }) => [
+              styles.deleteAccountBtn,
+              { opacity: pressed || isDeletingAccount ? 0.6 : 1 },
+            ]}
+          >
+            {isDeletingAccount ? (
+              <ActivityIndicator size="small" color={colors.textFaint} />
+            ) : (
+              <Text style={[typography('caption'), { color: colors.textFaint }]}>
+                {t('settings.deleteAccount')}
+              </Text>
+            )}
           </Pressable>
         </Section>
 
@@ -679,6 +746,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     borderRadius: 12,
     borderWidth: StyleSheet.hairlineWidth,
+    alignItems: 'center',
+  },
+  // Deliberately quieter than signOutBtn — an irreversible, rare action
+  // should not compete visually with the common one right above it.
+  deleteAccountBtn: {
+    paddingVertical: 12,
     alignItems: 'center',
   },
   locationCard: {

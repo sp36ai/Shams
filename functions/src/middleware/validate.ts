@@ -15,6 +15,38 @@ const LatSchema = z.number().min(-90).max(90);
 const LonSchema = z.number().min(-180).max(180);
 const LangSchema = z.enum(['en', 'ur', 'hi']);
 
+/**
+ * seekerName / motherName are the only user-controlled free-text fields that
+ * reach a Claude prompt (see askOracle.ts's buildOracleUserMessage and
+ * oracle/responseComposer.ts's buildUserPrompt — both interpolate them
+ * directly as `SEEKER_NAME: ${value}`). This does not attempt to be a
+ * "prompt injection sanitizer" — no regex reliably detects intent. It only
+ * removes the characters a legitimate human name never contains but that
+ * carry structural meaning in a prompt (control characters, and the
+ * quoting/bracketing/escaping characters a payload would use to try to
+ * break out of the `SEEKER_NAME: ` line) — normal names, including
+ * hyphenated and apostrophe'd ones across scripts, are unaffected.
+ */
+function sanitizeName(raw: string): string {
+  return raw
+    .normalize('NFKC')
+    // Unicode "Cc" (control) category — covers newlines/tabs/C0/DEL without
+    // spelling out raw control bytes or \u-escaped ranges in the source.
+    .replace(/\p{Cc}/gu, '')
+    .replace(/[`"{}[\]<>\\|~^]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, 100);
+}
+
+const NameSchema = z
+  .string()
+  .trim()
+  .min(1)
+  .max(100)
+  .transform(sanitizeName)
+  .pipe(z.string().min(1).max(100));
+
 // ── Function-specific schemas ────────────────────────────────────────────────
 
 export const AskOracleSchema = z
@@ -24,8 +56,8 @@ export const AskOracleSchema = z
     lon: LonSchema,
     questionLang: LangSchema,
     seekerProfile: z.enum(['clarity', 'comfort', 'action', 'surrender']).optional(),
-    seekerName: z.string().trim().min(1).max(100).optional(),
-    motherName: z.string().trim().min(1).max(100).optional(),
+    seekerName: NameSchema.optional(),
+    motherName: NameSchema.optional(),
   })
   .strict();
 
@@ -48,8 +80,8 @@ export const AskWatchOracleSchema = z
     questionLang: LangSchema,
     utcOffsetMinutes: z.number().int().min(-720).max(840).multipleOf(15),
     seekerProfile: z.enum(['clarity', 'comfort', 'action', 'surrender']).optional(),
-    seekerName: z.string().trim().max(100).optional(),
-    motherName: z.string().trim().max(100).optional(),
+    seekerName: NameSchema.optional(),
+    motherName: NameSchema.optional(),
   })
   .strict();
 
