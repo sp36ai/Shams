@@ -8,7 +8,7 @@
 
 ## Setup Checklist
 
-- [ ] Firebase Cloud Functions deployed (`askOracle`, `verifyGooglePlayPurchase`)
+- [ ] Firebase Cloud Functions deployed (`askWatchOracle`, `verifyGooglePlayPurchase`)
 - [ ] Two Firebase test accounts created: one free-plan, one mureed-plan
 - [ ] Play Store sandbox account configured for IAP testing
 - [ ] App Check debug token registered in Firebase console
