@@ -7,9 +7,17 @@
  * - Contextual routing (TIMING/REMEDY/CLARIFY/REFORMAT)
  *
  * Classification runs server-side via the classifyIntent Cloud Function.
+ *
+ * The call is raced against a timeout, not just wrapped in try/catch: a
+ * native callable invocation can hang instead of rejecting (same class of
+ * bug withTimeout() exists for), and this runs inside sendMessage()'s
+ * follow-up path before the guard/finally structure there gets a chance to
+ * recover — an unbounded await here reproduces the exact silent Send-jam
+ * bug fixed elsewhere in this app, just at a different call site.
  */
 
 import { regionalFunctions } from '../firebase/functionsRegion';
+import { withTimeout } from '../utils/withTimeout';
 
 export type IntentClass =
   | 'TIMING' // "when", "kitne din", "how long"
@@ -41,18 +49,28 @@ const VALID_INTENT_CLASSES: IntentClass[] = [
   'UNKNOWN',
 ];
 
+/** See CLASSIFY_TIMEOUT_MS in useQuestionGate.ts — same reasoning. */
+const CLASSIFY_INTENT_TIMEOUT_MS = 20000;
+
 export async function classifyIntent(params: ClassifyParams): Promise<IntentResult> {
   const { userMessage, lockedQuestion, verdictDirection, recentMessages } = params;
 
   try {
     const fn = regionalFunctions().httpsCallable<ClassifyParams, IntentResult>('classifyIntent');
 
-    const result = await fn({
-      userMessage,
-      lockedQuestion,
-      verdictDirection,
-      recentMessages: recentMessages.slice(0, 3),
-    });
+    const result = await withTimeout(
+      fn({
+        userMessage,
+        lockedQuestion,
+        verdictDirection,
+        recentMessages: recentMessages.slice(0, 3),
+      }),
+      CLASSIFY_INTENT_TIMEOUT_MS,
+    );
+
+    if (result === undefined) {
+      return { class: 'UNKNOWN', confidence: 'LOW', reason: 'classifier timed out' };
+    }
 
     const data = result.data;
     const cls = VALID_INTENT_CLASSES.includes(data?.class as IntentClass)
