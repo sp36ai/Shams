@@ -480,20 +480,6 @@ export function getManzila(moonLongitude: number): Manzila {
 }
 
 /**
- * Build the full oracle injection line for the Opus system prompt.
- * Verdict-aware — passes the correct theme so Opus knows the
- * emotional direction of this station tonight.
- */
-export function getManzilaOracleLine(
-  moonLongitude: number,
-  verdict: 'CONFIRMED' | 'DENIED',
-): string {
-  const m = getManzila(moonLongitude);
-  const theme = verdict === 'CONFIRMED' ? m.confirmedTheme : m.deniedTheme;
-  return `${m.oracleVoice}\n${theme}`;
-}
-
-/**
  * Get display-safe fields for the UI card.
  * Returns only what the frontend needs — no oracle machinery exposed.
  */
