@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, StatusBar } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { runSecurityChecks, INTEGRITY_FAIL_MESSAGE } from '@utils/security';
-import { initializeAppCheckService } from './firebase/appCheck';
+import { ensureAppCheckReady } from './firebase/appCheck';
 import { ThemeProvider } from '@theme/ThemeProvider';
 import { I18nProvider } from '@i18n/I18nProvider';
 import RootNavigator from './navigation/RootNavigator';
@@ -41,7 +41,7 @@ const App: React.FC = () => {
   // service itself; this catch just stops it from being a truly silent,
   // untracked promise rejection at the call site too.
   useEffect(() => {
-    initializeAppCheckService().catch(e => {
+    ensureAppCheckReady().catch(e => {
       console.error('App Check Initialization Failed:', e);
     });
   }, []);
