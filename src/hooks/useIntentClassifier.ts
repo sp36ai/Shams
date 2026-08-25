@@ -18,6 +18,7 @@
 
 import { regionalFunctions } from '../firebase/functionsRegion';
 import { withTimeout } from '../utils/withTimeout';
+import { ensureAppCheckReady } from '../firebase/appCheck';
 
 export type IntentClass =
   | 'TIMING' // "when", "kitne din", "how long"
@@ -52,10 +53,18 @@ const VALID_INTENT_CLASSES: IntentClass[] = [
 /** See CLASSIFY_TIMEOUT_MS in useQuestionGate.ts — same reasoning. */
 const CLASSIFY_INTENT_TIMEOUT_MS = 20000;
 
+/** See the matching constant + comment in useQuestionGate.ts. Lower-risk
+ *  here — a follow-up implies askWatchOracle already succeeded once this
+ *  sitting, so App Check is normally already warm — but applied for the
+ *  same defense-in-depth reasoning after a background/resume or deep link. */
+const APP_CHECK_GATE_TIMEOUT_MS = 8000;
+
 export async function classifyIntent(params: ClassifyParams): Promise<IntentResult> {
   const { userMessage, lockedQuestion, verdictDirection, recentMessages } = params;
 
   try {
+    await withTimeout(ensureAppCheckReady(), APP_CHECK_GATE_TIMEOUT_MS);
+
     const fn = regionalFunctions().httpsCallable<ClassifyParams, IntentResult>('classifyIntent');
 
     const result = await withTimeout(

@@ -20,6 +20,7 @@
 
 import { regionalFunctions } from '../firebase/functionsRegion';
 import { withTimeout } from '../utils/withTimeout';
+import { ensureAppCheckReady } from '../firebase/appCheck';
 
 export type QuestionClass = 'VALID_HORARY' | 'CONVERSATIONAL' | 'AMBIGUOUS';
 
@@ -30,6 +31,20 @@ const VALID_CLASSES: readonly QuestionClass[] = ['VALID_HORARY', 'CONVERSATIONAL
  *  exists to catch a native call that never settles at all. */
 const CLASSIFY_TIMEOUT_MS = 20000;
 
+/**
+ * This is the FIRST network call sendMessage() makes — on a fast cold start
+ * into an already-authenticated session, it can fire before Play Integrity's
+ * first App Check token exchange has completed (Auth's token is typically
+ * already cached; App Check's is not). A confirmed real-device Crashlytics
+ * trace showed exactly this: signedIn=true, idToken=ok, App Check
+ * FAILED: empty/undefined — not a rejected token, an absent one. Give it a
+ * bounded head start rather than assume a header is already attached; the
+ * fallback below already treats any failure as VALID_HORARY, so this never
+ * blocks a real question, it just narrows the window where App Check hasn't
+ * caught up yet.
+ */
+const APP_CHECK_GATE_TIMEOUT_MS = 8000;
+
 export async function classifyQuestion(text: string): Promise<QuestionClass> {
   // 500+ chars → skip classification, genuine question
   if (text.length > 500) {
@@ -37,6 +52,8 @@ export async function classifyQuestion(text: string): Promise<QuestionClass> {
   }
 
   try {
+    await withTimeout(ensureAppCheckReady(), APP_CHECK_GATE_TIMEOUT_MS);
+
     const fn = regionalFunctions().httpsCallable<{ text: string }, { class: QuestionClass }>(
       'classifyQuestion',
     );

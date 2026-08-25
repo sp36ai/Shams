@@ -18,8 +18,21 @@
 
 import { regionalFunctions } from './functionsRegion';
 import { withTimeout } from '../utils/withTimeout';
+import { ensureAppCheckReady } from './appCheck';
 import type { DisplayWatchVerdict } from '@astrology/rkp/watchJudgment';
 import type { WatchOracleComposition } from '../types/watchOracle';
+
+/**
+ * How long to give App Check a chance to attach a token before firing
+ * anyway. Not a correctness gate — the call proceeds regardless of whether
+ * this resolves, times out, or App Check itself rejects; existing
+ * server-side error handling already turns a genuinely missing/invalid
+ * token into a proper "seal of verification is absent" bubble. This exists
+ * only to close the common case: a fast cold start where Play Integrity's
+ * first token exchange (slower than Auth's, typically already cached)
+ * hasn't completed yet by the time the querent taps Ask.
+ */
+const APP_CHECK_GATE_TIMEOUT_MS = 8000;
 
 /**
  * The server itself allows up to 120s (Anthropic synthesis ~25s + cold-start
@@ -89,6 +102,10 @@ export function deviceUtcOffsetMinutes(now: Date = new Date()): number {
 }
 
 export async function askWatchOracle(args: AskWatchOracleInput): Promise<AskWatchOracleResult> {
+  // Give App Check a bounded head start before firing — see
+  // APP_CHECK_GATE_TIMEOUT_MS above for why. Proceeds either way.
+  await withTimeout(ensureAppCheckReady(), APP_CHECK_GATE_TIMEOUT_MS);
+
   const fn = regionalFunctions().httpsCallable('askWatchOracle');
 
   const payload: Record<string, unknown> = {

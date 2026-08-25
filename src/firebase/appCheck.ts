@@ -17,6 +17,36 @@ import crashlytics from '@react-native-firebase/crashlytics';
  * exactly what routed a broken App Check init into "please sign in" on the
  * Ask screen for a user who was, in fact, signed in.
  */
+let appCheckReadyPromise: Promise<void> | null = null;
+
+/**
+ * Idempotent front door onto initializeAppCheckService() — every caller gets
+ * the SAME promise, so App Check is only ever initialized once no matter how
+ * many call sites need to know it's ready.
+ *
+ * Why this exists: App.tsx fires initializeAppCheckService() in a mount
+ * effect but never awaits it before rendering children — by design, nothing
+ * should block the UI on a native attestation round-trip. But that means any
+ * Cloud Function call firing soon after launch (a fast cold start into an
+ * already-authenticated session, tapping Ask within the first second or two)
+ * can go out before the SDK has attached an App Check header at all — not a
+ * rejected token, an ABSENT one (`appCheck=FAILED: empty/undefined` in the
+ * diagnostic probe below, confirmed via Crashlytics against a real device:
+ * signedIn=true, idToken=ok, App Check simply hadn't produced a token yet).
+ * Firebase Auth's token is typically already cached/fast; Play Integrity's
+ * first exchange routinely is not — Auth wins the race, App Check loses it.
+ *
+ * Call sites that are about to fire an enforceAppCheck'd callable should
+ * await this (bounded by withTimeout — see the call sites) before invoking
+ * it, rather than assume the interceptor already has a token attached.
+ */
+export function ensureAppCheckReady(): Promise<void> {
+  if (appCheckReadyPromise === null) {
+    appCheckReadyPromise = initializeAppCheckService();
+  }
+  return appCheckReadyPromise;
+}
+
 export const initializeAppCheckService = async (): Promise<void> => {
   const appCheck = firebase.appCheck();
 
