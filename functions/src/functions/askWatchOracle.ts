@@ -52,7 +52,7 @@ import { logger, hashText } from '../utils/logger';
 import { localIsoFromOffset } from '../utils/localTime';
 import { toBoundaryPlanetName } from '../utils/planetBoundaryName';
 import { ORACLE_FUNCTION_OPTS, ANTHROPIC_API_KEY } from '../config';
-import { claimQuotaSlot, refundQuotaSlot } from './askOracle';
+import { claimQuotaSlot, refundQuotaSlot } from '../utils/quotaSlots';
 import type { AuditLogDoc, ReadingDoc } from '../types';
 import type { VerdictKind } from '../engine/types/verdict';
 

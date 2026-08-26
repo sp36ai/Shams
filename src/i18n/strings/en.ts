@@ -35,7 +35,6 @@ export const en: StringTable = {
 
   nav: {
     homeTab: 'Home',
-    askTab: 'Ask',
     alFalakTab: 'Al-Falak',
     historyTab: 'History',
   },
@@ -87,19 +86,6 @@ export const en: StringTable = {
 
   oracle: {
     headerTitle: 'Shams al-Asrār',
-    welcomeMessage:
-      'Ask one clear question. The heavens will be read for the exact moment and place of asking, and the oracle will deliver its celestial counsel.',
-    placeholder: 'Type your question…',
-    sendButton: 'Ask',
-    quotaRemaining: '{{count}} questions remaining this week',
-    quotaExhausted:
-      'Your free questions for this week are used. Upgrade to continue without limits.',
-    upgradeCta: 'Upgrade',
-    enginePending:
-      'The judgment engine is being calibrated by Astro Sarfaraz. Your question has been received and a verdict will be available once calibration is complete.',
-    thinking: 'Reading the chart…',
-    askFollowUp: 'Ask a follow-up',
-    askNewQuestion: 'Ask a new question',
     verdictYes: 'YES',
     verdictNo: 'NO',
     verdictConditional: 'CONDITIONAL',
@@ -109,8 +95,6 @@ export const en: StringTable = {
     reasoningLabel: 'Why',
     timingLabel: 'When',
     remedyLabel: 'Remedy',
-    chartMomentLabel: 'Moment of question',
-    locationLabel: 'Location',
     dailySkyTitle: "Today's Sky for You",
     askShamsCta: 'Ask Shams',
     moonWatchTitle: 'Moon Watch',
@@ -133,11 +117,33 @@ export const en: StringTable = {
     readingHistoryCta: 'Reading History',
     viewPastReadingsSubtitle: 'View your past readings',
     moonManzilTitle: 'Moon Manzil',
-    askQuestionTitle: 'Ask Your Question',
-    chartCastSubtitle: 'The chart is cast for this exact moment.',
     rulingPlanetsNowLabel: 'Ruling Planets Now',
     currentHoraLordLabel: 'Current Hora Lord',
-    sealAskCta: 'Seal & Ask',
+  },
+
+  oracleChat: {
+    headerTitle: 'Ask Shams',
+    placeholder: 'Type your question…',
+    listening: 'Listening…',
+    send: 'Ask',
+    voiceInputTag: 'Voice',
+    startRecording: 'Start voice input',
+    stopRecording: 'Stop recording',
+    readingChart: 'Reading the chart…',
+    retry: 'Retry',
+    failedGeneric: 'The scrolls of this moment have not opened their seal. Try again.',
+    quotaExhausted: "Today's questions are used. Come back tomorrow, or upgrade for unlimited.",
+    micPermissionDenied: 'Microphone access is needed for voice questions. Enable it in Settings.',
+    noSpeechDetected: "Didn't catch that — try again.",
+    errorTimeout: 'The oracle took too long to answer. Try again.',
+    errorSignIn: 'Please sign in again to continue.',
+    listenToVerdict: 'Listen',
+    playNarration: 'Play narration',
+    pauseNarration: 'Pause narration',
+    speaking: 'Speaking…',
+    paused: 'Paused',
+    emptyTitle: 'Ask your first question',
+    emptyBody: 'Type it, or tap the mic to speak it. The oracle answers from this exact moment.',
   },
 
   skyClock: {

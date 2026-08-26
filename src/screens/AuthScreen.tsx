@@ -32,6 +32,7 @@ import crashlytics from '@react-native-firebase/crashlytics';
 
 import { useColors, useTheme } from '@theme/ThemeProvider';
 import { useTypography } from '@theme/useTypography';
+import { RADIUS } from '@theme/themes';
 import { useTranslation } from '@i18n/I18nProvider';
 import { useAuthStore } from '@stores/authStore';
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
@@ -829,7 +830,7 @@ const styles = StyleSheet.create({
   },
   form: {
     gap: 18,
-    borderRadius: 24,
+    borderRadius: RADIUS.xl,
     borderWidth: StyleSheet.hairlineWidth,
     padding: 24,
     shadowColor: '#000',
@@ -845,7 +846,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     borderWidth: StyleSheet.hairlineWidth,
-    borderRadius: 16,
+    borderRadius: RADIUS.lg,
     paddingHorizontal: 16,
     minHeight: 52,
   },
@@ -857,17 +858,17 @@ const styles = StyleSheet.create({
   },
   serverError: {
     borderWidth: StyleSheet.hairlineWidth,
-    borderRadius: 8,
+    borderRadius: RADIUS.sm,
     padding: 12,
   },
   successBox: {
     borderWidth: 1,
-    borderRadius: 8,
+    borderRadius: RADIUS.sm,
     padding: 12,
   },
   submitBtn: {
     height: 56,
-    borderRadius: 18,
+    borderRadius: RADIUS.xl,
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: 4,
@@ -895,7 +896,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     height: 52,
-    borderRadius: 18,
+    borderRadius: RADIUS.xl,
     borderWidth: StyleSheet.hairlineWidth,
     shadowColor: '#000',
     shadowOpacity: 0.08,

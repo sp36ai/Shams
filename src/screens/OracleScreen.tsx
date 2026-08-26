@@ -15,11 +15,11 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { acquireLocation } from '@utils/acquireLocation';
 import crashlytics from '@react-native-firebase/crashlytics';
 import { useNavigation } from '@react-navigation/native';
-import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import type { RootStackParamList } from '@navigation/types';
+import type { AppNavigation } from '@navigation/types';
 
 import { useColors, useTheme } from '@theme/ThemeProvider';
 import { useTypography } from '@theme/useTypography';
+import { RADIUS, SPACING } from '@theme/themes';
 import { useTranslation, useI18n } from '@i18n/I18nProvider';
 import { useSettingsStore } from '@stores/settingsStore';
 import { useQuotaStore, FREE_DAILY_LIMIT, TRIAL_DAILY_LIMIT } from '@stores/quotaStore';
@@ -61,10 +61,9 @@ const OracleScreen: React.FC = () => {
   const typography = useTypography();
   const t = useTranslation();
   const { lang } = useI18n();
-  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
-  // History lives on the sibling tab navigator, not the root stack — same
-  // loose-typing precedent as HistoryScreen's own navigation prop.
-  const tabNavigation = useNavigation<{ navigate: (screen: string) => void }>();
+  // One typed handle for both destinations: sibling tabs (AlFalak/History)
+  // and root-level pushes (Settings/Premium/OracleChat). See AppNavigation.
+  const navigation = useNavigation<AppNavigation>();
 
   const lastLocation = useSettingsStore(
     (s: ReturnType<typeof useSettingsStore.getState>) => s.lastLocation,
@@ -253,7 +252,7 @@ const OracleScreen: React.FC = () => {
 
         {/* Current Hora — compact readout, seal as a small badge (not the hero) */}
         <Pressable
-          onPress={() => tabNavigation.navigate('AlFalak')}
+          onPress={() => navigation.navigate('AlFalak')}
           style={[
             styles.heroCard,
             { backgroundColor: colors.surface, borderColor: colors.borderAccent + '55' },
@@ -388,10 +387,10 @@ const OracleScreen: React.FC = () => {
           )}
         </View>
 
-        {/* Ask New Question — opens the oracle chat conversation */}
+        {/* Ask New Question — opens the Oracle Chat conversation */}
         <Pressable
           testID="ask-shams-btn"
-          onPress={() => tabNavigation.navigate('Ask')}
+          onPress={() => navigation.navigate('OracleChat')}
           onLayout={e => {
             const { width, height } = e.nativeEvent.layout;
             setAskBtnSize({ width, height });
@@ -416,7 +415,7 @@ const OracleScreen: React.FC = () => {
             />
           )}
           <View style={[styles.actionIconWrap, { borderColor: colors.borderAccent }]}>
-            <Text style={{ fontSize: 18 }}>{'✦'}</Text>
+            <Text style={{ fontSize: 18, color: colors.goldBright }}>{'✦'}</Text>
           </View>
           <View style={styles.actionTextCol}>
             <Text style={[typography('button'), { color: colors.goldBright, fontSize: 16 }]}>
@@ -431,7 +430,7 @@ const OracleScreen: React.FC = () => {
 
         {/* Reading History */}
         <Pressable
-          onPress={() => tabNavigation.navigate('History')}
+          onPress={() => navigation.navigate('History')}
           style={({ pressed }) => [
             styles.actionBtnSecondary,
             {
@@ -637,7 +636,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 20,
+    paddingHorizontal: SPACING.xl,
     paddingVertical: 12,
     borderBottomWidth: StyleSheet.hairlineWidth,
     gap: 12,
@@ -668,7 +667,7 @@ const styles = StyleSheet.create({
     paddingBottom: 24,
   },
   vocBanner: {
-    marginHorizontal: 16,
+    marginHorizontal: SPACING.xl,
     marginTop: 10,
     paddingHorizontal: 14,
     paddingVertical: 8,
@@ -676,12 +675,12 @@ const styles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth,
   },
   heroCard: {
-    marginHorizontal: 16,
+    marginHorizontal: SPACING.xl,
     marginTop: 14,
     marginBottom: 12,
     paddingVertical: 14,
     paddingHorizontal: 16,
-    borderRadius: 20,
+    borderRadius: RADIUS.xl,
     borderWidth: StyleSheet.hairlineWidth,
     shadowColor: '#000',
     shadowOpacity: 0.08,
@@ -711,14 +710,14 @@ const styles = StyleSheet.create({
   pillRow: {
     flexDirection: 'row',
     gap: 10,
-    marginHorizontal: 16,
+    marginHorizontal: SPACING.xl,
     marginBottom: 12,
   },
   infoPill: {
     flex: 1,
     alignItems: 'center',
     paddingVertical: 12,
-    borderRadius: 16,
+    borderRadius: RADIUS.lg,
     borderWidth: StyleSheet.hairlineWidth,
   },
   tierPill: {
@@ -737,10 +736,10 @@ const styles = StyleSheet.create({
     opacity: 0.9,
   },
   card: {
-    marginHorizontal: 16,
+    marginHorizontal: SPACING.xl,
     marginBottom: 14,
     padding: 16,
-    borderRadius: 18,
+    borderRadius: RADIUS.xl,
     borderWidth: StyleSheet.hairlineWidth,
   },
   manzilCard: {
@@ -759,11 +758,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginHorizontal: 16,
+    marginHorizontal: SPACING.xl,
     marginBottom: 10,
     paddingVertical: 16,
     paddingHorizontal: 18,
-    borderRadius: 18,
+    borderRadius: RADIUS.xl,
     borderWidth: StyleSheet.hairlineWidth,
     overflow: 'hidden',
     shadowColor: '#000',
@@ -776,11 +775,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginHorizontal: 16,
+    marginHorizontal: SPACING.xl,
     marginBottom: 14,
     paddingVertical: 14,
     paddingHorizontal: 18,
-    borderRadius: 18,
+    borderRadius: RADIUS.xl,
     borderWidth: StyleSheet.hairlineWidth,
   },
   actionIconWrap: {

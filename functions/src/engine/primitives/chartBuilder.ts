@@ -143,29 +143,6 @@ function isCombust(
 }
 
 // ────────────────────────────────────────────────────────────────────────────
-// House occupancy — which house does a sidereal longitude fall in?
-// ────────────────────────────────────────────────────────────────────────────
-
-export function houseForLongitude(
-  siderealLon: number,
-  siderealCusps: readonly number[],
-): HouseIndex {
-  for (let i = 0; i < 12; i++) {
-    const cuspStart = siderealCusps[i] as number;
-    const cuspEnd = siderealCusps[(i + 1) % 12] as number;
-    // Handle wrap-around at 0°/360°
-    const inHouse =
-      cuspEnd > cuspStart
-        ? siderealLon >= cuspStart && siderealLon < cuspEnd
-        : siderealLon >= cuspStart || siderealLon < cuspEnd;
-    if (inHouse) {
-      return (i + 1) as HouseIndex;
-    }
-  }
-  return 1 as HouseIndex;
-}
-
-// ────────────────────────────────────────────────────────────────────────────
 // Assemble PlanetPosition from raw data
 // ────────────────────────────────────────────────────────────────────────────
 

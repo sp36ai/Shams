@@ -12,21 +12,19 @@ For seekers with real questions. People in transition. Those facing genuine choi
 
 Five celestial powers converge at the instant of your question — the cosmic validators. When these forces align, the truth is certain. When they scatter, the answer grows complex — but it is still true.
 
-## Two Oracle Modes
+## The Oracle
 
-**Digital Watch Oracle** — Answers anchored to your precise timestamp alone.
+**Digital Watch Oracle** — the app's sole oracle mode. Answers anchored to your precise timestamp: the house frame comes from the 5-minute bracket of the exact watch-minute you ask in, not a horoscope's local horizon. No location or birth data needed — it can answer the instant you open the app.
 
-**Astronomical Oracle** — Answers grounded in the actual planetary positions at your moment of asking.
-
-Both reveal the same truth. The difference is the depth of celestial witness you seek.
+An earlier location-based **Astronomical Oracle** mode (a true-Ascendant chart via Placidus houses) was retired from the client — see "Celestial Engine" below for what remains of it in the codebase.
 
 ## Subscription Tiers
 
-**Free Trial:** 7 days full access to both oracle modes.
+**Free Trial:** 7 days full access.
 
-**Mureed (₹249/month):** 3 questions per day, single oracle mode. Perfect for regular seekers. Annual: ₹2,490 (2 months free).
+**Mureed (₹249/month):** 3 questions per day. Perfect for regular seekers. Annual: ₹2,490 (2 months free).
 
-**Khass (₹699/month):** Unlimited questions, both oracle modes, exportable reports, reading archive, direct feedback channel. Annual: ₹6,990 (2 months free).
+**Khass (₹699/month):** Unlimited questions, exportable reports, reading archive, direct feedback channel. Annual: ₹6,990 (2 months free).
 
 ## The Brand
 
@@ -48,7 +46,7 @@ Built by **Astro Sarfaraz** — a solo developer, owner, and practicing celestia
 
 ### Judgment (Oracle)
 
-- **Ask**: Capture question → build celestial chart for current moment/saved location → server judgment → narrated verdict with timing/remedy/reasoning
+- **Ask**: Capture question → build celestial chart for the current watch-minute (no location needed) → server judgment → narrated verdict with timing/remedy/reasoning
 - **Intents**: Follow-up questions (timing, remedy, why) repurpose the chart without recalculating
 - **Confidence**: Verdict confidence level with detailed breakdown by judgment phase
 
@@ -74,7 +72,8 @@ Built by **Astro Sarfaraz** — a solo developer, owner, and practicing celestia
 
 ### User-Facing Callable Functions
 
-- **`askOracle`** — Horary judgment: validates input, enforces quota, builds chart, calls celestial engine, returns verdict
+- **`askWatchOracle`** — the live judgment endpoint: validates input, enforces quota, builds the watch-frame chart, calls the RKP celestial engine, returns verdict + remedy composition
+- **`classifyQuestion`** / **`classifyIntent`** — Layer-1 question gate and follow-up intent classification (Claude Haiku)
 - **`getQuota`** — Returns user's plan, daily usage, and remaining questions
 - **`syncReadings`** — Bulk fetch readings from Firestore
 - **`deleteReading`** — Delete reading by ID
@@ -88,10 +87,9 @@ Built by **Astro Sarfaraz** — a solo developer, owner, and practicing celestia
 
 ## Celestial Engine
 
-The authoritative algorithm documents:
+The authoritative algorithm document:
 
 - `docs/RKP_RULES_FROM_SARFARAZ.md` — Judgment rules and horary methodology
-- `src/astrology/kp/judgment/JUDGMENT_ALGORITHM.md` — Implementation details
 
 The engine code:
 
@@ -100,37 +98,45 @@ src/astrology/
   ├── primitives/       Ephemeris, ayanamsa, sidereal time, house cusps, sub-lords
   │   └── moshier/      Meeus/VSOP87 sun, moon and planet series
   ├── kp/
-  │   ├── judgment/     Verdict logic + timing + remedy
-  │   └── rules/        House matrix, nakshatras, vimshottari, keywords
-  ├── rkp/              Digital Watch Oracle — watch-selected house frame
+  │   └── rules/        House matrix, nakshatras, vimshottari, keywords — shared
+  │                      with the RKP engine below, not KP-exclusive
+  ├── rkp/              Digital Watch Oracle — the only judgment engine that ships
   └── types/            Chart, question and verdict contracts
 ```
 
-### The two modes share one sky
+### One engine, ever since the astronomical (KP) path was deleted
 
-Both oracle modes read the **same real ephemeris** — Meeus/VSOP87 series with
-heliocentric→geocentric conversion, Lahiri ayanamsa, genuine retrograde and
-combustion state. They differ only in where the **house frame** comes from:
-
-|                | Astronomical Oracle                                   | Digital Watch Oracle                                     |
-| -------------- | ----------------------------------------------------- | -------------------------------------------------------- |
-| Entry point    | `primitives/chartBuilder.ts`                          | `rkp/watchChart.ts`                                      |
-| 1st house from | True Ascendant — RAMC, obliquity, latitude (Placidus) | The 5-minute bracket of the querent's local watch minute |
-| Needs location | Yes — the horizon is local                            | No                                                       |
-| Planets        | Real                                                  | Real                                                     |
-
-The watch frame is a **moment-selected** house frame, of the same class as KP's
-1–249 number method, where a querent-chosen number rather than the local horizon
-fixes the Ascendant. It is not a horizon computation and must never be described
-as one, or substituted behind the Astronomical Oracle — the two are surfaced
-separately to the user for exactly that reason. See the header of
-`src/astrology/rkp/watchGrid.ts`.
+The client ships a single oracle mode — the **Digital Watch Oracle**
+(`rkp/watchChart.ts`). Its house frame comes from the 5-minute bracket of the
+querent's local watch minute, not a horoscope's local horizon — a
+**moment-selected** house frame, of the same class as KP's 1–249 number
+method, where a querent-chosen number rather than the local horizon fixes
+the Ascendant. It is not a horizon computation and must never be described
+as one. See the header of `src/astrology/rkp/watchGrid.ts`.
 
 Because the watch frame replaces the cusps and planetary positions are
 location-invariant, a Watch reading needs nothing from the querent — no birth
 data, and no location either. It can run the moment the app opens.
 
-Both modes feed the **same remedy layer** — the 38 tagged practices in
+An earlier **Astronomical Oracle** mode — a true-Ascendant chart built by
+`primitives/chartBuilder.ts` (RAMC, obliquity, latitude, Placidus houses,
+location required) — was retired from `OracleChatScreen`'s `runEngine()`
+first (it needed a location the watch frame doesn't, and running both per
+question would have double-charged the querent's quota for one question),
+then deleted outright once confirmed unreachable: the `judgeHorary()`
+judgment function and its helpers (`kp/judgment/`), the `askOracle` Cloud
+Function, and its dedicated LLM synthesis prompt are gone. `AstroVerdictCard`
+and the `AstroVerdictResult`/`SignificatorSets` types in `types/verdict.ts`
+are kept — deliberately, not an oversight — purely to render readings taken
+before the migration; nothing live produces that shape anymore. The
+`kp/rules/` tables (house matrix, nakshatras, vimshottari, question
+keywords) and the whole `primitives/` layer survive because the RKP engine
+itself depends on them — they were never KP-exclusive.
+
+The engine reads a real ephemeris —
+Meeus/VSOP87 series with heliocentric→geocentric conversion, Lahiri
+ayanamsa, genuine retrograde and combustion state — and feeds the remedy
+layer — the 38 tagged practices in
 `src/data/remedyLibrary.ts` (salawat, dua, istikhara, sadaqa, fasting, Qur'an,
 dhikr, charity, night prayer, silence, tawbah). `src/data/watchRemedyContext.ts`
 translates a watch verdict into the ranker's vocabulary: the obstructing planet

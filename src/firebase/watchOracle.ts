@@ -17,8 +17,43 @@
  */
 
 import { regionalFunctions } from './functionsRegion';
+import { withTimeout } from '../utils/withTimeout';
+import { ensureAppCheckReady } from './appCheck';
 import type { DisplayWatchVerdict } from '@astrology/rkp/watchJudgment';
 import type { WatchOracleComposition } from '../types/watchOracle';
+
+/**
+ * How long to give App Check a chance to attach a token before firing
+ * anyway. Not a correctness gate — the call proceeds regardless of whether
+ * this resolves, times out, or App Check itself rejects; existing
+ * server-side error handling already turns a genuinely missing/invalid
+ * token into a proper "seal of verification is absent" bubble. This exists
+ * only to close the common case: a fast cold start where Play Integrity's
+ * first token exchange (slower than Auth's, typically already cached)
+ * hasn't completed yet by the time the querent taps Ask.
+ */
+const APP_CHECK_GATE_TIMEOUT_MS = 8000;
+
+/**
+ * The server itself allows up to 120s (Anthropic synthesis ~25s + cold-start
+ * headroom) — see ORACLE_FUNCTION_OPTS in functions/src/config.ts. This is
+ * deliberately looser than that ceiling: it exists only to recover from a
+ * native callable invocation that hangs instead of ever resolving/rejecting
+ * (App Check/attestation round-trips are the known culprit — see
+ * withTimeout()'s docstring), not to race a normal, slower-than-usual
+ * response. Without this, that hang leaves `sendMessage()` awaiting forever
+ * with no spinner having ever had the chance to clear and no bubble ever
+ * rendered.
+ */
+const ASK_WATCH_ORACLE_TIMEOUT_MS = 45000;
+
+class AskWatchOracleTimeoutError extends Error {
+  code = 'deadline-exceeded';
+  constructor() {
+    super('askWatchOracle: no response within the client-side timeout');
+    this.name = 'AskWatchOracleTimeoutError';
+  }
+}
 
 export interface AskWatchOracleInput {
   question: string;
@@ -67,6 +102,10 @@ export function deviceUtcOffsetMinutes(now: Date = new Date()): number {
 }
 
 export async function askWatchOracle(args: AskWatchOracleInput): Promise<AskWatchOracleResult> {
+  // Give App Check a bounded head start before firing — see
+  // APP_CHECK_GATE_TIMEOUT_MS above for why. Proceeds either way.
+  await withTimeout(ensureAppCheckReady(), APP_CHECK_GATE_TIMEOUT_MS);
+
   const fn = regionalFunctions().httpsCallable('askWatchOracle');
 
   const payload: Record<string, unknown> = {
@@ -76,7 +115,13 @@ export async function askWatchOracle(args: AskWatchOracleInput): Promise<AskWatc
     ...(args.seekerProfile !== undefined ? { seekerProfile: args.seekerProfile } : {}),
   };
 
-  const result = await fn(payload);
+  const result = await withTimeout(fn(payload), ASK_WATCH_ORACLE_TIMEOUT_MS);
+  if (result === undefined) {
+    // Surfaces as `.code === 'deadline-exceeded'`, which OracleChatScreen's
+    // error handler already maps to "the channel to the oracle is
+    // interrupted" — no separate handling needed at the call site.
+    throw new AskWatchOracleTimeoutError();
+  }
   const data = result.data as WatchReading & { quotaRemaining: number | null };
 
   return {

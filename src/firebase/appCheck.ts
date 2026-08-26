@@ -17,6 +17,36 @@ import crashlytics from '@react-native-firebase/crashlytics';
  * exactly what routed a broken App Check init into "please sign in" on the
  * Ask screen for a user who was, in fact, signed in.
  */
+let appCheckReadyPromise: Promise<void> | null = null;
+
+/**
+ * Idempotent front door onto initializeAppCheckService() — every caller gets
+ * the SAME promise, so App Check is only ever initialized once no matter how
+ * many call sites need to know it's ready.
+ *
+ * Why this exists: App.tsx fires initializeAppCheckService() in a mount
+ * effect but never awaits it before rendering children — by design, nothing
+ * should block the UI on a native attestation round-trip. But that means any
+ * Cloud Function call firing soon after launch (a fast cold start into an
+ * already-authenticated session, tapping Ask within the first second or two)
+ * can go out before the SDK has attached an App Check header at all — not a
+ * rejected token, an ABSENT one (`appCheck=FAILED: empty/undefined` in the
+ * diagnostic probe below, confirmed via Crashlytics against a real device:
+ * signedIn=true, idToken=ok, App Check simply hadn't produced a token yet).
+ * Firebase Auth's token is typically already cached/fast; Play Integrity's
+ * first exchange routinely is not — Auth wins the race, App Check loses it.
+ *
+ * Call sites that are about to fire an enforceAppCheck'd callable should
+ * await this (bounded by withTimeout — see the call sites) before invoking
+ * it, rather than assume the interceptor already has a token attached.
+ */
+export function ensureAppCheckReady(): Promise<void> {
+  if (appCheckReadyPromise === null) {
+    appCheckReadyPromise = initializeAppCheckService();
+  }
+  return appCheckReadyPromise;
+}
+
 export const initializeAppCheckService = async (): Promise<void> => {
   const appCheck = firebase.appCheck();
 
@@ -51,15 +81,37 @@ export const initializeAppCheckService = async (): Promise<void> => {
 };
 
 /**
+ * Result of a getAppCheckToken() call. Discriminated on `ok` so callers can
+ * tell "no token, no error" apart from "token fetch threw: <reason>" instead
+ * of both collapsing into a bare `undefined` — see the note below.
+ */
+export type AppCheckTokenResult = { ok: true; token: string } | { ok: false; error: string };
+
+/**
  * Manually retrieves the current App Check token.
  * Useful for debugging or forcing a refresh if a request fails.
+ *
+ * This used to swallow any rejection from getToken() into a bare
+ * `console.error` + `undefined` return — invisible in a production build
+ * (no Crashlytics record, no console access on a shipped APK), and
+ * indistinguishable from "App Check hasn't produced a token yet" to any
+ * caller. That is exactly what was collapsing real Play Integrity/
+ * attestation rejections into the generic "empty/undefined" reading in the
+ * askWatchOracle diagnostic probe (OracleChatScreen.tsx), even after
+ * initializeAppCheckService() was fixed to stop swallowing its own init
+ * rejection (see appCheck.ts init above) — that fix only covers the
+ * initializeAppCheck() call, not this separate getToken() call. Mirror the
+ * same pattern here: record the real error to Crashlytics and hand callers
+ * the actual reason instead of throwing it away.
  */
-export const getAppCheckToken = async (forceRefresh = false): Promise<string | undefined> => {
+export const getAppCheckToken = async (forceRefresh = false): Promise<AppCheckTokenResult> => {
   try {
     const result = await firebase.appCheck().getToken(forceRefresh);
-    return result.token;
+    return { ok: true, token: result.token };
   } catch (error) {
-    console.error('[App Check] Failed to get token:', error);
-    return undefined;
+    const err = error instanceof Error ? error : new Error(String(error));
+    crashlytics().log('[App Check] getToken() rejected — see recorded error for the reason');
+    crashlytics().recordError(err);
+    return { ok: false, error: err.message };
   }
 };

@@ -8,6 +8,10 @@
  *   3. CollapsibleCosmicClock — collapsed by default.
  *      CosmicClock's setInterval runs only when focused AND expanded.
  *   4. PlanetTable — Planet | Sign | Degree | Status
+ *      Each row also carries a dignity note (Exalted/OwnSign/FriendlySign/
+ *      EnemySign/Debilitated) beneath it when the placement is notable —
+ *      motion status (Direct/Retrograde/Combust) and dignity are independent
+ *      axes, so e.g. Venus can read "Direct" AND "Debilitated in Virgo".
  *      Disclaimer: approximate display only, not used for horary judgment.
  */
 
@@ -15,16 +19,16 @@ import React, { useCallback, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
-import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 import { useColors, useTheme } from '@theme/ThemeProvider';
 import { useTypography } from '@theme/useTypography';
 import { useSettingsStore } from '@stores/settingsStore';
 import { dayLordAtMoment, horaLordAtMoment } from '@astrology/primitives/rulingPlanets';
 import { buildChart } from '@astrology/primitives/chartBuilder';
+import { dignityOf, type Dignity } from '@astrology/rkp/rules';
 import StarfieldBackground from '@components/StarfieldBackground';
 import CosmicClock from '@components/home/CosmicClock';
-import type { RootStackParamList } from '@navigation/types';
+import type { AppNavigation } from '@navigation/types';
 import {
   SIGN_NAMES,
   displayLonSidereal,
@@ -73,12 +77,65 @@ function computeTiming(lonDeg: number): TimingState {
 const STATUS_RETROGRADE = '#8C7A9A'; // muted violet — retrograde motion restrained
 const STATUS_COMBUST = '#B8952A'; // aged brass — combustion, closeness to the Sun
 
+// Dignity colors — a second, independent axis from motion/combustion above.
+// A planet can be Direct *and* Debilitated (Venus in Virgo) or Retrograde
+// *and* Exalted at once; these badges never replace the STATUS word, they
+// sit alongside it.
+const DIGNITY_EXALTED = '#D4AF37'; // bright gold — full strength
+const DIGNITY_OWN_SIGN = '#6FA787'; // sage green — at home
+const DIGNITY_FRIENDLY = '#7FA3B0'; // soft teal — welcomed by the sign's lord
+const DIGNITY_ENEMY = '#B8735A'; // muted terracotta — hosted by a foe
+const DIGNITY_DEBILITATED = '#A85C5C'; // muted rust — weakened
+
+const DIGNITY_ICON: Readonly<Record<Dignity, string>> = {
+  Exalted: '↑',
+  OwnSign: '⌂',
+  FriendlySign: '◇',
+  NeutralSign: '',
+  EnemySign: '⚔',
+  Debilitated: '↓',
+};
+
+const DIGNITY_LABEL: Readonly<Record<Dignity, string>> = {
+  Exalted: 'Exalted',
+  OwnSign: 'Own Sign',
+  FriendlySign: 'Friendly Sign',
+  NeutralSign: '',
+  EnemySign: 'Enemy Sign',
+  Debilitated: 'Debilitated',
+};
+
+function dignityColor(dignity: Dignity): string {
+  switch (dignity) {
+    case 'Exalted':
+      return DIGNITY_EXALTED;
+    case 'OwnSign':
+      return DIGNITY_OWN_SIGN;
+    case 'FriendlySign':
+      return DIGNITY_FRIENDLY;
+    case 'EnemySign':
+      return DIGNITY_ENEMY;
+    case 'Debilitated':
+      return DIGNITY_DEBILITATED;
+    case 'NeutralSign':
+      return '';
+  }
+}
+
+// A soft 15%-alpha tint of the dignity color, for the badge's fill — the
+// border and text stay at full color so the badge reads as "highlighted",
+// not just colored italic text.
+function dignityBg(dignity: Dignity): string {
+  return dignity === 'NeutralSign' ? 'transparent' : `${dignityColor(dignity)}26`;
+}
+
 interface PlanetRow {
   name: PlanetName;
   glyph: string;
   sign: string;
   degreeStr: string;
   status: 'Retrograde' | 'Combust' | 'Direct';
+  dignity: Dignity;
 }
 
 // Uses the same Moshier-ephemeris chart engine that powers real horary
@@ -107,7 +164,9 @@ function computePlanetRows(nowMs: number, latDeg: number, lonDeg: number): Plane
       status = 'Direct';
     }
 
-    return { name, glyph: PLANET_GLYPHS[name], sign, degreeStr, status };
+    const dignity = dignityOf(name, p.sign);
+
+    return { name, glyph: PLANET_GLYPHS[name], sign, degreeStr, status, dignity };
   });
 }
 
@@ -117,10 +176,9 @@ const SkyClockScreen: React.FC = () => {
   const { theme } = useTheme();
   const colors = useColors();
   const typography = useTypography();
-  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const navigation = useNavigation<AppNavigation>();
   // Al-Falak is now a persistent tab — canGoBack() is false when reached by
   // tapping the tab directly, so the back arrow falls back to the Home tab.
-  const tabNavigation = useNavigation<{ navigate: (screen: string) => void }>();
 
   const lastLocation = useSettingsStore(
     (s: ReturnType<typeof useSettingsStore.getState>) => s.lastLocation,
@@ -171,7 +229,7 @@ const SkyClockScreen: React.FC = () => {
       >
         <Pressable
           onPress={() =>
-            navigation.canGoBack() ? navigation.goBack() : tabNavigation.navigate('Home')
+            navigation.canGoBack() ? navigation.goBack() : navigation.navigate('Home')
           }
           style={styles.backBtn}
           accessibilityRole="button"
@@ -300,44 +358,135 @@ const SkyClockScreen: React.FC = () => {
               ))}
             </View>
             {/* Data rows */}
-            {planetRows.map(({ name, glyph, sign, degreeStr, status }, i) => (
-              <View
-                key={name}
-                style={[
-                  styles.tableRow,
-                  {
-                    borderBottomColor: colors.border,
-                    backgroundColor: i % 2 === 1 ? colors.surfaceElevated : 'transparent',
-                  },
-                ]}
+            {planetRows.map(({ name, glyph, sign, degreeStr, status, dignity }, i) => {
+              const hasDignityNote = dignity !== 'NeutralSign';
+              const rowBg = i % 2 === 1 ? colors.surfaceElevated : 'transparent';
+              return (
+                <View key={name} style={{ backgroundColor: rowBg }}>
+                  <View
+                    style={[
+                      styles.tableRow,
+                      {
+                        borderBottomColor: hasDignityNote ? 'transparent' : colors.border,
+                      },
+                    ]}
+                  >
+                    <Text style={[typography('caption'), styles.colPlanet, { color: colors.text }]}>
+                      {glyph} {name}
+                    </Text>
+                    <Text style={[typography('caption'), styles.colData, { color: colors.accent }]}>
+                      {sign}
+                    </Text>
+                    <Text
+                      style={[typography('caption'), styles.colData, { color: colors.textMuted }]}
+                    >
+                      {degreeStr}
+                    </Text>
+                    <Text
+                      style={[
+                        typography('caption'),
+                        styles.colData,
+                        {
+                          color:
+                            status === 'Retrograde'
+                              ? STATUS_RETROGRADE
+                              : status === 'Combust'
+                                ? STATUS_COMBUST
+                                : colors.textMuted,
+                        },
+                      ]}
+                    >
+                      {status}
+                    </Text>
+                  </View>
+                  {/* Dignity note — a second, independent axis from motion/combustion
+                      above: exaltation, own sign, friendly/enemy sign, or debilitation.
+                      A planet can be Direct and Debilitated at once (Venus in Virgo),
+                      so this never replaces the STATUS word, it sits below it. Silent
+                      for NeutralSign — most placements are unremarkable, and calling
+                      that out on every row would bury the ones that matter. */}
+                  {hasDignityNote && (
+                    <View style={[styles.dignityRow, { borderBottomColor: colors.border }]}>
+                      <View
+                        style={[
+                          styles.dignityBadge,
+                          {
+                            backgroundColor: dignityBg(dignity),
+                            borderColor: dignityColor(dignity),
+                          },
+                        ]}
+                      >
+                        <Text
+                          style={[
+                            typography('caption'),
+                            styles.dignityText,
+                            { color: dignityColor(dignity) },
+                          ]}
+                        >
+                          {DIGNITY_ICON[dignity]} {DIGNITY_LABEL[dignity]} in {sign}
+                        </Text>
+                      </View>
+                    </View>
+                  )}
+                </View>
+              );
+            })}
+          </View>
+
+          {/* Dignity legend — decodes the badges on rows carrying a dignity note. */}
+          <View style={styles.legend}>
+            <View
+              style={[
+                styles.legendBadge,
+                { backgroundColor: `${DIGNITY_EXALTED}26`, borderColor: DIGNITY_EXALTED },
+              ]}
+            >
+              <Text style={[typography('caption'), styles.legendText, { color: DIGNITY_EXALTED }]}>
+                ↑ Exalted
+              </Text>
+            </View>
+            <View
+              style={[
+                styles.legendBadge,
+                { backgroundColor: `${DIGNITY_OWN_SIGN}26`, borderColor: DIGNITY_OWN_SIGN },
+              ]}
+            >
+              <Text style={[typography('caption'), styles.legendText, { color: DIGNITY_OWN_SIGN }]}>
+                ⌂ Own Sign
+              </Text>
+            </View>
+            <View
+              style={[
+                styles.legendBadge,
+                { backgroundColor: `${DIGNITY_FRIENDLY}26`, borderColor: DIGNITY_FRIENDLY },
+              ]}
+            >
+              <Text style={[typography('caption'), styles.legendText, { color: DIGNITY_FRIENDLY }]}>
+                ◇ Friendly
+              </Text>
+            </View>
+            <View
+              style={[
+                styles.legendBadge,
+                { backgroundColor: `${DIGNITY_ENEMY}26`, borderColor: DIGNITY_ENEMY },
+              ]}
+            >
+              <Text style={[typography('caption'), styles.legendText, { color: DIGNITY_ENEMY }]}>
+                ⚔ Enemy
+              </Text>
+            </View>
+            <View
+              style={[
+                styles.legendBadge,
+                { backgroundColor: `${DIGNITY_DEBILITATED}26`, borderColor: DIGNITY_DEBILITATED },
+              ]}
+            >
+              <Text
+                style={[typography('caption'), styles.legendText, { color: DIGNITY_DEBILITATED }]}
               >
-                <Text style={[typography('caption'), styles.colPlanet, { color: colors.text }]}>
-                  {glyph} {name}
-                </Text>
-                <Text style={[typography('caption'), styles.colData, { color: colors.accent }]}>
-                  {sign}
-                </Text>
-                <Text style={[typography('caption'), styles.colData, { color: colors.textMuted }]}>
-                  {degreeStr}
-                </Text>
-                <Text
-                  style={[
-                    typography('caption'),
-                    styles.colData,
-                    {
-                      color:
-                        status === 'Retrograde'
-                          ? STATUS_RETROGRADE
-                          : status === 'Combust'
-                            ? STATUS_COMBUST
-                            : colors.textMuted,
-                    },
-                  ]}
-                >
-                  {status}
-                </Text>
-              </View>
-            ))}
+                ↓ Debilitated
+              </Text>
+            </View>
           </View>
         </View>
 
@@ -479,6 +628,44 @@ const styles = StyleSheet.create({
   },
   colData: {
     flex: 1.5,
+  },
+  dignityRow: {
+    flexDirection: 'row',
+    paddingHorizontal: 14,
+    paddingBottom: 8,
+    paddingTop: 2,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+  },
+  dignityBadge: {
+    flexDirection: 'row',
+    alignSelf: 'flex-start',
+    borderRadius: 8,
+    borderWidth: 1,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+  },
+  dignityText: {
+    fontSize: 9,
+    fontWeight: '600',
+    letterSpacing: 0.2,
+  },
+  legend: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginTop: 10,
+    marginLeft: 2,
+  },
+  legendBadge: {
+    borderRadius: 8,
+    borderWidth: 1,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    marginRight: 8,
+    marginBottom: 6,
+  },
+  legendText: {
+    fontSize: 9,
+    fontWeight: '600',
   },
   disclaimer: {
     marginHorizontal: 16,
