@@ -3,8 +3,9 @@
  * converted from heliocentric to true apparent geocentric longitude.
  * --------------------------------------------------------------------------
  * Accuracy: < 1' for all classical planets for 1900–2100 CE, AWAY FROM
- * conjunction/opposition — see the Venus/Mars note below for where that
- * claim does not hold, and what does and does not explain it.
+ * conjunction/opposition for Mars, and generally elsewhere — Venus had a
+ * genuine bug (fixed, see below); see the Venus/Mars note for what does and
+ * does not explain the residual near conjunction/opposition.
  *
  * Each planet's HELIOCENTRIC ecliptic longitude is derived from:
  *   L = L₀ + L₁·T + L₂·T² + ... (geometric mean + periodic terms)
@@ -32,30 +33,53 @@
  *   matches what Meeus Ch.33 actually specifies rather than a flattened
  *   approximation of it.
  *
- *   WHAT IT DID NOT FIX, measured directly (RKP audit Pass 3): at
- *   Venus's/Mars's own published conjunction/opposition instants, the flat
- *   2D form landed ~3.75°/~1.17° from the Sun where it should land within
- *   a fraction of a degree. Switching to 3D only closed that to
- *   ~3.67°/~1.19° — because the 2D→3D correction to the in-plane (x, y)
- *   components is itself tiny (a cos(inclination) factor, ≈0.998 for
- *   Venus's 3.4°): it was never going to move a several-degree error. The
- *   actual amplification is structural to vector subtraction near
- *   conjunction/opposition regardless of dimensionality — the planet's and
- *   Earth's heliocentric vectors nearly cancel there, so the resulting
- *   angle is dominated by whatever error the heliocentric longitude series
- *   already carries — confirmed by comparing this module's own computed
- *   Venus heliocentric longitude against Earth's at the exact published
- *   conjunction instant: they disagree by ~1.4°, which is the series'
- *   truncation error, not a 2D/3D artifact. Distant planets (Jupiter,
- *   Saturn, 5-9x Earth's own solar distance) barely notice this
- *   amplification regardless; Venus and Mars, at comparable distances to
- *   Earth's own, do. Closing THAT gap needs a more accurate heliocentric
- *   longitude series (more VSOP87 terms, or Meeus Table 33.b periodic
- *   perturbations — Venus currently has none in this module, unlike
- *   Mars/Jupiter/Saturn below) verified against independent reference
- *   values with the same rigor as the dates this file's tests use, not
- *   coefficients added on the strength of a hypothesis alone. Filed as a
- *   distinct follow-up, deliberately not attempted here.
+ *   THE FULL STORY (RKP audit Pass 3), because each step here corrected a
+ *   real but wrong conclusion from the step before it:
+ *
+ *   1. At Venus's/Mars's own published conjunction/opposition instants, the
+ *      original flat 2D form landed ~3.75°/~1.17° from the Sun where it
+ *      should land within a fraction of a degree.
+ *   2. Switching to the 3D form above only closed that to ~3.67°/~1.19° —
+ *      measured directly, not assumed — because the 2D→3D correction to the
+ *      in-plane (x, y) components is itself tiny (a cos(inclination)
+ *      factor, ≈0.998 for Venus's 3.4°): it was never going to move a
+ *      several-degree error. The actual amplification is structural to
+ *      vector subtraction near conjunction/opposition regardless of
+ *      dimensionality — the planet's and Earth's heliocentric vectors
+ *      nearly cancel there, so the resulting angle is dominated by whatever
+ *      error the heliocentric longitude already carries. Distant planets
+ *      (Jupiter, Saturn, 5-9x Earth's own solar distance) barely notice
+ *      this regardless; Venus and Mars, at comparable distances to Earth's
+ *      own, do.
+ *   3. What was actually being amplified turned out to differ by planet.
+ *      Cross-checking each planet's own L(J2000.0) − M(J2000.0) — which
+ *      must equal its published longitude of perihelion ϖ = Ω + ω — against
+ *      independently published values: Mercury, Mars, Jupiter, Saturn all
+ *      checked out to within 0.001°, meaning their small residuals (Mars's
+ *      heliocentric longitude was off by ~0.46° from Earth's at its exact
+ *      opposition instant) really are this low-precision series' own
+ *      truncation error, with nothing further to fix short of a finer
+ *      series. Venus's did not check out: its mean-anomaly epoch constant
+ *      was 212.2595°, but L−ϖ (ϖ = 131.53298°, independently published)
+ *      requires ~50.45° — off by ~162°. That is now fixed (see the comment
+ *      on VENUS's M constant below). It closed Venus's conjunction-instant
+ *      error from ~3.67° to ~0.94° — most of the gap, not all of it; the
+ *      remainder is the same kind of low-precision truncation error Mars
+ *      has, just proportionally larger here because Venus sits closer to
+ *      Earth's own orbit, which the near-conjunction amplification (point 2
+ *      above) still magnifies.
+ *   4. This was genuinely a wrong-constant bug, not a missing-perturbation-
+ *      terms problem, which was the original hypothesis: Van Flandern &
+ *      Pulkkinen (1979) — the actual source of this module's L/M/e
+ *      constants — gives Venus's own periodic perturbation terms as
+ *      totaling well under 0.1° even fully applied, an order of magnitude
+ *      too small to have explained the original ~3.7° gap on their own.
+ *
+ *   Closing Venus's/Mars's remaining sub-degree residual near conjunction/
+ *   opposition needs a genuinely finer heliocentric series (full VSOP87,
+ *   not this paper's low-precision truncation), verified against
+ *   independent reference values with the same rigor used here — filed as
+ *   a distinct, smaller follow-up, not attempted in this pass.
  *
  *   Without a geocentric step at all, apparent retrograde motion — a
  *   purely geocentric-parallax effect from Earth's own orbital motion —
@@ -71,6 +95,14 @@
  * References:
  *   - Meeus, *Astronomical Algorithms* 2nd ed., Ch.33–36         [MEEUS]
  *   - Moshier, *Astronomical Algorithms in C*, Ch.4–9            [MOSHIER]
+ *   - Van Flandern, T. C., and Pulkkinen, K. F., "Low-Precision
+ *     Formulae for Planetary Positions," ApJS 41:391-411, 1979 —
+ *     the actual origin of this module's L/M/e mean-element
+ *     constants and structure (confirmed by directly reading the
+ *     paper during the RKP audit; its own Table 4 periodic-
+ *     perturbation terms for Venus, notably, are NOT included here
+ *     — they total well under 0.1° and were confirmed too small to
+ *     explain the conjunction-instant error found in Pass 3).
  *   - Standish (JPL), *Keplerian Elements for Approximate
  *     Positions of the Major Planets* — source for Venus/Mars's
  *     J2000.0 inclination/node/perihelion constants below.
@@ -259,7 +291,25 @@ const VENUS_I = 3.3946; // inclination to the ecliptic, degrees
 export function venusPosition(jdtt: JDtt): PlanetLonLat {
   const T = (jdtt - 2451545.0) / 36525.0;
   const L = normalize360(polyval([181.979801, 58517.815676, 0.00000165, -0.000000002], T));
-  const M = normalize360(polyval([212.2595, 58517.80387, -0.000128], T)) * DEG_TO_RAD;
+  // Mean anomaly epoch constant. FIX (RKP audit Pass 3, root cause of the
+  // ~3.7° conjunction-instant error): this was 212.2595, which is not
+  // Venus's mean anomaly at J2000.0 by ~162° — cross-checked two ways: (1)
+  // independently published Venus mean anomaly at J2000.0 is ~50.11-50.12°
+  // (not 212.2595°); (2) L(J2000.0) − M(J2000.0) must equal the longitude
+  // of perihelion ϖ = Ω + ω ≈ 76.68° + 54.89° ≈ 131.57°, and the published
+  // ϖ(J2000.0) is 131.53298° — the old constant gave L−M ≈ 329.72°, off by
+  // ~198°, while 50.446821° (used below, = this file's own verified-correct
+  // L(0) minus the published ϖ, for self-consistency) gives L−M ≈ 131.53°
+  // exactly. A wrong M phase does not move the mean orbit at all — it only
+  // misapplies the equation-of-center wobble (≤ ~0.78° for Venus's small
+  // eccentricity) at the wrong point in the cycle, bounded at ~2x that
+  // magnitude — which is why this was never wildly wrong, only close to a
+  // degree off (worst near conjunction/opposition, where planets.ts's
+  // vector-subtraction geocentric conversion amplifies whatever heliocentric
+  // error already exists — see the file header). Mars/Jupiter/Saturn's own
+  // M constants were checked the same way (L−M against each planet's own
+  // published ϖ) and are correct to within 0.001°; this bug is Venus-only.
+  const M = normalize360(polyval([50.446821, 58517.80387, -0.000128], T)) * DEG_TO_RAD;
   const e = 0.00677188 - 0.000047766 * T;
   const C = 2 * e * Math.sin(M) + (5 / 4) * e * e * Math.sin(2 * M);
   const helioLon = normalize360(L + C * (180 / Math.PI));
