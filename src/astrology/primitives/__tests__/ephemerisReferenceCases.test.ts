@@ -31,6 +31,55 @@
  *      the Sun's AND the Moon is near a node (ecliptic latitude close to
  *      0°). Both are checked independently.
  *
+ *   4. Mercury's three published 2026 retrograde windows — its geocentric
+ *      longitude must move backward inside each and forward outside all
+ *      of them.
+ *
+ *   5. Venus at inferior conjunction, 2025-03-23 01:00 UTC (earthsky.org /
+ *      in-the-sky.org) — Venus sits between Earth and the Sun, so its
+ *      geocentric longitude coincides with the Sun's, by definition.
+ *
+ *   6. Mars at opposition, 2025-01-16 ~01:00-01:17 UTC (multiple sources,
+ *      averaged to 01:10 UTC) — Earth sits between Mars and the Sun, so
+ *      Mars's geocentric longitude is the Sun's + 180°, by definition.
+ *
+ *   7. Jupiter at opposition, 2026-01-10 08:00 UTC (earthsky.org /
+ *      in-the-sky.org / Fiske Planetarium) — same definition as Mars.
+ *
+ *   8. Saturn at opposition, 2025-09-21 06:00 UTC (earthsky.org /
+ *      in-the-sky.org) — same definition again, closing out all seven
+ *      classical bodies (Sun, Moon, Mercury, Venus, Mars, Jupiter, Saturn)
+ *      against real, independently published events. Rahu/Ketu are pure
+ *      geometric constructs (the Moon's own orbital nodes) rather than an
+ *      observable body with an independently published position, so they
+ *      have no analogous external reference case; their formula is a
+ *      direct transcription of Meeus 47.7 and is exercised throughout
+ *      Pass 2's structural tests instead.
+ *
+ * CASES 5 AND 6 FOUND A REAL ACCURACY LIMIT, NOT JUST A PASSING TEST.
+ * Jupiter and Saturn (cases 7-8) land within arcminutes of their published
+ * opposition instants. Venus and Mars (cases 5-6) do not — they land ~3.75°
+ * and ~1.17° off respectively, at the exact moment they're supposed to align
+ * with the Sun to within a fraction of a degree. Both cases' comments trace
+ * the cause: planets.ts's geocentric conversion is a flat 2D vector
+ * subtraction between the planet's own heliocentric position and Earth's;
+ * near conjunction/opposition the two heliocentric longitudes are close
+ * together, and dividing by that short "baseline" amplifies whatever small
+ * error the low-precision heliocentric series already carries. Jupiter and
+ * Saturn's own solar distances are 5-9x Earth's, so the same absolute error
+ * barely moves their computed geocentric longitude — Venus and Mars don't
+ * have that luxury. This directly threatens Mercury/Venus combustion
+ * detection specifically, since combustion is evaluated exactly when a
+ * planet is near the Sun — the same geometry this measures. Filed as a
+ * follow-up (see cases 5-6 below), not fixed here — Pass 3's job is to
+ * establish ground truth, not rewrite the engine.
+ *
+ * Opposition/conjunction/retrograde dates are exact, deterministic orbital
+ * mechanics computed by observatories years in advance — not predictions in
+ * the colloquial, uncertain sense — so a case landing after this file's
+ * authorship date (e.g. part of case 4's third window) is exactly as
+ * permanent a fact as one safely in the past.
+ *
  * A failure here means the ephemeris itself has drifted from reality — a
  * different and more serious class of problem than a Pass 1/2 finding,
  * since every downstream sign/house/judgment computation inherits it.
@@ -38,9 +87,15 @@
 import { isoToJD, jdutToJdtt } from '@astrology/primitives/julianDay';
 import { sunPosition } from '@astrology/primitives/moshier/sun';
 import { moonPosition } from '@astrology/primitives/moshier/moon';
-import { mercuryPosition } from '@astrology/primitives/moshier/planets';
+import {
+  mercuryPosition,
+  venusPosition,
+  marsPosition,
+  jupiterPosition,
+  saturnPosition,
+} from '@astrology/primitives/moshier/planets';
 import { lahiriAyanamsa } from '@astrology/primitives/ayanamsa';
-import { angularDistance, signedSeparation } from '@astrology/primitives/angles';
+import { angularDistance, signedSeparation, normalize360 } from '@astrology/primitives/angles';
 
 function jdttFromUtc(iso: string) {
   return jdutToJdtt(isoToJD(iso));
@@ -149,5 +204,91 @@ describe('reference case 4: Mercury retrograde stations, 2026', () => {
     expect(longitudeDeltaPerDay('2026-04-20T00:00:00Z')).toBeGreaterThan(0); // between window 1 and 2
     expect(longitudeDeltaPerDay('2026-09-01T00:00:00Z')).toBeGreaterThan(0); // between window 2 and 3
     expect(longitudeDeltaPerDay('2026-12-15T00:00:00Z')).toBeGreaterThan(0); // after window 3
+  });
+});
+
+describe('reference case 5: Venus at inferior conjunction, 2025-03-23 01:00 UTC', () => {
+  it('lands multiple degrees from true conjunction — a real, diagnosed accuracy limit, not test slack', () => {
+    // FINDING (Pass 3): at exact inferior conjunction, Venus's own
+    // heliocentric longitude formula agrees with Earth's to ~1.4° — a
+    // plausible residual for a truncated low-precision series. But
+    // toGeocentricLongitude() (planets.ts) converts to geocentric position
+    // via flat 2D vector subtraction: x = Rv*cosLv - Re*cosLe, y likewise.
+    // Near conjunction, Rv and Re point in nearly the same direction, so
+    // the resulting (x,y) vector's direction — and therefore the computed
+    // geocentric longitude — is dominated by whatever small angular error
+    // exists between the two heliocentric longitudes, amplified by the
+    // short Earth-Venus baseline. The identical geometry (Venus and Earth
+    // heliocentrically aligned) is what makes Jupiter/Saturn's opposition
+    // checks below land within arcminutes: for them the "baseline" (their
+    // own solar distance) is 5-9x Earth's, so the same absolute
+    // heliocentric error barely rotates the resultant vector.
+    //
+    // This is not academic: Venus's combustion threshold is 10°
+    // (8° retrograde) — see constants.ts COMBUSTION_THRESHOLD_DEG — and
+    // Venus is combust-relevant PRECISELY when it is near the Sun in the
+    // sky, i.e. near this same conjunction geometry. A multi-degree
+    // position error here is a meaningful fraction of that threshold, so a
+    // borderline combustion call near conjunction carries real risk of
+    // landing on the wrong side. Filed as a follow-up, not fixed here —
+    // Pass 3 establishes ground truth, it doesn't rewrite the engine.
+    const jdtt = jdttFromUtc('2025-03-23T01:00:00Z');
+    const sunLon = sunPosition(jdtt).longitude;
+    const venusLon = venusPosition(jdtt).longitude;
+    const error = angularDistance(sunLon, venusLon);
+    // Lower bound: proves the module header's "< 1' for all classical
+    // planets" claim does not hold in this configuration — if this ever
+    // drops below 0.1°, the geocentric conversion was likely fixed
+    // (3D vector subtraction, or a finer series) and this whole comment
+    // block, and the combustion-risk follow-up, should be revisited.
+    expect(error).toBeGreaterThan(0.1);
+    // Upper bound: still a sanity ceiling — catches a wrong orbital
+    // element or a heliocentric/geocentric mixup, an order of magnitude
+    // beyond the ~3.75° actually measured here.
+    expect(error).toBeLessThan(6);
+  });
+});
+
+describe('reference case 6: Mars at opposition, 2025-01-16 ~01:10 UTC', () => {
+  it('lands over a degree from true opposition — the same amplification, milder (larger baseline)', () => {
+    // Same mechanism as case 5: at opposition Mars's heliocentric longitude
+    // agrees with Earth's to ~0.46° (a smaller residual than Venus's — Mars'
+    // own low-precision series includes an extra periodic correction term
+    // Venus's does not), but Mars's own solar distance (~1.5 AU) is closer
+    // to Earth's (1 AU) than an outer planet's, so the vector-subtraction
+    // baseline is still short enough to amplify that residual into a
+    // measured ~1.17° geocentric error. Milder than Venus's ~3.75° (Mars
+    // sits farther from Earth than Venus ever does), but the same root
+    // cause, and comfortably outside Mars's own combustion threshold
+    // margins (17°) is wide enough that this specific case is lower-risk
+    // for Mars than for Venus/Mercury — noted for completeness, not urgency.
+    // Published times for this event range from 01:00 to 02:32 UTC
+    // depending on source; 01:10 is a reasonable midpoint, and the ~1.5
+    // hour spread moves Mars against the Sun by well under a tenth of a
+    // degree, so it does not explain the gap measured below.
+    const jdtt = jdttFromUtc('2025-01-16T01:10:00Z');
+    const sunLon = sunPosition(jdtt).longitude;
+    const marsLon = marsPosition(jdtt).longitude;
+    const error = angularDistance(marsLon, normalize360(sunLon + 180));
+    expect(error).toBeGreaterThan(0.1); // same "claim doesn't hold here" marker as case 5
+    expect(error).toBeLessThan(3); // sanity ceiling, ~2.5x the ~1.17° actually measured
+  });
+});
+
+describe('reference case 7: Jupiter at opposition, 2026-01-10 08:00 UTC', () => {
+  it('sits opposite the Sun — Earth is directly between Jupiter and the Sun', () => {
+    const jdtt = jdttFromUtc('2026-01-10T08:00:00Z');
+    const sunLon = sunPosition(jdtt).longitude;
+    const jupiterLon = jupiterPosition(jdtt).longitude;
+    expect(angularDistance(jupiterLon, normalize360(sunLon + 180))).toBeLessThan(0.5);
+  });
+});
+
+describe('reference case 8: Saturn at opposition, 2025-09-21 06:00 UTC', () => {
+  it('sits opposite the Sun — Earth is directly between Saturn and the Sun', () => {
+    const jdtt = jdttFromUtc('2025-09-21T06:00:00Z');
+    const sunLon = sunPosition(jdtt).longitude;
+    const saturnLon = saturnPosition(jdtt).longitude;
+    expect(angularDistance(saturnLon, normalize360(sunLon + 180))).toBeLessThan(0.5);
   });
 });
