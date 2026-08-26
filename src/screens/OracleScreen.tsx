@@ -15,8 +15,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { acquireLocation } from '@utils/acquireLocation';
 import crashlytics from '@react-native-firebase/crashlytics';
 import { useNavigation } from '@react-navigation/native';
-import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import type { RootStackParamList } from '@navigation/types';
+import type { AppNavigation } from '@navigation/types';
 
 import { useColors, useTheme } from '@theme/ThemeProvider';
 import { useTypography } from '@theme/useTypography';
@@ -62,10 +61,9 @@ const OracleScreen: React.FC = () => {
   const typography = useTypography();
   const t = useTranslation();
   const { lang } = useI18n();
-  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
-  // History lives on the sibling tab navigator, not the root stack — same
-  // loose-typing precedent as HistoryScreen's own navigation prop.
-  const tabNavigation = useNavigation<{ navigate: (screen: string) => void }>();
+  // One typed handle for both destinations: sibling tabs (AlFalak/History)
+  // and root-level pushes (Settings/Premium/OracleChat). See AppNavigation.
+  const navigation = useNavigation<AppNavigation>();
 
   const lastLocation = useSettingsStore(
     (s: ReturnType<typeof useSettingsStore.getState>) => s.lastLocation,
@@ -254,7 +252,7 @@ const OracleScreen: React.FC = () => {
 
         {/* Current Hora — compact readout, seal as a small badge (not the hero) */}
         <Pressable
-          onPress={() => tabNavigation.navigate('AlFalak')}
+          onPress={() => navigation.navigate('AlFalak')}
           style={[
             styles.heroCard,
             { backgroundColor: colors.surface, borderColor: colors.borderAccent + '55' },
@@ -432,7 +430,7 @@ const OracleScreen: React.FC = () => {
 
         {/* Reading History */}
         <Pressable
-          onPress={() => tabNavigation.navigate('History')}
+          onPress={() => navigation.navigate('History')}
           style={({ pressed }) => [
             styles.actionBtnSecondary,
             {

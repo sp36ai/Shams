@@ -19,9 +19,12 @@
  * these param types with optional URL params.
  */
 
-import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import type { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
-import type { CompositeScreenProps } from '@react-navigation/native';
+import type {
+  NativeStackNavigationProp,
+  NativeStackScreenProps,
+} from '@react-navigation/native-stack';
+import type { BottomTabNavigationProp, BottomTabScreenProps } from '@react-navigation/bottom-tabs';
+import type { CompositeNavigationProp, CompositeScreenProps } from '@react-navigation/native';
 
 /* -------------------------------------------------------------------------- */
 /*  Root stack                                                                */
@@ -74,3 +77,27 @@ declare global {
     interface RootParamList extends RootStackParamList {}
   }
 }
+
+/* -------------------------------------------------------------------------- */
+/*  Typed navigation for tab screens                                          */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * What `useNavigation()` should return inside any screen hosted by MainTabs.
+ *
+ * Tab screens navigate to BOTH sibling tabs (Home/AlFalak/History) and
+ * root-level pushes (Settings/Premium/OracleChat), so neither param list
+ * alone types them. Composing the two is what makes `navigate()` reject a
+ * route that does not exist.
+ *
+ * This exists because it was previously typed as
+ * `useNavigation<{ navigate: (screen: string) => void }>()` — which accepts
+ * ANY string. That is not a stylistic detail: when the "Ask" tab was removed,
+ * `navigate('Ask')` in HistoryScreen kept compiling and silently became a
+ * no-op at runtime. Widening to `string` turns a compile error into a dead
+ * button, so prefer this type over a hand-rolled shape.
+ */
+export type AppNavigation = CompositeNavigationProp<
+  BottomTabNavigationProp<MainTabParamList>,
+  NativeStackNavigationProp<RootStackParamList>
+>;

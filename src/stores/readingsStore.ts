@@ -59,8 +59,9 @@ export interface Reading {
    */
   verdictJson: unknown;
   /**
-   * Watch oracle composition (diagnosis, protocol, and narration) when available.
-   * Computed in parallel with astronomical oracle; absent if askWatchOracle fails.
+   * Watch oracle composition (diagnosis, protocol, and narration) when
+   * available. Absent when askWatchOracle could not compose one — the
+   * verdict still stands, only the prose/protocol layer is missing.
    */
   watch_oracle?: {
     /** The raw watch verdict from the 5-minute bracket judgment. */

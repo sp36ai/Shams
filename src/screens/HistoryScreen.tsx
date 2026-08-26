@@ -24,6 +24,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
+import type { AppNavigation } from '@navigation/types';
 
 import { useColors, useTheme } from '@theme/ThemeProvider';
 import { useTypography } from '@theme/useTypography';
@@ -112,7 +113,7 @@ const HistoryScreen: React.FC = () => {
   const colors = useColors();
   const typography = useTypography();
   const t = useTranslation();
-  const navigation = useNavigation<{ navigate: (screen: string) => void }>();
+  const navigation = useNavigation<AppNavigation>();
 
   const filter = useReadingsStore((s: ReturnType<typeof useReadingsStore.getState>) => s.filter);
   const sort = useReadingsStore((s: ReturnType<typeof useReadingsStore.getState>) => s.sort);
