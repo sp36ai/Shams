@@ -155,7 +155,7 @@ export const CLASSICAL_GRAHAS: readonly PlanetIndex[] = Object.freeze([
 ]);
 
 /** KP uses 9 grahas (7 classical + Rahu + Ketu). Outer planets optional. */
-export const KP_NAVA_GRAHAS: readonly PlanetIndex[] = Object.freeze([
+export const NAVA_GRAHAS: readonly PlanetIndex[] = Object.freeze([
   ...CLASSICAL_GRAHAS,
   PlanetIndex.Rahu,
   PlanetIndex.Ketu,

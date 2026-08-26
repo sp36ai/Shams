@@ -29,8 +29,8 @@ import {
   NAKSHATRA_SPAN_DEG,
   TOTAL_DASHA_YEARS,
   type Graha,
-} from '../kp/rules/vimshottari';
-import { nakshatraIndexFromLongitude, NAKSHATRA_LORDS } from '../kp/rules/nakshatras';
+} from '../rules/vimshottari';
+import { nakshatraIndexFromLongitude, NAKSHATRA_LORDS } from '../rules/nakshatras';
 import { normalize360 } from './angles';
 import { VIMSHOTTARI_DAYS_PER_YEAR } from './constants';
 

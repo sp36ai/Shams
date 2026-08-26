@@ -62,7 +62,7 @@ const { buildWatchChart } =
 const { judgeWatchChart } =
   require('../engine/rkp/watchJudgment') as typeof import('../engine/rkp/watchJudgment');
 const { classifyQuestion } =
-  require('../engine/kp/rules/questionKeywords') as typeof import('../engine/kp/rules/questionKeywords');
+  require('../engine/rules/questionKeywords') as typeof import('../engine/rules/questionKeywords');
 const { composeWatchOracleResponse } =
   require('../oracle/responseComposer') as typeof import('../oracle/responseComposer');
 /* eslint-enable @typescript-eslint/no-var-requires */

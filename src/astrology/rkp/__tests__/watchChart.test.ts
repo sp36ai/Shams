@@ -1,6 +1,6 @@
 import { buildWatchChart, houseOf } from '@astrology/rkp/watchChart';
 import { judgeWatchChart } from '@astrology/rkp/watchJudgment';
-import { ALL_QUESTION_TYPES } from '@astrology/kp/rules/houseMatrix';
+import { ALL_QUESTION_TYPES } from '@astrology/rules/houseMatrix';
 import { PLANETS } from '@astrology/types/chart';
 import type { HouseNumber } from '@astrology/rkp/nomenclature';
 
@@ -126,6 +126,38 @@ describe('judgment', () => {
       chart.planets[verdict.targetRuler].isRetrograde ||
       chart.planets[chart.lagnaRuler].isRetrograde;
     expect(verdict.reversal).toBe(retro ? 'POSSIBLE' : 'NONE');
+  });
+
+  it('resolves to REVERSING (not a silent FULFILLED/MOVING/UNFORMED) whenever `reversal` is POSSIBLE, unless a harder BLOCKED already fired', () => {
+    // Regression: `state` used to only look at the target house's own ruler
+    // for its REVERSING branch, while `reversal` (above) also considered the
+    // querent's own (lagna) ruler. That let a chart with ONLY the lagna ruler
+    // retrograde report `reversal: 'POSSIBLE'` while `state` settled on
+    // something else entirely (observed: FULFILLED, in ~2% of sampled
+    // moment/question pairs) with no explanation anywhere in `factors`.
+    for (const qType of ALL_QUESTION_TYPES) {
+      const chart = buildWatchChart(MOMENT);
+      const verdict = judgeWatchChart(chart, qType);
+      if (verdict.reversal === 'POSSIBLE' && verdict.score > -5) {
+        expect(verdict.state).toBe('REVERSING');
+      }
+    }
+
+    // A concrete real-sky instance: at this moment Mushtari (Jupiter, the
+    // lagna ruler here) is retrograde while the marriage question's own
+    // target-house ruler (Utarid) is not. Before the fix this settled on
+    // UNFORMED with no retrograde factor recorded at all.
+    const chart = buildWatchChart('2026-02-01T00:40:00+05:30');
+    const marriage = judgeWatchChart(chart, 'marriage');
+    expect(chart.planets[chart.lagnaRuler].isRetrograde).toBe(true);
+    expect(chart.planets[marriage.targetRuler].isRetrograde).toBe(false);
+    expect(marriage.reversal).toBe('POSSIBLE');
+    expect(marriage.state).toBe('REVERSING');
+    expect(
+      marriage.factors.some(
+        f => f.includes(chart.planets[chart.lagnaRuler].name) && f.includes('retrograde'),
+      ),
+    ).toBe(true);
   });
 
   it('gives a timing window whenever the chart has settled', () => {

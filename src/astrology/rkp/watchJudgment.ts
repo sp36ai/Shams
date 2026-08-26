@@ -15,7 +15,7 @@
  * and cosmic markers use the classical Arabic/Urdu names from nomenclature.ts.
  */
 
-import { HOUSE_MATRIX, type QuestionType } from '@astrology/kp/rules/houseMatrix';
+import { HOUSE_MATRIX, type QuestionType } from '@astrology/rules/houseMatrix';
 import type { Planet } from '@astrology/types/chart';
 
 import { SIGN_META, type Direction, type HouseNumber } from './nomenclature';
@@ -234,11 +234,26 @@ export function judgeWatchChart(chart: WatchChart, qType: QuestionType): WatchVe
   }
 
   // ── 6. Retrogression ─────────────────────────────────────────────────────
-  const reversal: 'POSSIBLE' | 'NONE' =
-    rulerPos.isRetrograde || lagnaRulerPos.isRetrograde ? 'POSSIBLE' : 'NONE';
+  // "A ruling planet is retrograde" means either witness: the matter's own
+  // ruler OR the querent's own ruler. `reversal` and the REVERSING state
+  // (step 8, via resolveState) must agree on this same broad condition —
+  // they used to check different planets, which let a chart with only the
+  // lagna ruler retrograde report `reversal: 'POSSIBLE'` while `state`
+  // resolved to FULFILLED/MOVING/etc. with no explanation in `factors` at
+  // all. targetRuler and lagnaRuler coincide for any question whose primary
+  // house is the 1st Ghar (e.g. health), so the lagna-ruler factor line is
+  // skipped there to avoid repeating the same planet twice.
+  const targetRulerIsLagnaRuler = targetRuler === lagnaRuler;
+  const anyRulerRetrograde = rulerPos.isRetrograde || lagnaRulerPos.isRetrograde;
+  const reversal: 'POSSIBLE' | 'NONE' = anyRulerRetrograde ? 'POSSIBLE' : 'NONE';
   if (rulerPos.isRetrograde) {
     factors.push(
       `${rulerPos.name} is retrograde — decisions already taken on this matter are liable to be reopened.`,
+    );
+  }
+  if (!targetRulerIsLagnaRuler && lagnaRulerPos.isRetrograde) {
+    factors.push(
+      `${lagnaRulerPos.name} (your own ruler) is retrograde — your own position on the matter is liable to change.`,
     );
   }
   if (rulerPos.isCombust) {
@@ -263,7 +278,7 @@ export function judgeWatchChart(chart: WatchChart, qType: QuestionType): WatchVe
   // ── 8. Settle the state ──────────────────────────────────────────────────
   const state = resolveState({
     score,
-    retrograde: rulerPos.isRetrograde,
+    retrograde: anyRulerRetrograde,
     obstruction,
     rulerWeak: isWeak(rulerPos.dignity),
   });

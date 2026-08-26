@@ -17,7 +17,7 @@
  * store imports, so sync-engine can mirror it to the server unchanged.
  */
 
-import { HOUSE_MATRIX, type QuestionType } from '../kp/rules/houseMatrix';
+import { HOUSE_MATRIX, type QuestionType } from '../rules/houseMatrix';
 
 import type { Confidence, DisplayWatchVerdict, WatchState } from './watchJudgment';
 

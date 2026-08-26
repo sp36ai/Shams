@@ -2,6 +2,18 @@
 
 **Shams al-Asrār | Engine v2.0.0-moshier | Audit date: 2026-05-09**
 
+> **⚠️ SUPERSEDED — describes a since-deleted engine.** This document analyzes
+> `judgeHorary.ts` / `chartBuilder.ts`-based scoring (the "5-step engine"
+> below) as the live judgment path. That engine — and its Cloud Function,
+> `askOracle` — was deleted on 2026-08-25 (PR #92, "Delete the retired
+> KP/Astronomical judgment engine — completely, not just unwired"). The sole
+> live judgment path today is the RKP Watch Engine (`askWatchOracle` →
+> `src/astrology/rkp/{watchChart,watchJudgment,diagnosis}.ts`), which this
+> document does not cover. See `SHAMS_FORENSIC_AUDIT_2026-08-26.md` for the
+> current, verified architecture and KP-removal status. Kept here as a
+> historical record of the pre-deletion engine and the reasoning that led to
+> deleting it — do not treat anything below as describing the current system.
+
 ---
 
 ## A. What True KP Actually Is
