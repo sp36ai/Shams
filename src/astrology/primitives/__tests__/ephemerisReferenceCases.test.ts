@@ -56,33 +56,40 @@
  *      direct transcription of Meeus 47.7 and is exercised throughout
  *      Pass 2's structural tests instead.
  *
- * CASES 5 AND 6 FOUND A REAL BUG, AND IT TOOK TWO WRONG DIAGNOSES TO GET
- * THERE — READ planets.ts's HEADER BEFORE TOUCHING EITHER CASE AGAIN.
- * Jupiter and Saturn (cases 7-8) land within arcminutes of their published
- * opposition instants. Venus and Mars (cases 5-6) did not — several degrees
- * off at the exact moment they're supposed to align with the Sun to within a
- * fraction of a degree. Diagnosis 1 (wrong): the flat 2D geocentric
- * conversion (latitude forced to 0) was amplifying a small heliocentric
- * error through a short vector-subtraction "baseline." Switching to full 3D
- * barely moved the number (~3.75°→~3.67° for Venus, ~1.17°→~1.19° for Mars)
- * — a real correctness improvement (both now report genuine ecliptic
- * latitude) but not the cause. Diagnosis 2 (also wrong, but closer):
- * "amplified low-precision truncation error, missing Meeus Table 33.b
- * perturbation terms." Reading the actual primary source (Van Flandern &
- * Pulkkinen 1979 — this module's real origin) disproved that: Venus's own
- * periodic terms in that paper total under 0.1°, nowhere near enough.
- * The actual bug: cross-checking each planet's L(J2000.0) − M(J2000.0)
- * against its independently published longitude of perihelion ϖ = Ω + ω —
- * Mercury/Mars/Jupiter/Saturn matched to 0.001°, Venus was off by ~162°.
- * Its mean-anomaly epoch constant was transcribed wrong. Fixed in
- * planets.ts; closed Venus's conjunction-instant error from ~3.67° to
- * ~0.94° — most of it, not all: the remainder is genuine low-precision
- * truncation error, the same kind Mars has, amplified the same
- * near-conjunction way. This is why case 5 below is no longer "several
- * degrees off, filed as a follow-up" — it is now "closed by ~74%, with a
- * documented, smaller residual." This directly matters for Mercury/Venus
- * combustion detection, evaluated exactly when a planet is near the Sun —
- * the same geometry this measures.
+ * CASES 5 AND 6 FOUND A REAL BUG AND A REAL PRECISION CEILING, AND IT TOOK
+ * THREE WRONG-OR-INCOMPLETE DIAGNOSES TO SEPARATE THEM — read planets.ts's
+ * header before touching Venus or Mars again. Jupiter and Saturn (cases
+ * 7-8) always landed within arcminutes of their published opposition
+ * instants. Venus and Mars (cases 5-6) did not — several degrees off at the
+ * exact moment they're supposed to align with the Sun to within a fraction
+ * of a degree:
+ *
+ *   - Diagnosis 1 (wrong): the flat 2D geocentric conversion (latitude
+ *     forced to 0) was amplifying a small heliocentric error through a
+ *     short vector-subtraction "baseline." Switching to full 3D barely
+ *     moved the number (~3.75°→~3.67° for Venus, ~1.17°→~1.19° for Mars).
+ *   - Diagnosis 2 (wrong): missing Meeus Table 33.b perturbation terms.
+ *     Reading the actual primary source (Van Flandern & Pulkkinen 1979)
+ *     disproved that — Venus's own terms there total under 0.1°.
+ *   - Diagnosis 3 (right, but only for Venus): a genuinely wrong
+ *     mean-anomaly epoch constant, found by cross-checking L(J2000.0) −
+ *     M(J2000.0) against each planet's published longitude of perihelion.
+ *     Fixed; closed Venus's error to ~0.94° — most of the original gap,
+ *     not all of it.
+ *   - The remainder, for both planets, was never a bug: it was the low-
+ *     precision Van Flandern-Pulkkinen series' own truncation floor,
+ *     amplified by the same near-conjunction vector-subtraction geometry.
+ *     Closed by switching Venus and Mars to the actual VSOP87 planetary
+ *     theory (30-50x more terms; see planets.ts and vsop87Geocentric.ts),
+ *     verified independently against Astronomy Engine's own computed
+ *     output to ~1 arcsecond before being wired in. Cases 5 and 6 below
+ *     now measure ~0.03°/~0.07° — real, tight, high-confidence checks, not
+ *     documented limitations anymore.
+ *
+ * This mattered beyond the numbers: Mercury/Venus combustion is evaluated
+ * exactly when a planet is near the Sun — the same geometry this measures —
+ * so the original multi-degree error was a real risk to a borderline
+ * combustion call, not just an audit curiosity.
  *
  * Opposition/conjunction/retrograde dates are exact, deterministic orbital
  * mechanics computed by observatories years in advance — not predictions in
@@ -218,79 +225,57 @@ describe('reference case 4: Mercury retrograde stations, 2026', () => {
 });
 
 describe('reference case 5: Venus at inferior conjunction, 2025-03-23 01:00 UTC', () => {
-  it('lands within ~1° of true conjunction, down from ~3.67° — a real bug, found and fixed', () => {
-    // FINDING (Pass 3) — see planets.ts's file header for the full account
-    // of how this was diagnosed, including the two wrong turns along the
-    // way (2D-vs-3D, then "missing perturbation terms"). The actual bug:
-    // venusPosition()'s mean-anomaly epoch constant was 212.2595°, but
-    // Venus's L(J2000.0) − M(J2000.0) must equal its published longitude
-    // of perihelion (131.53298°), which requires M ≈ 50.45° — the old
-    // constant was off by ~162°. Now fixed. Measured directly, not
-    // assumed: ~3.75° before any fix, ~3.67° after the (necessary, but not
-    // sufficient on its own) 3D geocentric-conversion fix, ~0.94° after
-    // this fix — a ~74% reduction from where Pass 3 started.
+  it('lands within ~0.03° of true conjunction — the bug fixed, then the precision ceiling raised', () => {
+    // FINDING (Pass 3) — see planets.ts's file header for the full
+    // diagnostic path, including the two wrong turns before either the
+    // real bug (a mistranscribed mean-anomaly epoch constant) or the real
+    // precision ceiling (the low-precision series' own truncation floor)
+    // was correctly identified. Measured at each stage, not assumed:
+    // ~3.75° with the original flat 2D form, ~3.67° after switching to 3D
+    // vector subtraction (necessary, insufficient alone), ~0.94° after
+    // fixing the mean-anomaly bug, ~0.03° after switching Venus to the
+    // actual VSOP87 series (30-50x more terms), verified independently
+    // against Astronomy Engine's own computed output before being wired
+    // in. A ~99% reduction from where Pass 3 started.
     //
-    // The remaining ~0.94° is not further margin for suspicion: it is the
-    // same low-precision-series truncation error Mars carries (case 6),
-    // amplified the same way by the near-conjunction vector-subtraction
-    // geometry (see planets.ts header) — genuinely the floor of what a
-    // Van Flandern-Pulkkinen-class equation-of-center-only series can do
-    // here, not a second bug of the same kind as the one just fixed.
-    //
-    // This still matters for combustion: Venus's threshold is 10°
-    // (8° retrograde — constants.ts COMBUSTION_THRESHOLD_DEG), and Venus
-    // is combust-relevant precisely in this same near-Sun geometry. ~0.94°
-    // is a smaller bite out of that margin than ~3.67° was, but not zero.
-    // Closing it further needs a genuinely finer heliocentric series (full
-    // VSOP87), verified with the same rigor as this file's reference
-    // dates — filed as a distinct, smaller follow-up, not attempted here.
+    // This mattered for combustion, not just accuracy in the abstract:
+    // Venus's threshold is 10° (8° retrograde — constants.ts
+    // COMBUSTION_THRESHOLD_DEG), and Venus is combust-relevant precisely
+    // in this same near-Sun geometry. ~3.75° was a real bite out of that
+    // margin; ~0.03° is not.
     const jdtt = jdttFromUtc('2025-03-23T01:00:00Z');
     const sunLon = sunPosition(jdtt).longitude;
     const venusLon = venusPosition(jdtt).longitude;
     const error = angularDistance(sunLon, venusLon);
-    // Lower bound: proves the module header's "< 1' for all classical
-    // planets" claim still does not hold in this configuration — if this
-    // ever drops below 0.1°, the heliocentric series was likely improved
-    // (e.g. a finer series closing the remaining truncation error) and
-    // this comment block should be revisited.
-    expect(error).toBeGreaterThan(0.1);
-    // Upper bound: a sanity ceiling well beyond the ~0.94° actually
-    // measured here — catches a regression back toward the old bug, a
-    // wrong orbital element, or a heliocentric/geocentric mixup.
-    expect(error).toBeLessThan(2);
+    // 0.1° comfortably covers the residual (published-time rounding to the
+    // minute, this engine's own Sun formula's small residual, and VSOP87's
+    // own sub-arcsecond truncation) while still catching a real
+    // regression — a reintroduced bug, a wrong term, a units mixup — many
+    // times over the ~0.03° actually measured here.
+    expect(error).toBeLessThan(0.1);
   });
 });
 
 describe('reference case 6: Mars at opposition, 2025-01-16 ~01:10 UTC', () => {
-  it('lands over a degree from true opposition — genuine truncation error, not a bug (unlike Venus)', () => {
+  it('lands within ~0.08° of true opposition — the same precision ceiling raised, no bug to fix here', () => {
     // Mars went through the same diagnostic sequence as Venus (case 5) with
-    // a different ending: switching to the 3D geocentric conversion barely
-    // moved this number (~1.17° before, ~1.19° after — the 2D→3D correction
-    // to Mars's in-plane (x, y) is itself tiny, cos(1.85°) ≈ 0.9995), but
-    // UNLIKE Venus, Mars's L(J2000.0) − M(J2000.0) checks out against its
-    // published longitude of perihelion (336.0603° computed vs. 336.06°
-    // published, agreeing to 0.001°) — there is no wrong-constant bug here
-    // to fix. Mars's own heliocentric longitude genuinely agrees with
-    // Earth's to only ~0.46° at this exact instant, and Mars's own solar
-    // distance (~1.5 AU) is still close enough to Earth's (1 AU) for the
-    // near-opposition vector-subtraction baseline (see planets.ts header)
-    // to amplify that into the ~1.19° measured below. That ~0.46° is
-    // simply this low-precision series' own truncation floor for Mars.
-    // Milder than Venus's ~0.94° post-fix residual (Mars sits farther from
-    // Earth than Venus ever does, so the same amplification mechanism has
-    // less to work with), and comfortably inside Mars's own combustion
-    // threshold margin (17°), so lower-risk for Mars than for Venus/
-    // Mercury — noted for completeness, not urgency.
+    // one difference throughout: it never had a wrong-constant bug. Its
+    // L(J2000.0) − M(J2000.0) checked out against its published longitude
+    // of perihelion (336.0603° computed vs. 336.06° published, agreeing to
+    // 0.001°) from the start. Its entire original ~1.17°/~1.19° error was
+    // the low-precision series' own truncation floor, amplified by the
+    // same near-opposition vector-subtraction geometry as Venus's (see
+    // planets.ts header). Switching Mars to the actual VSOP87 series
+    // closed it to ~0.07°, the same way as Venus and for the same reason.
     // Published times for this event range from 01:00 to 02:32 UTC
-    // depending on source; 01:10 is a reasonable midpoint, and the ~1.5
-    // hour spread moves Mars against the Sun by well under a tenth of a
-    // degree, so it does not explain the gap measured below.
+    // depending on source; 01:10 is a reasonable midpoint, and even the
+    // full ~1.5 hour spread moves Mars against the Sun by well under a
+    // tenth of a degree, comfortably inside the tolerance below.
     const jdtt = jdttFromUtc('2025-01-16T01:10:00Z');
     const sunLon = sunPosition(jdtt).longitude;
     const marsLon = marsPosition(jdtt).longitude;
     const error = angularDistance(marsLon, normalize360(sunLon + 180));
-    expect(error).toBeGreaterThan(0.1); // same "claim doesn't hold here" marker as case 5
-    expect(error).toBeLessThan(3); // sanity ceiling, ~2.5x the ~1.19° actually measured
+    expect(error).toBeLessThan(0.15); // ~2x the ~0.07° actually measured
   });
 });
 

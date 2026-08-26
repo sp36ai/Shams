@@ -1,91 +1,60 @@
 /**
- * Outer + inner planet positions — Meeus low-precision VSOP87 truncation,
- * converted from heliocentric to true apparent geocentric longitude.
+ * Outer + inner planet positions — heliocentric to true apparent geocentric
+ * ecliptic longitude.
  * --------------------------------------------------------------------------
- * Accuracy: < 1' for all classical planets for 1900–2100 CE, AWAY FROM
- * conjunction/opposition for Mars, and generally elsewhere — Venus had a
- * genuine bug (fixed, see below); see the Venus/Mars note for what does and
- * does not explain the residual near conjunction/opposition.
+ * Mercury/Jupiter/Saturn: Meeus/Van Flandern-Pulkkinen low-precision
+ * mean-longitude + equation-of-center series (< 1' claimed accuracy,
+ * 1900-2100 CE), converted to geocentric via a flat 2D vector subtraction
+ * (ecliptic latitude forced to 0 — see toGeocentricLongitude below).
  *
- * Each planet's HELIOCENTRIC ecliptic longitude is derived from:
- *   L = L₀ + L₁·T + L₂·T² + ... (geometric mean + periodic terms)
+ * Venus/Mars: the actual VSOP87 planetary theory (vsop87Geocentric.ts,
+ * vsop87VenusMarsData.ts — 30-50x more terms than the low-precision
+ * formulas above), converted to geocentric via full 3D vector subtraction
+ * (toGeocentric3D below), verified against an independent implementation
+ * (Astronomy Engine) to ~1 arcsecond. This is the end state of the RKP
+ * audit Pass 3 investigation into a real, measured accuracy problem — kept
+ * here because the path to it is worth knowing before touching either
+ * planet's code again:
  *
- * Geocentric conversion (Meeus Ch.33's intended final step — previously
- * missing from this module):
- *   A planet's heliocentric longitude L and radius vector R are combined
- *   with Earth's own heliocentric longitude L0 and radius R0 (both derived
- *   from the Sun's apparent geocentric position — Earth's heliocentric
- *   longitude is the Sun's geocentric longitude + 180°) to give the
- *   planet's apparent GEOCENTRIC ecliptic longitude λ, the quantity real
- *   astrology charts need. R is the planet's true instantaneous
- *   heliocentric distance, from Kepler's equation: r = a(1 − e·cos E),
- *   with E solved from M = E − e·sin E.
+ *   1. Both planets landed several degrees from the Sun at their own
+ *      published conjunction/opposition instants (Venus ~3.75° off,
+ *      Mars ~1.17°) — should be within a fraction of a degree by
+ *      definition of what those events are.
+ *   2. First hypothesis: the flat 2D form (still used by Mercury/Jupiter/
+ *      Saturn above) was amplifying a heliocentric error by discarding
+ *      latitude near conjunction/opposition, where the planet's and
+ *      Earth's heliocentric vectors nearly cancel in the subtraction.
+ *      Switching to 3D vector subtraction using each planet's real
+ *      orbital inclination barely moved the numbers (~3.75°→~3.67°,
+ *      ~1.17°→~1.19°) — the 2D→3D correction to the in-plane components
+ *      is itself tiny (a cos(inclination) factor, ≈0.998 for Venus).
+ *      Wrong hypothesis, but the vector-subtraction amplification
+ *      mechanism itself was real and is why Jupiter/Saturn (5-9x Earth's
+ *      solar distance) never show this problem regardless of form.
+ *   3. Second hypothesis: missing Meeus Table 33.b periodic perturbation
+ *      terms (Venus had none in the low-precision formula, Mars had 2).
+ *      Reading the actual primary source (Van Flandern & Pulkkinen 1979)
+ *      disproved this: Venus's own periodic terms there total under 0.1°
+ *      even fully applied — an order of magnitude too small.
+ *   4. The actual finding, for Venus: cross-checking each planet's
+ *      L(J2000.0) − M(J2000.0) against its published longitude of
+ *      perihelion (ϖ = Ω + ω) — Mercury/Mars/Jupiter/Saturn matched to
+ *      0.001°, Venus was off by ~162°. Its mean-anomaly epoch constant
+ *      had been transcribed wrong — a genuine, isolated bug, not a
+ *      precision limit. Fixing it (still visible in git history) closed
+ *      Venus's conjunction-instant error to ~0.94°. Mars had no such bug
+ *      (checked the same way) — its ~1.19° really was this formula
+ *      family's truncation floor.
+ *   5. Rather than patch the low-precision formula further for either
+ *      planet, both were switched to the real VSOP87 series (this file's
+ *      current state), closing the remaining residual to ~1 arcsecond —
+ *      verified directly against Astronomy Engine's own computed output,
+ *      not assumed from the term count alone.
  *
- *   Mercury/Jupiter/Saturn use a flat 2D subtraction (ecliptic latitude
- *   forced to 0):
- *     x = R·cos(L) − R0·cos(L0),  y = R·sin(L) − R0·sin(L0),  λ = atan2(y, x)
- *
- *   Venus/Mars use the full 3D form instead (see toGeocentric3D below),
- *   which rotates through the orbit's real inclination and ascending node
- *   rather than silently forcing latitude to 0. This is a genuine
- *   correctness fix in its own right — Venus/Mars now report real,
- *   non-zero ecliptic latitude (previously always 0), and the geometry now
- *   matches what Meeus Ch.33 actually specifies rather than a flattened
- *   approximation of it.
- *
- *   THE FULL STORY (RKP audit Pass 3), because each step here corrected a
- *   real but wrong conclusion from the step before it:
- *
- *   1. At Venus's/Mars's own published conjunction/opposition instants, the
- *      original flat 2D form landed ~3.75°/~1.17° from the Sun where it
- *      should land within a fraction of a degree.
- *   2. Switching to the 3D form above only closed that to ~3.67°/~1.19° —
- *      measured directly, not assumed — because the 2D→3D correction to the
- *      in-plane (x, y) components is itself tiny (a cos(inclination)
- *      factor, ≈0.998 for Venus's 3.4°): it was never going to move a
- *      several-degree error. The actual amplification is structural to
- *      vector subtraction near conjunction/opposition regardless of
- *      dimensionality — the planet's and Earth's heliocentric vectors
- *      nearly cancel there, so the resulting angle is dominated by whatever
- *      error the heliocentric longitude already carries. Distant planets
- *      (Jupiter, Saturn, 5-9x Earth's own solar distance) barely notice
- *      this regardless; Venus and Mars, at comparable distances to Earth's
- *      own, do.
- *   3. What was actually being amplified turned out to differ by planet.
- *      Cross-checking each planet's own L(J2000.0) − M(J2000.0) — which
- *      must equal its published longitude of perihelion ϖ = Ω + ω — against
- *      independently published values: Mercury, Mars, Jupiter, Saturn all
- *      checked out to within 0.001°, meaning their small residuals (Mars's
- *      heliocentric longitude was off by ~0.46° from Earth's at its exact
- *      opposition instant) really are this low-precision series' own
- *      truncation error, with nothing further to fix short of a finer
- *      series. Venus's did not check out: its mean-anomaly epoch constant
- *      was 212.2595°, but L−ϖ (ϖ = 131.53298°, independently published)
- *      requires ~50.45° — off by ~162°. That is now fixed (see the comment
- *      on VENUS's M constant below). It closed Venus's conjunction-instant
- *      error from ~3.67° to ~0.94° — most of the gap, not all of it; the
- *      remainder is the same kind of low-precision truncation error Mars
- *      has, just proportionally larger here because Venus sits closer to
- *      Earth's own orbit, which the near-conjunction amplification (point 2
- *      above) still magnifies.
- *   4. This was genuinely a wrong-constant bug, not a missing-perturbation-
- *      terms problem, which was the original hypothesis: Van Flandern &
- *      Pulkkinen (1979) — the actual source of this module's L/M/e
- *      constants — gives Venus's own periodic perturbation terms as
- *      totaling well under 0.1° even fully applied, an order of magnitude
- *      too small to have explained the original ~3.7° gap on their own.
- *
- *   Closing Venus's/Mars's remaining sub-degree residual near conjunction/
- *   opposition needs a genuinely finer heliocentric series (full VSOP87,
- *   not this paper's low-precision truncation), verified against
- *   independent reference values with the same rigor used here — filed as
- *   a distinct, smaller follow-up, not attempted in this pass.
- *
- *   Without a geocentric step at all, apparent retrograde motion — a
- *   purely geocentric-parallax effect from Earth's own orbital motion —
- *   could never appear, no matter how carefully speed is computed
- *   downstream: a heliocentric-only longitude is (to this precision)
- *   monotonic in time.
+ * Without a geocentric step at all, apparent retrograde motion — a purely
+ * geocentric-parallax effect from Earth's own orbital motion — could never
+ * appear, no matter how carefully speed is computed downstream: a
+ * heliocentric-only longitude is (to this precision) monotonic in time.
  *
  * Lunar nodes (Rahu/Ketu) are an unrelated, already-geocentric concept —
  * the Moon's own orbital nodes around Earth — and need no such conversion:
@@ -97,21 +66,23 @@
  *   - Moshier, *Astronomical Algorithms in C*, Ch.4–9            [MOSHIER]
  *   - Van Flandern, T. C., and Pulkkinen, K. F., "Low-Precision
  *     Formulae for Planetary Positions," ApJS 41:391-411, 1979 —
- *     the actual origin of this module's L/M/e mean-element
- *     constants and structure (confirmed by directly reading the
- *     paper during the RKP audit; its own Table 4 periodic-
- *     perturbation terms for Venus, notably, are NOT included here
- *     — they total well under 0.1° and were confirmed too small to
- *     explain the conjunction-instant error found in Pass 3).
- *   - Standish (JPL), *Keplerian Elements for Approximate
- *     Positions of the Major Planets* — source for Venus/Mars's
- *     J2000.0 inclination/node/perihelion constants below.
+ *     source of Mercury/Jupiter/Saturn's L/M/e constants below
+ *     (confirmed by directly reading the paper during the RKP
+ *     audit, not assumed from citation alone).
+ *   - VSOP87 (Bureau des Longitudes) — source of Venus/Mars's term
+ *     series; see vsop87Geocentric.ts and vsop87VenusMarsData.ts
+ *     for the full derivation and verification.
  */
 
 import { normalize360, degToRad, radToDeg } from '../angles';
 import { DEG_TO_RAD } from '../constants';
 import { sunPosition } from './sun';
 import type { JDtt } from '../julianDay';
+import {
+  venusHeliocentricEclipticOfDate,
+  marsHeliocentricEclipticOfDate,
+  type HeliocentricSpherical,
+} from './vsop87Geocentric';
 
 export interface PlanetLonLat {
   /** Apparent geocentric ecliptic longitude (tropical), degrees [0°, 360°) */
@@ -192,51 +163,28 @@ function earthHeliocentricXYZ(jdtt: JDtt): { x: number; y: number; z: number } {
 }
 
 /**
- * Rotate an orbital-plane position — radius r, argument of latitude
- * u = ν + ω (true anomaly + argument of perihelion) — through the orbit's
- * inclination i and longitude of ascending node Ω into heliocentric
- * ecliptic rectangular coordinates (AU). The standard 3-rotation form; see
- * e.g. Meeus Ch.33 or the Standish (JPL) Keplerian-elements method.
- */
-function orbitalPlaneToHelioXYZ(
-  r: number,
-  argLatitudeDeg: number,
-  inclinationDeg: number,
-  ascendingNodeDeg: number,
-): { x: number; y: number; z: number } {
-  const u = degToRad(argLatitudeDeg);
-  const i = degToRad(inclinationDeg);
-  const N = degToRad(ascendingNodeDeg);
-  const cosU = Math.cos(u);
-  const sinU = Math.sin(u);
-  const cosN = Math.cos(N);
-  const sinN = Math.sin(N);
-  const cosI = Math.cos(i);
-  return {
-    x: r * (cosN * cosU - sinN * sinU * cosI),
-    y: r * (sinN * cosU + cosN * sinU * cosI),
-    z: r * sinU * Math.sin(i),
-  };
-}
-
-/**
- * Heliocentric orbital-plane position → apparent geocentric ecliptic
- * longitude AND latitude, via full 3D vector subtraction against Earth's
- * own heliocentric position. See the file header for why this replaces
- * the flat 2D form (toGeocentricLongitude) for Venus and Mars specifically.
+ * Heliocentric ecliptic-of-date spherical position (as vsop87Geocentric.ts
+ * produces for Venus/Mars) → apparent geocentric ecliptic longitude AND
+ * latitude, via full 3D vector subtraction against Earth's own
+ * heliocentric position. See the file header for why Venus/Mars use this
+ * instead of the flat 2D form (toGeocentricLongitude) that Mercury/
+ * Jupiter/Saturn still use below.
  */
 function toGeocentric3D(
-  r: number,
-  argLatitudeDeg: number,
-  inclinationDeg: number,
-  ascendingNodeDeg: number,
+  helio: HeliocentricSpherical,
   jdtt: JDtt,
 ): { longitude: number; latitude: number } {
-  const helio = orbitalPlaneToHelioXYZ(r, argLatitudeDeg, inclinationDeg, ascendingNodeDeg);
+  const helioLonRad = degToRad(helio.lonDeg);
+  const helioLatRad = degToRad(helio.latDeg);
+  const rCosLat = helio.r * Math.cos(helioLatRad);
+  const helioX = rCosLat * Math.cos(helioLonRad);
+  const helioY = rCosLat * Math.sin(helioLonRad);
+  const helioZ = helio.r * Math.sin(helioLatRad);
+
   const earth = earthHeliocentricXYZ(jdtt);
-  const x = helio.x - earth.x;
-  const y = helio.y - earth.y;
-  const z = helio.z - earth.z;
+  const x = helioX - earth.x;
+  const y = helioY - earth.y;
+  const z = helioZ - earth.z;
   return {
     longitude: normalize360(radToDeg(Math.atan2(y, x))),
     latitude: radToDeg(Math.atan2(z, Math.sqrt(x * x + y * y))),
@@ -274,90 +222,36 @@ export function mercuryPosition(jdtt: JDtt): PlanetLonLat {
   };
 }
 
-// ── Venus (Meeus Ch.33) ───────────────────────────────────────────────────
+// ── Venus (VSOP87 — see vsop87Geocentric.ts) ───────────────────────────────
 
-const VENUS_A = 0.723332;
-// J2000.0 mean orbital elements (Standish/JPL "Keplerian Elements for
-// Approximate Positions"; cross-checked against independently published
-// values). Held constant rather than given secular rates: their drift is
-// on the order of 0.2-3 degrees per CENTURY, two orders of magnitude below
-// the low-precision longitude series' own truncation error at the dates
-// this engine actually runs at (within decades of J2000), so a rate term
-// would not measurably change the result.
-const VENUS_N = 76.6799; // longitude of ascending node, degrees
-const VENUS_I = 3.3946; // inclination to the ecliptic, degrees
-// (argument of perihelion is not needed as a separate constant — see `u` below)
-
+/**
+ * RKP audit Pass 3, final fix: this used to be a Meeus-style mean-longitude
+ * + equation-of-center formula (Van Flandern & Pulkkinen 1979), the same
+ * family Mercury/Jupiter/Saturn below still use. Two real problems with it
+ * for Venus specifically were found and fixed in that order — a wrong
+ * mean-anomaly epoch constant (a genuine bug, see git history), and, once
+ * that no longer explained the remaining ~0.94° conjunction-instant error,
+ * the formula's own truncation floor (Venus's series here had zero Table
+ * 33.b periodic perturbation terms). Rather than patch a low-precision
+ * formula further, Venus now uses the actual VSOP87 planetary theory
+ * (30-50x more terms) via vsop87Geocentric.ts, verified there to agree
+ * with an independent, widely-used implementation (Astronomy Engine) to
+ * about 1 arcsecond — three orders of magnitude better than what this
+ * replaced.
+ */
 export function venusPosition(jdtt: JDtt): PlanetLonLat {
-  const T = (jdtt - 2451545.0) / 36525.0;
-  const L = normalize360(polyval([181.979801, 58517.815676, 0.00000165, -0.000000002], T));
-  // Mean anomaly epoch constant. FIX (RKP audit Pass 3, root cause of the
-  // ~3.7° conjunction-instant error): this was 212.2595, which is not
-  // Venus's mean anomaly at J2000.0 by ~162° — cross-checked two ways: (1)
-  // independently published Venus mean anomaly at J2000.0 is ~50.11-50.12°
-  // (not 212.2595°); (2) L(J2000.0) − M(J2000.0) must equal the longitude
-  // of perihelion ϖ = Ω + ω ≈ 76.68° + 54.89° ≈ 131.57°, and the published
-  // ϖ(J2000.0) is 131.53298° — the old constant gave L−M ≈ 329.72°, off by
-  // ~198°, while 50.446821° (used below, = this file's own verified-correct
-  // L(0) minus the published ϖ, for self-consistency) gives L−M ≈ 131.53°
-  // exactly. A wrong M phase does not move the mean orbit at all — it only
-  // misapplies the equation-of-center wobble (≤ ~0.78° for Venus's small
-  // eccentricity) at the wrong point in the cycle, bounded at ~2x that
-  // magnitude — which is why this was never wildly wrong, only close to a
-  // degree off (worst near conjunction/opposition, where planets.ts's
-  // vector-subtraction geocentric conversion amplifies whatever heliocentric
-  // error already exists — see the file header). Mars/Jupiter/Saturn's own
-  // M constants were checked the same way (L−M against each planet's own
-  // published ϖ) and are correct to within 0.001°; this bug is Venus-only.
-  const M = normalize360(polyval([50.446821, 58517.80387, -0.000128], T)) * DEG_TO_RAD;
-  const e = 0.00677188 - 0.000047766 * T;
-  const C = 2 * e * Math.sin(M) + (5 / 4) * e * e * Math.sin(2 * M);
-  const helioLon = normalize360(L + C * (180 / Math.PI));
-  const E = solveKepler(M, e);
-  const r = VENUS_A * (1 - e * Math.cos(E));
-  // Argument of latitude u = ω + ν (argument of perihelion + true anomaly).
-  // helioLon above is the true ecliptic-projected longitude Ω + ω + ν (see
-  // file header), so subtracting Ω leaves exactly ω + ν — an exact
-  // algebraic identity, not an approximation, so no separate true-anomaly
-  // computation is needed here.
-  const u = normalize360(helioLon - VENUS_N);
-  const { longitude, latitude } = toGeocentric3D(r, u, VENUS_I, VENUS_N, jdtt);
-  return { longitude, latitude, radiusAU: r };
+  const helio = venusHeliocentricEclipticOfDate(jdtt);
+  const { longitude, latitude } = toGeocentric3D(helio, jdtt);
+  return { longitude, latitude, radiusAU: helio.r };
 }
 
-// ── Mars (Meeus Ch.33) ────────────────────────────────────────────────────
+// ── Mars (VSOP87 — see vsop87Geocentric.ts) ────────────────────────────────
 
-const MARS_A = 1.523679;
-// J2000.0 mean orbital elements — see the note above VENUS_N/VENUS_I for
-// why these are held constant rather than given secular rates.
-const MARS_N = 49.5581; // longitude of ascending node, degrees
-const MARS_I = 1.8497; // inclination to the ecliptic, degrees
-
+/** See the comment on venusPosition() above — same fix, same reasoning. */
 export function marsPosition(jdtt: JDtt): PlanetLonLat {
-  const T = (jdtt - 2451545.0) / 36525.0;
-  // Mean longitude
-  const L = normalize360(polyval([355.433275, 19140.2993313, 0.00000261, -0.000000003], T));
-  // Mean anomaly
-  const M = normalize360(polyval([19.373, 19140.30268, -0.000181], T)) * DEG_TO_RAD;
-  const e = 0.09341233 - 0.000092064 * T;
-  const C =
-    (2 * e - (e * e * e) / 4) * Math.sin(M) +
-    (5 / 4) * e * e * Math.sin(2 * M) +
-    (13 / 12) * e * e * e * Math.sin(3 * M);
-  const C_deg = C * (180 / Math.PI);
-  // Additional periodic corrections (Meeus Table 33.b, top 5)
-  const Mrad = M;
-  const Msun = normalize360(357.52911 + 35999.05029 * T) * DEG_TO_RAD;
-  const corr =
-    +0.1088 * Math.sin((Mrad - Msun + Math.PI) % (2 * Math.PI)) + 0.0313 * Math.sin(2 * Mrad);
-  const helioLon = normalize360(L + C_deg + corr);
-  const E = solveKepler(M, e);
-  const r = MARS_A * (1 - e * Math.cos(E));
-  // See the identical comment in venusPosition(): helioLon - Ω = ω + ν
-  // exactly, so this needs no separate true-anomaly computation.
-  const u = normalize360(helioLon - MARS_N);
-  const { longitude, latitude } = toGeocentric3D(r, u, MARS_I, MARS_N, jdtt);
-  return { longitude, latitude, radiusAU: r };
+  const helio = marsHeliocentricEclipticOfDate(jdtt);
+  const { longitude, latitude } = toGeocentric3D(helio, jdtt);
+  return { longitude, latitude, radiusAU: helio.r };
 }
 
 // ── Jupiter (Meeus Ch.33) ─────────────────────────────────────────────────
