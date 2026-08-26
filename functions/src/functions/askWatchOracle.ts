@@ -172,13 +172,23 @@ export const askWatchOracle = onCall(
       let oracleResponse: WatchOracleComposition | null = null;
       let readingRef: DocumentReference;
 
+      // Updated right before each step below so a throw's log line names the
+      // stage that actually failed, instead of leaving every failure in this
+      // block indistinguishable as "askWatchOracle: engine failure". This is
+      // the whole reason the next occurrence of this error is fast to
+      // pinpoint from Cloud Logging alone.
+      let stage = 'local-time';
+
       try {
         // Instant is ours; only the zone comes from the caller.
         instant = new Date();
         localMoment = localIsoFromOffset(instant, input.utcOffsetMinutes);
 
+        stage = 'chart-build';
         chart = buildWatchChart(localMoment);
+        stage = 'classify-question';
         qType = classifyQuestion(input.question);
+        stage = 'judge-chart';
         verdict = judgeWatchChart(chart, qType);
 
         // Shadow-node boundary mapping — obstruction/targetRuler/lagnaRuler are
@@ -194,6 +204,7 @@ export const askWatchOracle = onCall(
         };
 
         // ── Diagnosis → remedy protocol → narration ──────────────────────────
+        stage = 'oracle-composition';
         try {
           oracleResponse = await composeWatchOracleResponse({
             verdict: publicVerdict,
@@ -209,6 +220,7 @@ export const askWatchOracle = onCall(
           oracleResponse = null;
         }
 
+        stage = 'reading-doc-assembly';
         readingRef = db.collection('readings').doc();
         const narration = oracleResponse?.narration?.interpretation || verdict.factors.join(' ');
         const readingDoc: Omit<ReadingDoc, 'createdAt'> = {
@@ -235,6 +247,7 @@ export const askWatchOracle = onCall(
           ...(oracleResponse ? { watchOracle: oracleResponse } : {}),
         };
 
+        stage = 'firestore-write';
         await readingRef.set({
           ...readingDoc,
           createdAt: new Date(),
@@ -250,7 +263,11 @@ export const askWatchOracle = onCall(
         // client regardless of what's logged here — the stack trace below
         // is only visible in Cloud Logging (Firebase Console → Functions →
         // Logs, filter on "askWatchOracle: engine failure"), not to the app.
+        // `stage` names which of the steps above actually threw, so this one
+        // line is enough to jump straight to the offending code without
+        // re-deriving it from the stack trace.
         logger.error('askWatchOracle: engine failure', {
+          stage,
           err: String(err),
           stack: err instanceof Error ? err.stack : undefined,
           userId,
