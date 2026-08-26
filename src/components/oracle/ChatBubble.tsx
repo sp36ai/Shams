@@ -18,6 +18,8 @@ import type { ChatMessage } from '@stores/oracleChatStore';
 import type { WatchReading } from '../../firebase/watchOracle';
 import RkpWatchCard, { STATE_HEADLINE } from './RkpWatchCard';
 import RemedyProtocolCard from './RemedyProtocolCard';
+import GuidanceCard from './GuidanceCard';
+import { directionalFocusFor } from '../../data/watchRemedyContext';
 import type { SpeakingStatus } from '@hooks/useTextToSpeech';
 
 /**
@@ -164,8 +166,12 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({
               lagnaSignName={reading.lagnaSignName}
               lagnaRulerName={reading.lagnaRulerName}
               verdict={reading.verdict}
+              directionalFocus={directionalFocusFor(reading.verdict)}
             />
             {reading.oracle !== undefined && <RemedyProtocolCard composition={reading.oracle} />}
+            {message.selectedRemedies !== undefined && (
+              <GuidanceCard remedies={message.selectedRemedies} />
+            )}
           </>
         )}
       </View>

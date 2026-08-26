@@ -44,8 +44,11 @@ import { useSpeechToText } from '@hooks/useSpeechToText';
 import { useTextToSpeech } from '@hooks/useTextToSpeech';
 import { useOracleChatStore, selectIsEmpty, type ChatInputKind } from '@stores/oracleChatStore';
 import { useReadingsStore } from '@stores/readingsStore';
-import { askWatchOracle } from '../firebase/watchOracle';
+import { askWatchOracle, type WatchReading } from '../firebase/watchOracle';
 import { toReadingRecord } from '../data/watchReadingRecord';
+import { selectRemedies } from '../data/remedySelector';
+import { watchVerdictToRankingContext } from '../data/watchRemedyContext';
+import { speakableTextFor } from '@components/oracle/ChatBubble';
 import StarfieldBackground from '@components/StarfieldBackground';
 import ChatBubble from '@components/oracle/ChatBubble';
 import ChatComposer from '@components/oracle/ChatComposer';
@@ -124,6 +127,43 @@ const OracleChatScreen: React.FC = () => {
   const sendingRef = useRef(false);
   const listRef = useRef<FlatList | null>(null);
 
+  /**
+   * Second, non-blocking round trip: pick the devotional practice that suits
+   * this reading, from the app's own tagged Islamic remedy library.
+   *
+   * Deliberately fired AFTER the verdict is already on screen and never
+   * awaited by the ask path — the verdict is the answer, and guidance is an
+   * enrichment. A slow or failed selection must not delay or fail a reading
+   * that already succeeded, so this swallows its own errors: the bubble
+   * simply renders without a GuidanceCard.
+   *
+   * `watchVerdictToRankingContext` is the purpose-built Watch Oracle bridge —
+   * it derives classification, severity, themes and spiritual state from the
+   * real DisplayWatchVerdict rather than from a coarse verdict string.
+   */
+  const runGuidanceSelection = useCallback(
+    (oracleMessageId: string, question: string, reading: WatchReading): void => {
+      const ranking = watchVerdictToRankingContext(reading.verdict, seekerProfile);
+      selectRemedies({
+        ...ranking,
+        readingId: reading.readingId,
+        // Never shown to the user — context for the selector only.
+        oracleSummary: speakableTextFor(reading).slice(0, 200),
+        questionText: question,
+        seekerProfile,
+      })
+        .then(result => {
+          if (result.selectedRemedies.length > 0) {
+            updateMessage(oracleMessageId, { selectedRemedies: result.selectedRemedies });
+          }
+        })
+        .catch(() => {
+          // Enrichment only — the verdict already stands.
+        });
+    },
+    [seekerProfile, updateMessage],
+  );
+
   // ── Core ask logic — the ONE path both text and voice funnel into ─────────
 
   const runAsk = useCallback(
@@ -153,6 +193,8 @@ const OracleChatScreen: React.FC = () => {
             reading: result.reading,
           }),
         );
+
+        runGuidanceSelection(oracleMessageId, question, result.reading);
       } catch (err) {
         // consumeOne() already charged the local quota counter before the
         // network call — give it back on failure, same reasoning as the
@@ -161,7 +203,7 @@ const OracleChatScreen: React.FC = () => {
         updateMessage(oracleMessageId, { status: 'failed', errorMessage: errorMessageFor(err, t) });
       }
     },
-    [canAsk, consumeOne, lang, seekerProfile, updateMessage, addReading, t],
+    [canAsk, consumeOne, lang, seekerProfile, updateMessage, addReading, t, runGuidanceSelection],
   );
 
   const sendMessage = useCallback(

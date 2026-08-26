@@ -17,6 +17,7 @@
 import { create } from 'zustand';
 
 import type { WatchReading } from '../firebase/watchOracle';
+import type { RenderedRemedy } from '../data/remedyRenderer';
 import { storage, KEYS } from '@storage/mmkv';
 
 export type ChatRole = 'user' | 'oracle';
@@ -35,6 +36,17 @@ export interface ChatMessage {
   status: ChatMessageStatus;
   /** Present once a 'sent' oracle message resolves. */
   reading?: WatchReading;
+  /**
+   * Islamic-practice guidance for this reading, chosen by the selectRemedies
+   * Cloud Function from the client's own candidate ranking.
+   *
+   * Distinct from the server's `reading.oracle.protocol` steps, which are the
+   * RKP diagnosis's own interventions: that answers "what does the chart
+   * prescribe", this answers "which practice suits this seeker now". Arrives
+   * after the verdict (the selection is a second, non-blocking round trip),
+   * so a 'sent' message legitimately renders without it.
+   */
+  selectedRemedies?: RenderedRemedy[];
   /** Present on a 'failed' oracle message — shown next to the retry control. */
   errorMessage?: string;
   /** On an oracle message: the user message id this is answering. */
