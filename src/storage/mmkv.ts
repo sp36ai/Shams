@@ -35,6 +35,10 @@ export const KEYS = Object.freeze({
   // Readings cache (most-recent N readings for offline open of History)
   READINGS_CACHE: 'readings.cache.v1',
 
+  // Oracle Chat local conversation transcript (separate from the readings
+  // cache above — this is the chat bubbles, not the structured reading list)
+  ORACLE_CHAT_HISTORY: 'oracleChat.history.v1',
+
   // Onboarding flags
   ONBOARDING_SEEN: 'onboarding.seen.v1',
   ONBOARDING_LOCATION_PROMPTED: 'onboarding.locationPrompted.v1',

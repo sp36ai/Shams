@@ -14,9 +14,16 @@
     <!-- ═══ Network state for offline-handling UX ═══ -->
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
-    <!-- ═══ Hardware features (none required-true; app must run on tablets too) ═══ -->
+    <!-- ═══ Oracle Chat voice input (on-device speech-to-text) ═══ -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+
+    <!-- ═══ Hardware features (none required-true; app must run on tablets too, -->
+    <!--     and a tablet/emulator without a mic must still install) ═══ -->
     <uses-feature
         android:name="android.hardware.location.gps"
+        android:required="false" />
+    <uses-feature
+        android:name="android.hardware.microphone"
         android:required="false" />
 
     <queries>

@@ -186,11 +186,37 @@ export interface StringTable {
     todaysQuotaLabel: string;
     yourTierLabel: string;
     tierWanderer: string;
+    askNewQuestionCta: string;
+    consultOracleSubtitle: string;
     readingHistoryCta: string;
     viewPastReadingsSubtitle: string;
     moonManzilTitle: string;
     rulingPlanetsNowLabel: string;
     currentHoraLordLabel: string;
+  };
+  oracleChat: {
+    headerTitle: string;
+    placeholder: string;
+    listening: string;
+    send: string;
+    voiceInputTag: string;
+    startRecording: string;
+    stopRecording: string;
+    readingChart: string;
+    retry: string;
+    failedGeneric: string;
+    quotaExhausted: string;
+    micPermissionDenied: string;
+    noSpeechDetected: string;
+    errorTimeout: string;
+    errorSignIn: string;
+    listenToVerdict: string;
+    playNarration: string;
+    pauseNarration: string;
+    speaking: string;
+    paused: string;
+    emptyTitle: string;
+    emptyBody: string;
   };
   skyClock: {
     headerTitle: string;

@@ -4,7 +4,9 @@
  * The first screen the seeker lands on after onboarding (Oracle is the
  * initial tab in MainTabs). Passive status surface only — no chat, no
  * composer. Hierarchy follows DĀR AL-SHAMS design system §Home Screen:
- * hora status → celestial state → moon mansion → user tier.
+ * hora status → celestial state → ask entry → moon mansion → user tier.
+ * Hands off to OracleChatScreen (via "Ask New Question") for the actual
+ * question/verdict conversation.
  */
 
 import React, { useCallback, useEffect, useState } from 'react';
@@ -33,6 +35,7 @@ import TabIcon from '@components/TabIcon';
 import HoraBadge from '@components/home/HoraBadge';
 import ManzilEmblem from '@components/home/ManzilEmblem';
 import CornerBrackets from '@components/home/CornerBrackets';
+import GlowWash from '@components/home/GlowWash';
 import { buildDailySkyMessage } from '@utils/dailySkyMessage';
 import { favoredChipForPlanet } from '../data/favoredQuestion';
 import { PLANET_DHIKR } from '../data/dailyDhikr';
@@ -86,6 +89,10 @@ const OracleScreen: React.FC = () => {
 
   // ── Trial day banners — Day 6 passive strip, Day 7 once-per-day soft prompt ─
   const [trialBannerKind, setTrialBannerKind] = useState<'day6' | 'day7' | null>(null);
+
+  // Measured once via onLayout so the "Ask New Question" glow wash clips
+  // exactly to the button's real rendered size (its width isn't known statically).
+  const [askBtnSize, setAskBtnSize] = useState<{ width: number; height: number } | null>(null);
 
   const evaluateTrialBanner = useCallback(() => {
     const { plan: currentPlan, checkTrial } = useQuotaStore.getState();
@@ -381,6 +388,47 @@ const OracleScreen: React.FC = () => {
             </Text>
           )}
         </View>
+
+        {/* Ask New Question — opens the Oracle Chat conversation */}
+        <Pressable
+          testID="ask-shams-btn"
+          onPress={() => navigation.navigate('OracleChat')}
+          onLayout={e => {
+            const { width, height } = e.nativeEvent.layout;
+            setAskBtnSize({ width, height });
+          }}
+          style={({ pressed }) => [
+            styles.actionBtn,
+            {
+              backgroundColor: colors.surface,
+              borderColor: colors.borderAccent + '55',
+              opacity: pressed ? 0.85 : 1,
+            },
+          ]}
+          accessibilityRole="button"
+          accessibilityLabel={t('oracle.askNewQuestionCta')}
+        >
+          {askBtnSize !== null && (
+            <GlowWash
+              width={askBtnSize.width}
+              height={askBtnSize.height}
+              color={colors.goldBright}
+              opacity={0.35}
+            />
+          )}
+          <View style={[styles.actionIconWrap, { borderColor: colors.borderAccent }]}>
+            <Text style={{ fontSize: 18, color: colors.goldBright }}>{'✦'}</Text>
+          </View>
+          <View style={styles.actionTextCol}>
+            <Text style={[typography('button'), { color: colors.goldBright, fontSize: 16 }]}>
+              {t('oracle.askNewQuestionCta')}
+            </Text>
+            <Text style={[typography('caption'), { color: colors.textMuted, marginTop: 2 }]}>
+              {t('oracle.consultOracleSubtitle')}
+            </Text>
+          </View>
+          <Text style={[typography('label'), { color: colors.goldBright, opacity: 0.85 }]}>›</Text>
+        </Pressable>
 
         {/* Reading History */}
         <Pressable
@@ -707,6 +755,23 @@ const styles = StyleSheet.create({
   },
   manzilTextCol: {
     flex: 1,
+  },
+  actionBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginHorizontal: SPACING.xl,
+    marginBottom: 10,
+    paddingVertical: 16,
+    paddingHorizontal: 18,
+    borderRadius: RADIUS.xl,
+    borderWidth: StyleSheet.hairlineWidth,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOpacity: 0.14,
+    shadowRadius: 14,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 3,
   },
   actionBtnSecondary: {
     flexDirection: 'row',

@@ -36,6 +36,9 @@ export type RootStackParamList = {
   Premium: undefined;
   /** Settings — reached via the gear icon in the Home dashboard header. */
   Settings: undefined;
+  /** Oracle Chat — the question/verdict conversation, reached via Home's
+   *  "Ask New Question" CTA. A root-level push, not a persistent tab. */
+  OracleChat: undefined;
 };
 
 export type RootStackScreenProps<RouteName extends keyof RootStackParamList> =
