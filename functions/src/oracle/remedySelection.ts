@@ -18,7 +18,7 @@
  *     spiritual or astrological practice, regardless of score.
  */
 
-import type { QuestionType } from '../engine/kp/rules/houseMatrix';
+import type { QuestionType } from '../engine/rules/houseMatrix';
 import type { ImbalancePattern, RkpDiagnosis } from '../engine/rkp/diagnosis';
 import {
   MANDATORY_ESCALATION_TYPES,

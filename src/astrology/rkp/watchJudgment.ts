@@ -15,7 +15,7 @@
  * and cosmic markers use the classical Arabic/Urdu names from nomenclature.ts.
  */
 
-import { HOUSE_MATRIX, type QuestionType } from '@astrology/kp/rules/houseMatrix';
+import { HOUSE_MATRIX, type QuestionType } from '@astrology/rules/houseMatrix';
 import type { Planet } from '@astrology/types/chart';
 
 import { SIGN_META, type Direction, type HouseNumber } from './nomenclature';

@@ -6,7 +6,7 @@
  * second, potentially drifting implementation.
  *
  * These are MEAN-longitude approximations (±1–5°), display only — the real
- * KP horary judgment always runs the full Moshier ephemeris server-side.
+ * RKP horary judgment always runs the full Moshier ephemeris server-side.
  */
 
 export const SIGN_NAMES = [

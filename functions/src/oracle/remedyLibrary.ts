@@ -22,7 +22,7 @@
  * compile error.
  */
 
-import type { QuestionType } from '../engine/kp/rules/houseMatrix';
+import type { QuestionType } from '../engine/rules/houseMatrix';
 import type { ImbalancePattern, RkpOutcome } from '../engine/rkp/diagnosis';
 
 export type RemedyCategory =

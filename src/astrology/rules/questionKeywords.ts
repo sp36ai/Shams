@@ -364,8 +364,10 @@ export function normalizeQuestion(text: string): string {
  * Determinism contract: for a given input string, the output is fixed.
  * No randomness, no locale-dependent collation beyond `toLocaleLowerCase`.
  *
- * Phase 1 caller: src/screens/OracleScreen.tsx (engine stub).
- * Phase 3 caller: src/astrology/kp/judgment/judgeHorary.ts (real engine).
+ * Caller: functions/src/functions/askWatchOracle.ts, server-side, ahead of
+ * the RKP Watch judgment (src/astrology/rkp/watchJudgment.ts). (The original
+ * caller, judgeHorary.ts, was the retired KP/Astronomical engine — deleted;
+ * see git history.)
  */
 export function classifyQuestion(text: string): QuestionType {
   const normalized = normalizeQuestion(text);

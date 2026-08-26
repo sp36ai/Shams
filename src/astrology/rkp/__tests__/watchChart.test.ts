@@ -1,6 +1,6 @@
 import { buildWatchChart, houseOf } from '@astrology/rkp/watchChart';
 import { judgeWatchChart } from '@astrology/rkp/watchJudgment';
-import { ALL_QUESTION_TYPES } from '@astrology/kp/rules/houseMatrix';
+import { ALL_QUESTION_TYPES } from '@astrology/rules/houseMatrix';
 import { PLANETS } from '@astrology/types/chart';
 import type { HouseNumber } from '@astrology/rkp/nomenclature';
 

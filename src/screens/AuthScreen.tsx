@@ -351,7 +351,7 @@ const AuthScreen: React.FC = () => {
                 { color: colors.textFaint, textAlign: 'center', marginTop: 4, letterSpacing: 2.5 },
               ]}
             >
-              {'✦  KP HORARY ORACLE  ✦'}
+              {'✦  RKP HORARY ORACLE  ✦'}
             </Text>
           </View>
 

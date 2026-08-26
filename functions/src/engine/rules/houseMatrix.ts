@@ -6,7 +6,10 @@
  * Source of truth: docs/RKP_RULES_FROM_SARFARAZ.md §1
  * Provided by: Astro Sarfaraz (project owner) during Phase 1 intake.
  *
- * USED BY:  Phase 3 engine — src/astrology/kp/judgment/judgeHorary.ts
+ * USED BY:  the RKP Watch engine — src/astrology/rkp/watchJudgment.ts and
+ *           src/astrology/rkp/diagnosis.ts. (The original Phase 3 caller,
+ *           judgeHorary.ts, was the retired KP/Astronomical engine — deleted;
+ *           see git history.)
  *
  * EDIT POLICY:
  *   This file is a faithful transcription of the owner-provided rules.

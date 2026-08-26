@@ -2,7 +2,7 @@
  * Question types — Shams al-Asrār
  * --------------------------------------------------------------------------
  * The user types a free-form question; the question classifier maps it to
- * a `QuestionType` defined in src/astrology/kp/rules/houseMatrix.ts. The
+ * a `QuestionType` defined in src/astrology/rules/houseMatrix.ts. The
  * intermediate shape and inputs to the engine live here.
  */
 
@@ -18,9 +18,9 @@ import type { LangCode } from '@i18n/types';
  *   marriage, love, child, education, career, job, business, finance,
  *   property, vehicle, health, travel, litigation, foreign
  */
-export type { QuestionType } from '@astrology/kp/rules/houseMatrix';
+export type { QuestionType } from '@astrology/rules/houseMatrix';
 
-import type { QuestionType } from '@astrology/kp/rules/houseMatrix';
+import type { QuestionType } from '@astrology/rules/houseMatrix';
 
 /** What the user types into the Oracle screen — pre-classification. */
 export interface RawQuestion {

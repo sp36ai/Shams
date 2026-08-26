@@ -455,7 +455,7 @@ const AstroVerdictCard: React.FC<AstroVerdictCardProps> = ({
               { backgroundColor: colors.accent + '22', borderColor: colors.accent },
             ]}
           >
-            <Text style={[typography('label'), { color: colors.accent }]}>KP ASTRO</Text>
+            <Text style={[typography('label'), { color: colors.accent }]}>RKP ASTRO</Text>
           </View>
           <Text style={[typography('caption'), { color: colors.textFaint }]}>
             {(result.category ?? '').toUpperCase()}
@@ -550,7 +550,7 @@ const AstroVerdictCard: React.FC<AstroVerdictCardProps> = ({
                 { backgroundColor: colors.accent + '22', borderColor: colors.accent },
               ]}
             >
-              <Text style={[typography('label'), { color: colors.accent }]}>KP ASTRO</Text>
+              <Text style={[typography('label'), { color: colors.accent }]}>RKP ASTRO</Text>
             </View>
             <Text style={[typography('caption'), { color: colors.textFaint }]}>
               {(result.category ?? '').toUpperCase()}

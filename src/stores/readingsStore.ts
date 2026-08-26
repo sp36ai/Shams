@@ -7,7 +7,7 @@
 
 import { create } from 'zustand';
 
-import type { QuestionType } from '@astrology/kp/rules/houseMatrix';
+import type { QuestionType } from '@astrology/rules/houseMatrix';
 import type { DisplayWatchVerdict } from '@astrology/rkp/watchJudgment';
 import type { WatchOracleComposition } from '../types/watchOracle';
 import { storage, KEYS } from '@storage/mmkv';
@@ -15,7 +15,7 @@ import { storage, KEYS } from '@storage/mmkv';
 /**
  * Catalog of question categories the engine supports.
  *
- * SOURCE OF TRUTH: `QuestionType` in `@astrology/kp/rules/houseMatrix`,
+ * SOURCE OF TRUTH: `QuestionType` in `@astrology/rules/houseMatrix`,
  * which is the owner-provided RKP rule set from Astro Sarfaraz. We import
  * it once and alias as `QuestionCategory` so the readings cache and filter
  * UI stay locked to the engine's category vocabulary — any new category
