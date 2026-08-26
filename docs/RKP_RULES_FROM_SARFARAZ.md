@@ -1,6 +1,47 @@
 # RKP Rules - Source of Truth from Astro Sarfaraz
 
-> Status: aligned to the current runtime engine
+> Status: **NOT aligned to the current runtime engine.** This document describes
+> `judgeHorary.ts` — the Moon-Sub-Lord / Cusp-Sub-Lord / 5-6-ruling-planet
+> scoring engine used by the old, location-dependent Astronomical Oracle. That
+> engine, its Cloud Function (`askOracle`) and `judgeHorary.ts` itself were
+> deleted on 2026-08-25 (PR #92). The sole live judgment path today is the
+> Digital Watch Oracle (`askWatchOracle` → `src/astrology/rkp/watchJudgment.ts`),
+> whose actual scoring model — house-ruler dignity, ruler-to-ruler classical
+> friendship, benefic/malefic occupancy and aspect on the target and 11th
+> houses, retrograde/combustion penalties, a fixed obstruction precedence
+> (Saturn > Mars > Rahu > Ketu) — is **not described anywhere in this
+> document** and has no owner-attributed specification of its own; see
+> `SHAMS_RKP_ENGINE_AUDIT_2026-08-26.md` §"Judgment calibration" for the
+> full finding and what is/isn't owner-sourced in the live engine.
+>
+> **What in this document IS still live and verified faithful to the runtime
+> engine, as of the 2026-08-26 audit:**
+> - §2 House Matrix table — byte-for-byte verified against
+>   `src/astrology/rules/houseMatrix.ts`, which the live `watchJudgment.ts`
+>   and `diagnosis.ts` both import directly. This is the one part of the
+>   owner's original intake that the Watch Oracle actually runs on.
+> - §2 question-classification *concept* (keyword-driven, first-match-wins,
+>   normalize/lowercase/trim) — live in `questionKeywords.ts`. One
+>   implementation detail has drifted from the text below: the code matches
+>   on Unicode-aware WORD boundaries, not raw substrings, specifically to
+>   stop "work" from firing inside "artwork" — a deliberate, documented
+>   improvement made in the code, never back-ported to this doc.
+> - §3's sub-lord/nakshatra/Vimshottari *primitives* (`subLord.ts`,
+>   `nakshatras.ts`, `vimshottari.ts`, `dasha.ts`) are still computed,
+>   correctly, by `chartBuilder.ts` on every Watch Oracle request — but
+>   `watchChart.ts` discards those fields before they reach
+>   `watchJudgment.ts`. They are real, tested, unused-by-judgment computation,
+>   not a live judgment input.
+> - §4 Ruling Planets (Day/Hora/AscSign/AscStar/MoonSign/MoonStar) are
+>   likewise computed by `chartBuilder.ts` and likewise discarded before
+>   `watchJudgment.ts` — the Watch Oracle does not use any of them.
+>
+> Everything else below (§1 core model, §4's witness list as a *judgment*
+> input, §5 the 5-step algorithm, §6 timing-via-dasha, §7 output contract)
+> describes the deleted engine only. Kept as a historical record of what
+> Astro Sarfaraz specified for the Astronomical Oracle — do not read it as a
+> description of what askWatchOracle does today.
+>
 > Origin: Astro Sarfaraz's rule intake plus Phase 2 Forensic Audit updates (Promise + 5 RP)
 > Owner: Astro Sarfaraz
 
