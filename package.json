@@ -42,7 +42,7 @@
     "moduleNameMapper": {
       "react-native-mmkv": "<rootDir>/__mocks__/react-native-mmkv.js",
       "swisseph-wasm": "<rootDir>/__mocks__/swisseph-wasm.js",
-      "firebase/functionsRegion$": "<rootDir>/__mocks__/functionsRegion.js"
+      "(^|/)functionsRegion$": "<rootDir>/__mocks__/functionsRegion.js"
     },
     "moduleFileExtensions": [
       "ts",
@@ -62,6 +62,7 @@
     "@react-native-firebase/firestore": "19.3.0",
     "@react-native-firebase/functions": "19.3.0",
     "@react-native-google-signin/google-signin": "16.1.2",
+    "@react-native-voice/voice": "3.2.4",
     "@react-navigation/bottom-tabs": "7.18.8",
     "@react-navigation/native": "7.3.8",
     "@react-navigation/native-stack": "7.17.10",
@@ -74,6 +75,7 @@
     "react-native-safe-area-context": "5.8.0",
     "react-native-screens": "4.18.0",
     "react-native-svg": "15.15.5",
+    "react-native-tts": "4.1.1",
     "zustand": "^4.5.5"
   },
   "devDependencies": {

@@ -12,9 +12,10 @@
  * - Sage garden / olive ink (zaytunAlHikma — light)
  * - Violet secret / indigo dusk (sirrAlBanafsaj)
  *
- * NOTE — confidence/verdict color is NOT a theme token. CONFIRMED-HIGH gold,
- * CONFIRMED-MEDIUM, CONFIRMED-LOW, and DENIED all render identically no
- * matter which theme below is active — see theme/semanticColors.ts.
+ * NOTE — the Watch Oracle's verdict colour comes from the semantic tokens
+ * below (maqbool / caution / mardood), which every theme defines. The old
+ * fixed CONFIRMED/DENIED palette belonged to the retired Astronomical (KP)
+ * verdict card and was removed with it.
  */
 
 export type ThemeId =
@@ -498,8 +499,7 @@ const zaytunAlHikma: Theme = {
 // 6. SIRR AL-BANAFSAJ — Violet Secret · Indigo Dusk  (dark)
 // ─────────────────────────────────────────────────────────────────────────────
 // Color-only theme — typography (Cinzel / Cormorant Garamond / Amiri) is
-// untouched, same as every other theme here. Confidence/verdict color is
-// NOT part of this palette — see theme/semanticColors.ts.
+// untouched, same as every other theme here.
 const sirrAlBanafsaj: Theme = {
   id: 'sirrAlBanafsaj',
   labelKey: 'theme.sirrAlBanafsaj',

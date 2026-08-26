@@ -1,180 +1,247 @@
 /**
- * OracleChatScreen — Send re-entrancy-guard regression test.
+ * OracleChatScreen — conversation flow tests.
  * --------------------------------------------------------------------------
- * Reproduces the exact failure this branch was created to fix: an
- * askWatchOracle() rejection with code 'unauthenticated' routes into a
- * diagnostic probe (auth().currentUser.getIdToken() + getAppCheckToken())
- * that, on some real devices, hangs forever instead of settling. Because
- * that probe sat inside the same try/catch/finally that resets
- * sendingRef.current, a hang there used to leave the Ask screen's Send
- * button (and every suggestion chip) permanently dead for the rest of the
- * sitting — the very first tap after the failure would silently no-op.
- *
- * Both native calls are mocked here to never resolve or reject, exactly
- * reproducing that hang. This test uses REAL timers (not fake ones) and
- * waits out the actual DIAGNOSTIC_PROBE_TIMEOUT_MS backstop — slower than a
- * faked clock, but it avoids the fragility of interleaving fake timers with
- * this component's several chained awaits (classifyQuestion, consumeOne,
- * acquireLocation, runEngine), and there is exactly one test in this
- * category, not a hot loop.
- *
- * Uses the `userEvent` API (not `fireEvent`) for the TextInput interaction —
- * `fireEvent.changeText` does not reliably flush a controlled TextInput's
- * value in this project's RNTL setup, while `userEvent.type` does.
+ * Exercises the one path both text and voice funnel into: sendMessage() →
+ * askWatchOracle() → a bubble that ends up 'sent' or 'failed'+retryable.
+ * Voice-specific behavior (STT/TTS) is covered by their own hook tests —
+ * @react-native-voice/voice and react-native-tts are mocked wholesale in
+ * jest.setup.js, so this file only needs the mic BUTTON to render, not the
+ * recognizer to do anything real.
  */
 import React from 'react';
 import { screen, userEvent, waitFor } from '@testing-library/react-native';
-import { useNavigation } from '@react-navigation/native';
-import { useSettingsStore } from '@stores/settingsStore';
-import { useQuotaStore } from '@stores/quotaStore';
+import { buildWatchChart } from '@astrology/rkp/watchChart';
+import { judgeWatchChart } from '@astrology/rkp/watchJudgment';
+import { httpsCallable } from '../../firebase/functionsRegion';
 import { renderScreen } from '../../test-utils/renderScreen';
+import { useOracleChatStore } from '@stores/oracleChatStore';
+import { useReadingsStore } from '@stores/readingsStore';
+import { useQuotaStore } from '@stores/quotaStore';
 import OracleChatScreen from '../OracleChatScreen';
 
-jest.mock('../../firebase/watchOracle', () => ({
-  askWatchOracle: jest.fn(() => {
-    const err = Object.assign(new Error('askWatchOracle rejected'), {
-      code: 'unauthenticated',
-    });
-    return Promise.reject(err);
-  }),
-  deviceUtcOffsetMinutes: jest.fn(() => 330),
-}));
+const MOMENT = '2026-08-08T11:13:00+05:30';
 
-jest.mock('@utils/acquireLocation', () => ({
-  // Default matches production behavior on a fresh settingsStore (no
-  // lastLocation yet) — resolves to a real coordinate, same as the
-  // @react-native-community/geolocation mock in jest.setup.js. Overridden
-  // per-test below to exercise the "unexpected exception" safety net.
-  acquireLocation: jest.fn(() => Promise.resolve({ lat: 31.634, lon: 74.3587 })),
-}));
+function defaultImpl(name: string) {
+  if (name === 'getQuota') {
+    return jest.fn(() => Promise.resolve({ data: { remaining: 3 } }));
+  }
+  return jest.fn(() => Promise.resolve({ data: {} }));
+}
 
-jest.mock('../../firebase/appCheck', () => ({
-  // Never settles — the exact real-world failure mode this test targets.
-  getAppCheckToken: jest.fn(() => new Promise(() => undefined)),
-}));
+function successPayload() {
+  return {
+    readingId: 'r1',
+    computedAt: '2026-08-08T05:43:00.000Z',
+    localMoment: MOMENT,
+    window: { startMinute: 43, endMinute: 48, minute: 43 },
+    lagnaSignName: 'Burj Jauza',
+    lagnaRulerName: 'Utarid',
+    verdict: judgeWatchChart(buildWatchChart(MOMENT), 'legal'),
+    quotaRemaining: 2,
+  };
+}
 
-// Unrelated to the guard under test — this only silences a caught, logged
-// "trial server registration failed" error from the free-plan gate's
-// startTrial() side effect (a fresh quota store always starts a trial on
-// the first ask), which otherwise clutters test output.
-jest.mock('../../firebase/trial', () => ({
-  activateTrialOnServer: jest.fn(() =>
-    Promise.resolve({ startedAt: new Date().toISOString(), expiresAt: '', alreadyActive: false }),
-  ),
-}));
+beforeEach(() => {
+  useOracleChatStore.getState().clearAll();
+  useReadingsStore.getState().clearAll();
+  useQuotaStore.setState({ plan: 'free', questionsToday: 0 });
+  (httpsCallable as jest.Mock).mockReset();
+  (httpsCallable as jest.Mock).mockImplementation(defaultImpl);
+});
 
-describe('OracleChatScreen — Send button re-entrancy guard', () => {
-  beforeEach(() => {
-    // These are module-level zustand singletons — state set by one test
-    // (e.g. lastLocation via sendMessage's opportunistic location fetch, or
-    // questionsToday via consumeOne()) otherwise leaks into the next test
-    // in this file, since __mocks__/react-native-mmkv.js only resets the
-    // underlying storage, not the already-constructed store's in-memory
-    // state. Force both back to a clean, predictable "fresh install" shape
-    // before every test.
-    useSettingsStore.setState({ lastLocation: null });
-    useQuotaStore.setState({
-      questionsToday: 0,
-      plan: 'free',
-      trialStartDate: null,
-      trialActive: false,
-      trialExpired: false,
-      planExpiry: null,
-    });
-
-    // jest.mock()'d fns at the top of this file are module singletons too —
-    // call counts from one test otherwise carry into the next.
-    jest.requireMock('../../firebase/watchOracle').askWatchOracle.mockClear();
-    jest.requireMock('@utils/acquireLocation').acquireLocation.mockClear();
-
-    (useNavigation as jest.Mock).mockReturnValue({
-      navigate: jest.fn(),
-      goBack: jest.fn(),
-      canGoBack: jest.fn(() => false),
-      replace: jest.fn(),
-      push: jest.fn(),
-      setOptions: jest.fn(),
-      addListener: jest.fn(() => jest.fn()),
-    });
-
-    // auth().currentUser.getIdToken() is the diagnostic probe's other
-    // never-settling call — see the firebase/appCheck mock above for the
-    // other one.
-    const auth = jest.requireMock('@react-native-firebase/auth').default;
-    auth().currentUser = { getIdToken: jest.fn(() => new Promise(() => undefined)) };
+describe('OracleChatScreen', () => {
+  it('shows the empty state with no conversation yet', async () => {
+    await renderScreen(<OracleChatScreen />);
+    expect(screen.getByText('Ask your first question')).toBeTruthy();
   });
 
-  it('re-enables Send after the App Check diagnostic probe hangs forever', async () => {
-    const { askWatchOracle } = jest.requireMock('../../firebase/watchOracle');
+  it('adds a user bubble and a pending oracle bubble immediately on send', async () => {
+    // Held open deliberately, to isolate the immediate 'sending' state from
+    // whatever the eventual response turns out to be (covered by its own
+    // tests below) — resolved at the end so askWatchOracle's own internal
+    // withTimeout() clears its real setTimeout instead of leaking it.
+    let resolveAsk: (value: { data: unknown }) => void = () => {};
+    const pending = new Promise<{ data: unknown }>(resolve => {
+      resolveAsk = resolve;
+    });
+    (httpsCallable as jest.Mock).mockImplementation((name: string) => {
+      if (name === 'askWatchOracle') {
+        return jest.fn(() => pending);
+      }
+      return defaultImpl(name);
+    });
 
     await renderScreen(<OracleChatScreen />);
     const user = userEvent.setup();
 
-    const input = screen.getByTestId('oracle-input');
-    await user.type(input, 'Will the job offer come through?');
-    await user.press(screen.getByTestId('oracle-send-btn'));
+    await user.type(screen.getByTestId('oracle-chat-input'), 'Will I get the job?');
+    await user.press(screen.getByTestId('oracle-chat-send-btn'));
 
-    // In flight: the composer disables the instant runEngine()/
-    // askWatchOracle() is pending. Checked on the TextInput's `editable`
-    // prop rather than the Send Pressable's `disabled` prop — RNTL doesn't
-    // surface Pressable's `disabled` on `.props` the way it does a real
-    // TextInput prop, and `editable={!sending}` isolates exactly the state
-    // this test cares about.
-    await waitFor(() => expect(input.props.editable).toBe(false));
-    expect(askWatchOracle).toHaveBeenCalledTimes(1);
+    expect(screen.getByText('Will I get the job?')).toBeTruthy();
+    expect(screen.getByText('Reading the chart…')).toBeTruthy();
 
-    // The real regression: previously, a hang in the diagnostic probe kept
-    // this true forever. It must flip back within DIAGNOSTIC_PROBE_TIMEOUT_MS
-    // (8s) of the rejection, not never.
-    await waitFor(() => expect(input.props.editable).toBe(true), { timeout: 12000 });
+    resolveAsk({ data: successPayload() });
+    await waitFor(() => expect(screen.queryByText('Reading the chart…')).toBeNull());
+  });
 
-    // The stronger assertion: sendingRef.current (invisible to RTL) is only
-    // observable through its effect — a second attempt must actually go
-    // through, not silently no-op the way it did before the fix.
-    await user.type(screen.getByTestId('oracle-input'), 'Will the job offer come through?');
-    await user.press(screen.getByTestId('oracle-send-btn'));
-
-    await waitFor(() => expect(askWatchOracle).toHaveBeenCalledTimes(2));
-  }, 20000);
-
-  it('shows a visible error and re-enables Send when a gate before the engine call throws unexpectedly', async () => {
-    // Simulates the class of bug this safety net exists for: something in a
-    // gate that isn't the engine call itself (here, the opportunistic
-    // location fetch) throws instead of degrading gracefully. Before the
-    // whole-function try/catch/finally, this would have left sendingRef.current
-    // stuck true with zero visible sign anything went wrong — no spinner, no
-    // modal, no error, forever, exactly matching real-world reports of the
-    // Ask screen going silently dead on the very first attempt.
-    const { acquireLocation } = jest.requireMock('@utils/acquireLocation');
-    const { askWatchOracle } = jest.requireMock('../../firebase/watchOracle');
-    acquireLocation.mockRejectedValueOnce(new Error('unexpected native failure'));
+  it('resolves the pending bubble into a rendered verdict on success', async () => {
+    (httpsCallable as jest.Mock).mockImplementation((name: string) => {
+      if (name === 'askWatchOracle') {
+        return jest.fn(() => Promise.resolve({ data: successPayload() }));
+      }
+      return defaultImpl(name);
+    });
 
     await renderScreen(<OracleChatScreen />);
     const user = userEvent.setup();
 
-    const input = screen.getByTestId('oracle-input');
-    await user.type(input, 'Will the job offer come through?');
-    await user.press(screen.getByTestId('oracle-send-btn'));
+    await user.type(screen.getByTestId('oracle-chat-input'), 'Will I get the job?');
+    await user.press(screen.getByTestId('oracle-chat-send-btn'));
 
-    // The generic fallback message from the new outer catch — proof the
-    // failure is visible rather than silent.
+    await waitFor(() => expect(screen.queryByText('Reading the chart…')).toBeNull());
+    // RkpWatchCard's own plain-language headline for the judged state.
+    const messages = useOracleChatStore.getState().messages;
+    const oracleMsg = messages.find(m => m.role === 'oracle');
+    expect(oracleMsg?.status).toBe('sent');
+    expect(oracleMsg?.reading?.readingId).toBe('r1');
+
+    // Also lands in Reading History.
+    expect(useReadingsStore.getState().readings.some(r => r.id === 'r1')).toBe(true);
+  });
+
+  it('shows a failed bubble with retry on network failure, and recovers on retry', async () => {
+    // askWatchOracle() (firebase/watchOracle.ts, unmodified — pre-existing
+    // behavior) races the callable against withTimeout(), which resolves to
+    // `undefined` on ANY rejection, not only a real timeout — so a rejected
+    // callable surfaces here as errorTimeout regardless of its own .code.
+    // That collapsing of distinct failures into one message is a pre-existing
+    // characteristic of the shared client wrapper, not something introduced
+    // or fixable from this screen.
+    (httpsCallable as jest.Mock).mockImplementation((name: string) => {
+      if (name === 'askWatchOracle') {
+        return jest.fn(() =>
+          Promise.reject(Object.assign(new Error('boom'), { code: 'internal' })),
+        );
+      }
+      return defaultImpl(name);
+    });
+
+    await renderScreen(<OracleChatScreen />);
+    const user = userEvent.setup();
+
+    await user.type(screen.getByTestId('oracle-chat-input'), 'Will I get the job?');
+    await user.press(screen.getByTestId('oracle-chat-send-btn'));
+
+    await waitFor(() =>
+      expect(screen.getByText('The oracle took too long to answer. Try again.')).toBeTruthy(),
+    );
+
+    // Now let a retry succeed.
+    (httpsCallable as jest.Mock).mockImplementation((name: string) => {
+      if (name === 'askWatchOracle') {
+        return jest.fn(() => Promise.resolve({ data: successPayload() }));
+      }
+      return defaultImpl(name);
+    });
+
+    await user.press(screen.getByText('↻ Retry'));
+
+    await waitFor(() => {
+      const oracleMsg = useOracleChatStore.getState().messages.find(m => m.role === 'oracle');
+      expect(oracleMsg?.status).toBe('sent');
+    });
+  });
+
+  it('runs the guidance pipeline after a successful reading and attaches the remedies', async () => {
+    const selectCallable = jest.fn(() =>
+      Promise.resolve({
+        data: {
+          selectedIds: ['dhikr_01', 'quran_01'],
+          selectionReason: 'suits a delayed matter',
+          descriptions: { dhikr_01: 'Steady the heart with remembrance.' },
+        },
+      }),
+    );
+    (httpsCallable as jest.Mock).mockImplementation((name: string) => {
+      if (name === 'askWatchOracle') {
+        return jest.fn(() => Promise.resolve({ data: successPayload() }));
+      }
+      if (name === 'selectRemedies') {
+        return selectCallable;
+      }
+      return defaultImpl(name);
+    });
+
+    await renderScreen(<OracleChatScreen />);
+    const user = userEvent.setup();
+    await user.type(screen.getByTestId('oracle-chat-input'), 'Will I get the job?');
+    await user.press(screen.getByTestId('oracle-chat-send-btn'));
+
+    await waitFor(() => {
+      const oracleMsg = useOracleChatStore.getState().messages.find(m => m.role === 'oracle');
+      expect(oracleMsg?.selectedRemedies?.length).toBeGreaterThan(0);
+    });
+
+    // The selection is driven by the watch verdict, not a coarse verdict string.
+    expect(selectCallable).toHaveBeenCalled();
+    const oracleMsg = useOracleChatStore.getState().messages.find(m => m.role === 'oracle');
+    expect(oracleMsg?.selectedRemedies?.map(r => r.id)).toEqual(['dhikr_01', 'quran_01']);
+    // Generated descriptions from the selector win over the library default.
+    expect(oracleMsg?.selectedRemedies?.[0]?.description).toBe(
+      'Steady the heart with remembrance.',
+    );
+  });
+
+  it('still shows the verdict when the guidance selection fails', async () => {
+    // The verdict is the answer; guidance is enrichment. A selector failure
+    // must never downgrade a reading that already succeeded.
+    (httpsCallable as jest.Mock).mockImplementation((name: string) => {
+      if (name === 'askWatchOracle') {
+        return jest.fn(() => Promise.resolve({ data: successPayload() }));
+      }
+      if (name === 'selectRemedies') {
+        return jest.fn(() => Promise.reject(new Error('selector down')));
+      }
+      return defaultImpl(name);
+    });
+
+    await renderScreen(<OracleChatScreen />);
+    const user = userEvent.setup();
+    await user.type(screen.getByTestId('oracle-chat-input'), 'Will I get the job?');
+    await user.press(screen.getByTestId('oracle-chat-send-btn'));
+
+    await waitFor(() => {
+      const oracleMsg = useOracleChatStore.getState().messages.find(m => m.role === 'oracle');
+      expect(oracleMsg?.status).toBe('sent');
+    });
+    expect(
+      useOracleChatStore.getState().messages.find(m => m.role === 'oracle')?.reading?.readingId,
+    ).toBe('r1');
+  });
+
+  it('shows a quota-exhausted failed bubble without calling askWatchOracle when quota is spent', async () => {
+    useQuotaStore.setState({ plan: 'free', questionsToday: 999 });
+    const askCallable = jest.fn(() => Promise.resolve({ data: successPayload() }));
+    (httpsCallable as jest.Mock).mockImplementation((name: string) => {
+      if (name === 'askWatchOracle') {
+        return askCallable;
+      }
+      return defaultImpl(name);
+    });
+
+    await renderScreen(<OracleChatScreen />);
+    const user = userEvent.setup();
+
+    await user.type(screen.getByTestId('oracle-chat-input'), 'Will I get the job?');
+    await user.press(screen.getByTestId('oracle-chat-send-btn'));
+
     await waitFor(() =>
       expect(
         screen.getByText(
-          'The scrolls of this moment have not opened their seal. Return at the next appointed hour.',
+          "Today's questions are used. Come back tomorrow, or upgrade for unlimited.",
         ),
       ).toBeTruthy(),
     );
-
-    // The engine call must never have been reached — the throw happened
-    // upstream of it.
-    expect(askWatchOracle).not.toHaveBeenCalled();
-
-    // And the guard must be clear: a second, unaffected attempt goes through.
-    await waitFor(() => expect(input.props.editable).toBe(true));
-    await user.type(screen.getByTestId('oracle-input'), 'Will the job offer come through?');
-    await user.press(screen.getByTestId('oracle-send-btn'));
-
-    await waitFor(() => expect(askWatchOracle).toHaveBeenCalledTimes(1));
+    expect(askCallable).not.toHaveBeenCalled();
   });
 });

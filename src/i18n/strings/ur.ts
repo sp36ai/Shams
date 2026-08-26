@@ -43,7 +43,6 @@ export const ur: StringTable = {
 
   nav: {
     homeTab: 'ہوم',
-    askTab: 'پوچھیں',
     alFalakTab: 'الفلک',
     historyTab: 'زائچے',
   },
@@ -95,19 +94,6 @@ export const ur: StringTable = {
 
   oracle: {
     headerTitle: 'شمس کی آواز',
-    welcomeMessage:
-      'میں شمس ہوں۔ ایک واضح سوال پوچھیں — نکاح، روزگار، صحت، مال، سفر، یا کوئی بھی معاملہ جو آپ کے دل پر بوجھ ہے۔ جس لمحے آپ پوچھتے ہیں، وہی لمحہ چارٹ مقرر کرتا ہے، اور چارٹ ہی فیصلہ کھولتا ہے۔',
-    placeholder: 'اپنا سوال لکھیں…',
-    sendButton: 'پوچھیں',
-    quotaRemaining: 'اِس ہفتے {{count}} سوال باقی ہیں',
-    quotaExhausted:
-      'اِس ہفتے کے مفت سوالات ختم ہو چکے ہیں۔ بغیر کسی حد کے جاری رکھنے کے لیے اپ گریڈ کریں۔',
-    upgradeCta: 'اپ گریڈ',
-    enginePending:
-      'فیصلہ ساز نظام آسٹرو سرفراز کی نگرانی میں ترتیب پا رہا ہے۔ آپ کا سوال محفوظ کر لیا گیا ہے، اور تنظیم مکمل ہوتے ہی فیصلہ پیش کیا جائے گا۔',
-    thinking: 'چارٹ پڑھا جا رہا ہے…',
-    askFollowUp: 'مزید پوچھیں',
-    askNewQuestion: 'نیا سوال پوچھیں',
     verdictYes: 'ہاں',
     verdictNo: 'نہیں',
     verdictConditional: 'مشروط',
@@ -117,8 +103,6 @@ export const ur: StringTable = {
     reasoningLabel: 'وجہ',
     timingLabel: 'وقت',
     remedyLabel: 'تدبیر',
-    chartMomentLabel: 'سوال کا لمحہ',
-    locationLabel: 'مقام',
     dailySkyTitle: 'آج کا آسمان آپ کے لیے',
     askShamsCta: 'شمس سے پوچھیں',
     moonWatchTitle: 'چاند کی نگرانی',
@@ -141,11 +125,33 @@ export const ur: StringTable = {
     readingHistoryCta: 'سابقہ زائچے',
     viewPastReadingsSubtitle: 'اپنے سابقہ زائچے دیکھیں',
     moonManzilTitle: 'منزلِ قمر',
-    askQuestionTitle: 'اپنا سوال پوچھیں',
-    chartCastSubtitle: 'زائچہ اسی لمحے کے لیے تیار کیا جا رہا ہے۔',
     rulingPlanetsNowLabel: 'موجودہ حاکم سیارے',
     currentHoraLordLabel: 'موجودہ ہورا کا حاکم',
-    sealAskCta: 'مہر لگا کر پوچھیں',
+  },
+
+  oracleChat: {
+    headerTitle: 'شمس سے پوچھیں',
+    placeholder: 'اپنا سوال لکھیں…',
+    listening: 'سن رہا ہے…',
+    send: 'پوچھیں',
+    voiceInputTag: 'آواز',
+    startRecording: 'آواز سے سوال شروع کریں',
+    stopRecording: 'ریکارڈنگ روکیں',
+    readingChart: 'چارٹ پڑھا جا رہا ہے…',
+    retry: 'دوبارہ کوشش کریں',
+    failedGeneric: 'اس لمحے کی مہر نہیں کھلی۔ دوبارہ کوشش کریں۔',
+    quotaExhausted: 'آج کے سوالات ختم ہو چکے۔ کل واپس آئیں، یا لامحدود کے لیے اپ گریڈ کریں۔',
+    micPermissionDenied: 'آواز سے سوال کے لیے مائیکروفون کی اجازت درکار ہے۔ سیٹنگز میں فعال کریں۔',
+    noSpeechDetected: 'کچھ سنائی نہیں دیا — دوبارہ کوشش کریں۔',
+    errorTimeout: 'اوریکل کو جواب دینے میں زیادہ وقت لگا۔ دوبارہ کوشش کریں۔',
+    errorSignIn: 'جاری رکھنے کے لیے دوبارہ سائن ان کریں۔',
+    listenToVerdict: 'سنیں',
+    playNarration: 'بیان چلائیں',
+    pauseNarration: 'بیان روکیں',
+    speaking: 'بول رہا ہے…',
+    paused: 'رکا ہوا',
+    emptyTitle: 'اپنا پہلا سوال پوچھیں',
+    emptyBody: 'لکھیں، یا مائیکروفون دبا کر بولیں۔ اوریکل اسی لمحے سے جواب دیتا ہے۔',
   },
 
   skyClock: {

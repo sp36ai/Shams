@@ -1,7 +1,8 @@
 /**
- * oracleChips — quick-reply chip text shown in OracleChatScreen, shared out
- * so other modules (e.g. the home dashboard's "favored now" card) can
- * reference the exact same category labels without duplicating strings.
+ * oracleChips — quick-reply chip text for oracle question categories,
+ * shared out so other modules (e.g. the home dashboard's "favored now"
+ * card) can reference the exact same category labels without duplicating
+ * strings.
  */
 
 export const INITIAL_CHIPS: Record<'en' | 'ur' | 'hi', readonly string[]> = {

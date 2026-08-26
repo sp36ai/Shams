@@ -104,4 +104,41 @@ jest.mock('@react-navigation/native', () => {
   };
 });
 
+// @react-native-voice/voice and react-native-tts are native modules with no
+// bridge in the Jest environment (no NativeEventEmitter backing, no device).
+// Mocked as plain objects whose event "handlers" are settable properties
+// (Voice) or addEventListener/removeEventListener pairs (Tts), matching each
+// library's real shape closely enough for useSpeechToText/useTextToSpeech's
+// own tests to drive them directly.
+jest.mock('@react-native-voice/voice', () => ({
+  __esModule: true,
+  default: {
+    start: jest.fn(() => Promise.resolve()),
+    stop: jest.fn(() => Promise.resolve()),
+    cancel: jest.fn(() => Promise.resolve()),
+    destroy: jest.fn(() => Promise.resolve()),
+    removeAllListeners: jest.fn(),
+    isAvailable: jest.fn(() => Promise.resolve(1)),
+    onSpeechStart: undefined,
+    onSpeechEnd: undefined,
+    onSpeechError: undefined,
+    onSpeechResults: undefined,
+    onSpeechPartialResults: undefined,
+  },
+}));
+
+jest.mock('react-native-tts', () => ({
+  __esModule: true,
+  default: {
+    getInitStatus: jest.fn(() => Promise.resolve('success')),
+    setDefaultLanguage: jest.fn(() => Promise.resolve('success')),
+    speak: jest.fn(),
+    stop: jest.fn(() => Promise.resolve(true)),
+    pause: jest.fn(() => Promise.resolve(true)),
+    resume: jest.fn(() => Promise.resolve(true)),
+    addEventListener: jest.fn(),
+    removeEventListener: jest.fn(),
+  },
+}));
+
 jest.setTimeout(15000);

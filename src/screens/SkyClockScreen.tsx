@@ -19,7 +19,6 @@ import React, { useCallback, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
-import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 import { useColors, useTheme } from '@theme/ThemeProvider';
 import { useTypography } from '@theme/useTypography';
@@ -29,7 +28,7 @@ import { buildChart } from '@astrology/primitives/chartBuilder';
 import { dignityOf, type Dignity } from '@astrology/rkp/rules';
 import StarfieldBackground from '@components/StarfieldBackground';
 import CosmicClock from '@components/home/CosmicClock';
-import type { RootStackParamList } from '@navigation/types';
+import type { AppNavigation } from '@navigation/types';
 import {
   SIGN_NAMES,
   displayLonSidereal,
@@ -177,10 +176,9 @@ const SkyClockScreen: React.FC = () => {
   const { theme } = useTheme();
   const colors = useColors();
   const typography = useTypography();
-  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const navigation = useNavigation<AppNavigation>();
   // Al-Falak is now a persistent tab — canGoBack() is false when reached by
   // tapping the tab directly, so the back arrow falls back to the Home tab.
-  const tabNavigation = useNavigation<{ navigate: (screen: string) => void }>();
 
   const lastLocation = useSettingsStore(
     (s: ReturnType<typeof useSettingsStore.getState>) => s.lastLocation,
@@ -231,7 +229,7 @@ const SkyClockScreen: React.FC = () => {
       >
         <Pressable
           onPress={() =>
-            navigation.canGoBack() ? navigation.goBack() : tabNavigation.navigate('Home')
+            navigation.canGoBack() ? navigation.goBack() : navigation.navigate('Home')
           }
           style={styles.backBtn}
           accessibilityRole="button"

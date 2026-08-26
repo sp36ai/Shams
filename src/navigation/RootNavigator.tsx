@@ -5,8 +5,9 @@
  *   1. Splash (always shown, min 2.5s brand moment)
  *   2. Auth   (if user is not signed in)
  *   3. LocationPermission (first launch after auth if not yet prompted)
- *   4. Main   (bottom tabs: Home | Ask | Al-Falak | History; Settings is a
- *              root-level push from Home's header gear icon)
+ *   4. Main   (bottom tabs: Home | Al-Falak | History; Settings and Oracle
+ *              Chat are both root-level pushes from Home — the gear icon and
+ *              the "Ask New Question" CTA, respectively)
  *
  * Firebase Auth bootstrap is awaited asynchronously via onAuthStateChanged;
  * while it resolves we stay on Splash so the user never sees a flash of the
@@ -29,6 +30,7 @@ import OnboardingScreen from '@screens/OnboardingScreen';
 import LocationPermissionScreen from '@screens/LocationPermissionScreen';
 import PremiumScreen from '@screens/PremiumScreen';
 import SettingsScreen from '@screens/SettingsScreen';
+import OracleChatScreen from '@screens/OracleChatScreen';
 import MainTabs from './MainTabs';
 
 import { useAuthStore } from '@stores/authStore';
@@ -130,6 +132,12 @@ const RootNavigator: React.FC = () => {
         <RootStack.Screen
           name="Settings"
           component={SettingsScreen}
+          options={{ headerShown: false, animation: 'slide_from_right' }}
+        />
+        {/* Oracle Chat — reached via Home's "Ask New Question" CTA */}
+        <RootStack.Screen
+          name="OracleChat"
+          component={OracleChatScreen}
           options={{ headerShown: false, animation: 'slide_from_right' }}
         />
       </RootStack.Navigator>
