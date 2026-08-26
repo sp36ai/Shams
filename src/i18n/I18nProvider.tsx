@@ -20,8 +20,8 @@
  *         this without react-native-restart, which we add in Phase 1 §1.11.
  *
  * Translation function:
- *   t('oracle.welcomeMessage')                → string
- *   t('oracle.quotaRemaining', { count: 2 })  → interpolates {{count}}
+ *   t('oracle.headerTitle')                     → string
+ *   t('oracle.voidOfCourseBanner', { time: 2 }) → interpolates {{time}}
  *   Missing key in strict mode → throws in __DEV__, returns key path in prod.
  */
 

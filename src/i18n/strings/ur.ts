@@ -43,7 +43,6 @@ export const ur: StringTable = {
 
   nav: {
     homeTab: 'ہوم',
-    askTab: 'پوچھیں',
     alFalakTab: 'الفلک',
     historyTab: 'زائچے',
   },
@@ -95,19 +94,6 @@ export const ur: StringTable = {
 
   oracle: {
     headerTitle: 'شمس کی آواز',
-    welcomeMessage:
-      'میں شمس ہوں۔ ایک واضح سوال پوچھیں — نکاح، روزگار، صحت، مال، سفر، یا کوئی بھی معاملہ جو آپ کے دل پر بوجھ ہے۔ جس لمحے آپ پوچھتے ہیں، وہی لمحہ چارٹ مقرر کرتا ہے، اور چارٹ ہی فیصلہ کھولتا ہے۔',
-    placeholder: 'اپنا سوال لکھیں…',
-    sendButton: 'پوچھیں',
-    quotaRemaining: 'اِس ہفتے {{count}} سوال باقی ہیں',
-    quotaExhausted:
-      'اِس ہفتے کے مفت سوالات ختم ہو چکے ہیں۔ بغیر کسی حد کے جاری رکھنے کے لیے اپ گریڈ کریں۔',
-    upgradeCta: 'اپ گریڈ',
-    enginePending:
-      'فیصلہ ساز نظام آسٹرو سرفراز کی نگرانی میں ترتیب پا رہا ہے۔ آپ کا سوال محفوظ کر لیا گیا ہے، اور تنظیم مکمل ہوتے ہی فیصلہ پیش کیا جائے گا۔',
-    thinking: 'چارٹ پڑھا جا رہا ہے…',
-    askFollowUp: 'مزید پوچھیں',
-    askNewQuestion: 'نیا سوال پوچھیں',
     verdictYes: 'ہاں',
     verdictNo: 'نہیں',
     verdictConditional: 'مشروط',
@@ -117,8 +103,6 @@ export const ur: StringTable = {
     reasoningLabel: 'وجہ',
     timingLabel: 'وقت',
     remedyLabel: 'تدبیر',
-    chartMomentLabel: 'سوال کا لمحہ',
-    locationLabel: 'مقام',
     dailySkyTitle: 'آج کا آسمان آپ کے لیے',
     askShamsCta: 'شمس سے پوچھیں',
     moonWatchTitle: 'چاند کی نگرانی',
@@ -136,16 +120,11 @@ export const ur: StringTable = {
     todaysQuotaLabel: 'آج کا کوٹہ',
     yourTierLabel: 'آپ کا درجہ',
     tierWanderer: 'سالک',
-    askNewQuestionCta: 'نیا سوال پوچھیں',
-    consultOracleSubtitle: 'اوریکل سے رجوع کریں',
     readingHistoryCta: 'سابقہ زائچے',
     viewPastReadingsSubtitle: 'اپنے سابقہ زائچے دیکھیں',
     moonManzilTitle: 'منزلِ قمر',
-    askQuestionTitle: 'اپنا سوال پوچھیں',
-    chartCastSubtitle: 'زائچہ اسی لمحے کے لیے تیار کیا جا رہا ہے۔',
     rulingPlanetsNowLabel: 'موجودہ حاکم سیارے',
     currentHoraLordLabel: 'موجودہ ہورا کا حاکم',
-    sealAskCta: 'مہر لگا کر پوچھیں',
   },
 
   skyClock: {

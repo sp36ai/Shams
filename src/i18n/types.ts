@@ -116,7 +116,6 @@ export interface StringTable {
   };
   nav: {
     homeTab: string;
-    askTab: string;
     alFalakTab: string;
     historyTab: string;
   };
@@ -162,16 +161,6 @@ export interface StringTable {
   };
   oracle: {
     headerTitle: string;
-    welcomeMessage: string;
-    placeholder: string;
-    sendButton: string;
-    quotaRemaining: string;
-    quotaExhausted: string;
-    upgradeCta: string;
-    enginePending: string;
-    thinking: string;
-    askFollowUp: string;
-    askNewQuestion: string;
     verdictYes: string;
     verdictNo: string;
     verdictConditional: string;
@@ -181,8 +170,6 @@ export interface StringTable {
     reasoningLabel: string;
     timingLabel: string;
     remedyLabel: string;
-    chartMomentLabel: string;
-    locationLabel: string;
     dailySkyTitle: string;
     askShamsCta: string;
     moonWatchTitle: string;
@@ -199,16 +186,11 @@ export interface StringTable {
     todaysQuotaLabel: string;
     yourTierLabel: string;
     tierWanderer: string;
-    askNewQuestionCta: string;
-    consultOracleSubtitle: string;
     readingHistoryCta: string;
     viewPastReadingsSubtitle: string;
     moonManzilTitle: string;
-    askQuestionTitle: string;
-    chartCastSubtitle: string;
     rulingPlanetsNowLabel: string;
     currentHoraLordLabel: string;
-    sealAskCta: string;
   };
   skyClock: {
     headerTitle: string;

@@ -149,7 +149,7 @@ const HistoryScreen: React.FC = () => {
   );
 
   const handleAskFirst = useCallback(() => {
-    navigation.navigate('Ask');
+    navigation.navigate('Home');
   }, [navigation]);
 
   const renderItem = useCallback(

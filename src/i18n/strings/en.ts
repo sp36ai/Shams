@@ -35,7 +35,6 @@ export const en: StringTable = {
 
   nav: {
     homeTab: 'Home',
-    askTab: 'Ask',
     alFalakTab: 'Al-Falak',
     historyTab: 'History',
   },
@@ -87,19 +86,6 @@ export const en: StringTable = {
 
   oracle: {
     headerTitle: 'Shams al-Asrār',
-    welcomeMessage:
-      'Ask one clear question. The heavens will be read for the exact moment and place of asking, and the oracle will deliver its celestial counsel.',
-    placeholder: 'Type your question…',
-    sendButton: 'Ask',
-    quotaRemaining: '{{count}} questions remaining this week',
-    quotaExhausted:
-      'Your free questions for this week are used. Upgrade to continue without limits.',
-    upgradeCta: 'Upgrade',
-    enginePending:
-      'The judgment engine is being calibrated by Astro Sarfaraz. Your question has been received and a verdict will be available once calibration is complete.',
-    thinking: 'Reading the chart…',
-    askFollowUp: 'Ask a follow-up',
-    askNewQuestion: 'Ask a new question',
     verdictYes: 'YES',
     verdictNo: 'NO',
     verdictConditional: 'CONDITIONAL',
@@ -109,8 +95,6 @@ export const en: StringTable = {
     reasoningLabel: 'Why',
     timingLabel: 'When',
     remedyLabel: 'Remedy',
-    chartMomentLabel: 'Moment of question',
-    locationLabel: 'Location',
     dailySkyTitle: "Today's Sky for You",
     askShamsCta: 'Ask Shams',
     moonWatchTitle: 'Moon Watch',
@@ -128,16 +112,11 @@ export const en: StringTable = {
     todaysQuotaLabel: "Today's Quota",
     yourTierLabel: 'Your Tier',
     tierWanderer: 'Wanderer',
-    askNewQuestionCta: 'Ask New Question',
-    consultOracleSubtitle: 'Consult the Oracle',
     readingHistoryCta: 'Reading History',
     viewPastReadingsSubtitle: 'View your past readings',
     moonManzilTitle: 'Moon Manzil',
-    askQuestionTitle: 'Ask Your Question',
-    chartCastSubtitle: 'The chart is cast for this exact moment.',
     rulingPlanetsNowLabel: 'Ruling Planets Now',
     currentHoraLordLabel: 'Current Hora Lord',
-    sealAskCta: 'Seal & Ask',
   },
 
   skyClock: {

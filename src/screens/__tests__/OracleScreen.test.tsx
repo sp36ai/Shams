@@ -32,16 +32,6 @@ describe('OracleScreen navigation wiring', () => {
     return navigate;
   }
 
-  it('navigates to the Ask tab when "Ask New Question" is pressed', async () => {
-    const navigate = mockNavigate();
-    await renderScreen(<OracleScreen />);
-
-    const user = userEvent.setup();
-    await user.press(screen.getByTestId('ask-shams-btn'));
-
-    expect(navigate).toHaveBeenCalledWith('Ask');
-  });
-
   it('navigates to Settings when the header gear is pressed', async () => {
     const navigate = mockNavigate();
     await renderScreen(<OracleScreen />);

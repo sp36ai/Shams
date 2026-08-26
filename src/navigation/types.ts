@@ -48,8 +48,6 @@ export type RootStackScreenProps<RouteName extends keyof RootStackParamList> =
 export type MainTabParamList = {
   /** Home dashboard — formerly the "Oracle" tab; content unchanged, renamed to match the reference IA. */
   Home: undefined;
-  /** Oracle chat — the question/verdict conversation, now a persistent tab. */
-  Ask: undefined;
   /** Al-Falak — Sky State timing/context panel, now a persistent tab. */
   AlFalak: undefined;
   History: undefined;

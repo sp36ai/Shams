@@ -1,9 +1,9 @@
 /**
  * MainTabs — bottom tab navigator for the local RKP shell.
  * --------------------------------------------------------------------------
- * Tabs (in order): Home | Ask | Al-Falak | History — matches the Dār
- * al-Shams reference IA. Settings is NOT a tab; it's a root-level push
- * reached via the gear icon in Home's header.
+ * Tabs (in order): Home | Al-Falak | History — matches the Dār al-Shams
+ * reference IA. Settings is NOT a tab; it's a root-level push reached via
+ * the gear icon in Home's header.
  * Home is the initial route — it is the primary landing surface.
  *
  * Visual contract:
@@ -35,7 +35,6 @@ import {
 import { Pressable } from 'react-native';
 
 import OracleScreen from '@screens/OracleScreen';
-import OracleChatScreen from '@screens/OracleChatScreen';
 import SkyClockScreen from '@screens/SkyClockScreen';
 import HistoryScreen from '@screens/HistoryScreen';
 
@@ -87,7 +86,6 @@ const MainTabs: React.FC = () => {
   const labels = useMemo<Record<keyof MainTabParamList, string>>(
     () => ({
       Home: t('nav.homeTab' as TKey),
-      Ask: t('nav.askTab' as TKey),
       AlFalak: t('nav.alFalakTab' as TKey),
       History: t('nav.historyTab' as TKey),
     }),
@@ -96,7 +94,6 @@ const MainTabs: React.FC = () => {
 
   const iconNames: Record<keyof MainTabParamList, IconName> = {
     Home: 'oracle',
-    Ask: 'ask',
     AlFalak: 'skyclock',
     History: 'history',
   };
@@ -168,7 +165,6 @@ const MainTabs: React.FC = () => {
       })}
     >
       <Tab.Screen name="Home" component={OracleScreen} options={{ tabBarLabel: labels.Home }} />
-      <Tab.Screen name="Ask" component={OracleChatScreen} options={{ tabBarLabel: labels.Ask }} />
       <Tab.Screen
         name="AlFalak"
         component={SkyClockScreen}

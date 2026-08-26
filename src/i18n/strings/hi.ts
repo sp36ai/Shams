@@ -42,7 +42,6 @@ export const hi: StringTable = {
 
   nav: {
     homeTab: 'होम',
-    askTab: 'पूछें',
     alFalakTab: 'अल-फ़लक',
     historyTab: 'रीडिंग',
   },
@@ -94,19 +93,6 @@ export const hi: StringTable = {
 
   oracle: {
     headerTitle: 'शम्स की वाणी',
-    welcomeMessage:
-      'मैं शम्स हूँ। एक स्पष्ट प्रश्न पूछिए — विवाह, करियर, स्वास्थ्य, धन, यात्रा, या कोई भी विषय जो आपके मन पर भार है। प्रश्न का क्षण ही कुंडली निर्धारित करता है, और कुंडली ही निर्णय खोलती है।',
-    placeholder: 'अपना प्रश्न लिखें…',
-    sendButton: 'पूछें',
-    quotaRemaining: 'इस सप्ताह {{count}} प्रश्न शेष',
-    quotaExhausted:
-      'इस सप्ताह के निःशुल्क प्रश्न समाप्त हो चुके हैं। बिना सीमा जारी रखने के लिए अपग्रेड करें।',
-    upgradeCta: 'अपग्रेड',
-    enginePending:
-      'निर्णय-तंत्र एस्ट्रो सरफ़राज़ की निगरानी में संरेखित किया जा रहा है। आपका प्रश्न प्राप्त हो गया है, और संरेखण पूर्ण होते ही निर्णय प्रस्तुत किया जाएगा।',
-    thinking: 'कुंडली पढ़ी जा रही है…',
-    askFollowUp: 'और पूछें',
-    askNewQuestion: 'नया प्रश्न पूछें',
     verdictYes: 'हाँ',
     verdictNo: 'नहीं',
     verdictConditional: 'सशर्त',
@@ -116,8 +102,6 @@ export const hi: StringTable = {
     reasoningLabel: 'कारण',
     timingLabel: 'समय',
     remedyLabel: 'उपाय',
-    chartMomentLabel: 'प्रश्न का क्षण',
-    locationLabel: 'स्थान',
     dailySkyTitle: 'आज का आकाश आपके लिए',
     askShamsCta: 'शम्स से पूछें',
     moonWatchTitle: 'चंद्र निगरानी',
@@ -135,16 +119,11 @@ export const hi: StringTable = {
     todaysQuotaLabel: 'आज का कोटा',
     yourTierLabel: 'आपका स्तर',
     tierWanderer: 'साधक',
-    askNewQuestionCta: 'नया प्रश्न पूछें',
-    consultOracleSubtitle: 'ओरेकल से परामर्श करें',
     readingHistoryCta: 'पिछली रीडिंग',
     viewPastReadingsSubtitle: 'अपनी पिछली रीडिंग देखें',
     moonManzilTitle: 'मंज़िल-ए-क़मर',
-    askQuestionTitle: 'अपना प्रश्न पूछें',
-    chartCastSubtitle: 'चार्ट इसी क्षण के लिए तैयार किया जा रहा है।',
     rulingPlanetsNowLabel: 'वर्तमान शासक ग्रह',
     currentHoraLordLabel: 'वर्तमान होरा स्वामी',
-    sealAskCta: 'मुहर लगाकर पूछें',
   },
 
   skyClock: {
