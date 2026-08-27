@@ -144,6 +144,8 @@ jest.mock('react-native-tts', () => ({
     pause: jest.fn(() => Promise.resolve(true)),
     resume: jest.fn(() => Promise.resolve(true)),
     addEventListener: jest.fn(() => ({ remove: jest.fn() })),
+    // Android returns a Promise resolving to the utteranceId, not the string
+    // the shipped .d.ts declares (TextToSpeechModule.java:209-234).
     removeEventListener: jest.fn(() => {
       throw new TypeError('this.removeListener is not a function');
     }),
