@@ -146,7 +146,20 @@ const RemedyProtocolCard: React.FC<RemedyProtocolCardProps> = ({ composition }) 
     mardood: colors.mardood,
     muted: colors.textMuted,
   };
-  const outcomeColor = tone[OUTCOME_TONE[diagnosis.outcome]];
+  /*
+   * Defensive reads — same reasoning as RkpWatchCard's: a composition reaches
+   * this card from MMKV as often as from the network, and a cache written by
+   * an older build outlives it. An unknown outcome used to produce
+   * `undefined + '08'` as a colour ("undefined08"), an absent `steps` threw on
+   * `.length`, and `narration !== null` let an UNDEFINED narration through to
+   * `.rkp_finding`. Each of those was a render-phase throw over stored data,
+   * which repeats on every launch until the cache is cleared.
+   */
+  const outcomeColor = tone[OUTCOME_TONE[diagnosis.outcome]] ?? colors.textMuted;
+  const outcomeHeadline = OUTCOME_HEADLINE[diagnosis.outcome] ?? diagnosis.outcome;
+  const postureLabel = POSTURE_LABEL[diagnosis.timingPosture] ?? diagnosis.timingPosture;
+  const steps = Array.isArray(protocol?.steps) ? protocol.steps : [];
+  const hasNarration = narration !== null && narration !== undefined;
 
   // Determine reading section background based on outcome tone
   const readingBg = outcomeColor + '08'; // Very subtle tint (5% opacity)
@@ -164,15 +177,15 @@ const RemedyProtocolCard: React.FC<RemedyProtocolCardProps> = ({ composition }) 
           {'✧ THE READING'}
         </Text>
         <Text style={[typography('heading'), styles.headline, { color: outcomeColor }]}>
-          {OUTCOME_HEADLINE[diagnosis.outcome]}
+          {outcomeHeadline}
         </Text>
         <Text style={[typography('caption'), styles.subtiming, { color: colors.textMuted }]}>
-          {`${POSTURE_LABEL[diagnosis.timingPosture]} • ${confidenceLabel(diagnosis.confidence)}`}
+          {`${postureLabel} • ${confidenceLabel(diagnosis.confidence)}`}
         </Text>
       </View>
 
       {/* ── Narration, when synthesis succeeded ──────────────────────────── */}
-      {narration !== null && (
+      {hasNarration && (
         <View style={styles.narrativeSection}>
           <Text style={[typography('body'), styles.prose, { color: colors.text, lineHeight: 22 }]}>
             {narration.rkp_finding}
@@ -193,43 +206,45 @@ const RemedyProtocolCard: React.FC<RemedyProtocolCardProps> = ({ composition }) 
       )}
 
       {/* ── No-remedy result — a finding, not an empty state ─────────────── */}
-      {!protocol.interventionRequired && protocol.guidance !== null && (
-        <View
-          style={[
-            styles.guidance,
-            { backgroundColor: colors.maqbool + '08', borderColor: colors.maqbool + '30' },
-          ]}
-        >
-          <View style={styles.guidanceHeader}>
-            <Text
-              style={[
-                typography('label'),
-                { color: colors.maqbool, fontSize: 12, fontWeight: '600' },
-              ]}
-            >
-              {'✓ No remedy needed'}
-            </Text>
-          </View>
-          <Text
+      {protocol?.interventionRequired !== true &&
+        protocol?.guidance !== null &&
+        protocol?.guidance !== undefined && (
+          <View
             style={[
-              typography('caption'),
-              styles.guidanceText,
-              { color: colors.textMuted, lineHeight: 20 },
+              styles.guidance,
+              { backgroundColor: colors.maqbool + '08', borderColor: colors.maqbool + '30' },
             ]}
           >
-            {protocol.guidance}
-          </Text>
-        </View>
-      )}
+            <View style={styles.guidanceHeader}>
+              <Text
+                style={[
+                  typography('label'),
+                  { color: colors.maqbool, fontSize: 12, fontWeight: '600' },
+                ]}
+              >
+                {'✓ No remedy needed'}
+              </Text>
+            </View>
+            <Text
+              style={[
+                typography('caption'),
+                styles.guidanceText,
+                { color: colors.textMuted, lineHeight: 20 },
+              ]}
+            >
+              {protocol.guidance}
+            </Text>
+          </View>
+        )}
 
       {/* ── The protocol ─────────────────────────────────────────────────── */}
-      {protocol.steps.length > 0 && (
+      {steps.length > 0 && (
         <View style={styles.protocolSection}>
           <Text style={[typography('label'), styles.protocolLabel, { color: colors.text }]}>
-            {protocol.interventionRequired ? '✧ What is counselled' : '✧ Also noted'}
+            {protocol?.interventionRequired === true ? '✧ What is counselled' : '✧ Also noted'}
           </Text>
           <View style={styles.stepsContainer}>
-            {numberSteps(protocol.steps).map(({ step, index }) => (
+            {numberSteps(steps).map(({ step, index }) => (
               <ProtocolStep
                 key={step.id}
                 step={step}
@@ -264,7 +279,7 @@ const RemedyProtocolCard: React.FC<RemedyProtocolCardProps> = ({ composition }) 
         </View>
       )}
 
-      {narration !== null && (
+      {hasNarration && (
         <Text style={[typography('caption'), styles.signature, { color: colors.textFaint }]}>
           {narration.signature}
         </Text>
@@ -313,12 +328,18 @@ const ProtocolStep: React.FC<StepProps> = ({ step, index, colors, typography }) 
       </View>
 
       <View style={styles.badges}>
+        {/* Fall back to the raw value rather than rendering nothing: a step
+            from an older library still names its own category honestly. */}
         <Badge
-          text={CATEGORY_LABEL[step.category]}
+          text={CATEGORY_LABEL[step.category] ?? step.category}
           color={colors.textFaint}
           typography={typography}
         />
-        <Badge text={EVIDENCE_LABEL[step.evidenceType]} color={accent} typography={typography} />
+        <Badge
+          text={EVIDENCE_LABEL[step.evidenceType] ?? step.evidenceType}
+          color={accent}
+          typography={typography}
+        />
         {step.duration !== null && (
           <Badge text={step.duration} color={colors.textFaint} typography={typography} />
         )}
