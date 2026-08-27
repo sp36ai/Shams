@@ -208,6 +208,12 @@ export const askWatchOracle = onCall(
         try {
           oracleResponse = await composeWatchOracleResponse({
             verdict: publicVerdict,
+            // The seeker's own words. Without them the narration is written
+            // from the verdict alone, so two different questions that judge
+            // to the same state read identically — which is exactly what
+            // seekers reported. The diagnosis above is already settled and
+            // the prompt treats this strictly as subject matter.
+            question: input.question,
             seekerName: input.seekerName,
             motherName: input.motherName,
           });
