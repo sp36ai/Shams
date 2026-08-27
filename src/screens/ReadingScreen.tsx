@@ -180,6 +180,25 @@ const ReadingScreen: React.FC = () => {
    * working after that first submit without a navigation round trip.
    */
   const [threadId, setThreadId] = useState<string | null>(route.params?.threadId ?? null);
+
+  /*
+   * Follow the route.
+   *
+   * `threadId` is seeded from the params and then owned by this screen, which
+   * is what lets the first submit of a new Reading bind its thread without a
+   * navigation round trip. The cost is that a screen INSTANCE reused for a
+   * different Reading — which React Navigation does whenever a route already
+   * on the stack is navigated to again — would keep rendering the old one:
+   * the seeker taps a Reading in the list and is shown a different Reading's
+   * verdict. Every call site now uses push(), so this should not arise; this
+   * makes it structurally impossible rather than merely unlikely.
+   */
+  const routeThreadId = route.params?.threadId;
+  useEffect(() => {
+    if (routeThreadId !== undefined && routeThreadId !== threadId) {
+      setThreadId(routeThreadId);
+    }
+  }, [routeThreadId, threadId]);
   const [inputText, setInputText] = useState('');
   const [sending, setSending] = useState(false);
   const sendingRef = useRef(false);
@@ -565,11 +584,13 @@ const ReadingScreen: React.FC = () => {
   }, [stt.isListening, stt.partialText]);
 
   const micErrorText =
-    stt.error === 'permission-denied'
-      ? t('oracleChat.micPermissionDenied')
-      : stt.error === 'no-speech'
-        ? t('oracleChat.noSpeechDetected')
-        : null;
+    stt.error === 'unavailable'
+      ? t('oracleChat.voiceUnavailable')
+      : stt.error === 'permission-denied'
+        ? t('oracleChat.micPermissionDenied')
+        : stt.error === 'no-speech'
+          ? t('oracleChat.noSpeechDetected')
+          : null;
 
   // ── Scroll to the newest message whenever the list grows ──────────────────
   useEffect(() => {
@@ -687,6 +708,7 @@ const ReadingScreen: React.FC = () => {
           isListening={stt.isListening}
           onMicPress={handleMicPress}
           micDisabled={sending}
+          micAvailable={stt.isAvailable}
           // Once a reading stands, every send in this Reading is a follow-up.
           mode={thread !== null && thread.readingId !== null ? 'discuss' : 'ask'}
         />

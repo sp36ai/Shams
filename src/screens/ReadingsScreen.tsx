@@ -217,7 +217,10 @@ const ReadingsScreen: React.FC = () => {
   const isSearching = search.trim().length > 0;
 
   const handleNewReading = useCallback(() => {
-    navigation.navigate('Reading');
+    // push, not navigate: navigate() would reuse a Reading already on the
+    // stack and merely merge params into it, which is not what "open this
+    // one" means. push always gives the Reading its own screen.
+    navigation.push('Reading', {});
   }, [navigation]);
 
   const handleDeleteThread = useCallback(
@@ -276,7 +279,7 @@ const ReadingsScreen: React.FC = () => {
         return (
           <ThreadRow
             thread={item.thread}
-            onPress={() => navigation.navigate('Reading', { threadId: item.thread.id })}
+            onPress={() => navigation.push('Reading', { threadId: item.thread.id })}
             onLongPress={() => handleDeleteThread(item.thread)}
           />
         );

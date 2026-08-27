@@ -45,6 +45,30 @@ const LOCALE_BY_LANG: Readonly<Record<'en' | 'ur' | 'hi', string>> = {
 /** How long stop() waits for a final transcript before giving up. */
 const FINALIZE_TIMEOUT_MS = 4000;
 
+/**
+ * Whether the recognizer native module is actually present in this build.
+ *
+ * Every call below went straight at `Voice` — including the listener
+ * assignments in the mount effect. If the native module is missing or failed
+ * to link (an autolinking miss, a stripped release build, a device with no
+ * recognizer service), that assignment throws during render of the screen that
+ * uses this hook. There is no boundary inside the screen, so the throw took
+ * out the whole navigator: pressing Ask showed an error instead of the
+ * composer, and nothing said why.
+ *
+ * Voice is an ENHANCEMENT — the oracle answers typed questions perfectly well
+ * without it — so an absent recognizer must degrade to "no mic", never to a
+ * dead screen. Evaluated once, defensively, because reading a property off a
+ * broken native module can itself throw.
+ */
+const VOICE_AVAILABLE: boolean = (() => {
+  try {
+    return typeof Voice?.start === 'function';
+  } catch {
+    return false;
+  }
+})();
+
 export type SpeechToTextError =
   | 'permission-denied'
   | 'unavailable'
@@ -52,6 +76,11 @@ export type SpeechToTextError =
   | 'recognizer-error';
 
 export interface SpeechToTextState {
+  /**
+   * False when this build or device has no usable recognizer. The composer
+   * hides its mic rather than offering a button that cannot work.
+   */
+  isAvailable: boolean;
   /** True while the recognizer is actively listening. */
   isListening: boolean;
   /** Live, in-progress transcript — updates as the recognizer hears more. */
@@ -95,58 +124,80 @@ export function useSpeechToText(lang: 'en' | 'ur' | 'hi'): SpeechToTextState {
   useEffect(() => {
     mountedRef.current = true;
 
-    Voice.onSpeechPartialResults = (e: SpeechResultsEvent) => {
-      const text = e.value?.[0] ?? '';
-      latestTranscriptRef.current = text;
-      if (mountedRef.current) {
-        setPartialText(text);
-      }
-    };
+    if (!VOICE_AVAILABLE) {
+      return () => {
+        mountedRef.current = false;
+      };
+    }
 
-    Voice.onSpeechResults = (e: SpeechResultsEvent) => {
-      const text = e.value?.[0] ?? latestTranscriptRef.current;
-      latestTranscriptRef.current = text;
-      if (mountedRef.current) {
-        setPartialText(text);
-        setIsListening(false);
-      }
-      finalizeResolveRef.current?.(text);
-      finalizeResolveRef.current = null;
-    };
+    try {
+      Voice.onSpeechPartialResults = (e: SpeechResultsEvent) => {
+        const text = e.value?.[0] ?? '';
+        latestTranscriptRef.current = text;
+        if (mountedRef.current) {
+          setPartialText(text);
+        }
+      };
 
-    Voice.onSpeechEnd = () => {
-      if (mountedRef.current) {
-        setIsListening(false);
-      }
-      // No onSpeechResults followed (silence, or the engine ended without a
-      // final hypothesis) — resolve stop() with whatever partial we have
-      // rather than leaving it hanging until FINALIZE_TIMEOUT_MS.
-      finalizeResolveRef.current?.(latestTranscriptRef.current);
-      finalizeResolveRef.current = null;
-    };
+      Voice.onSpeechResults = (e: SpeechResultsEvent) => {
+        const text = e.value?.[0] ?? latestTranscriptRef.current;
+        latestTranscriptRef.current = text;
+        if (mountedRef.current) {
+          setPartialText(text);
+          setIsListening(false);
+        }
+        finalizeResolveRef.current?.(text);
+        finalizeResolveRef.current = null;
+      };
 
-    Voice.onSpeechError = (e: SpeechErrorEvent) => {
-      const mapped = mapRecognizerErrorCode(e.error?.code);
-      log.warn('recognizer error', { code: e.error?.code, message: e.error?.message });
-      if (mountedRef.current) {
-        setIsListening(false);
-        setError(mapped);
-      }
-      finalizeResolveRef.current?.(latestTranscriptRef.current);
-      finalizeResolveRef.current = null;
-    };
+      Voice.onSpeechEnd = () => {
+        if (mountedRef.current) {
+          setIsListening(false);
+        }
+        // No onSpeechResults followed (silence, or the engine ended without a
+        // final hypothesis) — resolve stop() with whatever partial we have
+        // rather than leaving it hanging until FINALIZE_TIMEOUT_MS.
+        finalizeResolveRef.current?.(latestTranscriptRef.current);
+        finalizeResolveRef.current = null;
+      };
+
+      Voice.onSpeechError = (e: SpeechErrorEvent) => {
+        const mapped = mapRecognizerErrorCode(e.error?.code);
+        log.warn('recognizer error', { code: e.error?.code, message: e.error?.message });
+        if (mountedRef.current) {
+          setIsListening(false);
+          setError(mapped);
+        }
+        finalizeResolveRef.current?.(latestTranscriptRef.current);
+        finalizeResolveRef.current = null;
+      };
+    } catch (err) {
+      // A recognizer that rejects its own listener setup is a recognizer this
+      // session cannot use. Logged, not thrown: the composer still types.
+      log.warn('recognizer listener setup failed — voice input disabled', {
+        error: String(err),
+      });
+    }
 
     return () => {
       mountedRef.current = false;
-      Voice.destroy()
-        .then(() => Voice.removeAllListeners())
-        .catch(() => {
-          /* best-effort teardown — nothing to recover from on a torn-down screen */
-        });
+      try {
+        Voice.destroy()
+          .then(() => Voice.removeAllListeners())
+          .catch(() => {
+            /* best-effort teardown — nothing to recover from on a torn-down screen */
+          });
+      } catch {
+        /* same: teardown of a module that never worked cannot fail the unmount */
+      }
     };
   }, []);
 
   const start = useCallback(async (): Promise<void> => {
+    if (!VOICE_AVAILABLE) {
+      setError('unavailable');
+      return;
+    }
     setError(null);
     setPartialText('');
     latestTranscriptRef.current = '';
@@ -211,5 +262,5 @@ export function useSpeechToText(lang: 'en' | 'ur' | 'hi'): SpeechToTextState {
     }
   }, []);
 
-  return { isListening, partialText, error, start, stop, cancel };
+  return { isAvailable: VOICE_AVAILABLE, isListening, partialText, error, start, stop, cancel };
 }

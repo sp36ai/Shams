@@ -137,6 +137,7 @@ export const en: StringTable = {
     quotaExhausted: "Today's questions are used. Come back tomorrow, or upgrade for unlimited.",
     micPermissionDenied: 'Microphone access is needed for voice questions. Enable it in Settings.',
     noSpeechDetected: "Didn't catch that — try again.",
+    voiceUnavailable: 'Voice input is not available on this device. Type your question instead.',
     errorTimeout: 'The oracle took too long to answer. Try again.',
     errorAlreadyRunning: 'This question is already being read. Give it a moment, then try again.',
     errorSignIn: 'Please sign in again to continue.',

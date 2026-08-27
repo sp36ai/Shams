@@ -388,8 +388,10 @@ const OracleScreen: React.FC = () => {
 
         {/* Ask Shams — the primary action: a question becomes a Reading */}
         <HomeAskComposer
-          onSubmit={question => navigation.navigate('Reading', { initialQuestion: question })}
-          onOpenBlank={() => navigation.navigate('Reading')}
+          // push, not navigate — see ReadingsScreen for why: a Reading is
+          // always its own screen, never a params update to one already open.
+          onSubmit={question => navigation.push('Reading', { initialQuestion: question })}
+          onOpenBlank={() => navigation.push('Reading', {})}
         />
 
         {/* Reading History */}
