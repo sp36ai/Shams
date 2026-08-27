@@ -1,85 +1,10 @@
-/**
- * MMKV storage — single shared instance for the whole app.
- * --------------------------------------------------------------------------
- * Why one instance, not per-domain:
- *   - MMKV is fast (<1ms reads) but each instance opens its own mmap file.
- *     Multiple instances inflate APK install footprint and cold-start I/O.
- *   - Namespacing is done via key prefixes (see KEYS below) — same effect,
- *     one file.
- *
- * Persistence semantics relied on by Zustand stores:
- *   - getString(key) returns string | undefined  (NEVER null)
- *   - set(key, value) is synchronous and durable on next event loop tick
- *   - delete(key) is synchronous
- */
-
-import { MMKV } from 'react-native-mmkv';
-
-/** Singleton store. Do NOT instantiate MMKV elsewhere. */
-export const storage = new MMKV({
-  id: 'shams-default',
-});
-
-/**
- * Namespaced key registry. Every persisted key in the app MUST be declared
- * here so we have one place to audit storage shape during migrations.
- *
- * Convention: <domain>.<field>
- * Versioning: bump suffix (e.g. `auth.session.v2`) when shape changes.
- */
-export const KEYS = Object.freeze({
-  // Settings domain
-  SETTINGS_THEME: 'settings.themeId.v1',
-  SETTINGS_LANG: 'settings.lang.v1',
-
-  // Readings cache (most-recent N readings for offline open of History)
-  READINGS_CACHE: 'readings.cache.v1',
-
-  // Oracle Chat local conversation transcript (separate from the readings
-  // cache above — this is the chat bubbles, not the structured reading list)
-  ORACLE_CHAT_HISTORY: 'oracleChat.history.v1',
-
-  // Onboarding flags
-  ONBOARDING_SEEN: 'onboarding.seen.v1',
-  ONBOARDING_LOCATION_PROMPTED: 'onboarding.locationPrompted.v1',
-  ONBOARDING_PERMISSION_GRANTED: 'onboarding.permissionGranted.v1',
-
-  // Last known location (for chart construction fallback if GPS slow)
-  LOCATION_LAST_LAT: 'location.lastLat.v1',
-  LOCATION_LAST_LON: 'location.lastLon.v1',
-  LOCATION_LAST_LABEL: 'location.lastLabel.v1',
-  LOCATION_LAST_TIMESTAMP: 'location.lastTimestamp.v1',
-
-  // Quota domain
-  QUOTA_WEEK: 'quota.week.v1',
-  QUOTA_COUNT: 'quota.count.v1',
-  QUOTA_PLAN: 'quota.plan.v1',
-  QUOTA_PLAN_EXPIRY: 'quota.planExpiry.v1',
-  TRIAL_START: 'shams_trial_start',
-
-  // Trial banners — date string guards ("Mon Jun 06 2026" format)
-  DAY7_PROMPT_DATE: 'trial.day7PromptDate.v1',
-
-  // Seeker profile — inferred once during onboarding via Haiku
-  ONBOARDING_SEEKER_PROFILE: 'onboarding.seekerProfile.v1',
-  ONBOARDING_ANSWERS: 'onboarding.answers.v1',
-
-  // Seeker identity (name + mother's name for the Hidden Scroll header)
-  SEEKER_NAME: 'seeker.name.v1',
-  MOTHER_NAME: 'seeker.motherName.v1',
-
-  // Auth domain
-  AUTH_USER_ID: 'auth.userId.v1',
-  AUTH_USER_NAME: 'auth.userName.v1',
-  AUTH_USER_EMAIL: 'auth.userEmail.v1',
-  // Last signed-in uid. Unlike AUTH_USER_ID (a display cache cleared on
-  // sign-out), this sentinel persists across sign-out so bootstrap() can tell
-  // when a *different* account signs in and reset per-account state.
-  AUTH_LAST_UID: 'auth.lastUid.v1',
-  // Client-side sign-in throttle. Persisted so force-killing the app between
-  // attempts cannot reset the lockout.
-  AUTH_FAILED_ATTEMPTS: 'auth.failedAttempts.v1',
-  AUTH_LOCKOUT_UNTIL: 'auth.lockoutUntil.v1',
-} as const);
-
-export type StorageKey = (typeof KEYS)[keyof typeof KEYS];
+@@
+   // Readings cache (most-recent N readings for offline open of History)
+   READINGS_CACHE: 'readings.cache.v1',
++  // Threads cache (thread-first conversation storage)
++  THREADS_CACHE: 'threads.cache.v1',
++
++  // Per-account migration sentinel prefix: used as `${THREADS_MIGRATED_PREFIX}${uid}`
++  THREADS_MIGRATED_PREFIX: 'threads.migrated.v1.',
+@@
+ export type StorageKey = (typeof KEYS)[keyof typeof KEYS];
