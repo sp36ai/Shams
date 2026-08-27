@@ -20,10 +20,26 @@
  * and rendering the result is delegated to RkpWatchCard/RemedyProtocolCard
  * (via ChatBubble) and to the toReadingRecord() mapper for History.
  *
- * Scope note (v1): every send is a fresh askWatchOracle call — there is no
- * follow-up intent classification or conversational quick-reply chips here.
- * That is a deliberate simplification, not an oversight; the previous
- * screen's much larger follow-up/paywall machinery is not carried over.
+ * TWO KINDS OF SEND
+ *   A sitting with the oracle is a conversation, not a vending machine: the
+ *   seeker asks, receives a reading, and then wants to talk about it. So a
+ *   send is one of two things, chosen explicitly in the composer's mode row:
+ *
+ *     ASK      → askWatchOracle   — casts a chart for this moment, spends a
+ *                                   quota slot, renders the verdict cards.
+ *     DISCUSS  → discussReading   — answers a follow-up about the reading
+ *                                   already standing, spends no quota,
+ *                                   renders prose. Bounded server-side.
+ *
+ *   The mode row appears only once a reading exists, and defaults to DISCUSS
+ *   from that point — the common next message after a verdict is "why?", not
+ *   an unrelated new question. The seeker can always switch back, and the
+ *   oracle itself flags a follow-up that is really a new question, which the
+ *   bubble turns into an explicit "ask as a new question" tap.
+ *
+ *   Both paths still funnel through one sendMessage(): the pair of bubbles,
+ *   the re-entrancy guard, and the failure/retry handling are identical, and
+ *   only the network call and what the oracle bubble carries differ.
  */
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
@@ -42,16 +58,23 @@ import { useQuota } from '@hooks/useQuota';
 import { useQuotaStore } from '@stores/quotaStore';
 import { useSpeechToText } from '@hooks/useSpeechToText';
 import { useTextToSpeech } from '@hooks/useTextToSpeech';
-import { useOracleChatStore, selectIsEmpty, type ChatInputKind } from '@stores/oracleChatStore';
+import {
+  useOracleChatStore,
+  selectIsEmpty,
+  latestReadingId,
+  discussionTurnsFor,
+  type ChatInputKind,
+} from '@stores/oracleChatStore';
 import { useReadingsStore } from '@stores/readingsStore';
 import { askWatchOracle, type WatchReading } from '../firebase/watchOracle';
+import { discussReading } from '../firebase/oracleDiscussion';
 import { toReadingRecord } from '../data/watchReadingRecord';
 import { selectRemedies } from '../data/remedySelector';
 import { watchVerdictToRankingContext } from '../data/watchRemedyContext';
 import { speakableTextFor } from '@components/oracle/ChatBubble';
 import StarfieldBackground from '@components/StarfieldBackground';
 import ChatBubble from '@components/oracle/ChatBubble';
-import ChatComposer from '@components/oracle/ChatComposer';
+import ChatComposer, { type ComposerMode } from '@components/oracle/ChatComposer';
 
 /**
  * Maps a send failure to a message the seeker can act on. Firebase callable
@@ -73,6 +96,12 @@ export function errorMessageFor(err: unknown, t: ReturnType<typeof useTranslatio
   }
   if (code === 'resource-exhausted') {
     return t('oracleChat.quotaExhausted');
+  }
+  if (code === 'unavailable') {
+    return t('oracleChat.discussionUnavailable');
+  }
+  if (code === 'not-found') {
+    return t('oracleChat.discussionReadingGone');
   }
   return t('oracleChat.failedGeneric');
 }
@@ -128,6 +157,26 @@ const OracleChatScreen: React.FC = () => {
   const listRef = useRef<FlatList | null>(null);
 
   /**
+   * The reading a follow-up would be about — the most recent one in this
+   * transcript. Null until the seeker has had a reading at all, which is what
+   * keeps the very first send an ask no matter what the mode says.
+   */
+  const standingReadingId = latestReadingId(messages);
+
+  const [mode, setMode] = useState<ComposerMode>('ask');
+
+  // A verdict has just landed: the next message is far more likely to be
+  // "why?" than an unrelated new question, so the composer moves to DISCUSS
+  // on its own. Keyed on the reading id rather than on message count, so it
+  // fires once per reading and never overrides a seeker who has since chosen
+  // ASK for their next message.
+  useEffect(() => {
+    if (standingReadingId !== null) {
+      setMode('discuss');
+    }
+  }, [standingReadingId]);
+
+  /**
    * Second, non-blocking round trip: pick the devotional practice that suits
    * this reading, from the app's own tagged Islamic remedy library.
    *
@@ -164,7 +213,50 @@ const OracleChatScreen: React.FC = () => {
     [seekerProfile, updateMessage],
   );
 
-  // ── Core ask logic — the ONE path both text and voice funnel into ─────────
+  // ── The two send paths ────────────────────────────────────────────────────
+
+  /**
+   * Answer a follow-up about a reading that already stands.
+   *
+   * Spends no quota — the reading was the charged unit, and understanding it
+   * is part of what was bought (the server bounds the conversation instead;
+   * see discussReading.ts). So there is no consumeOne()/refundOne() pair here,
+   * and 'resource-exhausted' from this call means the reading's own follow-up
+   * budget is spent, not that the seeker is out of questions.
+   *
+   * Only the reading ID and the transcript since it travel: the verdict itself
+   * is loaded server-side, so the oracle can only ever discuss a reading it
+   * actually gave.
+   */
+  const runDiscuss = useCallback(
+    async (
+      oracleMessageId: string,
+      userMessageId: string,
+      message: string,
+      readingId: string,
+    ): Promise<void> => {
+      try {
+        const result = await discussReading({
+          readingId,
+          message,
+          lang,
+          turns: discussionTurnsFor(
+            useOracleChatStore.getState().messages,
+            readingId,
+            userMessageId,
+          ),
+        });
+        updateMessage(oracleMessageId, {
+          status: 'sent',
+          text: result.answer,
+          suggestsNewQuestion: result.isNewQuestion,
+        });
+      } catch (err) {
+        updateMessage(oracleMessageId, { status: 'failed', errorMessage: errorMessageFor(err, t) });
+      }
+    },
+    [lang, updateMessage, t],
+  );
 
   const runAsk = useCallback(
     async (oracleMessageId: string, question: string): Promise<void> => {
@@ -206,12 +298,27 @@ const OracleChatScreen: React.FC = () => {
     [canAsk, consumeOne, lang, seekerProfile, updateMessage, addReading, t, runGuidanceSelection],
   );
 
+  /**
+   * The ONE path every send funnels into — typed, spoken, or re-sent from a
+   * bubble. Adds the seeker's bubble and the oracle placeholder, then hands
+   * off to whichever of the two calls this send is.
+   *
+   * `forceMode` exists for "ask this as a new question", which must cast a
+   * chart regardless of what the composer's mode row currently says.
+   */
   const sendMessage = useCallback(
-    (text: string, kind: ChatInputKind) => {
+    (text: string, kind: ChatInputKind, forceMode?: ComposerMode) => {
       const trimmed = text.trim();
       if (trimmed.length === 0 || sendingRef.current) {
         return;
       }
+
+      // With no reading standing there is nothing to discuss, so a send is an
+      // ask whatever the mode says — this is what makes the first message of
+      // a sitting always a reading.
+      const readingId = latestReadingId(useOracleChatStore.getState().messages);
+      const effectiveMode: ComposerMode = readingId === null ? 'ask' : (forceMode ?? mode);
+
       sendingRef.current = true;
       setSending(true);
 
@@ -227,15 +334,24 @@ const OracleChatScreen: React.FC = () => {
         createdAt: now,
         status: 'sending',
         replyToId: userId,
+        variant: effectiveMode === 'discuss' ? 'discussion' : 'reading',
+        ...(effectiveMode === 'discuss' && readingId !== null
+          ? { groundedReadingId: readingId }
+          : {}),
       });
       setInputText('');
 
-      runAsk(oracleId, trimmed).finally(() => {
+      const run =
+        effectiveMode === 'discuss' && readingId !== null
+          ? runDiscuss(oracleId, userId, trimmed, readingId)
+          : runAsk(oracleId, trimmed);
+
+      run.finally(() => {
         sendingRef.current = false;
         setSending(false);
       });
     },
-    [addMessage, runAsk],
+    [addMessage, runAsk, runDiscuss, mode],
   );
 
   const handleSend = useCallback(() => {
@@ -255,12 +371,38 @@ const OracleChatScreen: React.FC = () => {
       sendingRef.current = true;
       setSending(true);
       updateMessage(oracleMsg.id, { status: 'sending', errorMessage: undefined });
-      runAsk(oracleMsg.id, userMsg.text).finally(() => {
+
+      // Retry the call this turn actually was. A failed follow-up retried as
+      // a reading would silently cast a chart and charge for it.
+      const run =
+        oracleMsg.variant === 'discussion' && oracleMsg.groundedReadingId !== undefined
+          ? runDiscuss(oracleMsg.id, userMsg.id, userMsg.text, oracleMsg.groundedReadingId)
+          : runAsk(oracleMsg.id, userMsg.text);
+
+      run.finally(() => {
         sendingRef.current = false;
         setSending(false);
       });
     },
-    [messages, runAsk, updateMessage],
+    [messages, runAsk, runDiscuss, updateMessage],
+  );
+
+  /**
+   * The oracle declined a follow-up because it is really its own horary
+   * question. Re-send those exact words through the ask path — a fresh pair
+   * of bubbles, a fresh chart, and a quota slot, all of which is why this is
+   * a tap and never automatic.
+   */
+  const handleAskAsNewQuestion = useCallback(
+    (userMessageId: string) => {
+      const userMsg = messages.find(m => m.id === userMessageId);
+      if (userMsg === undefined) {
+        return;
+      }
+      setMode('ask');
+      sendMessage(userMsg.text, userMsg.kind ?? 'text', 'ask');
+    },
+    [messages, sendMessage],
   );
 
   // ── Voice input — mic toggles STT; the transcript funnels into sendMessage ─
@@ -343,6 +485,7 @@ const OracleChatScreen: React.FC = () => {
                 message={item}
                 questionLang={lang}
                 onRetry={handleRetry}
+                onAskAsNewQuestion={handleAskAsNewQuestion}
                 ttsStatus={tts.status}
                 ttsActiveMessageId={tts.activeMessageId}
                 onToggleSpeech={tts.toggle}
@@ -367,6 +510,9 @@ const OracleChatScreen: React.FC = () => {
           isListening={stt.isListening}
           onMicPress={handleMicPress}
           micDisabled={sending}
+          mode={mode}
+          onModeChange={setMode}
+          showModeToggle={standingReadingId !== null}
         />
       </KeyboardAvoidingView>
     </SafeAreaView>

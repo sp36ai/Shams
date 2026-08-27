@@ -244,4 +244,203 @@ describe('OracleChatScreen', () => {
     );
     expect(askCallable).not.toHaveBeenCalled();
   });
+  /* ---------------------------------------------------------------------- */
+  /*  Follow-up discussion                                                   */
+  /* ---------------------------------------------------------------------- */
+
+  describe('discussion of a standing reading', () => {
+    /** Ask once, so a reading is standing and the composer offers DISCUSS. */
+    async function askOnce(user: ReturnType<typeof userEvent.setup>) {
+      await user.type(screen.getByTestId('oracle-chat-input'), 'Will I get the job?');
+      await user.press(screen.getByTestId('oracle-chat-send-btn'));
+      await waitFor(() =>
+        expect(useOracleChatStore.getState().messages.find(m => m.role === 'oracle')?.status).toBe(
+          'sent',
+        ),
+      );
+    }
+
+    it('sends a follow-up through discussReading — no chart, no quota spent', async () => {
+      const askCallable = jest.fn(() => Promise.resolve({ data: successPayload() }));
+      const discussCallable = jest.fn(() =>
+        Promise.resolve({
+          data: { answer: 'It is delay, not denial.', isNewQuestion: false, turnsRemaining: 11 },
+        }),
+      );
+      (httpsCallable as jest.Mock).mockImplementation((name: string) => {
+        if (name === 'askWatchOracle') {
+          return askCallable;
+        }
+        if (name === 'discussReading') {
+          return discussCallable;
+        }
+        return defaultImpl(name);
+      });
+
+      await renderScreen(<OracleChatScreen />);
+      const user = userEvent.setup();
+      await askOnce(user);
+
+      const spentAfterAsk = useQuotaStore.getState().questionsToday;
+
+      // The mode row appears only once a reading stands, and defaults to
+      // DISCUSS — so this second send needs no mode change to be a follow-up.
+      expect(screen.getByTestId('oracle-chat-mode-discuss')).toBeTruthy();
+
+      await user.type(screen.getByTestId('oracle-chat-input'), 'Why is it taking so long?');
+      await user.press(screen.getByTestId('oracle-chat-send-btn'));
+
+      await waitFor(() => expect(screen.getByText('It is delay, not denial.')).toBeTruthy());
+
+      expect(askCallable).toHaveBeenCalledTimes(1); // still just the first ask
+      expect(discussCallable).toHaveBeenCalledTimes(1);
+      expect(discussCallable.mock.calls[0]?.[0]).toMatchObject({
+        readingId: 'r1',
+        message: 'Why is it taking so long?',
+      });
+      // A follow-up is not a reading: nothing more was charged.
+      expect(useQuotaStore.getState().questionsToday).toBe(spentAfterAsk);
+    });
+
+    it('sends the turns since the reading, so the reply follows the conversation', async () => {
+      const discussCallable = jest.fn(() =>
+        Promise.resolve({
+          data: { answer: 'Wait for the window.', isNewQuestion: false, turnsRemaining: 10 },
+        }),
+      );
+      (httpsCallable as jest.Mock).mockImplementation((name: string) => {
+        if (name === 'askWatchOracle') {
+          return jest.fn(() => Promise.resolve({ data: successPayload() }));
+        }
+        if (name === 'discussReading') {
+          return discussCallable;
+        }
+        return defaultImpl(name);
+      });
+
+      await renderScreen(<OracleChatScreen />);
+      const user = userEvent.setup();
+      await askOnce(user);
+
+      await user.type(screen.getByTestId('oracle-chat-input'), 'Why so long?');
+      await user.press(screen.getByTestId('oracle-chat-send-btn'));
+      await waitFor(() => expect(screen.getByText('Wait for the window.')).toBeTruthy());
+
+      await user.type(screen.getByTestId('oracle-chat-input'), 'And meanwhile?');
+      await user.press(screen.getByTestId('oracle-chat-send-btn'));
+      await waitFor(() => expect(discussCallable).toHaveBeenCalledTimes(2));
+
+      // The reading itself is never re-sent — the server loads it.
+      expect(discussCallable.mock.calls[1]?.[0]).toMatchObject({
+        turns: [
+          { role: 'seeker', text: 'Why so long?' },
+          { role: 'oracle', text: 'Wait for the window.' },
+        ],
+      });
+    });
+
+    it('switching to NEW QUESTION casts a fresh chart instead of discussing', async () => {
+      const askCallable = jest.fn(() => Promise.resolve({ data: successPayload() }));
+      const discussCallable = jest.fn(() =>
+        Promise.resolve({ data: { answer: 'x', isNewQuestion: false, turnsRemaining: 9 } }),
+      );
+      (httpsCallable as jest.Mock).mockImplementation((name: string) => {
+        if (name === 'askWatchOracle') {
+          return askCallable;
+        }
+        if (name === 'discussReading') {
+          return discussCallable;
+        }
+        return defaultImpl(name);
+      });
+
+      await renderScreen(<OracleChatScreen />);
+      const user = userEvent.setup();
+      await askOnce(user);
+
+      await user.press(screen.getByTestId('oracle-chat-mode-ask'));
+      await user.type(screen.getByTestId('oracle-chat-input'), 'Will my brother travel?');
+      await user.press(screen.getByTestId('oracle-chat-send-btn'));
+
+      await waitFor(() => expect(askCallable).toHaveBeenCalledTimes(2));
+      expect(discussCallable).not.toHaveBeenCalled();
+    });
+
+    it('offers to re-ask a follow-up the oracle judged to be its own question', async () => {
+      const askCallable = jest.fn(() => Promise.resolve({ data: successPayload() }));
+      (httpsCallable as jest.Mock).mockImplementation((name: string) => {
+        if (name === 'askWatchOracle') {
+          return askCallable;
+        }
+        if (name === 'discussReading') {
+          return jest.fn(() =>
+            Promise.resolve({
+              data: {
+                answer: 'That is its own question, and needs its own moment.',
+                isNewQuestion: true,
+                turnsRemaining: 11,
+              },
+            }),
+          );
+        }
+        return defaultImpl(name);
+      });
+
+      await renderScreen(<OracleChatScreen />);
+      const user = userEvent.setup();
+      await askOnce(user);
+
+      await user.type(screen.getByTestId('oracle-chat-input'), 'Will my brother travel?');
+      await user.press(screen.getByTestId('oracle-chat-send-btn'));
+
+      await waitFor(() => expect(screen.getByTestId('oracle-chat-ask-as-new')).toBeTruthy());
+
+      // Nothing is cast until the seeker taps — a new chart costs a slot.
+      expect(askCallable).toHaveBeenCalledTimes(1);
+
+      await user.press(screen.getByTestId('oracle-chat-ask-as-new'));
+
+      await waitFor(() => expect(askCallable).toHaveBeenCalledTimes(2));
+      const readings = useOracleChatStore
+        .getState()
+        .messages.filter(m => m.role === 'oracle' && m.variant !== 'discussion');
+      expect(readings).toHaveLength(2);
+    });
+
+    it('retries a failed follow-up as a follow-up, never as a new reading', async () => {
+      const askCallable = jest.fn(() => Promise.resolve({ data: successPayload() }));
+      let discussFails = true;
+      const discussCallable = jest.fn(() =>
+        discussFails
+          ? Promise.reject(Object.assign(new Error('down'), { code: 'unavailable' }))
+          : Promise.resolve({
+              data: { answer: 'Delay, not denial.', isNewQuestion: false, turnsRemaining: 11 },
+            }),
+      );
+      (httpsCallable as jest.Mock).mockImplementation((name: string) => {
+        if (name === 'askWatchOracle') {
+          return askCallable;
+        }
+        if (name === 'discussReading') {
+          return discussCallable;
+        }
+        return defaultImpl(name);
+      });
+
+      await renderScreen(<OracleChatScreen />);
+      const user = userEvent.setup();
+      await askOnce(user);
+
+      await user.type(screen.getByTestId('oracle-chat-input'), 'Why so long?');
+      await user.press(screen.getByTestId('oracle-chat-send-btn'));
+      await waitFor(() => expect(screen.getByText('↻ Retry')).toBeTruthy());
+
+      discussFails = false;
+      await user.press(screen.getByText('↻ Retry'));
+
+      await waitFor(() => expect(screen.getByText('Delay, not denial.')).toBeTruthy());
+      expect(askCallable).toHaveBeenCalledTimes(1);
+      expect(discussCallable).toHaveBeenCalledTimes(2);
+    });
+  });
 });

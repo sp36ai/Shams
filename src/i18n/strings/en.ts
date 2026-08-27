@@ -144,6 +144,14 @@ export const en: StringTable = {
     paused: 'Paused',
     emptyTitle: 'Ask your first question',
     emptyBody: 'Type it, or tap the mic to speak it. The oracle answers from this exact moment.',
+    reply: 'Reply',
+    considering: 'Considering your words…',
+    modeDiscuss: '💬 Discuss this reading',
+    modeNewQuestion: '✦ New question',
+    placeholderDiscuss: 'Ask about this reading…',
+    askAsNewQuestion: 'Ask this as a new question',
+    discussionUnavailable: 'The oracle did not answer that. Try asking again.',
+    discussionReadingGone: 'That reading is no longer available to discuss.',
   },
 
   skyClock: {

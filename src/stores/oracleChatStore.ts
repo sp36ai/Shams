@@ -12,6 +12,15 @@
  * 'sending' oracle placeholder; the placeholder is then updated in place to
  * 'sent' (with the reading attached) or 'failed' (with an error), never
  * replaced — so retry can find it by id and flip it back to 'sending'.
+ *
+ * An oracle turn is one of two kinds, distinguished by `variant`:
+ *   - 'reading'    — a chart was cast for this question; the bubble is the
+ *                    verdict cards, and a quota slot was spent.
+ *   - 'discussion' — a follow-up about a reading already given; the bubble is
+ *                    prose in `text`, and `groundedReadingId` names the
+ *                    reading it is grounded in. No chart, no quota.
+ * The transcript holds both, in order, because that is the conversation the
+ * seeker actually had.
  */
 
 import { create } from 'zustand';
@@ -24,6 +33,8 @@ export type ChatRole = 'user' | 'oracle';
 export type ChatMessageStatus = 'sending' | 'sent' | 'failed';
 /** How the user captured this question — only meaningful on role 'user'. */
 export type ChatInputKind = 'text' | 'voice';
+/** What an oracle turn is — see this file's header. */
+export type ChatOracleVariant = 'reading' | 'discussion';
 
 export interface ChatMessage {
   id: string;
@@ -34,8 +45,26 @@ export interface ChatMessage {
   kind?: ChatInputKind;
   createdAt: string;
   status: ChatMessageStatus;
-  /** Present once a 'sent' oracle message resolves. */
+  /**
+   * On an oracle message: whether this turn is a reading or a follow-up.
+   * Absent on messages written before discussion existed, which are readings —
+   * every reader must treat undefined as 'reading'.
+   */
+  variant?: ChatOracleVariant;
+  /** Present once a 'sent' oracle message of variant 'reading' resolves. */
   reading?: WatchReading;
+  /**
+   * On a 'discussion' oracle message: the reading this reply is grounded in.
+   * Retry needs it, and so does every following follow-up in the same thread.
+   */
+  groundedReadingId?: string;
+  /**
+   * On a 'discussion' oracle message: the oracle judged the seeker's message
+   * to be its own horary question and declined to answer it from the standing
+   * reading. The bubble offers to ask it as a new question, which casts a
+   * fresh chart and costs a quota slot.
+   */
+  suggestsNewQuestion?: boolean;
   /**
    * Islamic-practice guidance for this reading, chosen by the selectRemedies
    * Cloud Function from the client's own candidate ranking.
@@ -132,3 +161,69 @@ export const useOracleChatStore = create<OracleChatState>((set, get) => ({
 }));
 
 export const selectIsEmpty = (s: OracleChatState): boolean => s.messages.length === 0;
+
+/* -------------------------------------------------------------------------- */
+/*  Transcript queries — pure, exported for testing                           */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * The reading a follow-up would be about: the most recent oracle turn that
+ * actually produced one. Null when the seeker has not had a reading yet in
+ * this transcript, which is what makes the composer's first send an ask.
+ *
+ * A failed or still-sending reading does not count — there is nothing to
+ * discuss until a verdict exists.
+ */
+export function latestReadingId(messages: readonly ChatMessage[]): string | null {
+  for (let i = messages.length - 1; i >= 0; i -= 1) {
+    const m = messages[i];
+    if (m !== undefined && m.role === 'oracle' && m.status === 'sent' && m.reading !== undefined) {
+      return m.reading.readingId;
+    }
+  }
+  return null;
+}
+
+/**
+ * The conversation that has happened SINCE a reading was given — what the
+ * server needs to answer the next follow-up in context.
+ *
+ * The reading itself is deliberately not included: the server loads it from
+ * Firestore and puts it in the brief, so repeating it here would only give a
+ * client-supplied copy of facts the server already holds. Pending and failed
+ * turns are skipped too — a question that never got an answer is not part of
+ * the thread the oracle is replying to.
+ *
+ * `beforeMessageId` is the message being answered right now. It is already in
+ * the transcript by the time the call is built (its bubble goes up before the
+ * network round trip, and is still there on a retry), and it travels as the
+ * request's own `message` — so everything from it onward is excluded here to
+ * keep the oracle from being handed the same words twice.
+ */
+export function discussionTurnsFor(
+  messages: readonly ChatMessage[],
+  readingId: string,
+  beforeMessageId?: string,
+): Array<{ role: 'seeker' | 'oracle'; text: string }> {
+  const start = messages.findIndex(m => m.role === 'oracle' && m.reading?.readingId === readingId);
+  if (start === -1) {
+    return [];
+  }
+
+  const cutoff =
+    beforeMessageId === undefined ? -1 : messages.findIndex(m => m.id === beforeMessageId);
+  const end = cutoff === -1 ? messages.length : cutoff;
+
+  const turns: Array<{ role: 'seeker' | 'oracle'; text: string }> = [];
+  for (const m of messages.slice(start + 1, end)) {
+    if (m.status !== 'sent' || m.text.trim().length === 0) {
+      continue;
+    }
+    if (m.role === 'user') {
+      turns.push({ role: 'seeker', text: m.text });
+    } else if (m.variant === 'discussion') {
+      turns.push({ role: 'oracle', text: m.text });
+    }
+  }
+  return turns;
+}

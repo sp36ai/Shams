@@ -217,6 +217,16 @@ export interface StringTable {
     paused: string;
     emptyTitle: string;
     emptyBody: string;
+    /** Send-button label while the composer is in discussion mode. */
+    reply: string;
+    /** Pending-bubble caption for a follow-up — no chart is being read. */
+    considering: string;
+    modeDiscuss: string;
+    modeNewQuestion: string;
+    placeholderDiscuss: string;
+    askAsNewQuestion: string;
+    discussionUnavailable: string;
+    discussionReadingGone: string;
   };
   skyClock: {
     headerTitle: string;

@@ -6,6 +6,11 @@
  * exactly as returned, nothing recomputed here. This file's only original
  * logic is `speakableTextFor`, which concatenates already-composed prose
  * fields into one string for text-to-speech — string assembly, not judgment.
+ *
+ * An oracle turn comes in two shapes and this file renders both: a reading
+ * (the verdict cards) and a follow-up reply (prose, spoken the same way).
+ * Which one it is comes from `message.variant`, never from guessing at which
+ * fields happen to be populated.
  */
 
 import React from 'react';
@@ -42,6 +47,12 @@ interface ChatBubbleProps {
   message: ChatMessage;
   questionLang: 'en' | 'ur' | 'hi';
   onRetry: (userMessageId: string) => void;
+  /**
+   * Re-send a follow-up the oracle declined to answer, as a fresh question.
+   * Casts a new chart and spends a quota slot — so it is always an explicit
+   * tap, never something this bubble does on the seeker's behalf.
+   */
+  onAskAsNewQuestion: (userMessageId: string) => void;
   ttsStatus: SpeakingStatus;
   ttsActiveMessageId: string | null;
   onToggleSpeech: (messageId: string, text: string, lang: 'en' | 'ur' | 'hi') => void;
@@ -51,6 +62,7 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({
   message,
   questionLang,
   onRetry,
+  onAskAsNewQuestion,
   ttsStatus,
   ttsActiveMessageId,
   onToggleSpeech,
@@ -90,7 +102,9 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({
         >
           <ActivityIndicator size="small" color={colors.accent} />
           <Text style={[typography('caption'), { color: colors.textMuted, marginLeft: 8 }]}>
-            {t('oracleChat.readingChart')}
+            {message.variant === 'discussion'
+              ? t('oracleChat.considering')
+              : t('oracleChat.readingChart')}
           </Text>
         </View>
       </View>
@@ -127,10 +141,60 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({
     );
   }
 
-  // 'sent' — full reading, if present.
+  // 'sent' — a reading, or a follow-up reply.
   const reading = message.reading;
   const isSpeaking = ttsActiveMessageId === message.id && ttsStatus === 'speaking';
   const isPaused = ttsActiveMessageId === message.id && ttsStatus === 'paused';
+
+  if (message.variant === 'discussion') {
+    return (
+      <View style={[styles.row, styles.rowOracle]}>
+        <View
+          style={[
+            styles.bubble,
+            styles.oracleBubble,
+            styles.discussionBubble,
+            { backgroundColor: colors.surface, borderColor: colors.border },
+          ]}
+        >
+          <Text style={[typography('body'), { color: colors.text, lineHeight: 22 }]}>
+            {message.text}
+          </Text>
+
+          {message.suggestsNewQuestion === true && message.replyToId !== undefined && (
+            <Pressable
+              onPress={() => onAskAsNewQuestion(message.replyToId!)}
+              style={({ pressed }) => [styles.newQuestionBtn, { opacity: pressed ? 0.7 : 1 }]}
+              accessibilityRole="button"
+              accessibilityLabel={t('oracleChat.askAsNewQuestion')}
+              testID="oracle-chat-ask-as-new"
+            >
+              <Text style={[typography('label'), { color: colors.goldBright }]}>
+                {'✦ ' + t('oracleChat.askAsNewQuestion')}
+              </Text>
+            </Pressable>
+          )}
+
+          <Pressable
+            onPress={() => onToggleSpeech(message.id, message.text, questionLang)}
+            style={({ pressed }) => [styles.discussionSpeechBtn, { opacity: pressed ? 0.7 : 1 }]}
+            accessibilityRole="button"
+            accessibilityLabel={
+              isSpeaking ? t('oracleChat.pauseNarration') : t('oracleChat.playNarration')
+            }
+          >
+            <Text style={[typography('caption'), { color: colors.textFaint }]}>
+              {isSpeaking
+                ? '⏸ ' + t('oracleChat.speaking')
+                : isPaused
+                  ? '▶ ' + t('oracleChat.paused')
+                  : '▶ ' + t('oracleChat.listenToVerdict')}
+            </Text>
+          </Pressable>
+        </View>
+      </View>
+    );
+  }
 
   return (
     <View style={[styles.row, styles.rowOracle]}>
@@ -208,6 +272,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   retryBtn: {
+    marginTop: 8,
+    alignSelf: 'flex-start',
+  },
+  discussionBubble: {
+    maxWidth: '92%',
+  },
+  newQuestionBtn: {
+    marginTop: 10,
+    alignSelf: 'flex-start',
+  },
+  discussionSpeechBtn: {
     marginTop: 8,
     alignSelf: 'flex-start',
   },

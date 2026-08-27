@@ -152,6 +152,14 @@ export const hi: StringTable = {
     paused: 'रुका हुआ',
     emptyTitle: 'अपना पहला प्रश्न पूछें',
     emptyBody: 'लिखें, या माइक दबाकर बोलें। ओरेकल इसी क्षण से उत्तर देता है।',
+    reply: 'उत्तर',
+    considering: 'आपकी बात पर विचार हो रहा है…',
+    modeDiscuss: '💬 इसी उत्तर पर चर्चा',
+    modeNewQuestion: '✦ नया प्रश्न',
+    placeholderDiscuss: 'इस उत्तर के बारे में पूछें…',
+    askAsNewQuestion: 'इसे नए प्रश्न के रूप में पूछें',
+    discussionUnavailable: 'ओरेकल ने इसका उत्तर नहीं दिया। पुनः पूछें।',
+    discussionReadingGone: 'यह उत्तर अब चर्चा के लिए उपलब्ध नहीं है।',
   },
 
   skyClock: {

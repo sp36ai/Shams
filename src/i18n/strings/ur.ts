@@ -152,6 +152,14 @@ export const ur: StringTable = {
     paused: 'رکا ہوا',
     emptyTitle: 'اپنا پہلا سوال پوچھیں',
     emptyBody: 'لکھیں، یا مائیکروفون دبا کر بولیں۔ اوریکل اسی لمحے سے جواب دیتا ہے۔',
+    reply: 'جواب',
+    considering: 'آپ کی بات پر غور ہو رہا ہے…',
+    modeDiscuss: '💬 اسی جواب پر گفتگو',
+    modeNewQuestion: '✦ نیا سوال',
+    placeholderDiscuss: 'اسی جواب کے بارے میں پوچھیں…',
+    askAsNewQuestion: 'اسے نئے سوال کے طور پر پوچھیں',
+    discussionUnavailable: 'اوریکل نے اس کا جواب نہیں دیا۔ دوبارہ پوچھیں۔',
+    discussionReadingGone: 'یہ جواب اب گفتگو کے لیے دستیاب نہیں۔',
   },
 
   skyClock: {

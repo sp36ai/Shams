@@ -158,6 +158,20 @@ export interface ReadingDoc {
   reasoning: OracleResponse['reasoning'];
   createdAt: FirebaseFirestore.Timestamp;
   horaryNumber?: number;
+  /**
+   * The full watch-oracle composition (diagnosis + protocol + narration),
+   * written by askWatchOracle. Typed as unknown for the same reason as
+   * OracleResponse.watchOracle above — this file stays free of a dependency
+   * on the oracle module — and narrowed at the one place that reads it back
+   * (discussReading.ts). Absent on readings whose synthesis failed, so a
+   * reader must handle its absence rather than assume it.
+   */
+  watchOracle?: unknown;
+  /**
+   * Follow-up turns spent on this reading, capped at DISCUSSION_TURN_LIMIT.
+   * Incremented (and refunded on failure) by discussReading.
+   */
+  discussionTurns?: number;
 }
 
 /** Firestore /trials/{userId} document shape. */
@@ -193,4 +207,5 @@ export type AuditAction =
   | 'payment_play_fail'
   | 'plan_upgraded'
   | 'reading_synced'
-  | 'reading_deleted';
+  | 'reading_deleted'
+  | 'discussion_turn';

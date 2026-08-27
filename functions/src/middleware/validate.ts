@@ -39,6 +39,40 @@ export const AskWatchOracleSchema = z
 
 export type AskWatchOracleInput = z.infer<typeof AskWatchOracleSchema>;
 
+/**
+ * discussReading input.
+ *
+ * Note what is NOT here: no verdict, no diagnosis, no timing. A follow-up
+ * names the reading it is about and nothing more — the grounding facts are
+ * loaded from Firestore server-side, so the caller cannot present the oracle
+ * with a reading it never gave (see discussReading.ts).
+ *
+ * `turns` is the recent transcript, oldest first, sent so the reply follows
+ * the conversation rather than restarting it. It is the seeker's own words
+ * and the oracle's own earlier replies, so it carries no authority beyond
+ * context; it is capped here and flattened again before it reaches the model.
+ */
+export const DiscussReadingSchema = z
+  .object({
+    readingId: z.string().min(1).max(128),
+    message: z.string().trim().min(1).max(500),
+    lang: LangSchema,
+    turns: z
+      .array(
+        z
+          .object({
+            role: z.enum(['seeker', 'oracle']),
+            text: z.string().max(4000),
+          })
+          .strict(),
+      )
+      .max(20)
+      .optional(),
+  })
+  .strict();
+
+export type DiscussReadingInput = z.infer<typeof DiscussReadingSchema>;
+
 export const SyncReadingsSchema = z
   .object({
     readings: z

@@ -1,4 +1,9 @@
-import { useOracleChatStore, type ChatMessage } from '../oracleChatStore';
+import {
+  useOracleChatStore,
+  latestReadingId,
+  discussionTurnsFor,
+  type ChatMessage,
+} from '../oracleChatStore';
 import { storage, KEYS } from '@storage/mmkv';
 
 function msg(overrides: Partial<ChatMessage> = {}): ChatMessage {
@@ -63,5 +68,103 @@ describe('oracleChatStore', () => {
     useOracleChatStore.getState().addMessage(msg());
     useOracleChatStore.getState().clearAll();
     expect(storage.getString(KEYS.ORACLE_CHAT_HISTORY)).toBeUndefined();
+  });
+});
+
+/* -------------------------------------------------------------------------- */
+/*  Transcript queries — what a follow-up is grounded in                      */
+/* -------------------------------------------------------------------------- */
+
+function readingMsg(id: string, readingId: string): ChatMessage {
+  return {
+    id,
+    role: 'oracle',
+    text: '',
+    createdAt: '2026-08-08T05:43:00.000Z',
+    status: 'sent',
+    variant: 'reading',
+    // Only the id is read by these helpers; the rest of WatchReading is
+    // irrelevant here and deliberately not faked.
+    reading: { readingId } as ChatMessage['reading'],
+  };
+}
+
+function discussionMsg(
+  id: string,
+  text: string,
+  status: ChatMessage['status'] = 'sent',
+): ChatMessage {
+  return {
+    id,
+    role: 'oracle',
+    text,
+    createdAt: '2026-08-08T05:44:00.000Z',
+    status,
+    variant: 'discussion',
+  };
+}
+
+describe('latestReadingId', () => {
+  it('is null before any reading — the first send can only be an ask', () => {
+    expect(latestReadingId([msg({ id: 'u1' })])).toBeNull();
+  });
+
+  it('returns the most recent reading, not the first', () => {
+    expect(
+      latestReadingId([readingMsg('o1', 'r1'), msg({ id: 'u2' }), readingMsg('o2', 'r2')]),
+    ).toBe('r2');
+  });
+
+  it('ignores a reading that never landed — there is nothing to discuss yet', () => {
+    const pending: ChatMessage = { ...readingMsg('o2', 'r2'), status: 'sending' };
+    expect(latestReadingId([readingMsg('o1', 'r1'), pending])).toBe('r1');
+  });
+});
+
+describe('discussionTurnsFor', () => {
+  it('returns only what happened after the reading, and never the reading itself', () => {
+    const turns = discussionTurnsFor(
+      [
+        msg({ id: 'u0', text: 'Will the sale complete?' }),
+        readingMsg('o0', 'r1'),
+        msg({ id: 'u1', text: 'Why so long?' }),
+        discussionMsg('o1', 'Because the agent is slow.'),
+      ],
+      'r1',
+    );
+    expect(turns).toEqual([
+      { role: 'seeker', text: 'Why so long?' },
+      { role: 'oracle', text: 'Because the agent is slow.' },
+    ]);
+  });
+
+  it('skips turns that never resolved', () => {
+    const turns = discussionTurnsFor(
+      [
+        readingMsg('o0', 'r1'),
+        msg({ id: 'u1', text: 'Why so long?' }),
+        discussionMsg('o1', '', 'sending'),
+      ],
+      'r1',
+    );
+    expect(turns).toEqual([{ role: 'seeker', text: 'Why so long?' }]);
+  });
+
+  it('excludes the message being answered, which travels separately', () => {
+    const turns = discussionTurnsFor(
+      [
+        readingMsg('o0', 'r1'),
+        msg({ id: 'u1', text: 'Why so long?' }),
+        discussionMsg('o1', 'Because the agent is slow.'),
+        msg({ id: 'u2', text: 'And meanwhile?' }),
+      ],
+      'r1',
+      'u2',
+    );
+    expect(turns.map(turn => turn.text)).toEqual(['Why so long?', 'Because the agent is slow.']);
+  });
+
+  it('is empty for a reading that is not in this transcript', () => {
+    expect(discussionTurnsFor([readingMsg('o0', 'r1')], 'r9')).toEqual([]);
   });
 });
