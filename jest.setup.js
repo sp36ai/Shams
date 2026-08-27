@@ -107,9 +107,9 @@ jest.mock('@react-navigation/native', () => {
 // @react-native-voice/voice and react-native-tts are native modules with no
 // bridge in the Jest environment (no NativeEventEmitter backing, no device).
 // Mocked as plain objects whose event "handlers" are settable properties
-// (Voice) or addEventListener/removeEventListener pairs (Tts), matching each
-// library's real shape closely enough for useSpeechToText/useTextToSpeech's
-// own tests to drive them directly.
+// (Voice) or an addEventListener returning a removable subscription (Tts),
+// matching each library's real shape closely enough for useSpeechToText/
+// useTextToSpeech's own tests to drive them directly.
 jest.mock('@react-native-voice/voice', () => ({
   __esModule: true,
   default: {
@@ -127,6 +127,13 @@ jest.mock('@react-native-voice/voice', () => ({
   },
 }));
 
+// The `removeEventListener` throw below is not pedantry — it is what the real
+// module does under RN 0.78. react-native-tts still ships the method, but it
+// delegates to NativeEventEmitter#removeListener, deleted in RN 0.72. The
+// previous mock stubbed it as a harmless jest.fn(), so the hook's unmount
+// cleanup passed every test while throwing on device: leaving Oracle Chat
+// rendered the ErrorBoundary instead of returning to Home. Mirror the real
+// failure here so re-introducing the call fails the suite, not the seeker.
 jest.mock('react-native-tts', () => ({
   __esModule: true,
   default: {
@@ -136,8 +143,10 @@ jest.mock('react-native-tts', () => ({
     stop: jest.fn(() => Promise.resolve(true)),
     pause: jest.fn(() => Promise.resolve(true)),
     resume: jest.fn(() => Promise.resolve(true)),
-    addEventListener: jest.fn(),
-    removeEventListener: jest.fn(),
+    addEventListener: jest.fn(() => ({ remove: jest.fn() })),
+    removeEventListener: jest.fn(() => {
+      throw new TypeError('this.removeListener is not a function');
+    }),
   },
 }));
 

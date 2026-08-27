@@ -106,4 +106,42 @@ describe('useTextToSpeech', () => {
     expect(result.current.activeMessageId).toBeNull();
     expect(mockedTts.stop).toHaveBeenCalled();
   });
+
+  // Unmount is the back button: leaving Oracle Chat tears this hook down. The
+  // teardown used to call Tts.removeEventListener, which throws under RN 0.78
+  // (see jest.setup.js), and a throwing unmount surfaced as the app's
+  // ErrorBoundary screen instead of a return to Home.
+  describe('teardown (the back-button path)', () => {
+    it('unmounts without throwing', async () => {
+      const { unmount } = await renderHook(() => useTextToSpeech());
+      // unmount() is async in RNTL v14 — an un-awaited call resolves nothing
+      // and would pass even while the cleanup throws.
+      await expect(unmount()).resolves.toBeUndefined();
+    });
+
+    it('releases every listener via its subscription, never removeEventListener', async () => {
+      const { unmount } = await renderHook(() => useTextToSpeech());
+
+      const removes = mockedTts.addEventListener.mock.results.map(
+        r => (r.value as { remove: jest.Mock }).remove,
+      );
+      expect(removes).toHaveLength(3);
+
+      await unmount();
+
+      removes.forEach(remove => expect(remove).toHaveBeenCalled());
+      expect(mockedTts.removeEventListener).not.toHaveBeenCalled();
+    });
+
+    it('stops any in-flight utterance so audio does not outlive the screen', async () => {
+      const { result, unmount } = await renderHook(() => useTextToSpeech());
+      result.current.speak('m1', 'text', 'en');
+      await waitFor(() => expect(result.current.status).toBe('speaking'));
+
+      mockedTts.stop.mockClear();
+      await unmount();
+
+      expect(mockedTts.stop).toHaveBeenCalled();
+    });
+  });
 });

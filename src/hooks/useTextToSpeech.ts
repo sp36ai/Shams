@@ -19,6 +19,7 @@
  */
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import type { EmitterSubscription } from 'react-native';
 import Tts from 'react-native-tts';
 
 import { createLogger } from '@utils/logger';
@@ -44,6 +45,31 @@ export interface TextToSpeechState {
   stop: () => void;
   /** speak / pause / resume, whichever this messageId's button should do. */
   toggle: (messageId: string, text: string, lang: 'en' | 'ur' | 'hi') => void;
+}
+
+/**
+ * Subscribe to a TTS event, returning the handle that unsubscribes it.
+ *
+ * Deliberately NOT `Tts.removeEventListener`, which the library still ships:
+ * it delegates to NativeEventEmitter#removeListener (index.js:122), a method
+ * React Native deleted in 0.72 — RN 0.78's NativeEventEmitter only exposes
+ * `removeAllListeners` and per-subscription `remove()`. Calling it throws
+ * "this.removeListener is not a function", and because that call sat in this
+ * hook's unmount cleanup, leaving Oracle Chat threw during teardown and the
+ * app's ErrorBoundary rendered its fallback instead of the home dashboard.
+ *
+ * `addEventListener` does return the EmitterSubscription (index.js:118-120)
+ * even though the shipped typings declare `void`, hence the cast: the handle
+ * is real, only the .d.ts is wrong.
+ */
+type TtsEventName = 'tts-finish' | 'tts-cancel' | 'tts-error';
+
+function subscribe(type: TtsEventName, handler: (event: never) => void): EmitterSubscription {
+  const add = Tts.addEventListener as unknown as (
+    t: TtsEventName,
+    h: (event: never) => void,
+  ) => EmitterSubscription;
+  return add(type, handler);
 }
 
 let ttsInitPromise: Promise<void> | null = null;
@@ -80,14 +106,14 @@ export function useTextToSpeech(): TextToSpeechState {
       onFinish();
     };
 
-    Tts.addEventListener('tts-finish', onFinish);
-    Tts.addEventListener('tts-cancel', onCancel);
-    Tts.addEventListener('tts-error', onError);
+    const subscriptions = [
+      subscribe('tts-finish', onFinish),
+      subscribe('tts-cancel', onCancel),
+      subscribe('tts-error', onError),
+    ];
 
     return () => {
-      Tts.removeEventListener('tts-finish', onFinish);
-      Tts.removeEventListener('tts-cancel', onCancel);
-      Tts.removeEventListener('tts-error', onError);
+      subscriptions.forEach(sub => sub.remove());
       Tts.stop().catch(() => {
         /* best-effort — screen is unmounting anyway */
       });
