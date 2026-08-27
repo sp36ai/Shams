@@ -150,7 +150,7 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({
                 }
               >
                 <Text style={[typography('label'), { color: colors.goldBright }]}>
-                  {isSpeaking ? '⏸' : isPaused ? '▶' : '▶'}
+                  {isSpeaking ? '⏸' : '▶'}
                 </Text>
               </Pressable>
               <Text style={[typography('caption'), { color: colors.textFaint, marginLeft: 6 }]}>
