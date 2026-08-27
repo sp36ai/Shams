@@ -29,3 +29,37 @@ export function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T | und
     );
   });
 }
+
+/**
+ * withDeadline — like withTimeout, but preserves the failure.
+ *
+ * withTimeout above resolves `undefined` for BOTH a timeout and a rejection,
+ * which is right for a fire-and-forget gate (an App Check token that never
+ * arrives) and wrong for a call whose error the caller must act on: a Firebase
+ * callable carries its meaning in `.code`, and collapsing 'resource-exhausted'
+ * and 'aborted' into "no answer" tells the seeker their question timed out
+ * when in fact they are out of questions, or the reading is already running.
+ *
+ * So this one rejects with the original error, and rejects with `onTimeout()`
+ * only when the deadline actually passes — which is the case the raw promise
+ * cannot report, because a hung native call never settles at all.
+ */
+export function withDeadline<T>(
+  promise: Promise<T>,
+  ms: number,
+  onTimeout: () => Error,
+): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timer = setTimeout(() => reject(onTimeout()), ms);
+    promise.then(
+      value => {
+        clearTimeout(timer);
+        resolve(value);
+      },
+      err => {
+        clearTimeout(timer);
+        reject(err);
+      },
+    );
+  });
+}

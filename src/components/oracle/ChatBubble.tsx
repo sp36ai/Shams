@@ -161,18 +161,30 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({
             {message.text}
           </Text>
 
+          {/*
+            A suggestion, never a redirection. The oracle has already answered
+            in this Reading; this only offers the matter its own chart. Doing
+            nothing keeps the seeker exactly where they are, which is why
+            "continue" is not a button — continuing is what happens if they
+            ignore this and keep typing.
+          */}
           {message.suggestsNewQuestion === true && message.replyToId !== undefined && (
-            <Pressable
-              onPress={() => onAskAsNewQuestion(message.replyToId!)}
-              style={({ pressed }) => [styles.newQuestionBtn, { opacity: pressed ? 0.7 : 1 }]}
-              accessibilityRole="button"
-              accessibilityLabel={t('oracleChat.askAsNewQuestion')}
-              testID="oracle-chat-ask-as-new"
-            >
-              <Text style={[typography('label'), { color: colors.goldBright }]}>
-                {'✦ ' + t('oracleChat.askAsNewQuestion')}
+            <View style={[styles.suggestionBlock, { borderTopColor: colors.border }]}>
+              <Text style={[typography('caption'), { color: colors.textMuted }]}>
+                {t('oracleChat.separateQuestionNote')}
               </Text>
-            </Pressable>
+              <Pressable
+                onPress={() => onAskAsNewQuestion(message.replyToId!)}
+                style={({ pressed }) => [styles.newQuestionBtn, { opacity: pressed ? 0.7 : 1 }]}
+                accessibilityRole="button"
+                accessibilityLabel={t('oracleChat.askAsNewQuestion')}
+                testID="oracle-chat-ask-as-new"
+              >
+                <Text style={[typography('label'), { color: colors.goldBright }]}>
+                  {'✦ ' + t('oracleChat.askAsNewQuestion')}
+                </Text>
+              </Pressable>
+            </View>
           )}
 
           <Pressable
@@ -278,8 +290,13 @@ const styles = StyleSheet.create({
   discussionBubble: {
     maxWidth: '92%',
   },
+  suggestionBlock: {
+    marginTop: 12,
+    paddingTop: 10,
+    borderTopWidth: StyleSheet.hairlineWidth,
+  },
   newQuestionBtn: {
-    marginTop: 10,
+    marginTop: 8,
     alignSelf: 'flex-start',
   },
   discussionSpeechBtn: {

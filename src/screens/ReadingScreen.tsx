@@ -69,14 +69,16 @@ import {
   discussionTurnsFor,
   type MessageInputKind,
   type ReadingMessage,
+  type ReadingThread,
 } from '@stores/readingThreadsStore';
 import { useReadingsStore } from '@stores/readingsStore';
-import { askWatchOracle, type WatchReading } from '../firebase/watchOracle';
+import { askWatchOracle, newRequestId, type WatchReading } from '../firebase/watchOracle';
 import { discussReading } from '../firebase/oracleDiscussion';
 import { toReadingRecord } from '../data/watchReadingRecord';
 import { selectRemedies } from '../data/remedySelector';
 import { watchVerdictToRankingContext } from '../data/watchRemedyContext';
 import { buildShareText, canShare } from '../data/readingShare';
+import { readingTitleFor } from '../data/readingTitle';
 import { speakableTextFor } from '@components/oracle/ChatBubble';
 import StarfieldBackground from '@components/StarfieldBackground';
 import ChatBubble from '@components/oracle/ChatBubble';
@@ -103,6 +105,12 @@ export function errorMessageFor(err: unknown, t: ReturnType<typeof useTranslatio
   }
   if (code === 'resource-exhausted') {
     return t('oracleChat.quotaExhausted');
+  }
+  if (code === 'aborted') {
+    // The server holds a claim on this exact submission: an earlier attempt
+    // may still be about to succeed, so retrying now is the one thing that
+    // could duplicate it. See functions/src/utils/idempotency.ts.
+    return t('oracleChat.errorAlreadyRunning');
   }
   if (code === 'unavailable') {
     return t('oracleChat.discussionUnavailable');
@@ -242,7 +250,12 @@ const ReadingScreen: React.FC = () => {
 
   /** Cast the chart for a thread's opening question. Spends a quota slot. */
   const runAsk = useCallback(
-    async (targetThreadId: string, oracleMessageId: string, question: string): Promise<void> => {
+    async (
+      targetThreadId: string,
+      oracleMessageId: string,
+      question: string,
+      requestId: string,
+    ): Promise<void> => {
       if (!canAsk || !consumeOne()) {
         updateMessage(targetThreadId, oracleMessageId, {
           status: 'failed',
@@ -256,6 +269,10 @@ const ReadingScreen: React.FC = () => {
         const result = await askWatchOracle({
           question,
           questionLang: lang,
+          // The thread's own id, so a retry — including one after the app was
+          // killed mid-call — replays that reading rather than casting and
+          // charging for a second one.
+          requestId,
           ...(seekerProfile !== null ? { seekerProfile } : {}),
         });
         updateMessage(targetThreadId, oracleMessageId, {
@@ -360,7 +377,13 @@ const ReadingScreen: React.FC = () => {
       // that moment for a new Reading.
       const existing = threadById(useReadingThreadsStore.getState().threads, threadId ?? undefined);
       const target =
-        existing ?? createThread({ id: `t_${Date.now()}`, question: trimmed, questionLang: lang });
+        existing ??
+        createThread({
+          id: `t_${Date.now()}`,
+          requestId: newRequestId(),
+          question: trimmed,
+          questionLang: lang,
+        });
       if (existing === null) {
         setThreadId(target.id);
       }
@@ -391,7 +414,7 @@ const ReadingScreen: React.FC = () => {
 
       const run = isFollowUp
         ? runDiscuss(target.id, oracleId, userId, trimmed, readingId)
-        : runAsk(target.id, oracleId, trimmed);
+        : runAsk(target.id, oracleId, trimmed, target.requestId);
 
       run.finally(() => {
         sendingRef.current = false;
@@ -408,6 +431,12 @@ const ReadingScreen: React.FC = () => {
   /**
    * A question handed over from Home. Submitted once, on mount: Home owns the
    * composer that starts a Reading, this screen owns the Reading itself.
+   *
+   * The submission happens in an effect, which runs after the first commit —
+   * so for one frame there is a question in flight and no thread yet. That
+   * frame renders the provisional header below rather than the empty state:
+   * arriving from Home must land on the seeker's question, never on a blank
+   * "New Reading" that their words then appear in.
    */
   const initialQuestion = route.params?.initialQuestion;
   const initialSentRef = useRef(false);
@@ -441,7 +470,7 @@ const ReadingScreen: React.FC = () => {
       const run =
         oracleMsg.variant === 'discussion' && thread.readingId !== null
           ? runDiscuss(thread.id, oracleMsg.id, userMsg.id, userMsg.text, thread.readingId)
-          : runAsk(thread.id, oracleMsg.id, userMsg.text);
+          : runAsk(thread.id, oracleMsg.id, userMsg.text, thread.requestId);
 
       run.finally(() => {
         sendingRef.current = false;
@@ -530,6 +559,29 @@ const ReadingScreen: React.FC = () => {
 
   const shareable = thread !== null && canShare(thread);
 
+  /**
+   * What the header shows while a handed-over question is still being filed.
+   * Same shape as a real thread, built from the question alone — the moment
+   * and the verdict are not known yet and are simply absent, never faked.
+   */
+  const provisionalThread: ReadingThread | null =
+    thread === null && initialQuestion !== undefined
+      ? {
+          id: 'provisional',
+          requestId: '',
+          readingId: null,
+          title: readingTitleFor(initialQuestion),
+          question: initialQuestion,
+          questionLang: lang,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          status: 'pending',
+          context: null,
+          messages: [],
+        }
+      : null;
+  const headerThread = thread ?? provisionalThread;
+
   return (
     <SafeAreaView style={[styles.root, { backgroundColor: theme.colors.bg }]} edges={['top']}>
       <StarfieldBackground
@@ -549,7 +601,7 @@ const ReadingScreen: React.FC = () => {
           <Text style={[typography('label'), { color: colors.accent, fontSize: 20 }]}>‹</Text>
         </Pressable>
         <Text style={[typography('subheading'), { color: colors.goldBright }]} numberOfLines={1}>
-          {thread?.title ?? t('reading.newReading')}
+          {headerThread?.title ?? t('reading.newReading')}
         </Text>
         {shareable ? (
           <Pressable
@@ -571,7 +623,7 @@ const ReadingScreen: React.FC = () => {
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
       >
-        {thread === null ? (
+        {headerThread === null ? (
           <EmptyState />
         ) : (
           <FlatList
@@ -579,7 +631,7 @@ const ReadingScreen: React.FC = () => {
             data={messages}
             keyExtractor={m => m.id}
             renderItem={renderMessage}
-            ListHeaderComponent={<ReadingHeader thread={thread} />}
+            ListHeaderComponent={<ReadingHeader thread={headerThread} />}
             contentContainerStyle={styles.listContent}
             onContentSizeChange={() => listRef.current?.scrollToEnd({ animated: true })}
           />

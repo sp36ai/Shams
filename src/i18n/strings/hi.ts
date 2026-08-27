@@ -145,6 +145,7 @@ export const hi: StringTable = {
     micPermissionDenied:
       'आवाज़ से प्रश्न के लिए माइक्रोफ़ोन की अनुमति चाहिए। सेटिंग्स में सक्षम करें।',
     noSpeechDetected: 'कुछ सुनाई नहीं दिया — दोबारा कोशिश करें।',
+    errorAlreadyRunning: 'यह प्रश्न पहले से पढ़ा जा रहा है। थोड़ा रुककर पुनः प्रयास करें।',
     errorTimeout: 'ओरेकल को उत्तर देने में बहुत समय लगा। दोबारा कोशिश करें।',
     errorSignIn: 'जारी रखने के लिए दोबारा साइन इन करें।',
     listenToVerdict: 'सुनें',
@@ -159,7 +160,8 @@ export const hi: StringTable = {
     modeDiscuss: '💬 इसी उत्तर पर चर्चा',
     modeNewQuestion: '✦ नया प्रश्न',
     placeholderDiscuss: 'इस उत्तर के बारे में पूछें…',
-    askAsNewQuestion: 'इसे नए प्रश्न के रूप में पूछें',
+    askAsNewQuestion: 'इसके लिए नई रीडिंग खोलें',
+    separateQuestionNote: 'यह अलग प्रश्न हो सकता है — इसे अपना क्षण चाहिए।',
     discussionUnavailable: 'ओरेकल ने इसका उत्तर नहीं दिया। पुनः पूछें।',
     discussionReadingGone: 'यह उत्तर अब चर्चा के लिए उपलब्ध नहीं है।',
   },

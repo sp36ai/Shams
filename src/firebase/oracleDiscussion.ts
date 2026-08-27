@@ -13,7 +13,7 @@
  */
 
 import { regionalFunctions } from './functionsRegion';
-import { withTimeout } from '../utils/withTimeout';
+import { withTimeout, withDeadline } from '../utils/withTimeout';
 import { ensureAppCheckReady } from './appCheck';
 
 /** Same bounded head start the ask path gives App Check — see watchOracle.ts. */
@@ -70,7 +70,10 @@ export async function discussReading(args: DiscussReadingInput): Promise<Discuss
 
   const fn = regionalFunctions().httpsCallable('discussReading');
 
-  const result = await withTimeout(
+  // withDeadline preserves the callable's own error code — 'resource-exhausted'
+  // here means this reading's follow-up budget is spent, not that the seeker
+  // is out of questions, and the screen says something different for each.
+  const result = await withDeadline(
     fn({
       readingId: args.readingId,
       message: args.message,
@@ -78,13 +81,8 @@ export async function discussReading(args: DiscussReadingInput): Promise<Discuss
       turns: args.turns.slice(-MAX_DISCUSSION_TURNS_SENT),
     }),
     DISCUSS_READING_TIMEOUT_MS,
+    () => new DiscussReadingTimeoutError(),
   );
-
-  if (result === undefined) {
-    // Surfaces as `.code === 'deadline-exceeded'`, which the chat screen's
-    // existing error mapping already turns into a retryable bubble.
-    throw new DiscussReadingTimeoutError();
-  }
 
   const data = result.data as {
     answer: string;

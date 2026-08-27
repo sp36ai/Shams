@@ -150,13 +150,12 @@ describe('ReadingScreen', () => {
   });
 
   it('shows a failed bubble with retry on network failure, and recovers on retry', async () => {
-    // askWatchOracle() (firebase/watchOracle.ts, unmodified — pre-existing
-    // behavior) races the callable against withTimeout(), which resolves to
-    // `undefined` on ANY rejection, not only a real timeout — so a rejected
-    // callable surfaces here as errorTimeout regardless of its own .code.
-    // That collapsing of distinct failures into one message is a pre-existing
-    // characteristic of the shared client wrapper, not something introduced
-    // or fixable from this screen.
+    // The callable's own `.code` reaches the seeker: askWatchOracle now races
+    // against withDeadline(), which rejects with the original error, so an
+    // 'internal' failure reads as a generic failure rather than as a timeout.
+    // (It previously used withTimeout(), which resolves `undefined` on ANY
+    // rejection and so reported every failure — out of quota, signed out,
+    // server error — as "took too long".)
     (httpsCallable as jest.Mock).mockImplementation((name: string) => {
       if (name === 'askWatchOracle') {
         return jest.fn(() =>
@@ -173,7 +172,9 @@ describe('ReadingScreen', () => {
     await user.press(screen.getByTestId('oracle-chat-send-btn'));
 
     await waitFor(() =>
-      expect(screen.getByText('The oracle took too long to answer. Try again.')).toBeTruthy(),
+      expect(
+        screen.getByText('The scrolls of this moment have not opened their seal. Try again.'),
+      ).toBeTruthy(),
     );
 
     // Now let a retry succeed.
@@ -461,6 +462,28 @@ describe('ReadingScreen', () => {
       expect(useReadingThreadsStore.getState().threads).toHaveLength(0);
     });
 
+    it('shows the handed-over question immediately, with no blank New Reading', async () => {
+      // Held open so the assertion lands while the cast is still in flight —
+      // the exact frame the seeker sees on arriving from Home.
+      let resolveAsk: (value: { data: unknown }) => void = () => {};
+      const pending = new Promise<{ data: unknown }>(resolve => {
+        resolveAsk = resolve;
+      });
+      (httpsCallable as jest.Mock).mockImplementation((name: string) =>
+        name === 'askWatchOracle' ? jest.fn(() => pending) : defaultImpl(name),
+      );
+      setRoute({ initialQuestion: 'Should I accept this opportunity?' });
+
+      await renderScreen(<ReadingScreen />);
+
+      expect(screen.getByText('Should I accept this opportunity?')).toBeTruthy();
+      expect(screen.queryByText('New Reading')).toBeNull();
+      expect(screen.getAllByText('Accept opportunity').length).toBeGreaterThan(0);
+
+      resolveAsk({ data: successPayload() });
+      await waitFor(() => expect(onlyThread()?.readingId).toBe('r1'));
+    });
+
     it('submits a question handed over from Home, once', async () => {
       const askCallable = jest.fn(() => Promise.resolve({ data: successPayload() }));
       (httpsCallable as jest.Mock).mockImplementation((name: string) =>
@@ -505,6 +528,33 @@ describe('ReadingScreen', () => {
       expect(
         threadById(useReadingThreadsStore.getState().threads, 't_old')?.context?.localMoment,
       ).toBe('2026-08-08T11:13:00+05:30');
+    });
+
+    it('retries a failed cast under the SAME requestId, so the server can replay it', async () => {
+      const askCallable = jest.fn(() =>
+        Promise.reject(Object.assign(new Error('boom'), { code: 'internal' })),
+      );
+      (httpsCallable as jest.Mock).mockImplementation((name: string) =>
+        name === 'askWatchOracle' ? askCallable : defaultImpl(name),
+      );
+
+      await renderScreen(<ReadingScreen />);
+      const user = userEvent.setup();
+      await user.type(screen.getByTestId('oracle-chat-input'), 'Will I get the job?');
+      await user.press(screen.getByTestId('oracle-chat-send-btn'));
+      await waitFor(() => expect(screen.getByText('↻ Retry')).toBeTruthy());
+
+      await user.press(screen.getByText('↻ Retry'));
+      await waitFor(() => expect(askCallable).toHaveBeenCalledTimes(2));
+
+      // The id identifies the seeker's ACT of asking, not the call: same id on
+      // the retry is what lets the server tell a retry from a second question.
+      const first = askCallable.mock.calls[0]?.[0] as { requestId?: string };
+      const second = askCallable.mock.calls[1]?.[0] as { requestId?: string };
+      expect(first.requestId).toBeDefined();
+      expect(second.requestId).toBe(first.requestId);
+      // And it is persisted, so the id survives the app being killed.
+      expect(onlyThread()?.requestId).toBe(first.requestId);
     });
 
     it('keeps a retried cast in the same Reading rather than opening a second', async () => {

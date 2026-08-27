@@ -212,6 +212,8 @@ export interface StringTable {
     micPermissionDenied: string;
     noSpeechDetected: string;
     errorTimeout: string;
+    /** The server is already reading this exact submission. */
+    errorAlreadyRunning: string;
     errorSignIn: string;
     listenToVerdict: string;
     playNarration: string;
@@ -228,6 +230,8 @@ export interface StringTable {
     modeNewQuestion: string;
     placeholderDiscuss: string;
     askAsNewQuestion: string;
+    /** Suggestion above that action — never phrased as a refusal. */
+    separateQuestionNote: string;
     discussionUnavailable: string;
     discussionReadingGone: string;
   };

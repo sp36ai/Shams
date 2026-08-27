@@ -34,6 +34,13 @@ export const AskWatchOracleSchema = z
     seekerProfile: z.enum(['clarity', 'comfort', 'action', 'surrender']).optional(),
     seekerName: z.string().trim().max(100).optional(),
     motherName: z.string().trim().max(100).optional(),
+    /**
+     * Client-generated, once per user action and reused on every retry of
+     * that action. It is what lets the server tell a retry from a second
+     * question — see utils/idempotency.ts. Optional so a client that predates
+     * it still works; such a call simply gets no deduplication.
+     */
+    requestId: z.string().trim().min(8).max(128).optional(),
   })
   .strict();
 

@@ -48,6 +48,7 @@ function message(overrides: Partial<ReadingMessage> = {}): ReadingMessage {
 function openThread(question = 'Should I accept this business opportunity?'): ReadingThread {
   return useReadingThreadsStore.getState().createThread({
     id: 't1',
+    requestId: 'req_t1',
     question,
     questionLang: 'en',
   });
@@ -89,26 +90,56 @@ describe('attaching the cast chart', () => {
     expect(thread?.context).toEqual(contextFrom(reading()));
   });
 
-  it('never rewrites a context once written - a Reading keeps its own moment', () => {
+  it('never rewrites a bound Reading - not its moment, not which reading it is', () => {
     openThread();
     useReadingThreadsStore
       .getState()
       .attachReading('t1', reading('r1', '2026-08-08T11:13:00+05:30'));
-    // A second cast against the same thread must not move the moment.
+    // Anything arriving later — a racing retry, a future temporal feature —
+    // must leave both the moment and the reading it names untouched.
     useReadingThreadsStore
       .getState()
       .attachReading('t1', reading('r2', '2026-08-11T09:02:00+05:30'));
 
     const thread = threadById(useReadingThreadsStore.getState().threads, 't1');
     expect(thread?.context?.localMoment).toBe('2026-08-08T11:13:00+05:30');
+    expect(thread?.readingId).toBe('r1');
+  });
+
+  it('freezes the context at runtime, where readonly types no longer exist', () => {
+    openThread();
+    useReadingThreadsStore.getState().attachReading('t1', reading());
+    const context = threadById(useReadingThreadsStore.getState().threads, 't1')?.context;
+
+    expect(Object.isFrozen(context)).toBe(true);
+    expect(Object.isFrozen(context?.window)).toBe(true);
+  });
+
+  it('carries a requestId that survives persistence, so a retry can replay', () => {
+    const thread = openThread();
+    expect(thread.requestId).toBe('req_t1');
+    const persisted = JSON.parse(storage.getString(KEYS.READING_THREADS) as string) as Array<{
+      requestId?: string;
+    }>;
+    expect(persisted[0]?.requestId).toBe('req_t1');
   });
 });
 
 describe('messages belong to their Reading', () => {
   it('keeps two Readings apart', () => {
     const store = useReadingThreadsStore.getState();
-    store.createThread({ id: 't1', question: 'Will the sale complete?', questionLang: 'en' });
-    store.createThread({ id: 't2', question: 'Should I travel?', questionLang: 'en' });
+    store.createThread({
+      id: 't1',
+      requestId: 'req_t1',
+      question: 'Will the sale complete?',
+      questionLang: 'en',
+    });
+    store.createThread({
+      id: 't2',
+      requestId: 'req_t2',
+      question: 'Should I travel?',
+      questionLang: 'en',
+    });
 
     store.addMessage('t1', message({ id: 'a', text: 'Why so long?' }));
     store.addMessage('t2', message({ id: 'b', text: 'When?' }));
@@ -132,6 +163,7 @@ describe('messages belong to their Reading', () => {
 describe('discussionTurnsFor', () => {
   const thread: ReadingThread = {
     id: 't1',
+    requestId: 'req_t1',
     readingId: 'r1',
     title: 'Business opportunity',
     question: 'Should I accept?',
@@ -175,6 +207,7 @@ describe('searchThreads', () => {
   const threads: ReadingThread[] = [
     {
       id: 't1',
+      requestId: 'req_t1',
       readingId: 'r1',
       title: 'Career transition',
       question: 'Should I leave my current job?',
@@ -187,6 +220,7 @@ describe('searchThreads', () => {
     },
     {
       id: 't2',
+      requestId: 'req_t2',
       readingId: 'r2',
       title: 'Property decision',
       question: 'Should I buy this shop?',
@@ -250,19 +284,24 @@ describe('groupByRecency', () => {
 });
 
 describe('migration from the pre-thread transcript', () => {
+  function legacy(messages: ReadingMessage[]): void {
+    storage.set(KEYS.ORACLE_CHAT_HISTORY, JSON.stringify(messages));
+    storage.delete(KEYS.READING_THREADS);
+  }
+
+  const verdict = (id: string, readingId: string) =>
+    message({ id, role: 'oracle', text: '', variant: 'reading', reading: reading(readingId) });
+
   it('splits the flat transcript into the threads that were always implicit', () => {
-    const legacy: ReadingMessage[] = [
+    legacy([
       message({ id: 'u0', text: 'Will the sale complete?' }),
-      message({ id: 'o0', role: 'oracle', text: '', variant: 'reading', reading: reading('r1') }),
+      verdict('o0', 'r1'),
       message({ id: 'u1', text: 'Why so long?' }),
       message({ id: 'o1', role: 'oracle', text: 'The agent is slow.', variant: 'discussion' }),
       message({ id: 'u2', text: 'Should I travel?' }),
-      message({ id: 'o2', role: 'oracle', text: '', variant: 'reading', reading: reading('r2') }),
-    ];
-    storage.set(KEYS.ORACLE_CHAT_HISTORY, JSON.stringify(legacy));
-    storage.delete(KEYS.READING_THREADS);
+      verdict('o2', 'r2'),
+    ]);
 
-    // The path a cold start takes when it finds no threads cache.
     const migrated = migrateLegacyTranscript();
 
     expect(migrated.map(t => t.readingId)).toEqual(['r2', 'r1']);
@@ -273,5 +312,139 @@ describe('migration from the pre-thread transcript', () => {
     expect(migrated.find(t => t.readingId === 'r2')?.messages.map(m => m.id)).toEqual(['u2', 'o2']);
     // Read once: the legacy key is gone afterwards.
     expect(storage.getString(KEYS.ORACLE_CHAT_HISTORY)).toBeUndefined();
+  });
+
+  it('is idempotent - running it twice leaves exactly what running it once did', () => {
+    legacy([
+      message({ id: 'u0', text: 'Will the sale complete?' }),
+      verdict('o0', 'r1'),
+      message({ id: 'u1', text: 'Why so long?' }),
+      message({ id: 'o1', role: 'oracle', text: 'The agent is slow.', variant: 'discussion' }),
+    ]);
+
+    const once = migrateLegacyTranscript();
+    const afterOnce = storage.getString(KEYS.READING_THREADS);
+
+    // A second run — a re-entrant call, a crash-and-restart — finds no source
+    // and must neither duplicate the threads nor erase them.
+    const twice = migrateLegacyTranscript();
+
+    expect(twice).toEqual([]);
+    expect(storage.getString(KEYS.READING_THREADS)).toBe(afterOnce);
+    expect(JSON.parse(afterOnce as string)).toHaveLength(once.length);
+  });
+
+  it('records that it ran even when there was nothing to migrate', () => {
+    storage.delete(KEYS.ORACLE_CHAT_HISTORY);
+    storage.delete(KEYS.READING_THREADS);
+
+    expect(migrateLegacyTranscript()).toEqual([]);
+    // "Migration has run" is a fact on disk, not an inference from an absent
+    // key — otherwise every cold start would re-enter this path.
+    expect(storage.getString(KEYS.READING_THREADS)).toBe('[]');
+  });
+
+  it('migrates a single Reading with no follow-ups', () => {
+    legacy([message({ id: 'u0', text: 'Will the sale complete?' }), verdict('o0', 'r1')]);
+
+    const migrated = migrateLegacyTranscript();
+    expect(migrated).toHaveLength(1);
+    expect(migrated[0]?.messages.map(m => m.id)).toEqual(['u0', 'o0']);
+    expect(migrated[0]?.status).toBe('complete');
+  });
+
+  it('keeps consecutive Readings apart, even with no messages between them', () => {
+    legacy([
+      message({ id: 'u0', text: 'Will the sale complete?' }),
+      verdict('o0', 'r1'),
+      message({ id: 'u1', text: 'Should I travel?' }),
+      verdict('o1', 'r2'),
+      message({ id: 'u2', text: 'And the house?' }),
+      verdict('o2', 'r3'),
+    ]);
+
+    const migrated = migrateLegacyTranscript();
+    expect(migrated.map(t => t.readingId)).toEqual(['r3', 'r2', 'r1']);
+    expect(migrated.every(t => t.messages.length === 2)).toBe(true);
+    expect(migrated.map(t => t.question)).toEqual([
+      'And the house?',
+      'Should I travel?',
+      'Will the sale complete?',
+    ]);
+  });
+
+  it('drops orphan messages that precede any verdict rather than guessing', () => {
+    legacy([
+      message({ id: 'o_orphan', role: 'oracle', text: 'A stray reply.', variant: 'discussion' }),
+      message({ id: 'u0', text: 'Will the sale complete?' }),
+      verdict('o0', 'r1'),
+    ]);
+
+    const migrated = migrateLegacyTranscript();
+    expect(migrated).toHaveLength(1);
+    // The orphan belonged to no Reading; the question immediately before the
+    // verdict still opens one.
+    expect(migrated[0]?.messages.map(m => m.id)).toEqual(['u0', 'o0']);
+  });
+
+  it('keeps a Reading whose question was never persisted, rather than dropping it', () => {
+    legacy([verdict('o0', 'r1')]);
+
+    const migrated = migrateLegacyTranscript();
+    expect(migrated).toHaveLength(1);
+    expect(migrated[0]?.question).toBe('');
+    expect(migrated[0]?.readingId).toBe('r1');
+  });
+
+  it('leaves a half-written conversation openable', () => {
+    // The app died with a follow-up still in flight.
+    legacy([
+      message({ id: 'u0', text: 'Will the sale complete?' }),
+      verdict('o0', 'r1'),
+      message({ id: 'u1', text: 'Why so long?' }),
+      message({ id: 'o1', role: 'oracle', text: '', variant: 'discussion', status: 'sending' }),
+    ]);
+
+    const migrated = migrateLegacyTranscript();
+    expect(migrated[0]?.messages.map(m => m.id)).toEqual(['u0', 'o0', 'u1', 'o1']);
+    expect(migrated[0]?.status).toBe('complete');
+  });
+
+  it('does not start a thread from a verdict with no usable reading id', () => {
+    const damaged = message({
+      id: 'o_bad',
+      role: 'oracle',
+      text: '',
+      variant: 'reading',
+      reading: { ...reading('r1'), readingId: '' },
+    });
+    legacy([message({ id: 'u0', text: 'Will the sale complete?' }), damaged, verdict('o1', 'r2')]);
+
+    const migrated = migrateLegacyTranscript();
+    // The damaged entry cost only itself: the question still opened the real
+    // Reading that followed.
+    expect(migrated.map(t => t.readingId)).toEqual(['r2']);
+    expect(migrated[0]?.question).toBe('Will the sale complete?');
+  });
+
+  it('survives corrupt legacy data without leaving the migration armed', () => {
+    storage.set(KEYS.ORACLE_CHAT_HISTORY, '{not json');
+    storage.delete(KEYS.READING_THREADS);
+
+    expect(migrateLegacyTranscript()).toEqual([]);
+    expect(storage.getString(KEYS.ORACLE_CHAT_HISTORY)).toBeUndefined();
+    expect(storage.getString(KEYS.READING_THREADS)).toBe('[]');
+  });
+
+  it('ignores legacy entries of the wrong shape', () => {
+    storage.set(
+      KEYS.ORACLE_CHAT_HISTORY,
+      JSON.stringify([null, 42, { role: 'user' }, message({ id: 'u0' }), verdict('o0', 'r1')]),
+    );
+    storage.delete(KEYS.READING_THREADS);
+
+    const migrated = migrateLegacyTranscript();
+    expect(migrated).toHaveLength(1);
+    expect(migrated[0]?.messages.map(m => m.id)).toEqual(['u0', 'o0']);
   });
 });

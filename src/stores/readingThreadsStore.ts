@@ -88,13 +88,17 @@ export interface ReadingMessage {
  */
 export interface ReadingContext {
   /** The querent's local moment, as used to select the bracket. */
-  localMoment: string;
+  readonly localMoment: string;
   /** Server instant the chart was cast, UTC. */
-  computedAt: string;
-  window: { startMinute: number; endMinute: number; minute: number };
-  lagnaSignName: string;
-  lagnaRulerName: string;
-  method: 'RKP';
+  readonly computedAt: string;
+  readonly window: {
+    readonly startMinute: number;
+    readonly endMinute: number;
+    readonly minute: number;
+  };
+  readonly lagnaSignName: string;
+  readonly lagnaRulerName: string;
+  readonly method: 'RKP';
 }
 
 export type ThreadStatus = 'pending' | 'complete' | 'error';
@@ -102,6 +106,17 @@ export type ThreadStatus = 'pending' | 'complete' | 'error';
 export interface ReadingThread {
   /** Local, stable from the moment the seeker submits their question. */
   id: string;
+  /**
+   * Identifies the seeker's ACT of asking, to the server.
+   *
+   * Persisted with the thread, not held in memory, because that is the case it
+   * exists for: if the app dies between the server casting the chart and the
+   * response arriving, the retry after restart must carry the SAME id so the
+   * server replays that reading instead of casting and charging for another.
+   * Written once with the thread and never regenerated — a new question means
+   * a new thread, which brings its own id.
+   */
+  requestId: string;
   /** The server's reading id, once the chart has landed. Null until then —
    *  and null forever on a thread whose first cast failed. */
   readingId: string | null;
@@ -155,12 +170,18 @@ function isThread(value: unknown): value is ReadingThread {
 function readCache(): ReadingThread[] {
   const raw = storage.getString(KEYS.READING_THREADS);
   if (raw === undefined) {
+    // No threads cache: either a fresh install or a seeker upgrading from the
+    // flat transcript. migrateLegacyTranscript() handles both and always
+    // leaves the cache written, so this branch is taken exactly once.
     return migrateLegacyTranscript();
   }
   try {
     const parsed = JSON.parse(raw) as unknown;
     return Array.isArray(parsed) ? parsed.filter(isThread) : [];
   } catch {
+    // Corrupt cache. Dropping it loses conversations, which is bad, but
+    // returning garbage to every screen is worse — and the migration is not
+    // re-run, because its source has long since been deleted.
     storage.delete(KEYS.READING_THREADS);
     return [];
   }
@@ -190,20 +211,46 @@ function writeCache(threads: ReadingThread[]): void {
  * The old store held every reading and follow-up of every sitting in one list.
  * Splitting it at each reading turn recovers the threads that were always
  * implicitly there, so an existing seeker opens the new Readings list and
- * finds their history rather than an empty state. Runs once: the legacy key is
- * deleted afterwards, and a transcript that cannot be parsed is simply dropped.
+ * finds their history rather than an empty state.
+ *
+ * IDEMPOTENT, and by construction rather than by luck:
+ *   - the legacy key is deleted before anything is inferred, so a second run
+ *     — a crash mid-migration, a re-entrant call, a later cold start — finds
+ *     no source and returns what the threads cache already holds;
+ *   - the threads cache is ALWAYS written, even when the transcript yielded
+ *     nothing, so "migration has run" is a fact on disk rather than an
+ *     inference from an absent key;
+ *   - thread ids are derived from the server's reading id, so re-running over
+ *     the same input could only ever produce the same threads.
+ *
+ * Inference limits, stated plainly because they are inference: a verdict claims
+ * the most recent unanswered seeker message as the question it answers. That is
+ * how the old screen actually wrote the transcript, so it is right for every
+ * transcript this app produced. Messages that precede the first verdict have no
+ * reading to belong to and are dropped rather than guessed at; a verdict with
+ * no seeker message before it becomes a Reading with an empty question, which
+ * still opens and still shows its own verdict.
  */
 export function migrateLegacyTranscript(): ReadingThread[] {
   const raw = storage.getString(KEYS.ORACLE_CHAT_HISTORY);
   if (raw === undefined) {
+    // Nothing to migrate — a fresh install, or a migration that already ran.
+    // Either way the threads cache is now authoritative and must exist.
+    const existing = storage.getString(KEYS.READING_THREADS);
+    if (existing === undefined) {
+      writeCache([]);
+    }
     return [];
   }
+  // Deleted BEFORE any inference: a crash midway must not leave a transcript
+  // that a later run would migrate a second time.
   storage.delete(KEYS.ORACLE_CHAT_HISTORY);
 
   let legacy: ReadingMessage[];
   try {
     const parsed = JSON.parse(raw) as unknown;
     if (!Array.isArray(parsed)) {
+      writeCache([]);
       return [];
     }
     legacy = parsed.filter((m): m is ReadingMessage => {
@@ -219,6 +266,9 @@ export function migrateLegacyTranscript(): ReadingThread[] {
       );
     });
   } catch {
+    // Corrupt legacy data. The key is already gone, so record that migration
+    // has happened and move on with an empty archive.
+    writeCache([]);
     return [];
   }
 
@@ -236,7 +286,18 @@ export function migrateLegacyTranscript(): ReadingThread[] {
       message.variant !== 'discussion' &&
       message.reading !== undefined;
 
-    if (isReadingTurn) {
+    const reading = message.reading;
+    // A verdict with no usable reading id cannot be opened again, so it must
+    // not start a thread — and must not consume the question either. Checked
+    // BEFORE anything is claimed or moved, so a damaged entry costs nothing
+    // but itself.
+    const opensThread =
+      isReadingTurn &&
+      reading !== undefined &&
+      typeof reading.readingId === 'string' &&
+      reading.readingId.length > 0;
+
+    if (opensThread && reading !== undefined) {
       const question = unanswered;
       unanswered = undefined;
       // The question opens the NEW thread rather than closing the previous
@@ -247,10 +308,12 @@ export function migrateLegacyTranscript(): ReadingThread[] {
           open.messages.splice(at, 1);
         }
       }
-      const reading = message.reading as WatchReading;
       const questionText = question?.text ?? '';
       threads.push({
         id: `t_${reading.readingId}`,
+        // A migrated Reading has already been cast and can never be re-asked,
+        // so this id is inert; it exists only to satisfy the shape.
+        requestId: `migrated_${reading.readingId}`,
         readingId: reading.readingId,
         title: readingTitleFor(questionText),
         question: questionText,
@@ -266,7 +329,10 @@ export function migrateLegacyTranscript(): ReadingThread[] {
 
     if (message.role === 'user') {
       unanswered = message;
-    } else {
+    } else if (!isReadingTurn) {
+      // A genuine reply answers the question before it. A damaged verdict —
+      // reading turn, unusable id — deliberately does NOT: it costs only
+      // itself, and the question stays available to the next real verdict.
       unanswered = undefined;
     }
 
@@ -280,22 +346,28 @@ export function migrateLegacyTranscript(): ReadingThread[] {
   }
 
   const ordered = threads.reverse();
-  if (ordered.length > 0) {
-    writeCache(ordered);
-  }
+  // Written unconditionally — see the idempotency note above.
+  writeCache(ordered);
   return ordered;
 }
 
-/** The immutable moment snapshot, read straight off the server's response. */
+/**
+ * The immutable moment snapshot, read straight off the server's response.
+ *
+ * Frozen, not merely typed readonly: `readonly` is erased at runtime and this
+ * object outlives every screen that touches it. A future follow-up that needs
+ * a different temporal frame must carry that on the follow-up, never by
+ * reaching into the Reading it belongs to.
+ */
 export function contextFrom(reading: WatchReading): ReadingContext {
-  return {
+  return Object.freeze({
     localMoment: reading.localMoment,
     computedAt: reading.computedAt,
-    window: reading.window,
     lagnaSignName: reading.lagnaSignName,
     lagnaRulerName: reading.lagnaRulerName,
     method: 'RKP',
-  };
+    window: Object.freeze({ ...reading.window }),
+  });
 }
 
 /* -------------------------------------------------------------------------- */
@@ -313,6 +385,7 @@ export interface ReadingThreadsState {
    */
   createThread: (input: {
     id: string;
+    requestId: string;
     question: string;
     questionLang: 'en' | 'ur' | 'hi';
   }) => ReadingThread;
@@ -335,10 +408,11 @@ function touch(thread: ReadingThread, at: string): ReadingThread {
 export const useReadingThreadsStore = create<ReadingThreadsState>((set, get) => ({
   threads: readCache(),
 
-  createThread: ({ id, question, questionLang }): ReadingThread => {
+  createThread: ({ id, requestId, question, questionLang }): ReadingThread => {
     const now = new Date().toISOString();
     const thread: ReadingThread = {
       id,
+      requestId,
       readingId: null,
       title: readingTitleFor(question),
       question,
@@ -379,20 +453,27 @@ export const useReadingThreadsStore = create<ReadingThreadsState>((set, get) => 
   },
 
   attachReading: (threadId, reading): void => {
-    const next = get().threads.map(thread =>
-      thread.id === threadId
-        ? {
-            ...thread,
-            readingId: reading.readingId,
-            status: 'complete' as ThreadStatus,
-            // Written once. A later cast in the same thread is impossible by
-            // construction — a new question opens a new thread — but this
-            // guard states the rule rather than relying on that.
-            context: thread.context ?? contextFrom(reading),
-            updatedAt: new Date().toISOString(),
-          }
-        : thread,
-    );
+    const next = get().threads.map(thread => {
+      if (thread.id !== threadId) {
+        return thread;
+      }
+      // A Reading is bound to its moment exactly once. Once the chart has
+      // landed, NOTHING that happens later in this thread — a follow-up, a
+      // retry that raced a replay, a future feature asking about a different
+      // date — may move the reading it is about or the moment it was cast
+      // for. The guard lives here, at the only writer, rather than in each
+      // caller: a rule enforced at one point cannot be forgotten at another.
+      if (thread.context !== null) {
+        return thread;
+      }
+      return {
+        ...thread,
+        readingId: reading.readingId,
+        status: 'complete' as ThreadStatus,
+        context: contextFrom(reading),
+        updatedAt: new Date().toISOString(),
+      };
+    });
     writeCache(next);
     set({ threads: next });
   },
