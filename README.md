@@ -121,7 +121,7 @@ data, and no location either. It can run the moment the app opens.
 
 An earlier **Astronomical Oracle** mode — a true-Ascendant chart built by
 `primitives/chartBuilder.ts` (RAMC, obliquity, latitude, Placidus houses,
-location required) — was retired from `OracleChatScreen`'s `runEngine()`
+location required) — was retired from the ask screen's `runEngine()`
 first (it needed a location the watch frame doesn't, and running both per
 question would have double-charged the querent's quota for one question),
 then deleted outright once confirmed unreachable: the `judgeHorary()`
@@ -236,7 +236,7 @@ npm test                    # Vitest (currently minimal coverage)
 │   ├── hooks/             React hooks (purchase, quota, classifier, timing)
 │   ├── i18n/              Translations (EN, UR, HI)
 │   ├── navigation/        React Navigation stack and tabs
-│   ├── screens/           App screens (auth, splash, ask, history, etc.)
+│   ├── screens/           App screens (auth, splash, Reading, Your Readings, etc.)
 │   ├── storage/           MMKV instance and key registry
 │   ├── stores/            Zustand stores (auth, quota, readings, settings)
 │   ├── theme/             Theme provider and typography

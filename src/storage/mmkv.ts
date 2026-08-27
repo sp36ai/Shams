@@ -35,8 +35,13 @@ export const KEYS = Object.freeze({
   // Readings cache (most-recent N readings for offline open of History)
   READINGS_CACHE: 'readings.cache.v1',
 
-  // Oracle Chat local conversation transcript (separate from the readings
-  // cache above — this is the chat bubbles, not the structured reading list)
+  // Reading threads — each Reading with the conversation belonging to it.
+  // Supersedes ORACLE_CHAT_HISTORY below, whose flat transcript is migrated
+  // into threads once, on first read (see readingThreadsStore).
+  READING_THREADS: 'readings.threads.v1',
+
+  // Legacy flat Oracle Chat transcript. Read once for migration, then
+  // deleted; no code writes it any more.
   ORACLE_CHAT_HISTORY: 'oracleChat.history.v1',
 
   // Onboarding flags

@@ -1,5 +1,5 @@
 /**
- * ChatBubble — one turn in the Oracle Chat conversation.
+ * ChatBubble — one turn in a Reading's conversation.
  * --------------------------------------------------------------------------
  * Presentation only, same discipline as RkpWatchCard/RemedyProtocolCard: a
  * 'sent' oracle message renders those two cards from `message.reading`
@@ -19,7 +19,7 @@ import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-nati
 import { useColors } from '@theme/ThemeProvider';
 import { useTypography } from '@theme/useTypography';
 import { useTranslation } from '@i18n/I18nProvider';
-import type { ChatMessage } from '@stores/oracleChatStore';
+import type { ReadingMessage } from '@stores/readingThreadsStore';
 import type { WatchReading } from '../../firebase/watchOracle';
 import RkpWatchCard, { STATE_HEADLINE } from './RkpWatchCard';
 import RemedyProtocolCard from './RemedyProtocolCard';
@@ -44,13 +44,13 @@ export function speakableTextFor(reading: WatchReading): string {
 }
 
 interface ChatBubbleProps {
-  message: ChatMessage;
+  message: ReadingMessage;
   questionLang: 'en' | 'ur' | 'hi';
   onRetry: (userMessageId: string) => void;
   /**
-   * Re-send a follow-up the oracle declined to answer, as a fresh question.
-   * Casts a new chart and spends a quota slot — so it is always an explicit
-   * tap, never something this bubble does on the seeker's behalf.
+   * Open a follow-up the oracle declined to answer as its OWN Reading, cast
+   * for its own moment. A new chart and a quota slot — so it is always an
+   * explicit tap, never something this bubble does on the seeker's behalf.
    */
   onAskAsNewQuestion: (userMessageId: string) => void;
   ttsStatus: SpeakingStatus;

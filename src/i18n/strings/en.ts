@@ -36,7 +36,7 @@ export const en: StringTable = {
   nav: {
     homeTab: 'Home',
     alFalakTab: 'Al-Falak',
-    historyTab: 'History',
+    readingsTab: 'Readings',
   },
 
   permission: {
@@ -112,7 +112,9 @@ export const en: StringTable = {
     todaysQuotaLabel: "Today's Quota",
     yourTierLabel: 'Your Tier',
     tierWanderer: 'Wanderer',
-    askNewQuestionCta: 'Ask New Question',
+    askNewQuestionCta: 'Ask Shams',
+    askPrompt: 'What would you like to ask?',
+    askPlaceholder: 'Ask Shams…',
     consultOracleSubtitle: 'Consult the Oracle',
     readingHistoryCta: 'Reading History',
     viewPastReadingsSubtitle: 'View your past readings',
@@ -154,6 +156,13 @@ export const en: StringTable = {
     discussionReadingGone: 'That reading is no longer available to discuss.',
   },
 
+  reading: {
+    sectionLabel: 'THE READING',
+    yourQuestion: 'YOUR QUESTION',
+    newReading: 'New Reading',
+    shareReading: 'Share Reading',
+  },
+
   skyClock: {
     headerTitle: 'Sky Clock',
     nowLabel: 'Now',
@@ -166,9 +175,9 @@ export const en: StringTable = {
   },
 
   history: {
-    headerTitle: 'Readings',
-    emptyTitle: 'No readings yet',
-    emptyBody: 'Your readings will appear here.',
+    headerTitle: 'Your Readings',
+    emptyTitle: 'Your first Reading will appear here.',
+    emptyBody: 'Ask Shams when something is on your mind.',
     filterAll: 'All',
     filterYes: 'Yes',
     filterNo: 'No',
@@ -177,6 +186,17 @@ export const en: StringTable = {
     sortOldest: 'Oldest first',
     deleteConfirm: 'Delete this reading? This cannot be undone.',
     deleteAction: 'Delete',
+    searchPlaceholder: 'Search readings',
+    noResults: 'No readings found.',
+    newReading: 'New Reading',
+    beginReading: 'Begin a Reading',
+    groupToday: 'TODAY',
+    groupYesterday: 'YESTERDAY',
+    groupPrevious7: 'PREVIOUS 7 DAYS',
+    groupPrevious30: 'PREVIOUS 30 DAYS',
+    groupOlder: 'EARLIER',
+    pendingReading: 'Reading the moment…',
+    failedReading: 'Unfinished',
   },
 
   premium: {

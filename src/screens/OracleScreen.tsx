@@ -5,8 +5,9 @@
  * initial tab in MainTabs). Passive status surface only — no chat, no
  * composer. Hierarchy follows DĀR AL-SHAMS design system §Home Screen:
  * hora status → celestial state → ask entry → moon mansion → user tier.
- * Hands off to OracleChatScreen (via "Ask New Question") for the actual
- * question/verdict conversation.
+ * The one thing it is not passive about is the ask composer: a question
+ * typed here opens a Reading (ReadingScreen), which owns the verdict and the
+ * conversation about it.
  */
 
 import React, { useCallback, useEffect, useState } from 'react';
@@ -34,7 +35,7 @@ import TabIcon from '@components/TabIcon';
 import HoraBadge from '@components/home/HoraBadge';
 import ManzilEmblem from '@components/home/ManzilEmblem';
 import CornerBrackets from '@components/home/CornerBrackets';
-import GlowWash from '@components/home/GlowWash';
+import HomeAskComposer from '@components/home/HomeAskComposer';
 import { buildDailySkyMessage } from '@utils/dailySkyMessage';
 import { favoredChipForPlanet } from '../data/favoredQuestion';
 import { PLANET_DHIKR } from '../data/dailyDhikr';
@@ -62,7 +63,7 @@ const OracleScreen: React.FC = () => {
   const t = useTranslation();
   const { lang } = useI18n();
   // One typed handle for both destinations: sibling tabs (AlFalak/History)
-  // and root-level pushes (Settings/Premium/OracleChat). See AppNavigation.
+  // and root-level pushes (Settings/Premium/Reading). See AppNavigation.
   const navigation = useNavigation<AppNavigation>();
 
   const lastLocation = useSettingsStore(
@@ -90,8 +91,6 @@ const OracleScreen: React.FC = () => {
 
   // Measured once via onLayout so the "Ask New Question" glow wash clips
   // exactly to the button's real rendered size (its width isn't known statically).
-  const [askBtnSize, setAskBtnSize] = useState<{ width: number; height: number } | null>(null);
-
   const evaluateTrialBanner = useCallback(() => {
     const { plan: currentPlan, checkTrial } = useQuotaStore.getState();
     if (currentPlan !== 'free') {
@@ -387,50 +386,15 @@ const OracleScreen: React.FC = () => {
           )}
         </View>
 
-        {/* Ask New Question — opens the Oracle Chat conversation */}
-        <Pressable
-          testID="ask-shams-btn"
-          onPress={() => navigation.navigate('OracleChat')}
-          onLayout={e => {
-            const { width, height } = e.nativeEvent.layout;
-            setAskBtnSize({ width, height });
-          }}
-          style={({ pressed }) => [
-            styles.actionBtn,
-            {
-              backgroundColor: colors.surface,
-              borderColor: colors.borderAccent + '55',
-              opacity: pressed ? 0.85 : 1,
-            },
-          ]}
-          accessibilityRole="button"
-          accessibilityLabel={t('oracle.askNewQuestionCta')}
-        >
-          {askBtnSize !== null && (
-            <GlowWash
-              width={askBtnSize.width}
-              height={askBtnSize.height}
-              color={colors.goldBright}
-              opacity={0.35}
-            />
-          )}
-          <View style={[styles.actionIconWrap, { borderColor: colors.borderAccent }]}>
-            <Text style={{ fontSize: 18, color: colors.goldBright }}>{'✦'}</Text>
-          </View>
-          <View style={styles.actionTextCol}>
-            <Text style={[typography('button'), { color: colors.goldBright, fontSize: 16 }]}>
-              {t('oracle.askNewQuestionCta')}
-            </Text>
-            <Text style={[typography('caption'), { color: colors.textMuted, marginTop: 2 }]}>
-              {t('oracle.consultOracleSubtitle')}
-            </Text>
-          </View>
-          <Text style={[typography('label'), { color: colors.goldBright, opacity: 0.85 }]}>›</Text>
-        </Pressable>
+        {/* Ask Shams — the primary action: a question becomes a Reading */}
+        <HomeAskComposer
+          onSubmit={question => navigation.navigate('Reading', { initialQuestion: question })}
+          onOpenBlank={() => navigation.navigate('Reading')}
+        />
 
         {/* Reading History */}
         <Pressable
-          onPress={() => navigation.navigate('History')}
+          onPress={() => navigation.navigate('Readings')}
           style={({ pressed }) => [
             styles.actionBtnSecondary,
             {

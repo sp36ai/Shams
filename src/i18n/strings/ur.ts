@@ -44,7 +44,7 @@ export const ur: StringTable = {
   nav: {
     homeTab: 'ہوم',
     alFalakTab: 'الفلک',
-    historyTab: 'زائچے',
+    readingsTab: 'زائچے',
   },
 
   permission: {
@@ -121,6 +121,8 @@ export const ur: StringTable = {
     yourTierLabel: 'آپ کا درجہ',
     tierWanderer: 'سالک',
     askNewQuestionCta: 'نیا سوال پوچھیں',
+    askPrompt: 'آپ کیا پوچھنا چاہتے ہیں؟',
+    askPlaceholder: 'شمس سے پوچھیں…',
     consultOracleSubtitle: 'اوریکل سے رجوع کریں',
     readingHistoryCta: 'سابقہ زائچے',
     viewPastReadingsSubtitle: 'اپنے سابقہ زائچے دیکھیں',
@@ -162,6 +164,13 @@ export const ur: StringTable = {
     discussionReadingGone: 'یہ جواب اب گفتگو کے لیے دستیاب نہیں۔',
   },
 
+  reading: {
+    sectionLabel: 'زائچہ',
+    yourQuestion: 'آپ کا سوال',
+    newReading: 'نیا زائچہ',
+    shareReading: 'زائچہ بھیجیں',
+  },
+
   skyClock: {
     headerTitle: 'فلکی گھڑی',
     nowLabel: 'اِس وقت',
@@ -185,6 +194,17 @@ export const ur: StringTable = {
     sortOldest: 'پہلے پرانے',
     deleteConfirm: 'یہ فیصلہ حذف کریں؟ یہ واپس نہیں آ سکتا۔',
     deleteAction: 'حذف کریں',
+    searchPlaceholder: 'زائچے تلاش کریں',
+    noResults: 'کوئی زائچہ نہیں ملا۔',
+    newReading: 'نیا زائچہ',
+    beginReading: 'زائچہ شروع کریں',
+    groupToday: 'آج',
+    groupYesterday: 'کل',
+    groupPrevious7: 'پچھلے ۷ دن',
+    groupPrevious30: 'پچھلے ۳۰ دن',
+    groupOlder: 'اس سے پہلے',
+    pendingReading: 'لمحہ پڑھا جا رہا ہے…',
+    failedReading: 'نامکمل',
   },
 
   premium: {

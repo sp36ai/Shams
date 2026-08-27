@@ -30,7 +30,7 @@ import OnboardingScreen from '@screens/OnboardingScreen';
 import LocationPermissionScreen from '@screens/LocationPermissionScreen';
 import PremiumScreen from '@screens/PremiumScreen';
 import SettingsScreen from '@screens/SettingsScreen';
-import OracleChatScreen from '@screens/OracleChatScreen';
+import ReadingScreen from '@screens/ReadingScreen';
 import MainTabs from './MainTabs';
 
 import { useAuthStore } from '@stores/authStore';
@@ -136,8 +136,8 @@ const RootNavigator: React.FC = () => {
         />
         {/* Oracle Chat — reached via Home's "Ask New Question" CTA */}
         <RootStack.Screen
-          name="OracleChat"
-          component={OracleChatScreen}
+          name="Reading"
+          component={ReadingScreen}
           options={{ headerShown: false, animation: 'slide_from_right' }}
         />
       </RootStack.Navigator>

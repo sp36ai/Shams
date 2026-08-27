@@ -36,7 +36,7 @@ import { Pressable } from 'react-native';
 
 import OracleScreen from '@screens/OracleScreen';
 import SkyClockScreen from '@screens/SkyClockScreen';
-import HistoryScreen from '@screens/HistoryScreen';
+import ReadingsScreen from '@screens/ReadingsScreen';
 
 import { useColors } from '@theme/ThemeProvider';
 import { useTypography } from '@theme/useTypography';
@@ -87,7 +87,7 @@ const MainTabs: React.FC = () => {
     () => ({
       Home: t('nav.homeTab' as TKey),
       AlFalak: t('nav.alFalakTab' as TKey),
-      History: t('nav.historyTab' as TKey),
+      Readings: t('nav.readingsTab' as TKey),
     }),
     [t],
   );
@@ -95,7 +95,7 @@ const MainTabs: React.FC = () => {
   const iconNames: Record<keyof MainTabParamList, IconName> = {
     Home: 'oracle',
     AlFalak: 'skyclock',
-    History: 'history',
+    Readings: 'history',
   };
 
   return (
@@ -171,9 +171,9 @@ const MainTabs: React.FC = () => {
         options={{ tabBarLabel: labels.AlFalak }}
       />
       <Tab.Screen
-        name="History"
-        component={HistoryScreen}
-        options={{ tabBarLabel: labels.History }}
+        name="Readings"
+        component={ReadingsScreen}
+        options={{ tabBarLabel: labels.Readings }}
       />
     </Tab.Navigator>
   );

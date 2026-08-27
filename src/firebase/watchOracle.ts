@@ -117,7 +117,7 @@ export async function askWatchOracle(args: AskWatchOracleInput): Promise<AskWatc
 
   const result = await withTimeout(fn(payload), ASK_WATCH_ORACLE_TIMEOUT_MS);
   if (result === undefined) {
-    // Surfaces as `.code === 'deadline-exceeded'`, which OracleChatScreen's
+    // Surfaces as `.code === 'deadline-exceeded'`, which ReadingScreen's
     // error handler already maps to "the channel to the oracle is
     // interrupted" — no separate handling needed at the call site.
     throw new AskWatchOracleTimeoutError();

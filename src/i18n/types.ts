@@ -117,7 +117,7 @@ export interface StringTable {
   nav: {
     homeTab: string;
     alFalakTab: string;
-    historyTab: string;
+    readingsTab: string;
   };
   permission: {
     locationTitle: string;
@@ -187,6 +187,9 @@ export interface StringTable {
     yourTierLabel: string;
     tierWanderer: string;
     askNewQuestionCta: string;
+    /** Home composer — the line above the field, and the field's own hint. */
+    askPrompt: string;
+    askPlaceholder: string;
     consultOracleSubtitle: string;
     readingHistoryCta: string;
     viewPastReadingsSubtitle: string;
@@ -228,6 +231,13 @@ export interface StringTable {
     discussionUnavailable: string;
     discussionReadingGone: string;
   };
+  /** One Reading — its header, its actions, its states. */
+  reading: {
+    sectionLabel: string;
+    yourQuestion: string;
+    newReading: string;
+    shareReading: string;
+  };
   skyClock: {
     headerTitle: string;
     nowLabel: string;
@@ -250,6 +260,18 @@ export interface StringTable {
     sortOldest: string;
     deleteConfirm: string;
     deleteAction: string;
+    /** Your Readings — search, grouping and empty states. */
+    searchPlaceholder: string;
+    noResults: string;
+    newReading: string;
+    beginReading: string;
+    groupToday: string;
+    groupYesterday: string;
+    groupPrevious7: string;
+    groupPrevious30: string;
+    groupOlder: string;
+    pendingReading: string;
+    failedReading: string;
   };
   premium: {
     headerTitle: string;

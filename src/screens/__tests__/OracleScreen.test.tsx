@@ -42,13 +42,31 @@ describe('OracleScreen navigation wiring', () => {
     expect(navigate).toHaveBeenCalledWith('Settings');
   });
 
-  it('navigates to Oracle Chat when "Ask New Question" is pressed', async () => {
+  it('opens an empty Reading when the ask button is pressed with nothing typed', async () => {
     const navigate = mockNavigate();
     await renderScreen(<OracleScreen />);
 
     const user = userEvent.setup();
     await user.press(screen.getByTestId('ask-shams-btn'));
 
-    expect(navigate).toHaveBeenCalledWith('OracleChat');
+    expect(navigate).toHaveBeenCalledWith('Reading');
+  });
+
+  it('carries a typed question into the Reading it opens', async () => {
+    const navigate = mockNavigate();
+    await renderScreen(<OracleScreen />);
+
+    const user = userEvent.setup();
+    await user.type(
+      screen.getByTestId('home-ask-input'),
+      'Should I accept this business opportunity?',
+    );
+    await user.press(screen.getByTestId('ask-shams-btn'));
+
+    // Home owns the composer that STARTS a Reading; the Reading itself is
+    // created on the other side, when the question is actually submitted.
+    expect(navigate).toHaveBeenCalledWith('Reading', {
+      initialQuestion: 'Should I accept this business opportunity?',
+    });
   });
 });

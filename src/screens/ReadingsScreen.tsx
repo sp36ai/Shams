@@ -1,13 +1,24 @@
 /**
- * HistoryScreen — past readings list with full detail modal.
+ * ReadingsScreen — "Your Readings", the archive of past Readings.
  * --------------------------------------------------------------------------
- * List: MMKV-backed, filter chips (All/Yes/No/Conditional), sort toggle.
- * Tap any row → full-screen modal with:
- *   - Verdict badge + confidence bar
- *   - Full narration in the device language
- *   - Step-by-step reasoning trace
- *   - Timing window
- *   - Remedy guidance (if present)
+ * A Reading is a conversation, not a receipt, so a row here OPENS it: tapping
+ * one pushes ReadingScreen with that thread, where the verdict is restored as
+ * it was cast and a follow-up can still be asked. This is the difference from
+ * the previous History screen, which showed a dead-end detail modal — the
+ * seeker could re-read a verdict but never continue it.
+ *
+ * Two kinds of row, because nothing is thrown away:
+ *   - THREAD — a Reading with its conversation. Opens the Reading.
+ *   - ARCHIVE — a reading recorded before threads existed, which has no
+ *     conversation to open. Still readable, in the detail modal this screen
+ *     has always had.
+ *
+ * Ordering is recency-grouped against the DEVICE's local day boundaries
+ * (Today / Yesterday / Previous 7 days / …), computed in the store; this file
+ * only translates the group keys. The verdict filter chips and sort toggle
+ * were removed in favour of search: a seeker looks for a Reading by what they
+ * asked, not by which way it was answered.
+ *
  * Long-press → confirm delete.
  */
 
@@ -20,6 +31,7 @@ import {
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -29,14 +41,16 @@ import type { AppNavigation } from '@navigation/types';
 import { useColors, useTheme } from '@theme/ThemeProvider';
 import { useTypography } from '@theme/useTypography';
 import { useTranslation, useI18n } from '@i18n/I18nProvider';
+import { useReadingsStore, type Reading, type VerdictKind } from '@stores/readingsStore';
 import {
-  useReadingsStore,
-  selectFilteredReadings,
-  selectIsEmpty,
-  type Reading,
-  type ReadingFilter,
-  type VerdictKind,
-} from '@stores/readingsStore';
+  useReadingThreadsStore,
+  groupByRecency,
+  searchThreads,
+  type ReadingThread,
+  type ThreadGroupKey,
+} from '@stores/readingThreadsStore';
+import { readingTitleFor } from '../data/readingTitle';
+import { formatReadingMoment } from '@components/oracle/ReadingHeader';
 import StarfieldBackground from '@components/StarfieldBackground';
 import RkpWatchCard from '@components/oracle/RkpWatchCard';
 import RemedyProtocolCard from '@components/oracle/RemedyProtocolCard';
@@ -85,55 +99,149 @@ function extractVerdict(reading: Reading): VerdictJson {
 }
 
 /* -------------------------------------------------------------------------- */
-/*  Filter chips                                                              */
+/*  List rows                                                                 */
 /* -------------------------------------------------------------------------- */
 
-interface FilterChipDef {
-  value: ReadingFilter;
-  i18nKey:
-    | 'history.filterAll'
-    | 'history.filterYes'
-    | 'history.filterNo'
-    | 'history.filterConditional';
-}
+/**
+ * One entry in the list. A THREAD row opens its Reading; an ARCHIVE row is a
+ * reading recorded before threads existed and can only be re-read.
+ */
+type ReadingsRow =
+  | { kind: 'group'; key: string; groupKey: ThreadGroupKey }
+  | { kind: 'thread'; key: string; thread: ReadingThread; updatedAt: string }
+  | { kind: 'archive'; key: string; reading: Reading; updatedAt: string };
 
-const FILTER_CHIPS: readonly FilterChipDef[] = [
-  { value: 'all', i18nKey: 'history.filterAll' },
-  { value: 'YES', i18nKey: 'history.filterYes' },
-  { value: 'NO', i18nKey: 'history.filterNo' },
-  { value: 'CONDITIONAL', i18nKey: 'history.filterConditional' },
-] as const;
+const GROUP_LABEL_KEY: Readonly<
+  Record<
+    ThreadGroupKey,
+    | 'history.groupToday'
+    | 'history.groupYesterday'
+    | 'history.groupPrevious7'
+    | 'history.groupPrevious30'
+    | 'history.groupOlder'
+  >
+> = Object.freeze({
+  today: 'history.groupToday',
+  yesterday: 'history.groupYesterday',
+  previous7: 'history.groupPrevious7',
+  previous30: 'history.groupPrevious30',
+  older: 'history.groupOlder',
+});
+
+/**
+ * Fold threads and pre-thread archive entries into one recency-grouped list.
+ *
+ * An archive entry whose reading already belongs to a thread is dropped: the
+ * thread is the same Reading with its conversation attached, and showing both
+ * would list one Reading twice.
+ */
+export function buildRows(
+  threads: readonly ReadingThread[],
+  archive: readonly Reading[],
+  search: string,
+  now: Date = new Date(),
+): ReadingsRow[] {
+  const threadReadingIds = new Set(
+    threads.map(thread => thread.readingId).filter((id): id is string => id !== null),
+  );
+
+  const needle = search.trim().toLowerCase();
+  const matchedThreads = searchThreads(threads, search);
+  const matchedArchive = archive.filter(
+    reading =>
+      !threadReadingIds.has(reading.id) &&
+      (needle.length === 0 || reading.question.toLowerCase().includes(needle)),
+  );
+
+  const items: Array<
+    | { kind: 'thread'; thread: ReadingThread; updatedAt: string }
+    | { kind: 'archive'; reading: Reading; updatedAt: string }
+  > = [
+    ...matchedThreads.map(thread => ({
+      kind: 'thread' as const,
+      thread,
+      updatedAt: thread.updatedAt,
+    })),
+    ...matchedArchive.map(reading => ({
+      kind: 'archive' as const,
+      reading,
+      updatedAt: reading.createdAt,
+    })),
+  ].sort((a, b) => (a.updatedAt < b.updatedAt ? 1 : -1));
+
+  const rows: ReadingsRow[] = [];
+  for (const group of groupByRecency(items, now)) {
+    rows.push({ kind: 'group', key: `g_${group.key}`, groupKey: group.key });
+    for (const item of group.items) {
+      rows.push(
+        item.kind === 'thread'
+          ? { kind: 'thread', key: item.thread.id, thread: item.thread, updatedAt: item.updatedAt }
+          : {
+              kind: 'archive',
+              key: `a_${item.reading.id}`,
+              reading: item.reading,
+              updatedAt: item.updatedAt,
+            },
+      );
+    }
+  }
+  return rows;
+}
 
 /* -------------------------------------------------------------------------- */
 /*  Screen                                                                    */
 /* -------------------------------------------------------------------------- */
 
-const HistoryScreen: React.FC = () => {
+const ReadingsScreen: React.FC = () => {
   const { theme } = useTheme();
   const colors = useColors();
   const typography = useTypography();
   const t = useTranslation();
   const navigation = useNavigation<AppNavigation>();
 
-  const filter = useReadingsStore((s: ReturnType<typeof useReadingsStore.getState>) => s.filter);
-  const sort = useReadingsStore((s: ReturnType<typeof useReadingsStore.getState>) => s.sort);
-  const setFilter = useReadingsStore(
-    (s: ReturnType<typeof useReadingsStore.getState>) => s.setFilter,
-  );
-  const setSort = useReadingsStore((s: ReturnType<typeof useReadingsStore.getState>) => s.setSort);
+  const threads = useReadingThreadsStore(s => s.threads);
+  const deleteThread = useReadingThreadsStore(s => s.deleteThread);
+  const archive = useReadingsStore((s: ReturnType<typeof useReadingsStore.getState>) => s.readings);
   const deleteReading = useReadingsStore(
     (s: ReturnType<typeof useReadingsStore.getState>) => s.deleteReading,
   );
-  const items = useReadingsStore(selectFilteredReadings);
-  const isEmpty = useReadingsStore(selectIsEmpty);
 
+  const [search, setSearch] = useState('');
   const [selectedReading, setSelectedReading] = useState<Reading | null>(null);
 
-  const handleSortToggle = useCallback(() => {
-    setSort(sort === 'newest' ? 'oldest' : 'newest');
-  }, [sort, setSort]);
+  // Recomputed only when the data or the search term actually changes —
+  // grouping walks every Reading, and this list is a scroll surface.
+  const rows = useMemo(() => buildRows(threads, archive, search), [threads, archive, search]);
 
-  const handleDelete = useCallback(
+  const hasAnyReading = threads.length > 0 || archive.length > 0;
+  const isSearching = search.trim().length > 0;
+
+  const handleNewReading = useCallback(() => {
+    navigation.navigate('Reading');
+  }, [navigation]);
+
+  const handleDeleteThread = useCallback(
+    (thread: ReadingThread) => {
+      Alert.alert(t('history.deleteAction'), t('history.deleteConfirm'), [
+        { text: t('common.cancel'), style: 'cancel' },
+        {
+          text: t('history.deleteAction'),
+          style: 'destructive',
+          onPress: () => {
+            deleteThread(thread.id);
+            // The archive entry is the same Reading; leaving it behind would
+            // resurrect the row the seeker just deleted.
+            if (thread.readingId !== null) {
+              void deleteReading(thread.readingId);
+            }
+          },
+        },
+      ]);
+    },
+    [t, deleteThread, deleteReading],
+  );
+
+  const handleDeleteArchive = useCallback(
     (reading: Reading) => {
       Alert.alert(t('history.deleteAction'), t('history.deleteConfirm'), [
         { text: t('common.cancel'), style: 'cancel' },
@@ -149,75 +257,39 @@ const HistoryScreen: React.FC = () => {
     [t, deleteReading],
   );
 
-  const handleAskFirst = useCallback(() => {
-    navigation.navigate('Home');
-  }, [navigation]);
-
-  const renderItem = useCallback(
-    ({ item }: { item: Reading }) => (
-      <ReadingRow
-        reading={item}
-        onPress={() => setSelectedReading(item)}
-        onLongPress={() => handleDelete(item)}
-      />
-    ),
-    [handleDelete],
-  );
-
-  const keyExtractor = useCallback((item: Reading) => item.id, []);
-
-  const ListHeader = useMemo(
-    () => (
-      <View style={styles.controlsBlock}>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.chipsRow}
-        >
-          {FILTER_CHIPS.map(chip => {
-            const active = filter === chip.value;
-            return (
-              <Pressable
-                key={chip.value}
-                onPress={() => setFilter(chip.value)}
-                style={({ pressed }: { pressed: boolean }) => [
-                  styles.chip,
-                  {
-                    borderColor: active ? colors.accent : colors.border,
-                    backgroundColor: active ? colors.surfaceElevated : 'transparent',
-                    opacity: pressed ? 0.75 : 1,
-                  },
-                ]}
-                accessibilityRole="button"
-                accessibilityState={{ selected: active }}
-              >
-                <Text
-                  style={[
-                    typography('caption'),
-                    { color: active ? colors.accent : colors.textMuted },
-                  ]}
-                >
-                  {t(chip.i18nKey)}
-                </Text>
-              </Pressable>
-            );
-          })}
-        </ScrollView>
-        <Pressable
-          onPress={handleSortToggle}
-          style={({ pressed }: { pressed: boolean }) => [
-            styles.sortBtn,
-            { borderColor: colors.border, opacity: pressed ? 0.75 : 1 },
-          ]}
-          accessibilityRole="button"
-        >
-          <Text style={[typography('caption'), { color: colors.textMuted }]}>
-            {sort === 'newest' ? t('history.sortNewest') : t('history.sortOldest')}
+  const renderRow = useCallback(
+    ({ item }: { item: ReadingsRow }) => {
+      if (item.kind === 'group') {
+        return (
+          <Text
+            style={[
+              typography('caption'),
+              styles.groupLabel,
+              { color: colors.textFaint, borderBottomColor: colors.border },
+            ]}
+          >
+            {t(GROUP_LABEL_KEY[item.groupKey])}
           </Text>
-        </Pressable>
-      </View>
-    ),
-    [filter, sort, colors, typography, t, setFilter, handleSortToggle],
+        );
+      }
+      if (item.kind === 'thread') {
+        return (
+          <ThreadRow
+            thread={item.thread}
+            onPress={() => navigation.navigate('Reading', { threadId: item.thread.id })}
+            onLongPress={() => handleDeleteThread(item.thread)}
+          />
+        );
+      }
+      return (
+        <ArchiveRow
+          reading={item.reading}
+          onPress={() => setSelectedReading(item.reading)}
+          onLongPress={() => handleDeleteArchive(item.reading)}
+        />
+      );
+    },
+    [colors, typography, t, navigation, handleDeleteThread, handleDeleteArchive],
   );
 
   return (
@@ -243,7 +315,6 @@ const HistoryScreen: React.FC = () => {
         <Text style={[typography('subheading'), { color: colors.text }]}>
           {t('history.headerTitle')}
         </Text>
-        {/* Ornamental gold hairline divider */}
         <View
           style={{
             height: StyleSheet.hairlineWidth,
@@ -254,33 +325,67 @@ const HistoryScreen: React.FC = () => {
         />
       </View>
 
-      {isEmpty ? (
-        <EmptyState onAsk={handleAskFirst} />
+      <View style={styles.controlsBlock}>
+        <TextInput
+          style={[
+            typography('body'),
+            styles.searchInput,
+            {
+              color: colors.text,
+              backgroundColor: colors.surfaceElevated,
+              borderColor: colors.border,
+            },
+          ]}
+          value={search}
+          onChangeText={setSearch}
+          placeholder={t('history.searchPlaceholder')}
+          placeholderTextColor={colors.textFaint}
+          autoCorrect={false}
+          testID="readings-search-input"
+        />
+        <Pressable
+          onPress={handleNewReading}
+          style={({ pressed }: { pressed: boolean }) => [
+            styles.newBtn,
+            { borderColor: colors.borderAccent, opacity: pressed ? 0.75 : 1 },
+          ]}
+          accessibilityRole="button"
+          accessibilityLabel={t('history.newReading')}
+          testID="readings-new-btn"
+        >
+          <Text style={[typography('label'), { color: colors.goldBright }]}>
+            {'✦ ' + t('history.newReading')}
+          </Text>
+        </Pressable>
+      </View>
+
+      {!hasAnyReading ? (
+        <EmptyState onAsk={handleNewReading} />
       ) : (
         <FlatList
-          data={items}
-          keyExtractor={keyExtractor}
-          renderItem={renderItem}
-          ListHeaderComponent={ListHeader}
+          data={rows}
+          keyExtractor={row => row.key}
+          renderItem={renderRow}
           contentContainerStyle={styles.listContent}
           showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
           ListEmptyComponent={
             <View style={styles.subEmpty}>
               <Text style={[typography('body'), { color: colors.textMuted, textAlign: 'center' }]}>
-                {t('history.emptyBody')}
+                {isSearching ? t('history.noResults') : t('history.emptyBody')}
               </Text>
             </View>
           }
         />
       )}
 
-      {/* ── Detail modal ── */}
+      {/* ── Detail modal — pre-thread archive entries only ── */}
       {selectedReading !== null && (
         <ReadingDetailModal
           reading={selectedReading}
           onClose={() => setSelectedReading(null)}
           onDelete={() => {
-            handleDelete(selectedReading);
+            handleDeleteArchive(selectedReading);
             setSelectedReading(null);
           }}
         />
@@ -290,21 +395,83 @@ const HistoryScreen: React.FC = () => {
 };
 
 /* -------------------------------------------------------------------------- */
-/*  Reading row                                                               */
+/*  Rows                                                                      */
 /* -------------------------------------------------------------------------- */
 
-const ReadingRow: React.FC<{
+/**
+ * A Reading with its conversation. Title first — it is what the seeker
+ * recognises the Reading by — question second, moment last.
+ */
+const ThreadRow: React.FC<{
+  thread: ReadingThread;
+  onPress: () => void;
+  onLongPress: () => void;
+}> = React.memo(({ thread, onPress, onLongPress }) => {
+  const colors = useColors();
+  const typography = useTypography();
+  const t = useTranslation();
+
+  const moment = formatReadingMoment(thread.context?.localMoment ?? thread.createdAt);
+  const statusNote =
+    thread.status === 'pending'
+      ? t('history.pendingReading')
+      : thread.status === 'error'
+        ? t('history.failedReading')
+        : null;
+
+  return (
+    <Pressable
+      onPress={onPress}
+      onLongPress={onLongPress}
+      delayLongPress={400}
+      style={({ pressed }: { pressed: boolean }) => [
+        styles.row,
+        {
+          backgroundColor: pressed ? colors.surfaceElevated : colors.surface,
+          borderColor: colors.border,
+          borderLeftWidth: 3,
+          borderLeftColor: thread.status === 'error' ? colors.negative : colors.borderAccent,
+        },
+      ]}
+      accessibilityRole="button"
+      accessibilityLabel={thread.title}
+    >
+      <View style={styles.rowMain}>
+        <Text style={[typography('bodyEmphasis'), { color: colors.text }]} numberOfLines={1}>
+          {thread.title}
+        </Text>
+        <Text
+          style={[typography('caption'), { color: colors.textMuted, marginTop: 3 }]}
+          numberOfLines={1}
+        >
+          {thread.question}
+        </Text>
+        <View style={styles.rowMeta}>
+          <Text style={[typography('caption'), { color: colors.textFaint }]}>{moment}</Text>
+          {statusNote !== null && (
+            <>
+              <Text style={[typography('caption'), { color: colors.textFaint }]}>·</Text>
+              <Text style={[typography('caption'), { color: colors.textFaint }]}>{statusNote}</Text>
+            </>
+          )}
+        </View>
+      </View>
+      <Text style={[typography('label'), { color: colors.goldBright, opacity: 0.8 }]}>›</Text>
+    </Pressable>
+  );
+});
+ThreadRow.displayName = 'ThreadRow';
+
+/** A reading recorded before threads existed — re-readable, not continuable. */
+const ArchiveRow: React.FC<{
   reading: Reading;
   onPress: () => void;
   onLongPress: () => void;
-}> = ({ reading, onPress, onLongPress }) => {
+}> = React.memo(({ reading, onPress, onLongPress }) => {
   const colors = useColors();
   const typography = useTypography();
 
   const vColor = verdictColorFor(reading.verdict, colors);
-  const badgeLabel = verdictBadgeFor(reading.verdict);
-  const vj = reading.verdictJson as { rulingPlanets?: { horaLord?: string } } | undefined;
-  const horaLord = vj?.rulingPlanets?.horaLord;
 
   return (
     <Pressable
@@ -323,35 +490,30 @@ const ReadingRow: React.FC<{
       accessibilityRole="button"
     >
       <View style={styles.rowMain}>
-        <Text style={[typography('bodyEmphasis'), { color: colors.text }]} numberOfLines={2}>
+        <Text style={[typography('bodyEmphasis'), { color: colors.text }]} numberOfLines={1}>
+          {readingTitleFor(reading.question)}
+        </Text>
+        <Text
+          style={[typography('caption'), { color: colors.textMuted, marginTop: 3 }]}
+          numberOfLines={1}
+        >
           {reading.question}
         </Text>
         <View style={styles.rowMeta}>
-          {horaLord !== undefined && horaLord.length > 0 && (
-            <>
-              <Text style={[typography('caption'), { color: colors.goldBright, fontSize: 10 }]}>
-                {horaLord} Hora
-              </Text>
-              <Text style={[typography('caption'), { color: colors.textFaint }]}>·</Text>
-            </>
-          )}
           <Text style={[typography('caption'), { color: colors.textFaint }]}>
-            {(reading.category ?? '').toUpperCase()}
-          </Text>
-          <Text style={[typography('caption'), { color: colors.textFaint }]}>·</Text>
-          <Text style={[typography('caption'), { color: colors.textFaint }]}>
-            {formatRelative(reading.createdAt)}
+            {formatReadingMoment(reading.createdAt)}
           </Text>
         </View>
       </View>
       <View style={[styles.verdictPill, { borderColor: vColor, backgroundColor: vColor + '14' }]}>
         <Text style={[typography('label'), { color: vColor, fontSize: 9, letterSpacing: 0.8 }]}>
-          {badgeLabel}
+          {verdictBadgeFor(reading.verdict)}
         </Text>
       </View>
     </Pressable>
   );
-};
+});
+ArchiveRow.displayName = 'ArchiveRow';
 
 /* -------------------------------------------------------------------------- */
 /*  Reading detail modal                                                      */
@@ -710,27 +872,6 @@ function verdictBadgeFor(v: VerdictKind): string {
   }
 }
 
-function formatRelative(iso: string): string {
-  const ts = Date.parse(iso);
-  if (Number.isNaN(ts)) {
-    return '';
-  }
-  const diffSec = Math.max(0, Math.floor((Date.now() - ts) / 1000));
-  if (diffSec < 60) {
-    return 'just now';
-  }
-  if (diffSec < 3600) {
-    return `${Math.floor(diffSec / 60)}m`;
-  }
-  if (diffSec < 86_400) {
-    return `${Math.floor(diffSec / 3600)}h`;
-  }
-  if (diffSec < 7 * 86_400) {
-    return `${Math.floor(diffSec / 86_400)}d`;
-  }
-  return new Date(ts).toLocaleDateString();
-}
-
 /* -------------------------------------------------------------------------- */
 /*  Styles                                                                    */
 /* -------------------------------------------------------------------------- */
@@ -752,6 +893,27 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   chipsRow: { gap: 8, paddingRight: 8 },
+  searchInput: {
+    flex: 1,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderRadius: 18,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+  },
+  newBtn: {
+    paddingHorizontal: 12,
+    paddingVertical: 9,
+    borderRadius: 18,
+    borderWidth: StyleSheet.hairlineWidth,
+  },
+  groupLabel: {
+    letterSpacing: 1.4,
+    paddingHorizontal: 18,
+    paddingTop: 18,
+    paddingBottom: 6,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    marginBottom: 6,
+  },
   chip: {
     paddingHorizontal: 12,
     paddingVertical: 6,
@@ -884,4 +1046,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default HistoryScreen;
+export default ReadingsScreen;

@@ -43,7 +43,7 @@ export const hi: StringTable = {
   nav: {
     homeTab: 'होम',
     alFalakTab: 'अल-फ़लक',
-    historyTab: 'रीडिंग',
+    readingsTab: 'रीडिंग',
   },
 
   permission: {
@@ -120,6 +120,8 @@ export const hi: StringTable = {
     yourTierLabel: 'आपका स्तर',
     tierWanderer: 'साधक',
     askNewQuestionCta: 'नया प्रश्न पूछें',
+    askPrompt: 'आप क्या पूछना चाहते हैं?',
+    askPlaceholder: 'शम्स से पूछें…',
     consultOracleSubtitle: 'ओरेकल से परामर्श करें',
     readingHistoryCta: 'पिछली रीडिंग',
     viewPastReadingsSubtitle: 'अपनी पिछली रीडिंग देखें',
@@ -162,6 +164,13 @@ export const hi: StringTable = {
     discussionReadingGone: 'यह उत्तर अब चर्चा के लिए उपलब्ध नहीं है।',
   },
 
+  reading: {
+    sectionLabel: 'रीडिंग',
+    yourQuestion: 'आपका प्रश्न',
+    newReading: 'नई रीडिंग',
+    shareReading: 'रीडिंग साझा करें',
+  },
+
   skyClock: {
     headerTitle: 'आकाश-घटिका',
     nowLabel: 'अभी',
@@ -185,6 +194,17 @@ export const hi: StringTable = {
     sortOldest: 'पुराने पहले',
     deleteConfirm: 'इस निर्णय को हटाएँ? यह वापस नहीं आएगा।',
     deleteAction: 'हटाएँ',
+    searchPlaceholder: 'रीडिंग खोजें',
+    noResults: 'कोई रीडिंग नहीं मिली।',
+    newReading: 'नई रीडिंग',
+    beginReading: 'रीडिंग शुरू करें',
+    groupToday: 'आज',
+    groupYesterday: 'कल',
+    groupPrevious7: 'पिछले ७ दिन',
+    groupPrevious30: 'पिछले ३० दिन',
+    groupOlder: 'इससे पहले',
+    pendingReading: 'क्षण पढ़ा जा रहा है…',
+    failedReading: 'अपूर्ण',
   },
 
   premium: {

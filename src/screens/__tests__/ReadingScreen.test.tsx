@@ -1,8 +1,17 @@
 /**
- * OracleChatScreen — conversation flow tests.
+ * ReadingScreen — the Reading lifecycle.
  * --------------------------------------------------------------------------
- * Exercises the one path both text and voice funnel into: sendMessage() →
- * askWatchOracle() → a bubble that ends up 'sent' or 'failed'+retryable.
+ * Exercises the rules that make a Reading a Reading rather than a chat:
+ *
+ *   - the first submit CREATES the Reading (nothing is created before it) and
+ *     casts the chart;
+ *   - every send after that is a follow-up on the SAME Reading, spending no
+ *     quota;
+ *   - reopening a Reading restores its stored moment and never recasts;
+ *   - a follow-up the oracle judges to be its own question opens a NEW
+ *     Reading rather than mutating this one's context;
+ *   - a failed cast is retryable and never opens a second Reading.
+ *
  * Voice-specific behavior (STT/TTS) is covered by their own hook tests —
  * @react-native-voice/voice and react-native-tts are mocked wholesale in
  * jest.setup.js, so this file only needs the mic BUTTON to render, not the
@@ -10,14 +19,37 @@
  */
 import React from 'react';
 import { screen, userEvent, waitFor } from '@testing-library/react-native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import { buildWatchChart } from '@astrology/rkp/watchChart';
 import { judgeWatchChart } from '@astrology/rkp/watchJudgment';
 import { httpsCallable } from '../../firebase/functionsRegion';
 import { renderScreen } from '../../test-utils/renderScreen';
-import { useOracleChatStore } from '@stores/oracleChatStore';
+import { useReadingThreadsStore, threadById } from '@stores/readingThreadsStore';
 import { useReadingsStore } from '@stores/readingsStore';
 import { useQuotaStore } from '@stores/quotaStore';
-import OracleChatScreen from '../OracleChatScreen';
+import ReadingScreen from '../ReadingScreen';
+
+/**
+ * Route params drive the whole open-vs-begin distinction, so each test states
+ * them explicitly. @react-navigation/native is already mocked wholesale in
+ * jest.setup.js (see the note there on why no real navigator is stood up);
+ * these two just steer that mock per test.
+ */
+const mockPush = jest.fn();
+
+function setRoute(params?: { threadId?: string; initialQuestion?: string }): void {
+  (useRoute as jest.Mock).mockReturnValue({ key: 'test', name: 'Reading', params });
+}
+
+/** The single thread in the store, whatever its generated id. */
+function onlyThread() {
+  const threads = useReadingThreadsStore.getState().threads;
+  return threads[0];
+}
+
+function oracleMessages() {
+  return onlyThread()?.messages.filter(m => m.role === 'oracle') ?? [];
+}
 
 const MOMENT = '2026-08-08T11:13:00+05:30';
 
@@ -42,16 +74,23 @@ function successPayload() {
 }
 
 beforeEach(() => {
-  useOracleChatStore.getState().clearAll();
+  setRoute(undefined);
+  mockPush.mockReset();
+  (useNavigation as jest.Mock).mockReturnValue({
+    push: mockPush,
+    navigate: jest.fn(),
+    goBack: jest.fn(),
+  });
+  useReadingThreadsStore.getState().clearAll();
   useReadingsStore.getState().clearAll();
   useQuotaStore.setState({ plan: 'free', questionsToday: 0 });
   (httpsCallable as jest.Mock).mockReset();
   (httpsCallable as jest.Mock).mockImplementation(defaultImpl);
 });
 
-describe('OracleChatScreen', () => {
+describe('ReadingScreen', () => {
   it('shows the empty state with no conversation yet', async () => {
-    await renderScreen(<OracleChatScreen />);
+    await renderScreen(<ReadingScreen />);
     expect(screen.getByText('Ask your first question')).toBeTruthy();
   });
 
@@ -71,13 +110,15 @@ describe('OracleChatScreen', () => {
       return defaultImpl(name);
     });
 
-    await renderScreen(<OracleChatScreen />);
+    await renderScreen(<ReadingScreen />);
     const user = userEvent.setup();
 
     await user.type(screen.getByTestId('oracle-chat-input'), 'Will I get the job?');
     await user.press(screen.getByTestId('oracle-chat-send-btn'));
 
-    expect(screen.getByText('Will I get the job?')).toBeTruthy();
+    // The question is the READING's question — stated once, in the header,
+    // never also as a bubble.
+    expect(screen.getAllByText('Will I get the job?')).toHaveLength(1);
     expect(screen.getByText('Reading the chart…')).toBeTruthy();
 
     resolveAsk({ data: successPayload() });
@@ -92,7 +133,7 @@ describe('OracleChatScreen', () => {
       return defaultImpl(name);
     });
 
-    await renderScreen(<OracleChatScreen />);
+    await renderScreen(<ReadingScreen />);
     const user = userEvent.setup();
 
     await user.type(screen.getByTestId('oracle-chat-input'), 'Will I get the job?');
@@ -100,8 +141,7 @@ describe('OracleChatScreen', () => {
 
     await waitFor(() => expect(screen.queryByText('Reading the chart…')).toBeNull());
     // RkpWatchCard's own plain-language headline for the judged state.
-    const messages = useOracleChatStore.getState().messages;
-    const oracleMsg = messages.find(m => m.role === 'oracle');
+    const oracleMsg = oracleMessages()[0];
     expect(oracleMsg?.status).toBe('sent');
     expect(oracleMsg?.reading?.readingId).toBe('r1');
 
@@ -126,7 +166,7 @@ describe('OracleChatScreen', () => {
       return defaultImpl(name);
     });
 
-    await renderScreen(<OracleChatScreen />);
+    await renderScreen(<ReadingScreen />);
     const user = userEvent.setup();
 
     await user.type(screen.getByTestId('oracle-chat-input'), 'Will I get the job?');
@@ -147,7 +187,7 @@ describe('OracleChatScreen', () => {
     await user.press(screen.getByText('↻ Retry'));
 
     await waitFor(() => {
-      const oracleMsg = useOracleChatStore.getState().messages.find(m => m.role === 'oracle');
+      const oracleMsg = oracleMessages()[0];
       expect(oracleMsg?.status).toBe('sent');
     });
   });
@@ -172,19 +212,19 @@ describe('OracleChatScreen', () => {
       return defaultImpl(name);
     });
 
-    await renderScreen(<OracleChatScreen />);
+    await renderScreen(<ReadingScreen />);
     const user = userEvent.setup();
     await user.type(screen.getByTestId('oracle-chat-input'), 'Will I get the job?');
     await user.press(screen.getByTestId('oracle-chat-send-btn'));
 
     await waitFor(() => {
-      const oracleMsg = useOracleChatStore.getState().messages.find(m => m.role === 'oracle');
+      const oracleMsg = oracleMessages()[0];
       expect(oracleMsg?.selectedRemedies?.length).toBeGreaterThan(0);
     });
 
     // The selection is driven by the watch verdict, not a coarse verdict string.
     expect(selectCallable).toHaveBeenCalled();
-    const oracleMsg = useOracleChatStore.getState().messages.find(m => m.role === 'oracle');
+    const oracleMsg = oracleMessages()[0];
     expect(oracleMsg?.selectedRemedies?.map(r => r.id)).toEqual(['dhikr_01', 'quran_01']);
     // Generated descriptions from the selector win over the library default.
     expect(oracleMsg?.selectedRemedies?.[0]?.description).toBe(
@@ -205,18 +245,16 @@ describe('OracleChatScreen', () => {
       return defaultImpl(name);
     });
 
-    await renderScreen(<OracleChatScreen />);
+    await renderScreen(<ReadingScreen />);
     const user = userEvent.setup();
     await user.type(screen.getByTestId('oracle-chat-input'), 'Will I get the job?');
     await user.press(screen.getByTestId('oracle-chat-send-btn'));
 
     await waitFor(() => {
-      const oracleMsg = useOracleChatStore.getState().messages.find(m => m.role === 'oracle');
+      const oracleMsg = oracleMessages()[0];
       expect(oracleMsg?.status).toBe('sent');
     });
-    expect(
-      useOracleChatStore.getState().messages.find(m => m.role === 'oracle')?.reading?.readingId,
-    ).toBe('r1');
+    expect(oracleMessages()[0]?.reading?.readingId).toBe('r1');
   });
 
   it('shows a quota-exhausted failed bubble without calling askWatchOracle when quota is spent', async () => {
@@ -229,7 +267,7 @@ describe('OracleChatScreen', () => {
       return defaultImpl(name);
     });
 
-    await renderScreen(<OracleChatScreen />);
+    await renderScreen(<ReadingScreen />);
     const user = userEvent.setup();
 
     await user.type(screen.getByTestId('oracle-chat-input'), 'Will I get the job?');
@@ -249,15 +287,11 @@ describe('OracleChatScreen', () => {
   /* ---------------------------------------------------------------------- */
 
   describe('discussion of a standing reading', () => {
-    /** Ask once, so a reading is standing and the composer offers DISCUSS. */
+    /** Ask once, so a Reading stands and every later send is a follow-up. */
     async function askOnce(user: ReturnType<typeof userEvent.setup>) {
       await user.type(screen.getByTestId('oracle-chat-input'), 'Will I get the job?');
       await user.press(screen.getByTestId('oracle-chat-send-btn'));
-      await waitFor(() =>
-        expect(useOracleChatStore.getState().messages.find(m => m.role === 'oracle')?.status).toBe(
-          'sent',
-        ),
-      );
+      await waitFor(() => expect(oracleMessages()[0]?.status).toBe('sent'));
     }
 
     it('sends a follow-up through discussReading — no chart, no quota spent', async () => {
@@ -277,15 +311,11 @@ describe('OracleChatScreen', () => {
         return defaultImpl(name);
       });
 
-      await renderScreen(<OracleChatScreen />);
+      await renderScreen(<ReadingScreen />);
       const user = userEvent.setup();
       await askOnce(user);
 
       const spentAfterAsk = useQuotaStore.getState().questionsToday;
-
-      // The mode row appears only once a reading stands, and defaults to
-      // DISCUSS — so this second send needs no mode change to be a follow-up.
-      expect(screen.getByTestId('oracle-chat-mode-discuss')).toBeTruthy();
 
       await user.type(screen.getByTestId('oracle-chat-input'), 'Why is it taking so long?');
       await user.press(screen.getByTestId('oracle-chat-send-btn'));
@@ -318,7 +348,7 @@ describe('OracleChatScreen', () => {
         return defaultImpl(name);
       });
 
-      await renderScreen(<OracleChatScreen />);
+      await renderScreen(<ReadingScreen />);
       const user = userEvent.setup();
       await askOnce(user);
 
@@ -339,34 +369,7 @@ describe('OracleChatScreen', () => {
       });
     });
 
-    it('switching to NEW QUESTION casts a fresh chart instead of discussing', async () => {
-      const askCallable = jest.fn(() => Promise.resolve({ data: successPayload() }));
-      const discussCallable = jest.fn(() =>
-        Promise.resolve({ data: { answer: 'x', isNewQuestion: false, turnsRemaining: 9 } }),
-      );
-      (httpsCallable as jest.Mock).mockImplementation((name: string) => {
-        if (name === 'askWatchOracle') {
-          return askCallable;
-        }
-        if (name === 'discussReading') {
-          return discussCallable;
-        }
-        return defaultImpl(name);
-      });
-
-      await renderScreen(<OracleChatScreen />);
-      const user = userEvent.setup();
-      await askOnce(user);
-
-      await user.press(screen.getByTestId('oracle-chat-mode-ask'));
-      await user.type(screen.getByTestId('oracle-chat-input'), 'Will my brother travel?');
-      await user.press(screen.getByTestId('oracle-chat-send-btn'));
-
-      await waitFor(() => expect(askCallable).toHaveBeenCalledTimes(2));
-      expect(discussCallable).not.toHaveBeenCalled();
-    });
-
-    it('offers to re-ask a follow-up the oracle judged to be its own question', async () => {
+    it('opens a follow-up judged to be its own question as a NEW Reading', async () => {
       const askCallable = jest.fn(() => Promise.resolve({ data: successPayload() }));
       (httpsCallable as jest.Mock).mockImplementation((name: string) => {
         if (name === 'askWatchOracle') {
@@ -386,7 +389,7 @@ describe('OracleChatScreen', () => {
         return defaultImpl(name);
       });
 
-      await renderScreen(<OracleChatScreen />);
+      await renderScreen(<ReadingScreen />);
       const user = userEvent.setup();
       await askOnce(user);
 
@@ -400,11 +403,14 @@ describe('OracleChatScreen', () => {
 
       await user.press(screen.getByTestId('oracle-chat-ask-as-new'));
 
-      await waitFor(() => expect(askCallable).toHaveBeenCalledTimes(2));
-      const readings = useOracleChatStore
-        .getState()
-        .messages.filter(m => m.role === 'oracle' && m.variant !== 'discussion');
-      expect(readings).toHaveLength(2);
+      // A new matter gets its OWN Reading, cast for its own moment. This
+      // Reading's context is never reused for it, and this Reading is not
+      // recast either.
+      expect(mockPush).toHaveBeenCalledWith('Reading', {
+        initialQuestion: 'Will my brother travel?',
+      });
+      expect(askCallable).toHaveBeenCalledTimes(1);
+      expect(useReadingThreadsStore.getState().threads).toHaveLength(1);
     });
 
     it('retries a failed follow-up as a follow-up, never as a new reading', async () => {
@@ -427,7 +433,7 @@ describe('OracleChatScreen', () => {
         return defaultImpl(name);
       });
 
-      await renderScreen(<OracleChatScreen />);
+      await renderScreen(<ReadingScreen />);
       const user = userEvent.setup();
       await askOnce(user);
 
@@ -441,6 +447,91 @@ describe('OracleChatScreen', () => {
       await waitFor(() => expect(screen.getByText('Delay, not denial.')).toBeTruthy());
       expect(askCallable).toHaveBeenCalledTimes(1);
       expect(discussCallable).toHaveBeenCalledTimes(2);
+    });
+  });
+  /* ---------------------------------------------------------------------- */
+  /*  Opening vs beginning a Reading                                         */
+  /* ---------------------------------------------------------------------- */
+
+  describe('the Reading lifecycle', () => {
+    it('creates nothing until the seeker actually asks', async () => {
+      await renderScreen(<ReadingScreen />);
+      // Composer open, no question submitted: an abandoned composer must not
+      // leave an empty Reading behind.
+      expect(useReadingThreadsStore.getState().threads).toHaveLength(0);
+    });
+
+    it('submits a question handed over from Home, once', async () => {
+      const askCallable = jest.fn(() => Promise.resolve({ data: successPayload() }));
+      (httpsCallable as jest.Mock).mockImplementation((name: string) =>
+        name === 'askWatchOracle' ? askCallable : defaultImpl(name),
+      );
+      setRoute({ initialQuestion: 'Should I accept this business opportunity?' });
+
+      await renderScreen(<ReadingScreen />);
+
+      await waitFor(() => expect(askCallable).toHaveBeenCalledTimes(1));
+      const thread = onlyThread();
+      expect(thread?.question).toBe('Should I accept this business opportunity?');
+      expect(thread?.title).toBe('Accept business opportunity');
+      expect(useReadingThreadsStore.getState().threads).toHaveLength(1);
+    });
+
+    it('restores an existing Reading without recasting it', async () => {
+      const askCallable = jest.fn(() => Promise.resolve({ data: successPayload() }));
+      (httpsCallable as jest.Mock).mockImplementation((name: string) =>
+        name === 'askWatchOracle' ? askCallable : defaultImpl(name),
+      );
+
+      // A Reading cast three days ago, with its own moment.
+      const store = useReadingThreadsStore.getState();
+      store.createThread({
+        id: 't_old',
+        question: 'Will the buyer complete the purchase?',
+        questionLang: 'en',
+      });
+      store.attachReading('t_old', {
+        ...successPayload(),
+        localMoment: '2026-08-08T11:13:00+05:30',
+      } as never);
+      setRoute({ threadId: 't_old' });
+
+      await renderScreen(<ReadingScreen />);
+
+      // Opening a Reading loads it. It does not consult the oracle again, and
+      // the moment it shows is the one it was cast for.
+      expect(askCallable).not.toHaveBeenCalled();
+      expect(screen.getByText('Will the buyer complete the purchase?')).toBeTruthy();
+      expect(
+        threadById(useReadingThreadsStore.getState().threads, 't_old')?.context?.localMoment,
+      ).toBe('2026-08-08T11:13:00+05:30');
+    });
+
+    it('keeps a retried cast in the same Reading rather than opening a second', async () => {
+      (httpsCallable as jest.Mock).mockImplementation((name: string) => {
+        if (name === 'askWatchOracle') {
+          return jest.fn(() =>
+            Promise.reject(Object.assign(new Error('boom'), { code: 'internal' })),
+          );
+        }
+        return defaultImpl(name);
+      });
+
+      await renderScreen(<ReadingScreen />);
+      const user = userEvent.setup();
+      await user.type(screen.getByTestId('oracle-chat-input'), 'Will I get the job?');
+      await user.press(screen.getByTestId('oracle-chat-send-btn'));
+      await waitFor(() => expect(screen.getByText('↻ Retry')).toBeTruthy());
+
+      (httpsCallable as jest.Mock).mockImplementation((name: string) =>
+        name === 'askWatchOracle'
+          ? jest.fn(() => Promise.resolve({ data: successPayload() }))
+          : defaultImpl(name),
+      );
+      await user.press(screen.getByText('↻ Retry'));
+
+      await waitFor(() => expect(onlyThread()?.readingId).toBe('r1'));
+      expect(useReadingThreadsStore.getState().threads).toHaveLength(1);
     });
   });
 });
