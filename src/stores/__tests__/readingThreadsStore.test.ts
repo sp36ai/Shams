@@ -125,6 +125,51 @@ describe('attaching the cast chart', () => {
   });
 });
 
+describe('restateQuestion', () => {
+  it('moves the question, its title and its requestId together', () => {
+    openThread('Should I accept this business opportunity?');
+    useReadingThreadsStore.getState().restateQuestion('t1', 'Should I sell the shop?', 'req_new');
+
+    const thread = threadById(useReadingThreadsStore.getState().threads, 't1');
+    expect(thread?.question).toBe('Should I sell the shop?');
+    expect(thread?.title).toBe('Sell shop');
+    // A different question is a different act of asking: reusing the old id
+    // could make the server replay the earlier reading as its answer.
+    expect(thread?.requestId).toBe('req_new');
+    expect(thread?.status).toBe('pending');
+  });
+
+  it('refuses once a chart has landed - then a different question is a different Reading', () => {
+    openThread('Should I accept this business opportunity?');
+    useReadingThreadsStore.getState().attachReading('t1', reading());
+    useReadingThreadsStore.getState().restateQuestion('t1', 'Should I sell the shop?', 'req_new');
+
+    const thread = threadById(useReadingThreadsStore.getState().threads, 't1');
+    expect(thread?.question).toBe('Should I accept this business opportunity?');
+    expect(thread?.requestId).toBe('req_t1');
+  });
+});
+
+describe('eviction', () => {
+  it('drops the least recently active Reading, not the earliest created', () => {
+    const store = useReadingThreadsStore.getState();
+    store.createThread({ id: 'old', requestId: 'r_old', question: 'Old one?', questionLang: 'en' });
+    store.createThread({ id: 'new', requestId: 'r_new', question: 'New one?', questionLang: 'en' });
+
+    // The older Reading is revived with a follow-up. Adding a message leaves a
+    // thread where it sits in the array, so recency has to be read from
+    // updatedAt or eviction would drop the conversation in active use.
+    useReadingThreadsStore
+      .getState()
+      .addMessage('old', message({ id: 'f1', createdAt: '2030-01-01T00:00:00.000Z' }));
+
+    const persisted = JSON.parse(storage.getString(KEYS.READING_THREADS) as string) as Array<{
+      id: string;
+    }>;
+    expect(persisted[0]?.id).toBe('old');
+  });
+});
+
 describe('messages belong to their Reading', () => {
   it('keeps two Readings apart', () => {
     const store = useReadingThreadsStore.getState();

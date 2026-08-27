@@ -595,6 +595,40 @@ describe('ReadingScreen', () => {
       expect(onlyThread()?.requestId).toBe(first.requestId);
     });
 
+    it('re-asking after a failed cast moves the question AND mints a new requestId', async () => {
+      const askCallable = jest.fn(() =>
+        Promise.reject(Object.assign(new Error('boom'), { code: 'internal' })),
+      );
+      (httpsCallable as jest.Mock).mockImplementation((name: string) =>
+        name === 'askWatchOracle' ? askCallable : defaultImpl(name),
+      );
+
+      await renderScreen(<ReadingScreen />);
+      const user = userEvent.setup();
+      await user.type(screen.getByTestId('oracle-chat-input'), 'Will I get the job?');
+      await user.press(screen.getByTestId('oracle-chat-send-btn'));
+      await waitFor(() => expect(screen.getByText('↻ Retry')).toBeTruthy());
+
+      // Different words, not the Retry button: the seeker is asking something
+      // else, in a Reading that never got a chart.
+      await user.type(screen.getByTestId('oracle-chat-input'), 'Should I sell the shop?');
+      await user.press(screen.getByTestId('oracle-chat-send-btn'));
+      await waitFor(() => expect(askCallable).toHaveBeenCalledTimes(2));
+
+      // The header must not keep naming a matter this Reading is no longer
+      // about...
+      expect(onlyThread()?.question).toBe('Should I sell the shop?');
+      expect(onlyThread()?.title).toBe('Sell shop');
+
+      // ...and the id must be new. Reusing it would let the server replay the
+      // earlier reading — if that cast in fact succeeded and only its response
+      // was lost — as the answer to these different words.
+      const first = askCallable.mock.calls[0]?.[0] as { requestId?: string };
+      const second = askCallable.mock.calls[1]?.[0] as { requestId?: string };
+      expect(second.requestId).not.toBe(first.requestId);
+      expect(onlyThread()?.requestId).toBe(second.requestId);
+    });
+
     it('keeps a retried cast in the same Reading rather than opening a second', async () => {
       (httpsCallable as jest.Mock).mockImplementation((name: string) => {
         if (name === 'askWatchOracle') {

@@ -198,7 +198,12 @@ function readCache(): ReadingThread[] {
 }
 
 function writeCache(threads: ReadingThread[]): void {
-  const trimmed = threads.slice(0, THREAD_LIMIT).map(thread =>
+  // Ordered by real recency before trimming. Only createThread prepends —
+  // adding a message leaves a thread where it sits — so without this, a
+  // Reading revived with follow-ups today could be evicted ahead of one that
+  // has not been touched in months, purely because it was created earlier.
+  const byRecency = [...threads].sort((a, b) => (a.updatedAt < b.updatedAt ? 1 : -1));
+  const trimmed = byRecency.slice(0, THREAD_LIMIT).map(thread =>
     thread.messages.length > MESSAGE_LIMIT
       ? // Keep the head: the reading itself is the first pair and must never
         // be evicted, or the thread loses the very thing it is about.
@@ -385,7 +390,12 @@ export function contextFrom(reading: WatchReading): ReadingContext {
 /* -------------------------------------------------------------------------- */
 
 export interface ReadingThreadsState {
-  /** Newest activity first — the order Your Readings renders. */
+  /**
+   * Every Reading held on the device. Newest-created first in practice, but
+   * not a guarantee any reader should lean on: a thread stays where it is
+   * when a follow-up is added to it. Your Readings sorts by `updatedAt`
+   * itself, and eviction does the same — see writeCache.
+   */
   threads: ReadingThread[];
 
   /**
@@ -402,6 +412,17 @@ export interface ReadingThreadsState {
 
   addMessage: (threadId: string, message: ReadingMessage) => void;
   updateMessage: (threadId: string, messageId: string, patch: Partial<ReadingMessage>) => void;
+
+  /**
+   * The seeker asked something different in a Reading whose chart never
+   * landed. Rewrites the question, its title and — because this is a
+   * different act of asking — its requestId.
+   *
+   * Refused outright once a chart HAS landed: at that point the question is
+   * what the chart was cast for and can never be restated. A different
+   * question then is a different Reading.
+   */
+  restateQuestion: (threadId: string, question: string, requestId: string) => void;
 
   /** The chart landed: bind the server's reading id and snapshot the moment. */
   attachReading: (threadId: string, reading: WatchReading) => void;
@@ -458,6 +479,24 @@ export const useReadingThreadsStore = create<ReadingThreadsState>((set, get) => 
           }
         : thread,
     );
+    writeCache(next);
+    set({ threads: next });
+  },
+
+  restateQuestion: (threadId, question, requestId): void => {
+    const next = get().threads.map(thread => {
+      if (thread.id !== threadId || thread.context !== null) {
+        return thread;
+      }
+      return {
+        ...thread,
+        question,
+        title: readingTitleFor(question),
+        requestId,
+        status: 'pending' as ThreadStatus,
+        updatedAt: new Date().toISOString(),
+      };
+    });
     writeCache(next);
     set({ threads: next });
   },

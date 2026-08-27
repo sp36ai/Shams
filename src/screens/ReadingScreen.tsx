@@ -167,6 +167,7 @@ const ReadingScreen: React.FC = () => {
   const addMessage = useReadingThreadsStore(s => s.addMessage);
   const updateMessage = useReadingThreadsStore(s => s.updateMessage);
   const attachReading = useReadingThreadsStore(s => s.attachReading);
+  const restateQuestion = useReadingThreadsStore(s => s.restateQuestion);
   const setThreadStatus = useReadingThreadsStore(s => s.setThreadStatus);
 
   const stt = useSpeechToText(lang);
@@ -198,9 +199,11 @@ const ReadingScreen: React.FC = () => {
     if (thread === null) {
       return [];
     }
-    const openingId = thread.messages.find(
-      m => m.role === 'oracle' && m.variant !== 'discussion',
-    )?.replyToId;
+    // The LAST cast turn, not the first: a Reading whose chart failed and was
+    // then re-asked in different words carries more than one, and the header
+    // states the question of the one that stands now.
+    const casts = thread.messages.filter(m => m.role === 'oracle' && m.variant !== 'discussion');
+    const openingId = casts[casts.length - 1]?.replyToId;
     return openingId === undefined
       ? thread.messages
       : thread.messages.filter(m => m.id !== openingId);
@@ -398,6 +401,20 @@ const ReadingScreen: React.FC = () => {
       const readingId = target.readingId;
       const isFollowUp = readingId !== null;
 
+      // A send into a Reading whose chart never landed, with different words:
+      // the seeker is re-asking, not retrying. Two things have to move with
+      // the question — the title, or the header would name a matter this
+      // Reading is no longer about, and the requestId, because a different
+      // question is a different act of asking. Reusing the old id here would
+      // be the one way to get the wrong verdict: if the earlier cast actually
+      // succeeded server-side and only its response was lost, the server would
+      // replay THAT reading as the answer to these new words.
+      const isRestatement = !isFollowUp && existing !== null && trimmed !== existing.question;
+      const askRequestId = isRestatement ? newRequestId() : target.requestId;
+      if (isRestatement) {
+        restateQuestion(target.id, trimmed, askRequestId);
+      }
+
       addMessage(target.id, {
         id: userId,
         role: 'user',
@@ -424,14 +441,14 @@ const ReadingScreen: React.FC = () => {
       const run =
         isFollowUp && followUpRequestId !== undefined
           ? runDiscuss(target.id, oracleId, userId, trimmed, readingId, followUpRequestId)
-          : runAsk(target.id, oracleId, trimmed, target.requestId);
+          : runAsk(target.id, oracleId, trimmed, askRequestId);
 
       run.finally(() => {
         sendingRef.current = false;
         setSending(false);
       });
     },
-    [threadId, lang, createThread, addMessage, runAsk, runDiscuss],
+    [threadId, lang, createThread, restateQuestion, addMessage, runAsk, runDiscuss],
   );
 
   const handleSend = useCallback(() => {
