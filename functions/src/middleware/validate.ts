@@ -75,6 +75,12 @@ export const DiscussReadingSchema = z
       )
       .max(20)
       .optional(),
+    /**
+     * Client-generated, once per follow-up and reused on every retry of it —
+     * same contract as askWatchOracle's. Optional so an older client still
+     * works, at the cost of deduplication.
+     */
+    requestId: z.string().trim().min(8).max(128).optional(),
   })
   .strict();
 

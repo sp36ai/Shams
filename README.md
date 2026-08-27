@@ -74,7 +74,7 @@ Built by **Astro Sarfaraz** — a solo developer, owner, and practicing celestia
 
 - **`askWatchOracle`** — the live judgment endpoint: validates input, enforces quota, builds the watch-frame chart, calls the RKP celestial engine, returns verdict + remedy composition
 - **`discussReading`** — the follow-up conversation endpoint: answers questions *about* a reading already given. Loads the reading server-side (ownership enforced), so the reply is grounded in the verdict that was actually issued and can never revise it. Spends no quota — a reading is the unit charged, and understanding it is part of what was bought — and is bounded instead at 12 follow-up turns per reading. A follow-up that is really a new horary question is flagged rather than answered, and the app offers to ask it as a fresh reading
-- **`classifyQuestion`** / **`classifyIntent`** — Layer-1 question gate and follow-up intent classification (Claude Haiku)
+- **`classifyQuestion`** — Layer-1 question gate (Claude Haiku)
 - **`getQuota`** — Returns user's plan, daily usage, and remaining questions
 - **`syncReadings`** — Bulk fetch readings from Firestore
 - **`deleteReading`** — Delete reading by ID

@@ -32,6 +32,5 @@ export { razorpayWebhook } from './functions/payments/razorpay';
 export { health } from './functions/health';
 export { setAdminClaim } from './functions/admin';
 export { classifyQuestion } from './functions/classifyQuestion';
-export { classifyIntent } from './functions/classifyIntent';
 export { inferProfile } from './functions/inferProfile';
 export { selectRemedies } from './functions/selectRemedies';

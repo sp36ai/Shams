@@ -334,6 +334,7 @@ const ReadingScreen: React.FC = () => {
       userMessageId: string,
       message: string,
       readingId: string,
+      requestId: string,
     ): Promise<void> => {
       const current = threadById(useReadingThreadsStore.getState().threads, targetThreadId);
       try {
@@ -342,6 +343,10 @@ const ReadingScreen: React.FC = () => {
           message,
           lang,
           turns: current === null ? [] : discussionTurnsFor(current, userMessageId),
+          // Carried on the oracle message, so a retry — including one after
+          // the app was killed — replays this answer rather than spending a
+          // second turn from the reading's budget.
+          requestId,
         });
         updateMessage(targetThreadId, oracleMessageId, {
           status: 'sent',
@@ -401,6 +406,9 @@ const ReadingScreen: React.FC = () => {
         createdAt: now,
         status: 'sent',
       });
+      // A follow-up gets its own id; the thread's own id belongs to the cast.
+      const followUpRequestId = isFollowUp ? newRequestId() : undefined;
+
       addMessage(target.id, {
         id: oracleId,
         role: 'oracle',
@@ -409,12 +417,14 @@ const ReadingScreen: React.FC = () => {
         status: 'sending',
         replyToId: userId,
         variant: isFollowUp ? 'discussion' : 'reading',
+        ...(followUpRequestId !== undefined ? { requestId: followUpRequestId } : {}),
       });
       setInputText('');
 
-      const run = isFollowUp
-        ? runDiscuss(target.id, oracleId, userId, trimmed, readingId)
-        : runAsk(target.id, oracleId, trimmed, target.requestId);
+      const run =
+        isFollowUp && followUpRequestId !== undefined
+          ? runDiscuss(target.id, oracleId, userId, trimmed, readingId, followUpRequestId)
+          : runAsk(target.id, oracleId, trimmed, target.requestId);
 
       run.finally(() => {
         sendingRef.current = false;
@@ -468,8 +478,17 @@ const ReadingScreen: React.FC = () => {
       // failed follow-up retried as a reading would silently cast a chart and
       // charge for it, and a retried cast must not open a second Reading.
       const run =
-        oracleMsg.variant === 'discussion' && thread.readingId !== null
-          ? runDiscuss(thread.id, oracleMsg.id, userMsg.id, userMsg.text, thread.readingId)
+        oracleMsg.variant === 'discussion' &&
+        thread.readingId !== null &&
+        oracleMsg.requestId !== undefined
+          ? runDiscuss(
+              thread.id,
+              oracleMsg.id,
+              userMsg.id,
+              userMsg.text,
+              thread.readingId,
+              oracleMsg.requestId,
+            )
           : runAsk(thread.id, oracleMsg.id, userMsg.text, thread.requestId);
 
       run.finally(() => {

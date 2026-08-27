@@ -48,6 +48,14 @@ export interface DiscussReadingInput {
   lang: 'en' | 'ur' | 'hi';
   /** Recent transcript, oldest first. Capped server-side at 20 turns. */
   turns: DiscussionTurn[];
+  /**
+   * Identifies this follow-up, and is reused on every retry of it. Same
+   * contract as askWatchOracle's requestId and for the same reason: a
+   * follow-up costs a turn from the reading's budget, and a retry after the
+   * app was killed must replay the original answer rather than spend a
+   * second turn on a different one.
+   */
+  requestId?: string;
 }
 
 export interface DiscussReadingResult {
@@ -79,6 +87,7 @@ export async function discussReading(args: DiscussReadingInput): Promise<Discuss
       message: args.message,
       lang: args.lang,
       turns: args.turns.slice(-MAX_DISCUSSION_TURNS_SENT),
+      ...(args.requestId !== undefined ? { requestId: args.requestId } : {}),
     }),
     DISCUSS_READING_TIMEOUT_MS,
     () => new DiscussReadingTimeoutError(),

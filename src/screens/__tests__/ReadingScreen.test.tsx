@@ -414,6 +414,44 @@ describe('ReadingScreen', () => {
       expect(useReadingThreadsStore.getState().threads).toHaveLength(1);
     });
 
+    it('retries a follow-up under its own SAME requestId, so the turn is not spent twice', async () => {
+      const discussCallable = jest.fn(() =>
+        Promise.reject(Object.assign(new Error('down'), { code: 'unavailable' })),
+      );
+      (httpsCallable as jest.Mock).mockImplementation((name: string) => {
+        if (name === 'askWatchOracle') {
+          return jest.fn(() => Promise.resolve({ data: successPayload() }));
+        }
+        if (name === 'discussReading') {
+          return discussCallable;
+        }
+        return defaultImpl(name);
+      });
+
+      await renderScreen(<ReadingScreen />);
+      const user = userEvent.setup();
+      await askOnce(user);
+
+      await user.type(screen.getByTestId('oracle-chat-input'), 'Why so long?');
+      await user.press(screen.getByTestId('oracle-chat-send-btn'));
+      await waitFor(() => expect(screen.getByText('↻ Retry')).toBeTruthy());
+
+      await user.press(screen.getByText('↻ Retry'));
+      await waitFor(() => expect(discussCallable).toHaveBeenCalledTimes(2));
+
+      const first = discussCallable.mock.calls[0]?.[0] as { requestId?: string };
+      const second = discussCallable.mock.calls[1]?.[0] as { requestId?: string };
+      expect(first.requestId).toBeDefined();
+      expect(second.requestId).toBe(first.requestId);
+
+      // It is the follow-up's own id, not the thread's — the thread's belongs
+      // to the cast, and reusing it would collide with the reading's claim.
+      expect(first.requestId).not.toBe(onlyThread()?.requestId);
+      // And it is persisted, so the id survives the app being killed.
+      const pending = oracleMessages().find(m => m.variant === 'discussion');
+      expect(pending?.requestId).toBe(first.requestId);
+    });
+
     it('retries a failed follow-up as a follow-up, never as a new reading', async () => {
       const askCallable = jest.fn(() => Promise.resolve({ data: successPayload() }));
       let discussFails = true;

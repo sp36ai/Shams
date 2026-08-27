@@ -1,8 +1,19 @@
 /**
- * readingsStore — local cache of RKP readings.
+ * readingsStore — the local archive of cast readings.
  * --------------------------------------------------------------------------
- * The shell is local-only. A reading is written to MMKV immediately after
- * judgment so History opens instantly and still works offline.
+ * A reading is written to MMKV immediately after judgment, so the archive
+ * opens instantly and still works offline.
+ *
+ * Scope, since a second store now exists: this one holds the READING as the
+ * engine produced it — verdict, confidence, composition — one entry per cast.
+ * readingThreadsStore holds the Reading as the seeker experiences it: the
+ * question, its moment, and the conversation about it. The two are written
+ * together and this one is what pre-thread entries live in, which is why
+ * Your Readings reads both.
+ *
+ * Filter and sort state used to live here for the old History screen's chips.
+ * Both are gone: Your Readings is searched and grouped by recency instead,
+ * and dead store state outlives the memory of why it was there.
  */
 
 import { create } from 'zustand';
@@ -77,20 +88,12 @@ export interface Reading {
   };
 }
 
-export type ReadingFilter = 'all' | VerdictKind;
-export type ReadingSort = 'newest' | 'oldest';
-
 const CACHE_LIMIT = 100;
 
 export interface ReadingsState {
   readings: Reading[];
-  filter: ReadingFilter;
-  sort: ReadingSort;
   addReading: (reading: Reading) => Promise<void>;
   deleteReading: (id: string) => Promise<void>;
-
-  setFilter: (f: ReadingFilter) => void;
-  setSort: (s: ReadingSort) => void;
   clearAll: () => void;
 }
 
@@ -139,8 +142,6 @@ function writeCache(readings: Reading[]): void {
 
 export const useReadingsStore = create<ReadingsState>((set, get) => ({
   readings: readCache(),
-  filter: 'all',
-  sort: 'newest',
 
   addReading: async (reading: Reading): Promise<void> => {
     const next = [reading, ...get().readings.filter(r => r.id !== reading.id)];
@@ -154,29 +155,14 @@ export const useReadingsStore = create<ReadingsState>((set, get) => ({
     set({ readings: next });
   },
 
-  setFilter: (f: ReadingFilter): void => set({ filter: f }),
-  setSort: (s: ReadingSort): void => set({ sort: s }),
-
   clearAll: (): void => {
     storage.delete(KEYS.READINGS_CACHE);
-    set({ readings: [], filter: 'all', sort: 'newest' });
+    set({ readings: [] });
   },
 }));
 
 /* -------------------------------------------------------------------------- */
 /*  Derived selectors                                                         */
 /* -------------------------------------------------------------------------- */
-
-/**
- * Apply current filter + sort to the readings list. Memoize the call site
- * with useMemo if rendering large lists, but for v1 the cap of 100 makes
- * this cheap.
- */
-export function selectFilteredReadings(s: ReadingsState): Reading[] {
-  const filtered = s.filter === 'all' ? s.readings : s.readings.filter(r => r.verdict === s.filter);
-  return [...filtered].sort((a, b) =>
-    s.sort === 'newest' ? (a.createdAt < b.createdAt ? 1 : -1) : a.createdAt > b.createdAt ? 1 : -1,
-  );
-}
 
 export const selectIsEmpty = (s: ReadingsState): boolean => s.readings.length === 0;

@@ -75,6 +75,16 @@ export interface ReadingMessage {
   errorMessage?: string;
   /** On an oracle message: the user message id this is answering. */
   replyToId?: string;
+  /**
+   * On a 'discussion' oracle message: identifies the follow-up it is
+   * answering, to the server.
+   *
+   * Persisted with the message rather than held in memory, for the same
+   * reason the thread persists its own: a retry after the app was killed must
+   * carry the SAME id, so the server replays that answer instead of spending
+   * a second turn from this reading's budget.
+   */
+  requestId?: string;
 }
 
 /**

@@ -10,10 +10,13 @@
  *   2. Firebase Auth       — request.auth UID verified by the runtime
  *   3. Input validation    — Zod, strict
  *   4. Rate limit          — shared limiter, per user
- *   5. Load the reading    — /readings/{id}, ownership enforced here
- *   6. Turn budget         — atomic increment, capped per reading
- *   7. Compose the reply   — Claude, over the STORED reading only
- *   8. Audit log           — no PII
+ *   5. Idempotency claim   — claimRequest(), so one follow-up spends one turn
+ *                            even if the app dies mid-call and is retried
+ *   6. Load the reading    — /readings/{id}, ownership enforced here
+ *   7. Turn budget         — atomic increment, capped per reading
+ *   8. Compose the reply   — Claude, over the STORED reading only
+ *   9. Record the response — against the requestId, so a retry replays it
+ *  10. Audit log           — no PII
  *
  * WHY THIS DOES NOT CHARGE A QUOTA SLOT
  *   The unit the app sells is a reading — a chart cast for a moment. Charging
@@ -40,6 +43,7 @@ import { parse, DiscussReadingSchema } from '../middleware/validate';
 import { measure } from '../middleware/telemetry';
 import { logger, hashText } from '../utils/logger';
 import { ORACLE_FUNCTION_OPTS, ANTHROPIC_API_KEY, DISCUSSION_TURN_LIMIT } from '../config';
+import { claimRequest, completeRequest, releaseRequest } from '../utils/idempotency';
 import type { AuditLogDoc, ReadingDoc } from '../types';
 import type { WatchOracleComposition } from '../oracle/responseComposer';
 import {
@@ -92,6 +96,26 @@ export const discussReading = onCall(
 
       await enforceRateLimit(userId);
 
+      // ── Idempotency, BEFORE the turn is counted ──────────────────────────
+      //
+      // Lower stakes than askWatchOracle — a follow-up costs a turn, not a
+      // quota slot — but the same hole: if this function answered and the app
+      // died before the reply landed, the seeker's retry would spend a second
+      // turn from this reading's budget and never see the first answer.
+      const { requestId } = input;
+      if (requestId !== undefined) {
+        const { replay } = await claimRequest<DiscussReadingResponse>(userId, requestId);
+        if (replay !== null) {
+          return replay;
+        }
+      }
+
+      const release = async (): Promise<void> => {
+        if (requestId !== undefined) {
+          await releaseRequest(userId, requestId);
+        }
+      };
+
       const readingRef = db.collection('readings').doc(input.readingId);
 
       // ── Load + ownership + turn budget, atomically ───────────────────────
@@ -130,6 +154,10 @@ export const discussReading = onCall(
           return { doc: data, turnsRemaining: DISCUSSION_TURN_LIMIT - used - 1 };
         }));
       } catch (err) {
+        // No turn was spent — a missing reading, a foreign one, an exhausted
+        // budget, a failed read. The claim must not outlive the attempt, or
+        // the seeker's next try is refused for the wrong reason.
+        await release();
         if (err instanceof HttpsError) {
           throw err;
         }
@@ -186,11 +214,19 @@ export const discussReading = onCall(
         logger.warn('discussReading: audit log write failed', { err: String(err) });
       }
 
-      return {
+      const response: DiscussReadingResponse = {
         answer: reply.answer,
         isNewQuestion: reply.isNewQuestion,
         turnsRemaining,
       };
+
+      // Stored, so a retry replays THIS answer rather than spending another
+      // turn to generate a different one.
+      if (requestId !== undefined) {
+        await completeRequest(userId, requestId, response);
+      }
+
+      return response;
     });
   },
 );
