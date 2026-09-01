@@ -102,9 +102,14 @@ const GuidanceCard: React.FC<GuidanceCardProps> = ({ remedies }) => {
               { color: colors.goldBright, opacity: 0.6 },
             ]}
           >
+            {/* Guarded like the other cards: these remedies are persisted with
+                the message and re-render from cache long after the library
+                that produced them changed. */}
             {(CATEGORY_ICON[remedy.category] ?? '◈') +
               '  ' +
-              remedy.category.toUpperCase().replace(/_/g, ' ')}
+              (typeof remedy.category === 'string'
+                ? remedy.category.toUpperCase().replace(/_/g, ' ')
+                : 'GUIDANCE')}
           </Text>
 
           <Text style={[typography('body'), styles.title, { color: colors.text }]}>
@@ -125,7 +130,9 @@ const GuidanceCard: React.FC<GuidanceCardProps> = ({ remedies }) => {
                 { color: colors.goldBright, opacity: 0.5 },
               ]}
             >
-              {remedy.effectDimension.replace(/_/g, ' ')}
+              {typeof remedy.effectDimension === 'string'
+                ? remedy.effectDimension.replace(/_/g, ' ')
+                : 'guidance'}
             </Text>
           </View>
         </View>
