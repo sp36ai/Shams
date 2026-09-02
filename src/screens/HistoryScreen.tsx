@@ -29,6 +29,7 @@ import type { AppNavigation } from '@navigation/types';
 import { useColors, useTheme } from '@theme/ThemeProvider';
 import { useTypography } from '@theme/useTypography';
 import { useTranslation, useI18n } from '@i18n/I18nProvider';
+import { useTextToSpeech } from '@hooks/useTextToSpeech';
 import {
   useReadingsStore,
   selectFilteredReadings,
@@ -367,6 +368,7 @@ const ReadingDetailModal: React.FC<{
   const typography = useTypography();
   const t = useTranslation();
   const { lang } = useI18n();
+  const tts = useTextToSpeech();
 
   const v = extractVerdict(reading);
   const vColor = verdictColorFor(reading.verdict, colors);
@@ -374,6 +376,13 @@ const ReadingDetailModal: React.FC<{
   const badgeLabel = verdictBadgeFor(reading.verdict);
   const narration = v.narration?.[lang] ?? v.narration?.en ?? '';
   const confidence = v.confidence ?? 0;
+
+  const isSpeaking = tts.activeMessageId === `reading_${reading.id}` && tts.status === 'speaking';
+  const isPaused = tts.activeMessageId === `reading_${reading.id}` && tts.status === 'paused';
+
+  const handleToggleSpeech = useCallback(() => {
+    tts.toggle(`reading_${reading.id}`, narration, lang);
+  }, [tts, reading.id, narration, lang]);
 
   return (
     <Modal visible animationType="slide" presentationStyle="pageSheet" onRequestClose={onClose}>
@@ -439,15 +448,45 @@ const ReadingDetailModal: React.FC<{
             </View>
           </View>
 
-          {/* Narration */}
+          {/* Narration with audio playback */}
           {narration.length > 0 && (
             <View style={[styles.section, { borderColor: colors.border }]}>
-              <Text style={[typography('caption'), { color: colors.textMuted, marginBottom: 8 }]}>
-                Verdict
-              </Text>
-              <Text style={[typography('body'), { color: colors.text, lineHeight: 24 }]}>
-                {narration}
-              </Text>
+              <View style={styles.narrationHeader}>
+                <View style={{ flex: 1 }}>
+                  <Text style={[typography('caption'), { color: colors.textMuted, marginBottom: 8 }]}>
+                    Verdict
+                  </Text>
+                </View>
+                <Pressable
+                  onPress={handleToggleSpeech}
+                  style={({ pressed }) => [
+                    styles.narrationSpeechBtn,
+                    { borderColor: colors.borderAccent, opacity: pressed ? 0.7 : 1 },
+                  ]}
+                  accessibilityRole="button"
+                  accessibilityLabel={
+                    isSpeaking ? t('oracleChat.pauseNarration') : t('oracleChat.playNarration')
+                  }
+                >
+                  <Text style={[typography('label'), { color: colors.goldBright }]}>
+                    {isSpeaking ? '⏸' : '▶'}
+                  </Text>
+                </Pressable>
+              </View>
+              <View style={styles.narrationContent}>
+                {(isSpeaking || isPaused) && (
+                  <Text style={[typography('caption'), { color: colors.textFaint, marginBottom: 8 }]}>
+                    {isSpeaking
+                      ? t('oracleChat.speaking')
+                      : isPaused
+                        ? t('oracleChat.paused')
+                        : t('oracleChat.listenToVerdict')}
+                  </Text>
+                )}
+                <Text style={[typography('body'), { color: colors.text, lineHeight: 24 }]}>
+                  {narration}
+                </Text>
+              </View>
             </View>
           )}
 
@@ -881,6 +920,23 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     padding: 14,
     borderBottomWidth: 1,
+  },
+  narrationHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
+  narrationSpeechBtn: {
+    borderWidth: 1,
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  narrationContent: {
+    gap: 8,
   },
 });
 
