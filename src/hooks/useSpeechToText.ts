@@ -184,6 +184,7 @@ export function useSpeechToText(lang: 'en' | 'ur' | 'hi'): SpeechToTextState {
       log.error('Voice.stop threw', { error: String(e) });
       finalizeResolveRef.current = null;
       if (mountedRef.current) {
+        setPartialText('');
         setIsListening(false);
       }
       return latestTranscriptRef.current;
@@ -192,6 +193,7 @@ export function useSpeechToText(lang: 'en' | 'ur' | 'hi'): SpeechToTextState {
     const result = await withTimeout(finalize, FINALIZE_TIMEOUT_MS);
     finalizeResolveRef.current = null;
     if (mountedRef.current) {
+      setPartialText('');
       setIsListening(false);
     }
     return result ?? latestTranscriptRef.current;
