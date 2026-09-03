@@ -1548,6 +1548,525 @@ def evaluate_node_in_judgment(
 
 ---
 
+---
+
+## 8. Retrograde (Vakra) Planet Logic
+
+### Overview: Temporal Circuit Breakers
+
+In the Shams Method, retrograde planets act as **temporal circuit breakers** within the deterministic engine. Their behavior is not a loss of strength, but rather an **alteration in directionality and timing**.
+
+The system treats retrograde motion strictly according to where the planet sits in the stellar hierarchy (CSL, Star Lord, or Sub Lord) and the nature of the event being queried.
+
+---
+
+### Positional Impact of Retrograde Planets
+
+#### A. Retrograde Cuspal Sub-Lord (The Anchor)
+
+When the primary CSL of the queried house is retrograde, the native's initial efforts toward the event will face **reversals, revisions, or false starts**.
+
+**Engine Verdict:** `EVENT_REQUIRES_RESTART`
+- The event is not denied, but it requires repeated effort
+- The native will likely abandon the pursuit temporarily and return to it later
+- Expected retries: 2–3 attempts before success
+- Timeline shift: Add 3–6 months to expected manifestation
+
+**Example:** If the 5th CSL (speculation/windfall) is retrograde, the native might buy a lottery ticket, then abandon the plan, then return to it weeks later when the CSL becomes direct.
+
+#### B. Retrograde Star Lord (The Result)
+
+The Star Lord dictates the result. If the Star Lord is retrograde but signifies favorable houses, the promise is **mathematically valid but temporarily suspended in time**.
+
+**Engine Verdict:** `EVENT_DELAYED`
+- The event cannot manifest while the Star Lord is retrograde in transit
+- It remains in a holding pattern and will execute only after the planet assumes direct motion
+- Calculate direct motion date using ephemeris
+- New execution window: Star Lord's retrograde end date + 2–3 weeks
+
+**Example:** If Moon (Star Lord of windfall) is retrograde, the promised gain is real but must wait until the Moon turns direct.
+
+#### C. Retrograde Sub Lord (The Final Verdict)
+
+This is the **most critical failure point** in the Shams Method. The Sub Lord is the ultimate gatekeeper; if it is retrograde, it **withdraws its consent**.
+
+**Engine Verdict:** `EVENT_DENIED`
+- Even if the Star Lord promises a spectacular windfall or perfect marriage, a retrograde Sub Lord aborts the event at the eleventh hour
+- The promise dissolves before materialization
+- No rescheduling possible (unless event type triggers Reversal Override)
+
+**Corollary:** If a direct Sub Lord is placed in the Star of a retrograde planet, the outcome is similarly **destabilized** → `EVENT_UNCERTAIN`
+
+**Example:** Jupiter (Sub Lord) retrograde → Even with Moon (Star Lord) promising a windfall, Jupiter's retrograde veto blocks it entirely.
+
+---
+
+### The Reversal Override (When Retrograde is Favorable)
+
+The deterministic engine does **not** apply the `EVENT_DENIED` logic universally. Retrograde literally means "moving backward." Therefore, for queries where the native **desires a return to a previous state**, retrograde significators become **mandatory for success**.
+
+#### Events That Require or Benefit from Retrograde Planets
+
+| Event Type | Retrograde Benefit | Mechanism |
+| --- | --- | --- |
+| **Reconciliation** | Returning to an ex-partner or dropped relationship | Going backward in time to reunite |
+| **Reinstatement** | Getting a lost job back after termination | Reversing the termination decision |
+| **Recovery** | Healing from an illness (returning to health) | Reverting to a previous healthy state |
+| **Retrieval** | Finding lost articles or recovering bad debts | Going backward to recover what was lost |
+| **Reversal of Judgment** | Overturning a legal decision or appeal | Reversing the prior adverse verdict |
+
+#### Engine Logic Trigger
+
+```
+if query_type in ["RECONCILIATION", "REINSTATEMENT", "RECOVERY", "RETRIEVAL", "REVERSAL"]:
+    retrograde_star_lord → FAVORABLE (primary manifesting agent)
+    retrograde_sub_lord → FAVORABLE (enables reversal)
+else:
+    retrograde_star_lord → DELAYED (temporal suspension)
+    retrograde_sub_lord → DENIED (fatal veto)
+```
+
+**Example:** A native queries "Will I get my old job back?" With a retrograde Star Lord, the answer becomes:
+- **Standard Query:** `EVENT_DELAYED` (must wait for planet to turn direct)
+- **Reversal Query:** `PROMISED_VIA_RETROGRADE` (retrograde motion itself reverses the termination)
+
+---
+
+### The Nodal Exception (Rahu and Ketu)
+
+Rahu and Ketu are **always in retrograde motion** (they move backward through the zodiac). Applying standard retrograde penalties to them would mathematically break the engine.
+
+**Rule:**
+- The Shams Method **inherently ignores** the retrograde status of the Nodes themselves
+- Instead, the engine evaluates the retrograde status of the **Node's Star Lord and Sign Lord**
+- If Rahu acts as a Sub Lord, it is fully capable of delivering a positive verdict, provided its **Proxy Targets** (the planets it represents) are in direct motion
+
+**Logic:**
+
+```
+if node.name in ["Rahu", "Ketu"]:
+    ignore node.is_retrograde  # Always true; skip evaluation
+    
+    # Check the Node's Star Lord and Sign Lord instead
+    if node_star_lord.is_retrograde:
+        verdict_status = "DELAYED"  # Node's promise suspended
+    elif node_sign_lord.is_retrograde:
+        verdict_status = "DELAYED"  # Node's proxy authority suspended
+    else:
+        verdict_status = "EVALUATED_NORMALLY"  # Node operates at full strength
+```
+
+---
+
+### Algorithmic Pseudo-Code for Retrograde Logic
+
+```python
+def evaluate_retrograde_impact(csl, stl, sub, event_type, query_intent):
+    """
+    Evaluate retrograde status across the CSL → Star Lord → Sub Lord chain.
+    
+    Args:
+        csl: Cuspal Sub-Lord planet
+        stl: Star Lord of the CSL
+        sub: Sub Lord of the CSL
+        event_type: WINDFALL_LOTTERY, LITIGATION_VICTORY, RECONCILIATION, etc.
+        query_intent: "FORWARD" (normal goal) or "REVERSAL" (return to past state)
+    
+    Returns:
+        verdict_status: PROMISED_ABSOLUTE, DELAYED, DENIED, PROMISED_VIA_REVERSAL
+    """
+    
+    # Check for "Return to Past" event types
+    is_reversal_event = query_intent == "REVERSAL" or event_type in [
+        "RECONCILIATION", "RECOVERY", "REINSTATEMENT", "RETRIEVAL", "REVERSAL_OF_JUDGMENT"
+    ]
+    
+    # === SUB LORD CHECK (FATAL VETO) ===
+    if sub.is_retrograde and sub.name not in ["Rahu", "Ketu"]:
+        if is_reversal_event:
+            # Retrograde Sub Lord ENABLES reversal in return-to-past queries
+            return {
+                "status": "PROMISED_VIA_RETROGRADE",
+                "confidence": 0.90,
+                "detail": f"Retrograde {sub.name} enables reversal/return. Event will revert to past state."
+            }
+        else:
+            # Retrograde Sub Lord DENIES in forward queries
+            return {
+                "status": "DENIED",
+                "confidence": 0.95,
+                "detail": f"Sub Lord {sub.name} is retrograde. Event aborts at final stage."
+            }
+    
+    # === STAR LORD CHECK (DELAY or ENABLE) ===
+    if stl.is_retrograde and stl.name not in ["Rahu", "Ketu"]:
+        if is_reversal_event:
+            # Retrograde Star Lord ENABLES reversal
+            return {
+                "status": "PROMISED_VIA_RETROGRADE",
+                "confidence": 0.88,
+                "detail": f"Retrograde {stl.name} enables return to previous state."
+            }
+        else:
+            # Retrograde Star Lord DELAYS in forward queries
+            direct_motion_date = calculate_retrograde_end_date(stl)
+            new_execution_date = add_days(direct_motion_date, 14)  # 2-week buffer
+            return {
+                "status": "DELAYED",
+                "confidence": 0.85,
+                "detail": f"Star Lord {stl.name} is retrograde. Event suspended until {new_execution_date}."
+            }
+    
+    # === CSL RETROGRADE CHECK (REVERSALS, NOT DENIAL) ===
+    if csl.is_retrograde and csl.name not in ["Rahu", "Ketu"]:
+        return {
+            "status": "EVENT_REQUIRES_RESTART",
+            "confidence": 0.70,
+            "detail": f"CSL {csl.name} is retrograde. Native will face false starts; expect 2-3 attempts."
+        }
+    
+    # === NODAL SPECIAL CASE ===
+    if stl.name in ["Rahu", "Ketu"]:
+        # Check Node's Star Lord and Sign Lord instead
+        node_stl = get_star_lord(stl.nakshatra)
+        node_sign_lord = get_sign_lord(stl.sign)
+        
+        if node_stl.is_retrograde or node_sign_lord.is_retrograde:
+            return {
+                "status": "DELAYED",
+                "confidence": 0.82,
+                "detail": f"Node's proxy ({node_stl.name}) is retrograde. Promise suspended."
+            }
+    
+    # === NO RETROGRADE ISSUES ===
+    return {
+        "status": "PROMISED_AND_DIRECT",
+        "confidence": 0.95,
+        "detail": "All planets in direct motion. Event proceeds normally."
+    }
+```
+
+---
+
+## 9. The Unified Shams Method Engine: End-to-End Architecture
+
+### Overview: From Query to Final Verdict
+
+To bring the Shams Method to its logical conclusion as a deterministic system, all isolated modules—**Cuspal Sub-Lords, Node Proxies, Retrograde mechanics, Timing filters, and Veto Logic**—must collapse into a **single, unified execution pipeline**.
+
+This pipeline removes human intuition from the equation, treating astrological forecasting as a **strict compilation of mathematical states**.
+
+---
+
+### Phase 1: Initialization & Matrix Generation
+
+Before answering any query, the engine calculates the baseline cosmic state and normalizes the data.
+
+#### Step 1.1: Cuspal Calculation
+- Generate the 12 Placidus cusps using Lahiri ayanamsa
+- Map exact degrees for the Sign, Star (Nakshatra), and Sub of each house
+- Store as: `Cusp[i] = {longitude, sign, nakshatra, sub}`
+
+#### Step 1.2: Planetary Array Mapping
+- Log positions of all 9 planets (Sun, Moon, Mars, Mercury, Jupiter, Venus, Saturn, Rahu, Ketu)
+- Calculate retrograde status for each planet
+- Store: `Planet[i] = {longitude, sign, nakshatra, sub, is_retrograde, dignity}`
+
+#### Step 1.3: Node Proxy Resolution
+- Immediately resolve Rahu and Ketu into their full proxy arrays
+- For each Node: Conjunction → Aspect → Sign Lord → Star Lord (Priority 1–4)
+- Store: `Node_Proxy[Rahu/Ketu] = {signified_houses[], proxy_planets[], trigger_strength}`
+
+#### Step 1.4: Untenanted Flagging
+- Scan all 27 Nakshatras
+- If a planet has **no occupants** in its three Nakshatras, flag it as `is_untenanted = true`
+- **Effect:** Untenanted planets gain **Level B and Level D self-signification strength** (double power)
+
+**Output:** Baseline cosmic matrix ready for interrogation
+
+---
+
+### Phase 2: The Promise Gateway (Binary Resolution)
+
+The engine evaluates whether the **universe permits the event to happen at all**.
+
+#### Step 2.1: Target Vector Assignment
+Define the primary house ($P$), supporting houses ($S$), and negating house ($N = P - 1$ or event-specific):
+
+```
+Example (Windfall):
+  P = 5 (Speculation)
+  S = [2, 8, 11]
+  N = [4, 12]
+```
+
+#### Step 2.2: CSL Interrogation
+1. Locate the **Cuspal Sub-Lord of house $P$**
+2. Extract its Star Lord and Sub Lord
+3. Store: `CSL_Chain = {csl_planet, star_lord, sub_lord}`
+
+#### Step 2.3: Result vs. Verdict Check
+
+**The Star Lord (Result):**
+- Does it signify $P$ and $S$ (favorable)?
+- Does it drag the native into $N$ (unfavorable)?
+- Is it in direct motion?
+- Calculate: `star_lord_alignment_score = (houses_in_S / total_S) × (1 if not retrograde else 0.7)`
+
+**The Sub Lord (Final Verdict):**
+- Does it veto the Star Lord by signifying $N$?
+- Apply Sub-Lord Veto Logic (absolute override)
+- Calculate: `sub_lord_alignment_score = (houses_in_N / total_N) × (veto_weight)`
+
+#### Step 2.4: Retrograde (Vakra) Check
+1. If Sub Lord `is_retrograde` → Apply retrograde logic (DENIED or FAVORABLE if reversal event)
+2. If Star Lord `is_retrograde` → Flag as `SUSPENDED` (DELAYED until direct)
+3. If CSL `is_retrograde` → Flag as `REQUIRES_RESTART` (repeated attempts)
+
+#### Step 2.5: Promise Gateway Output
+
+```
+verdict_state = evaluate_promise_gateway(
+    star_lord_alignment_score,
+    sub_lord_alignment_score,
+    retrograde_status,
+    event_type,
+    query_intent
+)
+
+return {
+    "status": PROMISED | DENIED | DELAYED | UNCERTAIN,
+    "confidence": 0.0–1.0,
+    "blocking_factors": [list of blockers if any],
+    "proceed_to_timing": (status == PROMISED)
+}
+```
+
+**If status is NOT `PROMISED`, stop here. Return verdict to user.**
+
+---
+
+### Phase 3: Chrono-Triggering (The Timing Module)
+
+If Phase 2 returns a `PROMISED` status, the engine moves to **time extraction**.
+
+#### Step 3.1: DBA Array Formulation
+- Identify the currently active Dasha (major period) lord
+- Identify the currently active Bhukti (sub-period) lord
+- Identify the currently active Antara (sub-sub-period) lord
+- Store: `DBA_Array = [dasha_lord, bhukti_lord, antara_lord]`
+
+#### Step 3.2: RP Array Formulation
+- Capture the 5 Ruling Planets at the exact moment the query was cast
+- Lagna Star Lord, Lagna Sign Lord, Moon Star Lord, Moon Sign Lord, Day Lord
+- Store: `RP_Array = [lagna_star, lagna_sign, moon_star, moon_sign, day_lord]`
+
+#### Step 3.3: The Intersection Filter
+- Cross-reference the arrays: `Operative = DBA_Array ∩ RP_Array`
+- Only planets in **both** arrays can trigger the event
+- Store: `Operative_Significators = [planets in intersection]`
+
+#### Step 3.4: Stigmatization Scrub
+Remove any intersected planet that:
+- Is **Combust (Astangata)** (within ~8° of Sun)
+- Whose Sub Lord signifies the negating house ($N$)
+- Is in mutual retrograde conflict with another operative planet
+
+#### Step 3.5: Transit Lock
+Project the remaining operative planets into the ephemeris:
+1. **Level 1 (Month):** Find when Sun transits a Nakshatra owned by operative planet → 1–2 day range
+2. **Level 2 (Day):** Find when Moon transits a Nakshatra owned by operative planet → hour/minute precision
+3. **Level 3 (Moment):** Find when Lagna crosses the Sub of operative planet → second precision
+
+Store: `Execution_Timestamp = [calculated exact date/time]`
+
+---
+
+### Phase 4: Final Master Output (JSON Schema)
+
+When the entire Shams Method architecture runs to completion, it yields a standardized data object:
+
+```json
+{
+  "query_metadata": {
+    "event_type": "WINDFALL_LOTTERY_SPECULATION",
+    "vectors": {
+      "primary": 5,
+      "secondary": [2, 8, 11],
+      "negating": [4, 12]
+    },
+    "query_intent": "FORWARD",
+    "query_timestamp": 1725358500
+  },
+  
+  "promise_evaluation": {
+    "phase": 2,
+    "csl_anchor": {
+      "planet": "Jupiter",
+      "house": 5,
+      "is_retrograde": false
+    },
+    "star_lord": {
+      "planet": "Moon",
+      "signifies": [8, 11],
+      "is_retrograde": false,
+      "alignment_score": 0.95,
+      "node_proxies": null
+    },
+    "sub_lord": {
+      "planet": "Mercury",
+      "signifies": [2, 11],
+      "is_retrograde": false,
+      "veto_triggered": false,
+      "alignment_score": 0.92
+    },
+    "retrograde_check": "NONE",
+    "promise_status": "PROMISED_ABSOLUTE",
+    "confidence": 0.92
+  },
+  
+  "timing_execution": {
+    "phase": 3,
+    "dba_lords": ["Moon", "Mercury", "Jupiter"],
+    "ruling_planets": ["Mercury", "Mars", "Moon", "Jupiter"],
+    "operative_significators": ["Moon", "Mercury", "Jupiter"],
+    "discarded_significators": [
+      {
+        "planet": "Mars",
+        "reason": "COMBUST"
+      }
+    ],
+    "trigger_date": "2026-09-28",
+    "trigger_time": "16:15:00 IST",
+    "transit_coordinates": {
+      "sun_transit": {
+        "star": "Hasta (Moon)",
+        "sub": "Jupiter",
+        "window": "Sep 25–Sep 28"
+      },
+      "moon_transit": {
+        "star": "Revati (Mercury)",
+        "sub": "Jupiter",
+        "timestamp": "2026-09-28T16:15:00Z"
+      },
+      "lagna_transit": {
+        "star": "Jupiter's Star",
+        "sub": "Mercury",
+        "timestamp": "2026-09-28T16:16:23Z"
+      }
+    }
+  },
+  
+  "final_verdict": {
+    "status": "PROMISED_AND_TIMED",
+    "confidence": 0.92,
+    "execution_date": "2026-09-28",
+    "execution_time": "16:15 IST",
+    "timeline_certainty": "HIGH",
+    "amount_estimate": {
+      "min": 100000,
+      "max": 1000000,
+      "currency": "INR"
+    },
+    "blocking_conditions": [],
+    "contingency": null
+  },
+  
+  "audit_trail": {
+    "stages_executed": [
+      "INITIALIZATION",
+      "PROMISE_GATEWAY",
+      "CHRONO_TRIGGERING",
+      "VERDICT_COMPOSITION"
+    ],
+    "factors": [
+      "Primary vector (5) satisfied: actual=[5,8,11]",
+      "Star Lord (Moon) signifies 8,11: PROMISSORY",
+      "Sub Lord (Mercury) signifies 2,11: CONFIRMING (no veto)",
+      "No retrograde issues detected",
+      "DBA window: IMMINENT (all 3 lords signify event houses)",
+      "Operative significators: [Moon, Mercury, Jupiter]",
+      "Sun transits Moon's Star Sep 28, Jupiter's Sub confirmed",
+      "Moon transits Mercury's Star Sep 28, 16:15 IST",
+      "RESULT: PROMISED_AND_TIMED with VERY_HIGH confidence"
+    ],
+    "diagnostics": [
+      {
+        "stage": "PROMISE_GATEWAY",
+        "check": "VETO_LOGIC",
+        "result": "PASS",
+        "detail": "Sub-Lord confirms Star-Lord promise"
+      },
+      {
+        "stage": "RETROGRADE_CHECK",
+        "check": "BACKWARD_MOTION",
+        "result": "PASS",
+        "detail": "All planets in direct motion"
+      },
+      {
+        "stage": "CHRONO_TRIGGERING",
+        "check": "DBA_ALIGNMENT",
+        "result": "PASS",
+        "detail": "All three DBA lords present in RP pool"
+      },
+      {
+        "stage": "TRANSIT_LOCK",
+        "check": "EPHEMERIS_MATCH",
+        "result": "PASS",
+        "detail": "Operative planets confirmed in transit ephemeris"
+      }
+    ]
+  }
+}
+```
+
+---
+
+### End-to-End Architecture Diagram
+
+```
+ORACLE QUERY (Prashna)
+  ↓
+  [PHASE 1: INITIALIZATION & MATRIX GENERATION]
+  ├─ Cuspal Calculation (12 Placidus houses)
+  ├─ Planetary Array Mapping (9 planets + retrograde status)
+  ├─ Node Proxy Resolution (Rahu/Ketu → Conjunction/Aspect/Sign Lord/Star Lord)
+  └─ Untenanted Flagging (double-power planets)
+  ↓
+  [PHASE 2: PROMISE GATEWAY (BINARY RESOLUTION)]
+  ├─ Target Vector Assignment (P, S, N houses)
+  ├─ CSL Interrogation (Star Lord → Sub Lord chain)
+  ├─ Result vs. Verdict Check (alignment scores)
+  ├─ Retrograde Check (Sub/Star/CSL vakra logic)
+  └─ Promise Gateway Output (PROMISED / DENIED / DELAYED / UNCERTAIN)
+  ↓
+  IF NOT PROMISED → Return Verdict to User (END)
+  ↓
+  IF PROMISED → Continue to Phase 3
+  ↓
+  [PHASE 3: CHRONO-TRIGGERING (TIMING MODULE)]
+  ├─ DBA Array Formulation (current Dasha/Bhukti/Antara)
+  ├─ RP Array Formulation (5 classical Ruling Planets)
+  ├─ Intersection Filter (DBA ∩ RP)
+  ├─ Stigmatization Scrub (Combust, negating houses)
+  └─ Transit Lock (Sun/Moon/Lagna transit analysis)
+  ↓
+  [PHASE 4: FINAL MASTER OUTPUT]
+  ├─ Compose JSON response (promise + timing)
+  ├─ Emit stage-tagged diagnostics
+  ├─ Write audit trail to Firestore
+  └─ Cache result in MMKV history
+  ↓
+  ORACLE RESPONSE TO USER
+  ├─ Verdict (PROMISED / DENIED / DELAYED)
+  ├─ Confidence (0.0–1.0)
+  ├─ Execution Date/Time (if timing calculated)
+  ├─ Factors (audit trail)
+  └─ Diagnostics (stage tags for debug)
+```
+
+---
+
 ## References & Alignment
 
 - **Core Authority:** RKP_RULES_FROM_SARFARAZ.md
