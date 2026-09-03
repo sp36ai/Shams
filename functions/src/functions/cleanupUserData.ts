@@ -2,12 +2,18 @@
  * cleanupUserData — cascading account-erasure trigger.
  * --------------------------------------------------------------------------
  * Fires the moment a Firebase Auth user record is destroyed — whether from
- * this app's own account-deletion flow, an admin-console deletion, or the
- * user revoking "Sign in with Apple" directly from iOS Settings (a path
- * Apple requires apps to support, and one this app's own UI never sees). A
- * server-side Admin SDK operation is the only place this can be guaranteed:
- * a client-side callable could be interrupted mid-execution, or bypassed
- * entirely by the Apple-Settings path.
+ * this app's own account-deletion flow (Settings → authStore.deleteAccount())
+ * or an admin-console deletion. A server-side Admin SDK operation is the
+ * only place this can be guaranteed regardless of the trigger: a
+ * client-side callable could be interrupted mid-execution by a dropped
+ * connection right after the Auth record is gone but before cleanup runs.
+ *
+ * This app currently offers only email/password and Google sign-in — no
+ * Sign in with Apple, so there is no live "user revokes it from iOS
+ * Settings" path today. Worth keeping the trigger-based design anyway: if
+ * Apple Sign-In is ever added, Apple requires supporting that exact
+ * revocation path, which bypasses any in-app UI entirely and could only
+ * ever be caught here.
  *
  * Scope — verified against the real schema in `firestore.rules` and every
  * `.collection()` call in this codebase, not assumed:
