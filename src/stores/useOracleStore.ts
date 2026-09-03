@@ -21,8 +21,10 @@
  * Dasha timing, invented zodiac transit degrees) modeled on a KP-style engine
  * that was never real — see project history. That fabricated engine has been
  * removed. This store now carries only the actual `WatchReading` the server
- * returns. Any zodiac-animation feature needs the server to expose real
- * transit data first; it is not invented here.
+ * returns, including its real `transitCoordinates` (Sun/Moon/Lagna sign +
+ * degree, derived from the same chart the verdict itself was judged from —
+ * see `transitCoordinatesOf` in `watchChart.ts`) for a future zodiac
+ * animation. Still nothing invented client-side.
  */
 
 import { create } from 'zustand';
@@ -309,3 +311,6 @@ export const useExecutionPhase = () => useOracleStore(state => state.executionPh
 export const useIsLoading = () => useOracleStore(state => state.isLoading);
 export const useQueryHistory = () => useOracleStore(state => state.queryHistory);
 export const useCurrentQuery = () => useOracleStore(state => state.currentQuery);
+/** Real Sun/Moon/Lagna position from the latest reading, for a future zodiac animation. */
+export const useTransitCoordinates = () =>
+  useOracleStore(state => state.enginePayload?.transitCoordinates ?? null);
