@@ -157,7 +157,7 @@ export interface CompleteTiming {
 export async function resolveTiming(
   chart: WatchChart,
   eventType: ComplexEventType,
-  verdictState: 'PROMISED' | 'PROMISED_ABSOLUTE',
+  _verdictState: 'PROMISED' | 'PROMISED_ABSOLUTE',
   queryTimestamp: number
 ): Promise<CompleteTiming> {
   // Phase 1: Extract and check DBA window
@@ -361,8 +361,8 @@ function calculateRulingPlanets(chart: WatchChart, queryTimestamp: number): Ruli
 function findOperativeSignificators(
   dbaWindow: DashaData,
   rulingPlanets: RulingPlanetsData,
-  chart: WatchChart,
-  eventType: ComplexEventType
+  _chart: WatchChart,
+  _eventType: ComplexEventType
 ): OperativeSignificators {
   const dbaArray = [dbaWindow.maha.lord, dbaWindow.bhukti.lord, dbaWindow.antara.lord];
   const rpArray = rulingPlanets.rawPool;
@@ -413,9 +413,9 @@ function findOperativeSignificators(
  * Level 3 (Moment): Lagna transit → second precision (optional)
  */
 async function pinpointDateViaTransits(
-  chart: WatchChart,
+  _chart: WatchChart,
   operativeSignificators: OperativeSignificators,
-  eventType: ComplexEventType,
+  _eventType: ComplexEventType,
   queryTimestamp: number
 ): Promise<TransitTimingResult> {
   // Placeholder: Real implementation requires ephemeris lookup

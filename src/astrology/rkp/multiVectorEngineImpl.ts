@@ -186,7 +186,7 @@ function evaluateSingleVector(
   cslData: CuspSubLordData,
   vectorType: 'PRIMARY' | 'SECONDARY' | 'NEGATING' | 'EVENT_SPECIFIC_NEGATOR',
   expectedHouses: HouseNumber[],
-  chart: WatchChart
+  _chart: WatchChart
 ): VectorEvaluationResult {
   // Combine Star and Sub significations
   const actualHouses = Array.from(new Set([...cslData.starSignifications, ...cslData.subSignifications]));
@@ -233,9 +233,9 @@ function evaluateSingleVector(
  */
 function evaluateVetoLogic(
   primaryCSL: CuspSubLordData,
-  chart: WatchChart,
-  eventType: ComplexEventType,
-  primaryHouse: HouseNumber
+  _chart: WatchChart,
+  _eventType: ComplexEventType,
+  _primaryHouse: HouseNumber
 ): {
   starLordVerdict: 'PROMISSORY' | 'NEGATING' | 'NEUTRAL';
   subLordVerdict: 'CONFIRMING' | 'REVERSING' | 'NEUTRAL';
@@ -321,7 +321,7 @@ function computeVerdictState(
   secondaryVectors: VectorEvaluationResult[],
   negatingVectors: VectorEvaluationResult[],
   vetoResult: ReturnType<typeof evaluateVetoLogic>,
-  eventType: ComplexEventType
+  _eventType: ComplexEventType
 ): EventVerdictState {
   // Veto logic takes absolute precedence
   if (vetoResult.vetoApplied && vetoResult.vetoAuthority === 'ABSOLUTE') {
@@ -335,7 +335,7 @@ function computeVerdictState(
 
   // Score based on vector alignment
   const primaryScore = primaryVector.alignmentScore;
-  const secondaryScore =
+  const _secondaryScore =
     secondaryVectors.length > 0
       ? secondaryVectors.reduce((sum, v) => sum + v.alignmentScore, 0) / secondaryVectors.length
       : 0;
@@ -416,7 +416,7 @@ function constructFactorList(
   secondaryVectors: VectorEvaluationResult[],
   negatingVectors: VectorEvaluationResult[],
   vetoResult: ReturnType<typeof evaluateVetoLogic>,
-  eventType: ComplexEventType
+  _eventType: ComplexEventType
 ): string[] {
   const factors: string[] = [];
 
@@ -463,7 +463,7 @@ function constructFactorList(
  * Used for production debugging and audit compliance.
  */
 function constructDiagnosticsTrace(
-  eventType: ComplexEventType,
+  _eventType: ComplexEventType,
   primaryCSL: CuspSubLordData,
   vetoResult: ReturnType<typeof evaluateVetoLogic>,
   verdict: EventVerdictState,
@@ -547,8 +547,8 @@ function identifyBlockers(
  * Returns min/max days for event manifestation, or null if timing is indeterminate.
  */
 function extractTimingVector(
-  chart: WatchChart,
-  eventType: ComplexEventType,
+  _chart: WatchChart,
+  _eventType: ComplexEventType,
   verdict: EventVerdictState
 ): {
   minDays: number;
@@ -575,8 +575,8 @@ function extractTimingVector(
  */
 function enhanceLitigationJudgment(
   baseJudgment: LitigationJudgment,
-  chart: WatchChart,
-  primaryCSL: CuspSubLordData
+  _chart: WatchChart,
+  _primaryCSL: CuspSubLordData
 ): LitigationJudgment {
   return {
     ...baseJudgment,
@@ -596,8 +596,8 @@ function enhanceLitigationJudgment(
  */
 function enhanceFinancialJudgment(
   baseJudgment: FinancialJudgment,
-  chart: WatchChart,
-  primaryCSL: CuspSubLordData
+  _chart: WatchChart,
+  _primaryCSL: CuspSubLordData
 ): FinancialJudgment {
   return {
     ...baseJudgment,

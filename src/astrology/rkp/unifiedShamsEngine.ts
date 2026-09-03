@@ -227,7 +227,7 @@ export async function executeUnifiedShamsMethod(
  * Pre-calculate the baseline cosmic state.
  */
 function performInitialization(
-  chart: WatchChart,
+  _chart: WatchChart,
   auditTrail: AuditEvent[]
 ): UnifiedShamsJudgment['initialization'] {
   const timestamp = Date.now();

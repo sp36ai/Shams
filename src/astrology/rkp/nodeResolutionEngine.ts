@@ -370,7 +370,7 @@ export function evaluateNodeInJudgment(
 export function applyEclipseOverride(
   planetSignifications: HouseNumber[],
   nodeSignifications: HouseNumber[],
-  chart: WatchChart
+  _chart: WatchChart
 ): {
   operative: HouseNumber[];
   supersedesAuthority: 'Node' | 'Planet' | 'Neutral';

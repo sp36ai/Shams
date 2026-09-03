@@ -355,7 +355,7 @@ function isNodePlanet(planet: Planet): boolean {
  *
  * Used in retrograde analysis when Node is Star Lord.
  */
-function getStarLordOfNode(node: Planet): Planet | null {
+function getStarLordOfNode(_node: Planet): Planet | null {
   // Placeholder: Would fetch from chart
   return null;
 }
@@ -365,7 +365,7 @@ function getStarLordOfNode(node: Planet): Planet | null {
  *
  * Used in retrograde analysis when Node is in a specific sign.
  */
-function getSignLordOfNode(node: Planet): Planet | null {
+function getSignLordOfNode(_node: Planet): Planet | null {
   // Placeholder: Would fetch from chart
   return null;
 }
