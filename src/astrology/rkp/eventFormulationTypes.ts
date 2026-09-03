@@ -12,7 +12,7 @@
  * Ref: docs/EVENT_FORMULATION_MATRIX.md
  */
 
-import type { HouseNumber, Planet } from '@astrology/types/chart';
+import type { HouseIndex, Planet } from '@astrology/types/chart';
 
 /**
  * Event categories that require multi-house vector evaluation.
@@ -80,16 +80,16 @@ export type EventConfidence =
  */
 export interface EventVectorSignification {
   /** Primary anchor house (P) — dominant signification for the event. */
-  primary: HouseNumber;
+  primary: HouseIndex;
 
   /** Reinforcing houses (S) — strengthen the primary vector. */
-  secondary: HouseNumber[];
+  secondary: HouseIndex[];
 
   /** Negating/blocking houses (N) — directly oppose the primary vector. */
-  negating: HouseNumber[];
+  negating: HouseIndex[];
 
   /** Alternative negating houses context-dependent on event specifics. */
-  eventSpecificNegators?: HouseNumber[];
+  eventSpecificNegators?: HouseIndex[];
 }
 
 /**
@@ -99,7 +99,7 @@ export interface EventVectorSignification {
  * Used in multi-vector evaluation loops.
  */
 export interface CuspSubLordData {
-  house: HouseNumber;
+  house: HouseIndex;
 
   /** The actual Cusp Sub-Lord planet. */
   cslPlanet: Planet;
@@ -111,10 +111,10 @@ export interface CuspSubLordData {
   subLord: Planet;
 
   /** Houses signified by starLord at Level A (most powerful). */
-  starSignifications: HouseNumber[];
+  starSignifications: HouseIndex[];
 
   /** Houses signified by subLord at Level A. */
-  subSignifications: HouseNumber[];
+  subSignifications: HouseIndex[];
 
   /** Mars or Ketu involvement (mandatory for surgery gate). */
   hasMarsKetu: boolean;
@@ -134,10 +134,10 @@ export interface VectorEvaluationResult {
   vectorType: 'PRIMARY' | 'SECONDARY' | 'NEGATING' | 'EVENT_SPECIFIC_NEGATOR';
 
   /** Houses that should be signified per the matrix. */
-  expectedHouses: HouseNumber[];
+  expectedHouses: HouseIndex[];
 
   /** Houses actually signified by relevant CSLs. */
-  actualHouses: HouseNumber[];
+  actualHouses: HouseIndex[];
 
   /** Strength of alignment (0.0 to 1.0). */
   alignmentScore: number;
@@ -146,7 +146,7 @@ export interface VectorEvaluationResult {
   isSatisfied: boolean;
 
   /** CSLs involved in this vector's evaluation. */
-  relevantCSLs: HouseNumber[];
+  relevantCSLs: HouseIndex[];
 }
 
 /**
