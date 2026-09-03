@@ -16,6 +16,7 @@ import { useColors } from '@theme/ThemeProvider';
 import { useTypography } from '@theme/useTypography';
 import { HOUSE_META, PLANET_NAME } from '@astrology/rkp/nomenclature';
 import type { DisplayWatchVerdict, WatchState } from '@astrology/rkp/watchJudgment';
+import type { TransitCoordinates } from '@astrology/rkp/watchChart';
 import type { DirectionalFocus } from '../../data/watchRemedyContext';
 
 /* -------------------------------------------------------------------------- */
@@ -100,6 +101,13 @@ export interface RkpWatchCardProps {
   verdict: DisplayWatchVerdict;
   /** Optional physical correspondence, from data/watchRemedyContext.ts. */
   directionalFocus?: DirectionalFocus | null;
+  /**
+   * Sun/Moon position at the exact moment this reading was judged. Always
+   * present on a live reading; absent only on a reading cached to MMKV
+   * before this field existed — the section is simply omitted then, never
+   * backfilled with a guess.
+   */
+  transitCoordinates?: TransitCoordinates;
 }
 
 const RkpWatchCard: React.FC<RkpWatchCardProps> = ({
@@ -108,6 +116,7 @@ const RkpWatchCard: React.FC<RkpWatchCardProps> = ({
   lagnaRulerName,
   verdict,
   directionalFocus,
+  transitCoordinates,
 }) => {
   const colors = useColors();
   const typography = useTypography();
@@ -180,6 +189,28 @@ const RkpWatchCard: React.FC<RkpWatchCardProps> = ({
             {directionalFocus.focus}
           </Text>
         </View>
+      )}
+
+      {/* ── The sky at this exact moment (absent on pre-upgrade cached readings) */}
+      {transitCoordinates !== undefined && (
+        <>
+          <View style={[styles.rule, { backgroundColor: colors.border }]} />
+          <Text style={[typography('label'), { color: colors.text, marginBottom: 6 }]}>
+            {'The sky at this moment'}
+          </Text>
+          <Row
+            label="Sun"
+            value={`${transitCoordinates.sun.signName}, ${transitCoordinates.sun.degreeInSign.toFixed(1)}°`}
+            colors={colors}
+            typography={typography}
+          />
+          <Row
+            label="Moon"
+            value={`${transitCoordinates.moon.signName}, ${transitCoordinates.moon.degreeInSign.toFixed(1)}°`}
+            colors={colors}
+            typography={typography}
+          />
+        </>
       )}
 
       {/* ── Why — spoken from the engine's own record ────────────────────── */}

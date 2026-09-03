@@ -2,7 +2,7 @@ import { buildWatchChart, houseOf, transitCoordinatesOf } from '@astrology/rkp/w
 import { judgeWatchChart } from '@astrology/rkp/watchJudgment';
 import { ALL_QUESTION_TYPES } from '@astrology/kp/rules/houseMatrix';
 import { PLANETS } from '@astrology/types/chart';
-import type { HouseNumber } from '@astrology/rkp/nomenclature';
+import { SIGN_META, type HouseNumber } from '@astrology/rkp/nomenclature';
 
 const MOMENT = '2026-08-08T11:13:00+05:30';
 
@@ -166,6 +166,15 @@ describe('transitCoordinatesOf — display/animation coordinates', () => {
     expect(coords.sun.degreeInSign).toBe(chart.planets.Sun.degreeInSign);
     expect(coords.moon.sign).toBe(chart.planets.Moon.sign);
     expect(coords.moon.degreeInSign).toBe(chart.planets.Moon.degreeInSign);
+  });
+
+  it('pre-formats signName the same way the rest of the chart does — display components never recompute it', () => {
+    const chart = buildWatchChart(MOMENT);
+    const coords = transitCoordinatesOf(chart);
+    expect(coords.sun.signName).toBe(`Burj ${SIGN_META[coords.sun.sign].name}`);
+    expect(coords.moon.signName).toBe(`Burj ${SIGN_META[coords.moon.sign].name}`);
+    // Lagna reuses the chart's own lagnaSignName verbatim rather than reformatting it.
+    expect(coords.lagna.signName).toBe(chart.lagnaSignName);
   });
 
   it('flattens sign/degree into a single 0-360 longitude', () => {

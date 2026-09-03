@@ -8,12 +8,15 @@
  * fields into one string for text-to-speech — string assembly, not judgment.
  */
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { useColors } from '@theme/ThemeProvider';
 import { useTypography } from '@theme/useTypography';
 import { useTranslation } from '@i18n/I18nProvider';
+import en from '../../i18n/strings/en';
+import ur from '../../i18n/strings/ur';
+import hi from '../../i18n/strings/hi';
 import type { ChatMessage } from '@stores/oracleChatStore';
 import type { WatchReading } from '../../firebase/watchOracle';
 import RkpWatchCard, { STATE_HEADLINE } from './RkpWatchCard';
@@ -21,6 +24,43 @@ import RemedyProtocolCard from './RemedyProtocolCard';
 import GuidanceCard from './GuidanceCard';
 import { directionalFocusFor } from '../../data/watchRemedyContext';
 import type { SpeakingStatus } from '@hooks/useTextToSpeech';
+
+/**
+ * Per-language cycling captions for the 'sending' bubble. Looked up directly
+ * rather than through useTranslation() because the translate function is
+ * typed to leaf strings; this is the one place that needs the whole array.
+ */
+const READING_CHART_STEPS: Readonly<Record<'en' | 'ur' | 'hi', readonly string[]>> = {
+  en: en.oracleChat.readingChartSteps,
+  ur: ur.oracleChat.readingChartSteps,
+  hi: hi.oracleChat.readingChartSteps,
+};
+
+/**
+ * Cycles through READING_CHART_STEPS every 5s while mounted. Deliberately an
+ * indeterminate loop, not a fixed one-shot sequence: askWatchOracle can take
+ * up to ~45s (Anthropic narration synthesis is the real long pole), so a
+ * fixed sequence would finish and leave the bubble static long before the
+ * real response can arrive. Local, ephemeral component state — never touches
+ * oracleChatStore, which persists every change to MMKV on disk.
+ */
+function useCyclingCaption(lang: 'en' | 'ur' | 'hi', active: boolean): string {
+  const steps = READING_CHART_STEPS[lang];
+  const [index, setIndex] = useState(0);
+
+  useEffect(() => {
+    if (!active) {
+      return;
+    }
+    setIndex(0);
+    const id = setInterval(() => {
+      setIndex(prev => (prev + 1) % steps.length);
+    }, 5000);
+    return () => clearInterval(id);
+  }, [active, steps.length]);
+
+  return steps[index] ?? steps[0]!;
+}
 
 /**
  * The text a 'sent' oracle message's play/pause button speaks. Prefers the
@@ -60,6 +100,7 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({
   const t = useTranslation();
 
   const isUser = message.role === 'user';
+  const cyclingCaption = useCyclingCaption(questionLang, !isUser && message.status === 'sending');
 
   if (isUser) {
     return (
@@ -90,7 +131,7 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({
         >
           <ActivityIndicator size="small" color={colors.accent} />
           <Text style={[typography('caption'), { color: colors.textMuted, marginLeft: 8 }]}>
-            {t('oracleChat.readingChart')}
+            {cyclingCaption}
           </Text>
         </View>
       </View>
@@ -167,6 +208,7 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({
               lagnaRulerName={reading.lagnaRulerName}
               verdict={reading.verdict}
               directionalFocus={directionalFocusFor(reading.verdict)}
+              transitCoordinates={reading.transitCoordinates}
             />
             {reading.oracle !== undefined && <RemedyProtocolCard composition={reading.oracle} />}
             {message.selectedRemedies !== undefined && (

@@ -203,6 +203,14 @@ export interface StringTable {
     startRecording: string;
     stopRecording: string;
     readingChart: string;
+    /**
+     * Cycled while waiting for askWatchOracle — the round trip can run up to
+     * ~45s (Anthropic narration synthesis is the long pole), so this must be
+     * an indeterminate loop, never a fixed-timing sequence that finishes
+     * long before the real response can arrive. Stages describe the real
+     * RKP Watch Engine (watchJudgment.ts) — see ChatBubble.tsx.
+     */
+    readingChartSteps: readonly string[];
     retry: string;
     failedGeneric: string;
     quotaExhausted: string;

@@ -171,6 +171,9 @@ export function houseOf(chart: WatchChart, house: HouseNumber): WatchHouse {
  */
 export interface TransitPosition {
   readonly sign: SignIndex;
+  /** Display form, e.g. "Burj Asad" — pre-formatted so display components
+   *  (RkpWatchCard et al.) never recompute it from the raw sign index. */
+  readonly signName: string;
   /** Degrees within the sign, [0, 30). */
   readonly degreeInSign: number;
   /** (sign - 1) * 30 + degreeInSign, in [0, 360). */
@@ -205,14 +208,21 @@ export function transitCoordinatesOf(chart: WatchChart): TransitCoordinates {
   return {
     sun: {
       sign: sun.sign,
+      signName: `Burj ${SIGN_META[sun.sign].name}`,
       degreeInSign: sun.degreeInSign,
       longitude: toLongitude(sun.sign, sun.degreeInSign),
     },
     moon: {
       sign: moon.sign,
+      signName: `Burj ${SIGN_META[moon.sign].name}`,
       degreeInSign: moon.degreeInSign,
       longitude: toLongitude(moon.sign, moon.degreeInSign),
     },
-    lagna: { sign: chart.lagnaSign, longitude: toLongitude(chart.lagnaSign, 0) },
+    // lagnaSignName already carries the same "Burj {name}" formatting.
+    lagna: {
+      sign: chart.lagnaSign,
+      signName: chart.lagnaSignName,
+      longitude: toLongitude(chart.lagnaSign, 0),
+    },
   };
 }
