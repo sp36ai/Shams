@@ -81,7 +81,9 @@ describe('OracleChatScreen', () => {
     expect(screen.getByText('Selecting the Ghar for this moment…')).toBeTruthy();
 
     resolveAsk({ data: successPayload() });
-    await waitFor(() => expect(screen.queryByText('Selecting the Ghar for this moment…')).toBeNull());
+    await waitFor(() =>
+      expect(screen.queryByText('Selecting the Ghar for this moment…')).toBeNull(),
+    );
   });
 
   it('resolves the pending bubble into a rendered verdict on success', async () => {
@@ -98,7 +100,9 @@ describe('OracleChatScreen', () => {
     await user.type(screen.getByTestId('oracle-chat-input'), 'Will I get the job?');
     await user.press(screen.getByTestId('oracle-chat-send-btn'));
 
-    await waitFor(() => expect(screen.queryByText('Selecting the Ghar for this moment…')).toBeNull());
+    await waitFor(() =>
+      expect(screen.queryByText('Selecting the Ghar for this moment…')).toBeNull(),
+    );
     // RkpWatchCard's own plain-language headline for the judged state.
     const messages = useOracleChatStore.getState().messages;
     const oracleMsg = messages.find(m => m.role === 'oracle');
