@@ -11,7 +11,7 @@
  * Ref: docs/EVENT_FORMULATION_MATRIX.md § 7
  */
 
-import type { Planet, HouseNumber, Nakshatra } from '@astrology/types/chart';
+import type { Planet, HouseIndex } from '@astrology/types/chart';
 import type { WatchChart } from './watchChart';
 
 /**
@@ -30,25 +30,25 @@ export interface NodeResolutionResult {
   node: 'Rahu' | 'Ketu';
 
   /** House the node physically occupies (Level B) */
-  baseOccupation: HouseNumber;
+  baseOccupation: HouseIndex;
 
   /** All houses signified by the node via full proxy resolution */
-  signifiedHouses: HouseNumber[];
+  signifiedHouses: HouseIndex[];
 
   /** Breakdown by resolution tier (for debugging) */
   tierBreakdown: {
-    baseOccupation: HouseNumber[];
-    conjunction: HouseNumber[];
-    aspect: HouseNumber[];
-    signLord: HouseNumber[];
-    starLord: HouseNumber[];
+    baseOccupation: HouseIndex[];
+    conjunction: HouseIndex[];
+    aspect: HouseIndex[];
+    signLord: HouseIndex[];
+    starLord: HouseIndex[];
   };
 
   /** Planets contributing to proxy array */
   proxyPlanets: {
     tier: ProxyResolutionTier;
     planet: Planet;
-    contributes: HouseNumber[];
+    contributes: HouseIndex[];
   }[];
 
   /** Eclipse Override active? (Node stronger than proxied planets) */
@@ -77,13 +77,13 @@ export interface NodeInJudgmentContext {
   subLordIsNode: boolean;
 
   /** Full signification array for CSL (if it's a Node) */
-  cslSignifications?: HouseNumber[];
+  cslSignifications?: HouseIndex[];
 
   /** Full signification array for Star Lord (if it's a Node) */
-  starLordSignifications?: HouseNumber[];
+  starLordSignifications?: HouseIndex[];
 
   /** Full signification array for Sub-Lord (if it's a Node) */
-  subLordSignifications?: HouseNumber[];
+  subLordSignifications?: HouseIndex[];
 
   /** Eclipse Override active at any level? */
   eclipseOverrideActive: boolean;
@@ -106,7 +106,7 @@ export function resolveNodeSignifications(
   }
 
   const nodeName = node.name as 'Rahu' | 'Ketu';
-  const signifiedHouses = new Set<HouseNumber>();
+  const signifiedHouses = new Set<HouseIndex>();
   const tierBreakdown: NodeResolutionResult['tierBreakdown'] = {
     baseOccupation: [],
     conjunction: [],
@@ -117,7 +117,7 @@ export function resolveNodeSignifications(
   const proxyPlanets: NodeResolutionResult['proxyPlanets'] = [];
 
   // Base Level (Level B): The house the Node occupies
-  const baseHouse = node.house as HouseNumber;
+  const baseHouse = node.house as HouseIndex;
   signifiedHouses.add(baseHouse);
   tierBreakdown.baseOccupation.push(baseHouse);
 
@@ -254,9 +254,9 @@ export function resolveNodeSignifications(
  *
  * Does not recursively resolve Nodes.
  */
-function getBasePlanetSignifications(planet: Planet, chart: WatchChart): HouseNumber[] {
+function getBasePlanetSignifications(planet: Planet, chart: WatchChart): HouseIndex[] {
   const owned = chart.getOwnedHouses(planet);
-  const occupied = planet.house ? [planet.house as HouseNumber] : [];
+  const occupied = planet.house ? [planet.house as HouseIndex] : [];
 
   const combined = new Set([...owned, ...occupied]);
   return Array.from(combined).sort((a, b) => a - b);
@@ -273,7 +273,7 @@ export function getStarLordResult(
   chart: WatchChart
 ): {
   isNode: boolean;
-  significations: HouseNumber[];
+  significations: HouseIndex[];
 } {
   const stl = chart.getStarLord(planet.nakshatra);
 
@@ -304,13 +304,13 @@ export function evaluateNodeInJudgment(
   chart: WatchChart
 ): NodeInJudgmentContext {
   let cslIsNode = false;
-  let cslSignifications: HouseNumber[] | undefined;
+  let cslSignifications: HouseIndex[] | undefined;
 
   let starLordIsNode = false;
-  let starLordSignifications: HouseNumber[] | undefined;
+  let starLordSignifications: HouseIndex[] | undefined;
 
   let subLordIsNode = false;
-  let subLordSignifications: HouseNumber[] | undefined;
+  let subLordSignifications: HouseIndex[] | undefined;
 
   let eclipseOverrideActive = false;
 
@@ -368,11 +368,11 @@ export function evaluateNodeInJudgment(
  *   Event manifests with sudden, intense, unpredictable characteristics.
  */
 export function applyEclipseOverride(
-  planetSignifications: HouseNumber[],
-  nodeSignifications: HouseNumber[],
+  planetSignifications: HouseIndex[],
+  nodeSignifications: HouseIndex[],
   _chart: WatchChart
 ): {
-  operative: HouseNumber[];
+  operative: HouseIndex[];
   supersedesAuthority: 'Node' | 'Planet' | 'Neutral';
   eventModification: 'SUDDEN' | 'UNPREDICTABLE' | 'INTENSE' | 'NONE';
 } {

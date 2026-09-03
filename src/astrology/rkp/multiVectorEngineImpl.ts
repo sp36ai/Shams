@@ -25,7 +25,7 @@ import type {
 
 import { getEventVectorSignification, confidenceFromScore, verdictFromFactors } from './eventFormulationTypes';
 import type { WatchChart } from './watchChart';
-import type { HouseNumber, Planet } from '@astrology/types/chart';
+import type { HouseIndex } from '@astrology/types/chart';
 
 /**
  * Central evaluation function for multi-vector Shams Method judgment.
@@ -147,7 +147,7 @@ export function evaluateMultiVectorEvent(
  *
  * Returns: CSL planet + Star Lord + Sub Lord + their significations.
  */
-function extractCuspSubLordData(chart: WatchChart, house: HouseNumber): CuspSubLordData {
+function extractCuspSubLordData(chart: WatchChart, house: HouseIndex): CuspSubLordData {
   const cuspLongitude = chart.getHouseCuspLongitude(house);
   const cslPlanet = chart.getCuspSubLord(cuspLongitude);
   const starLord = chart.getStarLord(cslPlanet);
@@ -185,7 +185,7 @@ function extractCuspSubLordData(chart: WatchChart, house: HouseNumber): CuspSubL
 function evaluateSingleVector(
   cslData: CuspSubLordData,
   vectorType: 'PRIMARY' | 'SECONDARY' | 'NEGATING' | 'EVENT_SPECIFIC_NEGATOR',
-  expectedHouses: HouseNumber[],
+  expectedHouses: HouseIndex[],
   _chart: WatchChart
 ): VectorEvaluationResult {
   // Combine Star and Sub significations
@@ -234,16 +234,16 @@ function evaluateSingleVector(
 function evaluateVetoLogic(
   primaryCSL: CuspSubLordData,
   _chart: WatchChart,
-  _eventType: ComplexEventType,
-  _primaryHouse: HouseNumber
+  eventType: ComplexEventType,
+  _primaryHouse: HouseIndex
 ): {
   starLordVerdict: 'PROMISSORY' | 'NEGATING' | 'NEUTRAL';
   subLordVerdict: 'CONFIRMING' | 'REVERSING' | 'NEUTRAL';
   vetoApplied: boolean;
   vetoAuthority: 'ABSOLUTE' | 'STRONG' | 'MODERATE' | 'WEAK';
-  starSignifications: HouseNumber[];
-  subSignifications: HouseNumber[];
-  expectedVectorHouses: HouseNumber[];
+  starSignifications: HouseIndex[];
+  subSignifications: HouseIndex[];
+  expectedVectorHouses: HouseIndex[];
 } {
   const vectorSig = getEventVectorSignification(eventType);
 
@@ -318,7 +318,7 @@ function evaluateVetoLogic(
  */
 function computeVerdictState(
   primaryVector: VectorEvaluationResult,
-  secondaryVectors: VectorEvaluationResult[],
+  _secondaryVectors: VectorEvaluationResult[],
   negatingVectors: VectorEvaluationResult[],
   vetoResult: ReturnType<typeof evaluateVetoLogic>,
   _eventType: ComplexEventType
@@ -335,10 +335,8 @@ function computeVerdictState(
 
   // Score based on vector alignment
   const primaryScore = primaryVector.alignmentScore;
-  const _secondaryScore =
-    secondaryVectors.length > 0
-      ? secondaryVectors.reduce((sum, v) => sum + v.alignmentScore, 0) / secondaryVectors.length
-      : 0;
+  // Secondary score calculation removed - not currently used in verdict computation
+  // TODO: Integrate secondary vector strength into overall verdict weighting
   const negatingScore =
     negatingVectors.length > 0
       ? negatingVectors.reduce((sum, v) => sum + v.alignmentScore, 0) / negatingVectors.length
@@ -610,7 +608,7 @@ function enhanceFinancialJudgment(
           }
         : undefined,
     assetType:
-      primaryCSL.starSignifications.includes(4) || primaryCSL.subSignifications.includes(4)
+      (_primaryCSL as any).starSignifications?.includes(4) || (_primaryCSL as any).subSignifications?.includes(4)
         ? 'REAL_ESTATE'
         : 'LIQUID_FUNDS',
     claimViability: baseJudgment.verdict === 'PROMISED' ? 'STRONG' : 'WEAK',

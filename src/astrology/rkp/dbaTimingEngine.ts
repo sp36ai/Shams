@@ -10,7 +10,7 @@
  * Ref: docs/EVENT_FORMULATION_MATRIX.md § 6
  */
 
-import type { Planet, Nakshatra } from '@astrology/types/chart';
+import type { Planet } from '@astrology/types/chart';
 import type { ComplexEventType } from './eventFormulationTypes';
 import { getEventVectorSignification } from './eventFormulationTypes';
 import type { WatchChart } from './watchChart';
