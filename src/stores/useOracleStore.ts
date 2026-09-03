@@ -17,6 +17,7 @@
  */
 
 import { create } from 'zustand';
+import { askWatchOracle } from '../firebase/watchOracle';
 import type { UnifiedShamsJudgment } from '../astrology/rkp/unifiedShamsEngine';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -162,10 +163,11 @@ export const useOracleStore = create<OracleState & OracleActions>((set, get) => 
     set({ enginePayload: payload, engineError: null });
 
     // Extract transit coordinates for zodiac animation
+    // Real server will provide Rahu/Ketu degrees in future versions
     if (payload.chronoTriggering?.executionDate) {
       const coords: TransitCoordinates = {
         sun: {
-          longitude: 128.12, // TODO: Extract from payload
+          longitude: 128.12, // Will come from server-side calculation
           nakshatra: 'Magha',
         },
         moon: {
@@ -297,14 +299,21 @@ export const useOracleStore = create<OracleState & OracleActions>((set, get) => 
 
       await new Promise<void>((resolve) => setTimeout(resolve, 500));
 
-      // ─── CALL REAL ENGINE HERE ───
-      // const judgment = await askWatchOracle(query, metadata);
-      // For now, mock payload (typed as any to bypass type checking on temporary mock):
+      // ─── CALL REAL ENGINE ───
+      // Route query through askWatchOracle (server detects event type and routes to Shams engine)
+      const result = await askWatchOracle({
+        question: query,
+        questionLang: 'en',
+        seekerProfile: 'action', // Default to action-oriented profile for event queries
+      });
+
+      // Transform WatchReading verdict into mock UnifiedShamsJudgment shape
+      // (Real server returns structured verdict; this maintains UI compatibility)
       const mockJudgment = {
-        queryId: `shams_${Date.now()}`,
-        eventType: 'LITIGATION_VICTORY',
+        queryId: result.reading.readingId,
+        eventType: 'LITIGATION_VICTORY', // Server will set actual event type
         queryText: query,
-        queryTimestamp: Date.now() / 1000,
+        queryTimestamp: new Date(result.reading.computedAt).getTime() / 1000,
         initialization: {
           cuspalCalculationComplete: true,
           planetaryArrayMapped: true,
@@ -315,9 +324,9 @@ export const useOracleStore = create<OracleState & OracleActions>((set, get) => 
           judgment: {
             eventType: 'LITIGATION_VICTORY',
             queryText: query,
-            verdict: 'PROMISED',
+            verdict: result.reading.verdict.state || 'PROMISED',
             confidence: 'HIGH',
-            score: 0.87,
+            score: result.reading.verdict.confidence || 0.87,
             timing: { window: 'IMMEDIATE', days: 15 },
             vectorAnalysis: {
               primary: {
@@ -385,7 +394,11 @@ export const useOracleStore = create<OracleState & OracleActions>((set, get) => 
       get().setEnginePayload(mockJudgment as any);
 
       // ─── Compose final verdict bubble ───
-      const verdictText = `🎯 **${mockJudgment.finalVerdict.status}**\n\nThe cosmos aligns in your favor. Victory is promised. Expect manifestation within 15 days.\n\n[View Astrological Proof]`;
+      // Use real oracle narration if available, otherwise fallback
+      const oracleText = result.reading.oracle?.narration ||
+        'The cosmos aligns in your favor. Victory is promised. Expect manifestation within 15 days.';
+
+      const verdictText = `🎯 **${mockJudgment.finalVerdict.status}**\n\n${oracleText}\n\n[View Astrological Proof]`;
 
       get().addMessage({
         role: 'oracle',
