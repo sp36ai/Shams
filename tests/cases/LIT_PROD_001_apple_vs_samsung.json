@@ -1,0 +1,173 @@
+{
+  "test_id": "LIT_PROD_001",
+  "category": "LITIGATION",
+  "description": "Apple vs. Samsung Patent Litigation: $1.049B damages verdict. Query: \"Will we win and receive damages?\" Timestamp: Aug 24, 2012, 15:30 PDT.",
+  "scenario": "High-stakes patent litigation with documented financial outcome. 6th CSL must support 11th house victory without Sub-Lord veto to 12th/5th. 2nd/8th axis should trigger windfall alongside victory verdict.",
+  "input_state": {
+    "query_metadata": {
+      "event_type": "LITIGATION_VICTORY",
+      "query_intent": "FORWARD",
+      "timestamp": 1345847400,
+      "query_text": "Will we win the patent lawsuit and receive damages?"
+    },
+    "chart_data": {
+      "location": {
+        "lat": 37.3382,
+        "lon": -121.8863,
+        "city": "San Jose, CA"
+      },
+      "timestamp_utc": "2012-08-24T22:30:00Z",
+      "cusps": {
+        "1": 236.95757998235572,
+        "2": 128.48232791576882,
+        "3": 81.66490319607146,
+        "4": 345.9930637294206,
+        "5": 10.898960312092793,
+        "6": 30.659399674492686,
+        "7": 56.95757998235574,
+        "8": 308.48232791576885,
+        "9": 261.66490319607146,
+        "10": 165.99306372942058,
+        "11": 190.8989603120928,
+        "12": 210.65939967449265
+      },
+      "planets": {
+        "Sun": {
+          "siderealLongitude": 128.11594208372023,
+          "siderealLatitude": 0,
+          "isRetrograde": false,
+          "sign": 5,
+          "nakshatra": 10,
+          "nakshatraLord": "Ketu",
+          "subLord": "Jupiter"
+        },
+        "Moon": {
+          "siderealLongitude": 222.81826026414393,
+          "siderealLatitude": 0.5623762926296898,
+          "isRetrograde": false,
+          "sign": 8,
+          "nakshatra": 17,
+          "nakshatraLord": "Saturn",
+          "subLord": "Mars"
+        },
+        "Mars": {
+          "siderealLongitude": 186.79678081489416,
+          "siderealLatitude": 0,
+          "isRetrograde": false,
+          "sign": 7,
+          "nakshatra": 15,
+          "nakshatraLord": "Rahu",
+          "subLord": "Rahu"
+        },
+        "Mercury": {
+          "siderealLongitude": 112.73425417634384,
+          "siderealLatitude": 0,
+          "isRetrograde": false,
+          "sign": 4,
+          "nakshatra": 9,
+          "nakshatraLord": "Mercury",
+          "subLord": "Moon"
+        },
+        "Jupiter": {
+          "siderealLongitude": 50.09749422922815,
+          "siderealLatitude": 0,
+          "isRetrograde": false,
+          "sign": 2,
+          "nakshatra": 4,
+          "nakshatraLord": "Moon",
+          "subLord": "Ketu"
+        },
+        "Venus": {
+          "siderealLongitude": 82.66513908148531,
+          "siderealLatitude": 0,
+          "isRetrograde": false,
+          "sign": 3,
+          "nakshatra": 7,
+          "nakshatraLord": "Jupiter",
+          "subLord": "Saturn"
+        },
+        "Saturn": {
+          "siderealLongitude": 181.53078714934793,
+          "siderealLatitude": 0,
+          "isRetrograde": false,
+          "sign": 7,
+          "nakshatra": 14,
+          "nakshatraLord": "Mars",
+          "subLord": "Mercury"
+        },
+        "Rahu": {
+          "siderealLongitude": 216.39810421327755,
+          "siderealLatitude": 0,
+          "isRetrograde": true,
+          "sign": 8,
+          "nakshatra": 17,
+          "nakshatraLord": "Saturn",
+          "subLord": "Mercury"
+        },
+        "Ketu": {
+          "siderealLongitude": 36.39810421327756,
+          "siderealLatitude": 0,
+          "isRetrograde": true,
+          "sign": 2,
+          "nakshatra": 3,
+          "nakshatraLord": "Sun",
+          "subLord": "Mercury"
+        }
+      },
+      "nodes": {
+        "rahu": {
+          "siderealLongitude": 216.39810421327755,
+          "siderealLatitude": 0,
+          "sign": 8,
+          "nakshatra": 17,
+          "nakshatraLord": "Saturn"
+        },
+        "ketu": {
+          "siderealLongitude": 36.39810421327756,
+          "siderealLatitude": 0,
+          "sign": 2,
+          "nakshatra": 3,
+          "nakshatraLord": "Sun"
+        }
+      },
+      "retrograde_planets": [
+        "Rahu",
+        "Ketu"
+      ]
+    },
+    "event_vectors": {
+      "primary": 6,
+      "secondary": [
+        1,
+        10,
+        11
+      ],
+      "negating": [
+        12,
+        5
+      ]
+    }
+  },
+  "expected_output": {
+    "status": "PROMISED_AND_TIMED",
+    "confidence_minimum": 0.85,
+    "verdict_reasoning": "Victory promised by 11th house signification; Sub-Lord confirms without veto to 12th",
+    "damages_expected": true,
+    "factors": [
+      "Real ephemeris data from August 24, 2012, 22:30 UTC",
+      "San Jose, California (37.3382° N, 121.8863° W)",
+      "6th CSL supports Litigation victory",
+      "11th house signification: Victory promised",
+      "2nd/8th axis: Damages windfall",
+      "Sub-Lord does not veto (no 12th/5th signification)",
+      "Historical outcome: $1.049 billion awarded in Apple favor"
+    ]
+  },
+  "pass_criteria": {
+    "status_match": true,
+    "confidence_above_threshold": 0.85,
+    "verdict_reasoning_included": true,
+    "damages_axis_triggered": true,
+    "execution_time_ms_max": 500
+  }
+}

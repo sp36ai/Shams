@@ -238,6 +238,16 @@ class ShamsBacktester {
         // Handle multiple parameter types: planet object with .name, string, nakshatra object
         const planetName = planet?.name || planet?.nakshatra || planet;
 
+        // For production ephemeris data, use the nakshatraLord from planetary data
+        const planetData = chartData.planets?.[planetName];
+        if (planetData?.nakshatraLord) {
+          return {
+            name: planetData.nakshatraLord,
+            isNode: planetData.nakshatraLord === 'Rahu' || planetData.nakshatraLord === 'Ketu',
+            isRetrograde: retrogradeInfo.includes(planetData.nakshatraLord),
+          };
+        }
+
         // Nakshatra to star lord mapping (simplified 27 nakshatras)
         const nakshatraStarLords: Record<string, string> = {
           Ashwini: 'Ketu', Bharani: 'Venus', Krittika: 'Sun',
@@ -275,10 +285,26 @@ class ShamsBacktester {
 
       getSignifiedHouses: (planet: any, types: string[]) => {
         const key = planet.name || planet;
+
         // Use real significations from test data if available
         if (chartData.significations?.[key]) {
           return chartData.significations[key];
         }
+
+        // For production ephemeris data, derive significations from planetary position
+        const planetData = chartData.planets?.[key];
+        if (planetData) {
+          // Houses owned by the planet based on sign lordship
+          const sign = planetData.sign;
+          const signLordsMap: Record<number, number[]> = {
+            1: [1, 8], 2: [2, 9], 3: [3, 12],
+            4: [4, 11], 5: [5, 10], 6: [6, 11],
+            7: [7, 12], 8: [8, 1], 9: [9, 2],
+            10: [10, 3], 11: [11, 4], 12: [12, 5],
+          };
+          return signLordsMap[sign] || [1, 7]; // Default Mars aspects
+        }
+
         // Fallback to CSL data significations
         if (key === cslData.star_lord?.name) {
           return cslData.star_lord?.signifies || [8, 11];
