@@ -18,6 +18,7 @@ import { HOUSE_META, PLANET_NAME } from '@astrology/rkp/nomenclature';
 import type { DisplayWatchVerdict, WatchState } from '@astrology/rkp/watchJudgment';
 import type { TransitCoordinates } from '@astrology/rkp/watchChart';
 import type { DirectionalFocus } from '../../data/watchRemedyContext';
+import ZodiacClock from './ZodiacClock';
 
 /* -------------------------------------------------------------------------- */
 /*  Presentation tables                                                       */
@@ -195,20 +196,14 @@ const RkpWatchCard: React.FC<RkpWatchCardProps> = ({
       {transitCoordinates !== undefined && (
         <>
           <View style={[styles.rule, { backgroundColor: colors.border }]} />
-          <Text style={[typography('label'), { color: colors.text, marginBottom: 6 }]}>
-            {'The sky at this moment'}
+          <Text style={[typography('label'), styles.sectionLabel, { color: colors.goldBright }]}>
+            {'THE SKY AT THIS MOMENT'}
           </Text>
-          <Row
-            label="Sun"
-            value={`${transitCoordinates.sun.signName}, ${transitCoordinates.sun.degreeInSign.toFixed(1)}°`}
-            colors={colors}
-            typography={typography}
-          />
-          <Row
-            label="Moon"
-            value={`${transitCoordinates.moon.signName}, ${transitCoordinates.moon.degreeInSign.toFixed(1)}°`}
-            colors={colors}
-            typography={typography}
+          <ZodiacClock
+            sunLongitude={transitCoordinates.sun.longitude}
+            moonLongitude={transitCoordinates.moon.longitude}
+            sunLabel={`${transitCoordinates.sun.signName}, ${transitCoordinates.sun.degreeInSign.toFixed(1)}°`}
+            moonLabel={`${transitCoordinates.moon.signName}, ${transitCoordinates.moon.degreeInSign.toFixed(1)}°`}
           />
         </>
       )}
@@ -218,14 +213,16 @@ const RkpWatchCard: React.FC<RkpWatchCardProps> = ({
       <Text style={[typography('label'), { color: colors.text, marginBottom: 6 }]}>
         {'How the chart reads'}
       </Text>
-      {verdict.factors.map((factor, i) => (
-        <View key={`${i}-${factor.slice(0, 12)}`} style={styles.factorRow}>
-          <Text style={[typography('caption'), { color: colors.goldBright }]}>{'✦'}</Text>
-          <Text style={[typography('caption'), styles.factorText, { color: colors.textMuted }]}>
-            {factor}
-          </Text>
-        </View>
-      ))}
+      <View style={[styles.factorsPanel, { backgroundColor: colors.bg + '40' }]}>
+        {verdict.factors.map((factor, i) => (
+          <View key={`${i}-${factor.slice(0, 12)}`} style={styles.factorRow}>
+            <Text style={[typography('caption'), { color: colors.goldBright }]}>{'✦'}</Text>
+            <Text style={[typography('caption'), styles.factorText, { color: colors.textMuted }]}>
+              {factor}
+            </Text>
+          </View>
+        ))}
+      </View>
     </View>
   );
 };
@@ -280,6 +277,10 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     borderWidth: StyleSheet.hairlineWidth,
   },
+  factorsPanel: {
+    borderRadius: 10,
+    padding: 10,
+  },
   factorRow: {
     flexDirection: 'row',
     gap: 8,
@@ -287,6 +288,11 @@ const styles = StyleSheet.create({
   },
   factorText: {
     flex: 1,
+  },
+  sectionLabel: {
+    letterSpacing: 2,
+    opacity: 0.7,
+    marginBottom: 10,
   },
 });
 

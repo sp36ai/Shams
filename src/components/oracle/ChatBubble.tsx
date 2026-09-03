@@ -10,6 +10,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import Animated, { FadeIn } from 'react-native-reanimated';
 
 import { useColors } from '@theme/ThemeProvider';
 import { useTypography } from '@theme/useTypography';
@@ -130,9 +131,13 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({
           ]}
         >
           <ActivityIndicator size="small" color={colors.accent} />
-          <Text style={[typography('caption'), { color: colors.textMuted, marginLeft: 8 }]}>
+          <Animated.Text
+            key={cyclingCaption}
+            entering={FadeIn.duration(300)}
+            style={[typography('caption'), { color: colors.textMuted, marginLeft: 8 }]}
+          >
             {cyclingCaption}
-          </Text>
+          </Animated.Text>
         </View>
       </View>
     );
