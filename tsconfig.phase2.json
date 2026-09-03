@@ -1,0 +1,17 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "skipLibCheck": true,
+    "noImplicitAny": false,
+    "strict": false,
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
+    "noImplicitReturns": false
+  },
+  "include": [
+    "src/components/OracleChat.tsx",
+    "src/components/DeepDiveProofCard.tsx",
+    "src/stores/useOracleStore.ts",
+    "src/firebase/watchOracle.ts"
+  ]
+}
