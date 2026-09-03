@@ -1,0 +1,88 @@
+{
+  "test_id": "RET_001",
+  "category": "RETROGRADE",
+  "description": "Retrograde Delay: 5th CSL Jupiter in Moon's Star. Moon is retrograde. Sub-Lord Mercury (direct) confirms. Expected: Star-Lord retrograde suspends event → DELAYED until Moon direct.",
+  "scenario": "Native asks about windfall. Jupiter (5th CSL) in Moon's Star, Mercury's Sub. Star-Lord (Moon) retrograde but signifies 8, 11 (windfall). Sub-Lord (Mercury) direct, confirms 2, 11 (bank, fulfillment). Expected: DELAYED. Timeline shift: +30 days (until Moon turns direct).",
+  "input_state": {
+    "query_metadata": {
+      "event_type": "WINDFALL_LOTTERY_SPECULATION",
+      "query_intent": "FORWARD",
+      "timestamp": 1725358994,
+      "query_text": "Will I get a windfall soon?"
+    },
+    "chart_data": {
+      "csl_data": {
+        "house": 5,
+        "csl_planet": {
+          "name": "Jupiter",
+          "longitude": 90.0,
+          "sign": "Cancer",
+          "nakshatra": "Pushya",
+          "is_retrograde": false,
+          "house": 5
+        },
+        "star_lord": {
+          "name": "Moon",
+          "signifies": [8, 11],
+          "is_retrograde": true,
+          "retrograde_since": "2026-08-15",
+          "direct_motion_date": "2026-10-05"
+        },
+        "sub_lord": {
+          "name": "Mercury",
+          "signifies": [2, 11],
+          "is_retrograde": false,
+          "owns": [3, 6]
+        }
+      },
+      "ruling_planets": {
+        "lagna_star_lord": "Venus",
+        "lagna_sign_lord": "Sun",
+        "moon_star_lord": "Jupiter",
+        "moon_sign_lord": "Mercury",
+        "day_lord": "Mars"
+      },
+      "retrograde_analysis": {
+        "csl_retrograde": false,
+        "star_lord_retrograde": true,
+        "sub_lord_retrograde": false,
+        "retrograde_impact": "STAR_LORD_DELAYED"
+      }
+    },
+    "event_vectors": {
+      "primary": 5,
+      "secondary": [2, 8, 11],
+      "negating": [4, 12]
+    }
+  },
+  "expected_output": {
+    "status": "DELAYED",
+    "confidence_minimum": 0.85,
+    "delay_reason": "Star-Lord (Moon) retrograde suspends event in time",
+    "star_lord_retrograde": true,
+    "sub_lord_retrograde": false,
+    "direct_motion_date": "2026-10-05",
+    "new_execution_window_start": "2026-10-19",
+    "timeline_shift_days": 32,
+    "factors": [
+      "Primary vector (5) supported by Star Lord (Moon signifies 8, 11)",
+      "Star-Lord verdict: PROMISSORY (windfall promised)",
+      "Star-Lord (Moon) is retrograde: SUSPENDED",
+      "Sub-Lord (Mercury) is direct, signifies 2, 11: CONFIRMS",
+      "Retrograde verdict: Star-Lord retrograde blocks manifestation",
+      "Event cannot execute while Star-Lord retrograde",
+      "Direct motion date: October 5, 2026",
+      "Execution deferred to post-direct window: ~October 19, 2026",
+      "Final verdict: DELAYED (promise valid but temporally suspended)"
+    ]
+  },
+  "pass_criteria": {
+    "status_match": true,
+    "confidence_above_threshold": 0.85,
+    "star_lord_retrograde_detected": true,
+    "sub_lord_direct_confirmed": true,
+    "direct_motion_date_match": "2026-10-05",
+    "timeline_shift_minimum_days": 30,
+    "execution_time_ms_max": 700
+  }
+}

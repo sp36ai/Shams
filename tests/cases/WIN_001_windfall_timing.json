@@ -1,0 +1,88 @@
+{
+  "test_id": "WIN_001",
+  "category": "WINDFALL",
+  "description": "Windfall Lottery: 5th CSL Jupiter (Moon Star → Mercury Sub) promises windfall. DBA ∩ RP intersection locks timing to Sep 28, 2026.",
+  "scenario": "Native asks about lottery ticket. Jupiter (5th CSL) in Moon's Star, Mercury's Sub. Moon→8,11, Mercury→2,11. DBA: [Moon, Mercury, Jupiter]. RP: [Mercury, Mars, Moon, Jupiter]. Intersection: [Moon, Mercury, Jupiter]. Transit: Sun enters Moon's Star Sep 25, Jupiter's Sub Sep 28. Moon transits Mercury's Star Sep 28, 4:15 PM IST. Expected: PROMISED_AND_TIMED with Sep 28, 4:15 PM execution.",
+  "input_state": {
+    "query_metadata": {
+      "event_type": "WINDFALL_LOTTERY_SPECULATION",
+      "query_intent": "FORWARD",
+      "timestamp": 1725358994,
+      "query_text": "Will my lottery ticket win big?"
+    },
+    "chart_data": {
+      "csl_data": {
+        "house": 5,
+        "csl_planet": {
+          "name": "Jupiter",
+          "longitude": 90.0,
+          "sign": "Cancer",
+          "nakshatra": "Pushya",
+          "is_retrograde": false,
+          "house": 5
+        },
+        "star_lord": {
+          "name": "Moon",
+          "signifies": [8, 11],
+          "is_retrograde": false,
+          "owns": [4]
+        },
+        "sub_lord": {
+          "name": "Mercury",
+          "signifies": [2, 11],
+          "is_retrograde": false,
+          "owns": [3, 6]
+        }
+      },
+      "ruling_planets": {
+        "lagna_star_lord": "Mercury",
+        "lagna_sign_lord": "Mars",
+        "moon_star_lord": "Moon",
+        "moon_sign_lord": "Jupiter",
+        "day_lord": "Jupiter"
+      },
+      "dasha_data": {
+        "maha_lord": "Moon",
+        "bhukti_lord": "Mercury",
+        "antara_lord": "Jupiter",
+        "maha_remaining_days": 450,
+        "bhukti_remaining_days": 120,
+        "antara_remaining_days": 45
+      }
+    },
+    "event_vectors": {
+      "primary": 5,
+      "secondary": [2, 8, 11],
+      "negating": [4, 12]
+    }
+  },
+  "expected_output": {
+    "status": "PROMISED_AND_TIMED",
+    "confidence_minimum": 0.92,
+    "dba_alignment": "IMMINENT (all 3 lords present in event houses)",
+    "operative_significators": ["Moon", "Mercury", "Jupiter"],
+    "transit_timing": {
+      "sun_transit_date": "2026-09-28",
+      "moon_transit_time": "2026-09-28T16:15:00+05:30",
+      "lagna_transit_moment": "2026-09-28T16:16:23+05:30"
+    },
+    "factors": [
+      "Primary vector (5) satisfied by Star Lord (Moon signifies 8, 11)",
+      "Star-Lord verdict: PROMISSORY (windfall promised via 8-11 axis)",
+      "Sub-Lord (Mercury) signifies 2, 11: CONFIRMING (deposits to bank)",
+      "DBA: [Moon, Mercury, Jupiter] all signify event houses",
+      "RP: [Mercury, Mars, Moon, Jupiter]",
+      "Intersection: [Moon, Mercury, Jupiter] - all operative",
+      "Transit lock: Sun to Hasta (Moon's Star) → Jupiter's Sub on Sep 28",
+      "Transit lock: Moon to Revati (Mercury's Star) → Jupiter's Sub at 4:15 PM IST",
+      "Final verdict: PROMISED_AND_TIMED (execution confirmed Sep 28, 2026, 4:15 PM IST)"
+    ]
+  },
+  "pass_criteria": {
+    "status_match": true,
+    "confidence_above_threshold": 0.92,
+    "execution_date_match": "2026-09-28",
+    "execution_time_precision": "±15 minutes",
+    "execution_time_ms_max": 800
+  }
+}

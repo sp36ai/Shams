@@ -1,0 +1,94 @@
+{
+  "test_id": "NODE_001",
+  "category": "NODE_RESOLUTION",
+  "description": "Node Multi-House Trigger: Rahu in 6th house with Venus, Saturn aspect, Mercury sign lord, Moon star lord. Absorbs 7 houses: [2,3,4,6,7,8,9]",
+  "scenario": "Rahu in Virgo (6) conjoined with Venus, aspected by Saturn. Mercury is sign lord of Virgo. Moon is star lord of Rahu's Nakshatra (Ashlesha). Expected: Rahu proxy array = [2,3,4,6,7,8,9]. Trigger strength: VERY_STRONG. Event character: WILDCARD.",
+  "input_state": {
+    "query_metadata": {
+      "event_type": "BUSINESS_PARTNERSHIP_SUCCESS",
+      "query_intent": "FORWARD",
+      "timestamp": 1725358994,
+      "query_text": "Will my business partnership succeed?"
+    },
+    "chart_data": {
+      "node_data": {
+        "node": "Rahu",
+        "house": 6,
+        "longitude": 180.0,
+        "sign": "Virgo",
+        "nakshatra": "Ashlesha",
+        "occupants": ["Venus"],
+        "aspects": ["Saturn"],
+        "sign_lord": "Mercury",
+        "star_lord": "Moon"
+      },
+      "proxy_resolution": {
+        "base_occupation": [6],
+        "conjunction": {
+          "planet": "Venus",
+          "signifies": [2, 7]
+        },
+        "aspect": {
+          "planet": "Saturn",
+          "signifies": [8, 9]
+        },
+        "sign_lord": {
+          "planet": "Mercury",
+          "signifies": [3, 6]
+        },
+        "star_lord": {
+          "planet": "Moon",
+          "signifies": [4]
+        }
+      },
+      "csl_data": {
+        "house": 7,
+        "csl_planet": {
+          "name": "Venus",
+          "is_retrograde": false
+        },
+        "star_lord": {
+          "name": "Moon",
+          "signifies": [4, 11]
+        },
+        "sub_lord": {
+          "name": "Rahu",
+          "signifies": [2, 3, 4, 6, 7, 8, 9]
+        }
+      }
+    },
+    "event_vectors": {
+      "primary": 7,
+      "secondary": [10, 11, 2],
+      "negating": [6, 8, 12]
+    }
+  },
+  "expected_output": {
+    "status": "COMPOUND_TRIGGER_DETECTED",
+    "node_significations": [2, 3, 4, 6, 7, 8, 9],
+    "trigger_strength": "VERY_STRONG",
+    "proxy_count": 4,
+    "event_character": "WILDCARD",
+    "confidence_minimum": 0.85,
+    "factors": [
+      "Node (Rahu) in 6th house, base signification: [6]",
+      "Conjunction with Venus: absorbs [2, 7] (relationships, money)",
+      "Aspect from Saturn: absorbs [8, 9] (obstacles, merit)",
+      "Sign Lord (Mercury): absorbs [3, 6] (communication, service)",
+      "Star Lord (Moon): absorbs [4] (home, family)",
+      "Full Proxy Array: [2, 3, 4, 6, 7, 8, 9] (7 houses)",
+      "Trigger Strength: VERY_STRONG (7 houses > 5)",
+      "Event Character: WILDCARD (Rahu fires 4 planet scripts simultaneously)",
+      "Eclipse Override: Rahu supersedes Venus, Saturn, Mercury, Moon in execution",
+      "Expected outcome: Compound life event via business partnership channel"
+    ]
+  },
+  "pass_criteria": {
+    "status_match": true,
+    "signification_count": 7,
+    "trigger_strength_match": "VERY_STRONG",
+    "event_character_match": "WILDCARD",
+    "confidence_above_threshold": 0.85,
+    "execution_time_ms_max": 600
+  }
+}
