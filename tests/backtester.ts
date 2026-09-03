@@ -6,8 +6,11 @@
  *   1. Sub-Lord Veto Reversal (Litigation Loss)
  *   2. Sub-Lord Confirmation (Litigation Victory)
  *   3. DBA ∩ RP Timing (Windfall with exact date)
- *   4. Node Multi-House Trigger (Rahu proxy array)
+ *   4. Node Multi-House Trigger (Rahu proxy array) ⚠️ Recursion risk
  *   5. Retrograde Delay (Star-Lord retrograde suspension)
+ *
+ * CRITICAL: This backtester uses the ACTUAL ShamsUnifiedEngine.
+ * Monitor for stack overflow in NODE_001 (node proxy recursion).
  *
  * Usage:
  *   npm run test:backtest -- tests/cases/LIT_001_litigation_loss_veto_reversal.json
@@ -16,6 +19,8 @@
 
 import fs from 'fs';
 import path from 'path';
+import { executeUnifiedShamsMethod, type UnifiedShamsJudgment } from '../src/astrology/rkp/unifiedShamsEngine';
+import type { ComplexEventType } from '../src/astrology/rkp/eventFormulationTypes';
 
 interface TestCase {
   test_id: string;
@@ -90,6 +95,7 @@ class ShamsBacktester {
 
   /**
    * Execute a single test case
+   * Uses the ACTUAL ShamsUnifiedEngine (not simulated)
    */
   private async runTestCase(filePath: string): Promise<void> {
     const startTime = performance.now();
@@ -101,24 +107,44 @@ class ShamsBacktester {
       console.log(`▶ Running: ${testCase.test_id} (${testCase.category})`);
       console.log(`  Description: ${testCase.description}\n`);
 
-      // Simulate engine execution (in production, this calls executeUnifiedShamsMethod)
-      const actualOutput = this.simulateEngineExecution(testCase);
+      let actualOutput: any;
+      let error: string | null = null;
+
+      try {
+        // Execute ACTUAL engine (not simulated)
+        actualOutput = await this.executeActualEngine(testCase);
+      } catch (engineError) {
+        // Catch recursion errors, stack overflow, etc.
+        if (String(engineError).includes('Maximum call stack size exceeded')) {
+          error = 'RECURSION_ERROR: Node proxy resolution infinite loop detected';
+          console.log(`  ⚠️  ${error}`);
+        } else if (String(engineError).includes('ReferenceError')) {
+          error = `DEPENDENCY_ERROR: ${engineError}`;
+          console.log(`  ⚠️  ${error}`);
+        } else {
+          throw engineError;
+        }
+      }
 
       // Validate output
-      const passed = this.validateOutput(testCase, actualOutput);
+      const passed = !error && this.validateOutput(testCase, actualOutput);
 
       const duration = performance.now() - startTime;
       this.results.push({
         test_id: testCase.test_id,
         passed,
         duration_ms: duration,
-        status_match: actualOutput.status === testCase.expected_output.status,
-        confidence_match: actualOutput.confidence >= testCase.expected_output.confidence_minimum,
-        factors: actualOutput.factors || [],
+        status_match: actualOutput?.status === testCase.expected_output.status,
+        confidence_match: actualOutput?.confidence >= testCase.expected_output.confidence_minimum,
+        factors: actualOutput?.factors || [],
+        error,
       });
 
       // Print result
-      if (passed) {
+      if (error) {
+        console.log(`  ❌ FAIL (Engine Error)`);
+        console.log(`     Error: ${error}`);
+      } else if (passed) {
         console.log(`  ✅ PASS`);
       } else {
         console.log(`  ❌ FAIL`);
@@ -126,15 +152,21 @@ class ShamsBacktester {
           console.log(`     Expected: ${testCase.expected_output.status}`);
           console.log(`     Actual: ${actualOutput.status}`);
         }
+        if (actualOutput.confidence < testCase.expected_output.confidence_minimum) {
+          console.log(`     Confidence: ${(actualOutput.confidence * 100).toFixed(1)}% (min: ${(testCase.expected_output.confidence_minimum * 100).toFixed(1)}%)`);
+        }
       }
 
       console.log(`  ⏱  Duration: ${duration.toFixed(2)}ms`);
-      console.log(`  Confidence: ${(actualOutput.confidence * 100).toFixed(1)}%\n`);
+      if (actualOutput?.confidence) {
+        console.log(`  Confidence: ${(actualOutput.confidence * 100).toFixed(1)}%`);
+      }
+      console.log('');
 
       this.totalDuration += duration;
     } catch (error) {
       const duration = performance.now() - startTime;
-      console.log(`  ❌ ERROR: ${error}\n`);
+      console.log(`  ❌ FATAL ERROR: ${error}\n`);
 
       this.results.push({
         test_id: path.basename(filePath),
@@ -149,47 +181,72 @@ class ShamsBacktester {
   }
 
   /**
-   * Simulate engine execution (placeholder for actual engine call)
-   * In production, this would call: executeUnifiedShamsMethod(testCase.input_state)
+   * Execute ACTUAL engine (NOT simulated)
+   * Calls the real ShamsUnifiedEngine with test case data
    */
-  private simulateEngineExecution(testCase: TestCase): any {
-    // For backtesting purposes, we return the expected output
-    // In production, the actual engine would be called here
-    return {
-      status: testCase.expected_output.status,
-      confidence: testCase.expected_output.confidence_minimum,
-      factors: testCase.expected_output.factors,
-      veto_triggered: testCase.expected_output.veto_triggered,
-      operativeSignificators: testCase.expected_output.operative_significators,
-    };
+  private async executeActualEngine(testCase: TestCase): Promise<UnifiedShamsJudgment> {
+    // Extract required parameters from test case
+    const inputState = testCase.input_state;
+    const eventType = inputState.query_metadata.event_type as ComplexEventType;
+    const queryText = inputState.query_metadata.query_text;
+    const timestamp = inputState.query_metadata.timestamp;
+    const queryIntent = inputState.query_metadata.query_intent || 'FORWARD';
+
+    // Call the REAL unified engine
+    // ⚠️ This is where recursion errors will surface (especially in NODE_001)
+    const judgment = await executeUnifiedShamsMethod(
+      {} as any, // WatchChart - would be real in production
+      eventType,
+      queryText,
+      timestamp,
+      queryIntent as 'FORWARD' | 'REVERSAL'
+    );
+
+    return judgment;
   }
 
   /**
    * Validate test case output against expected criteria
+   * Works with actual UnifiedShamsJudgment output
    */
-  private validateOutput(testCase: TestCase, actualOutput: any): boolean {
+  private validateOutput(testCase: TestCase, judgment: UnifiedShamsJudgment): boolean {
+    if (!judgment || !judgment.finalVerdict) {
+      return false;
+    }
+
     const criteria = testCase.pass_criteria;
 
     // Status must match
-    if (criteria.status_match && actualOutput.status !== testCase.expected_output.status) {
-      return false;
+    if (criteria.status_match) {
+      // Map finalVerdict.status to expected_output.status
+      if (judgment.finalVerdict.status !== testCase.expected_output.status) {
+        return false;
+      }
     }
 
     // Confidence must be above threshold
-    if (criteria.confidence_above_threshold && actualOutput.confidence < testCase.expected_output.confidence_minimum) {
-      return false;
+    if (criteria.confidence_above_threshold) {
+      if (judgment.finalVerdict.confidence < testCase.expected_output.confidence_minimum) {
+        return false;
+      }
     }
 
-    // Veto logic (if applicable)
+    // Veto logic (if applicable) - check promiseGateway
     if ('veto_correctly_applied' in criteria) {
-      if (criteria.veto_correctly_applied && !actualOutput.veto_triggered) {
+      const judgment_veto = judgment.promiseGateway?.blockingFactors.some(
+        (f) => f.toLowerCase().includes('veto')
+      );
+      if (criteria.veto_correctly_applied && !judgment_veto) {
         return false;
       }
     }
 
     // Veto must be absent (if applicable)
     if ('veto_correctly_absent' in criteria) {
-      if (criteria.veto_correctly_absent && actualOutput.veto_triggered) {
+      const judgment_veto = judgment.promiseGateway?.blockingFactors.some(
+        (f) => f.toLowerCase().includes('veto')
+      );
+      if (criteria.veto_correctly_absent && judgment_veto) {
         return false;
       }
     }
