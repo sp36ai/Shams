@@ -936,6 +936,191 @@ Stage 3: VERDICT_ROLLBACK
 
 ---
 
+## 5. Worked Examples: Logic Engine in Action
+
+### Scenario A: The Litigation Query
+**Question:** *"Will I win the ongoing lawsuit, or will I have to pay damages?"*
+
+#### Step 1: Variable Declaration
+- **Primary Anchor ($P$):** $6$ (Defeating opponent)
+- **Supporting ($S$):** $11$ (Fulfillment/Victory), $10$ (Status)
+- **Negating ($N$):** $12$ (Loss/opponent's victory/penalties), $5$ (Compromise)
+
+#### Step 2: CSL Verification
+
+**Horary Chart State:**
+| CSL | Planet | Star Lord | Sub Lord | StL Significations | SL Significations |
+| --- | --- | --- | --- | --- | --- |
+| **6th** | Venus | Saturn | Rahu | **11**, **8** | **12** |
+
+**Engine Evaluation:**
+
+1. **Star Lord Check (The Result):**
+   - Venus is in the Nakshatra of **Saturn**.
+   - Saturn strongly signifies the **11th house** (by occupation) → Victory and upper hand
+   - Saturn also signifies the **8th house** (by lordship) → Stress, tension, financial penalty
+   - *Intermediate verdict:* Star Lord promises victory BUT drags in penalty element
+
+2. **Sub-Lord Check (The Final Verdict):**
+   - Venus is in the Sub of **Rahu**.
+   - Rahu signifies the **12th house** only
+   - The **12th house is the primary negator** of the 1st (native) and acts as the 6th from the 7th (opponent's victory)
+   - *Sub-routine decision:* The Sub-Lord holds **veto power** and reverses the Star Lord's promise
+
+#### Step 3: Engine Output
+
+```
+Status: DENIED_WITH_PENALTY
+Confidence: HIGH (0.85)
+Verdict: REVERSIBLE
+
+Factors:
+  1. Star Lord (Saturn) signifies 11 → Victory signaled
+  2. Star Lord (Saturn) also signifies 8 → Penalty element introduced
+  3. Sub-Lord (Rahu) signifies 12 → Native's loss confirmed
+  4. Sub-Lord veto overrides Star Lord promise → Case goes against native
+  5. 8 involvement indicates severe financial damages or humiliation
+  6. 5 (compromise) absent → No settlement possible
+
+Timeline: 6–12 months (Saturn's deliberation period)
+Blockers: Sub-Lord negation (Rahu→12), 8-house penalty doubling
+```
+
+**Human-Readable Verdict:**
+> The native will initially appear to have a strong case and may win early motions. However, the final judgment will go entirely against them. The loss will include severe financial damages or humiliation. No compromise is available; the case reaches a destructive final verdict.
+
+---
+
+### Scenario B: The Speculative Windfall Query
+**Question:** *"Will my lottery ticket result in a major jackpot?"*
+
+#### Step 1: Variable Declaration
+- **Primary Anchor ($P$):** $5$ (Speculation/Lottery)
+- **Supporting ($S$):** $2$ (Wealth), $8$ (Sudden/unearned money), $11$ (Massive gain)
+- **Negating ($N$):** $4$ (Loss of speculation), $12$ (Capital erosion)
+
+#### Step 2: CSL Verification
+
+**Horary Chart State:**
+| CSL | Planet | Star Lord | Sub Lord | StL Significations | SL Significations |
+| --- | --- | --- | --- | --- | --- |
+| **5th** | Jupiter | Moon | Mercury | **8**, **11** | **2**, **11** |
+
+**Engine Evaluation:**
+
+1. **Star Lord Check (The Result):**
+   - Jupiter is in the Nakshatra of the **Moon**.
+   - Moon strongly signifies the **8th house** → Sudden, unearned money
+   - Moon also signifies the **11th house** → Massive fulfillment and gain
+   - *Intermediate verdict:* The $8-11$ linkage is the exact signature for sudden windfall; event strongly promised
+
+2. **Sub-Lord Check (The Final Verdict):**
+   - Jupiter is in the Sub of **Mercury**.
+   - Mercury signifies the **2nd house** → Bank balance, liquid funds
+   - Mercury also signifies the **11th house** → Fulfillment and final gains
+   - **Crucially:** Mercury does NOT signify the 4th (loss) or 12th (expenditure) houses
+   - *Sub-routine decision:* The Sub-Lord **confirms and deposits** the Star Lord's promise into liquid wealth
+
+#### Step 3: Engine Output
+
+```
+Status: PROMISED_ABSOLUTE
+Confidence: VERY_HIGH (0.92)
+Verdict: FULFILLED
+
+Factors:
+  1. Star Lord (Moon) signifies 8 → Unearned money promised
+  2. Star Lord (Moon) also signifies 11 → Massive gain promised
+  3. 8-11 nexus is the exact windfall signature
+  4. Sub-Lord (Mercury) signifies 2 → Deposit into bank balance
+  5. Sub-Lord (Mercury) also signifies 11 → Fulfillment assured
+  6. Sub-Lord contains ZERO negating vectors (no 4 or 12)
+  7. Sub-Lord confirms Star Lord promise without reversal
+
+Timeline: 2–6 weeks (Mercury's swift period)
+Blockers: None (clean alignment across all vectors)
+Contingency: Amount depends on DBA timing and Ruling Planets confirmation
+```
+
+**Human-Readable Verdict:**
+> The Shams Method confirms a direct hit. The 5th CSL points exactly to the 8-11 axis (sudden unearned gain), and the Sub-Lord safely deposits that wealth into the 2nd house (bank account). The native will win a substantial windfall.
+
+---
+
+#### Step 4: The Timing Algorithm (Next Phase)
+
+Both verdicts now require **Dasha-Bhukti-Antara (DBA) timing** and **Ruling Planets (RP)** confirmation:
+
+**For Scenario A (Litigation Loss):**
+- Event promised (negatively) under current Dasha
+- Engine must scan DBA to find when the **12th house Bhukti Lord** becomes operative
+- Ruling Planets at query time confirm or delay manifestation
+- Final timing = Bhukti activation window ∩ RP confirmation
+
+**For Scenario B (Windfall Gain):**
+- Event promised (positively) under current Dasha
+- Engine must scan DBA to find when the **2nd house Bhukti Lord** becomes operative
+- Ruling Planets at query time confirm or expedite manifestation
+- Final timing = Bhukti activation window ∩ RP confirmation
+
+---
+
+### Integration with askWatchOracle
+
+The two-scenario flow demonstrates the complete pipeline:
+
+```
+Query Input (Litigation or Windfall)
+    ↓
+Extract Horary Chart + CSLs (6th for litigation, 5th for windfall)
+    ↓
+Evaluate Star Lord → Sub-Lord chain
+    ↓
+Apply Veto Logic (Sub-Lord overrides Star Lord)
+    ↓
+Compute Verdict State (PROMISED, DENIED, CONTINGENT, etc.)
+    ↓
+Extract Timing Vector (DBA + RP)
+    ↓
+Render Human-Readable Response (via responseComposer)
+    ↓
+Store Audit Trail (with stage tags in Firestore)
+    ↓
+Cache Result (MMKV history)
+```
+
+**Stage-Tagged Diagnostics (Litigation Example):**
+```
+[STAGE 1] HOUSE_SIGNIFICATION_CHECK
+  6th CSL: Venus
+  Star Lord: Saturn
+  Significations: [11 (occupant), 8 (owner)]
+  Result: PASS (6→8,11 detected)
+
+[STAGE 2] VETO_LOGIC_EVALUATION
+  Sub-Lord: Rahu
+  Sub-Lord Significations: [12]
+  Veto Status: ACTIVE (Sub negates Star)
+  Result: VETO_CONFIRMED
+
+[STAGE 3] VERDICT_COMPUTATION
+  Star Verdict: VICTORY (8-11 axis, but 8 introduces penalty)
+  Sub Verdict: LOSS (12 house negation)
+  Applied Veto: Star overridden by Sub
+  Final Verdict: DENIED_WITH_PENALTY
+  Result: PASS
+
+[STAGE 4] CONFIDENCE_SCORING
+  Star Alignment: 0.75 (11 present, 8 complicates)
+  Sub Alignment: 0.95 (12 unambiguous negation)
+  Veto Authority: HIGH (Sub-Lord authority is strict)
+  Composite Score: 0.85
+  Confidence: HIGH
+  Result: PASS
+```
+
+---
+
 ## References & Alignment
 
 - **Core Authority:** RKP_RULES_FROM_SARFARAZ.md
