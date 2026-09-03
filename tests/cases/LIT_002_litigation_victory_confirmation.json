@@ -5,7 +5,7 @@
   "scenario": "Native in lawsuit. Jupiter (6th CSL) in Moon's Star, Mercury's Sub. Moon signifies 11 (victory). Mercury signifies 11 (fulfillment). Expected: Sub-Lord confirms → PROMISED_VICTORY.",
   "input_state": {
     "query_metadata": {
-      "event_type": "LITIGATION_OUTCOME",
+      "event_type": "LITIGATION_VICTORY",
       "query_intent": "FORWARD",
       "timestamp": 1725358994,
       "query_text": "Will I win the ongoing lawsuit?"
@@ -54,7 +54,7 @@
     }
   },
   "expected_output": {
-    "status": "PROMISED_VICTORY",
+    "status": "PROMISED_AND_TIMED",
     "confidence_minimum": 0.90,
     "veto_triggered": false,
     "star_lord_alignment": "11 (victory promised)",

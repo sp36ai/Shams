@@ -23,7 +23,7 @@
     "test:rules": "firebase emulators:exec --config firebase.test.json --only firestore \"jest firestore.rules.test.ts --testEnvironment node --runInBand\"",
     "test:e2e": "maestro test .maestro/",
     "test:e2e:single": "maestro test",
-    "test:backtest": "node tests/run-backtest.js",
+    "test:backtest": "tsx tests/backtester.ts",
     "check:orphans": "npx madge --extensions ts,tsx --ts-config tsconfig.json --orphans src",
     "validate:firebase:predeploy": "powershell -ExecutionPolicy Bypass -File scripts/Validate-FirebasePredeploy.ps1",
     "postinstall": "npx patch-package || echo \"No patches\""
@@ -105,6 +105,7 @@
     "prettier": "3.3.3",
     "react-test-renderer": "19.0.0",
     "test-renderer": "^1.2.0",
+    "tsx": "^4.23.13",
     "typescript": "5.5.4"
   },
   "engines": {

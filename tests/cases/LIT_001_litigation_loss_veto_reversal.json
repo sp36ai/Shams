@@ -5,7 +5,7 @@
   "scenario": "Native in lawsuit. Venus (6th CSL) in Saturn's Star, Rahu's Sub. Saturn signifies 11 (victory) + 8 (penalty). Rahu signifies 12 (loss). Expected: Sub-Lord veto reverses Star-Lord promise → DENIED_WITH_PENALTY.",
   "input_state": {
     "query_metadata": {
-      "event_type": "LITIGATION_OUTCOME",
+      "event_type": "LITIGATION_DEFEAT",
       "query_intent": "FORWARD",
       "timestamp": 1725358994,
       "query_text": "Will I win the ongoing lawsuit?"
@@ -54,7 +54,7 @@
     }
   },
   "expected_output": {
-    "status": "DENIED_WITH_PENALTY",
+    "status": "DENIED",
     "confidence_minimum": 0.82,
     "veto_triggered": true,
     "veto_planet": "Rahu",
