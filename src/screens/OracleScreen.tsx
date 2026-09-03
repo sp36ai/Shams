@@ -53,6 +53,31 @@ function formatClockTime(ms: number): string {
   return new Date(ms).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
 }
 
+/**
+ * One right-aligned label/value line inside a Tier-2 telemetry panel
+ * (Moon Manzil's phase/sunrise/sunset readout). Muted-gold caption label,
+ * bright emphasis value — reads as an instrument readout, not prose.
+ */
+const TelemetryRow: React.FC<{
+  label: string;
+  value: string;
+  colors: ReturnType<typeof useColors>;
+  typography: ReturnType<typeof useTypography>;
+}> = ({ label, value, colors, typography }) => (
+  <View style={styles.telemetryRow}>
+    <Text
+      style={[
+        typography('caption'),
+        styles.telemetryLabel,
+        { color: colors.goldBright, opacity: 0.7 },
+      ]}
+    >
+      {label}
+    </Text>
+    <Text style={[typography('bodyEmphasis'), { color: colors.text }]}>{value}</Text>
+  </View>
+);
+
 // ── OracleScreen (home dashboard) ───────────────────────────────────────────
 
 const OracleScreen: React.FC = () => {
@@ -255,7 +280,7 @@ const OracleScreen: React.FC = () => {
           onPress={() => navigation.navigate('AlFalak')}
           style={[
             styles.heroCard,
-            { backgroundColor: colors.surface, borderColor: colors.borderAccent + '55' },
+            { backgroundColor: colors.surface, borderColor: colors.accent, borderWidth: 1 },
           ]}
           accessibilityRole="button"
           accessibilityLabel="Open Al-Falak — Sky State timing panel"
@@ -372,18 +397,31 @@ const OracleScreen: React.FC = () => {
             </View>
           </View>
           {skyExtras.sunTimes !== null && (
-            <Text
+            <View
               style={[
-                typography('caption'),
-                { color: colors.textFaint, marginTop: 10, lineHeight: 18 },
+                styles.telemetryPanel,
+                { backgroundColor: colors.bg + '66', borderColor: colors.border },
               ]}
             >
-              {skyExtras.moonPhaseFull}
-              {'   ·   '}
-              {t('oracle.sunriseLabel')} {formatClockTime(skyExtras.sunTimes.sunriseMs)}
-              {'   ·   '}
-              {t('oracle.sunsetLabel')} {formatClockTime(skyExtras.sunTimes.sunsetMs)}
-            </Text>
+              <TelemetryRow
+                label="PHASE"
+                value={skyExtras.moonPhaseFull}
+                colors={colors}
+                typography={typography}
+              />
+              <TelemetryRow
+                label={t('oracle.sunriseLabel')}
+                value={formatClockTime(skyExtras.sunTimes.sunriseMs)}
+                colors={colors}
+                typography={typography}
+              />
+              <TelemetryRow
+                label={t('oracle.sunsetLabel')}
+                value={formatClockTime(skyExtras.sunTimes.sunsetMs)}
+                colors={colors}
+                typography={typography}
+              />
+            </View>
           )}
         </View>
 
@@ -399,7 +437,8 @@ const OracleScreen: React.FC = () => {
             styles.actionBtn,
             {
               backgroundColor: colors.surface,
-              borderColor: colors.borderAccent + '55',
+              borderColor: colors.accent,
+              borderWidth: 1,
               opacity: pressed ? 0.85 : 1,
             },
           ]}
@@ -456,23 +495,32 @@ const OracleScreen: React.FC = () => {
           <Text style={[typography('label'), { color: colors.textMuted }]}>›</Text>
         </Pressable>
 
-        {/* Today's Sky — daily personalized readout, based on saved profile */}
+        {/* Today's Sky — daily personalized readout, based on saved profile.
+            Tier 2.5 "derived insight": an interpretation of the telemetry
+            above, not raw data — a left accent rule instead of a boxed
+            card, and italic Spectral prose to read as a quoted reading
+            rather than another instrument panel. */}
         <View
           style={[
-            styles.card,
-            { backgroundColor: colors.surface, borderColor: colors.borderAccent + '44' },
+            styles.insightPanel,
+            { backgroundColor: colors.surface, borderLeftColor: colors.accent },
           ]}
         >
           <Text style={[typography('caption'), { color: colors.goldBright, letterSpacing: 1.2 }]}>
             {t('oracle.dailySkyTitle').toUpperCase()}
           </Text>
-          <Text style={[typography('body'), { color: colors.text, marginTop: 8, lineHeight: 22 }]}>
+          <Text
+            style={[typography('bodyItalic'), { color: colors.text, marginTop: 8, lineHeight: 22 }]}
+          >
             {dailySky.greeting} {lang === 'ur' ? 'کے تحت' : lang === 'hi' ? 'में' : 'is under'}{' '}
             <Text style={{ fontWeight: '700', color: colors.accent }}>{dailySky.dayLord}</Text> (
             {dailySky.dayTheme}).
           </Text>
           <Text
-            style={[typography('body'), { color: colors.textMuted, marginTop: 4, lineHeight: 22 }]}
+            style={[
+              typography('bodyItalic'),
+              { color: colors.textMuted, marginTop: 4, lineHeight: 22 },
+            ]}
           >
             {lang === 'ur' ? 'اس گھڑی پر' : lang === 'hi' ? 'इस समय' : 'This hour carries'}{' '}
             <Text style={{ fontWeight: '700', color: colors.accent }}>{dailySky.horaLord}</Text> (
@@ -490,40 +538,46 @@ const OracleScreen: React.FC = () => {
           )}
         </View>
 
-        {/* Favored Now — which chip category the current hora lord favors */}
+        {/* Favored Now — which chip category the current hora lord favors.
+            Same Tier 2.5 treatment as Today's Sky: a derived recommendation,
+            not a data readout. */}
         <View
           style={[
-            styles.card,
-            { backgroundColor: colors.surface, borderColor: colors.borderAccent + '44' },
+            styles.insightPanel,
+            { backgroundColor: colors.surface, borderLeftColor: colors.accent },
           ]}
         >
           <Text style={[typography('caption'), { color: colors.goldBright, letterSpacing: 1.2 }]}>
             {t('oracle.favoredNowTitle').toUpperCase()}
           </Text>
-          <Text style={[typography('body'), { color: colors.text, marginTop: 8, lineHeight: 22 }]}>
+          <Text
+            style={[typography('bodyItalic'), { color: colors.text, marginTop: 8, lineHeight: 22 }]}
+          >
             {t('oracle.favoredNowBody')}{' '}
             <Text style={{ fontWeight: '700', color: colors.accent }}>{favoredChip}</Text>
           </Text>
         </View>
 
-        {/* Daily Dhikr — a Name of Allah tied to today's day lord */}
+        {/* Daily Dhikr — a Name of Allah tied to today's day lord.
+            Devotional treatment: no border, no hard edges — an illuminated
+            page, not a data card. Arabic name centered in pure accent gold. */}
         {dhikr !== undefined && (
-          <View
-            style={[
-              styles.card,
-              { backgroundColor: colors.surface, borderColor: colors.borderAccent + '44' },
-            ]}
-          >
-            <Text style={[typography('caption'), { color: colors.goldBright, letterSpacing: 1.2 }]}>
+          <View style={[styles.devotionalPanel, { backgroundColor: colors.surface }]}>
+            <Text
+              style={[
+                typography('caption'),
+                { color: colors.goldBright, letterSpacing: 1.2, textAlign: 'center' },
+              ]}
+            >
               {t('oracle.dailyDhikrTitle').toUpperCase()}
             </Text>
             <Text
               style={{
                 fontFamily: 'Amiri-Regular',
-                fontSize: 20,
-                color: colors.goldBright,
+                fontSize: 22,
+                color: colors.accent,
                 textAlign: 'center',
-                marginTop: 10,
+                marginTop: 12,
                 marginBottom: 2,
               }}
             >
@@ -553,13 +607,10 @@ const OracleScreen: React.FC = () => {
           </View>
         )}
 
-        {/* Today's Blessing — Islamic day-of-week note */}
-        <View
-          style={[
-            styles.card,
-            { backgroundColor: colors.surface, borderColor: colors.borderAccent + '44' },
-          ]}
-        >
+        {/* Today's Blessing — Islamic day-of-week note. Same devotional
+            treatment as Daily Dhikr, left-aligned since this one reads as
+            a short note rather than a recitation focal point. */}
+        <View style={[styles.devotionalPanel, { backgroundColor: colors.surface }]}>
           <Text style={[typography('caption'), { color: colors.goldBright, letterSpacing: 1.2 }]}>
             {t('oracle.blessingTitle').toUpperCase()}
           </Text>
@@ -753,6 +804,48 @@ const styles = StyleSheet.create({
   },
   manzilTextCol: {
     flex: 1,
+  },
+  // Tier 2 — telemetry readout nested inside the Manzil card (phase/
+  // sunrise/sunset). Flatter and darker than the identity block above it,
+  // no border of its own beyond a faint hairline — reads as an instrument
+  // panel, not another card.
+  telemetryPanel: {
+    marginTop: 10,
+    borderRadius: RADIUS.lg,
+    borderWidth: StyleSheet.hairlineWidth,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+  },
+  telemetryRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 5,
+  },
+  telemetryLabel: {
+    letterSpacing: 1,
+    fontSize: 10,
+  },
+  // Tier 2.5 — derived insight (Today's Sky, Favored Now). A left accent
+  // rule instead of a full border box, so it reads as a quoted reading
+  // rather than a structural container.
+  insightPanel: {
+    marginHorizontal: SPACING.xl,
+    marginBottom: 14,
+    paddingVertical: 16,
+    paddingLeft: 16,
+    paddingRight: 16,
+    borderRadius: RADIUS.lg,
+    borderLeftWidth: 2,
+  },
+  // Devotional (Daily Dhikr, Today's Blessing). No border, generous
+  // padding — an illuminated page set into the scroll, not a data card.
+  devotionalPanel: {
+    marginHorizontal: SPACING.xl,
+    marginBottom: 14,
+    paddingVertical: 20,
+    paddingHorizontal: 20,
+    borderRadius: RADIUS.xl,
   },
   actionBtn: {
     flexDirection: 'row',
