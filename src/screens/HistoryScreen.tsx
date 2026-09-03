@@ -463,6 +463,7 @@ const ReadingDetailModal: React.FC<{
                 lagnaSignName={reading.watch_oracle.lagnaSignName}
                 lagnaRulerName={reading.watch_oracle.lagnaRulerName}
                 verdict={reading.watch_oracle.verdict}
+                transitCoordinates={reading.watch_oracle.transitCoordinates}
               />
               <RemedyProtocolCard composition={reading.watch_oracle.composition} />
             </>

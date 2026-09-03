@@ -1,36 +1,64 @@
 # RKP Rules - Source of Truth from Astro Sarfaraz
 
-> Status: aligned to the current runtime engine
-> Origin: Astro Sarfaraz's rule intake plus Phase 2 Forensic Audit updates (Promise + 5 RP)
+> **Status:** Aligned to the current runtime engine (`src/astrology/rkp/watchJudgment.ts`).
+>
+> *Note: The legacy KP astronomical judgment system (Cusp Sub-Lords as a
+> promise gate, Moon Sub-Lord scoring, Ruling-Planet witnesses, Vimshottari
+> Dasha timing — implemented in the now-deleted `judgeHorary.ts`) was
+> permanently retired and removed. This document previously described that
+> engine as current; it did not match the code for some time. It now
+> strictly reflects the authoritative RKP Watch Engine mechanics below.*
+>
+> Origin: Astro Sarfaraz's rule intake (house matrix, question keywords,
+> nakshatra/dasha constants) plus the current Watch Engine's own judgment
+> method.
 > Owner: Astro Sarfaraz
 
 ---
 
 ## 1. Core engine model
 
-This engine now uses the 5-step Moon-Sub-Lord RKP flow.
-
-It uses Cusp Sub-Lords as a primary "Promise Layer" gatekeeper (Step 0) and 4-tier Significator Ranking (Phase B/D) for the scoring pass.
+The current engine judges from the **Watch-Minute Ghar framework**, not
+Placidus cusps: the watch minute at the moment of asking selects the 1st
+Ghar, the twelve signs rotate through the Ghars from there, and real
+sidereal planetary positions (Lahiri ayanamsa) drop into whichever Ghar
+their true sign occupies. See `src/astrology/rkp/watchChart.ts` for the
+chart build and `src/astrology/rkp/watchGrid.ts` for the Ghar-selection
+math.
 
 Deterministic inputs:
 
-- Exact UTC timestamp of the question
-- Exact location of the question
+- Exact UTC timestamp of the question (read for the watch minute)
 - Sidereal chart using Lahiri ayanamsa
-- Placidus houses, with Porphyry fallback only at extreme latitude
+- No location or house-cusp computation is used for judgment — the watch
+  frame replaces cusps entirely, which is why a reading needs no lat/lon
 
-Primary judgment signal:
+Judgment relies strictly on:
 
-- Find the Moon's sidereal longitude
-- Find the Moon's nakshatra
-- Find the Moon's sub-lord
-- Judge the house occupied by the Moon's sub-lord against the question matrix
+1. **Target house selection** — mapped via the owner-sourced
+   `houseMatrix.ts` (`primary` house per question type).
+2. **Sidereal planet placement** — real ephemeris-based placement into
+   Ghars (no simulation).
+3. **Planetary dignity** — strength of the house's own ruler
+   (`dignityOf`, `isStrong`/`isWeak` in `rules.ts`).
+4. **Ruler relations** — how the querent's Lagna ruler regards the
+   target house's ruler (`relationBetween`, `isBenefic`/`isMalefic`).
+5. **Obstruction check** — malefic occupation/aspect on the target Ghar,
+   in strict precedence, falling back to a Moon-in-8th/12th disagreement
+   signal.
+
+Every contribution is recorded in `factors`, so narration speaks from
+actual chart facts and a reading can be audited after the event. This is
+a deterministic weighted reading, not a black box.
+
+Code: `src/astrology/rkp/watchJudgment.ts`
 
 ---
 
 ## 2. House Matrix
 
-The following entries mirror the exact owner-provided 5-step table.
+The following entries mirror the exact owner-provided table. This data is
+still current and is imported directly by `watchJudgment.ts`.
 
 | Question Type | Favorable Houses | Denial Houses | Primary | Secondary |
 | ------------- | ---------------- | ------------- | ------- | --------- |
@@ -46,7 +74,8 @@ The following entries mirror the exact owner-provided 5-step table.
 | education     | 4, 9, 11         | 8, 12         | 4       | 9, 11     |
 | lostitem      | 2, 4, 11         | 8, 12         | 2       | 4, 11     |
 
-App-retained extension categories that are not part of the owner's exact pasted table:
+App-retained extension categories that are not part of the owner's exact
+pasted table:
 
 | Question Type | Favorable Houses | Denial Houses | Primary | Secondary |
 | ------------- | ---------------- | ------------- | ------- | --------- |
@@ -54,22 +83,33 @@ App-retained extension categories that are not part of the owner's exact pasted 
 | spiritual     | 5, 9, 12         | 6, 8          | 9       | 5, 12     |
 | general       | 1, 11            | 8, 12         | 1       | 11        |
 
+**Note (multi-house / compound events):** every entry above resolves to
+exactly one `primary` house. There is currently no owner-authored rule
+for how houses interact for compound events (e.g. litigation weighed
+against the 6th, 7th and 12th together; disease-onset vs. recovery as
+separate house pairs; earned wealth vs. windfall). That data does not
+exist yet in this codebase in any form — see the companion intake
+document `docs/MULTI_HOUSE_EVENT_INTAKE.md` for the structured request
+prepared for Astro Sarfaraz to fill in before any compound-event logic is
+implemented.
+
 Code: `src/astrology/kp/rules/houseMatrix.ts`
 
 ---
 
-## 3. Sidereal and Nakshatra rules
+## 3. Sidereal and Nakshatra constants
 
 - Zodiac: sidereal only
 - Ayanamsa: Lahiri only
-- Nakshatra span: 13deg20min
+- Nakshatra span: 13°20'
 - Vimshottari order: Ketu, Venus, Sun, Moon, Mars, Rahu, Jupiter, Saturn, Mercury
 - Dasha years: Ketu 7, Venus 20, Sun 6, Moon 10, Mars 7, Rahu 18, Jupiter 16, Saturn 19, Mercury 17
 
-Sub-lord rule:
-
-- Each nakshatra is subdivided proportionally by Vimshottari dasha years
-- The sub-sequence always starts from that nakshatra's lord
+These constants are retained as shared mathematical primitives (used
+elsewhere in the app, e.g. dasha display) and provenance documentation.
+**They are not consumed by the current judgment algorithm** —
+`watchJudgment.ts` does not compute or use a sub-lord chain or dasha
+timing for its verdict (see §6 below for how timing actually works now).
 
 Code:
 
@@ -80,143 +120,150 @@ Code:
 
 ---
 
-## 4. Ruling Planets
+## 4. Ruling Planets — not used by the current judgment
 
-The engine uses 5 Classical KP Witnesses plus 1 Confirmatory RKP Lord:
-
-1. Day Lord (at Sunrise transition)
-2. Ascendant Sign Lord
-3. Ascendant Star (Nakshatra) Lord
-4. Moon Sign Lord
-5. Moon Star (Nakshatra) Lord
-6. Hora Lord (Confirmatory)
-
-Local-time basis:
-
-- All three are computed from the same local-solar moment derived from longitude
-- This avoids UTC/local drift between weekday, hora, and minute
-
-Day lord:
-
-- Sunday Sun
-- Monday Moon
-- Tuesday Mars
-- Wednesday Mercury
-- Thursday Jupiter
-- Friday Venus
-- Saturday Saturn
-
-Hora lord:
-
-- Chaldean order: Sun -> Venus -> Mercury -> Moon -> Saturn -> Jupiter -> Mars
-- Sunrise is approximated as 6:00 AM local solar time
-- Each hora is treated as one local-solar hour in the runtime engine
-
-Minute lord:
-
-- Divide the current local-solar hour into 9 equal parts
-- Sequence: Ketu, Venus, Sun, Moon, Mars, Rahu, Jupiter, Saturn, Mercury
-
-Code: `src/astrology/primitives/rulingPlanets.ts`
+The legacy engine used 5 Classical KP Witnesses plus a confirmatory Hora
+lord (Day Lord, Ascendant Sign/Star Lord, Moon Sign/Star Lord, Hora Lord)
+as a scoring pass. **The current `watchJudgment.ts` does not use Ruling
+Planet witnesses at all** — confirmed: nothing under `src/astrology/rkp/`
+imports the ruling-planets primitive. The primitive itself
+(`src/astrology/primitives/rulingPlanets.ts`) is retained only as a
+shared calculation and may be used elsewhere in the app outside
+judgment (e.g. display/remedy contexts) — verify at the call site before
+assuming it feeds a verdict.
 
 ---
 
-## 5. The 5-step judgment algorithm
+## 5. The current judgment algorithm
+
+This replaces the old 5-step Cusp-Sub-Lord/Moon-Sub-Lord pseudocode,
+which described `judgeHorary.ts` — a file that no longer exists. The
+following is a faithful step-by-step account of `judgeWatchChart()` in
+`src/astrology/rkp/watchJudgment.ts`:
 
 ```text
-function judgeHorary(chart, question):
+function judgeWatchChart(chart, qType):
+  targetHouse = HOUSE_MATRIX[qType].primary
+  target      = chart's Ghar at targetHouse
+  fulfilment  = chart's Ghar at house 11
+  targetRuler = target.ruler
+  lagnaRuler  = chart.lagnaRuler
 
-  STEP 0 - Promise Layer (Cusp Sub-Lord)
-    { favorable, denial, primary } = HOUSE_MATRIX[qType]
-    primaryCuspSubLord = chart.cusps[primary].subLord
-    cslHouse = houseOfPlanet(primaryCuspSubLord, chart)
+  score = 0
 
-    if cslHouse in denial: return DENIED (Matter not promised in this chart)
+  # 1. Strength of the ruler that owns the matter
+  if targetRuler is strong (dignity): score += 2
+  else if targetRuler is weak:        score -= 2
 
-  STEP 1 - Read Moon's sidereal nakshatra and sub-lord
-    moonSubLord = chart.planets['Moon'].subLord
+  # 2. Querent's ruler vs. the matter's ruler
+  relation = relationBetween(lagnaRuler, targetRuler)
+  if relation == Friend: score += 2
+  else if relation == Enemy: score -= 2
 
-  STEP 3 - Check the house occupied by Moon's sub-lord
-    moonSubLordHouse = houseOfPlanet(moonSubLord, chart)
-    if moonSubLordHouse in favorable: +2
-    else if moonSubLordHouse in denial: -2
-    else: 0
+  # 3. Who occupies or aspects the target Ghar
+  for each planet occupying or aspecting target:
+    if benefic: score += 2
+    else if malefic: score -= 2
 
-  STEP 4 - Verify with ruling planets
-    witnesses = [Day, AscSign, AscStar, MoonSign, MoonStar, Hora]
-    for each rp in witnesses:
-      if rp in favorable_significators: +1
-      else if rp in denial_significators: -1
-      else: 0
+  # 4. Who occupies or aspects the 11th Ghar (fulfilment)
+  for each planet occupying or aspecting fulfilment:
+    if benefic: score += 2
+    else if malefic: score -= 2
 
-  STEP 5 - Convert score to verdict
-    if score >= 3: YES
-    else if score <= -2: NO
-    else: CONDITIONAL
+  # 5. Where the matter's ruler itself has landed
+  if targetRuler's house in matrix.favorable: score += 1
+  else if targetRuler's house in matrix.denial: score -= 1
+
+  # 6. Retrogression / combustion
+  reversal = POSSIBLE if targetRuler or lagnaRuler is retrograde else NONE
+  if targetRuler is combust: score -= 1
+
+  # 7. Obstruction (strict precedence: Saturn > Mars > Rahu > Ketu,
+  #    occupying beats aspecting; falls back to Moon in 8th/12th)
+  obstruction = firstObstruction(chart, targetHouse)
+
+  # 8. Settle the state
+  state = BLOCKED   if score <= -5
+        = REVERSING if targetRuler is retrograde
+        = FULFILLED if score >= 5
+        = DELAYED   if obstruction == Saturn or targetRuler is weak
+        = MOVING    if score >= 2
+        = UNFORMED  otherwise
+
+  # 9. Confidence, downgraded when witnesses disagree
+  confidence = band(|score|): >=6 VERY_HIGH, >=4 HIGH, >=2 MODERATE,
+                               >=1 LOW, else UNCERTAIN
+  downgrade one band if both a benefic and a malefic witnessed the matter,
+  or if obstruction is a Moon-disagreement signal
 ```
 
-Retrograde modifier:
+Every `+2`/`-2`/`+1`/`-1` contribution above is recorded verbatim into
+the verdict's `factors` array as it happens — narration is generated
+from those recorded facts, never independently.
 
-- If verdict is YES and any of these are retrograde:
-- Moon's Sub-Lord
-- Jupiter
-- Venus
-- Then verdict becomes DELAYED
-
-This modifier reduces confidence and adds delay.
-It does not convert a NO into YES.
-
-Code: `src/astrology/kp/judgment/judgeHorary.ts`
+Code: `src/astrology/rkp/watchJudgment.ts`
 
 ---
 
 ## 6. Timing
 
-Timing planet:
+This replaces the old dasha/nakshatra-lord-based timing description.
 
-- Nakshatra lord of the Moon's Sub-Lord planet
+Timing is **not** dasha-based in the current engine. It is derived from
+the target house ruler's own classical planetary speed:
 
-Rough timing:
+```text
+function computeTiming(chart, ruler):
+  base = BASE_TIMING[ruler]   # classical baseline window, e.g.
+                               # Moon 3-7 days ... Saturn 90-150 days
+  factor = 1
+  if ruler is retrograde: factor *= 1.5
+  if ruler is weak (dignity): factor *= 1.5
+  if ruler is exalted: factor *= 0.7
 
-- `months = dashaYears(timingPlanet) * 12 * (positiveScore / maxScore)`
+  return { minDays: base.minDays * factor, maxDays: base.maxDays * factor }
+```
 
-Runtime output then converts the computed duration to one of:
+Timing is omitted (`null`) entirely when the state is `UNFORMED`.
 
-- `days`
-- `weeks`
-- `months`
-- `years`
-
-Active dasha fields are included for traceability:
-
-- Mahadasha
-- Antardasha
-- Pratyantardasha
-
-Code:
-
-- `src/astrology/primitives/dasha.ts`
-- `src/astrology/kp/judgment/judgeHorary.ts`
+Code: `src/astrology/rkp/watchJudgment.ts`
 
 ---
 
 ## 7. Output contract notes
 
-Current decisive payloads in the verdict:
+Current decisive payload in the verdict (`WatchVerdict` /
+`DisplayWatchVerdict`, `src/astrology/rkp/watchJudgment.ts`):
 
-- `questionCusp` - contextual cusp snapshot for the matter
-- `moonSubLord` - decisive Moon-sub-lord snapshot
-- `rulingPlanets` - day/hora/minute ruling planets plus raw agreement score
+- `targetHouse` / `targetSignName` / `targetRuler` / `targetRulerName`
+- `fulfilmentHouse` (always 11)
+- `lagnaRuler` and `rulerRelation` (Friend/Enemy/Neutral, etc.)
+- `state`, `confidence`, `score`
+- `obstruction`, `reversal`
+- `timing` (nullable `{ minDays, maxDays }`)
+- `direction`, `afflictedDirection`, `controllerProfile`
+- `factors` — the ordered, human-readable reasoning trail
 
-The old CSL-based verdict contract has been removed from the runtime path.
+`DisplayWatchVerdict` is the wire shape: `obstruction`, `targetRuler` and
+`lagnaRuler` are boundary-mapped to display names (`Ras`/`Dhanab` for the
+nodes) before leaving the server — see
+`functions/src/utils/planetBoundaryName.ts`.
+
+The old CSL-based verdict contract remains removed from the runtime path.
 
 ---
 
 ## 8. Remaining provisional areas
 
-The following still need explicit owner confirmation if they are to be treated as authoritative cultural output rather than engineering placeholders:
+The following still need explicit owner confirmation if they are to be
+treated as authoritative cultural output rather than engineering
+placeholders:
 
 - remedy mapping
 - EN/UR/HI narration wording
+- **Multi-house / compound event judgment** (litigation, health crises,
+  financial windfalls, and similar compound scenarios) — no owner rule
+  exists for this yet. See `docs/MULTI_HOUSE_EVENT_INTAKE.md`.
 
-These do not change the underlying deterministic verdict logic.
+These do not change the underlying deterministic verdict logic described
+above.

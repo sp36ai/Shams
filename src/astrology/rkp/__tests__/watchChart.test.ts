@@ -1,8 +1,8 @@
-import { buildWatchChart, houseOf } from '@astrology/rkp/watchChart';
+import { buildWatchChart, houseOf, transitCoordinatesOf } from '@astrology/rkp/watchChart';
 import { judgeWatchChart } from '@astrology/rkp/watchJudgment';
 import { ALL_QUESTION_TYPES } from '@astrology/kp/rules/houseMatrix';
 import { PLANETS } from '@astrology/types/chart';
-import type { HouseNumber } from '@astrology/rkp/nomenclature';
+import { SIGN_META, type HouseNumber } from '@astrology/rkp/nomenclature';
 
 const MOMENT = '2026-08-08T11:13:00+05:30';
 
@@ -155,5 +155,49 @@ describe('judgment', () => {
         expect(factor).not.toMatch(banned);
       }
     }
+  });
+});
+
+describe('transitCoordinatesOf — display/animation coordinates', () => {
+  it('mirrors the chart’s own Sun and Moon sign/degree, not invented values', () => {
+    const chart = buildWatchChart(MOMENT);
+    const coords = transitCoordinatesOf(chart);
+    expect(coords.sun.sign).toBe(chart.planets.Sun.sign);
+    expect(coords.sun.degreeInSign).toBe(chart.planets.Sun.degreeInSign);
+    expect(coords.moon.sign).toBe(chart.planets.Moon.sign);
+    expect(coords.moon.degreeInSign).toBe(chart.planets.Moon.degreeInSign);
+  });
+
+  it('pre-formats signName the same way the rest of the chart does — display components never recompute it', () => {
+    const chart = buildWatchChart(MOMENT);
+    const coords = transitCoordinatesOf(chart);
+    expect(coords.sun.signName).toBe(`Burj ${SIGN_META[coords.sun.sign].name}`);
+    expect(coords.moon.signName).toBe(`Burj ${SIGN_META[coords.moon.sign].name}`);
+    // Lagna reuses the chart's own lagnaSignName verbatim rather than reformatting it.
+    expect(coords.lagna.signName).toBe(chart.lagnaSignName);
+  });
+
+  it('flattens sign/degree into a single 0-360 longitude', () => {
+    const chart = buildWatchChart(MOMENT);
+    const coords = transitCoordinatesOf(chart);
+    expect(coords.sun.longitude).toBe(
+      (chart.planets.Sun.sign - 1) * 30 + chart.planets.Sun.degreeInSign,
+    );
+    expect(coords.sun.longitude).toBeGreaterThanOrEqual(0);
+    expect(coords.sun.longitude).toBeLessThan(360);
+  });
+
+  it('gives Lagna only the start-of-sign longitude, never a fabricated sub-degree', () => {
+    const chart = buildWatchChart(MOMENT);
+    const coords = transitCoordinatesOf(chart);
+    expect(coords.lagna.sign).toBe(chart.lagnaSign);
+    expect(coords.lagna.longitude).toBe((chart.lagnaSign - 1) * 30);
+    expect(coords.lagna).not.toHaveProperty('degreeInSign');
+  });
+
+  it('moves with the real sky across different moments, like the chart itself', () => {
+    const january = transitCoordinatesOf(buildWatchChart('2026-01-01T09:13:00+05:30'));
+    const august = transitCoordinatesOf(buildWatchChart('2026-08-08T23:13:00+05:30'));
+    expect(january.sun.longitude).not.toBeCloseTo(august.sun.longitude, 3);
   });
 });

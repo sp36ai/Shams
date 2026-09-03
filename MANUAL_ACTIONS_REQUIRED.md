@@ -132,8 +132,8 @@ Project: `shams-app-4d0e7` · Package: `com.astrosarfaraz.shamsalasrar` · Regio
 > succeeds today. **The keystore and its four secrets already exist in
 > GitHub Secrets.**
 >
-> Signing a new bundle with a *different* key makes Play reject the upload
-> outright: *"Your Android App Bundle is signed with the wrong key."*
+> Signing a new bundle with a _different_ key makes Play reject the upload
+> outright: _"Your Android App Bundle is signed with the wrong key."_
 > Recovering from that requires a Play App Signing upload-key reset, which
 > Google must approve and which takes days.
 >
@@ -183,7 +183,7 @@ gh secret set GOOGLE_PLAY_SERVICE_ACCOUNT_JSON < play-service-account.json
 ### 8b. Create the GCP Secret Manager secrets (steps 3 and 5)
 
 These are the **runtime** secrets the deployed functions read via `defineSecret`.
-They are *not* GitHub Secrets, and all four are declared in `firebase.json`.
+They are _not_ GitHub Secrets, and all four are declared in `firebase.json`.
 
 Use `printf '%s'`, not `echo` — a trailing newline is part of the secret value and
 will corrupt an API key.
@@ -228,8 +228,8 @@ at runtime while every CI check stays green — the same failure shape as the re
 model id that was serving canned fallback text. Confirm on a real device from the
 `internal` track:
 
-1. Ask one question and read the result. If it opens *"The scrolls of this moment
-   have not opened their seal…"* the synthesis call failed — `ANTHROPIC_API_KEY` is
+1. Ask one question and read the result. If it opens _"The scrolls of this moment
+   have not opened their seal…"_ the synthesis call failed — `ANTHROPIC_API_KEY` is
    missing from Secret Manager, or the model id is wrong again. A real reading is
    unique prose referencing the chart.
 2. Watch the function logs while you do it:

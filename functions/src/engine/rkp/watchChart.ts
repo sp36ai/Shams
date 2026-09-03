@@ -163,3 +163,66 @@ export function houseOf(chart: WatchChart, house: HouseNumber): WatchHouse {
   }
   return found;
 }
+
+/**
+ * A single body's position, in the same (sign, degree-within-sign) terms
+ * the rest of this file already speaks, plus a flattened 0-360 longitude
+ * for callers (e.g. a UI rotation transform) that just want one number.
+ */
+export interface TransitPosition {
+  readonly sign: SignIndex;
+  /** Display form, e.g. "Burj Asad" — pre-formatted so display components
+   *  (RkpWatchCard et al.) never recompute it from the raw sign index. */
+  readonly signName: string;
+  /** Degrees within the sign, [0, 30). */
+  readonly degreeInSign: number;
+  /** (sign - 1) * 30 + degreeInSign, in [0, 360). */
+  readonly longitude: number;
+}
+
+/**
+ * Sun, Moon and Lagna position for this chart, for display/animation only —
+ * never consumed by judgment (`watchJudgment.ts` never imports this).
+ *
+ * IMPORTANT — Lagna carries no `degreeInSign`. This is a whole-sign (Ghar)
+ * system: the 1st Ghar begins exactly at the sign boundary, not at a
+ * continuous Placidus ascendant degree. `lagna.longitude` is therefore
+ * exactly `(lagnaSign - 1) * 30` — the true start of the sign, not an
+ * approximation of a degree this system doesn't compute. Do not treat it
+ * as ascendant-degree precision.
+ */
+export interface TransitCoordinates {
+  readonly sun: TransitPosition;
+  readonly moon: TransitPosition;
+  readonly lagna: Omit<TransitPosition, 'degreeInSign'>;
+}
+
+function toLongitude(sign: SignIndex, degreeInSign: number): number {
+  return (sign - 1) * 30 + degreeInSign;
+}
+
+/** Derive display/animation coordinates from an already-built chart. */
+export function transitCoordinatesOf(chart: WatchChart): TransitCoordinates {
+  const sun = chart.planets.Sun;
+  const moon = chart.planets.Moon;
+  return {
+    sun: {
+      sign: sun.sign,
+      signName: `Burj ${SIGN_META[sun.sign].name}`,
+      degreeInSign: sun.degreeInSign,
+      longitude: toLongitude(sun.sign, sun.degreeInSign),
+    },
+    moon: {
+      sign: moon.sign,
+      signName: `Burj ${SIGN_META[moon.sign].name}`,
+      degreeInSign: moon.degreeInSign,
+      longitude: toLongitude(moon.sign, moon.degreeInSign),
+    },
+    // lagnaSignName already carries the same "Burj {name}" formatting.
+    lagna: {
+      sign: chart.lagnaSign,
+      signName: chart.lagnaSignName,
+      longitude: toLongitude(chart.lagnaSign, 0),
+    },
+  };
+}

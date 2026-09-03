@@ -7,6 +7,7 @@
  *   getQuota                 — callable — get caller's quota status
  *   syncReadings             — callable — bulk-sync local readings to Firestore
  *   deleteReading            — callable — delete a single reading (owner only)
+ *   cleanupUserData          — v1 auth trigger — cascading account-erasure on user delete
  *   verifyGooglePlayPurchase — callable — verify IAP, upgrade plan + set custom claims
  *   razorpayWebhook          — HTTP    — Razorpay payment event handler
  *   setAdminClaim            — callable — manage administrative privileges
@@ -25,6 +26,7 @@ export { askWatchOracle } from './functions/askWatchOracle';
 export { activateTrial } from './functions/activateTrial';
 export { getQuota } from './functions/quota';
 export { syncReadings, deleteReading } from './functions/readings';
+export { cleanupUserData } from './functions/cleanupUserData';
 export { verifyGooglePlayPurchase } from './functions/payments/googlePlay';
 export { razorpayWebhook } from './functions/payments/razorpay';
 export { health } from './functions/health';

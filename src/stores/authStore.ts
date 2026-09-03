@@ -59,6 +59,23 @@ export interface AuthState {
   signIn: (email: string, password: string) => Promise<Error | null>;
   signUp: (email: string, password: string, name: string) => Promise<Error | null>;
   signInWithGoogle: () => Promise<Error | null>;
+  /**
+   * Re-confirms the current session immediately before a destructive action
+   * (account deletion) that Firebase requires "recent" auth for. Branches on
+   * the account's own sign-in provider — a password-provider account needs
+   * `password`; a Google-provider account ignores it and replays
+   * `signInWithGoogle()` instead, since that's the only credential it has.
+   */
+  reauthenticate: (password?: string) => Promise<Error | null>;
+  /**
+   * Deletes the Firebase Auth user record (must be called immediately after
+   * a successful `reauthenticate()` — Firebase rejects a delete that isn't
+   * "recent"), then clears every piece of local device state signOut()
+   * clears, plus the seeker identity signOut() deliberately leaves behind
+   * for a same-user resume. That distinction doesn't apply here: this
+   * account is gone for good, so nothing personal should survive it in MMKV.
+   */
+  deleteAccount: () => Promise<Error | null>;
   signOut: () => Promise<void>;
   clearError: () => void;
 }
@@ -82,6 +99,30 @@ const SIGNIN_LOCKOUT_MS = 30_000;
 function readLockoutUntil(): number | null {
   const v = storage.getNumber(KEYS.AUTH_LOCKOUT_UNTIL);
   return v !== undefined && v > Date.now() ? v : null;
+}
+
+/**
+ * Shared between signIn() and reauthenticate()'s password branch — a
+ * destructive-action re-guess of the password is the same brute-force
+ * threat as a normal sign-in attempt, so it spends from the same five-
+ * attempt/30s-lockout budget rather than a fresh one per call site.
+ */
+function recordFailedAttempt(): number | null {
+  const attempts = (storage.getNumber(KEYS.AUTH_FAILED_ATTEMPTS) ?? 0) + 1;
+  let nextLockout: number | null = null;
+  if (attempts >= MAX_SIGNIN_ATTEMPTS) {
+    nextLockout = Date.now() + SIGNIN_LOCKOUT_MS;
+    storage.set(KEYS.AUTH_LOCKOUT_UNTIL, nextLockout);
+    storage.set(KEYS.AUTH_FAILED_ATTEMPTS, 0); // reset — the lockout is the penalty now
+  } else {
+    storage.set(KEYS.AUTH_FAILED_ATTEMPTS, attempts);
+  }
+  return nextLockout;
+}
+
+function clearFailedAttempts(): void {
+  storage.delete(KEYS.AUTH_FAILED_ATTEMPTS);
+  storage.delete(KEYS.AUTH_LOCKOUT_UNTIL);
 }
 
 /* -------------------------------------------------------------------------- */
@@ -110,7 +151,7 @@ function cacheUserLocally(user: FirebaseAuthTypes.User | null): void {
 /*  Store factory                                                             */
 /* -------------------------------------------------------------------------- */
 
-export const useAuthStore = create<AuthState>(set => ({
+export const useAuthStore = create<AuthState>((set, get) => ({
   user: null,
   isLoading: false,
   error: null,
@@ -180,20 +221,11 @@ export const useAuthStore = create<AuthState>(set => ({
     try {
       await auth().signInWithEmailAndPassword(email, password);
       // Success clears the failure counter and any lockout.
-      storage.delete(KEYS.AUTH_FAILED_ATTEMPTS);
-      storage.delete(KEYS.AUTH_LOCKOUT_UNTIL);
+      clearFailedAttempts();
       set({ lockoutUntil: null });
       return null;
     } catch (err) {
-      const attempts = (storage.getNumber(KEYS.AUTH_FAILED_ATTEMPTS) ?? 0) + 1;
-      let nextLockout: number | null = null;
-      if (attempts >= MAX_SIGNIN_ATTEMPTS) {
-        nextLockout = Date.now() + SIGNIN_LOCKOUT_MS;
-        storage.set(KEYS.AUTH_LOCKOUT_UNTIL, nextLockout);
-        storage.set(KEYS.AUTH_FAILED_ATTEMPTS, 0); // reset — the lockout is the penalty now
-      } else {
-        storage.set(KEYS.AUTH_FAILED_ATTEMPTS, attempts);
-      }
+      const nextLockout = recordFailedAttempt();
       const msg = err instanceof Error ? err.message : 'Sign in failed';
       // AuthScreen's normaliseAuthError() deliberately discards this raw
       // message in production ([auth/<code>] ...) once none of its known
@@ -275,6 +307,99 @@ export const useAuthStore = create<AuthState>(set => ({
         return null;
       }
       const msg = err instanceof Error ? err.message : 'Google sign-in failed';
+      crashlytics().recordError(err instanceof Error ? err : new Error(msg));
+      set({ isLoading: false, error: msg });
+      return err instanceof Error ? err : new Error(msg);
+    }
+  },
+
+  reauthenticate: async (password?: string): Promise<Error | null> => {
+    const user = auth().currentUser;
+    if (user === null) {
+      return new Error('Not signed in');
+    }
+
+    const providerId = user.providerData[0]?.providerId;
+
+    // Google-provider accounts have no password to check — replaying the
+    // same sign-in flow is itself the reauthentication, and signInWithGoogle
+    // already owns every bit of that logic (native-UI timeout, cancellation,
+    // error normalisation). Nothing else to do here.
+    if (providerId === 'google.com') {
+      return get().signInWithGoogle();
+    }
+
+    if (providerId !== 'password') {
+      return new Error('Unsupported sign-in method for reauthentication');
+    }
+
+    // Refuse immediately while locally locked out — same guard signIn() uses.
+    const activeLockout = readLockoutUntil();
+    if (activeLockout !== null) {
+      set({ lockoutUntil: activeLockout, isLoading: false });
+      return new Error('auth/too-many-requests (locked)');
+    }
+    if (password === undefined || password.length === 0) {
+      return new Error('auth/missing-password');
+    }
+    if (user.email === null) {
+      return new Error('Account has no email on file');
+    }
+
+    set({ isLoading: true, error: null });
+    try {
+      // A direct REST-backed credential check, same class of call as
+      // signInWithEmailAndPassword above — not wrapped in withTimeout for
+      // the same reason that one isn't: withTimeout collapses a genuine
+      // rejection (wrong password) and a timeout to the same `undefined`,
+      // which is fine for signOut()'s "give up and log out locally anyway"
+      // posture but wrong here, where a wrong-password rejection must
+      // surface as an error, not be silently treated as done.
+      const credential = auth.EmailAuthProvider.credential(user.email, password);
+      await user.reauthenticateWithCredential(credential);
+      clearFailedAttempts();
+      set({ isLoading: false, lockoutUntil: null });
+      return null;
+    } catch (err) {
+      const nextLockout = recordFailedAttempt();
+      const msg = err instanceof Error ? err.message : 'Reauthentication failed';
+      crashlytics().recordError(err instanceof Error ? err : new Error(msg));
+      set({ isLoading: false, error: msg, lockoutUntil: nextLockout });
+      return err instanceof Error ? err : new Error(msg);
+    }
+  },
+
+  deleteAccount: async (): Promise<Error | null> => {
+    const user = auth().currentUser;
+    if (user === null) {
+      return new Error('Not signed in');
+    }
+
+    set({ isLoading: true, error: null });
+    try {
+      // Must run immediately after a successful reauthenticate() call —
+      // Firebase rejects this with auth/requires-recent-login otherwise.
+      // Same "no withTimeout" reasoning as reauthenticate(): this call must
+      // resolve or reject truthfully, not collapse to the same `undefined`
+      // a timeout would produce — an irreversible action is the one place
+      // "assume success and move on" (signOut()'s posture) is actively wrong.
+      await user.delete();
+
+      // Server-side cascade (readings/quotas/trials/rateLimits) is now
+      // cleanupUserData's job. Local device state must not survive it
+      // either: the same cleanup signOut() performs, plus settingsStore's
+      // seeker identity — signOut() deliberately keeps that so the SAME
+      // user resumes where they left off, but this account has no "later
+      // sign back in"; nothing personal should be left in MMKV.
+      invalidateQuotaCache();
+      useQuotaStore.getState().reset();
+      useReadingsStore.getState().clearAll();
+      useSettingsStore.getState().resetForNewAccount();
+      cacheUserLocally(null);
+      set({ user: null, isLoading: false, error: null });
+      return null;
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Account deletion failed';
       crashlytics().recordError(err instanceof Error ? err : new Error(msg));
       set({ isLoading: false, error: msg });
       return err instanceof Error ? err : new Error(msg);

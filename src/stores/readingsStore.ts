@@ -9,6 +9,7 @@ import { create } from 'zustand';
 
 import type { QuestionType } from '@astrology/kp/rules/houseMatrix';
 import type { DisplayWatchVerdict } from '@astrology/rkp/watchJudgment';
+import type { TransitCoordinates } from '@astrology/rkp/watchChart';
 import type { WatchOracleComposition } from '../types/watchOracle';
 import { storage, KEYS } from '@storage/mmkv';
 
@@ -74,6 +75,11 @@ export interface Reading {
     lagnaSignName: string;
     /** e.g. "Utarid" — classical name of the querent's own ruler. */
     lagnaRulerName: string;
+    /**
+     * Sun/Moon position at the moment this reading was judged. Absent on a
+     * reading cached before this field existed — never backfilled.
+     */
+    transitCoordinates?: TransitCoordinates;
   };
 }
 

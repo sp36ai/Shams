@@ -57,7 +57,7 @@ import type { AuditLogDoc, ReadingDoc } from '../types';
 import type { VerdictKind } from '../engine/types/verdict';
 
 /* eslint-disable @typescript-eslint/no-var-requires */
-const { buildWatchChart } =
+const { buildWatchChart, transitCoordinatesOf } =
   require('../engine/rkp/watchChart') as typeof import('../engine/rkp/watchChart');
 const { judgeWatchChart } =
   require('../engine/rkp/watchJudgment') as typeof import('../engine/rkp/watchJudgment');
@@ -70,6 +70,7 @@ const { composeWatchOracleResponse } =
 import type { WatchOracleComposition } from '../oracle/responseComposer';
 
 import type { WatchState, WatchVerdict } from '../engine/rkp/watchJudgment';
+import type { TransitCoordinates } from '../engine/rkp/watchChart';
 
 /**
  * The six watch states expressed in the app's existing verdict vocabulary, so
@@ -123,6 +124,13 @@ export interface WatchOracleResponse {
   lagnaSignName: string;
   lagnaRulerName: string;
   verdict: PublicWatchVerdict;
+  /**
+   * Sun/Moon/Lagna position for display or animation only (e.g. a zodiac
+   * clock) — never consumed by judgment. See `TransitCoordinates`'s own
+   * docstring for why `lagna` carries no sub-sign degree in this whole-sign
+   * (Ghar) system.
+   */
+  transitCoordinates: TransitCoordinates;
   /**
    * Diagnosis, remedy protocol and narration.
    *
@@ -313,6 +321,7 @@ export const askWatchOracle = onCall(
         lagnaSignName: chart.lagnaSignName,
         lagnaRulerName: chart.planets[chart.lagnaRuler].name,
         verdict: publicVerdict,
+        transitCoordinates: transitCoordinatesOf(chart),
         ...(oracleResponse ? { oracle: oracleResponse } : {}),
         quotaRemaining: remaining,
       };

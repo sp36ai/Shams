@@ -130,6 +130,12 @@ export const en: StringTable = {
     startRecording: 'Start voice input',
     stopRecording: 'Stop recording',
     readingChart: 'Reading the chart…',
+    readingChartSteps: [
+      'Selecting the Ghar for this moment…',
+      'Weighing ruler dignity and relation…',
+      'Checking for obstruction…',
+      "Composing the oracle's words…",
+    ],
     retry: 'Retry',
     failedGeneric: 'The scrolls of this moment have not opened their seal. Try again.',
     quotaExhausted: "Today's questions are used. Come back tomorrow, or upgrade for unlimited.",

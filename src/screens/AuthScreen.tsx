@@ -351,7 +351,7 @@ const AuthScreen: React.FC = () => {
                 { color: colors.textFaint, textAlign: 'center', marginTop: 4, letterSpacing: 2.5 },
               ]}
             >
-              {'✦  KP HORARY ORACLE  ✦'}
+              {'✦  RKP WATCH ORACLE  ✦'}
             </Text>
           </View>
 
@@ -750,7 +750,7 @@ const Field = React.forwardRef<TextInput, FieldProps>(
 /*  Error normalisation                                                       */
 /* -------------------------------------------------------------------------- */
 
-function normaliseAuthError(raw: string, t: ReturnType<typeof useTranslation>): string {
+export function normaliseAuthError(raw: string, t: ReturnType<typeof useTranslation>): string {
   // Firebase Auth embeds the error code in the message: [firebase_auth/code]
   const lower = raw.toLowerCase();
 

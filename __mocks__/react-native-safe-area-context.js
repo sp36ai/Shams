@@ -19,9 +19,7 @@ function SafeAreaProvider({ children }) {
   return React.createElement(View, { style: { flex: 1 } }, children);
 }
 
-const SafeAreaView = React.forwardRef((props, ref) =>
-  React.createElement(View, { ...props, ref }),
-);
+const SafeAreaView = React.forwardRef((props, ref) => React.createElement(View, { ...props, ref }));
 
 module.exports = {
   SafeAreaProvider,

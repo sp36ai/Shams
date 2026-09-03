@@ -20,7 +20,10 @@ import { regionalFunctions } from './functionsRegion';
 import { withTimeout } from '../utils/withTimeout';
 import { ensureAppCheckReady } from './appCheck';
 import type { DisplayWatchVerdict } from '@astrology/rkp/watchJudgment';
+import type { TransitCoordinates } from '@astrology/rkp/watchChart';
 import type { WatchOracleComposition } from '../types/watchOracle';
+
+export type { TransitCoordinates } from '@astrology/rkp/watchChart';
 
 /**
  * How long to give App Check a chance to attach a token before firing
@@ -73,6 +76,12 @@ export interface WatchReading {
   /** e.g. "Utarid". */
   lagnaRulerName: string;
   verdict: DisplayWatchVerdict;
+  /**
+   * Sun/Moon/Lagna position for display or animation (e.g. a zodiac clock)
+   * — never consumed by judgment. See `TransitCoordinates`'s own docstring
+   * for why `lagna` carries no sub-sign degree in this whole-sign system.
+   */
+  transitCoordinates: TransitCoordinates;
   /**
    * Diagnosis, remedy protocol and narration. Absent only if the server could
    * not compose one at all; `oracle.narration` being null is the ordinary
@@ -133,6 +142,7 @@ export async function askWatchOracle(args: AskWatchOracleInput): Promise<AskWatc
       lagnaSignName: data.lagnaSignName,
       lagnaRulerName: data.lagnaRulerName,
       verdict: data.verdict,
+      transitCoordinates: data.transitCoordinates,
       ...(data.oracle !== undefined ? { oracle: data.oracle } : {}),
     },
     quotaRemaining: data.quotaRemaining,

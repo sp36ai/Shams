@@ -78,6 +78,7 @@ export function toReadingRecord(input: ToReadingRecordInput): Reading {
             window: reading.window,
             lagnaSignName: reading.lagnaSignName,
             lagnaRulerName: reading.lagnaRulerName,
+            transitCoordinates: reading.transitCoordinates,
           }
         : undefined,
   };

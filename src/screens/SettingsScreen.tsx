@@ -4,9 +4,11 @@
 
 import React, { useCallback, useMemo, useState } from 'react';
 import {
+  ActivityIndicator,
   Alert,
   Image,
   Linking,
+  Modal,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -18,6 +20,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '@navigation/types';
+import auth from '@react-native-firebase/auth';
 import StarfieldBackground from '@components/StarfieldBackground';
 import { ThemeSwitcher } from '@components/ThemeSwitcher';
 
@@ -29,6 +32,7 @@ import { useSettingsStore } from '@stores/settingsStore';
 import { useAuthStore, selectUserName, selectUserEmail } from '@stores/authStore';
 import { useReadingsStore, type VerdictKind } from '@stores/readingsStore';
 import { useQuotaStore, FREE_DAILY_LIMIT, type PlanTier } from '@stores/quotaStore';
+import { normaliseAuthError } from './AuthScreen';
 
 const SEAL_IMAGE = require('@assets/images/sky-clock-disk.png');
 
@@ -69,6 +73,81 @@ const SettingsScreen: React.FC = () => {
   const userEmail = useAuthStore(selectUserEmail);
   const signOut = useAuthStore(s => s.signOut);
   const isLoading = useAuthStore(s => s.isLoading);
+  const reauthenticate = useAuthStore(s => s.reauthenticate);
+  const deleteAccount = useAuthStore(s => s.deleteAccount);
+
+  // ── Account deletion ────────────────────────────────────────────────────
+  // Password-provider accounts confirm via this in-screen prompt; Google-
+  // provider accounts have no password to check, so their "confirm" is
+  // just replaying the Google sign-in flow (see runDeleteFlow below).
+  const [reauthVisible, setReauthVisible] = useState(false);
+  const [reauthPassword, setReauthPassword] = useState('');
+  const [reauthError, setReauthError] = useState('');
+  const [deleting, setDeleting] = useState(false);
+
+  const runDeleteAccount = useCallback(async () => {
+    setDeleting(true);
+    const err = await deleteAccount();
+    setDeleting(false);
+    if (err) {
+      Alert.alert('Error', 'Could not delete your account. Please try again.');
+    }
+    // On success authStore.deleteAccount() already sets user: null — the
+    // root navigator's auth-state gate redirects on its own, same as sign-out.
+  }, [deleteAccount]);
+
+  const runDeleteFlow = useCallback(async () => {
+    const providerId = auth().currentUser?.providerData[0]?.providerId;
+    if (providerId === 'google.com') {
+      setDeleting(true);
+      const err = await reauthenticate();
+      if (err) {
+        setDeleting(false);
+        Alert.alert('Authentication Required', 'Please confirm your Google account to continue.');
+        return;
+      }
+      await runDeleteAccount();
+      return;
+    }
+    setReauthError('');
+    setReauthPassword('');
+    setReauthVisible(true);
+  }, [reauthenticate, runDeleteAccount]);
+
+  const handleDeleteAccountPress = useCallback(() => {
+    Alert.alert(
+      'Delete Account',
+      'This permanently erases your saved readings, preferences, and account data. This action cannot be undone.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Delete Everything', style: 'destructive', onPress: () => void runDeleteFlow() },
+      ],
+    );
+  }, [runDeleteFlow]);
+
+  const handleReauthCancel = useCallback(() => {
+    setReauthVisible(false);
+    setReauthPassword('');
+    setReauthError('');
+  }, []);
+
+  const handleReauthSubmit = useCallback(async () => {
+    setReauthError('');
+    setDeleting(true);
+    const err = await reauthenticate(reauthPassword);
+    if (err) {
+      setDeleting(false);
+      setReauthError(
+        err.message.includes('too-many-requests')
+          ? 'Too many attempts. Try again shortly.'
+          : normaliseAuthError(err.message, t),
+      );
+      return;
+    }
+    setReauthVisible(false);
+    setReauthPassword('');
+    await runDeleteAccount();
+  }, [reauthenticate, reauthPassword, runDeleteAccount, t]);
 
   const readings = useReadingsStore(s => s.readings);
   const plan = useQuotaStore(s => s.plan);
@@ -355,6 +434,43 @@ const SettingsScreen: React.FC = () => {
           </Pressable>
         </Section>
 
+        <Section title="Danger Zone">
+          <View
+            style={[
+              styles.dangerCard,
+              { backgroundColor: colors.surface, borderColor: colors.negative + '55' },
+            ]}
+          >
+            <Text style={[typography('caption'), { color: colors.textMuted, lineHeight: 18 }]}>
+              {
+                'Permanently erases your saved readings, preferences, and account data from our servers. This cannot be undone.'
+              }
+            </Text>
+            <Pressable
+              onPress={handleDeleteAccountPress}
+              disabled={isLoading || deleting}
+              accessibilityRole="button"
+              style={({ pressed }) => [
+                styles.signOutBtn,
+                styles.deleteBtn,
+                {
+                  borderColor: colors.negative,
+                  backgroundColor: colors.negative + '14',
+                  opacity: pressed || isLoading || deleting ? 0.6 : 1,
+                },
+              ]}
+            >
+              {deleting ? (
+                <ActivityIndicator color={colors.negative} />
+              ) : (
+                <Text style={[typography('button'), { color: colors.negative }]}>
+                  {'Delete Account'}
+                </Text>
+              )}
+            </Pressable>
+          </View>
+        </Section>
+
         <Section title={t('permission.locationTitle')}>
           <View
             style={[
@@ -382,6 +498,100 @@ const SettingsScreen: React.FC = () => {
           </View>
         </Section>
       </ScrollView>
+
+      {/* Re-auth prompt — password-provider accounts only. Firebase requires
+          a "recent" sign-in immediately before user.delete() succeeds; this
+          is that deliberate friction point, not a reactive retry after a
+          failed delete. */}
+      <Modal
+        visible={reauthVisible}
+        animationType="fade"
+        transparent
+        onRequestClose={handleReauthCancel}
+      >
+        <View style={styles.reauthOverlay}>
+          <View
+            style={[
+              styles.reauthCard,
+              { backgroundColor: colors.surfaceElevated, borderColor: colors.border },
+            ]}
+          >
+            <Text style={[typography('subheading'), { color: colors.goldBright }]}>
+              {'Confirm Your Password'}
+            </Text>
+            <Text
+              style={[
+                typography('caption'),
+                { color: colors.textMuted, marginTop: 6, lineHeight: 18 },
+              ]}
+            >
+              {
+                'For your security, re-enter your password before we permanently delete your account.'
+              }
+            </Text>
+            <TextInput
+              value={reauthPassword}
+              onChangeText={v => {
+                setReauthPassword(v);
+                setReauthError('');
+              }}
+              placeholder={t('auth.password')}
+              placeholderTextColor={colors.textFaint}
+              secureTextEntry
+              autoFocus
+              autoCapitalize="none"
+              returnKeyType="done"
+              onSubmitEditing={() => void handleReauthSubmit()}
+              style={[
+                typography('body'),
+                styles.reauthInput,
+                {
+                  color: colors.text,
+                  borderColor: reauthError ? colors.negative : colors.border,
+                  backgroundColor: colors.surface,
+                },
+              ]}
+            />
+            {reauthError.length > 0 && (
+              <Text style={[typography('caption'), { color: colors.negative, marginTop: 6 }]}>
+                {reauthError}
+              </Text>
+            )}
+            <View style={styles.reauthActions}>
+              <Pressable
+                onPress={handleReauthCancel}
+                disabled={deleting}
+                style={styles.reauthCancelBtn}
+                accessibilityRole="button"
+              >
+                <Text style={[typography('button'), { color: colors.textMuted }]}>
+                  {t('common.cancel')}
+                </Text>
+              </Pressable>
+              <Pressable
+                onPress={() => void handleReauthSubmit()}
+                disabled={deleting || reauthPassword.length === 0}
+                style={[
+                  styles.reauthConfirmBtn,
+                  {
+                    backgroundColor: colors.negative,
+                    opacity: deleting || reauthPassword.length === 0 ? 0.6 : 1,
+                  },
+                ]}
+                accessibilityRole="button"
+              >
+                {deleting ? (
+                  <ActivityIndicator color={colors.textOnPrimary} />
+                ) : (
+                  <Text style={[typography('button'), { color: colors.textOnPrimary }]}>
+                    {'Delete Everything'}
+                  </Text>
+                )}
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 };
@@ -680,6 +890,54 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     borderWidth: StyleSheet.hairlineWidth,
     alignItems: 'center',
+  },
+  dangerCard: {
+    padding: 16,
+    borderRadius: 16,
+    borderWidth: StyleSheet.hairlineWidth,
+    gap: 12,
+  },
+  deleteBtn: {
+    borderWidth: 1,
+  },
+  reauthOverlay: {
+    flex: 1,
+    backgroundColor: '#00000088',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 28,
+  },
+  reauthCard: {
+    width: '100%',
+    borderRadius: 18,
+    borderWidth: StyleSheet.hairlineWidth,
+    padding: 20,
+  },
+  reauthInput: {
+    borderWidth: StyleSheet.hairlineWidth,
+    borderRadius: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    marginTop: 16,
+  },
+  reauthActions: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    alignItems: 'center',
+    gap: 16,
+    marginTop: 18,
+  },
+  reauthCancelBtn: {
+    paddingVertical: 10,
+    paddingHorizontal: 8,
+  },
+  reauthConfirmBtn: {
+    minWidth: 140,
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   locationCard: {
     padding: 16,

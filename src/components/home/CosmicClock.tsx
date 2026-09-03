@@ -10,7 +10,8 @@
  *
  * Clock hands (hour / minute / second) sit above planets.
  * All planetary positions are mean-longitude approximations only — NOT
- * used for horary judgment. The Oracle engine uses the full KP engine.
+ * used for horary judgment. The Oracle engine judges from the RKP Watch
+ * Engine's true-ephemeris chart, computed server-side.
  */
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
