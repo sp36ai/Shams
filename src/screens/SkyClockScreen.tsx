@@ -492,8 +492,9 @@ const SkyClockScreen: React.FC = () => {
 
         {/* Disclaimer */}
         <Text style={[typography('caption'), styles.disclaimer, { color: colors.textFaint }]}>
-          Sidereal positions are mean-longitude approximations (±1–5°) for display only. Horary
-          judgment uses the full KP engine on the server.
+          Positions are computed from the true ephemeris (Moshier), the same source the RKP Watch
+          Engine judges from — shown here for reference only; the verdict itself is always judged
+          server-side.
         </Text>
       </ScrollView>
     </SafeAreaView>
