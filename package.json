@@ -14,10 +14,7 @@
     "clean:android": "cd android && ./gradlew clean",
     "lint": "eslint . --ext .ts,.tsx --max-warnings=0",
     "lint:fix": "eslint . --ext .ts,.tsx --fix",
-    "lint:phase2": "eslint src/components/OracleChat.tsx src/components/DeepDiveProofCard.tsx src/stores/useOracleStore.ts --ext .ts,.tsx --max-warnings=0",
     "typecheck": "tsc --noEmit",
-    "typecheck:phase2": "tsc --noEmit --project tsconfig.phase2.json",
-    "validate:phase2": "npm run typecheck:phase2 && npm run lint:phase2",
     "format": "prettier --write .",
     "test": "jest --testPathIgnorePatterns=firestore.rules.test.ts --testPathIgnorePatterns=functions/",
     "test:watch": "jest --watch --testPathIgnorePatterns=firestore.rules.test.ts --testPathIgnorePatterns=functions/",
@@ -26,7 +23,6 @@
     "test:rules": "firebase emulators:exec --config firebase.test.json --only firestore \"jest firestore.rules.test.ts --testEnvironment node --runInBand\"",
     "test:e2e": "maestro test .maestro/",
     "test:e2e:single": "maestro test",
-    "test:backtest": "tsx tests/backtester.ts",
     "check:orphans": "npx madge --extensions ts,tsx --ts-config tsconfig.json --orphans src",
     "validate:firebase:predeploy": "powershell -ExecutionPolicy Bypass -File scripts/Validate-FirebasePredeploy.ps1",
     "postinstall": "npx patch-package || echo \"No patches\""

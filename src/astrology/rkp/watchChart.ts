@@ -87,48 +87,6 @@ export interface WatchChart {
   /** Twelve Ghars, index 0 = 1st Ghar. */
   readonly houses: readonly WatchHouse[];
   readonly planets: Readonly<Record<Planet, WatchPlanet>>;
-
-  // Phase 1 Engine Integration Methods (Placeholder - Not Yet Implemented)
-  // These are called by engine code but not yet wired into WatchChart
-  // TODO: Implement these methods in watchChart builder
-  // @ts-ignore
-  getMoonNakshatra?(): string;
-  // @ts-ignore
-  getVimshottariDashaLord?(nakshatra: string, timestamp: number): any;
-  // @ts-ignore
-  getSignifiedHouses?(planet: any, levels?: string[]): number[];
-  // @ts-ignore
-  getLagna?(): any;
-  // @ts-ignore
-  getSign?(planet: any): number;
-  // @ts-ignore
-  getStarLord?(planet: any): any;
-  // @ts-ignore
-  getSignLord?(sign: number): any;
-  // @ts-ignore
-  getPlanetPosition?(planet: any): any;
-  // @ts-ignore
-  getDayLord?(): any;
-  // @ts-ignore
-  getCuspSubLord?(longitude: number): any;
-  // @ts-ignore
-  getHouseCuspLongitude?(house: number): number;
-  // @ts-ignore
-  getConjoinedPlanets?(planet: any): any[];
-  // @ts-ignore
-  getAspectingPlanets?(planet: any): any[];
-  // @ts-ignore
-  getSubLord?(planet: any): any;
-  // @ts-ignore
-  isBenefic?(planet: any): boolean;
-  // @ts-ignore
-  isRetrograde?(planet: any): boolean;
-  // @ts-ignore
-  isCombust?(planet: any): boolean;
-  // @ts-ignore
-  isDebilitated?(planet: any): boolean;
-  // @ts-ignore
-  getOwnedHouses?(planet: any): number[];
 }
 
 /**

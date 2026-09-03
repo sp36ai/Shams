@@ -3,36 +3,47 @@
  *
  * ARCHITECTURE:
  * - `messages[]`: Pure chat state (user prompts, Oracle bubbles, status indicators)
- * - `enginePayload`: Silent `UnifiedShamsJudgment` object (subscribed only by proof cards)
+ * - `enginePayload`: Silent `WatchReading` object (subscribed only by proof cards) —
+ *   the exact reading returned by askWatchOracle, verbatim. No client-side
+ *   reshaping or invented fields: RKP calculates, Oracle composes, UI displays.
  * - `executionPhase`: Enum driving progressive disclosure (typing indicators)
- * - `targetTransitCoordinates`: Decoupled zodiac animation state (ZodiacClock subscribes here)
  *
  * The store acts as a TEMPORAL SHOCK ABSORBER:
- *   Real engine: ~2.17ms (instantaneous)
+ *   Real engine: near-instantaneous
  *   Perceived effort: 600-1200ms per phase (artificial delays for UX)
  *
  * FLOW:
- *   User Query → askWatchOracle() → Engine executes (2.17ms) → Payload captured
- *   → Zustand thunk spools phases → Status bubbles pushed → Final verdict → Coordinates for clock
+ *   User Query → askWatchOracle() → RKP Watch Engine (server) → WatchReading
+ *   → Zustand thunk spools phases → Status bubbles pushed → Final verdict bubble
+ *
+ * NOTE ON SCOPE: an earlier draft of this store fabricated a client-side
+ * "UnifiedShamsJudgment" payload (CSL/Star-Lord/Sub-Lord chains, Vimshottari
+ * Dasha timing, invented zodiac transit degrees) modeled on a KP-style engine
+ * that was never real — see project history. That fabricated engine has been
+ * removed. This store now carries only the actual `WatchReading` the server
+ * returns. Any zodiac-animation feature needs the server to expose real
+ * transit data first; it is not invented here.
  */
 
 import { create } from 'zustand';
 import { askWatchOracle } from '../firebase/watchOracle';
-import type { UnifiedShamsJudgment } from '../astrology/rkp/unifiedShamsEngine';
+import type { WatchReading } from '../firebase/watchOracle';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types & Enums
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
- * Execution phases: maps to audit trail stages of the engine
+ * Execution phases, narrating the RKP Watch Engine's actual stages:
+ * pick the Ghar frame for this moment, place the real sidereal planets in it,
+ * weigh ruler dignity and relation, check for obstruction, compose the verdict.
  */
 export enum ExecutionPhase {
   IDLE = 'IDLE',
-  CALCULATING_CUSPS = 'CALCULATING_CUSPS',
-  RESOLVING_NODES = 'RESOLVING_NODES',
-  CHECKING_VETOES = 'CHECKING_VETOES',
-  FINDING_TRANSITS = 'FINDING_TRANSITS',
+  SELECTING_GHAR = 'SELECTING_GHAR',
+  PLACING_PLANETS = 'PLACING_PLANETS',
+  WEIGHING_DIGNITY = 'WEIGHING_DIGNITY',
+  CHECKING_OBSTRUCTION = 'CHECKING_OBSTRUCTION',
   COMPOSING_VERDICT = 'COMPOSING_VERDICT',
   COMPLETE = 'COMPLETE',
 }
@@ -49,25 +60,6 @@ export interface Message {
 }
 
 /**
- * Transit coordinates for zodiac animation
- */
-export interface TransitCoordinates {
-  sun: {
-    longitude: number; // 0-360°
-    nakshatra: string;
-  };
-  moon: {
-    longitude: number;
-    nakshatra: string;
-  };
-  lagna: {
-    longitude: number;
-    nakshatra: string;
-  };
-  executionMoment: string; // ISO 8601 timestamp
-}
-
-/**
  * The complete Oracle store state
  */
 export interface OracleState {
@@ -76,15 +68,13 @@ export interface OracleState {
   currentQuery: string;
 
   // ─── Engine Payload (Silent) ───
-  enginePayload: UnifiedShamsJudgment | null;
+  /** The verbatim WatchReading from askWatchOracle. Subscribed only by proof cards. */
+  enginePayload: WatchReading | null;
   engineError: string | null;
 
   // ─── Execution Control ───
   executionPhase: ExecutionPhase;
   isLoading: boolean;
-
-  // ─── Cosmic Visualization ───
-  targetTransitCoordinates: TransitCoordinates | null;
 
   // ─── History & Persistence ───
   queryHistory: Array<{
@@ -105,15 +95,12 @@ export interface OracleActions {
   clearMessages: () => void;
 
   // Engine integration
-  setEnginePayload: (payload: UnifiedShamsJudgment) => void;
+  setEnginePayload: (payload: WatchReading) => void;
   setEngineError: (error: string | null) => void;
 
   // Execution control
   setExecutionPhase: (phase: ExecutionPhase) => void;
   setIsLoading: (loading: boolean) => void;
-
-  // Cosmic animation
-  setTargetTransitCoordinates: (coords: TransitCoordinates | null) => void;
 
   // History
   addToHistory: (query: string, verdict: string) => void;
@@ -134,7 +121,6 @@ export const useOracleStore = create<OracleState & OracleActions>((set, get) => 
   engineError: null,
   executionPhase: ExecutionPhase.IDLE,
   isLoading: false,
-  targetTransitCoordinates: null,
   queryHistory: [],
 
   // ─── Chat Management ───
@@ -161,28 +147,6 @@ export const useOracleStore = create<OracleState & OracleActions>((set, get) => 
   // ─── Engine Integration ───
   setEnginePayload: payload => {
     set({ enginePayload: payload, engineError: null });
-
-    // Extract transit coordinates for zodiac animation
-    // Real server will provide Rahu/Ketu degrees in future versions
-    if (payload.chronoTriggering?.executionDate) {
-      const coords: TransitCoordinates = {
-        sun: {
-          longitude: 128.12, // Will come from server-side calculation
-          nakshatra: 'Magha',
-        },
-        moon: {
-          longitude: 222.82,
-          nakshatra: 'Ashlesha',
-        },
-        lagna: {
-          longitude: 236.96,
-          nakshatra: 'Purva Ashadha',
-        },
-        executionMoment: payload.chronoTriggering.executionDate,
-      };
-
-      set({ targetTransitCoordinates: coords });
-    }
   },
 
   setEngineError: error => {
@@ -196,11 +160,6 @@ export const useOracleStore = create<OracleState & OracleActions>((set, get) => 
 
   setIsLoading: loading => {
     set({ isLoading: loading });
-  },
-
-  // ─── Cosmic Animation ───
-  setTargetTransitCoordinates: coords => {
-    set({ targetTransitCoordinates: coords });
   },
 
   // ─── History ───
@@ -224,12 +183,11 @@ export const useOracleStore = create<OracleState & OracleActions>((set, get) => 
    *
    * FLOW:
    * 1. Add user message to chat
-   * 2. Set loading + phase to CALCULATING_CUSPS
-   * 3. Push status bubbles with 600-1200ms delays
-   * 4. Call real engine (executes in ~2ms, result cached)
-   * 5. Unpack phases from audit trail, spoon to UI
-   * 6. Final verdict bubble
-   * 7. Zodiac coordinates updated for animation
+   * 2. Set loading + phase to SELECTING_GHAR
+   * 3. Push status bubbles with artificial delays (temporal shock absorber)
+   * 4. Call the real RKP Watch Engine via askWatchOracle
+   * 5. Store the verbatim WatchReading
+   * 6. Final verdict bubble, composed from the server's own narration
    */
   processOracleQuery: async (query: string) => {
     // Step 1: Add user message
@@ -242,163 +200,75 @@ export const useOracleStore = create<OracleState & OracleActions>((set, get) => 
     set({
       isLoading: true,
       currentQuery: query,
-      executionPhase: ExecutionPhase.CALCULATING_CUSPS,
+      executionPhase: ExecutionPhase.SELECTING_GHAR,
     });
 
     try {
-      // Step 3: Simulate phase progression with status bubbles
-      // (Real engine runs in parallel; we're just showing the work)
+      // Step 3: Progressive disclosure status bubbles.
+      // These narrate the RKP Watch Engine's real stages — the engine itself
+      // runs server-side and returns well before this sequence finishes;
+      // the delays exist purely so the UI doesn't feel instantaneous/hollow.
 
-      // Phase 1: Calculating Cusps (600ms)
       get().addMessage({
         role: 'system',
-        content: '⚙️  Extracting 6th House CSL...',
-        phase: ExecutionPhase.CALCULATING_CUSPS,
+        content: '🕐 Selecting the Ghar for this moment...',
+        phase: ExecutionPhase.SELECTING_GHAR,
       });
 
       await new Promise<void>(resolve => setTimeout(resolve, 600));
 
-      // Phase 2: Resolving Nodes (800ms)
-      set({ executionPhase: ExecutionPhase.RESOLVING_NODES });
+      set({ executionPhase: ExecutionPhase.PLACING_PLANETS });
       get().addMessage({
         role: 'system',
-        content: '🌑 Resolving Rahu proxy array...',
-        phase: ExecutionPhase.RESOLVING_NODES,
+        content: '🪐 Placing the real sidereal planets...',
+        phase: ExecutionPhase.PLACING_PLANETS,
       });
 
       await new Promise<void>(resolve => setTimeout(resolve, 800));
 
-      // Phase 3: Checking Vetoes (700ms)
-      set({ executionPhase: ExecutionPhase.CHECKING_VETOES });
+      set({ executionPhase: ExecutionPhase.WEIGHING_DIGNITY });
       get().addMessage({
         role: 'system',
-        content: '⚔️  Evaluating Sub-Lord veto chain...',
-        phase: ExecutionPhase.CHECKING_VETOES,
+        content: '⚖️ Weighing ruler dignity and relation...',
+        phase: ExecutionPhase.WEIGHING_DIGNITY,
       });
 
       await new Promise<void>(resolve => setTimeout(resolve, 700));
 
-      // Phase 4: Finding Transits (900ms)
-      set({ executionPhase: ExecutionPhase.FINDING_TRANSITS });
+      set({ executionPhase: ExecutionPhase.CHECKING_OBSTRUCTION });
       get().addMessage({
         role: 'system',
-        content: '🔭 Locking transit intersection...',
-        phase: ExecutionPhase.FINDING_TRANSITS,
+        content: '🔍 Checking for obstruction...',
+        phase: ExecutionPhase.CHECKING_OBSTRUCTION,
       });
 
-      await new Promise<void>(resolve => setTimeout(resolve, 900));
+      await new Promise<void>(resolve => setTimeout(resolve, 700));
 
-      // Phase 5: Composing Verdict (500ms)
       set({ executionPhase: ExecutionPhase.COMPOSING_VERDICT });
       get().addMessage({
         role: 'system',
-        content: '✨ Composing final verdict...',
+        content: '✨ Composing the verdict...',
         phase: ExecutionPhase.COMPOSING_VERDICT,
       });
 
       await new Promise<void>(resolve => setTimeout(resolve, 500));
 
-      // ─── CALL REAL ENGINE ───
-      // Route query through askWatchOracle (server detects event type and routes to Shams engine)
+      // ─── CALL THE REAL RKP WATCH ENGINE (server-side) ───
       const result = await askWatchOracle({
         question: query,
         questionLang: 'en',
-        seekerProfile: 'action', // Default to action-oriented profile for event queries
+        seekerProfile: 'action',
       });
 
-      // Transform WatchReading verdict into mock UnifiedShamsJudgment shape
-      // (Real server returns structured verdict; this maintains UI compatibility)
-      const mockJudgment = {
-        queryId: result.reading.readingId,
-        eventType: 'LITIGATION_VICTORY', // Server will set actual event type
-        queryText: query,
-        queryTimestamp: new Date(result.reading.computedAt).getTime() / 1000,
-        initialization: {
-          cuspalCalculationComplete: true,
-          planetaryArrayMapped: true,
-          nodeProxyResolved: true,
-          unterianantFlaggingComplete: true,
-        },
-        promiseGateway: {
-          judgment: {
-            eventType: 'LITIGATION_VICTORY',
-            queryText: query,
-            verdict: result.reading.verdict.state || 'PROMISED',
-            confidence: 'HIGH',
-            score: result.reading.verdict.confidence || 0.87,
-            timing: { window: 'IMMEDIATE', days: 15 },
-            vectorAnalysis: {
-              primary: {
-                vectorType: 'PRIMARY',
-                expectedHouses: [6],
-                actualHouses: [11],
-                alignmentScore: 1.0,
-                isSatisfied: true,
-                relevantCSLs: [6],
-              },
-              secondary: [
-                {
-                  vectorType: 'SECONDARY',
-                  expectedHouses: [1, 10, 11],
-                  actualHouses: [1, 11],
-                  alignmentScore: 0.67,
-                  isSatisfied: true,
-                  relevantCSLs: [1, 10],
-                },
-              ],
-              negating: [],
-            },
-            cslDataset: [],
-            factors: ['6th CSL supports litigation', 'Sub-Lord confirms victory'],
-            diagnostics: 'Victory promised via 11th house signification',
-            blockers: [],
-          },
-          verdict: 'PROMISED',
-          confidence: 0.87,
-          blockingFactors: [],
-          proceedToTiming: true,
-        },
-        retrogradeAnalysis: {
-          analysis: {
-            cslPlanet: 'Venus',
-            starLord: 'Moon',
-            subLord: 'Mercury',
-            eventType: 'LITIGATION_VICTORY',
-            queryIntent: 'FORWARD',
-            cslRetrograde: false,
-            starLordRetrograde: false,
-            subLordRetrograde: false,
-            overallVerdict: 'PROMISED_AND_DIRECT',
-            overallConfidence: 0.87,
-            timeline: { delayDays: 0 },
-            factors: [],
-          },
-          retrogradeModifier: 'PROMISED_AND_DIRECT',
-        },
-        finalVerdict: {
-          status: 'PROMISED_AND_TIMED',
-          confidence: 0.87,
-          executionDate: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000).toISOString(),
-          executionTime: '14:30:00+05:30',
-          factors: [
-            'Victory promised by 6th → 11th alignment',
-            'Sub-Lord confirms without veto',
-            'Timing locked to transit intersection',
-          ],
-          auditTrail: [],
-        },
-      };
+      // ─── Store the verbatim reading ───
+      get().setEnginePayload(result.reading);
 
-      // ─── Store the payload ───
-      get().setEnginePayload(mockJudgment as any);
-
-      // ─── Compose final verdict bubble ───
-      // Use real oracle narration if available, otherwise fallback
+      // ─── Compose final verdict bubble from the server's own narration ───
       const oracleText =
-        result.reading.oracle?.narration ||
-        'The cosmos aligns in your favor. Victory is promised. Expect manifestation within 15 days.';
+        result.reading.oracle?.narration ??
+        `${result.reading.verdict.state} — ${result.reading.verdict.targetRulerName} governs this matter.`;
 
-      const verdictText = `🎯 **${mockJudgment.finalVerdict.status}**\n\n${oracleText}\n\n[View Astrological Proof]`;
+      const verdictText = `${oracleText}\n\n[View Astrological Proof]`;
 
       get().addMessage({
         role: 'oracle',
@@ -406,7 +276,7 @@ export const useOracleStore = create<OracleState & OracleActions>((set, get) => 
       });
 
       // ─── Add to history ───
-      get().addToHistory(query, mockJudgment.finalVerdict.status);
+      get().addToHistory(query, result.reading.verdict.state);
 
       // ─── Complete ───
       set({
@@ -437,7 +307,5 @@ export const useOracleMessages = () => useOracleStore(state => state.messages);
 export const useEnginePayload = () => useOracleStore(state => state.enginePayload);
 export const useExecutionPhase = () => useOracleStore(state => state.executionPhase);
 export const useIsLoading = () => useOracleStore(state => state.isLoading);
-export const useTargetTransitCoordinates = () =>
-  useOracleStore(state => state.targetTransitCoordinates);
 export const useQueryHistory = () => useOracleStore(state => state.queryHistory);
 export const useCurrentQuery = () => useOracleStore(state => state.currentQuery);

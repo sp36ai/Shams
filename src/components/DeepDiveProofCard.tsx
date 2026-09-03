@@ -1,23 +1,32 @@
 /**
  * DeepDiveProofCard — Astrological proof expansion showing the judgment reasoning
  *
+ * Displays the *real* reasoning behind a RKP Watch Engine verdict, exactly as
+ * returned by askWatchOracle. Nothing here is invented client-side: every
+ * field comes straight from `WatchReading.verdict` (a `DisplayWatchVerdict`).
+ *
  * DISPLAYS:
- * - Critical Path: CSL → Star Lord → Sub Lord significations
- * - Veto Logic: Sub-Lord confirmation or reversal of Star-Lord promise
- * - Factors: Complete list from finalVerdict.factors
- * - Confidence Score: With breakdown by vector
- * - Advanced: Full vectorAnalysis breakdown (collapsed by default)
+ * - Judgment Chain: target house/ruler → querent's ruler → their relation
+ * - Obstruction & Reversal risk
+ * - Factors: the engine's own `factors` list, in the order it applied them
+ * - Confidence: the engine's qualitative confidence band
+ * - Timing: the engine's timing window, when it has one
+ *
+ * An earlier draft of this card visualized a CSL → Star-Lord → Sub-Lord veto
+ * chain and a "vector analysis" breakdown. That data was never real — it
+ * came from a fabricated engine that has since been removed. This card now
+ * shows only what the real RKP Watch Engine actually computes.
  *
  * LAYOUT:
  * - Header with close button
- * - CSL Chain visualization (cards connected by arrows)
- * - Veto result indicator (CONFIRMED / REVERSED)
+ * - Verdict summary (state, confidence)
+ * - Judgment chain (target house/ruler, querent's ruler, relation)
+ * - Obstruction / reversal indicator
  * - Factors list
- * - Confidence meter
- * - Advanced toggle (shows primary/secondary/negating vectors)
+ * - Timing window
  */
 
-import React, { useState } from 'react';
+import React from 'react';
 import {
   View,
   Text,
@@ -27,7 +36,7 @@ import {
   Modal,
   SafeAreaView,
 } from 'react-native';
-import type { UnifiedShamsJudgment } from '../astrology/rkp/unifiedShamsEngine';
+import type { WatchReading } from '../firebase/watchOracle';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
@@ -35,16 +44,31 @@ import type { UnifiedShamsJudgment } from '../astrology/rkp/unifiedShamsEngine';
 
 interface DeepDiveProofCardProps {
   visible: boolean;
-  payload: UnifiedShamsJudgment | null;
+  payload: WatchReading | null;
   onClose: () => void;
 }
 
-interface CSLChainItem {
+interface ChainItem {
   title: string;
-  planet: string;
-  significations: number[];
-  role: 'CSL' | 'Star' | 'Sub';
+  value: string;
+  detail: string;
 }
+
+const CONFIDENCE_COLOR: Record<string, string> = {
+  VERY_HIGH: '#4CAF50',
+  HIGH: '#8BC34A',
+  MODERATE: '#FFC107',
+  LOW: '#FF9800',
+  UNCERTAIN: '#FF6B6B',
+};
+
+const CONFIDENCE_LABEL: Record<string, string> = {
+  VERY_HIGH: '✅ Very High Confidence',
+  HIGH: '✅ High Confidence',
+  MODERATE: '⚠️ Moderate Confidence',
+  LOW: '⚠️ Low Confidence',
+  UNCERTAIN: '❓ Uncertain',
+};
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Component
@@ -55,50 +79,31 @@ export const DeepDiveProofCard: React.FC<DeepDiveProofCardProps> = ({
   payload,
   onClose,
 }) => {
-  const [showAdvanced, setShowAdvanced] = useState(false);
-
   if (!payload) {
     return null;
   }
 
-  const judgment = payload.promiseGateway.judgment;
-  const verdict = payload.finalVerdict;
-  const cslData = judgment.cslDataset[0]; // Primary CSL
+  const verdict = payload.verdict;
+  const hasObstruction = verdict.obstruction !== 'None';
+  const hasReversalRisk = verdict.reversal === 'POSSIBLE';
 
-  // Extract CSL chain
-  const cslChain: CSLChainItem[] = [
+  const chain: ChainItem[] = [
     {
-      title: '6th House CSL',
-      planet:
-        typeof cslData?.cslPlanet === 'string'
-          ? cslData.cslPlanet
-          : (cslData?.cslPlanet as any)?.name || 'Unknown',
-      significations: cslData?.starSignifications || [],
-      role: 'CSL',
+      title: `House ${verdict.targetHouse}`,
+      value: verdict.targetSignName,
+      detail: `Ruled by ${verdict.targetRulerName}`,
     },
     {
-      title: 'Star Lord',
-      planet:
-        typeof cslData?.starLord === 'string'
-          ? cslData.starLord
-          : (cslData?.starLord as any)?.name || 'Unknown',
-      significations: cslData?.starSignifications || [],
-      role: 'Star',
+      title: "Querent's Ruler",
+      value: payload.lagnaRulerName,
+      detail: `Regards ${verdict.targetRulerName} as: ${verdict.rulerRelation}`,
     },
     {
-      title: 'Sub Lord',
-      planet:
-        typeof cslData?.subLord === 'string'
-          ? cslData.subLord
-          : (cslData?.subLord as any)?.name || 'Unknown',
-      significations: cslData?.subSignifications || [],
-      role: 'Sub',
+      title: `Fulfilment — House ${verdict.fulfilmentHouse}`,
+      value: verdict.state,
+      detail: 'Governs whether the desire actually materialises',
     },
   ];
-
-  // Determine veto result
-  const isVetoApplied = verdict.status.includes('DENIED') || verdict.status.includes('REVERSED');
-  const vetoResult = isVetoApplied ? 'REVERSED ⚔️' : 'CONFIRMED ✅';
 
   return (
     <Modal visible={visible} animationType="slide" presentationStyle="formSheet">
@@ -116,22 +121,26 @@ export const DeepDiveProofCard: React.FC<DeepDiveProofCardProps> = ({
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>🎯 Verdict</Text>
             <View style={styles.verdictBox}>
-              <Text style={styles.verdictStatus}>{verdict.status}</Text>
-              <Text style={styles.verdictConfidence}>
-                Confidence: {(payload.promiseGateway.confidence * 100).toFixed(0)}%
+              <Text style={styles.verdictStatus}>{verdict.state}</Text>
+              <Text
+                style={[
+                  styles.verdictConfidence,
+                  { color: CONFIDENCE_COLOR[verdict.confidence] ?? '#666' },
+                ]}
+              >
+                {CONFIDENCE_LABEL[verdict.confidence] ?? verdict.confidence}
               </Text>
             </View>
           </View>
 
-          {/* ─── CSL Chain Visualization ─── */}
+          {/* ─── Judgment Chain ─── */}
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>🔗 Judgment Chain</Text>
 
-            {cslChain.map((item, index) => (
-              <View key={index}>
-                <CSLChainCard item={item} />
-
-                {index < cslChain.length - 1 && (
+            {chain.map((item, index) => (
+              <View key={item.title}>
+                <ChainCard item={item} />
+                {index < chain.length - 1 && (
                   <View style={styles.chainArrow}>
                     <Text style={styles.arrowText}>↓</Text>
                   </View>
@@ -139,15 +148,22 @@ export const DeepDiveProofCard: React.FC<DeepDiveProofCardProps> = ({
               </View>
             ))}
 
-            {/* ─── Veto Result ─── */}
-            <View style={[styles.vetoResultBox, isVetoApplied && styles.vetoReversed]}>
-              <Text style={styles.vetoResultLabel}>Sub-Lord Verdict:</Text>
-              <Text style={styles.vetoResultValue}>{vetoResult}</Text>
-              <Text style={styles.vetoResultExplanation}>
-                {isVetoApplied
-                  ? "Sub-Lord's significations override Star-Lord's promise"
-                  : "Sub-Lord's significations align with Star-Lord's promise"}
+            {/* ─── Obstruction / Reversal ─── */}
+            <View
+              style={[
+                styles.vetoResultBox,
+                (hasObstruction || hasReversalRisk) && styles.vetoReversed,
+              ]}
+            >
+              <Text style={styles.vetoResultLabel}>Obstruction:</Text>
+              <Text style={styles.vetoResultValue}>
+                {hasObstruction ? `⚔️ ${verdict.obstruction}` : '✅ None'}
               </Text>
+              {hasReversalRisk && (
+                <Text style={styles.vetoResultExplanation}>
+                  A ruling planet is retrograde — expect rework, reversal, or an overturn.
+                </Text>
+              )}
             </View>
           </View>
 
@@ -162,69 +178,31 @@ export const DeepDiveProofCard: React.FC<DeepDiveProofCardProps> = ({
             ))}
           </View>
 
-          {/* ─── Confidence Breakdown ─── */}
+          {/* ─── Timing ─── */}
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>📊 Confidence Analysis</Text>
-            <ConfidenceMeter confidence={payload.promiseGateway.confidence} />
-          </View>
-
-          {/* ─── Advanced Vector Analysis ─── */}
-          <View style={styles.section}>
-            <TouchableOpacity
-              style={styles.advancedToggle}
-              onPress={() => setShowAdvanced(!showAdvanced)}
-            >
-              <Text style={styles.advancedToggleText}>
-                {showAdvanced ? '▼' : '▶'} Advanced Vector Analysis
-              </Text>
-            </TouchableOpacity>
-
-            {showAdvanced && (
-              <View style={styles.advancedContent}>
-                {/* Primary Vector */}
-                {judgment.vectorAnalysis?.primary && (
-                  <VectorBreakdown
-                    vector={judgment.vectorAnalysis.primary}
-                    title="Primary Vector (6th House)"
-                    color="#FF6B6B"
-                  />
-                )}
-
-                {/* Secondary Vectors */}
-                {judgment.vectorAnalysis?.secondary.length > 0 && (
-                  <View>
-                    <Text style={styles.advancedSubtitle}>Secondary Vectors</Text>
-                    {judgment.vectorAnalysis.secondary.map((vec, idx) => (
-                      <VectorBreakdown key={idx} vector={vec} color="#4ECDC4" />
-                    ))}
-                  </View>
-                )}
-
-                {/* Negating Vectors */}
-                {judgment.vectorAnalysis?.negating.length > 0 && (
-                  <View>
-                    <Text style={styles.advancedSubtitle}>Negating Vectors</Text>
-                    {judgment.vectorAnalysis.negating.map((vec, idx) => (
-                      <VectorBreakdown key={idx} vector={vec} color="#FFD93D" />
-                    ))}
-                  </View>
-                )}
-              </View>
-            )}
-          </View>
-
-          {/* ─── Audit Trail (if available) ─── */}
-          {verdict.auditTrail && verdict.auditTrail.length > 0 && (
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>🔍 Audit Trail</Text>
-              {verdict.auditTrail.slice(0, 5).map((event, index) => (
-                <View key={index} style={styles.auditItem}>
-                  <Text style={styles.auditPhase}>{event.phase}</Text>
-                  <Text style={styles.auditDetail}>{event.detail}</Text>
-                </View>
-              ))}
+            <Text style={styles.sectionTitle}>⏳ Timing</Text>
+            <View style={styles.verdictBox}>
+              {verdict.timing ? (
+                <Text style={styles.verdictConfidence}>
+                  Expected within {verdict.timing.minDays}–{verdict.timing.maxDays} days
+                </Text>
+              ) : (
+                <Text style={styles.verdictConfidence}>No usable timing signal in this chart</Text>
+              )}
             </View>
-          )}
+          </View>
+
+          {/* ─── Chart Context ─── */}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>🧭 Chart Context</Text>
+            <View style={styles.verdictBox}>
+              <Text style={styles.factorText}>
+                Direction: {verdict.direction}
+                {verdict.afflictedDirection ? ` · Afflicted: ${verdict.afflictedDirection}` : ''}
+              </Text>
+              <Text style={styles.factorText}>Controller profile: {verdict.controllerProfile}</Text>
+            </View>
+          </View>
 
           {/* ─── Spacer ─── */}
           <View style={{ height: 40 }} />
@@ -238,84 +216,12 @@ export const DeepDiveProofCard: React.FC<DeepDiveProofCardProps> = ({
 // Subcomponents
 // ─────────────────────────────────────────────────────────────────────────────
 
-/**
- * CSL Chain Card
- */
-const CSLChainCard: React.FC<{ item: CSLChainItem }> = ({ item }) => {
-  const roleColors = {
-    CSL: '#007AFF',
-    Star: '#FF6B6B',
-    Sub: '#FFD93D',
-  };
-
+const ChainCard: React.FC<{ item: ChainItem }> = ({ item }) => {
   return (
-    <View style={[styles.chainCard, { borderLeftColor: roleColors[item.role] }]}>
+    <View style={styles.chainCard}>
       <Text style={styles.chainCardTitle}>{item.title}</Text>
-      <Text style={styles.chainCardPlanet}>{item.planet}</Text>
-      <Text style={styles.chainCardSignifications}>
-        Signifies: {item.significations.join(', ')}
-      </Text>
-    </View>
-  );
-};
-
-/**
- * Confidence Meter
- */
-const ConfidenceMeter: React.FC<{ confidence: number }> = ({ confidence }) => {
-  const percentage = confidence * 100;
-  const confidenceColor = percentage >= 85 ? '#4CAF50' : percentage >= 70 ? '#FFC107' : '#FF6B6B';
-
-  return (
-    <View style={styles.confidenceMeterContainer}>
-      <View style={styles.meterBackground}>
-        <View
-          style={[styles.meterFill, { width: `${percentage}%`, backgroundColor: confidenceColor }]}
-        />
-      </View>
-      <Text style={styles.meterLabel}>{percentage.toFixed(1)}%</Text>
-
-      {/* Interpretation */}
-      <Text style={styles.confidenceInterpretation}>
-        {percentage >= 85
-          ? '✅ Very High Confidence'
-          : percentage >= 70
-            ? '⚠️ Moderate Confidence'
-            : '⚠️ Low Confidence'}
-      </Text>
-    </View>
-  );
-};
-
-/**
- * Vector Breakdown (for advanced analysis)
- */
-interface VectorBreakdownProps {
-  vector: any;
-  title?: string;
-  color: string;
-}
-
-const VectorBreakdown: React.FC<VectorBreakdownProps> = ({ vector, title, color }) => {
-  return (
-    <View style={[styles.vectorCard, { borderLeftColor: color }]}>
-      {title && <Text style={styles.vectorTitle}>{title}</Text>}
-      <Text style={styles.vectorType}>{vector.vectorType || 'Vector'}</Text>
-      <Text style={styles.vectorAlignment}>
-        Expected: {vector.expectedHouses?.join(', ') || 'N/A'}
-      </Text>
-      <Text style={styles.vectorAlignment}>Actual: {vector.actualHouses?.join(', ') || 'N/A'}</Text>
-      <View style={styles.alignmentBar}>
-        <View
-          style={[
-            styles.alignmentFill,
-            { width: `${(vector.alignmentScore || 0) * 100}%`, backgroundColor: color },
-          ]}
-        />
-      </View>
-      <Text style={styles.alignmentScore}>
-        Alignment: {((vector.alignmentScore || 0) * 100).toFixed(0)}%
-      </Text>
+      <Text style={styles.chainCardPlanet}>{item.value}</Text>
+      <Text style={styles.chainCardSignifications}>{item.detail}</Text>
     </View>
   );
 };
@@ -392,13 +298,14 @@ const styles = StyleSheet.create({
     color: '#666',
   },
 
-  // ─── CSL Chain ───
+  // ─── Judgment Chain ───
   chainCard: {
     backgroundColor: '#fff',
     borderRadius: 12,
     padding: 14,
     marginBottom: 8,
     borderLeftWidth: 4,
+    borderLeftColor: '#007AFF',
   },
 
   chainCardTitle: {
@@ -431,7 +338,7 @@ const styles = StyleSheet.create({
     fontWeight: '300',
   },
 
-  // ─── Veto Result ───
+  // ─── Obstruction / Reversal ───
   vetoResultBox: {
     backgroundColor: '#e8f5e9',
     borderRadius: 12,
@@ -487,134 +394,6 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: '#333',
     lineHeight: 18,
-  },
-
-  // ─── Confidence ───
-  confidenceMeterContainer: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 16,
-  },
-
-  meterBackground: {
-    height: 8,
-    backgroundColor: '#e0e0e0',
-    borderRadius: 4,
-    overflow: 'hidden',
-    marginBottom: 12,
-  },
-
-  meterFill: {
-    height: '100%',
-    borderRadius: 4,
-  },
-
-  meterLabel: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: '#1a1a1a',
-    marginBottom: 4,
-  },
-
-  confidenceInterpretation: {
-    fontSize: 13,
-    color: '#666',
-  },
-
-  // ─── Advanced ───
-  advancedToggle: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 14,
-    marginBottom: 12,
-  },
-
-  advancedToggleText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#007AFF',
-  },
-
-  advancedContent: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 14,
-  },
-
-  advancedSubtitle: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: '#666',
-    marginTop: 12,
-    marginBottom: 8,
-  },
-
-  vectorCard: {
-    backgroundColor: '#f9f9f9',
-    borderRadius: 8,
-    padding: 12,
-    marginBottom: 12,
-    borderLeftWidth: 3,
-  },
-
-  vectorTitle: {
-    fontSize: 12,
-    color: '#999',
-    fontWeight: '500',
-    marginBottom: 4,
-  },
-
-  vectorType: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: '#1a1a1a',
-    marginBottom: 4,
-  },
-
-  vectorAlignment: {
-    fontSize: 12,
-    color: '#666',
-    marginBottom: 2,
-  },
-
-  alignmentBar: {
-    height: 4,
-    backgroundColor: '#e0e0e0',
-    borderRadius: 2,
-    overflow: 'hidden',
-    marginVertical: 8,
-  },
-
-  alignmentFill: {
-    height: '100%',
-    borderRadius: 2,
-  },
-
-  alignmentScore: {
-    fontSize: 12,
-    color: '#666',
-    fontWeight: '500',
-  },
-
-  // ─── Audit Trail ───
-  auditItem: {
-    backgroundColor: '#fff',
-    borderRadius: 8,
-    padding: 12,
-    marginBottom: 8,
-  },
-
-  auditPhase: {
-    fontSize: 11,
-    color: '#999',
-    fontWeight: '600',
-    textTransform: 'uppercase',
-    marginBottom: 2,
-  },
-
-  auditDetail: {
-    fontSize: 13,
-    color: '#333',
   },
 });
 

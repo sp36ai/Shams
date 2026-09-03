@@ -1,9 +1,9 @@
 /**
- * OracleChat — WhatsApp-style conversational interface for the Shams Method
+ * OracleChat — WhatsApp-style conversational interface for the RKP Watch Engine
  *
  * FEATURES:
  * - Real-time message streaming (user prompts, oracle responses, status bubbles)
- * - Execution phase indicators (⚙️ CUSPS → 🌑 NODES → ⚔️ VETOES → 🔭 TRANSITS → ✨ VERDICT)
+ * - Execution phase indicators (🕐 Ghar → 🪐 planets → ⚖️ dignity → 🔍 obstruction → ✨ verdict)
  * - Typing animation during calculation phases
  * - Auto-scroll to latest message
  * - Disabled input during loading (prevents duplicate queries)
@@ -29,13 +29,14 @@ import {
   Platform,
 } from 'react-native';
 import { useOracleStore, ExecutionPhase, type Message } from '../stores/useOracleStore';
+import type { WatchReading } from '../firebase/watchOracle';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
 // ─────────────────────────────────────────────────────────────────────────────
 
 interface OracleChatProps {
-  onProofCardPress?: (payload: any) => void; // Callback when user taps "View Astrological Proof"
+  onProofCardPress?: (payload: WatchReading) => void; // Callback when user taps "View Astrological Proof"
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -141,8 +142,8 @@ export const OracleChat: React.FC<OracleChatProps> = ({ onProofCardPress }) => {
  */
 interface MessageBubbleProps {
   message: Message;
-  onProofCardPress?: (payload: any) => void;
-  enginePayload: any;
+  onProofCardPress?: (payload: WatchReading) => void;
+  enginePayload: WatchReading | null;
 }
 
 const MessageBubble: React.FC<MessageBubbleProps> = ({
@@ -236,10 +237,10 @@ const TypingIndicator: React.FC<TypingIndicatorProps> = ({ phase }) => {
 function getPhaseEmoji(phase: ExecutionPhase): string {
   const emojiMap: Record<ExecutionPhase, string> = {
     [ExecutionPhase.IDLE]: '⏸',
-    [ExecutionPhase.CALCULATING_CUSPS]: '⚙️',
-    [ExecutionPhase.RESOLVING_NODES]: '🌑',
-    [ExecutionPhase.CHECKING_VETOES]: '⚔️',
-    [ExecutionPhase.FINDING_TRANSITS]: '🔭',
+    [ExecutionPhase.SELECTING_GHAR]: '🕐',
+    [ExecutionPhase.PLACING_PLANETS]: '🪐',
+    [ExecutionPhase.WEIGHING_DIGNITY]: '⚖️',
+    [ExecutionPhase.CHECKING_OBSTRUCTION]: '🔍',
     [ExecutionPhase.COMPOSING_VERDICT]: '✨',
     [ExecutionPhase.COMPLETE]: '🎯',
   };
@@ -250,11 +251,11 @@ function getPhaseEmoji(phase: ExecutionPhase): string {
 function getPhaseText(phase: ExecutionPhase): string {
   const textMap: Record<ExecutionPhase, string> = {
     [ExecutionPhase.IDLE]: 'Ready',
-    [ExecutionPhase.CALCULATING_CUSPS]: 'Extracting 6th House CSL',
-    [ExecutionPhase.RESOLVING_NODES]: 'Resolving Rahu proxy array',
-    [ExecutionPhase.CHECKING_VETOES]: 'Evaluating Sub-Lord veto chain',
-    [ExecutionPhase.FINDING_TRANSITS]: 'Locking transit intersection',
-    [ExecutionPhase.COMPOSING_VERDICT]: 'Composing final verdict',
+    [ExecutionPhase.SELECTING_GHAR]: 'Selecting the Ghar for this moment',
+    [ExecutionPhase.PLACING_PLANETS]: 'Placing the real sidereal planets',
+    [ExecutionPhase.WEIGHING_DIGNITY]: 'Weighing ruler dignity and relation',
+    [ExecutionPhase.CHECKING_OBSTRUCTION]: 'Checking for obstruction',
+    [ExecutionPhase.COMPOSING_VERDICT]: 'Composing the verdict',
     [ExecutionPhase.COMPLETE]: 'Complete',
   };
 
