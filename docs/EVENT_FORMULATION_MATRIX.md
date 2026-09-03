@@ -1121,6 +1121,433 @@ Cache Result (MMKV history)
 
 ---
 
+---
+
+## 6. DBA Window Establishment & Transit-Based Timing
+
+### Overview: From Verdict to Exact Date
+
+The Shams Method requires **four phases** to convert a "PROMISED" verdict into an exact execution date:
+
+1. **Phase 1:** Establish the Active DBA (Dasha-Bhukti-Antara) Window
+2. **Phase 2:** Cast the Ruling Planets (RP) at query moment
+3. **Phase 3:** Intersection filter (DBA ∩ RP) → Final Triggering Agents
+4. **Phase 4:** Pinpoint exact date via celestial transits
+
+#### Phase 1: Establish the Active DBA Window
+
+**Principle:** A promised event only manifests when the current Dasha/Bhukti/Antara lords are **strong significators of the event houses**.
+
+**Example (Windfall Query - Continuation):**
+
+Assume the native runs the following planetary periods:
+- **Maha Dasha (Major Period):** Moon (Star Lord of 5th CSL; signifies 8, 11)
+- **Bhukti (Sub-Period):** Mercury (Sub Lord of 5th CSL; signifies 2, 11)
+- **Antara (Sub-Sub-Period):** Jupiter (The 5th CSL itself)
+
+**Engine Evaluation:**
+```
+DBA Array: [Moon, Mercury, Jupiter]
+Event Houses (Windfall): [2, 5, 8, 11]
+
+DBA Alignment Check:
+  ✓ Moon → 8, 11 (present in event houses)
+  ✓ Mercury → 2, 11 (present in event houses)
+  ✓ Jupiter → 5, 8, 11 (present in event houses)
+
+Status: DBA WINDOW ACTIVE — event is imminent
+```
+
+**Decision Rule:**
+- If all three DBA lords (Dasha, Bhukti, Antara) signify event houses → **Event imminent (0–60 days)**
+- If two DBA lords signify event houses → **Event likely (60–180 days)**
+- If one DBA lord signifies event houses → **Event possible (180–360 days)**
+- If no DBA lord signifies event houses → **Event delayed (beyond Dasha end)**
+
+---
+
+#### Phase 2: Cast the Ruling Planets (RP)
+
+The exact execution date is "locked" by the Ruling Planets at the precise moment the horary question was evaluated.
+
+**Assumed Query Moment:** Thursday, September 3, 2026, 3:45 PM UTC
+
+**Engine Calculation of 5 Ruling Planets:**
+
+1. **Lagna Star Lord:** Mercury (Star Lord of Ascendant nakshatra at query moment)
+2. **Lagna Sign Lord:** Mars (Sign ruler of Ascendant at query moment)
+3. **Moon Star Lord:** Moon (Star Lord of Moon's nakshatra at query moment)
+4. **Moon Sign Lord:** Jupiter (Sign ruler of Moon's sign at query moment)
+5. **Day Lord:** Jupiter (Thursday = Jupiter's day)
+
+**Raw RP Pool:** `{Mercury, Mars, Moon, Jupiter}`
+
+**Benefic Confirmation:**
+- Mercury, Moon, Jupiter are beneficial for windfall events
+- Mars introduces conflict/unexpected urgency (but not blocking)
+
+---
+
+#### Phase 3: The Intersection Filter (DBA ∩ RP)
+
+**Critical Rule:** An event materializes only through planets common to **both DBA and RP arrays**.
+
+```
+DBA Array:        [Moon, Mercury, Jupiter]
+RP Array:         [Mercury, Mars, Moon, Jupiter]
+
+Intersection (DBA ∩ RP):  [Moon, Mercury, Jupiter]
+Discard:          [Mars] (not in DBA, not a triggering agent)
+
+Final Triggering Agents: Moon, Mercury, Jupiter
+```
+
+**Discard/Stigmatization Check:**
+The engine verifies that operative significators are not afflicted:
+
+| Significator | Check | Result |
+| --- | --- | --- |
+| **Moon** | Sub-Lord points to 4/12? | ✗ No (points to 8, 11) |
+| **Mercury** | Retrograde? | ✗ No (direct motion) |
+| **Jupiter** | Combust or heavily aspected? | ✗ No (clean dignity) |
+
+**All three planets pass.** They are the Final Triggering Agents.
+
+---
+
+#### Phase 4: Pinpointing the Exact Date via Transits
+
+The Shams Method uses three nested transit cycles to convert the broad DBA window into a precise calendar date.
+
+##### The Month (Sun's Transit - 30 Day Cycle)
+
+The Sun moves ~1°/day and controls the monthly window.
+
+**Engine Logic:**
+1. Find when transiting Sun enters a Nakshatra owned by an Operative Significator (Moon, Mercury, or Jupiter)
+2. Within that Nakshatra, identify the Sub-division owned by another Operative Significator
+3. This narrows the window to **1–2 day range**
+
+**Example:**
+```
+Ephemeris Query: "When does Sun transit Moon's Star AND Jupiter's Sub?"
+
+Result:
+  Sun enters Hasta Nakshatra (Moon's star) on September 25, 2026
+  Within Hasta, Sun enters Jupiter's Sub on September 28, 2026
+  
+Monthly Window: September 28, 2026 (specific 1-2 day range)
+```
+
+##### The Day (Moon's Transit - Minute-Hand)
+
+The Moon moves ~13°/day and acts as the "minute hand" of the cosmic clock.
+
+**Engine Logic:**
+1. On the narrowed date (September 28), find when transiting Moon crosses a Nakshatra owned by an Operative Significator
+2. Within that Nakshatra, identify the Sub-division owned by another Operative Significator
+3. This pinpoints the **exact time** (hour/minute range)
+
+**Example:**
+```
+Ephemeris Query (September 28): "When does Moon transit Mercury's Star AND Jupiter's Sub?"
+
+Result:
+  Moon transits Revati Nakshatra (Mercury's star) starting 2:30 PM
+  Within Revati, Moon enters Jupiter's Sub at 4:15 PM IST on September 28, 2026
+  
+Exact Trigger Time: September 28, 2026, 4:15 PM IST
+```
+
+##### The Exact Moment (Lagna Transit - Optional for Instantaneous Events)
+
+For instantaneous life events (lottery draw announcement, job offer email, surgery scheduling call), the Ascendant (Lagna) transit provides microsecond precision.
+
+**Engine Logic:**
+1. On the precise date/time, calculate when the transiting Ascendant crosses the Star of Jupiter and the Sub of Mercury
+2. This identifies the **exact moment** of event manifestation
+
+**Result (Optional):**
+```
+Lagna crosses Jupiter's Star | Mercury's Sub at 4:16:23 PM IST
+
+Absolute Trigger: September 28, 2026, 4:16:23 PM IST
+(The exact moment the lottery number is announced, or notification arrives)
+```
+
+---
+
+#### Engine Output: PROMISED_AND_TIMED
+
+```
+Final Verdict: PROMISED_AND_TIMED
+Event: WINDFALL_LOTTERY_SPECULATION
+Execution Date: September 28, 2026
+Trigger Time: 4:15–4:16 PM IST
+
+Trigger Matrix:
+  Sun → Star: Moon | Sub: Jupiter
+  Moon → Star: Mercury | Sub: Jupiter
+  (Lagna transit adds microsecond precision if required)
+
+Confidence: VERY_HIGH (0.92)
+Blocking Conditions: None
+Ruling Planets: [Mercury, Moon, Jupiter]
+Operative Significators: [Moon, Mercury, Jupiter]
+```
+
+---
+
+## 7. Node (Rahu/Ketu) Resolution System
+
+### Overview: Shadow Entities as Cosmic Proxies
+
+In the Shams Method, **Rahu (North Node) and Ketu (South Node)** are treated as "Shadow Entities" without physical mass or inherent zodiacal ownership. They operate as **Cosmic Proxies**—absorbing, amplifying, and executing the agendas of other planets.
+
+**Core Principle:** A Node is **always stronger than the planet it represents** (the "Eclipse Override Rule"). If Rahu proxies Mars and both appear in the Ruling Planets, Rahu supersedes Mars in execution authority.
+
+---
+
+### The Proxy Resolution Hierarchy
+
+When Rahu or Ketu appears as a Cuspal Sub-Lord (CSL), Star Lord, or Ruling Planet, the engine cannot evaluate it like a standard planet. It must execute a substitution subroutine based on a strict **4-tier hierarchy**.
+
+The engine scans this hierarchy from top to bottom, accumulating significations at each active level:
+
+| Priority | Agent Status | Engine Condition | Signification Source |
+| --- | --- | --- | --- |
+| **1** | **Conjunction** | Any planet(s) occupying the exact same sign (Rasi) as the Node | Absorb owned + occupied houses of conjunct planet(s) |
+| **2** | **Aspect** | Any planet(s) casting direct aspect onto the Node (7th house aspect, Mars/Jupiter/Saturn special aspects) | Absorb owned + occupied houses of aspecting planet(s) |
+| **3** | **Sign Lord** | The planetary ruler of the sign the Node occupies | Absorb all houses owned + occupied by sign lord |
+| **4** | **Star Lord** | The planetary ruler of the Nakshatra the Node occupies | Absorb all houses signified by star lord |
+
+**Additional Base Level:** The Node always signifies its **occupied house** (Level B).
+
+---
+
+### Example: Multi-Layer Node Evaluation
+
+**Scenario:** Rahu in Virgo (6th house)
+- Conjoined with Venus
+- Aspected by Saturn
+- In the Star of Moon
+- Mercury is Lord of Virgo
+
+**Engine Node Array Construction for Rahu:**
+
+```
+Level B (Base Occupation): Rahu signifies 6
+
+Priority 1 (Conjunction):
+  Venus is conjoined with Rahu
+  Venus owns 2, 7 and occupies (chart-dependent)
+  Rahu absorbs: 2, 7
+
+Priority 2 (Aspect):
+  Saturn aspects Rahu from (chart-dependent position)
+  Saturn owns 8, 9 and occupies (chart-dependent)
+  Rahu absorbs: 8, 9
+
+Priority 3 (Sign Lord):
+  Mercury is Lord of Virgo
+  Mercury owns 3, 6 and occupies (chart-dependent)
+  Rahu absorbs: 3, 6
+
+Priority 4 (Star Lord):
+  Moon is Lord of Rahu's Nakshatra
+  Moon owns 4 and occupies (chart-dependent)
+  Rahu absorbs: 4
+
+Final Signification Array for Rahu: [2, 3, 4, 6, 7, 8, 9]
+```
+
+**Interpretation:** Rahu in this configuration becomes a massive multi-house trigger. It fires the scripts of Venus (relationships, money), Saturn (obstacles, delays, structure), Mercury (communication, service), and Moon (home, family, emotions) simultaneously. This is why nodal periods often bring **compound or chaotic life events**.
+
+---
+
+### The Eclipse Override Rule
+
+When both a planet and its Node-proxy appear in an evaluation (especially in Ruling Planets):
+
+**Rule:** The **Node supersedes the planet.**
+
+**Example:**
+If Mars signifies the 8th house (surgery/trauma) and Rahu acts as a proxy for Mars:
+- **Mars alone:** Surgery occurs, but manageable complication risk
+- **Rahu as Mars-proxy:** Surgery occurs with **far greater intensity**, sudden onset, and unpredictable complications
+
+If both Mars and Rahu appear in the Ruling Planets:
+- **Rahu takes operative authority** over Mars
+- Event manifests through Rahu's wildcard nature, not Mars's predictable patterns
+
+---
+
+### Nodes as Star Lords (The Reverse Proxy)
+
+The logic flips when a *regular* planet is placed in the Star of a Node.
+
+**Example:** 7th CSL (Marriage) is Jupiter, and Jupiter occupies the Star of Rahu
+
+**Engine Evaluation:**
+```
+Jupiter (7th CSL) is in Star of Rahu
+→ Jupiter will yield results of Rahu's significations
+→ Rahu signifies [6, 11] (from prior example, simplified)
+→ Rahu is conjoined with Venus (owns 7)
+→ Jupiter absorbs: 6, 11, 7
+
+Marriage Verdict: Strong YES (7, 11 present)
+Marriage Character: Unusual/Unconventional (Rahu's trademark effect)
+Marriage Timing: Sudden, unexpected (Rahu override)
+```
+
+**Decision Rule:**
+> The planet in the Star of a Node will yield the results of all houses the Node signifies (via its full Proxy Resolution array), PLUS it will manifest those results with Rahu's unpredictable, sudden, or transformative character.
+
+---
+
+### Algorithmic Pseudo-Code for Node Resolution
+
+#### Main Node Resolution Function
+
+```python
+def resolve_node_significations(node, chart_state):
+    """
+    Recursively fetch all significations a Node assumes.
+    
+    Args:
+        node: Rahu or Ketu object with position, nakshatra, sign
+        chart_state: Complete chart with all planets, cusps, aspects
+    
+    Returns:
+        set of house numbers the Node signifies (Levels B + 1-4)
+    """
+    signified_houses = set()
+    
+    # Base Level (Level B): The house the Node occupies
+    signified_houses.add(node.occupied_house)
+    
+    # Priority 1: Conjunction (Absorb occupant's owned/occupied houses)
+    for planet in chart_state.get_conjoined_planets(node):
+        # Recursively resolve if the conjunct is also a Node
+        if planet.name in ["Rahu", "Ketu"]:
+            signified_houses.update(resolve_node_significations(planet, chart_state))
+        else:
+            signified_houses.update(get_base_significations(planet, chart_state))
+    
+    # Priority 2: Aspect (Absorb aspecting planet's owned/occupied houses)
+    for planet in chart_state.get_aspecting_planets(node):
+        if planet.name in ["Rahu", "Ketu"]:
+            signified_houses.update(resolve_node_significations(planet, chart_state))
+        else:
+            signified_houses.update(get_base_significations(planet, chart_state))
+    
+    # Priority 3: Sign Lord (Absorb sign ruler's owned/occupied houses)
+    sign_lord = chart_state.get_sign_lord(node.sign)
+    if sign_lord.name in ["Rahu", "Ketu"]:
+        signified_houses.update(resolve_node_significations(sign_lord, chart_state))
+    else:
+        signified_houses.update(get_base_significations(sign_lord, chart_state))
+    
+    # Priority 4: Star Lord (Absorb star ruler's significations)
+    star_lord = chart_state.get_star_lord(node.nakshatra)
+    if star_lord.name in ["Rahu", "Ketu"]:
+        signified_houses.update(resolve_node_significations(star_lord, chart_state))
+    else:
+        signified_houses.update(get_base_significations(star_lord, chart_state))
+    
+    return signified_houses
+
+
+def get_star_lord_result(planet, chart_state):
+    """
+    Fetch the Star Lord and resolve if it's a Node.
+    
+    Args:
+        planet: Any planet that needs Star Lord evaluation
+        chart_state: Complete chart data
+    
+    Returns:
+        set of house numbers from Star Lord significations
+    """
+    stl = chart_state.get_star_lord(planet.nakshatra)
+    
+    if stl.name in ["Rahu", "Ketu"]:
+        # Star Lord is a Node → fetch its entire proxy array
+        return resolve_node_significations(stl, chart_state)
+    else:
+        # Standard planet → return its base significations
+        return get_base_significations(stl, chart_state)
+
+
+def evaluate_node_in_judgment(
+    csl_planet: Planet,
+    chart_state: ChartState,
+    event_type: ComplexEventType
+) -> dict:
+    """
+    Complete node evaluation for multi-vector judgment.
+    
+    If CSL, Star Lord, or Sub Lord is a Node, this function resolves
+    its full signification array and applies Eclipse Override if needed.
+    """
+    
+    # Step 1: Check if CSL itself is a Node
+    if csl_planet.name in ["Rahu", "Ketu"]:
+        csl_significations = resolve_node_significations(csl_planet, chart_state)
+        node_identity = f"Node-Proxy (Node occupies {csl_planet.occupied_house})"
+    else:
+        csl_significations = get_base_significations(csl_planet, chart_state)
+        node_identity = None
+    
+    # Step 2: Check if Star Lord is a Node
+    stl = chart_state.get_star_lord(csl_planet.nakshatra)
+    if stl.name in ["Rahu", "Ketu"]:
+        stl_significations = resolve_node_significations(stl, chart_state)
+        node_override_active = True
+    else:
+        stl_significations = get_base_significations(stl, chart_state)
+        node_override_active = False
+    
+    # Step 3: Check if Sub Lord is a Node
+    sl = chart_state.get_sub_lord(csl_planet)
+    if sl.name in ["Rahu", "Ketu"]:
+        sl_significations = resolve_node_significations(sl, chart_state)
+        veto_node_active = True
+    else:
+        sl_significations = get_base_significations(sl, chart_state)
+        veto_node_active = False
+    
+    # Step 4: Apply Eclipse Override Rule
+    # If Rahu/Ketu appears alongside standard planets in final significations,
+    # Node's wild/unpredictable nature overrides the planet's predictable timing
+    if node_override_active or veto_node_active:
+        character_modifier = "SUDDEN_UNEXPECTED_TRANSFORMATIVE"
+    else:
+        character_modifier = "STANDARD"
+    
+    return {
+        "csl_significations": csl_significations,
+        "star_lord_significations": stl_significations,
+        "sub_lord_significations": sl_significations,
+        "node_present": node_identity or node_override_active or veto_node_active,
+        "eclipse_override_active": node_override_active or veto_node_active,
+        "event_character": character_modifier,
+    }
+```
+
+---
+
+### Node Resolution Decision Table
+
+| Node Placement | Conjunction | Aspect | Sign Lord | Star Lord | Final Array | Strength |
+| --- | --- | --- | --- | --- | --- | --- |
+| Rahu in 6, with Venus, Saturn aspect, Mercury sign, Moon star | Venus (2,7) | Saturn (8,9) | Mercury (3,6) | Moon (4) | [2,3,4,6,7,8,9] | VERY HIGH |
+| Ketu in 12, alone, Jupiter aspect, Saturn sign, Mars star | None | Jupiter (5,12) | Saturn (8,9) | Mars (1,8) | [1,5,8,9,12] | HIGH |
+| Rahu in 11, with no conjunctions, alone, Sun sign, Mercury star | None | None | Sun (5) | Mercury (3,6) | [3,5,6,11] | MODERATE |
+
+---
+
 ## References & Alignment
 
 - **Core Authority:** RKP_RULES_FROM_SARFARAZ.md
