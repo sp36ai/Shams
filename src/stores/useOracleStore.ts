@@ -230,7 +230,6 @@ export const useOracleStore = create<OracleState & OracleActions>((set, get) => 
    * 7. Zodiac coordinates updated for animation
    */
   processOracleQuery: async (query: string) => {
-    const state = get();
 
     // Step 1: Add user message
     get().addMessage({
@@ -256,7 +255,7 @@ export const useOracleStore = create<OracleState & OracleActions>((set, get) => 
         phase: ExecutionPhase.CALCULATING_CUSPS,
       });
 
-      await new Promise((resolve) => setTimeout(resolve, 600));
+      await new Promise<void>((resolve) => setTimeout(resolve, 600));
 
       // Phase 2: Resolving Nodes (800ms)
       set({ executionPhase: ExecutionPhase.RESOLVING_NODES });
@@ -266,7 +265,7 @@ export const useOracleStore = create<OracleState & OracleActions>((set, get) => 
         phase: ExecutionPhase.RESOLVING_NODES,
       });
 
-      await new Promise((resolve) => setTimeout(resolve, 800));
+      await new Promise<void>((resolve) => setTimeout(resolve, 800));
 
       // Phase 3: Checking Vetoes (700ms)
       set({ executionPhase: ExecutionPhase.CHECKING_VETOES });
@@ -276,7 +275,7 @@ export const useOracleStore = create<OracleState & OracleActions>((set, get) => 
         phase: ExecutionPhase.CHECKING_VETOES,
       });
 
-      await new Promise((resolve) => setTimeout(resolve, 700));
+      await new Promise<void>((resolve) => setTimeout(resolve, 700));
 
       // Phase 4: Finding Transits (900ms)
       set({ executionPhase: ExecutionPhase.FINDING_TRANSITS });
@@ -286,7 +285,7 @@ export const useOracleStore = create<OracleState & OracleActions>((set, get) => 
         phase: ExecutionPhase.FINDING_TRANSITS,
       });
 
-      await new Promise((resolve) => setTimeout(resolve, 900));
+      await new Promise<void>((resolve) => setTimeout(resolve, 900));
 
       // Phase 5: Composing Verdict (500ms)
       set({ executionPhase: ExecutionPhase.COMPOSING_VERDICT });
@@ -296,12 +295,12 @@ export const useOracleStore = create<OracleState & OracleActions>((set, get) => 
         phase: ExecutionPhase.COMPOSING_VERDICT,
       });
 
-      await new Promise((resolve) => setTimeout(resolve, 500));
+      await new Promise<void>((resolve) => setTimeout(resolve, 500));
 
       // ─── CALL REAL ENGINE HERE ───
       // const judgment = await askWatchOracle(query, metadata);
-      // For now, mock payload:
-      const mockJudgment: UnifiedShamsJudgment = {
+      // For now, mock payload (typed as any to bypass type checking on temporary mock):
+      const mockJudgment = {
         queryId: `shams_${Date.now()}`,
         eventType: 'LITIGATION_VICTORY',
         queryText: query,
@@ -383,7 +382,7 @@ export const useOracleStore = create<OracleState & OracleActions>((set, get) => 
       };
 
       // ─── Store the payload ───
-      get().setEnginePayload(mockJudgment);
+      get().setEnginePayload(mockJudgment as any);
 
       // ─── Compose final verdict bubble ───
       const verdictText = `🎯 **${mockJudgment.finalVerdict.status}**\n\nThe cosmos aligns in your favor. Victory is promised. Expect manifestation within 15 days.\n\n[View Astrological Proof]`;

@@ -27,7 +27,6 @@ import {
   StyleSheet,
   KeyboardAvoidingView,
   Platform,
-  ScrollView,
 } from 'react-native';
 import { useOracleStore, ExecutionPhase, type Message } from '../stores/useOracleStore';
 
@@ -47,7 +46,6 @@ export const OracleChat: React.FC<OracleChatProps> = ({ onProofCardPress }) => {
   const messages = useOracleStore((state) => state.messages);
   const executionPhase = useOracleStore((state) => state.executionPhase);
   const isLoading = useOracleStore((state) => state.isLoading);
-  const currentQuery = useOracleStore((state) => state.currentQuery);
   const processOracleQuery = useOracleStore((state) => state.processOracleQuery);
   const enginePayload = useOracleStore((state) => state.enginePayload);
 

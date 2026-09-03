@@ -26,7 +26,6 @@ import {
   StyleSheet,
   Modal,
   SafeAreaView,
-  useWindowDimensions,
 } from 'react-native';
 import type { UnifiedShamsJudgment } from '../astrology/rkp/unifiedShamsEngine';
 
@@ -57,7 +56,6 @@ export const DeepDiveProofCard: React.FC<DeepDiveProofCardProps> = ({
   onClose,
 }) => {
   const [showAdvanced, setShowAdvanced] = useState(false);
-  const { width } = useWindowDimensions();
 
   if (!payload) return null;
 
@@ -69,19 +67,19 @@ export const DeepDiveProofCard: React.FC<DeepDiveProofCardProps> = ({
   const cslChain: CSLChainItem[] = [
     {
       title: '6th House CSL',
-      planet: cslData?.cslPlanet?.name || 'Unknown',
+      planet: typeof cslData?.cslPlanet === 'string' ? cslData.cslPlanet : (cslData?.cslPlanet as any)?.name || 'Unknown',
       significations: cslData?.starSignifications || [],
       role: 'CSL',
     },
     {
       title: 'Star Lord',
-      planet: cslData?.starLord?.name || 'Unknown',
+      planet: typeof cslData?.starLord === 'string' ? cslData.starLord : (cslData?.starLord as any)?.name || 'Unknown',
       significations: cslData?.starSignifications || [],
       role: 'Star',
     },
     {
       title: 'Sub Lord',
-      planet: cslData?.subLord?.name || 'Unknown',
+      planet: typeof cslData?.subLord === 'string' ? cslData.subLord : (cslData?.subLord as any)?.name || 'Unknown',
       significations: cslData?.subSignifications || [],
       role: 'Sub',
     },
