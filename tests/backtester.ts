@@ -217,52 +217,232 @@ class ShamsBacktester {
 
   /**
    * Create a mock WatchChart for testing with the necessary interface methods
+   * Extracts real data from test case input_state for accurate engine validation
    */
   private createMockChart(inputState: any): any {
     const chartData = inputState.chart_data || {};
+    const cslData = chartData.csl_data || {};
+    const retrogradeInfo = chartData.retrograde_planets || [];
 
     return {
-      // Mock CSL/Star/Sub Lord methods
+      // Mock CSL/Star/Sub Lord methods with real test data
       getHouseCuspLongitude: (house: number) => {
-        return chartData.cusps?.[house] || 0;
+        return chartData.cusps?.[house] || (house * 30); // Rough approximation
       },
 
       getCuspSubLord: (longitude: number) => {
-        return chartData.cuspSubLords?.[0] || { name: 'Venus', isNode: false };
+        return cslData.csl_planet || { name: 'Venus', isNode: false, isRetrograde: false };
       },
 
       getStarLord: (planet: any) => {
-        return chartData.starLords?.[planet.name] || { name: 'Moon', isNode: false };
+        // Handle multiple parameter types: planet object with .name, string, nakshatra object
+        const planetName = planet?.name || planet?.nakshatra || planet;
+
+        // Nakshatra to star lord mapping (simplified 27 nakshatras)
+        const nakshatraStarLords: Record<string, string> = {
+          Ashwini: 'Ketu', Bharani: 'Venus', Krittika: 'Sun',
+          Rohini: 'Moon', Mrigashirsha: 'Mars', Ardra: 'Rahu',
+          Punarvasu: 'Jupiter', Pushya: 'Saturn', Ashlesha: 'Mercury',
+          Magha: 'Ketu', 'P.Phalguni': 'Venus', 'U.Phalguni': 'Sun',
+          Hasta: 'Moon', Chitra: 'Mars', Svati: 'Rahu',
+          Vishakha: 'Jupiter', Anuradha: 'Saturn', Jyeshtha: 'Mercury',
+          Mula: 'Ketu', 'P.Ashadha': 'Venus', 'U.Ashadha': 'Sun',
+          Abhijit: 'Mercury', Shravana: 'Moon', Dhanishtha: 'Mars',
+          Shatabhisha: 'Rahu', 'P.Bhadrapada': 'Jupiter', 'U.Bhadrapada': 'Saturn',
+          Revati: 'Mercury',
+        };
+
+        // Look up from various sources
+        const starLordName = nakshatraStarLords[planetName as string] ||
+                            chartData.starLords?.[planetName]?.name ||
+                            cslData.star_lord?.name ||
+                            'Moon';
+
+        return {
+          name: starLordName,
+          isNode: starLordName === 'Rahu' || starLordName === 'Ketu',
+          isRetrograde: retrogradeInfo.includes(starLordName),
+        };
       },
 
       getSubLord: (planet: any) => {
-        return chartData.subLords?.[planet.name] || { name: 'Mercury', isNode: false };
+        const planetName = planet.name || planet;
+        const subLordData = chartData.subLords?.[planetName] ||
+                          cslData.sub_lord ||
+                          { name: 'Mercury', isNode: false, isRetrograde: false };
+        return subLordData;
       },
 
       getSignifiedHouses: (planet: any, types: string[]) => {
         const key = planet.name || planet;
-        return chartData.significations?.[key] || [1, 2, 3];
+        // Use real significations from test data if available
+        if (chartData.significations?.[key]) {
+          return chartData.significations[key];
+        }
+        // Fallback to CSL data significations
+        if (key === cslData.star_lord?.name) {
+          return cslData.star_lord?.signifies || [8, 11];
+        }
+        if (key === cslData.sub_lord?.name) {
+          return cslData.sub_lord?.signifies || [2, 11];
+        }
+        return [1, 2, 3]; // Default
       },
 
       isBenefic: (planet: any) => {
         const name = planet.name || planet;
-        return ['Venus', 'Mercury', 'Jupiter', 'Moon'].includes(name);
+        // Jupiter, Venus, Mercury (when not retrograde), Moon are considered benefic
+        const beneficList = ['Venus', 'Mercury', 'Jupiter', 'Moon'];
+        return beneficList.includes(name) && !retrogradeInfo.includes(name);
       },
 
       getPlanetPosition: (planet: string) => {
-        return chartData.planets?.[planet] || { longitude: 0, isRetrograde: false };
+        const data = chartData.planets?.[planet] ||
+                    chartData[planet] ||
+                    { longitude: 0, isRetrograde: retrogradeInfo.includes(planet) };
+        return {
+          longitude: data.longitude || 0,
+          isRetrograde: data.isRetrograde || retrogradeInfo.includes(planet),
+        };
       },
 
       getRetrogradePlanets: () => {
-        return chartData.retrograde_planets || [];
+        return retrogradeInfo;
       },
 
       getRulingPlanets: () => {
-        return chartData.ruling_planets || [];
+        const rp = chartData.ruling_planets || chartData.rp || {};
+        return Object.values(rp).filter((p) => typeof p === 'string');
       },
 
       getNodeSignifications: (node: string) => {
-        return chartData.node_significations?.[node] || [1, 2, 3];
+        const nodeData = chartData.node_data || {};
+        if (nodeData.node === node) {
+          // Return full proxy array from node resolution
+          return chartData.proxy_resolution?.full_array ||
+                 [nodeData.house, ...(nodeData.proxy_houses || [])];
+        }
+        return [1, 2, 3]; // Default
+      },
+
+      getOwnedHouses: (planet: string) => {
+        // Return houses owned by a planet based on sign lordships
+        const signLordsMap: Record<string, number[]> = {
+          Aries: [1, 8], Taurus: [2, 9], Gemini: [3, 12],
+          Cancer: [4, 11], Leo: [5, 10], Virgo: [6, 11],
+          Libra: [7, 12], Scorpio: [8, 1], Sagittarius: [9, 2],
+          Capricorn: [10, 3], Aquarius: [11, 4], Pisces: [12, 5],
+        };
+        return Object.entries(signLordsMap)
+          .filter(([_, planets]) => planets.includes(planet as any))
+          .flatMap(([_, houses]) => houses);
+      },
+
+      getAspectedHouses: (planet: string) => {
+        // Return houses aspected by a planet (classical aspects)
+        const aspectMap: Record<string, number[]> = {
+          Sun: [1, 5, 7, 9],
+          Moon: [1, 4, 7, 10],
+          Mars: [1, 4, 7, 8],
+          Mercury: [1, 6],
+          Jupiter: [1, 5, 7, 9],
+          Venus: [1, 7],
+          Saturn: [1, 3, 7, 10],
+          Rahu: [1, 5, 7, 9],
+          Ketu: [1, 5, 7, 9],
+        };
+        return aspectMap[planet] || [1, 7];
+      },
+
+      getConjoinedPlanets: (planet: string) => {
+        // Return planets in conjunction with a given planet
+        const nodeData = chartData.node_data || {};
+        if (nodeData.node === planet && nodeData.occupants) {
+          return nodeData.occupants.map((name: string) => ({
+            name,
+            isNode: false,
+            isRetrograde: retrogradeInfo.includes(name),
+          }));
+        }
+        return [];
+      },
+
+      getAspectingPlanets: (planet: string) => {
+        // Return planets aspecting a given planet
+        const nodeData = chartData.node_data || {};
+        if (nodeData.node === planet && nodeData.aspects) {
+          return nodeData.aspects.map((name: string) => ({
+            name,
+            isNode: false,
+            isRetrograde: retrogradeInfo.includes(name),
+          }));
+        }
+        return [];
+      },
+
+      getSignLord: (sign: string) => {
+        const signLords: Record<string, string> = {
+          Aries: 'Mars', Taurus: 'Venus', Gemini: 'Mercury',
+          Cancer: 'Moon', Leo: 'Sun', Virgo: 'Mercury',
+          Libra: 'Venus', Scorpio: 'Mars', Sagittarius: 'Jupiter',
+          Capricorn: 'Saturn', Aquarius: 'Saturn', Pisces: 'Jupiter',
+        };
+        const lord = signLords[sign] || 'Mercury';
+        return { name: lord, isNode: false, isRetrograde: retrogradeInfo.includes(lord) };
+      },
+
+      getMoonNakshatra: () => {
+        return chartData.moon_nakshatra || 'Ashlesha';
+      },
+
+      getVimshottariDashaLord: (nakshatra: string, timestamp: number) => {
+        const nakshatraLords: Record<string, string[]> = {
+          Ashlesha: ['Mercury', 'Moon', 'Venus'],
+          Magha: ['Ketu', 'Venus', 'Sun'],
+          'P.Phalguni': ['Venus', 'Sun', 'Moon'],
+        };
+        const lords = nakshatraLords[nakshatra] || ['Mercury', 'Moon', 'Venus'];
+        // Return Vimshottari dasha data from test case or default
+        return {
+          maha: { lord: chartData.dasha_data?.maha_lord || lords[0], name: lords[0] },
+          bhukti: { lord: chartData.dasha_data?.bhukti_lord || lords[1], name: lords[1] },
+          antara: { lord: chartData.dasha_data?.antara_lord || lords[2], name: lords[2] },
+        };
+      },
+
+      getLagna: () => {
+        return { longitude: 0, sign: 'Aries', nakshatra: 'Ashwini' };
+      },
+
+      getSign: (longitude: number) => {
+        const signs = ['Aries', 'Taurus', 'Gemini', 'Cancer', 'Leo', 'Virgo',
+                       'Libra', 'Scorpio', 'Sagittarius', 'Capricorn', 'Aquarius', 'Pisces'];
+        const signIndex = Math.floor(longitude / 30) % 12;
+        return signs[signIndex];
+      },
+
+      getDayLord: (timestamp: number) => {
+        const days = ['Sun', 'Moon', 'Mars', 'Mercury', 'Jupiter', 'Venus', 'Saturn'];
+        const date = new Date(timestamp * 1000);
+        const dayOfWeek = date.getDay();
+        return { name: days[dayOfWeek], isNode: false, isRetrograde: false };
+      },
+
+      isRetrograde: (planet: string) => {
+        return retrogradeInfo.includes(planet);
+      },
+
+      isCombust: (planet: string) => {
+        return false; // Simplified; would need Sun distance calculation
+      },
+
+      isDebilitated: (planet: string) => {
+        const debilitationMap: Record<string, string> = {
+          Sun: 'Libra', Moon: 'Scorpio', Mars: 'Cancer', Mercury: 'Pisces',
+          Jupiter: 'Capricorn', Venus: 'Virgo', Saturn: 'Aries',
+        };
+        // Would need actual sign calculation; simplified for now
+        return false;
       },
     };
   }
