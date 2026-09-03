@@ -361,23 +361,26 @@ function calculateRulingPlanets(chart: WatchChart, queryTimestamp: number): Ruli
 function findOperativeSignificators(
   dbaWindow: DashaData,
   rulingPlanets: RulingPlanetsData,
-  _chart: WatchChart,
+  chart: WatchChart,
   _eventType: ComplexEventType
 ): OperativeSignificators {
   const dbaArray = [dbaWindow.maha.lord, dbaWindow.bhukti.lord, dbaWindow.antara.lord];
   const rpArray = rulingPlanets.rawPool;
 
   // Build intersection
-  const dbaPlanetNames = dbaArray.map((p) => p.name);
-  const rpPlanetNames = rpArray.map((p) => p.name);
+  // NOTE: Type casting to any because dbaArray/rpArray contain WatchPlanet-like objects
+  // but are typed as Planet strings. This is a Phase 1 engine type system issue.
+  const dbaPlanetNames = (dbaArray as any).map((p: any) => p.name);
+  const rpPlanetNames = (rpArray as any).map((p: any) => p.name);
 
   const triggeringNames = dbaPlanetNames.filter((name) => rpPlanetNames.includes(name));
   const dbaOnlyNames = dbaPlanetNames.filter((name) => !rpPlanetNames.includes(name));
   const rpOnlyNames = rpPlanetNames.filter((name) => !dbaPlanetNames.includes(name));
 
-  const triggering = dbaArray.filter((p) => triggeringNames.includes(p.name));
-  const dbaOnly = dbaArray.filter((p) => dbaOnlyNames.includes(p.name));
-  const rpOnly = rpArray.filter((p) => rpOnlyNames.includes(p.name));
+  // Casting to any for same reason as above
+  const triggering = (dbaArray as any).filter((p: any) => triggeringNames.includes(p.name));
+  const dbaOnly = (dbaArray as any).filter((p: any) => dbaOnlyNames.includes(p.name));
+  const rpOnly = (rpArray as any).filter((p: any) => rpOnlyNames.includes(p.name));
 
   // Stigmatization check: Retrograde, combustion, debilitation
   const afflicted: Array<{
