@@ -138,19 +138,19 @@ export const useOracleStore = create<OracleState & OracleActions>((set, get) => 
   queryHistory: [],
 
   // ─── Chat Management ───
-  addMessage: (message) => {
+  addMessage: message => {
     const newMessage: Message = {
       ...message,
       id: `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
       timestamp: Date.now(),
     };
 
-    set((state) => ({
+    set(state => ({
       messages: [...state.messages, newMessage],
     }));
   },
 
-  setCurrentQuery: (query) => {
+  setCurrentQuery: query => {
     set({ currentQuery: query });
   },
 
@@ -159,7 +159,7 @@ export const useOracleStore = create<OracleState & OracleActions>((set, get) => 
   },
 
   // ─── Engine Integration ───
-  setEnginePayload: (payload) => {
+  setEnginePayload: payload => {
     set({ enginePayload: payload, engineError: null });
 
     // Extract transit coordinates for zodiac animation
@@ -185,27 +185,27 @@ export const useOracleStore = create<OracleState & OracleActions>((set, get) => 
     }
   },
 
-  setEngineError: (error) => {
+  setEngineError: error => {
     set({ engineError: error });
   },
 
   // ─── Execution Control ───
-  setExecutionPhase: (phase) => {
+  setExecutionPhase: phase => {
     set({ executionPhase: phase });
   },
 
-  setIsLoading: (loading) => {
+  setIsLoading: loading => {
     set({ isLoading: loading });
   },
 
   // ─── Cosmic Animation ───
-  setTargetTransitCoordinates: (coords) => {
+  setTargetTransitCoordinates: coords => {
     set({ targetTransitCoordinates: coords });
   },
 
   // ─── History ───
   addToHistory: (query, verdict) => {
-    set((state) => ({
+    set(state => ({
       queryHistory: [
         ...state.queryHistory,
         {
@@ -232,7 +232,6 @@ export const useOracleStore = create<OracleState & OracleActions>((set, get) => 
    * 7. Zodiac coordinates updated for animation
    */
   processOracleQuery: async (query: string) => {
-
     // Step 1: Add user message
     get().addMessage({
       role: 'user',
@@ -257,7 +256,7 @@ export const useOracleStore = create<OracleState & OracleActions>((set, get) => 
         phase: ExecutionPhase.CALCULATING_CUSPS,
       });
 
-      await new Promise<void>((resolve) => setTimeout(resolve, 600));
+      await new Promise<void>(resolve => setTimeout(resolve, 600));
 
       // Phase 2: Resolving Nodes (800ms)
       set({ executionPhase: ExecutionPhase.RESOLVING_NODES });
@@ -267,7 +266,7 @@ export const useOracleStore = create<OracleState & OracleActions>((set, get) => 
         phase: ExecutionPhase.RESOLVING_NODES,
       });
 
-      await new Promise<void>((resolve) => setTimeout(resolve, 800));
+      await new Promise<void>(resolve => setTimeout(resolve, 800));
 
       // Phase 3: Checking Vetoes (700ms)
       set({ executionPhase: ExecutionPhase.CHECKING_VETOES });
@@ -277,7 +276,7 @@ export const useOracleStore = create<OracleState & OracleActions>((set, get) => 
         phase: ExecutionPhase.CHECKING_VETOES,
       });
 
-      await new Promise<void>((resolve) => setTimeout(resolve, 700));
+      await new Promise<void>(resolve => setTimeout(resolve, 700));
 
       // Phase 4: Finding Transits (900ms)
       set({ executionPhase: ExecutionPhase.FINDING_TRANSITS });
@@ -287,7 +286,7 @@ export const useOracleStore = create<OracleState & OracleActions>((set, get) => 
         phase: ExecutionPhase.FINDING_TRANSITS,
       });
 
-      await new Promise<void>((resolve) => setTimeout(resolve, 900));
+      await new Promise<void>(resolve => setTimeout(resolve, 900));
 
       // Phase 5: Composing Verdict (500ms)
       set({ executionPhase: ExecutionPhase.COMPOSING_VERDICT });
@@ -297,7 +296,7 @@ export const useOracleStore = create<OracleState & OracleActions>((set, get) => 
         phase: ExecutionPhase.COMPOSING_VERDICT,
       });
 
-      await new Promise<void>((resolve) => setTimeout(resolve, 500));
+      await new Promise<void>(resolve => setTimeout(resolve, 500));
 
       // ─── CALL REAL ENGINE ───
       // Route query through askWatchOracle (server detects event type and routes to Shams engine)
@@ -395,7 +394,8 @@ export const useOracleStore = create<OracleState & OracleActions>((set, get) => 
 
       // ─── Compose final verdict bubble ───
       // Use real oracle narration if available, otherwise fallback
-      const oracleText = result.reading.oracle?.narration ||
+      const oracleText =
+        result.reading.oracle?.narration ||
         'The cosmos aligns in your favor. Victory is promised. Expect manifestation within 15 days.';
 
       const verdictText = `🎯 **${mockJudgment.finalVerdict.status}**\n\n${oracleText}\n\n[View Astrological Proof]`;
@@ -433,11 +433,11 @@ export const useOracleStore = create<OracleState & OracleActions>((set, get) => 
 // Selectors (for optimization and clarity)
 // ─────────────────────────────────────────────────────────────────────────────
 
-export const useOracleMessages = () => useOracleStore((state) => state.messages);
-export const useEnginePayload = () => useOracleStore((state) => state.enginePayload);
-export const useExecutionPhase = () => useOracleStore((state) => state.executionPhase);
-export const useIsLoading = () => useOracleStore((state) => state.isLoading);
+export const useOracleMessages = () => useOracleStore(state => state.messages);
+export const useEnginePayload = () => useOracleStore(state => state.enginePayload);
+export const useExecutionPhase = () => useOracleStore(state => state.executionPhase);
+export const useIsLoading = () => useOracleStore(state => state.isLoading);
 export const useTargetTransitCoordinates = () =>
-  useOracleStore((state) => state.targetTransitCoordinates);
-export const useQueryHistory = () => useOracleStore((state) => state.queryHistory);
-export const useCurrentQuery = () => useOracleStore((state) => state.currentQuery);
+  useOracleStore(state => state.targetTransitCoordinates);
+export const useQueryHistory = () => useOracleStore(state => state.queryHistory);
+export const useCurrentQuery = () => useOracleStore(state => state.currentQuery);

@@ -25,7 +25,7 @@ async function generateAppleVsSamsungCase() {
 
   // Build the real chart using the chartBuilder
   const isoTimestamp = '2012-08-24T22:30:00Z'; // 15:30 PDT = 22:30 UTC
-  const latitude = 37.3382;  // North
+  const latitude = 37.3382; // North
   const longitude = -121.8863; // West (negative)
 
   console.log('⚙️  Building ephemeris chart...');
@@ -69,13 +69,10 @@ async function generateAppleVsSamsungCase() {
         // Real chart from ephemeris
         location: { lat: latitude, lon: longitude, city: 'San Jose, CA' },
         timestamp_utc: isoTimestamp,
-        cusps: chart.cusps.reduce(
-          (acc: any, cusp: any, idx: number) => {
-            acc[idx + 1] = cusp.siderealLongitude;
-            return acc;
-          },
-          {}
-        ),
+        cusps: chart.cusps.reduce((acc: any, cusp: any, idx: number) => {
+          acc[idx + 1] = cusp.siderealLongitude;
+          return acc;
+        }, {}),
         planets: Object.fromEntries(
           Object.entries(planets).map(([name, data]: any) => [
             name,
@@ -88,7 +85,7 @@ async function generateAppleVsSamsungCase() {
               nakshatraLord: data.nakshatraLord,
               subLord: data.subLord,
             },
-          ])
+          ]),
         ),
         nodes: {
           rahu: {
@@ -119,7 +116,8 @@ async function generateAppleVsSamsungCase() {
     expected_output: {
       status: 'PROMISED_AND_TIMED',
       confidence_minimum: 0.85,
-      verdict_reasoning: 'Victory promised by 11th house signification; Sub-Lord confirms without veto to 12th',
+      verdict_reasoning:
+        'Victory promised by 11th house signification; Sub-Lord confirms without veto to 12th',
       damages_expected: true,
       factors: [
         'Real ephemeris data from August 24, 2012, 22:30 UTC',
@@ -141,7 +139,10 @@ async function generateAppleVsSamsungCase() {
   };
 
   // Write the test case
-  const outputPath = path.join('/home/user/Shams/tests/cases', 'LIT_PROD_001_apple_vs_samsung.json');
+  const outputPath = path.join(
+    '/home/user/Shams/tests/cases',
+    'LIT_PROD_001_apple_vs_samsung.json',
+  );
   fs.writeFileSync(outputPath, JSON.stringify(testCase, null, 2));
 
   console.log(`\n📝 Test case written to: ${outputPath}\n`);
@@ -150,7 +151,7 @@ async function generateAppleVsSamsungCase() {
 }
 
 // Execute
-generateAppleVsSamsungCase().catch((err) => {
+generateAppleVsSamsungCase().catch(err => {
   console.error('❌ Error generating test case:', err);
   process.exit(1);
 });

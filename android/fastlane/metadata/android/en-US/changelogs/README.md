@@ -11,13 +11,13 @@ the uploader could see.
 
 `r0adkll/upload-google-play`, the action our release workflow uses, reads this
 directory and keeps **only** files matching `whatsnew-<locale>`. It then parses
-the locale as *everything after the first dash*.
+the locale as _everything after the first dash_.
 
 Two rules follow, and both matter:
 
 - **The name must start with `whatsnew-`.** Fastlane-style names (`4.txt`,
   `default.txt`) do not match the filter and are silently skipped.
-- **There must be no file extension.** `whatsnew-en-US.txt` *does* pass the
+- **There must be no file extension.** `whatsnew-en-US.txt` _does_ pass the
   filter, but the locale then parses as `en-US.txt`, which is not a real Play
   locale — so it fails at the API instead of silently doing nothing.
 

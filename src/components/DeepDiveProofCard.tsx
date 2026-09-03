@@ -57,7 +57,9 @@ export const DeepDiveProofCard: React.FC<DeepDiveProofCardProps> = ({
 }) => {
   const [showAdvanced, setShowAdvanced] = useState(false);
 
-  if (!payload) return null;
+  if (!payload) {
+    return null;
+  }
 
   const judgment = payload.promiseGateway.judgment;
   const verdict = payload.finalVerdict;
@@ -67,19 +69,28 @@ export const DeepDiveProofCard: React.FC<DeepDiveProofCardProps> = ({
   const cslChain: CSLChainItem[] = [
     {
       title: '6th House CSL',
-      planet: typeof cslData?.cslPlanet === 'string' ? cslData.cslPlanet : (cslData?.cslPlanet as any)?.name || 'Unknown',
+      planet:
+        typeof cslData?.cslPlanet === 'string'
+          ? cslData.cslPlanet
+          : (cslData?.cslPlanet as any)?.name || 'Unknown',
       significations: cslData?.starSignifications || [],
       role: 'CSL',
     },
     {
       title: 'Star Lord',
-      planet: typeof cslData?.starLord === 'string' ? cslData.starLord : (cslData?.starLord as any)?.name || 'Unknown',
+      planet:
+        typeof cslData?.starLord === 'string'
+          ? cslData.starLord
+          : (cslData?.starLord as any)?.name || 'Unknown',
       significations: cslData?.starSignifications || [],
       role: 'Star',
     },
     {
       title: 'Sub Lord',
-      planet: typeof cslData?.subLord === 'string' ? cslData.subLord : (cslData?.subLord as any)?.name || 'Unknown',
+      planet:
+        typeof cslData?.subLord === 'string'
+          ? cslData.subLord
+          : (cslData?.subLord as any)?.name || 'Unknown',
       significations: cslData?.subSignifications || [],
       role: 'Sub',
     },
@@ -253,17 +264,13 @@ const CSLChainCard: React.FC<{ item: CSLChainItem }> = ({ item }) => {
  */
 const ConfidenceMeter: React.FC<{ confidence: number }> = ({ confidence }) => {
   const percentage = confidence * 100;
-  const confidenceColor =
-    percentage >= 85 ? '#4CAF50' : percentage >= 70 ? '#FFC107' : '#FF6B6B';
+  const confidenceColor = percentage >= 85 ? '#4CAF50' : percentage >= 70 ? '#FFC107' : '#FF6B6B';
 
   return (
     <View style={styles.confidenceMeterContainer}>
       <View style={styles.meterBackground}>
         <View
-          style={[
-            styles.meterFill,
-            { width: `${percentage}%`, backgroundColor: confidenceColor },
-          ]}
+          style={[styles.meterFill, { width: `${percentage}%`, backgroundColor: confidenceColor }]}
         />
       </View>
       <Text style={styles.meterLabel}>{percentage.toFixed(1)}%</Text>
@@ -297,9 +304,7 @@ const VectorBreakdown: React.FC<VectorBreakdownProps> = ({ vector, title, color 
       <Text style={styles.vectorAlignment}>
         Expected: {vector.expectedHouses?.join(', ') || 'N/A'}
       </Text>
-      <Text style={styles.vectorAlignment}>
-        Actual: {vector.actualHouses?.join(', ') || 'N/A'}
-      </Text>
+      <Text style={styles.vectorAlignment}>Actual: {vector.actualHouses?.join(', ') || 'N/A'}</Text>
       <View style={styles.alignmentBar}>
         <View
           style={[

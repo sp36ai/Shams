@@ -158,7 +158,7 @@ export async function resolveTiming(
   chart: WatchChart,
   eventType: ComplexEventType,
   _verdictState: 'PROMISED' | 'PROMISED_ABSOLUTE',
-  queryTimestamp: number
+  queryTimestamp: number,
 ): Promise<CompleteTiming> {
   // Phase 1: Extract and check DBA window
   const dbaWindow = extractDashaData(chart, queryTimestamp);
@@ -172,7 +172,7 @@ export async function resolveTiming(
     dbaWindow,
     rulingPlanets,
     chart,
-    eventType
+    eventType,
   );
 
   // Phase 4: Pinpoint exact date via transits
@@ -180,7 +180,7 @@ export async function resolveTiming(
     chart,
     operativeSignificators,
     eventType,
-    queryTimestamp
+    queryTimestamp,
   );
 
   // Determine final verdict based on timing confidence
@@ -220,7 +220,7 @@ function extractDashaData(chart: WatchChart, queryTimestamp: number): DashaData 
       startDate: new Date(vimshottariLord.mahaStartTimestamp),
       endDate: new Date(vimshottariLord.mahaEndTimestamp),
       remaining_days: Math.floor(
-        (vimshottariLord.mahaEndTimestamp - queryTimestamp) / (1000 * 60 * 60 * 24)
+        (vimshottariLord.mahaEndTimestamp - queryTimestamp) / (1000 * 60 * 60 * 24),
       ),
     },
     bhukti: {
@@ -228,7 +228,7 @@ function extractDashaData(chart: WatchChart, queryTimestamp: number): DashaData 
       startDate: new Date(vimshottariLord.bhuktiStartTimestamp),
       endDate: new Date(vimshottariLord.bhuktiEndTimestamp),
       remaining_days: Math.floor(
-        (vimshottariLord.bhuktiEndTimestamp - queryTimestamp) / (1000 * 60 * 60 * 24)
+        (vimshottariLord.bhuktiEndTimestamp - queryTimestamp) / (1000 * 60 * 60 * 24),
       ),
     },
     antara: {
@@ -236,7 +236,7 @@ function extractDashaData(chart: WatchChart, queryTimestamp: number): DashaData 
       startDate: new Date(vimshottariLord.antaraStartTimestamp),
       endDate: new Date(vimshottariLord.antaraEndTimestamp),
       remaining_days: Math.floor(
-        (vimshottariLord.antaraEndTimestamp - queryTimestamp) / (1000 * 60 * 60 * 24)
+        (vimshottariLord.antaraEndTimestamp - queryTimestamp) / (1000 * 60 * 60 * 24),
       ),
     },
   };
@@ -254,7 +254,7 @@ function extractDashaData(chart: WatchChart, queryTimestamp: number): DashaData 
 function checkDbaAlignment(
   dbaWindow: DashaData,
   eventType: ComplexEventType,
-  chart: WatchChart
+  chart: WatchChart,
 ): {
   mahaDashaSatisfied: boolean;
   bhuktiSatisfied: boolean;
@@ -271,9 +271,9 @@ function checkDbaAlignment(
   const antaraSig = chart.getSignifiedHouses(dbaWindow.antara.lord);
 
   // Check alignment
-  const mahaSatisfied = mahaSig.some((h) => eventHouses.includes(h));
-  const bhuktiSatisfied = bhuktiSig.some((h) => eventHouses.includes(h));
-  const antaraSatisfied = antaraSig.some((h) => eventHouses.includes(h));
+  const mahaSatisfied = mahaSig.some(h => eventHouses.includes(h));
+  const bhuktiSatisfied = bhuktiSig.some(h => eventHouses.includes(h));
+  const antaraSatisfied = antaraSig.some(h => eventHouses.includes(h));
 
   // Determine overall status and expected timeline
   const satisfiedCount = [mahaSatisfied, bhuktiSatisfied, antaraSatisfied].filter(Boolean).length;
@@ -362,7 +362,7 @@ function findOperativeSignificators(
   dbaWindow: DashaData,
   rulingPlanets: RulingPlanetsData,
   chart: WatchChart,
-  _eventType: ComplexEventType
+  _eventType: ComplexEventType,
 ): OperativeSignificators {
   const dbaArray = [dbaWindow.maha.lord, dbaWindow.bhukti.lord, dbaWindow.antara.lord];
   const rpArray = rulingPlanets.rawPool;
@@ -370,16 +370,21 @@ function findOperativeSignificators(
   // Build intersection
   // NOTE: Type casting to any because dbaArray/rpArray contain WatchPlanet-like objects
   // but are typed as Planet strings. This is a Phase 1 engine type system issue.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const dbaPlanetNames = (dbaArray as any).map((p: any) => p.name);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const rpPlanetNames = (rpArray as any).map((p: any) => p.name);
 
-  const triggeringNames = dbaPlanetNames.filter((name) => rpPlanetNames.includes(name));
-  const dbaOnlyNames = dbaPlanetNames.filter((name) => !rpPlanetNames.includes(name));
-  const rpOnlyNames = rpPlanetNames.filter((name) => !dbaPlanetNames.includes(name));
+  const triggeringNames = dbaPlanetNames.filter(name => rpPlanetNames.includes(name));
+  const dbaOnlyNames = dbaPlanetNames.filter(name => !rpPlanetNames.includes(name));
+  const rpOnlyNames = rpPlanetNames.filter(name => !dbaPlanetNames.includes(name));
 
   // Casting to any for same reason as above
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const triggering = (dbaArray as any).filter((p: any) => triggeringNames.includes(p.name));
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const dbaOnly = (dbaArray as any).filter((p: any) => dbaOnlyNames.includes(p.name));
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const rpOnly = (rpArray as any).filter((p: any) => rpOnlyNames.includes(p.name));
 
   // Stigmatization check: Retrograde, combustion, debilitation
@@ -419,7 +424,7 @@ async function pinpointDateViaTransits(
   _chart: WatchChart,
   operativeSignificators: OperativeSignificators,
   _eventType: ComplexEventType,
-  queryTimestamp: number
+  queryTimestamp: number,
 ): Promise<TransitTimingResult> {
   // Placeholder: Real implementation requires ephemeris lookup
   // to find exact transit times for Sun → Moon → Lagna
@@ -454,7 +459,7 @@ async function pinpointDateViaTransits(
       Level 1 (Month): Sun transits Nakshatra of ${triggering[0]?.name} → ${sunTransitDate.toDateString()}
       Level 2 (Day): Moon transits Nakshatra of ${triggering[1]?.name} → ${moonTransitTime.toLocaleString()}
       Level 3 (Moment): Lagna crosses operative significators → ${lagnaTransitMoment?.toLocaleTimeString()}
-      Operative Agents: [${triggering.map((p) => p.name).join(', ')}]
+      Operative Agents: [${triggering.map(p => p.name).join(', ')}]
     `,
   };
 }

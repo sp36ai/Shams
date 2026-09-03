@@ -23,7 +23,11 @@ import type {
   VectorEvaluationResult,
 } from './eventFormulationTypes';
 
-import { getEventVectorSignification, confidenceFromScore, verdictFromFactors } from './eventFormulationTypes';
+import {
+  getEventVectorSignification,
+  confidenceFromScore,
+  verdictFromFactors,
+} from './eventFormulationTypes';
 import type { WatchChart } from './watchChart';
 import type { HouseIndex } from '@astrology/types/chart';
 
@@ -36,7 +40,7 @@ import type { HouseIndex } from '@astrology/types/chart';
 export function evaluateMultiVectorEvent(
   chart: WatchChart,
   eventType: ComplexEventType,
-  queryText: string
+  queryText: string,
 ): CompoundEventJudgment {
   const vectorSig = getEventVectorSignification(eventType);
   const primaryHouse = vectorSig.primary;
@@ -45,34 +49,24 @@ export function evaluateMultiVectorEvent(
 
   // Step 1: Extract CSL data for primary and secondary houses
   const primaryCSL = extractCuspSubLordData(chart, primaryHouse);
-  const secondaryCSLs = secondaryHouses.map((h) => extractCuspSubLordData(chart, h));
-  const negatingCSLs = negatingHouses.map((h) => extractCuspSubLordData(chart, h));
+  const secondaryCSLs = secondaryHouses.map(h => extractCuspSubLordData(chart, h));
+  const negatingCSLs = negatingHouses.map(h => extractCuspSubLordData(chart, h));
 
   const allCSLs = [primaryCSL, ...secondaryCSLs, ...negatingCSLs];
 
   // Step 2: Evaluate each vector type
-  const primaryVectorResult = evaluateSingleVector(
-    primaryCSL,
-    'PRIMARY',
-    [primaryHouse],
-    chart
-  );
+  const primaryVectorResult = evaluateSingleVector(primaryCSL, 'PRIMARY', [primaryHouse], chart);
 
   const secondaryVectorResults = secondaryCSLs.map((csl, idx) =>
-    evaluateSingleVector(csl, 'SECONDARY', [secondaryHouses[idx]], chart)
+    evaluateSingleVector(csl, 'SECONDARY', [secondaryHouses[idx]], chart),
   );
 
   const negatingVectorResults = negatingCSLs.map((csl, idx) =>
-    evaluateSingleVector(csl, 'NEGATING', [negatingHouses[idx]], chart)
+    evaluateSingleVector(csl, 'NEGATING', [negatingHouses[idx]], chart),
   );
 
   // Step 3: Evaluate Star-Lord → Sub-Lord veto chain
-  const vetoResult = evaluateVetoLogic(
-    primaryCSL,
-    chart,
-    eventType,
-    primaryHouse
-  );
+  const vetoResult = evaluateVetoLogic(primaryCSL, chart, eventType, primaryHouse);
 
   // Step 4: Combine vectors to compute final verdict
   const computedVerdictState = computeVerdictState(
@@ -80,7 +74,7 @@ export function evaluateMultiVectorEvent(
     secondaryVectorResults,
     negatingVectorResults,
     vetoResult,
-    eventType
+    eventType,
   );
 
   // Step 5: Calculate confidence score
@@ -88,7 +82,7 @@ export function evaluateMultiVectorEvent(
     primaryVectorResult,
     secondaryVectorResults,
     negatingVectorResults,
-    vetoResult
+    vetoResult,
   );
 
   const confidence: EventConfidence = confidenceFromScore(confidenceScore);
@@ -99,7 +93,7 @@ export function evaluateMultiVectorEvent(
     secondaryVectorResults,
     negatingVectorResults,
     vetoResult,
-    eventType
+    eventType,
   );
 
   const diagnostics = constructDiagnosticsTrace(
@@ -107,7 +101,7 @@ export function evaluateMultiVectorEvent(
     primaryCSL,
     vetoResult,
     computedVerdictState,
-    confidenceScore
+    confidenceScore,
   );
 
   // Step 7: Detect blockers
@@ -186,13 +180,15 @@ function evaluateSingleVector(
   cslData: CuspSubLordData,
   vectorType: 'PRIMARY' | 'SECONDARY' | 'NEGATING' | 'EVENT_SPECIFIC_NEGATOR',
   expectedHouses: HouseIndex[],
-  _chart: WatchChart
+  _chart: WatchChart,
 ): VectorEvaluationResult {
   // Combine Star and Sub significations
-  const actualHouses = Array.from(new Set([...cslData.starSignifications, ...cslData.subSignifications]));
+  const actualHouses = Array.from(
+    new Set([...cslData.starSignifications, ...cslData.subSignifications]),
+  );
 
   // Calculate alignment: intersection of expected vs actual
-  const aligned = expectedHouses.filter((h) => actualHouses.includes(h));
+  const aligned = expectedHouses.filter(h => actualHouses.includes(h));
   const alignmentScore = aligned.length / Math.max(expectedHouses.length, 1);
 
   // Special scoring for PRIMARY vectors: must be very strong
@@ -235,7 +231,7 @@ function evaluateVetoLogic(
   primaryCSL: CuspSubLordData,
   _chart: WatchChart,
   eventType: ComplexEventType,
-  _primaryHouse: HouseIndex
+  _primaryHouse: HouseIndex,
 ): {
   starLordVerdict: 'PROMISSORY' | 'NEGATING' | 'NEUTRAL';
   subLordVerdict: 'CONFIRMING' | 'REVERSING' | 'NEUTRAL';
@@ -248,12 +244,10 @@ function evaluateVetoLogic(
   const vectorSig = getEventVectorSignification(eventType);
 
   // Determine Star-Lord verdict
-  const starSupportsEvent = primaryCSL.starSignifications.some((h) =>
-    vectorSig.secondary.includes(h)
+  const starSupportsEvent = primaryCSL.starSignifications.some(h =>
+    vectorSig.secondary.includes(h),
   );
-  const starOpposesEvent = primaryCSL.starSignifications.some((h) =>
-    vectorSig.negating.includes(h)
-  );
+  const starOpposesEvent = primaryCSL.starSignifications.some(h => vectorSig.negating.includes(h));
 
   let starLordVerdict: 'PROMISSORY' | 'NEGATING' | 'NEUTRAL';
   if (starSupportsEvent && !starOpposesEvent) {
@@ -265,12 +259,10 @@ function evaluateVetoLogic(
   }
 
   // Determine Sub-Lord verdict (VETO authority)
-  const subSupportsEvent = primaryCSL.subSignifications.some((h) =>
-    [...vectorSig.secondary, vectorSig.primary].includes(h)
+  const subSupportsEvent = primaryCSL.subSignifications.some(h =>
+    [...vectorSig.secondary, vectorSig.primary].includes(h),
   );
-  const subOpposesEvent = primaryCSL.subSignifications.some((h) =>
-    vectorSig.negating.includes(h)
-  );
+  const subOpposesEvent = primaryCSL.subSignifications.some(h => vectorSig.negating.includes(h));
 
   let subLordVerdict: 'CONFIRMING' | 'REVERSING' | 'NEUTRAL';
   let vetoApplied = false;
@@ -321,14 +313,17 @@ function computeVerdictState(
   _secondaryVectors: VectorEvaluationResult[],
   negatingVectors: VectorEvaluationResult[],
   vetoResult: ReturnType<typeof evaluateVetoLogic>,
-  _eventType: ComplexEventType
+  _eventType: ComplexEventType,
 ): EventVerdictState {
   // Veto logic takes absolute precedence
   if (vetoResult.vetoApplied && vetoResult.vetoAuthority === 'ABSOLUTE') {
     // Star-Lord promise is reversed by Sub-Lord
     if (vetoResult.starLordVerdict === 'PROMISSORY' && vetoResult.subLordVerdict === 'REVERSING') {
       return 'DENIED'; // Star promised, but Sub denied
-    } else if (vetoResult.starLordVerdict === 'NEGATING' && vetoResult.subLordVerdict === 'CONFIRMING') {
+    } else if (
+      vetoResult.starLordVerdict === 'NEGATING' &&
+      vetoResult.subLordVerdict === 'CONFIRMING'
+    ) {
       return 'REVERSIBLE'; // Star denied, but Sub confirmed (reversal possible)
     }
   }
@@ -362,7 +357,7 @@ function calculateConfidenceScore(
   primaryVector: VectorEvaluationResult,
   secondaryVectors: VectorEvaluationResult[],
   negatingVectors: VectorEvaluationResult[],
-  vetoResult: ReturnType<typeof evaluateVetoLogic>
+  vetoResult: ReturnType<typeof evaluateVetoLogic>,
 ): number {
   let score = 0.0;
 
@@ -392,7 +387,7 @@ function calculateConfidenceScore(
     } else if (vetoResult.vetoAuthority === 'STRONG') {
       score *= 0.85;
     } else if (vetoResult.vetoAuthority === 'WEAK') {
-      score *= 0.70; // Low confidence, ambiguous
+      score *= 0.7; // Low confidence, ambiguous
     }
   }
 
@@ -414,15 +409,19 @@ function constructFactorList(
   secondaryVectors: VectorEvaluationResult[],
   negatingVectors: VectorEvaluationResult[],
   vetoResult: ReturnType<typeof evaluateVetoLogic>,
-  _eventType: ComplexEventType
+  _eventType: ComplexEventType,
 ): string[] {
   const factors: string[] = [];
 
   // Primary vector
   if (primaryVector.isSatisfied) {
-    factors.push(`Primary vector (${primaryVector.expectedHouses.join(',')}) satisfied: actual=${primaryVector.actualHouses.join(',')}`);
+    factors.push(
+      `Primary vector (${primaryVector.expectedHouses.join(',')}) satisfied: actual=${primaryVector.actualHouses.join(',')}`,
+    );
   } else {
-    factors.push(`Primary vector (${primaryVector.expectedHouses.join(',')}) NOT satisfied: actual=${primaryVector.actualHouses.join(',')}`);
+    factors.push(
+      `Primary vector (${primaryVector.expectedHouses.join(',')}) NOT satisfied: actual=${primaryVector.actualHouses.join(',')}`,
+    );
   }
 
   // Star-Lord significations
@@ -431,7 +430,9 @@ function constructFactorList(
 
   // Sub-Lord significations
   factors.push(`Sub-Lord signifies: ${vetoResult.subSignifications.join(',')}`);
-  factors.push(`Sub-Lord verdict: ${vetoResult.subLordVerdict} (Veto Authority: ${vetoResult.vetoAuthority})`);
+  factors.push(
+    `Sub-Lord verdict: ${vetoResult.subLordVerdict} (Veto Authority: ${vetoResult.vetoAuthority})`,
+  );
 
   // Veto application
   if (vetoResult.vetoApplied) {
@@ -441,13 +442,17 @@ function constructFactorList(
   }
 
   // Secondary vectors
-  if (secondaryVectors.some((v) => v.isSatisfied)) {
-    factors.push(`Secondary vectors reinforcing: ${secondaryVectors.filter((v) => v.isSatisfied).length} / ${secondaryVectors.length}`);
+  if (secondaryVectors.some(v => v.isSatisfied)) {
+    factors.push(
+      `Secondary vectors reinforcing: ${secondaryVectors.filter(v => v.isSatisfied).length} / ${secondaryVectors.length}`,
+    );
   }
 
   // Negating vectors
-  if (negatingVectors.some((v) => v.isSatisfied)) {
-    factors.push(`Negating vectors present: ${negatingVectors.filter((v) => v.isSatisfied).length} / ${negatingVectors.length} (blocks outcome)`);
+  if (negatingVectors.some(v => v.isSatisfied)) {
+    factors.push(
+      `Negating vectors present: ${negatingVectors.filter(v => v.isSatisfied).length} / ${negatingVectors.length} (blocks outcome)`,
+    );
   } else {
     factors.push(`No negating vectors detected`);
   }
@@ -465,7 +470,7 @@ function constructDiagnosticsTrace(
   primaryCSL: CuspSubLordData,
   vetoResult: ReturnType<typeof evaluateVetoLogic>,
   verdict: EventVerdictState,
-  confidence: number
+  confidence: number,
 ): Array<{
   stage: string;
   check: string;
@@ -506,7 +511,7 @@ function constructDiagnosticsTrace(
 function identifyBlockers(
   vetoResult: ReturnType<typeof evaluateVetoLogic>,
   primaryVector: VectorEvaluationResult,
-  eventType: ComplexEventType
+  eventType: ComplexEventType,
 ): Array<{
   type: string;
   description: string;
@@ -547,7 +552,7 @@ function identifyBlockers(
 function extractTimingVector(
   _chart: WatchChart,
   _eventType: ComplexEventType,
-  verdict: EventVerdictState
+  verdict: EventVerdictState,
 ): {
   minDays: number;
   maxDays: number;
@@ -574,11 +579,16 @@ function extractTimingVector(
 function enhanceLitigationJudgment(
   baseJudgment: LitigationJudgment,
   _chart: WatchChart,
-  _primaryCSL: CuspSubLordData
+  _primaryCSL: CuspSubLordData,
 ): LitigationJudgment {
   return {
     ...baseJudgment,
-    financialOutcome: baseJudgment.verdict === 'DENIED' ? 'LOSS' : baseJudgment.verdict === 'PROMISED' ? 'GAIN' : 'BREAKEVEN',
+    financialOutcome:
+      baseJudgment.verdict === 'DENIED'
+        ? 'LOSS'
+        : baseJudgment.verdict === 'PROMISED'
+          ? 'GAIN'
+          : 'BREAKEVEN',
     statusImpact:
       baseJudgment.verdict === 'DENIED'
         ? 'DAMAGED'
@@ -595,7 +605,7 @@ function enhanceLitigationJudgment(
 function enhanceFinancialJudgment(
   baseJudgment: FinancialJudgment,
   _chart: WatchChart,
-  _primaryCSL: CuspSubLordData
+  _primaryCSL: CuspSubLordData,
 ): FinancialJudgment {
   return {
     ...baseJudgment,
@@ -608,7 +618,10 @@ function enhanceFinancialJudgment(
           }
         : undefined,
     assetType:
-      (_primaryCSL as any).starSignifications?.includes(4) || (_primaryCSL as any).subSignifications?.includes(4)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (_primaryCSL as any).starSignifications?.includes(4) ||
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (_primaryCSL as any).subSignifications?.includes(4)
         ? 'REAL_ESTATE'
         : 'LIQUID_FUNDS',
     claimViability: baseJudgment.verdict === 'PROMISED' ? 'STRONG' : 'WEAK',

@@ -66,11 +66,11 @@ export type EventVerdictState =
  * alignment and the absence of contradictory vectors.
  */
 export type EventConfidence =
-  | 'VERY_HIGH'    // ≥ 0.90 (3+ vectors strongly aligned)
-  | 'HIGH'         // 0.80–0.89 (2+ vectors aligned, no negations)
-  | 'MODERATE'     // 0.65–0.79 (Primary vector clear, secondary weak)
-  | 'LOW'          // 0.50–0.64 (Vectors mixed or timing unclear)
-  | 'UNCERTAIN';   // < 0.50 (Insufficient alignment)
+  | 'VERY_HIGH' // ≥ 0.90 (3+ vectors strongly aligned)
+  | 'HIGH' // 0.80–0.89 (2+ vectors aligned, no negations)
+  | 'MODERATE' // 0.65–0.79 (Primary vector clear, secondary weak)
+  | 'LOW' // 0.50–0.64 (Vectors mixed or timing unclear)
+  | 'UNCERTAIN'; // < 0.50 (Insufficient alignment)
 
 /**
  * Primary, secondary, and negating houses for a complex event.
@@ -201,7 +201,12 @@ export interface CompoundEventJudgment {
 
   /** Any blocker planets or conditions that override verdict. */
   blockers: {
-    type: 'MARS_KETU_ABSENT' | 'NEGATION_DOMINANCE' | 'TIMING_RETROGRADE' | 'LEGAL_DISPUTE' | 'OTHER';
+    type:
+      | 'MARS_KETU_ABSENT'
+      | 'NEGATION_DOMINANCE'
+      | 'TIMING_RETROGRADE'
+      | 'LEGAL_DISPUTE'
+      | 'OTHER';
     description: string;
     severity: 'FATAL' | 'MAJOR' | 'MINOR';
   }[];
@@ -239,7 +244,10 @@ export interface LitigationJudgment extends CompoundEventJudgment {
  * Extends CompoundEventJudgment with medical-specific fields.
  */
 export interface HealthJudgment extends CompoundEventJudgment {
-  eventType: 'HEALTH_DISEASE_MANIFESTATION' | 'HEALTH_SURGICAL_INTERVENTION' | 'HEALTH_RECOVERY_CURE';
+  eventType:
+    | 'HEALTH_DISEASE_MANIFESTATION'
+    | 'HEALTH_SURGICAL_INTERVENTION'
+    | 'HEALTH_RECOVERY_CURE';
 
   /** Disease/condition severity if manifestation is promised. */
   severity?: 'MILD' | 'MODERATE' | 'SEVERE' | 'CRITICAL';
@@ -265,7 +273,10 @@ export interface HealthJudgment extends CompoundEventJudgment {
  * Extends CompoundEventJudgment with financial-specific fields.
  */
 export interface FinancialJudgment extends CompoundEventJudgment {
-  eventType: 'WINDFALL_LOTTERY_SPECULATION' | 'WINDFALL_INHERITANCE_INSURANCE' | 'FINANCIAL_INSOLVENCY_DEBT';
+  eventType:
+    | 'WINDFALL_LOTTERY_SPECULATION'
+    | 'WINDFALL_INHERITANCE_INSURANCE'
+    | 'FINANCIAL_INSOLVENCY_DEBT';
 
   /** Estimated amount range if windfall/inheritance promised. */
   amountEstimate?: {
@@ -292,7 +303,10 @@ export interface FinancialJudgment extends CompoundEventJudgment {
  * Extends CompoundEventJudgment with education/career-specific fields.
  */
 export interface SelectionJudgment extends CompoundEventJudgment {
-  eventType: 'EXAM_SUCCESS_COMPETITIVE' | 'GOVERNMENT_JOB_APPOINTMENT' | 'BUSINESS_PARTNERSHIP_SUCCESS';
+  eventType:
+    | 'EXAM_SUCCESS_COMPETITIVE'
+    | 'GOVERNMENT_JOB_APPOINTMENT'
+    | 'BUSINESS_PARTNERSHIP_SUCCESS';
 
   /** Exam/test type (IITJEE, UPSC, Medical, etc.). */
   testType?: string;
@@ -467,10 +481,18 @@ export function getEventVectorSignification(eventType: ComplexEventType): EventV
  * Utility function to convert numeric confidence score to EventConfidence.
  */
 export function confidenceFromScore(score: number): EventConfidence {
-  if (score >= 0.90) return 'VERY_HIGH';
-  if (score >= 0.80) return 'HIGH';
-  if (score >= 0.65) return 'MODERATE';
-  if (score >= 0.50) return 'LOW';
+  if (score >= 0.9) {
+    return 'VERY_HIGH';
+  }
+  if (score >= 0.8) {
+    return 'HIGH';
+  }
+  if (score >= 0.65) {
+    return 'MODERATE';
+  }
+  if (score >= 0.5) {
+    return 'LOW';
+  }
   return 'UNCERTAIN';
 }
 
@@ -481,12 +503,12 @@ export function verdictFromFactors(
   score: number,
   hasNegation: boolean,
   isMixedAlignment: boolean,
-  hasReversalRisk: boolean
+  hasReversalRisk: boolean,
 ): EventVerdictState {
   if (score >= 0.75 && !hasNegation && !hasReversalRisk) {
     return 'PROMISED';
   }
-  if (score <= 0.40 && hasNegation) {
+  if (score <= 0.4 && hasNegation) {
     return 'DENIED';
   }
   if (hasReversalRisk) {
@@ -495,7 +517,7 @@ export function verdictFromFactors(
   if (isMixedAlignment) {
     return 'CONTINGENT';
   }
-  if (score >= 0.60 && !hasNegation) {
+  if (score >= 0.6 && !hasNegation) {
     return 'DELAYED';
   }
   return 'INDETERMINATE';

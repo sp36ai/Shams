@@ -75,7 +75,12 @@ export interface UnifiedShamsJudgment {
 
   // === FINAL MASTER VERDICT ===
   finalVerdict: {
-    status: 'PROMISED_AND_TIMED' | 'PROMISED_BUT_DELAYED' | 'PROMISED_VIA_RETROGRADE' | 'DENIED' | 'UNCERTAIN';
+    status:
+      | 'PROMISED_AND_TIMED'
+      | 'PROMISED_BUT_DELAYED'
+      | 'PROMISED_VIA_RETROGRADE'
+      | 'DENIED'
+      | 'UNCERTAIN';
     confidence: number;
     executionDate?: string;
     executionTime?: string;
@@ -99,7 +104,13 @@ type RetrogradVerdictState =
  * Individual audit event for traceability.
  */
 interface AuditEvent {
-  phase: 'INITIALIZATION' | 'PROMISE_GATEWAY' | 'RETROGRADE_CHECK' | 'NODE_ANALYSIS' | 'CHRONO_TRIGGERING' | 'VERDICT_COMPOSITION';
+  phase:
+    | 'INITIALIZATION'
+    | 'PROMISE_GATEWAY'
+    | 'RETROGRADE_CHECK'
+    | 'NODE_ANALYSIS'
+    | 'CHRONO_TRIGGERING'
+    | 'VERDICT_COMPOSITION';
   stage: string;
   check: string;
   result: 'PASS' | 'FAIL' | 'WARNING' | 'INFO';
@@ -118,7 +129,7 @@ export async function executeUnifiedShamsMethod(
   eventType: ComplexEventType,
   queryText: string,
   queryTimestamp: number,
-  queryIntent: 'FORWARD' | 'REVERSAL' = 'FORWARD'
+  queryIntent: 'FORWARD' | 'REVERSAL' = 'FORWARD',
 ): Promise<UnifiedShamsJudgment> {
   const queryId = generateQueryId();
   const auditTrail: AuditEvent[] = [];
@@ -127,12 +138,7 @@ export async function executeUnifiedShamsMethod(
   const initPhase = performInitialization(chart, auditTrail);
 
   // === PHASE 2: PROMISE GATEWAY (BINARY RESOLUTION) ===
-  const promisePhase = await performPromiseGateway(
-    chart,
-    eventType,
-    queryText,
-    auditTrail
-  );
+  const promisePhase = await performPromiseGateway(chart, eventType, queryText, auditTrail);
 
   // If not PROMISED, stop here
   if (promisePhase.verdict !== 'PROMISED') {
@@ -161,7 +167,7 @@ export async function executeUnifiedShamsMethod(
     promisePhase.judgment,
     queryIntent,
     eventType,
-    auditTrail
+    auditTrail,
   );
 
   // If retrograde retrogradeModifier overrides verdict, stop here
@@ -184,19 +190,10 @@ export async function executeUnifiedShamsMethod(
   }
 
   // === NODE ANALYSIS (if applicable) ===
-  const nodePhase = performNodeAnalysis(
-    promisePhase.judgment,
-    chart,
-    auditTrail
-  );
+  const nodePhase = performNodeAnalysis(promisePhase.judgment, chart, auditTrail);
 
   // === PHASE 3: CHRONO-TRIGGERING (TIMING MODULE) ===
-  const chronoPhase = await performChronoTriggering(
-    chart,
-    eventType,
-    queryTimestamp,
-    auditTrail
-  );
+  const chronoPhase = await performChronoTriggering(chart, eventType, queryTimestamp, auditTrail);
 
   // === PHASE 4: FINAL VERDICT COMPOSITION ===
   const finalPhase = composeFinaleVerdict(
@@ -204,7 +201,7 @@ export async function executeUnifiedShamsMethod(
     retrogradePhase,
     nodePhase,
     chronoPhase,
-    auditTrail
+    auditTrail,
   );
 
   return {
@@ -228,7 +225,7 @@ export async function executeUnifiedShamsMethod(
  */
 function performInitialization(
   _chart: WatchChart,
-  auditTrail: AuditEvent[]
+  auditTrail: AuditEvent[],
 ): UnifiedShamsJudgment['initialization'] {
   const timestamp = Date.now();
 
@@ -289,7 +286,7 @@ async function performPromiseGateway(
   chart: WatchChart,
   eventType: ComplexEventType,
   queryText: string,
-  auditTrail: AuditEvent[]
+  auditTrail: AuditEvent[],
 ): Promise<UnifiedShamsJudgment['promiseGateway']> {
   const timestamp = Date.now();
 
@@ -311,7 +308,7 @@ async function performPromiseGateway(
     judgment,
     verdict,
     confidence: judgment.score,
-    blockingFactors: judgment.blockers.map((b) => b.description),
+    blockingFactors: judgment.blockers.map(b => b.description),
     proceedToTiming: verdict === 'PROMISED',
   };
 }
@@ -325,7 +322,7 @@ function performRetrogradAnalysis(
   judgment: CompoundEventJudgment,
   queryIntent: 'FORWARD' | 'REVERSAL',
   eventType: ComplexEventType,
-  auditTrail: AuditEvent[]
+  auditTrail: AuditEvent[],
 ): UnifiedShamsJudgment['retrogradeAnalysis'] {
   const timestamp = Date.now();
 
@@ -336,7 +333,7 @@ function performRetrogradAnalysis(
     cslData.starLord,
     cslData.subLord,
     eventType,
-    queryIntent
+    queryIntent,
   );
 
   auditTrail.push({
@@ -362,7 +359,7 @@ function performRetrogradAnalysis(
 function performNodeAnalysis(
   judgment: CompoundEventJudgment,
   chart: WatchChart,
-  auditTrail: AuditEvent[]
+  auditTrail: AuditEvent[],
 ): UnifiedShamsJudgment['nodeAnalysis'] | undefined {
   const timestamp = Date.now();
 
@@ -400,7 +397,7 @@ async function performChronoTriggering(
   chart: WatchChart,
   eventType: ComplexEventType,
   queryTimestamp: number,
-  auditTrail: AuditEvent[]
+  auditTrail: AuditEvent[],
 ): Promise<UnifiedShamsJudgment['chronoTriggering'] | undefined> {
   const timestamp = Date.now();
 
@@ -413,7 +410,7 @@ async function performChronoTriggering(
       stage: 'STEP_3_3',
       check: 'INTERSECTION_FILTER',
       result: timing.operativeSignificators.triggering.length > 0 ? 'PASS' : 'WARNING',
-      detail: `Operative significators: ${timing.operativeSignificators.triggering.map((p) => p.name).join(', ')}`,
+      detail: `Operative significators: ${timing.operativeSignificators.triggering.map(p => p.name).join(', ')}`,
       timestamp,
     });
 
@@ -428,7 +425,7 @@ async function performChronoTriggering(
 
     return {
       timing,
-      operativeSignificators: timing.operativeSignificators.triggering.map((p) => p.name),
+      operativeSignificators: timing.operativeSignificators.triggering.map(p => p.name),
       executionDate: new Date(timing.transitTiming.executionTimestamp).toDateString(),
       executionTime: new Date(timing.transitTiming.executionTimestamp).toLocaleTimeString(),
       timingConfidence: timing.transitTiming.timingConfidence,
@@ -457,11 +454,16 @@ function composeFinaleVerdict(
   retrogradePhase: UnifiedShamsJudgment['retrogradeAnalysis'],
   nodePhase: UnifiedShamsJudgment['nodeAnalysis'] | undefined,
   chronoPhase: UnifiedShamsJudgment['chronoTriggering'] | undefined,
-  auditTrail: AuditEvent[]
+  auditTrail: AuditEvent[],
 ): UnifiedShamsJudgment['finalVerdict'] {
   const timestamp = Date.now();
 
-  let finalStatus: 'PROMISED_AND_TIMED' | 'PROMISED_BUT_DELAYED' | 'PROMISED_VIA_RETROGRADE' | 'DENIED' | 'UNCERTAIN';
+  let finalStatus:
+    | 'PROMISED_AND_TIMED'
+    | 'PROMISED_BUT_DELAYED'
+    | 'PROMISED_VIA_RETROGRADE'
+    | 'DENIED'
+    | 'UNCERTAIN';
 
   // Determine final status based on all phases
   if (retrogradePhase.retrogradeModifier === 'DENIED') {
@@ -511,7 +513,7 @@ function composeFinaleVerdict(
  * Helper: Map VerdictState to Promise Gateway verdict.
  */
 function mapVerdictStateToPromiseGateway(
-  verdictState: string
+  verdictState: string,
 ): 'PROMISED' | 'DENIED' | 'DELAYED' | 'UNCERTAIN' {
   if (verdictState === 'FULFILLED' || verdictState === 'PROMISED') {
     return 'PROMISED';
@@ -528,8 +530,13 @@ function mapVerdictStateToPromiseGateway(
  * Helper: Map Promise verdict to final status.
  */
 function mapPromiseVerdictToFinal(
-  verdict: 'PROMISED' | 'DENIED' | 'DELAYED' | 'UNCERTAIN'
-): 'PROMISED_AND_TIMED' | 'PROMISED_BUT_DELAYED' | 'PROMISED_VIA_RETROGRADE' | 'DENIED' | 'UNCERTAIN' {
+  verdict: 'PROMISED' | 'DENIED' | 'DELAYED' | 'UNCERTAIN',
+):
+  | 'PROMISED_AND_TIMED'
+  | 'PROMISED_BUT_DELAYED'
+  | 'PROMISED_VIA_RETROGRADE'
+  | 'DENIED'
+  | 'UNCERTAIN' {
   switch (verdict) {
     case 'PROMISED':
       return 'PROMISED_AND_TIMED';

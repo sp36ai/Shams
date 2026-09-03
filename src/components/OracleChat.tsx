@@ -43,11 +43,11 @@ interface OracleChatProps {
 // ─────────────────────────────────────────────────────────────────────────────
 
 export const OracleChat: React.FC<OracleChatProps> = ({ onProofCardPress }) => {
-  const messages = useOracleStore((state) => state.messages);
-  const executionPhase = useOracleStore((state) => state.executionPhase);
-  const isLoading = useOracleStore((state) => state.isLoading);
-  const processOracleQuery = useOracleStore((state) => state.processOracleQuery);
-  const enginePayload = useOracleStore((state) => state.enginePayload);
+  const messages = useOracleStore(state => state.messages);
+  const executionPhase = useOracleStore(state => state.executionPhase);
+  const isLoading = useOracleStore(state => state.isLoading);
+  const processOracleQuery = useOracleStore(state => state.processOracleQuery);
+  const enginePayload = useOracleStore(state => state.enginePayload);
 
   const [inputText, setInputText] = useState('');
   const flatListRef = useRef<FlatList>(null);
@@ -62,7 +62,9 @@ export const OracleChat: React.FC<OracleChatProps> = ({ onProofCardPress }) => {
   }, [messages]);
 
   const handleSend = async () => {
-    if (!inputText.trim() || isLoading) return;
+    if (!inputText.trim() || isLoading) {
+      return;
+    }
 
     const query = inputText.trim();
     setInputText('');
@@ -83,7 +85,7 @@ export const OracleChat: React.FC<OracleChatProps> = ({ onProofCardPress }) => {
       <FlatList
         ref={flatListRef}
         data={messages}
-        keyExtractor={(item) => item.id}
+        keyExtractor={item => item.id}
         renderItem={({ item }) => (
           <MessageBubble
             message={item}
@@ -207,7 +209,7 @@ const TypingIndicator: React.FC<TypingIndicatorProps> = ({ phase }) => {
 
   useEffect(() => {
     const interval = setInterval(() => {
-      setDots((prev) => (prev.length < 3 ? prev + '.' : ''));
+      setDots(prev => (prev.length < 3 ? prev + '.' : ''));
     }, 500);
 
     return () => clearInterval(interval);

@@ -130,22 +130,12 @@
           "nakshatraLord": "Sun"
         }
       },
-      "retrograde_planets": [
-        "Rahu",
-        "Ketu"
-      ]
+      "retrograde_planets": ["Rahu", "Ketu"]
     },
     "event_vectors": {
       "primary": 6,
-      "secondary": [
-        1,
-        10,
-        11
-      ],
-      "negating": [
-        12,
-        5
-      ]
+      "secondary": [1, 10, 11],
+      "negating": [12, 5]
     }
   },
   "expected_output": {

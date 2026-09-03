@@ -55,7 +55,7 @@
   },
   "expected_output": {
     "status": "PROMISED_AND_TIMED",
-    "confidence_minimum": 0.90,
+    "confidence_minimum": 0.9,
     "veto_triggered": false,
     "star_lord_alignment": "11 (victory promised)",
     "sub_lord_alignment": "11 (fulfillment confirmed)",
@@ -69,7 +69,7 @@
   },
   "pass_criteria": {
     "status_match": true,
-    "confidence_above_threshold": 0.90,
+    "confidence_above_threshold": 0.9,
     "veto_correctly_absent": true,
     "execution_time_ms_max": 500
   }

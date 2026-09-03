@@ -20,7 +20,12 @@ import type { WatchChart } from './watchChart';
  * When a Node appears in evaluation, the engine scans this hierarchy
  * from top to bottom, accumulating significations at each active level.
  */
-export type ProxyResolutionTier = 'CONJUNCTION' | 'ASPECT' | 'SIGN_LORD' | 'STAR_LORD' | 'BASE_OCCUPATION';
+export type ProxyResolutionTier =
+  | 'CONJUNCTION'
+  | 'ASPECT'
+  | 'SIGN_LORD'
+  | 'STAR_LORD'
+  | 'BASE_OCCUPATION';
 
 /**
  * Complete node evaluation result with full proxy array.
@@ -97,10 +102,7 @@ export interface NodeInJudgmentContext {
  *
  * Implements the recursive 4-tier hierarchy for node proxy resolution.
  */
-export function resolveNodeSignifications(
-  node: Planet,
-  chart: WatchChart
-): NodeResolutionResult {
+export function resolveNodeSignifications(node: Planet, chart: WatchChart): NodeResolutionResult {
   if (node.name !== 'Rahu' && node.name !== 'Ketu') {
     throw new Error(`resolveNodeSignifications: Expected Rahu or Ketu, got ${node.name}`);
   }
@@ -224,7 +226,13 @@ export function resolveNodeSignifications(
   const eclipseOverrideActive = proxyPlanets.length >= 2;
 
   // Event character: Modified by node's unpredictable nature
-  let eventCharacter: 'SUDDEN' | 'UNEXPECTED' | 'TRANSFORMATIVE' | 'COMPOUND' | 'WILDCARD' | 'STANDARD';
+  let eventCharacter:
+    | 'SUDDEN'
+    | 'UNEXPECTED'
+    | 'TRANSFORMATIVE'
+    | 'COMPOUND'
+    | 'WILDCARD'
+    | 'STANDARD';
   if (proxyPlanets.length >= 4) {
     eventCharacter = 'COMPOUND'; // Node firing 4+ planets
   } else if (proxyPlanets.length >= 3) {
@@ -270,7 +278,7 @@ function getBasePlanetSignifications(planet: Planet, chart: WatchChart): HouseIn
  */
 export function getStarLordResult(
   planet: Planet,
-  chart: WatchChart
+  chart: WatchChart,
 ): {
   isNode: boolean;
   significations: HouseIndex[];
@@ -301,7 +309,7 @@ export function getStarLordResult(
  */
 export function evaluateNodeInJudgment(
   cslPlanet: Planet,
-  chart: WatchChart
+  chart: WatchChart,
 ): NodeInJudgmentContext {
   let cslIsNode = false;
   let cslSignifications: HouseIndex[] | undefined;
@@ -370,15 +378,16 @@ export function evaluateNodeInJudgment(
 export function applyEclipseOverride(
   planetSignifications: HouseIndex[],
   nodeSignifications: HouseIndex[],
-  _chart: WatchChart
+  _chart: WatchChart,
 ): {
   operative: HouseIndex[];
   supersedesAuthority: 'Node' | 'Planet' | 'Neutral';
   eventModification: 'SUDDEN' | 'UNPREDICTABLE' | 'INTENSE' | 'NONE';
 } {
   // Node significations take precedence
-  const operative = Array.from(new Set([...nodeSignifications, ...planetSignifications]))
-    .sort((a, b) => a - b);
+  const operative = Array.from(new Set([...nodeSignifications, ...planetSignifications])).sort(
+    (a, b) => a - b,
+  );
 
   // Eclipse Override: Node is stronger
   const supersedesAuthority = 'Node' as const;

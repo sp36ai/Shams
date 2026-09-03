@@ -48,9 +48,7 @@ class SimpleBacktester {
 
       const files = fs.readdirSync(dir);
       const regex = new RegExp('^' + glob.replace(/\*/g, '.*') + '$');
-      return files
-        .filter((f) => regex.test(f) && f.endsWith('.json'))
-        .map((f) => path.join(dir, f));
+      return files.filter(f => regex.test(f) && f.endsWith('.json')).map(f => path.join(dir, f));
     }
 
     return [];
@@ -132,7 +130,10 @@ class SimpleBacktester {
       return false;
     }
 
-    if (criteria.confidence_above_threshold && actualOutput.confidence < testCase.expected_output.confidence_minimum) {
+    if (
+      criteria.confidence_above_threshold &&
+      actualOutput.confidence < testCase.expected_output.confidence_minimum
+    ) {
       return false;
     }
 
@@ -156,8 +157,8 @@ class SimpleBacktester {
     console.log('TEST SUMMARY');
     console.log('='.repeat(80) + '\n');
 
-    const passed = this.results.filter((r) => r.passed).length;
-    const failed = this.results.filter((r) => !r.passed).length;
+    const passed = this.results.filter(r => r.passed).length;
+    const failed = this.results.filter(r => !r.passed).length;
     const passRate = ((passed / this.results.length) * 100).toFixed(1);
 
     console.log(`Tests Run: ${this.results.length}`);

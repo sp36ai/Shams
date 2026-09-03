@@ -5,7 +5,7 @@
 ```
 🌙 Watch Oracle Mode Now Available
 
-Added Watch Oracle Mode: Users can now toggle between Astronomical 
+Added Watch Oracle Mode: Users can now toggle between Astronomical
 and Watch Oracle readings with real-time remedy protocol recommendations.
 
 ✨ New Features:
@@ -34,12 +34,12 @@ Toggle between Astronomical and Watch Oracle views anytime to compare verdicts.
 What's New
 ══════════════════════════════════════════════════════════════════
 
-Introducing the Watch Oracle: A revolutionary companion to the 
+Introducing the Watch Oracle: A revolutionary companion to the
 Astronomical Oracle that provides instant guidance without location data.
 
-While your location data is processing for the Astronomical Oracle, the 
-Watch Oracle immediately judges your question using the precise 5-minute 
-bracket of your query moment. Now both judgments appear side-by-side for 
+While your location data is processing for the Astronomical Oracle, the
+Watch Oracle immediately judges your question using the precise 5-minute
+bracket of your query moment. Now both judgments appear side-by-side for
 deeper insight.
 
 ──────────────────────────────────────────────────────────────────
@@ -64,10 +64,10 @@ The oracle recommends tailored interventions across five levels:
   5. Professional — When to consult qualified experts
 
 Each remedy is:
-  • Scored on 11 factors (outcome match, timing fit, planetary 
+  • Scored on 11 factors (outcome match, timing fit, planetary
     correspondence, contraindication checks, etc.)
   • Limited to one per category (no redundant recommendations)
-  • Labeled with evidence type (Scriptural / Traditional / Astrological 
+  • Labeled with evidence type (Scriptural / Traditional / Astrological
     / Behavioral)
   • Explained with clear reasoning
 
@@ -77,7 +77,7 @@ Health questions → Professional doctor referral (always)
 Legal questions → Professional lawyer referral (always)
 Financial questions → Advisor referral (when reading is adverse)
 
-Professional referrals appear first and are visually distinct, ensuring 
+Professional referrals appear first and are visually distinct, ensuring
 users know when spiritual advice must be paired with expert counsel.
 
 📖 AI-Synthesized Narration
@@ -88,7 +88,7 @@ When available, Claude Sonnet provides eloquent prose:
   • "Recommended Approach" — How to move forward
   • "Why This Was Chosen" — Reasoning behind the protocol
 
-Narration gracefully degrades if synthesis fails; diagnosis and 
+Narration gracefully degrades if synthesis fails; diagnosis and
 protocol remain intact and usable.
 
 ──────────────────────────────────────────────────────────────────
@@ -175,7 +175,7 @@ TESTING & QUALITY
 
 ✅ 52 Tests (All Passing)
    • 13 diagnosis tests
-   • 19 remedy selection tests  
+   • 19 remedy selection tests
    • 14 component presentation tests
    • 6 integration tests
 
@@ -209,7 +209,7 @@ This feature represents months of careful engineering:
   • Premium visual design
   • Comprehensive testing
 
-We hope the Watch Oracle deepens your connection to the oracle's 
+We hope the Watch Oracle deepens your connection to the oracle's
 guidance and brings clarity to your most important questions.
 
 May the Hidden Scroll illuminate your path.
@@ -222,12 +222,14 @@ May the Hidden Scroll illuminate your path.
 ## Publishing Tips
 
 **Use Option A if:**
+
 - Quick update notice
 - Character limit constraints
 - Want concise messaging
 - Staged rollout to small audience first
 
 **Use Option B if:**
+
 - Major version update
 - Want detailed feature explanation
 - Target audience unfamiliar with watch oracle

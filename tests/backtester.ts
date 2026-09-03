@@ -19,7 +19,10 @@
 
 import fs from 'fs';
 import path from 'path';
-import { executeUnifiedShamsMethod, type UnifiedShamsJudgment } from '../src/astrology/rkp/unifiedShamsEngine';
+import {
+  executeUnifiedShamsMethod,
+  type UnifiedShamsJudgment,
+} from '../src/astrology/rkp/unifiedShamsEngine';
 import type { ComplexEventType } from '../src/astrology/rkp/eventFormulationTypes';
 
 interface TestCase {
@@ -81,13 +84,13 @@ class ShamsBacktester {
     if (pattern.includes('*')) {
       const dir = path.dirname(pattern);
       const glob = path.basename(pattern);
-      if (!fs.existsSync(dir)) return [];
+      if (!fs.existsSync(dir)) {
+        return [];
+      }
 
       const files = fs.readdirSync(dir);
       const regex = new RegExp('^' + glob.replace(/\*/g, '.*') + '$');
-      return files
-        .filter((f) => regex.test(f) && f.endsWith('.json'))
-        .map((f) => path.join(dir, f));
+      return files.filter(f => regex.test(f) && f.endsWith('.json')).map(f => path.join(dir, f));
     }
 
     return [];
@@ -142,7 +145,8 @@ class ShamsBacktester {
         passed,
         duration_ms: duration,
         status_match: judgment?.finalVerdict?.status === testCase.expected_output.status,
-        confidence_match: judgment?.finalVerdict?.confidence >= testCase.expected_output.confidence_minimum,
+        confidence_match:
+          judgment?.finalVerdict?.confidence >= testCase.expected_output.confidence_minimum,
         factors: judgment?.finalVerdict?.factors || [],
         error,
       });
@@ -158,7 +162,9 @@ class ShamsBacktester {
         console.log(`     Expected: ${testCase.expected_output.status}`);
         console.log(`     Actual: ${judgment.finalVerdict.status}`);
         if (judgment.finalVerdict.confidence < testCase.expected_output.confidence_minimum) {
-          console.log(`     Confidence: ${(judgment.finalVerdict.confidence * 100).toFixed(1)}% (min: ${(testCase.expected_output.confidence_minimum * 100).toFixed(1)}%)`);
+          console.log(
+            `     Confidence: ${(judgment.finalVerdict.confidence * 100).toFixed(1)}% (min: ${(testCase.expected_output.confidence_minimum * 100).toFixed(1)}%)`,
+          );
         }
       } else {
         console.log(`  ❌ FAIL (No judgment returned)`);
@@ -209,7 +215,7 @@ class ShamsBacktester {
       eventType,
       queryText,
       timestamp,
-      queryIntent as 'FORWARD' | 'REVERSAL'
+      queryIntent as 'FORWARD' | 'REVERSAL',
     );
 
     return judgment;
@@ -227,7 +233,7 @@ class ShamsBacktester {
     return {
       // Mock CSL/Star/Sub Lord methods with real test data
       getHouseCuspLongitude: (house: number) => {
-        return chartData.cusps?.[house] || (house * 30); // Rough approximation
+        return chartData.cusps?.[house] || house * 30; // Rough approximation
       },
 
       getCuspSubLord: (longitude: number) => {
@@ -250,23 +256,42 @@ class ShamsBacktester {
 
         // Nakshatra to star lord mapping (simplified 27 nakshatras)
         const nakshatraStarLords: Record<string, string> = {
-          Ashwini: 'Ketu', Bharani: 'Venus', Krittika: 'Sun',
-          Rohini: 'Moon', Mrigashirsha: 'Mars', Ardra: 'Rahu',
-          Punarvasu: 'Jupiter', Pushya: 'Saturn', Ashlesha: 'Mercury',
-          Magha: 'Ketu', 'P.Phalguni': 'Venus', 'U.Phalguni': 'Sun',
-          Hasta: 'Moon', Chitra: 'Mars', Svati: 'Rahu',
-          Vishakha: 'Jupiter', Anuradha: 'Saturn', Jyeshtha: 'Mercury',
-          Mula: 'Ketu', 'P.Ashadha': 'Venus', 'U.Ashadha': 'Sun',
-          Abhijit: 'Mercury', Shravana: 'Moon', Dhanishtha: 'Mars',
-          Shatabhisha: 'Rahu', 'P.Bhadrapada': 'Jupiter', 'U.Bhadrapada': 'Saturn',
+          Ashwini: 'Ketu',
+          Bharani: 'Venus',
+          Krittika: 'Sun',
+          Rohini: 'Moon',
+          Mrigashirsha: 'Mars',
+          Ardra: 'Rahu',
+          Punarvasu: 'Jupiter',
+          Pushya: 'Saturn',
+          Ashlesha: 'Mercury',
+          Magha: 'Ketu',
+          'P.Phalguni': 'Venus',
+          'U.Phalguni': 'Sun',
+          Hasta: 'Moon',
+          Chitra: 'Mars',
+          Svati: 'Rahu',
+          Vishakha: 'Jupiter',
+          Anuradha: 'Saturn',
+          Jyeshtha: 'Mercury',
+          Mula: 'Ketu',
+          'P.Ashadha': 'Venus',
+          'U.Ashadha': 'Sun',
+          Abhijit: 'Mercury',
+          Shravana: 'Moon',
+          Dhanishtha: 'Mars',
+          Shatabhisha: 'Rahu',
+          'P.Bhadrapada': 'Jupiter',
+          'U.Bhadrapada': 'Saturn',
           Revati: 'Mercury',
         };
 
         // Look up from various sources
-        const starLordName = nakshatraStarLords[planetName as string] ||
-                            chartData.starLords?.[planetName]?.name ||
-                            cslData.star_lord?.name ||
-                            'Moon';
+        const starLordName =
+          nakshatraStarLords[planetName as string] ||
+          chartData.starLords?.[planetName]?.name ||
+          cslData.star_lord?.name ||
+          'Moon';
 
         return {
           name: starLordName,
@@ -278,8 +303,7 @@ class ShamsBacktester {
       getSubLord: (planet: any) => {
         const planetName = planet.name || planet;
         const subLordData = chartData.subLords?.[planetName] ||
-                          cslData.sub_lord ||
-                          { name: 'Mercury', isNode: false, isRetrograde: false };
+          cslData.sub_lord || { name: 'Mercury', isNode: false, isRetrograde: false };
         return subLordData;
       },
 
@@ -297,10 +321,18 @@ class ShamsBacktester {
           // Houses owned by the planet based on sign lordship
           const sign = planetData.sign;
           const signLordsMap: Record<number, number[]> = {
-            1: [1, 8], 2: [2, 9], 3: [3, 12],
-            4: [4, 11], 5: [5, 10], 6: [6, 11],
-            7: [7, 12], 8: [8, 1], 9: [9, 2],
-            10: [10, 3], 11: [11, 4], 12: [12, 5],
+            1: [1, 8],
+            2: [2, 9],
+            3: [3, 12],
+            4: [4, 11],
+            5: [5, 10],
+            6: [6, 11],
+            7: [7, 12],
+            8: [8, 1],
+            9: [9, 2],
+            10: [10, 3],
+            11: [11, 4],
+            12: [12, 5],
           };
           return signLordsMap[sign] || [1, 7]; // Default Mars aspects
         }
@@ -324,8 +356,7 @@ class ShamsBacktester {
 
       getPlanetPosition: (planet: string) => {
         const data = chartData.planets?.[planet] ||
-                    chartData[planet] ||
-                    { longitude: 0, isRetrograde: retrogradeInfo.includes(planet) };
+          chartData[planet] || { longitude: 0, isRetrograde: retrogradeInfo.includes(planet) };
         return {
           longitude: data.longitude || 0,
           isRetrograde: data.isRetrograde || retrogradeInfo.includes(planet),
@@ -338,15 +369,19 @@ class ShamsBacktester {
 
       getRulingPlanets: () => {
         const rp = chartData.ruling_planets || chartData.rp || {};
-        return Object.values(rp).filter((p) => typeof p === 'string');
+        return Object.values(rp).filter(p => typeof p === 'string');
       },
 
       getNodeSignifications: (node: string) => {
         const nodeData = chartData.node_data || {};
         if (nodeData.node === node) {
           // Return full proxy array from node resolution
-          return chartData.proxy_resolution?.full_array ||
-                 [nodeData.house, ...(nodeData.proxy_houses || [])];
+          return (
+            chartData.proxy_resolution?.full_array || [
+              nodeData.house,
+              ...(nodeData.proxy_houses || []),
+            ]
+          );
         }
         return [1, 2, 3]; // Default
       },
@@ -354,10 +389,18 @@ class ShamsBacktester {
       getOwnedHouses: (planet: string) => {
         // Return houses owned by a planet based on sign lordships
         const signLordsMap: Record<string, number[]> = {
-          Aries: [1, 8], Taurus: [2, 9], Gemini: [3, 12],
-          Cancer: [4, 11], Leo: [5, 10], Virgo: [6, 11],
-          Libra: [7, 12], Scorpio: [8, 1], Sagittarius: [9, 2],
-          Capricorn: [10, 3], Aquarius: [11, 4], Pisces: [12, 5],
+          Aries: [1, 8],
+          Taurus: [2, 9],
+          Gemini: [3, 12],
+          Cancer: [4, 11],
+          Leo: [5, 10],
+          Virgo: [6, 11],
+          Libra: [7, 12],
+          Scorpio: [8, 1],
+          Sagittarius: [9, 2],
+          Capricorn: [10, 3],
+          Aquarius: [11, 4],
+          Pisces: [12, 5],
         };
         return Object.entries(signLordsMap)
           .filter(([_, planets]) => planets.includes(planet as any))
@@ -408,10 +451,18 @@ class ShamsBacktester {
 
       getSignLord: (sign: string) => {
         const signLords: Record<string, string> = {
-          Aries: 'Mars', Taurus: 'Venus', Gemini: 'Mercury',
-          Cancer: 'Moon', Leo: 'Sun', Virgo: 'Mercury',
-          Libra: 'Venus', Scorpio: 'Mars', Sagittarius: 'Jupiter',
-          Capricorn: 'Saturn', Aquarius: 'Saturn', Pisces: 'Jupiter',
+          Aries: 'Mars',
+          Taurus: 'Venus',
+          Gemini: 'Mercury',
+          Cancer: 'Moon',
+          Leo: 'Sun',
+          Virgo: 'Mercury',
+          Libra: 'Venus',
+          Scorpio: 'Mars',
+          Sagittarius: 'Jupiter',
+          Capricorn: 'Saturn',
+          Aquarius: 'Saturn',
+          Pisces: 'Jupiter',
         };
         const lord = signLords[sign] || 'Mercury';
         return { name: lord, isNode: false, isRetrograde: retrogradeInfo.includes(lord) };
@@ -441,8 +492,20 @@ class ShamsBacktester {
       },
 
       getSign: (longitude: number) => {
-        const signs = ['Aries', 'Taurus', 'Gemini', 'Cancer', 'Leo', 'Virgo',
-                       'Libra', 'Scorpio', 'Sagittarius', 'Capricorn', 'Aquarius', 'Pisces'];
+        const signs = [
+          'Aries',
+          'Taurus',
+          'Gemini',
+          'Cancer',
+          'Leo',
+          'Virgo',
+          'Libra',
+          'Scorpio',
+          'Sagittarius',
+          'Capricorn',
+          'Aquarius',
+          'Pisces',
+        ];
         const signIndex = Math.floor(longitude / 30) % 12;
         return signs[signIndex];
       },
@@ -464,8 +527,13 @@ class ShamsBacktester {
 
       isDebilitated: (planet: string) => {
         const debilitationMap: Record<string, string> = {
-          Sun: 'Libra', Moon: 'Scorpio', Mars: 'Cancer', Mercury: 'Pisces',
-          Jupiter: 'Capricorn', Venus: 'Virgo', Saturn: 'Aries',
+          Sun: 'Libra',
+          Moon: 'Scorpio',
+          Mars: 'Cancer',
+          Mercury: 'Pisces',
+          Jupiter: 'Capricorn',
+          Venus: 'Virgo',
+          Saturn: 'Aries',
         };
         // Would need actual sign calculation; simplified for now
         return false;
@@ -498,7 +566,10 @@ class ShamsBacktester {
       }
 
       // Validate confidence
-      if (criteria.confidence_above_threshold && judgment.finalVerdict.confidence < expected.confidence_minimum) {
+      if (
+        criteria.confidence_above_threshold &&
+        judgment.finalVerdict.confidence < expected.confidence_minimum
+      ) {
         return false;
       }
       return true;
@@ -513,7 +584,10 @@ class ShamsBacktester {
     if (criteria.status_match) {
       // For COMPOUND_TRIGGER_DETECTED, map to an engine verdict
       const engineStatus = this.mapExpectedToEngineStatus(expected.status);
-      if (judgment.finalVerdict.status !== engineStatus && expected.status !== 'COMPOUND_TRIGGER_DETECTED') {
+      if (
+        judgment.finalVerdict.status !== engineStatus &&
+        expected.status !== 'COMPOUND_TRIGGER_DETECTED'
+      ) {
         return false;
       }
     }
@@ -527,8 +601,8 @@ class ShamsBacktester {
 
     // Veto logic (if applicable) - check promiseGateway
     if ('veto_correctly_applied' in criteria) {
-      const judgment_veto = judgment.promiseGateway?.blockingFactors.some(
-        (f) => f.toLowerCase().includes('veto')
+      const judgment_veto = judgment.promiseGateway?.blockingFactors.some(f =>
+        f.toLowerCase().includes('veto'),
       );
       if (criteria.veto_correctly_applied && !judgment_veto) {
         return false;
@@ -537,8 +611,8 @@ class ShamsBacktester {
 
     // Veto must be absent (if applicable)
     if ('veto_correctly_absent' in criteria) {
-      const judgment_veto = judgment.promiseGateway?.blockingFactors.some(
-        (f) => f.toLowerCase().includes('veto')
+      const judgment_veto = judgment.promiseGateway?.blockingFactors.some(f =>
+        f.toLowerCase().includes('veto'),
       );
       if (criteria.veto_correctly_absent && judgment_veto) {
         return false;
@@ -571,8 +645,8 @@ class ShamsBacktester {
     console.log('TEST SUMMARY');
     console.log('='.repeat(80) + '\n');
 
-    const passed = this.results.filter((r) => r.passed).length;
-    const failed = this.results.filter((r) => !r.passed).length;
+    const passed = this.results.filter(r => r.passed).length;
+    const failed = this.results.filter(r => !r.passed).length;
     const passRate = ((passed / this.results.length) * 100).toFixed(1);
 
     console.log(`Tests Run: ${this.results.length}`);
@@ -606,7 +680,7 @@ async function main() {
   await backtester.run(filePattern);
 }
 
-main().catch((error) => {
+main().catch(error => {
   console.error('Fatal error:', error);
   process.exit(1);
 });

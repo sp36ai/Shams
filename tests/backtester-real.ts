@@ -77,13 +77,13 @@ class ShamsBacktesterReal {
     if (pattern.includes('*')) {
       const dir = path.dirname(pattern);
       const glob = path.basename(pattern);
-      if (!fs.existsSync(dir)) return [];
+      if (!fs.existsSync(dir)) {
+        return [];
+      }
 
       const files = fs.readdirSync(dir);
       const regex = new RegExp('^' + glob.replace(/\*/g, '.*') + '$');
-      return files
-        .filter((f) => regex.test(f) && f.endsWith('.json'))
-        .map((f) => path.join(dir, f));
+      return files.filter(f => regex.test(f) && f.endsWith('.json')).map(f => path.join(dir, f));
     }
 
     return [];
@@ -181,7 +181,10 @@ class ShamsBacktesterReal {
       return false;
     }
 
-    if (criteria.confidence_above_threshold && actualOutput.confidence < testCase.expected_output.confidence_minimum) {
+    if (
+      criteria.confidence_above_threshold &&
+      actualOutput.confidence < testCase.expected_output.confidence_minimum
+    ) {
       return false;
     }
 
@@ -193,8 +196,8 @@ class ShamsBacktesterReal {
     console.log('TEST SUMMARY');
     console.log('='.repeat(80) + '\n');
 
-    const passed = this.results.filter((r) => r.passed).length;
-    const failed = this.results.filter((r) => !r.passed).length;
+    const passed = this.results.filter(r => r.passed).length;
+    const failed = this.results.filter(r => !r.passed).length;
     const passRate = ((passed / this.results.length) * 100).toFixed(1);
 
     console.log(`Tests Run: ${this.results.length}`);
@@ -227,7 +230,7 @@ async function main() {
   await backtester.run(filePattern);
 }
 
-main().catch((error) => {
+main().catch(error => {
   console.error('Fatal error:', error);
   process.exit(1);
 });
