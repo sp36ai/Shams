@@ -1,7 +1,8 @@
-Watch Oracle is now the app's single reading mode — the Astronomical (KP) view has been retired.
+Oracle Chat is now a full conversation — ask by voice or text, hear the reading spoken aloud, and retry without losing your place.
 
-• Faster verdicts: instant 5-minute bracket readings, no location needed
-• Al-Falak now shows each planet's dignity at a glance
-• Fixed a bug that could reject valid subscription purchases
-• Fixed a case where the home screen stopped responding to taps
-• More reliable question submission
+• Sharper sky: Venus and Mars positions are far more accurate
+• Your reading now reflects the question you actually asked
+• Remedy guidance now appears with every verdict
+• Fixed a crash when leaving Oracle Chat
+• Fixed voice playback pausing, resuming and skipping ahead
+• Wording and label fixes throughout
