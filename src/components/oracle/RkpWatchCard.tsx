@@ -14,7 +14,7 @@ import { StyleSheet, Text, View } from 'react-native';
 
 import { useColors } from '@theme/ThemeProvider';
 import { useTypography } from '@theme/useTypography';
-import { HOUSE_META, PLANET_NAME } from '@astrology/rkp/nomenclature';
+import { HOUSE_META, PLANET_NAME, gharLabel } from '@astrology/rkp/nomenclature';
 import type { DisplayWatchVerdict, WatchState } from '@astrology/rkp/watchJudgment';
 import type { DirectionalFocus } from '../../data/watchRemedyContext';
 
@@ -145,7 +145,7 @@ const RkpWatchCard: React.FC<RkpWatchCardProps> = ({
 
       {/* ── What was judged ──────────────────────────────────────────────── */}
       <Row
-        label={`${verdict.targetHouse}th Ghar`}
+        label={gharLabel(verdict.targetHouse)}
         value={`${HOUSE_META[verdict.targetHouse].bait} — ${verdict.targetSignName}`}
         colors={colors}
         typography={typography}
