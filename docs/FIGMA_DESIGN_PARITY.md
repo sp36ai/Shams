@@ -41,7 +41,7 @@ clone per remaining theme below it (variable-mode switched, not hand-recoloured)
 | ↳ `RkpWatchCard` (inside the Oracle turn) | `src/components/oracle/RkpWatchCard.tsx` | ✅ rebuilt from source |
 | `HistoryScreen` | `src/screens/HistoryScreen.tsx` | ✅ rebuilt from source |
 | `SkyClockScreen — Al-Falak` | `src/screens/SkyClockScreen.tsx` | ✅ rebuilt from source |
-| `SettingsScreen` | `src/screens/SettingsScreen.tsx` | ⚠️ partial |
+| `SettingsScreen` | `src/screens/SettingsScreen.tsx` | ✅ rebuilt from source |
 | `PremiumScreen` | `src/screens/PremiumScreen.tsx` | ⚠️ partial — plan data is real (`PLANS`) |
 | `SplashScreen` | `src/screens/SplashScreen.tsx` | ⚠️ partial |
 | `OnboardingScreen` | `src/screens/OnboardingScreen.tsx` | ⚠️ partial — question/choice copy is real (`QUESTIONS`) |
@@ -55,7 +55,7 @@ clone per remaining theme below it (variable-mode switched, not hand-recoloured)
 |---|---|---|
 | `Verdict Badge` (5 variants) | `verdictBadgeFor()` + `verdictColorFor()` in `HistoryScreen.tsx` | Maqbool=YES, Mardood=NO/DENIED, Mashroot=CONDITIONAL, Takheer=DELAYED, GhayrWazeh=UNCLEAR/PENDING. **Used by History rows only** — `RkpWatchCard` has no badge. |
 | `Tab Bar Item` (Tab × State) | `src/navigation/MainTabs.tsx` | Oracle / Al-Falak / History, Active+Inactive. |
-| `Button` (Primary / Secondary) | generic | Instances carry per-screen overrides (see *Deliberate deviations*). |
+| `Button — PROPOSAL (no equivalent in code)` | **nothing** | See *The Button component is a proposal* below. Deliberately not instanced into any screen frame. |
 
 ---
 
@@ -110,6 +110,38 @@ drifted from the real data model. What it got wrong, and what it now shows:
 | Tab bar drawn with uppercase `ORACLE` labels on `surface` with a top border | Sentence-case `nav.homeTab`/`nav.alFalakTab`/`nav.historyTab` (**Home**, not "Oracle") at `typography('caption')`, on `surfaceElevated` with a transparent top border and the accent@20% active halo |
 | Al-Falak header had a left-aligned title and subtitle; timing shown as six separate chips; clock drawn collapsed | Centred `AL-FALAK` over a live running clock with *Live Sky Clock* italic on the right; one bordered TimingBar of pills separated by hairline dividers (Hora/Day/Moon/Nakshatra/LST/Phase); `CELESTIAL CLOCK` **expanded by default** (`clockExpanded` initialises to `true`) |
 | Planet table had no zebra striping, sign in muted text, and no dignity legend | Alternating `surfaceElevated` rows, sign in `colors.accent`, dignity note row beneath non-neutral placements, and the five-badge dignity legend below the table |
+| Settings was missing whole sections, and its subscription card had a gold-tinted fill | All seven sections present (Appearance / Seeker Identity / Profile / Subscription / Reading Stats / Account / Location), each header carrying its trailing 20%-gold `sectionLine`; the subscription card is `surface`-filled and only turns `amber`-bordered on a paid plan |
+| A Figma `Button` was instanced into four screens | No shared Button exists in code — instances detached, component relabelled a proposal |
+
+---
+
+## THE BUTTON COMPONENT IS A PROPOSAL
+
+**There is no shared Button component in `src/`.** `src/components/` contains
+`BackgroundLattice`, `ErrorBoundary`, `GlowView`, `ShimmerOverlay`, `StarfieldBackground`,
+`TabIcon` and `ThemeSwitcher` — no Button. Every button in the app is an inline-styled
+`Pressable`.
+
+Counted across `src/screens/*.tsx` and `src/components/oracle/*.tsx`: **26 distinct
+button/chip/pill style keys** — `actionBtn`, `actionBtnSecondary`, `actionRow`, `backBtn`,
+`billingPill`, `btn`, `chip`, `effectPill`, `forgotBtn`, `infoPill`, `langChip`,
+`locationChip`, `micBtn`, `pill`, `primaryButton`, `restoreBtn`, `retryBtn`, `sendBtn`,
+`settingsBtn`, `signOutBtn`, `socialBtn`, `sortBtn`, `speechBtn`, `submitBtn`, `tabBtn`,
+`tierPill`, `verdictPill` — across **35 `Pressable` usages in 11 files**.
+
+An earlier pass instanced a Figma `Button` into four screens. That was backwards: it made the
+mirror show a component the app does not have. Those instances are now detached, and the
+component set is renamed `Button — PROPOSAL (no equivalent in code)` and carries an on-canvas
+caption saying so. The screen frames show each screen's real inline style instead.
+
+It is kept, rather than deleted, because consolidating 26 style keys is a reasonable
+suggestion — but it is a **code change to propose, not a design to implement from**. If it is
+adopted in `src/`, it stops being a proposal and becomes a mirror; until then the authority
+rule applies and the code wins.
+
+`Verdict Badge` and `Tab Bar Item` are different — those *are* mirrors, of
+`verdictBadgeFor()`/`verdictColorFor()` and of `MainTabs.tsx` respectively, and they stay
+instanced in the screens.
 
 ---
 
@@ -156,9 +188,6 @@ the bubble's cut corner mirrors to `bottomLeft`, and the composer reads send →
 
 Cases where Figma cannot express what the code does, and the workaround chosen:
 
-- **`Button` instance overrides.** `PremiumScreen`'s CTA overrides the fill to fixed
-  `KHASS_GOLD`; `SettingsScreen`'s Sign Out overrides stroke and label to `color/negative`
-  (a destructive action, not an accent one). Geometry and type still come from the component.
 - **Verdict left stripe.** A Figma frame has one stroke colour, so RN's
   `borderLeftWidth: 3 / borderLeftColor: vColor` over a hairline border is drawn as a 3px
   child rectangle inside a clipped row.
@@ -173,10 +202,10 @@ Cases where Figma cannot express what the code does, and the workaround chosen:
 
 Open, in rough priority order. None of these are claimed as done:
 
-1. **Settings / Premium / Auth-stack frames** were built from the screens' documented
-   structure, not line-by-line from source like the Oracle flow and Al-Falak were. They are
-   directionally right but unaudited — treat their detail as provisional. The corrections
-   table shows what tends to be wrong when a frame is drawn this way.
+1. **Premium and the four Auth-stack frames** were built from the screens' documented
+   structure, not line-by-line from source like the Oracle flow, Al-Falak and Settings were.
+   They are directionally right but unaudited — treat their detail as provisional. The
+   corrections table shows what tends to be wrong when a frame is drawn this way.
 2. **RTL / Devanagari coverage is one screen deep.** `OracleChatScreen — Urdu (RTL)` exists;
    the other nine screens are Latin/English only, and Hindi is not drawn at all (Noto Sans
    Devanagari is available in Figma, so it is buildable). Note that RTL correctness cannot be
