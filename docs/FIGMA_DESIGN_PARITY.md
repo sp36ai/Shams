@@ -40,7 +40,7 @@ clone per remaining theme below it (variable-mode switched, not hand-recoloured)
 | `OracleChatScreen` | `src/screens/OracleChatScreen.tsx`, `components/oracle/ChatBubble.tsx`, `ChatComposer.tsx` | ✅ rebuilt from source |
 | ↳ `RkpWatchCard` (inside the Oracle turn) | `src/components/oracle/RkpWatchCard.tsx` | ✅ rebuilt from source |
 | `HistoryScreen` | `src/screens/HistoryScreen.tsx` | ✅ rebuilt from source |
-| `SkyClockScreen — Al-Falak` | `src/screens/SkyClockScreen.tsx` | ⚠️ structure only — see *Not yet verified* |
+| `SkyClockScreen — Al-Falak` | `src/screens/SkyClockScreen.tsx` | ✅ rebuilt from source |
 | `SettingsScreen` | `src/screens/SettingsScreen.tsx` | ⚠️ partial |
 | `PremiumScreen` | `src/screens/PremiumScreen.tsx` | ⚠️ partial — plan data is real (`PLANS`) |
 | `SplashScreen` | `src/screens/SplashScreen.tsx` | ⚠️ partial |
@@ -106,6 +106,9 @@ drifted from the real data model. What it got wrong, and what it now shows:
 | History rows had an invented **confidence bar** | Real row: 3px verdict-coloured left stripe, question, `{Hora} · CATEGORY · relative-time` meta, verdict pill. Confidence appears only in the detail modal |
 | Only a happy-path frame per screen | Oracle chat now also shows the real `sending` (spinner + *Reading the chart…*) and `failed` (message + ↻ Retry) states |
 | Screen backgrounds were hardcoded dark | Bound to `color/bg`, so the two light themes (Ṣubḥ al-Waḥy, Zaytūn al-Ḥikma) render correctly |
+| Tab bar drawn with uppercase `ORACLE` labels on `surface` with a top border | Sentence-case `nav.homeTab`/`nav.alFalakTab`/`nav.historyTab` (**Home**, not "Oracle") at `typography('caption')`, on `surfaceElevated` with a transparent top border and the accent@20% active halo |
+| Al-Falak header had a left-aligned title and subtitle; timing shown as six separate chips; clock drawn collapsed | Centred `AL-FALAK` over a live running clock with *Live Sky Clock* italic on the right; one bordered TimingBar of pills separated by hairline dividers (Hora/Day/Moon/Nakshatra/LST/Phase); `CELESTIAL CLOCK` **expanded by default** (`clockExpanded` initialises to `true`) |
+| Planet table had no zebra striping, sign in muted text, and no dignity legend | Alternating `surfaceElevated` rows, sign in `colors.accent`, dignity note row beneath non-neutral placements, and the five-badge dignity legend below the table |
 
 ---
 
@@ -130,9 +133,10 @@ Cases where Figma cannot express what the code does, and the workaround chosen:
 
 Open, in rough priority order. None of these are claimed as done:
 
-1. **SkyClock / Settings / Premium / Auth-stack frames** were built from the screens'
-   documented structure, not line-by-line from source like the Oracle flow was. They are
-   directionally right but unaudited — treat their detail as provisional.
+1. **Settings / Premium / Auth-stack frames** were built from the screens' documented
+   structure, not line-by-line from source like the Oracle flow and Al-Falak were. They are
+   directionally right but unaudited — treat their detail as provisional. The corrections
+   table shows what tends to be wrong when a frame is drawn this way.
 2. **RTL (Urdu) and Devanagari (Hindi)** are not drawn at all. Every frame is Latin/English.
    `typography.ts` mandates Amiri at a 2.1 line-height multiplier, no letter-spacing, and
    `includeFontPadding` for Urdu — none of that is represented. Both fonts are available in
