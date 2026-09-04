@@ -115,6 +115,25 @@ drifted from the real data model. What it got wrong, and what it now shows:
 
 ---
 
+## BUG FOUND AND FIXED WHILE MIRRORING
+
+Mirroring `RkpWatchCard` meant reproducing its row labels exactly, which surfaced a live
+defect: both the card and `watchJudgment.ts` interpolated `${house}th Ghar` directly, so any
+question whose primary house is 1, 2 or 3 rendered **"1th Ghar" / "2th Ghar"**. From
+`HOUSE_MATRIX` the reachable cases are `health` and `general` (primary 1) and `finance` and
+`lostitem` (primary 2) — common categories, not edge cases. It appeared both on the card's row
+label and in the engine's factor prose under *How the chart reads*.
+
+`nomenclature.ts` already exported `gharLabel()` with the correct st/nd/rd/th suffixes, and
+nothing called it. Fixed by wiring the existing helper into the six variable-house sites, with
+regression tests that were verified to fail against the old interpolation. Presentation only —
+no scores, states, timings or confidence bands changed.
+
+The Figma frames show `4th Ghar` (a `property` question, primary 4), which is correct either
+way; the bug is only visible on houses 1–3.
+
+---
+
 ## THE BUTTON COMPONENT IS A PROPOSAL
 
 **There is no shared Button component in `src/`.** `src/components/` contains
