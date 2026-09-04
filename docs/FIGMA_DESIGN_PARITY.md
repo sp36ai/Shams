@@ -47,6 +47,7 @@ clone per remaining theme below it (variable-mode switched, not hand-recoloured)
 | `OnboardingScreen` | `src/screens/OnboardingScreen.tsx` | ⚠️ partial — question/choice copy is real (`QUESTIONS`) |
 | `LocationPermissionScreen` | `src/screens/LocationPermissionScreen.tsx` | ⚠️ partial |
 | `AuthScreen` | `src/screens/AuthScreen.tsx` | ⚠️ partial |
+| `OracleChatScreen — Urdu (RTL)` | same, with `lang === 'ur'` | ✅ built from `ur.ts` + `typography.ts` — see *Localisation gap* |
 
 ### Components page
 
@@ -112,6 +113,45 @@ drifted from the real data model. What it got wrong, and what it now shows:
 
 ---
 
+## LOCALISATION GAP — the Oracle result cards are not translated
+
+Found while building the Urdu frame, and worth an owner decision:
+
+**None of `RkpWatchCard.tsx`, `RemedyProtocolCard.tsx` or `GuidanceCard.tsx` imports
+`useTranslation` or calls `t()`.** Every string they render is hardcoded English —
+`STATE_HEADLINE` ("The matter completes"), the row labels (`Ruled by`, `Timing`, `Held by`,
+`Reversal`, `Direction`), `timingLabel()`'s "days / weeks / months", `obstructionLabel()`'s
+"Qamar disagrees — the mind behind the question is unsettled", and the `How the chart reads`
+factor list.
+
+So for an Urdu or Hindi seeker the app renders Urdu chrome — header, bubbles, composer, TTS
+caption, all correctly from `ur.ts` — wrapped around an **English verdict card**. The only
+language-aware part of the result is `reading.oracle.narration`, which is composed
+server-side.
+
+The `OracleChatScreen — Urdu (RTL)` frame is drawn that way deliberately: it shows what
+ships today, not an idealised translation, so the gap is visible rather than hidden.
+
+Two decisions belong to the owner here:
+
+1. Should the verdict card be localised at all? These are RKP terms of art
+   (`Ghar`, `Bait-ul-Arz`, `Qamar`) that may be intended to stay in their classical forms —
+   in which case only the connective English ("Ruled by", "which your ruler … counts
+   friendly") needs translating, not the vocabulary.
+2. If it is localised, `STATE_HEADLINE` and `timingLabel()` are judgment-adjacent phrasing.
+   Their wording is the engine's voice, so new translations are a methodology question, not
+   a copy question.
+
+### What the Urdu frame does demonstrate
+
+`typography.ts`'s Nastaliq rules applied faithfully: Amiri throughout, `letterSpacing: 0`,
+`lineHeight = round(fontSize × 2.1)`, and the per-variant size bumps (+2 body, +1
+caption/label, +3 subheading/heading). RTL mirroring is drawn as the platform would resolve
+it — the back chevron flips to the right, the user bubble's `flex-end` resolves to the left,
+the bubble's cut corner mirrors to `bottomLeft`, and the composer reads send → input → mic.
+
+---
+
 ## DELIBERATE DEVIATIONS
 
 Cases where Figma cannot express what the code does, and the workaround chosen:
@@ -137,10 +177,11 @@ Open, in rough priority order. None of these are claimed as done:
    structure, not line-by-line from source like the Oracle flow and Al-Falak were. They are
    directionally right but unaudited — treat their detail as provisional. The corrections
    table shows what tends to be wrong when a frame is drawn this way.
-2. **RTL (Urdu) and Devanagari (Hindi)** are not drawn at all. Every frame is Latin/English.
-   `typography.ts` mandates Amiri at a 2.1 line-height multiplier, no letter-spacing, and
-   `includeFontPadding` for Urdu — none of that is represented. Both fonts are available in
-   Figma, so this is buildable.
+2. **RTL / Devanagari coverage is one screen deep.** `OracleChatScreen — Urdu (RTL)` exists;
+   the other nine screens are Latin/English only, and Hindi is not drawn at all (Noto Sans
+   Devanagari is available in Figma, so it is buildable). Note that RTL correctness cannot be
+   fully judged from Figma — mirroring there is drawn by hand, whereas on device it comes
+   from `I18nManager`. The frame is a design reference, not proof the app mirrors correctly.
 3. **Accessibility is unverified.** No contrast audit, tap-target check, or screen-reader
    label pass was done on the Figma frames. `themes.ts` already carries WCAG-tuned
    `textFaint` values with explicit ratio comments — that bar has not been re-checked here.
