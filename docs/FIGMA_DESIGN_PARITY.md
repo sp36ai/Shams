@@ -42,11 +42,11 @@ clone per remaining theme below it (variable-mode switched, not hand-recoloured)
 | `HistoryScreen` | `src/screens/HistoryScreen.tsx` | ✅ rebuilt from source |
 | `SkyClockScreen — Al-Falak` | `src/screens/SkyClockScreen.tsx` | ✅ rebuilt from source |
 | `SettingsScreen` | `src/screens/SettingsScreen.tsx` | ✅ rebuilt from source |
-| `PremiumScreen` | `src/screens/PremiumScreen.tsx` | ⚠️ partial — plan data is real (`PLANS`) |
-| `SplashScreen` | `src/screens/SplashScreen.tsx` | ⚠️ partial |
-| `OnboardingScreen` | `src/screens/OnboardingScreen.tsx` | ⚠️ partial — question/choice copy is real (`QUESTIONS`) |
-| `LocationPermissionScreen` | `src/screens/LocationPermissionScreen.tsx` | ⚠️ partial |
-| `AuthScreen` | `src/screens/AuthScreen.tsx` | ⚠️ partial |
+| `PremiumScreen` | `src/screens/PremiumScreen.tsx` | ✅ rebuilt from source |
+| `SplashScreen` | `src/screens/SplashScreen.tsx` | ✅ rebuilt from source |
+| `OnboardingScreen` | `src/screens/OnboardingScreen.tsx` | ✅ rebuilt from source |
+| `LocationPermissionScreen` | `src/screens/LocationPermissionScreen.tsx` | ✅ rebuilt from source |
+| `AuthScreen` | `src/screens/AuthScreen.tsx` | ✅ rebuilt from source |
 | `OracleChatScreen — Urdu (RTL)` | same, with `lang === 'ur'` | ✅ built from `ur.ts` + `typography.ts` — see *Localisation gap* |
 
 ### Components page
@@ -112,6 +112,34 @@ drifted from the real data model. What it got wrong, and what it now shows:
 | Planet table had no zebra striping, sign in muted text, and no dignity legend | Alternating `surfaceElevated` rows, sign in `colors.accent`, dignity note row beneath non-neutral placements, and the five-badge dignity legend below the table |
 | Settings was missing whole sections, and its subscription card had a gold-tinted fill | All seven sections present (Appearance / Seeker Identity / Profile / Subscription / Reading Stats / Account / Location), each header carrying its trailing 20%-gold `sectionLine`; the subscription card is `surface`-filled and only turns `amber`-bordered on a paid plan |
 | A Figma `Button` was instanced into four screens | No shared Button exists in code — instances detached, component relabelled a proposal |
+| Premium drawn with the two plans **stacked** | `styles.cardsRow` puts them **side by side**, Khass at `flex: 1.05` with a `KHASS_GOLD` border and glow; plus the real back-arrow header copy, the *BEGIN WITH 7 DAYS FREE* banner, the selection dot and the *Restore previous purchase* link |
+| Onboarding drawn with a skip button, gold eyebrow and radio-selected choices | Centred slide with the `✦ BISMILLAH ✦` header, Amiri wordmark and ornament row; eyebrow is `textFaint`; choice cards are plain and centred with **no selection state** (tapping advances); no skip button exists |
+| Location permission drawn with a *Not now* secondary button | Only the primary button is rendered. The file's own header comment still describes a secondary "Not now" — the comment is stale, the code is not |
+| Auth drawn with filled pill tabs | Real tabs are **underline** tabs (`borderBottomWidth: 2` in `goldBright`), over a bordered form card with 52px-min input rows |
+| Splash drawn with a one-line wordmark, line–diamond–line rule and muted tagline | Two-line `SHAMS\nAL-ASRĀR` at `typography('hero')`, a single `❖` divider, and the tagline at `typography('subheading')` in `colors.text` |
+
+---
+
+## KP REMNANT FOUND AND REMOVED
+
+Mirroring `AuthScreen` surfaced the last user-facing reference to the retired KP engine:
+the wordmark's subtitle was a hardcoded `'✦  KP HORARY ORACLE  ✦'`, shown to every seeker on
+the sign-in screen. A `grep` for user-facing KP strings hits that line and nothing else —
+the remaining matches are code comments, not UI.
+
+Replaced with the app's own `app.tagline` ("The Horary Oracle of Divine Guidance"), which
+already existed, was already translated into Urdu and Hindi, and was already rendered by
+`SplashScreen`. No new copy invented. That also fixed a second defect at the same site: the
+KP string was hardcoded English and did not localise at all.
+
+**Still open (owner decision):** that subtitle applies `letterSpacing: 2.5`, and
+`typography.ts` is explicit that Nastaliq must never be letter-spaced. `SplashScreen` already
+letter-spaces this same tagline at 1.6, so the problem predates the change and affects both
+screens. It was left alone rather than folded into a KP removal.
+
+Two stale code comments also claim the Oracle "uses the full KP engine"
+(`SkyClockScreen.tsx`, `components/home/CosmicClock.tsx`). They are comments, not behaviour,
+but they contradict the RKP-only architecture and are worth correcting.
 
 ---
 
@@ -221,10 +249,12 @@ Cases where Figma cannot express what the code does, and the workaround chosen:
 
 Open, in rough priority order. None of these are claimed as done:
 
-1. **Premium and the four Auth-stack frames** were built from the screens' documented
-   structure, not line-by-line from source like the Oracle flow, Al-Falak and Settings were.
-   They are directionally right but unaudited — treat their detail as provisional. The
-   corrections table shows what tends to be wrong when a frame is drawn this way.
+1. **All ten screens have now been rebuilt from source**, so nothing in the frame map is
+   provisional any more. What is *not* covered: the frames show one representative state per
+   screen. Auth shows the Sign In tab only (not Sign Up, field errors, or the locked/loading
+   button); Onboarding shows question one only (not the Q3 completion state); Location shows
+   the idle state (not denied or blocked); Premium shows the pre-trial-expiry copy. The
+   corrections table is the record of what drifted when frames were drawn from a brief.
 2. **RTL / Devanagari coverage is one screen deep.** `OracleChatScreen — Urdu (RTL)` exists;
    the other nine screens are Latin/English only, and Hindi is not drawn at all (Noto Sans
    Devanagari is available in Figma, so it is buildable). Note that RTL correctness cannot be
