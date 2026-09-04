@@ -348,10 +348,16 @@ const AuthScreen: React.FC = () => {
             <Text
               style={[
                 typography('caption'),
-                { color: colors.textFaint, textAlign: 'center', marginTop: 4, letterSpacing: 2.5 },
+                {
+                  color: colors.textFaint,
+                  textAlign: 'center',
+                  marginTop: 4,
+                  letterSpacing: 2.5,
+                  textTransform: 'uppercase',
+                },
               ]}
             >
-              {'✦  KP HORARY ORACLE  ✦'}
+              {`✦  ${t('app.tagline')}  ✦`}
             </Text>
           </View>
 
