@@ -25,10 +25,12 @@ import React, { createContext, useCallback, useContext, useEffect, useMemo, useS
 import type { StatusBarStyle } from 'react-native';
 
 import { storage, KEYS } from '@storage/mmkv';
+import { useQuotaStore } from '@stores/quotaStore';
 
 import {
   DEFAULT_THEME_ID,
   getTheme,
+  isThemeUnlocked,
   isValidThemeId,
   THEMES,
   type Theme,
@@ -51,10 +53,21 @@ const ThemeContext = createContext<ThemeContextValue | null>(null);
 /**
  * Read persisted theme id synchronously. Used by initializer so the very first
  * render uses the correct theme (no flicker).
+ *
+ * Also enforces tier gating at cold start: `useQuotaStore`'s plan is itself
+ * rehydrated synchronously from MMKV at module load (see quotaStore.ts), so
+ * reading `.getState().plan` here is safe and correct on the very first
+ * render. A persisted theme the current plan no longer covers — most often
+ * a lapsed Mureed/Khāṣṣ subscription — falls back to the free default rather
+ * than rendering a theme the user can no longer access.
  */
 export function readPersistedThemeId(): ThemeId {
   const raw = storage.getString(KEYS.SETTINGS_THEME);
-  return isValidThemeId(raw) ? raw : DEFAULT_THEME_ID;
+  if (!isValidThemeId(raw)) {
+    return DEFAULT_THEME_ID;
+  }
+  const plan = useQuotaStore.getState().plan;
+  return isThemeUnlocked(raw, plan) ? raw : DEFAULT_THEME_ID;
 }
 
 interface ThemeProviderProps {
@@ -83,6 +96,18 @@ export function ThemeProvider({
     setThemeIdState(id);
     storage.set(KEYS.SETTINGS_THEME, id);
   }, []);
+
+  // Live downgrade: a subscription can lapse mid-session (a webhook-driven
+  // quotaStore.setPlan happening while the app is open), not only between
+  // launches. If that leaves the active theme locked, fall back to the free
+  // default immediately rather than leaving the user on a theme their plan
+  // no longer covers until next cold start.
+  const plan = useQuotaStore(s => s.plan);
+  useEffect(() => {
+    if (!isThemeUnlocked(themeId, plan)) {
+      setThemeId(DEFAULT_THEME_ID);
+    }
+  }, [plan, themeId, setThemeId]);
 
   const value = useMemo<ThemeContextValue>(() => {
     const theme = getTheme(themeId);

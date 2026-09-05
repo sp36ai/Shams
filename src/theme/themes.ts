@@ -2,21 +2,33 @@
  * Shams al-Asrār — DĀR AL-SHAMS Master Theme System
  * "The House of the Hidden Sun"
  * --------------------------------------------------------------------------
- * Six canonical themes. Single theme per session, MMKV-persisted.
+ * Eight canonical themes. Single theme per session, MMKV-persisted.
  *
  * VISUAL PHILOSOPHY:
- * - Obsidian manuscript black / illuminated gold (darAlShams)
- * - Midnight lapis lazuli / sapphire (laylAlBahr)
- * - Iron-black / crimson (narAlHadid)
- * - Dawn parchment / antique gold (subhAlWahy — light)
- * - Sage garden / olive ink (zaytunAlHikma — light)
- * - Violet secret / indigo dusk (sirrAlBanafsaj)
+ * - Obsidian manuscript black / illuminated gold (darAlShams — free default)
+ * - Midnight lapis lazuli / sapphire (laylAlBahr — Mureed)
+ * - Iron-black / crimson (narAlHadid — Mureed)
+ * - Dawn parchment / antique gold (subhAlWahy — light, Mureed)
+ * - Sage garden / olive ink (zaytunAlHikma — light, Mureed)
+ * - Violet secret / indigo dusk (sirrAlBanafsaj — Mureed)
+ * - Platinum axis-of-lights (qutbAlAnwar — Khāṣṣ)
+ * - Emerald treasure / rose gold (kanzAlAsrar — Khāṣṣ)
  *
  * NOTE — the Watch Oracle's verdict colour comes from the semantic tokens
  * below (maqbool / caution / mardood), which every theme defines. The old
  * fixed CONFIRMED/DENIED palette belonged to the retired Astronomical (KP)
  * verdict card and was removed with it.
+ *
+ * TIER GATING — every theme requires a minimum PlanTier (see THEME_TIER
+ * below). darAlShams is the one free-tier default; the other five original
+ * colour variants require Mureed; the two newest (qutbAlAnwar, kanzAlAsrar)
+ * require Khāṣṣ. Gating is enforced in two places: ThemeSwitcher.tsx (which
+ * themes are selectable) and ThemeProvider.tsx (falls back to
+ * DEFAULT_THEME_ID if a persisted or currently-active theme exceeds the
+ * user's current plan — e.g. a lapsed subscription).
  */
+
+import type { PlanTier } from '@stores/quotaStore';
 
 export type ThemeId =
   | 'darAlShams'
@@ -24,7 +36,9 @@ export type ThemeId =
   | 'narAlHadid'
   | 'subhAlWahy'
   | 'zaytunAlHikma'
-  | 'sirrAlBanafsaj';
+  | 'sirrAlBanafsaj'
+  | 'qutbAlAnwar'
+  | 'kanzAlAsrar';
 
 export interface ThemeColors {
   /** Deepest background */
@@ -574,6 +588,142 @@ const sirrAlBanafsaj: Theme = {
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
+// 7. QUTB AL-ANWAR — Platinum · Axis of Lights (dark) — Khāṣṣ exclusive
+// ─────────────────────────────────────────────────────────────────────────────
+const qutbAlAnwar: Theme = {
+  id: 'qutbAlAnwar',
+  labelKey: 'theme.qutbAlAnwar',
+  name: 'Quṭb al-Anwār',
+  subtitle: 'Platinum · Axis of Lights',
+  isDark: true,
+  colors: {
+    bg: '#07080B',
+    surface: '#0F1116',
+    surfaceElevated: '#171A20',
+    border: '#262A32',
+    borderAccent: '#D6DAE2',
+
+    gold: '#D6DAE2',
+    goldBright: '#F2F4F8',
+    brass: '#9CA3AF',
+
+    maqbool: '#7FE0C4',
+    maqboolGlow: 'rgba(127, 224, 196, 0.25)',
+    mardood: '#C0526B',
+    mardoodGlow: 'rgba(192, 82, 107, 0.15)',
+    caution: '#E8B34A',
+
+    text: '#F0F2F6',
+    textMuted: '#9AA0AC',
+    // Same WCAG-AA reasoning as darAlShams's textFaint: mid-gray against a
+    // near-black bg comfortably clears 4.5:1.
+    textFaint: '#7D828E',
+    textOnGold: '#0C0D10',
+
+    celestialDust: '#D6DAE2',
+    vellumOverlay: 'rgba(240, 242, 246, 0.03)',
+    manuscriptFog: 'rgba(214, 218, 226, 0.08)',
+    sacredGlow: '#D6DAE2',
+    lunarReflection: '#8FA8C2',
+    candlelight: '#F2F4F8',
+
+    accent: '#D6DAE2',
+    amber: '#F2F4F8',
+    primary: '#D6DAE2',
+    textOnPrimary: '#0C0D10',
+    positive: '#7FE0C4',
+    negative: '#C0526B',
+
+    starfield: '#D6DAE2',
+    nebula1: 'rgba(214, 218, 226, 0.08)',
+    nebula2: 'rgba(214, 218, 226, 0.05)',
+    nebula3: 'rgba(242, 244, 248, 0.03)',
+
+    chatUserBg: '#171A20',
+    chatUserBorder: '#262A32',
+    chatShamsBg: 'rgba(214, 218, 226, 0.07)',
+    chatShamsBorder: '#D6DAE2',
+
+    statusBar: '#07080B',
+    statusBarStyle: 'light-content',
+
+    atmTop: 'rgba(214, 218, 226, 0.06)',
+    atmBot: 'rgba(7, 8, 11, 0.0)',
+    jaliStroke: '#D6DAE2',
+    jaliOpacity: 0.055,
+    sealGradient: ['#D6DAE2', '#F2F4F8'],
+    horaGradient: ['rgba(214, 218, 226, 0.12)', 'rgba(214, 218, 226, 0.04)'],
+  },
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 8. KANZ AL-ASRĀR — Emerald · Treasure of Secrets (dark) — Khāṣṣ exclusive
+// ─────────────────────────────────────────────────────────────────────────────
+const kanzAlAsrar: Theme = {
+  id: 'kanzAlAsrar',
+  labelKey: 'theme.kanzAlAsrar',
+  name: 'Kanz al-Asrār',
+  subtitle: 'Emerald · Treasure of Secrets',
+  isDark: true,
+  colors: {
+    bg: '#070B09',
+    surface: '#0E1512',
+    surfaceElevated: '#16201B',
+    border: '#22302A',
+    borderAccent: '#D9A066',
+
+    gold: '#D9A066',
+    goldBright: '#F0BE8A',
+    brass: '#A67A4C',
+
+    maqbool: '#4FAE7A',
+    maqboolGlow: 'rgba(79, 174, 122, 0.25)',
+    mardood: '#B2483E',
+    mardoodGlow: 'rgba(178, 72, 62, 0.15)',
+    caution: '#C98A3E',
+
+    text: '#F2EAE0',
+    textMuted: '#A69B8C',
+    textFaint: '#7E7466',
+    textOnGold: '#1A1108',
+
+    celestialDust: '#D9A066',
+    vellumOverlay: 'rgba(242, 234, 224, 0.03)',
+    manuscriptFog: 'rgba(217, 160, 102, 0.08)',
+    sacredGlow: '#D9A066',
+    lunarReflection: '#7FA88F',
+    candlelight: '#F0BE8A',
+
+    accent: '#D9A066',
+    amber: '#F0BE8A',
+    primary: '#D9A066',
+    textOnPrimary: '#1A1108',
+    positive: '#4FAE7A',
+    negative: '#B2483E',
+
+    starfield: '#D9A066',
+    nebula1: 'rgba(217, 160, 102, 0.08)',
+    nebula2: 'rgba(217, 160, 102, 0.05)',
+    nebula3: 'rgba(240, 190, 138, 0.03)',
+
+    chatUserBg: '#16201B',
+    chatUserBorder: '#22302A',
+    chatShamsBg: 'rgba(217, 160, 102, 0.07)',
+    chatShamsBorder: '#D9A066',
+
+    statusBar: '#070B09',
+    statusBarStyle: 'light-content',
+
+    atmTop: 'rgba(217, 160, 102, 0.06)',
+    atmBot: 'rgba(7, 11, 9, 0.0)',
+    jaliStroke: '#D9A066',
+    jaliOpacity: 0.055,
+    sealGradient: ['#D9A066', '#F0BE8A'],
+    horaGradient: ['rgba(217, 160, 102, 0.12)', 'rgba(217, 160, 102, 0.04)'],
+  },
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Registry
 // ─────────────────────────────────────────────────────────────────────────────
 export const THEMES: Readonly<Record<ThemeId, Theme>> = Object.freeze({
@@ -583,6 +733,8 @@ export const THEMES: Readonly<Record<ThemeId, Theme>> = Object.freeze({
   subhAlWahy,
   zaytunAlHikma,
   sirrAlBanafsaj,
+  qutbAlAnwar,
+  kanzAlAsrar,
 });
 
 export const THEME_IDS: readonly ThemeId[] = [
@@ -592,9 +744,46 @@ export const THEME_IDS: readonly ThemeId[] = [
   'subhAlWahy',
   'zaytunAlHikma',
   'sirrAlBanafsaj',
+  'qutbAlAnwar',
+  'kanzAlAsrar',
 ];
 
 export const DEFAULT_THEME_ID: ThemeId = 'darAlShams';
+
+/**
+ * The minimum plan tier that unlocks each theme. darAlShams is the one
+ * free-tier default; the original five colour variants require Mureed;
+ * the two newest require Khāṣṣ.
+ *
+ * Kept here (not in quotaStore) because it's a property of the theme, not
+ * of the plan — quotaStore has no reason to know which themes exist.
+ */
+export const THEME_TIER: Readonly<Record<ThemeId, PlanTier>> = Object.freeze({
+  darAlShams: 'free',
+  laylAlBahr: 'mureed',
+  narAlHadid: 'mureed',
+  subhAlWahy: 'mureed',
+  zaytunAlHikma: 'mureed',
+  sirrAlBanafsaj: 'mureed',
+  qutbAlAnwar: 'khass',
+  kanzAlAsrar: 'khass',
+});
+
+const TIER_RANK: Readonly<Record<PlanTier, number>> = Object.freeze({
+  free: 0,
+  mureed: 1,
+  khass: 2,
+});
+
+/** Does `userTier` unlock a theme that requires `requiredTier`? */
+export function tierMeetsRequirement(userTier: PlanTier, requiredTier: PlanTier): boolean {
+  return TIER_RANK[userTier] >= TIER_RANK[requiredTier];
+}
+
+/** Is this theme selectable by a user on `userTier`? */
+export function isThemeUnlocked(id: ThemeId, userTier: PlanTier): boolean {
+  return tierMeetsRequirement(userTier, THEME_TIER[id]);
+}
 
 export function getTheme(id: ThemeId): Theme {
   return THEMES[id];

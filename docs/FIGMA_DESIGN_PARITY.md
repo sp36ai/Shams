@@ -87,7 +87,8 @@ Also new on `main` and **not** in the Figma file at all:
 Figma variables were generated **from** `src/theme/themes.ts` and `src/theme/typography.ts`,
 so they are derived, not independently authored.
 
-- **Colour** — one collection, six modes named for the six `ThemeId`s. 20 semantic tokens
+- **Colour** — one collection, **eight** modes named for the eight `ThemeId`s (the original
+  six, plus `qutbAlAnwar`/`kanzAlAsrar` — see *Tier-gated theming* below). 20 semantic tokens
   (`color/bg`, `color/surface`, `color/gold`, `color/positive`, …) matching `ThemeColors`.
 - **Spacing / Radius** — `SPACING` and `RADIUS` from `themes.ts`.
 - **Type styles** — the `TYPOGRAPHY_VARIANTS` ramp (hero → button).
@@ -103,7 +104,7 @@ Two things to know when editing:
 
 ### Colours that are intentionally NOT themed
 
-These are hardcoded constants in the source and must stay identical across all six modes.
+These are hardcoded constants in the source and must stay identical across all eight modes.
 Do not "fix" them to a theme token:
 
 | Constant | Where | Why |
@@ -218,7 +219,7 @@ screens agree in every theme, not just the four where gold and primary happen to
 
 **One legitimate divergence, kept as an escape hatch, not a special case:** Premium's Khāṣṣ
 tier uses a fixed `KHASS_GOLD` (`#B8952A`) brand accent that is deliberately constant across
-all six themes — it is not a theme token and never has been (it also colors the tier's border,
+all eight themes — it is not a theme token and never has been (it also colors the tier's border,
 label and selection dot elsewhere on the same screen). `Button` exposes an optional `tint`
 prop for exactly this case; every other call site leaves it unset and gets the normal
 per-theme `colors.primary` behaviour.
@@ -320,6 +321,103 @@ treatment. Premium's plan cards already differentiate the Khāṣṣ tier with a
 (`0.1`/`4`, neutral) — exactly the kind of state-differentiated elevation this pass was adding
 elsewhere. Redesigning either would have been churn without a defect to justify it, so neither
 was touched.
+
+## TIER-GATED THEMING — two new Khāṣṣ themes, free/Mureed/Khāṣṣ split
+
+Until this pass, theme choice was completely open — all 6 colour variants, free for every
+user, no gating at all. That changed by explicit product decision:
+
+- **Free** (no subscription): one fixed default, `darAlShams`. No picker shown as unlocked.
+- **Mureed**: unlocks the original five colour variants (`laylAlBahr`, `narAlHadid`,
+  `subhAlWahy`, `zaytunAlHikma`, `sirrAlBanafsaj`) — themes that already existed, now gated
+  rather than redesigned.
+- **Khāṣṣ**: unlocks two **new** themes, designed fresh for this tier rather than repurposing
+  anything that existed — `qutbAlAnwar` and `kanzAlAsrar`.
+
+### The two new themes
+
+Both dark, both built by the same formula every existing theme already follows (one accent
+hex drives `gold`/`accent`/`primary`/`sacredGlow`/`starfield`/`celestialDust`/`jaliStroke`/
+`sealGradient[0]`; a second, brighter stop drives `goldBright`/`amber`/`candlelight`/
+`sealGradient[1]`; `maqbool`/`mardood`/`caution` are independent semantic accents; `lunarReflection`
+is an independent cool accent) — new palette, same internal logic as the six themes that
+predate them, not a special case.
+
+- **Quṭb al-Anwār** ("Axis of Lights") — platinum/silver-white accent (`#D6DAE2` →
+  `#F2F4F8`) on near-black. The one accent hue none of the original six use (they run
+  gold/blue/red-orange/mustard-olive/violet) — chosen so a Khāṣṣ theme reads as visually
+  distinct at a glance, not just "one more gold variant."
+- **Kanz al-Asrār** ("Treasure of Secrets") — rose-gold accent (`#D9A066` → `#F0BE8A`) on
+  near-black emerald, with emerald `maqbool` and ruby `mardood`. Jewel-toned, distinct from
+  `darAlShams`'s warm gold and from Quṭb al-Anwār's cool platinum.
+
+Both were verified the same way the original elevation/stripe work was verified in this file
+(*Premium visual pass*, above): the fully variable-bound `RkpWatchCard` reference frame was
+cloned into each new Color-collection mode and screenshotted. Every value — background,
+state-tone stripe, elevation glow, text — resolved correctly with zero additional binding
+work, which is the actual payoff of having bound every value to a variable in the first
+place rather than hardcoding colours per frame.
+
+**Scope boundary, stated plainly:** only `RkpWatchCard` has a dedicated reference frame for
+the two new themes. A full mirror — all ten screens × 2 new themes, the way the original six
+were built out — was not attempted here; that is a much larger effort and wasn't asked for.
+`Button`, `Verdict Badge` and `Tab Bar` are equally variable-bound and would resolve correctly
+under the new modes on the same evidence, but that has not been individually screenshotted
+and confirmed the way `RkpWatchCard` was.
+
+### Enforcement — where gating actually lives
+
+- **`src/theme/themes.ts`** — `THEME_TIER: Record<ThemeId, PlanTier>` maps every theme to its
+  minimum tier; `tierMeetsRequirement()`/`isThemeUnlocked()` do the rank comparison
+  (`free` < `mureed` < `khass`). Covered by `src/theme/__tests__/themeTiers.test.ts` (30
+  cases: every theme × every tier).
+- **`src/theme/ThemeProvider.tsx`** — `readPersistedThemeId()` checks the persisted theme
+  against `useQuotaStore.getState().plan` (read synchronously — quotaStore's own plan field
+  is itself MMKV-rehydrated at module load, so this is safe on the very first render) and
+  falls back to `DEFAULT_THEME_ID` if it's no longer covered. A second effect does the same
+  check live, so a subscription that lapses mid-session (not just between app launches) can't
+  leave the user on a theme their plan no longer covers.
+- **`src/components/ThemeSwitcher.tsx`** — a locked card is dimmed (opacity 0.55), shows the
+  required tier (`✦ MUREED` / `✦ KHĀṢṢ`) instead of the DARK/LIGHT badge, and tapping it opens
+  Premium instead of switching — propose the upgrade, don't just disable, the same pattern
+  the rest of the app already uses for paywalled actions.
+
+### What this section does NOT cover
+
+- **Premium's marketing copy does not yet advertise theme unlocking as a plan benefit.**
+  `PremiumScreen.tsx`'s plan cards list other benefits; adding "unlock N themes" to that copy
+  is a product/marketing decision, not made here.
+- **Whether a currently-active Mureed/Khāṣṣ subscriber who downgrades keeps their in-progress
+  reading history styled the way they last saw it** — no, by design (the live-downgrade
+  effect above reverts immediately) — but this has not been manually verified end-to-end
+  against a real Play Store subscription-lapse webhook, only against `quotaStore.setPlan()`
+  called directly.
+
+---
+
+## FOLLOW-UP CONVERSATION — already built; one discoverability gap found and fixed
+
+`discussReading` (Cloud Function) → `oracleDiscussion.ts` (client) → `ReadingScreen.tsx`
+(`runDiscuss`, `isFollowUp` branching) is a complete, tested, working follow-up-conversation
+pipeline — it shipped in #99, well before this pass. If a seeker reports being unable to keep
+talking to the Oracle after a reading, the first thing to check is **which build they're
+running**, not the feature's existence.
+
+What this pass found and fixed: **the composer's placeholder text
+(`oracleChat.placeholderDiscuss`, "Ask about this reading…") was the only discoverability
+signal**, and it's unfocused grey text at the bottom of what can be a long scrolling thread —
+easy to miss when attention is naturally on the verdict card above, not the input below.
+
+The fix reuses copy that already existed but was never wired to anything:
+`oracleChat.modeDiscuss` ("💬 Discuss this reading") was defined in `en.ts` alongside
+`modeNewQuestion`, and neither string was referenced by any component — dead strings, not a
+missing-translation gap. `ReadingScreen.tsx` now renders `modeDiscuss` as a small label
+directly above the composer whenever `isDiscussMode` is true (the same condition that already
+switches the composer's placeholder and its `onSend` target), so the invitation to keep
+talking sits exactly where the seeker's eyes land next, not scrolled away above older
+messages. `modeNewQuestion` remains unwired — `handleAskAsNewReading`'s existing UI already
+covers that path (see `ChatBubble`'s `onAskAsNewQuestion`), so there was nothing to connect it
+to.
 
 ## LOCALISATION GAP — the Oracle result cards are not translated
 
