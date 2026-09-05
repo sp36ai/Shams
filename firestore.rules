@@ -121,6 +121,19 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    // ── /idempotencyKeys/{userId__requestId} ─────────────────────────────────
+    // Records that one submission has already been cast and charged, so a
+    // retry replays its response instead of paying for a second reading.
+    // Written exclusively by askWatchOracle via the Admin SDK. NO client
+    // access, not even the owner: a client that could read these could read
+    // back a stored response, and one that could delete them could re-cast a
+    // charged reading for free. Covered by the catch-all below, and stated
+    // explicitly so the intent survives a future edit of these rules.
+
+    match /idempotencyKeys/{keyId} {
+      allow read, write, delete: if false;
+    }
+
     // ── /_system/{document} ──────────────────────────────────────────────────
     // Internal configuration (feature flags, app signatures). Admin only.
 

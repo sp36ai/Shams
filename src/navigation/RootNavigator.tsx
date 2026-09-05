@@ -5,9 +5,25 @@
  *   1. Splash (always shown, min 2.5s brand moment)
  *   2. Auth   (if user is not signed in)
  *   3. LocationPermission (first launch after auth if not yet prompted)
- *   4. Main   (bottom tabs: Home | Al-Falak | History; Settings and Oracle
- *              Chat are both root-level pushes from Home — the gear icon and
- *              the "Ask New Question" CTA, respectively)
+ *   4. Main   (bottom tabs: Home | Al-Falak | Readings) — and, in the SAME
+ *              group, the three screens pushed over it: Reading, Settings
+ *              and Premium.
+ *
+ * WHY THE PUSHED SCREENS SIT INSIDE THE AUTHENTICATED GROUP
+ *   They used to be registered unconditionally, as siblings of whichever
+ *   gate screen was showing. That looked harmless and was not: signing out
+ *   from Settings flips `isAuthenticated`, which swaps Main for Auth — but
+ *   Settings itself stayed registered and stayed on top of the stack, so the
+ *   seeker signed out and went on looking at their own settings page, over an
+ *   Auth screen they could not see. Same for Reading and Premium. Registering
+ *   them in the group means losing auth unmounts them, and the seeker lands
+ *   where they should: on Auth.
+ *
+ * EVERY SCREEN IS INDIVIDUALLY BOUNDED
+ *   withScreenErrorBoundary() wraps each route here rather than in the screen
+ *   files, so a screen added later is covered by construction. Without it, one
+ *   screen throwing during render unmounted the whole NavigationContainer via
+ *   the root boundary: no tab bar, no back button, no way out but a restart.
  *
  * WHY THE PUSHED SCREENS SIT INSIDE THE AUTHENTICATED GROUP
  *   They used to be registered unconditionally, as siblings of whichever gate
@@ -47,7 +63,7 @@ import OnboardingScreen from '@screens/OnboardingScreen';
 import LocationPermissionScreen from '@screens/LocationPermissionScreen';
 import PremiumScreen from '@screens/PremiumScreen';
 import SettingsScreen from '@screens/SettingsScreen';
-import OracleChatScreen from '@screens/OracleChatScreen';
+import ReadingScreen from '@screens/ReadingScreen';
 import MainTabs from './MainTabs';
 import { withScreenErrorBoundary } from '@components/ScreenErrorBoundary';
 
@@ -77,7 +93,7 @@ const OnboardingRoute = withScreenErrorBoundary(OnboardingScreen, 'Onboarding');
 const MainRoute = withScreenErrorBoundary(MainTabs, 'Main');
 const PremiumRoute = withScreenErrorBoundary(PremiumScreen, 'Premium');
 const SettingsRoute = withScreenErrorBoundary(SettingsScreen, 'Settings');
-const OracleChatRoute = withScreenErrorBoundary(OracleChatScreen, 'Ask Shams');
+const ReadingRoute = withScreenErrorBoundary(ReadingScreen, 'Reading');
 
 const RootNavigator: React.FC = () => {
   const { theme } = useTheme();
@@ -181,10 +197,10 @@ const RootNavigator: React.FC = () => {
               component={SettingsRoute}
               options={{ animation: 'slide_from_right', gestureEnabled: true }}
             />
-            {/* Oracle Chat — reached via Home's "Ask New Question" CTA */}
+            {/* One Reading — opened from Your Readings, or begun from Home */}
             <RootStack.Screen
-              name="OracleChat"
-              component={OracleChatRoute}
+              name="Reading"
+              component={ReadingRoute}
               options={{ animation: 'slide_from_right', gestureEnabled: true }}
             />
           </RootStack.Group>

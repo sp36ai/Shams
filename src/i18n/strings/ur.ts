@@ -44,7 +44,7 @@ export const ur: StringTable = {
   nav: {
     homeTab: 'ہوم',
     alFalakTab: 'الفلک',
-    historyTab: 'زائچے',
+    readingsTab: 'زائچے',
   },
 
   permission: {
@@ -121,6 +121,8 @@ export const ur: StringTable = {
     yourTierLabel: 'آپ کا درجہ',
     tierWanderer: 'سالک',
     askNewQuestionCta: 'نیا سوال پوچھیں',
+    askPrompt: 'آپ کیا پوچھنا چاہتے ہیں؟',
+    askPlaceholder: 'شمس سے پوچھیں…',
     consultOracleSubtitle: 'اوریکل سے رجوع کریں',
     readingHistoryCta: 'سابقہ زائچے',
     viewPastReadingsSubtitle: 'اپنے سابقہ زائچے دیکھیں',
@@ -145,6 +147,7 @@ export const ur: StringTable = {
     noSpeechDetected: 'کچھ سنائی نہیں دیا — دوبارہ کوشش کریں۔',
     voiceUnavailable: 'اس ڈیوائس پر آواز سے سوال دستیاب نہیں۔ سوال لکھ کر بھیجیں۔',
     errorTimeout: 'اوریکل کو جواب دینے میں زیادہ وقت لگا۔ دوبارہ کوشش کریں۔',
+    errorAlreadyRunning: 'یہ سوال پہلے ہی پڑھا جا رہا ہے۔ ذرا ٹھہر کر دوبارہ کوشش کریں۔',
     errorSignIn: 'جاری رکھنے کے لیے دوبارہ سائن ان کریں۔',
     listenToVerdict: 'سنیں',
     playNarration: 'بیان چلائیں',
@@ -153,6 +156,22 @@ export const ur: StringTable = {
     paused: 'رکا ہوا',
     emptyTitle: 'اپنا پہلا سوال پوچھیں',
     emptyBody: 'لکھیں، یا مائیکروفون دبا کر بولیں۔ اوریکل اسی لمحے سے جواب دیتا ہے۔',
+    reply: 'جواب',
+    considering: 'آپ کی بات پر غور ہو رہا ہے…',
+    modeDiscuss: '💬 اسی جواب پر گفتگو',
+    modeNewQuestion: '✦ نیا سوال',
+    placeholderDiscuss: 'اسی جواب کے بارے میں پوچھیں…',
+    askAsNewQuestion: 'اس کے لیے نیا زائچہ کھولیں',
+    separateQuestionNote: 'یہ الگ سوال ہو سکتا ہے — اسے اپنا لمحہ درکار ہوگا۔',
+    discussionUnavailable: 'اوریکل نے اس کا جواب نہیں دیا۔ دوبارہ پوچھیں۔',
+    discussionReadingGone: 'یہ جواب اب گفتگو کے لیے دستیاب نہیں۔',
+  },
+
+  reading: {
+    sectionLabel: 'زائچہ',
+    yourQuestion: 'آپ کا سوال',
+    newReading: 'نیا زائچہ',
+    shareReading: 'زائچہ بھیجیں',
   },
 
   skyClock: {
@@ -178,6 +197,17 @@ export const ur: StringTable = {
     sortOldest: 'پہلے پرانے',
     deleteConfirm: 'یہ فیصلہ حذف کریں؟ یہ واپس نہیں آ سکتا۔',
     deleteAction: 'حذف کریں',
+    searchPlaceholder: 'زائچے تلاش کریں',
+    noResults: 'کوئی زائچہ نہیں ملا۔',
+    newReading: 'نیا زائچہ',
+    beginReading: 'زائچہ شروع کریں',
+    groupToday: 'آج',
+    groupYesterday: 'کل',
+    groupPrevious7: 'پچھلے ۷ دن',
+    groupPrevious30: 'پچھلے ۳۰ دن',
+    groupOlder: 'اس سے پہلے',
+    pendingReading: 'لمحہ پڑھا جا رہا ہے…',
+    failedReading: 'نامکمل',
   },
 
   premium: {

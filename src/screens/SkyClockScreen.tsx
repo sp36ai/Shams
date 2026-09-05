@@ -229,7 +229,11 @@ const SkyClockScreen: React.FC = () => {
       >
         <Pressable
           onPress={() =>
-            navigation.canGoBack() ? navigation.goBack() : navigation.navigate('Home')
+            // Al-Falak is a TAB, not a pushed screen: goBack() here returns
+            // to whichever tab was focused last, so the same arrow could land
+            // on Home or on Your Readings depending on history. This arrow
+            // means "back to Home" and now always does that.
+            navigation.navigate('Home')
           }
           style={styles.backBtn}
           accessibilityRole="button"

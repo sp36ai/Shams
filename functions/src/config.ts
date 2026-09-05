@@ -19,6 +19,17 @@ export function todayKey(now = Date.now()): string {
   return new Date(now).toISOString().slice(0, 10);
 }
 
+/**
+ * How many follow-up turns one reading may carry.
+ *
+ * Discussion is free — the unit sold is the reading, not the conversation
+ * about it (see discussReading.ts) — so this bound, not the quota, is what
+ * keeps a single reading from becoming an unbounded chat session. Generous
+ * enough that no ordinary seeker meets it, low enough to cap the cost of one
+ * reading; a seeker who exhausts it has a new question, not a follow-up.
+ */
+export const DISCUSSION_TURN_LIMIT = 12;
+
 export const REGION = 'asia-south1'; // Mumbai — closest to primary user base
 
 export const FUNCTION_OPTS = {

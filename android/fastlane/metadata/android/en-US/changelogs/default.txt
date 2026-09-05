@@ -1,8 +1,9 @@
-Stability release. One screen failing no longer stops the whole app.
+A reading is now something you can talk about, not just receive.
 
-• Fixed a crash that could leave the app on an error screen with no way back
-• A screen that does fail now names itself, and the rest of the app keeps working
-• Past readings open reliably, including ones saved by earlier versions
-• Voice input is hidden where the device does not support it
-• Signing out returns you to the sign-in screen
-• Swipe-back restored on Settings, Ask and Upgrade
+• Ask a follow-up on any reading — it costs no daily question
+• The oracle explains the reading it gave, without re-judging it
+• "Your Readings" keeps each reading with its conversation, titled and searchable
+• Open an old reading and it restores the moment it was cast for
+• Ask straight from the home screen
+• Share a completed reading
+• A question interrupted mid-cast is never charged twice

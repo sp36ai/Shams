@@ -43,7 +43,7 @@ export const hi: StringTable = {
   nav: {
     homeTab: 'होम',
     alFalakTab: 'अल-फ़लक',
-    historyTab: 'रीडिंग',
+    readingsTab: 'रीडिंग',
   },
 
   permission: {
@@ -120,6 +120,8 @@ export const hi: StringTable = {
     yourTierLabel: 'आपका स्तर',
     tierWanderer: 'साधक',
     askNewQuestionCta: 'नया प्रश्न पूछें',
+    askPrompt: 'आप क्या पूछना चाहते हैं?',
+    askPlaceholder: 'शम्स से पूछें…',
     consultOracleSubtitle: 'ओरेकल से परामर्श करें',
     readingHistoryCta: 'पिछली रीडिंग',
     viewPastReadingsSubtitle: 'अपनी पिछली रीडिंग देखें',
@@ -144,6 +146,7 @@ export const hi: StringTable = {
       'आवाज़ से प्रश्न के लिए माइक्रोफ़ोन की अनुमति चाहिए। सेटिंग्स में सक्षम करें।',
     voiceUnavailable: 'इस डिवाइस पर वॉइस इनपुट उपलब्ध नहीं है। प्रश्न लिखकर भेजें।',
     noSpeechDetected: 'कुछ सुनाई नहीं दिया — दोबारा कोशिश करें।',
+    errorAlreadyRunning: 'यह प्रश्न पहले से पढ़ा जा रहा है। थोड़ा रुककर पुनः प्रयास करें।',
     errorTimeout: 'ओरेकल को उत्तर देने में बहुत समय लगा। दोबारा कोशिश करें।',
     errorSignIn: 'जारी रखने के लिए दोबारा साइन इन करें।',
     listenToVerdict: 'सुनें',
@@ -153,6 +156,22 @@ export const hi: StringTable = {
     paused: 'रुका हुआ',
     emptyTitle: 'अपना पहला प्रश्न पूछें',
     emptyBody: 'लिखें, या माइक दबाकर बोलें। ओरेकल इसी क्षण से उत्तर देता है।',
+    reply: 'उत्तर',
+    considering: 'आपकी बात पर विचार हो रहा है…',
+    modeDiscuss: '💬 इसी उत्तर पर चर्चा',
+    modeNewQuestion: '✦ नया प्रश्न',
+    placeholderDiscuss: 'इस उत्तर के बारे में पूछें…',
+    askAsNewQuestion: 'इसके लिए नई रीडिंग खोलें',
+    separateQuestionNote: 'यह अलग प्रश्न हो सकता है — इसे अपना क्षण चाहिए।',
+    discussionUnavailable: 'ओरेकल ने इसका उत्तर नहीं दिया। पुनः पूछें।',
+    discussionReadingGone: 'यह उत्तर अब चर्चा के लिए उपलब्ध नहीं है।',
+  },
+
+  reading: {
+    sectionLabel: 'रीडिंग',
+    yourQuestion: 'आपका प्रश्न',
+    newReading: 'नई रीडिंग',
+    shareReading: 'रीडिंग साझा करें',
   },
 
   skyClock: {
@@ -178,6 +197,17 @@ export const hi: StringTable = {
     sortOldest: 'पुराने पहले',
     deleteConfirm: 'इस निर्णय को हटाएँ? यह वापस नहीं आएगा।',
     deleteAction: 'हटाएँ',
+    searchPlaceholder: 'रीडिंग खोजें',
+    noResults: 'कोई रीडिंग नहीं मिली।',
+    newReading: 'नई रीडिंग',
+    beginReading: 'रीडिंग शुरू करें',
+    groupToday: 'आज',
+    groupYesterday: 'कल',
+    groupPrevious7: 'पिछले ७ दिन',
+    groupPrevious30: 'पिछले ३० दिन',
+    groupOlder: 'इससे पहले',
+    pendingReading: 'क्षण पढ़ा जा रहा है…',
+    failedReading: 'अपूर्ण',
   },
 
   premium: {

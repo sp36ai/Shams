@@ -3,9 +3,14 @@
  * --------------------------------------------------------------------------
  * Text input, mic button (animated while recording), and the ASK/SEND
  * action. Owns none of the STT/quota/network logic — every callback here is
- * a pass-through to whatever OracleChatScreen decides to do, so this file
+ * a pass-through to whatever ReadingScreen decides to do, so this file
  * stays pure presentation, easy to reuse or restyle without touching the
  * conversation logic.
+ *
+ * `mode` is derived by the Reading screen, never chosen here: before a chart
+ * has been cast the next send is the Reading's question, and after it every
+ * send is a follow-up about that Reading. The composer only reflects which,
+ * in its placeholder and its action label.
  */
 
 import React, { useEffect, useRef } from 'react';
@@ -23,6 +28,8 @@ import { useColors } from '@theme/ThemeProvider';
 import { useTypography } from '@theme/useTypography';
 import { useTranslation } from '@i18n/I18nProvider';
 
+export type ComposerMode = 'ask' | 'discuss';
+
 interface ChatComposerProps {
   value: string;
   onChangeText: (text: string) => void;
@@ -38,6 +45,8 @@ interface ChatComposerProps {
    * rendered at all: a button that cannot work is worse than no button.
    */
   micAvailable?: boolean;
+  /** Whether the next send opens this Reading or follows up on it. */
+  mode?: ComposerMode;
 }
 
 const ChatComposer: React.FC<ChatComposerProps> = ({
@@ -49,6 +58,7 @@ const ChatComposer: React.FC<ChatComposerProps> = ({
   onMicPress,
   micDisabled = false,
   micAvailable = true,
+  mode = 'ask',
 }) => {
   const colors = useColors();
   const typography = useTypography();
@@ -142,7 +152,13 @@ const ChatComposer: React.FC<ChatComposerProps> = ({
         ]}
         value={value}
         onChangeText={onChangeText}
-        placeholder={isListening ? t('oracleChat.listening') : t('oracleChat.placeholder')}
+        placeholder={
+          isListening
+            ? t('oracleChat.listening')
+            : mode === 'discuss'
+              ? t('oracleChat.placeholderDiscuss')
+              : t('oracleChat.placeholder')
+        }
         placeholderTextColor={colors.textFaint}
         editable={!sending}
         multiline
@@ -161,7 +177,7 @@ const ChatComposer: React.FC<ChatComposerProps> = ({
           },
         ]}
         accessibilityRole="button"
-        accessibilityLabel={t('oracleChat.send')}
+        accessibilityLabel={mode === 'discuss' ? t('oracleChat.reply') : t('oracleChat.send')}
         testID="oracle-chat-send-btn"
       >
         {sending ? (
@@ -173,7 +189,7 @@ const ChatComposer: React.FC<ChatComposerProps> = ({
               { color: canSend ? colors.textOnPrimary : colors.textFaint },
             ]}
           >
-            {t('oracleChat.send')}
+            {mode === 'discuss' ? t('oracleChat.reply') : t('oracleChat.send')}
           </Animated.Text>
         )}
       </Pressable>

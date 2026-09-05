@@ -73,7 +73,8 @@ Built by **Astro Sarfaraz** — a solo developer, owner, and practicing celestia
 ### User-Facing Callable Functions
 
 - **`askWatchOracle`** — the live judgment endpoint: validates input, enforces quota, builds the watch-frame chart, calls the RKP celestial engine, returns verdict + remedy composition
-- **`classifyQuestion`** / **`classifyIntent`** — Layer-1 question gate and follow-up intent classification (Claude Haiku)
+- **`discussReading`** — the follow-up conversation endpoint: answers questions *about* a reading already given. Loads the reading server-side (ownership enforced), so the reply is grounded in the verdict that was actually issued and can never revise it. Spends no quota — a reading is the unit charged, and understanding it is part of what was bought — and is bounded instead at 12 follow-up turns per reading. A follow-up that is really a new horary question is flagged rather than answered, and the app offers to ask it as a fresh reading
+- **`classifyQuestion`** — Layer-1 question gate (Claude Haiku)
 - **`getQuota`** — Returns user's plan, daily usage, and remaining questions
 - **`syncReadings`** — Bulk fetch readings from Firestore
 - **`deleteReading`** — Delete reading by ID
@@ -120,7 +121,7 @@ data, and no location either. It can run the moment the app opens.
 
 An earlier **Astronomical Oracle** mode — a true-Ascendant chart built by
 `primitives/chartBuilder.ts` (RAMC, obliquity, latitude, Placidus houses,
-location required) — was retired from `OracleChatScreen`'s `runEngine()`
+location required) — was retired from the ask screen's `runEngine()`
 first (it needed a location the watch frame doesn't, and running both per
 question would have double-charged the querent's quota for one question),
 then deleted outright once confirmed unreachable: the `judgeHorary()`
@@ -235,7 +236,7 @@ npm test                    # Vitest (currently minimal coverage)
 │   ├── hooks/             React hooks (purchase, quota, classifier, timing)
 │   ├── i18n/              Translations (EN, UR, HI)
 │   ├── navigation/        React Navigation stack and tabs
-│   ├── screens/           App screens (auth, splash, ask, history, etc.)
+│   ├── screens/           App screens (auth, splash, Reading, Your Readings, etc.)
 │   ├── storage/           MMKV instance and key registry
 │   ├── stores/            Zustand stores (auth, quota, readings, settings)
 │   ├── theme/             Theme provider and typography

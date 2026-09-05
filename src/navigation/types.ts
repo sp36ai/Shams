@@ -8,7 +8,7 @@
  * Two navigators:
  *   - RootStack  : top-level switch between Splash → Permission → Main.
  *                  Implemented as a native-stack with conditional screens.
- *   - MainTabs   : bottom-tabs for the local RKP shell: Home | Ask | Al-Falak | History.
+ *   - MainTabs   : bottom-tabs for the local RKP shell: Home | Al-Falak | Readings.
  *                  Settings lives on RootStack, reached via the Home header's
  *                  gear icon rather than a tab (matches the Dār al-Shams
  *                  reference IA).
@@ -39,9 +39,20 @@ export type RootStackParamList = {
   Premium: undefined;
   /** Settings — reached via the gear icon in the Home dashboard header. */
   Settings: undefined;
-  /** Oracle Chat — the question/verdict conversation, reached via Home's
-   *  "Ask New Question" CTA. A root-level push, not a persistent tab. */
-  OracleChat: undefined;
+  /**
+   * One Reading — its verdict and the conversation belonging to it. A
+   * root-level push, not a persistent tab.
+   *
+   * The params are the whole distinction between opening a Reading and
+   * beginning one:
+   *   - `threadId`        opens an existing Reading; it is restored exactly
+   *                       as it was cast and nothing is recomputed.
+   *   - `initialQuestion` begins a new Reading and submits that question on
+   *                       arrival (Home owns the composer that starts one).
+   *   - neither           begins a new Reading with an empty composer.
+   * The Reading itself is created on submit, never on arrival.
+   */
+  Reading: { threadId?: string; initialQuestion?: string } | undefined;
 };
 
 export type RootStackScreenProps<RouteName extends keyof RootStackParamList> =
@@ -56,7 +67,8 @@ export type MainTabParamList = {
   Home: undefined;
   /** Al-Falak — Sky State timing/context panel, now a persistent tab. */
   AlFalak: undefined;
-  History: undefined;
+  /** Your Readings — the archive of past Readings, searchable. */
+  Readings: undefined;
 };
 
 /**
@@ -86,14 +98,14 @@ declare global {
  * What `useNavigation()` should return inside any screen hosted by MainTabs.
  *
  * Tab screens navigate to BOTH sibling tabs (Home/AlFalak/History) and
- * root-level pushes (Settings/Premium/OracleChat), so neither param list
+ * root-level pushes (Settings/Premium/Reading), so neither param list
  * alone types them. Composing the two is what makes `navigate()` reject a
  * route that does not exist.
  *
  * This exists because it was previously typed as
  * `useNavigation<{ navigate: (screen: string) => void }>()` — which accepts
  * ANY string. That is not a stylistic detail: when the "Ask" tab was removed,
- * `navigate('Ask')` in HistoryScreen kept compiling and silently became a
+ * `navigate('Ask')` in the readings list kept compiling and silently became a
  * no-op at runtime. Widening to `string` turns a compile error into a dead
  * button, so prefer this type over a hand-rolled shape.
  */

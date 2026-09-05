@@ -17,7 +17,7 @@
  */
 
 import { regionalFunctions } from './functionsRegion';
-import { withTimeout } from '../utils/withTimeout';
+import { withTimeout, withDeadline } from '../utils/withTimeout';
 import { ensureAppCheckReady } from './appCheck';
 import type { DisplayWatchVerdict } from '@astrology/rkp/watchJudgment';
 import type { WatchOracleComposition } from '../types/watchOracle';
@@ -59,6 +59,31 @@ export interface AskWatchOracleInput {
   question: string;
   questionLang: 'en' | 'ur' | 'hi';
   seekerProfile?: 'clarity' | 'comfort' | 'action' | 'surrender';
+  /**
+   * Identifies the user ACTION, not the call: generated once when the seeker
+   * submits, and reused byte-for-byte on every retry of that submission.
+   *
+   * This is what makes a charged reading safe to retry. The screen's
+   * re-entrancy guard only survives as long as the process does; if the app
+   * is killed after the server cast and charged but before the response
+   * landed, the retry arrives with the same id and the server replays the
+   * original reading instead of casting — and charging for — a second one.
+   * Send a NEW id only for a genuinely new question.
+   */
+  requestId?: string;
+}
+
+/**
+ * An id for one submission. Random and opaque: it identifies an action within
+ * one user's own history and carries nothing about the question or the seeker.
+ *
+ * `Math.random` is deliberate rather than a crypto import — a collision here
+ * would only affect this one user's own retries, and the id is not a secret,
+ * a token, or a key. 96 bits of it makes that collision negligible anyway.
+ */
+export function newRequestId(): string {
+  const part = (): string => Math.random().toString(36).slice(2, 10).padEnd(8, '0');
+  return `${part()}${part()}${part()}`;
 }
 
 export interface WatchReading {
@@ -113,15 +138,21 @@ export async function askWatchOracle(args: AskWatchOracleInput): Promise<AskWatc
     questionLang: args.questionLang,
     utcOffsetMinutes: deviceUtcOffsetMinutes(),
     ...(args.seekerProfile !== undefined ? { seekerProfile: args.seekerProfile } : {}),
+    ...(args.requestId !== undefined ? { requestId: args.requestId } : {}),
   };
 
-  const result = await withTimeout(fn(payload), ASK_WATCH_ORACLE_TIMEOUT_MS);
-  if (result === undefined) {
-    // Surfaces as `.code === 'deadline-exceeded'`, which OracleChatScreen's
-    // error handler already maps to "the channel to the oracle is
-    // interrupted" — no separate handling needed at the call site.
-    throw new AskWatchOracleTimeoutError();
-  }
+  // withDeadline, not withTimeout: a callable's failure carries its meaning in
+  // `.code` — 'resource-exhausted' (out of questions), 'aborted' (this exact
+  // question is already being read), 'unauthenticated' — and the screen maps
+  // each to a different bubble. Collapsing them all into a timeout, as the
+  // fire-and-forget helper does, told every seeker their question had timed
+  // out. The timeout case still exists on top, for a native call that hangs
+  // without ever settling.
+  const result = await withDeadline(
+    fn(payload),
+    ASK_WATCH_ORACLE_TIMEOUT_MS,
+    () => new AskWatchOracleTimeoutError(),
+  );
   const data = result.data as WatchReading & { quotaRemaining: number | null };
 
   return {

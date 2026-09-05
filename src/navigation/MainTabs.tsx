@@ -1,7 +1,7 @@
 /**
  * MainTabs — bottom tab navigator for the local RKP shell.
  * --------------------------------------------------------------------------
- * Tabs (in order): Home | Al-Falak | History — matches the Dār al-Shams
+ * Tabs (in order): Home | Al-Falak | Readings — matches the Dār al-Shams
  * reference IA. Settings is NOT a tab; it's a root-level push reached via
  * the gear icon in Home's header.
  * Home is the initial route — it is the primary landing surface.
@@ -36,7 +36,7 @@ import { Pressable } from 'react-native';
 
 import OracleScreen from '@screens/OracleScreen';
 import SkyClockScreen from '@screens/SkyClockScreen';
-import HistoryScreen from '@screens/HistoryScreen';
+import ReadingsScreen from '@screens/ReadingsScreen';
 
 import { useColors } from '@theme/ThemeProvider';
 import { useTypography } from '@theme/useTypography';
@@ -56,7 +56,7 @@ const Tab = createBottomTabNavigator<MainTabParamList>();
  */
 const HomeRoute = withScreenErrorBoundary(OracleScreen, 'Home');
 const AlFalakRoute = withScreenErrorBoundary(SkyClockScreen, 'Al-Falak');
-const HistoryRoute = withScreenErrorBoundary(HistoryScreen, 'Readings');
+const ReadingsRoute = withScreenErrorBoundary(ReadingsScreen, 'Your Readings');
 
 // `useTranslation()` returns the callable t function directly (not { t }).
 // Re-exporting the type alias here keeps the screenOptions block readable.
@@ -97,7 +97,7 @@ const MainTabs: React.FC = () => {
     () => ({
       Home: t('nav.homeTab' as TKey),
       AlFalak: t('nav.alFalakTab' as TKey),
-      History: t('nav.historyTab' as TKey),
+      Readings: t('nav.readingsTab' as TKey),
     }),
     [t],
   );
@@ -105,7 +105,7 @@ const MainTabs: React.FC = () => {
   const iconNames: Record<keyof MainTabParamList, IconName> = {
     Home: 'oracle',
     AlFalak: 'skyclock',
-    History: 'history',
+    Readings: 'history',
   };
 
   return (
@@ -181,9 +181,9 @@ const MainTabs: React.FC = () => {
         options={{ tabBarLabel: labels.AlFalak }}
       />
       <Tab.Screen
-        name="History"
-        component={HistoryRoute}
-        options={{ tabBarLabel: labels.History }}
+        name="Readings"
+        component={ReadingsRoute}
+        options={{ tabBarLabel: labels.Readings }}
       />
     </Tab.Navigator>
   );
