@@ -14,7 +14,6 @@
 
 import React, { useCallback, useEffect, useReducer, useRef, useState } from 'react';
 import {
-  ActivityIndicator,
   KeyboardAvoidingView,
   Linking,
   Platform,
@@ -34,6 +33,7 @@ import { useColors, useTheme } from '@theme/ThemeProvider';
 import { useTypography } from '@theme/useTypography';
 import { RADIUS } from '@theme/themes';
 import { useTranslation } from '@i18n/I18nProvider';
+import Button from '@components/ui/Button';
 import { useAuthStore } from '@stores/authStore';
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
 import { GOOGLE_WEB_CLIENT_ID } from '@stores/authStore';
@@ -477,36 +477,14 @@ const AuthScreen: React.FC = () => {
               </View>
             )}
 
-            <Pressable
+            <Button
+              label={submitLabel}
               onPress={() => void handleSubmit()}
-              disabled={isLoading || isLocked}
+              disabled={isLocked}
+              loading={isLoading}
               testID="auth-submit-btn"
-              style={({ pressed }) => [
-                styles.submitBtn,
-                {
-                  backgroundColor: isLoading || isLocked ? colors.surfaceElevated : colors.primary,
-                  // 3D press: colored shadow + slight scale
-                  shadowColor: colors.accent,
-                  shadowRadius: pressed ? 4 : 12,
-                  shadowOpacity: pressed ? 0.2 : 0.5,
-                  shadowOffset: { width: 0, height: pressed ? 1 : 4 },
-                  elevation: pressed ? 2 : 6,
-                  transform: [{ scale: pressed ? 0.975 : 1 }],
-                },
-              ]}
-              accessibilityRole="button"
-              accessibilityLabel={submitLabel}
-            >
-              {isLoading ? (
-                <ActivityIndicator color={colors.textOnPrimary} />
-              ) : (
-                <Text
-                  style={[typography('button'), { color: colors.textOnPrimary, letterSpacing: 1 }]}
-                >
-                  {submitLabel}
-                </Text>
-              )}
-            </Pressable>
+              containerStyle={styles.submitBtn}
+            />
 
             <View style={styles.toggleRow}>
               <Text style={[typography('caption'), { color: colors.textMuted }]}>
@@ -873,10 +851,6 @@ const styles = StyleSheet.create({
     padding: 12,
   },
   submitBtn: {
-    height: 56,
-    borderRadius: RADIUS.xl,
-    alignItems: 'center',
-    justifyContent: 'center',
     marginTop: 4,
   },
   toggleRow: {

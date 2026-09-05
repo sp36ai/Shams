@@ -14,6 +14,7 @@ import { regionalFunctions } from '../firebase/functionsRegion';
 import { useColors, useTheme } from '@theme/ThemeProvider';
 import { useTypography } from '@theme/useTypography';
 import StarfieldBackground from '@components/StarfieldBackground';
+import Button from '@components/ui/Button';
 import { useSettingsStore, type SeekerProfile } from '@stores/settingsStore';
 
 // ── Question definitions ──────────────────────────────────────────────────────
@@ -258,18 +259,11 @@ const OnboardingScreen: React.FC = () => {
               <View style={styles.completionArea}>
                 {inferring && <ActivityIndicator color={colors.goldBright} size="small" />}
                 {!inferring && profile !== null && (
-                  <Pressable
+                  <Button
                     testID="onboarding-enter-btn"
                     onPress={handleEnter}
-                    style={({ pressed }) => [
-                      styles.cta,
-                      { backgroundColor: colors.primary, opacity: pressed ? 0.85 : 1 },
-                    ]}
-                  >
-                    <Text style={[typography('button'), { color: colors.textOnPrimary }]}>
-                      {'Enter Shams al-Asrār'}
-                    </Text>
-                  </Pressable>
+                    label="Enter Shams al-Asrār"
+                  />
                 )}
               </View>
             )}
@@ -341,17 +335,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     minHeight: 56,
     justifyContent: 'center',
-  },
-  cta: {
-    paddingVertical: 16,
-    paddingHorizontal: 40,
-    borderRadius: 20,
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOpacity: 0.15,
-    shadowRadius: 18,
-    shadowOffset: { width: 0, height: 10 },
-    elevation: 4,
   },
   pagination: {
     position: 'absolute',

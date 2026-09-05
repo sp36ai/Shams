@@ -76,8 +76,9 @@ Also new on `main` and **not** in the Figma file at all:
 | Component set | Mirrors | Notes |
 |---|---|---|
 | `Verdict Badge` (5 variants) | `verdictBadgeFor()` + `verdictColorFor()` in `ReadingsScreen.tsx` | Maqbool=YES, Mardood=NO/DENIED, Mashroot=CONDITIONAL, Takheer=DELAYED, GhayrWazeh=UNCLEAR/PENDING. **Used by History rows only** — `RkpWatchCard` has no badge. |
-| `Tab Bar Item` (Tab × State) | `src/navigation/MainTabs.tsx` | Home / Al-Falak / Readings, Active+Inactive. The third tab was `History` when the frames were drawn; #99 renamed it to `Readings`. |
-| `Button — PROPOSAL (no equivalent in code)` | **nothing** | See *The Button component is a proposal* below. Deliberately not instanced into any screen frame. |
+| `Tab Bar Item` (Tab × State) | `src/navigation/MainTabs.tsx` | Home / Al-Falak / Readings, Active+Inactive. The third tab was `History` when the frames were drawn; #99 renamed it to `Readings` — variant names updated to match, and the missing `activeBar` indicator added. See *Tab Bar — premium assembly added*. |
+| `Tab Bar` (assembly) | `src/navigation/MainTabs.tsx` | New — the three-instance assembled bar with the real upward shadow. |
+| `Button` | `src/components/ui/Button.tsx` | Adopted, not mirrored — see *The Button component — adopted* below. |
 
 ---
 
@@ -133,7 +134,7 @@ drifted from the real data model. What it got wrong, and what it now shows:
 | Al-Falak header had a left-aligned title and subtitle; timing shown as six separate chips; clock drawn collapsed | Centred `AL-FALAK` over a live running clock with *Live Sky Clock* italic on the right; one bordered TimingBar of pills separated by hairline dividers (Hora/Day/Moon/Nakshatra/LST/Phase); `CELESTIAL CLOCK` **expanded by default** (`clockExpanded` initialises to `true`) |
 | Planet table had no zebra striping, sign in muted text, and no dignity legend | Alternating `surfaceElevated` rows, sign in `colors.accent`, dignity note row beneath non-neutral placements, and the five-badge dignity legend below the table |
 | Settings was missing whole sections, and its subscription card had a gold-tinted fill | All seven sections present (Appearance / Seeker Identity / Profile / Subscription / Reading Stats / Account / Location), each header carrying its trailing 20%-gold `sectionLine`; the subscription card is `surface`-filled and only turns `amber`-bordered on a paid plan |
-| A Figma `Button` was instanced into four screens | No shared Button exists in code — instances detached, component relabelled a proposal |
+| A Figma `Button` was instanced into four screens with no code equivalent | Resolved by adoption, not correction — see *The Button component — adopted* below |
 | Premium drawn with the two plans **stacked** | `styles.cardsRow` puts them **side by side**, Khass at `flex: 1.05` with a `KHASS_GOLD` border and glow; plus the real back-arrow header copy, the *BEGIN WITH 7 DAYS FREE* banner, the selection dot and the *Restore previous purchase* link |
 | Onboarding drawn with a skip button, gold eyebrow and radio-selected choices | Centred slide with the `✦ BISMILLAH ✦` header, Amiri wordmark and ornament row; eyebrow is `textFaint`; choice cards are plain and centred with **no selection state** (tapping advances); no skip button exists |
 | Location permission drawn with a *Not now* secondary button | Only the primary button is rendered. The file's own header comment still describes a secondary "Not now" — the comment is stale, the code is not |
@@ -184,35 +185,72 @@ way; the bug is only visible on houses 1–3.
 
 ---
 
-## THE BUTTON COMPONENT IS A PROPOSAL
+## THE BUTTON COMPONENT — ADOPTED
 
-**There is no shared Button component in `src/`.** `src/components/` contains
-`BackgroundLattice`, `ErrorBoundary`, `GlowView`, `ShimmerOverlay`, `StarfieldBackground`,
-`TabIcon` and `ThemeSwitcher` — no Button. Every button in the app is an inline-styled
-`Pressable`.
+**This is the one place in this file where Figma led and code followed**, by explicit
+request. Every other frame in this file mirrors code that already existed; `Button` did not
+exist in either, so there was nothing for Figma to mirror until a design was actually made.
 
-Counted across `src/screens/*.tsx` and `src/components/oracle/*.tsx`: **26 distinct
-button/chip/pill style keys** — `actionBtn`, `actionBtnSecondary`, `actionRow`, `backBtn`,
-`billingPill`, `btn`, `chip`, `effectPill`, `forgotBtn`, `infoPill`, `langChip`,
-`locationChip`, `micBtn`, `pill`, `primaryButton`, `restoreBtn`, `retryBtn`, `sendBtn`,
-`settingsBtn`, `signOutBtn`, `socialBtn`, `sortBtn`, `speechBtn`, `submitBtn`, `tabBtn`,
-`tierPill`, `verdictPill` — across **35 `Pressable` usages in 11 files**.
+Before: no shared Button in `src/`. `src/components/` had `BackgroundLattice`,
+`ErrorBoundary`, `GlowView`, `ShimmerOverlay`, `StarfieldBackground`, `TabIcon` and
+`ThemeSwitcher` — no Button. Counted across `src/screens/*.tsx` and
+`src/components/oracle/*.tsx`: **26 distinct button/chip/pill style keys** across **35
+`Pressable` usages in 11 files**, including three different primary-CTA treatments alone
+(`AuthScreen.submitBtn`: 56px fixed height, `RADIUS.xl`; `OnboardingScreen.cta`: `radius: 20`;
+`PremiumScreen.cta`: `radius: 16`) — three different corner radii and three different shadow
+recipes for what is visually the same button.
 
-An earlier pass instanced a Figma `Button` into four screens. That was backwards: it made the
-mirror show a component the app does not have. Those instances are now detached, and the
-component set is renamed `Button — PROPOSAL (no equivalent in code)` and carries an on-canvas
-caption saying so. The screen frames show each screen's real inline style instead.
+**Now:** `src/components/ui/Button.tsx` — `Style=Primary|Secondary|Ghost` ×
+`Size=Large(56)|Medium(48)` × live `Pressed`/`Disabled`/`Loading` states (driven from
+Pressable's own `pressed` prop and the `disabled`/`loading` props, not separate variants to
+pick between). Figma's `Button` component set (Components page) holds the full 24-cell
+static reference matrix these live states are drawn from, fully variable-bound —
+`elevation/glow` effect style, `radius/xl`+`radius/lg`, `spacing/xxl`+`spacing/xl` — with
+`Label` exposed as a component text property.
 
-It is kept, rather than deleted, because consolidating 26 style keys is a reasonable
-suggestion — but it is a **code change to propose, not a design to implement from**. If it is
-adopted in `src/`, it stops being a proposal and becomes a mirror; until then the authority
-rule applies and the code wins.
+**Correctness fix made during the build, not a style choice:** the first draft bound
+`Button`'s fill to `color/gold`/`color/textOnGold`. That's wrong — `colors.gold` and
+`colors.primary` diverge in **Layl al-Baḥr** (`#6AAAC8` vs `#4A6FA8`) and **Sirr al-Banafsaj**
+(`#A78BFA` vs `#7C3AED`), the same two themes flagged earlier for the gold/border Accent
+mismatch, and all four real screens already bound their CTAs to `colors.primary`. Rebound to
+`color/primary`/`color/textOnPrimary` before implementing in code, so the component and the
+screens agree in every theme, not just the four where gold and primary happen to be equal.
 
-`Verdict Badge` and `Tab Bar Item` are different — those *are* mirrors, of
-`verdictBadgeFor()`/`verdictColorFor()` and of `MainTabs.tsx` respectively, and they stay
-instanced in the screens.
+**One legitimate divergence, kept as an escape hatch, not a special case:** Premium's Khāṣṣ
+tier uses a fixed `KHASS_GOLD` (`#B8952A`) brand accent that is deliberately constant across
+all six themes — it is not a theme token and never has been (it also colors the tier's border,
+label and selection dot elsewhere on the same screen). `Button` exposes an optional `tint`
+prop for exactly this case; every other call site leaves it unset and gets the normal
+per-theme `colors.primary` behaviour.
+
+**Applied to all four screens that had a bespoke CTA:** `AuthScreen` (submit), `PremiumScreen`
+(purchase CTA, via `tint`), `OnboardingScreen` (`Enter Shams al-Asrār`), and
+`LocationPermissionScreen` (grant/open-settings). Each screen's now-dead style block
+(`submitBtn`'s fixed height/radius, `cta`'s padding/radius/shadow, `primaryButton`) was
+trimmed to only what `Button` doesn't own (margin, in `AuthScreen`; nothing left to keep in
+the other three). `ActivityIndicator` and `Pressable` imports were removed where the swap
+left them unused (`LocationPermissionScreen`).
+
+`Verdict Badge` and `Tab Bar Item` remain ordinary mirrors, of
+`verdictBadgeFor()`/`verdictColorFor()` and of `MainTabs.tsx` respectively — code led, Figma
+followed, same as everywhere else in this file.
 
 ---
+
+## TAB BAR — premium assembly added
+
+The Components page had `Tab Bar Item` (the six individual tab states) but no assembled bar,
+and its `Tab=History` variant name was stale — #99 renamed the code's third tab from
+`History` to `Readings` (see *Screens renamed by #99* above) and the frame never followed.
+Both fixed: the six variants are now `Tab=Home|Al-Falak|Readings, State=Active|Inactive`, and
+a new `Tab Bar` component assembles three instances (Home active, the other two inactive) on
+a 390×64 `color/surfaceElevated` ground with the same upward shadow `MainTabs.tsx` renders
+(`offset: (0,-8), radius: 24, opacity: .14`).
+
+Building the assembly also surfaced a gap in the individual `Tab Bar Item` variants
+themselves: the Active variants had the accent-glow `activeHalo` ellipse but were missing the
+`goldBright` `activeBar` — the 24×2.5 indicator bar `MainTabs.tsx` renders beneath the icon.
+Added to all three Active variants, bound to `color/goldBright`.
 
 ## LOCALISATION GAP — the Oracle result cards are not translated
 
@@ -291,6 +329,11 @@ Open, in rough priority order. None of these are claimed as done:
    names every 5s during the wait, but **it does not exist anywhere in `src/`**. The real
    pending state is a static `ActivityIndicator` + `oracleChat.readingChart`. Owner decision
    needed: build it, or drop it from the brief.
+6. **`Button` is unverified on-device.** Typecheck, lint and the full Jest suite pass with it
+   wired into all four screens, but no test renders it and asserts on its output, and it has
+   not been screenshotted on a real simulator/device across the six themes. The Figma
+   component set is the visual reference it was built from, not proof the RN implementation
+   matches pixel-for-pixel.
 
 ---
 

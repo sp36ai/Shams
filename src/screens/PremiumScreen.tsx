@@ -9,6 +9,7 @@ import { useQuotaStore } from '@stores/quotaStore';
 import { usePurchase, type PurchasePlan } from '@hooks/usePurchase';
 import type { RootStackParamList } from '@navigation/types';
 import StarfieldBackground from '@components/StarfieldBackground';
+import Button from '@components/ui/Button';
 
 const KHASS_GOLD = '#B8952A';
 
@@ -336,23 +337,13 @@ const PremiumScreen: React.FC = () => {
         </View>
 
         {/* CTA */}
-        <Pressable
+        <Button
+          label={ctaLabel}
           onPress={handleCta}
-          disabled={purchasing}
-          style={({ pressed }) => [
-            styles.cta,
-            {
-              backgroundColor: selectedPlan === 'khass' ? KHASS_GOLD : colors.primary,
-              opacity: pressed || purchasing ? 0.8 : 1,
-            },
-          ]}
-          accessibilityRole="button"
+          loading={purchasing}
+          tint={selectedPlan === 'khass' ? KHASS_GOLD : undefined}
           accessibilityLabel={ctaLabel}
-        >
-          <Text style={[typography('button'), { color: colors.textOnPrimary }]}>
-            {purchasing ? 'Processing…' : ctaLabel}
-          </Text>
-        </Pressable>
+        />
 
         {/* Restore */}
         <Pressable onPress={handleRestore} style={styles.restoreBtn} hitSlop={8}>
@@ -457,16 +448,6 @@ const styles = StyleSheet.create({
     borderRadius: 3,
     alignSelf: 'center',
     marginTop: 10,
-  },
-  cta: {
-    paddingVertical: 16,
-    borderRadius: 16,
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOpacity: 0.12,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 6 },
-    elevation: 3,
   },
   restoreBtn: {
     paddingVertical: 8,

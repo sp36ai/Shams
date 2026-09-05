@@ -39,19 +39,11 @@
  */
 
 import React, { useCallback, useState } from 'react';
-import {
-  ActivityIndicator,
-  Linking,
-  Platform,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { Linking, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Circle, G, Line, Path } from 'react-native-svg';
 import StarfieldBackground from '@components/StarfieldBackground';
+import Button from '@components/ui/Button';
 
 import { useColors, useTheme } from '@theme/ThemeProvider';
 import { useTypography } from '@theme/useTypography';
@@ -185,37 +177,13 @@ const LocationPermissionScreen: React.FC = () => {
           </Text>
 
           <View style={styles.actions}>
-            <Pressable
+            <Button
               onPress={isDenied && status === 'blocked' ? handleOpenSettings : handleGrant}
-              disabled={isLoading}
-              style={({ pressed }) => [
-                styles.primaryButton,
-                {
-                  backgroundColor: colors.primary,
-                  shadowColor: colors.accent,
-                  shadowOpacity: pressed ? 0.2 : 0.45,
-                  shadowRadius: pressed ? 4 : 16,
-                  shadowOffset: { width: 0, height: pressed ? 1 : 6 },
-                  elevation: pressed ? 2 : 6,
-                  opacity: isLoading ? 0.7 : pressed ? 0.9 : 1,
-                },
-              ]}
-            >
-              {isLoading ? (
-                <ActivityIndicator color={colors.textOnPrimary} />
-              ) : (
-                <Text
-                  style={[
-                    typography('button'),
-                    { color: colors.textOnPrimary, textAlign: 'center' },
-                  ]}
-                >
-                  {status === 'blocked'
-                    ? t('permission.openSettings')
-                    : t('permission.grantAccess')}
-                </Text>
-              )}
-            </Pressable>
+              loading={isLoading}
+              label={
+                status === 'blocked' ? t('permission.openSettings') : t('permission.grantAccess')
+              }
+            />
           </View>
         </View>
 
@@ -390,14 +358,6 @@ const styles = StyleSheet.create({
   },
   actions: {
     gap: 12,
-  },
-  primaryButton: {
-    paddingVertical: 16,
-    paddingHorizontal: 24,
-    borderRadius: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-    minHeight: 56,
   },
 });
 
