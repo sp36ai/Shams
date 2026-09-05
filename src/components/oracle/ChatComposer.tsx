@@ -100,19 +100,33 @@ const ChatComposer: React.FC<ChatComposerProps> = ({
       {micAvailable && (
         <View style={styles.micWrap}>
           {isListening && (
-            <Animated.View
-              pointerEvents="none"
-              style={[
-                styles.pulseRing,
-                {
-                  borderColor: colors.negative,
-                  opacity: pulse.interpolate({ inputRange: [0, 1], outputRange: [0.7, 0] }),
-                  transform: [
-                    { scale: pulse.interpolate({ inputRange: [0, 1], outputRange: [1, 1.6] }) },
-                  ],
-                },
-              ]}
-            />
+            <>
+              {/*
+                Second, static ring behind the existing animated pulse — a
+                restrained stand-in for the concentric "celestial" rings the
+                design spec calls for around voice input, sized to this
+                inline composer rather than a full-screen takeover (the real
+                voice flow has no separate listening screen: it's this mic
+                button, live in the composer bar).
+              */}
+              <View
+                pointerEvents="none"
+                style={[styles.glassRing, { borderColor: colors.negative + '40' }]}
+              />
+              <Animated.View
+                pointerEvents="none"
+                style={[
+                  styles.pulseRing,
+                  {
+                    borderColor: colors.negative,
+                    opacity: pulse.interpolate({ inputRange: [0, 1], outputRange: [0.7, 0] }),
+                    transform: [
+                      { scale: pulse.interpolate({ inputRange: [0, 1], outputRange: [1, 1.6] }) },
+                    ],
+                  },
+                ]}
+              />
+            </>
           )}
           <Pressable
             onPress={onMicPress}
@@ -123,6 +137,18 @@ const ChatComposer: React.FC<ChatComposerProps> = ({
                 backgroundColor: isListening ? colors.negative : colors.surfaceElevated,
                 borderColor: isListening ? colors.negative : colors.border,
                 opacity: micDisabled ? 0.4 : pressed ? 0.75 : 1,
+                // Depth behind the mic only while it's actually doing
+                // something — an idle mic stays flat, same rule as the
+                // Home composer's send button.
+                ...(isListening
+                  ? {
+                      shadowColor: colors.negative,
+                      shadowOpacity: 0.55,
+                      shadowRadius: 10,
+                      shadowOffset: { width: 0, height: 0 },
+                      elevation: 5,
+                    }
+                  : null),
               },
             ]}
             accessibilityRole="button"
@@ -209,8 +235,15 @@ const styles = StyleSheet.create({
   micWrap: {
     alignItems: 'center',
     justifyContent: 'center',
-    width: 40,
-    height: 40,
+    width: 52,
+    height: 52,
+  },
+  glassRing: {
+    position: 'absolute',
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    borderWidth: 1,
   },
   pulseRing: {
     position: 'absolute',
