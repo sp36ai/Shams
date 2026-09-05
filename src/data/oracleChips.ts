@@ -38,8 +38,7 @@ export const INITIAL_CHIPS: Record<'en' | 'ur' | 'hi', readonly string[]> = {
   ],
 };
 
-export const FOLLOWUP_CHIPS: Record<'en' | 'ur' | 'hi', readonly string[]> = {
-  en: ['When will it happen?', 'Why this verdict?', 'What remedy?', 'New question'],
-  ur: ['کب ہوگا؟', 'یہ فیصلہ کیوں؟', 'علاج کیا ہے؟', 'نیا سوال'],
-  hi: ['कब होगा?', 'यह निर्णय क्यों?', 'उपाय क्या है?', 'नया सवाल'],
-};
+// FOLLOWUP_CHIPS (static, unwired) was removed in favour of
+// WatchOracleComposition.suggestedQuestions — chips generated per-reading
+// from the actual diagnosis. See suggestedQuestions.ts and
+// SuggestedQuestionsRow.tsx.

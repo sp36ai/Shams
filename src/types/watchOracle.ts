@@ -62,6 +62,13 @@ export interface WatchOracleComposition {
    * readings written by a build predating this field still satisfy the type.
    */
   readonly brandSeal?: string;
+  /**
+   * 2–4 follow-up questions this diagnosis actually supports, or none.
+   * Deterministic (functions/src/oracle/suggestedQuestions.ts) — never
+   * model-written. Optional here for the same cached-reading-compat reason
+   * as brandSeal.
+   */
+  readonly suggestedQuestions?: readonly string[];
   readonly diagnosis: {
     readonly outcome: RkpOutcome;
     readonly primaryPattern: ImbalancePattern;

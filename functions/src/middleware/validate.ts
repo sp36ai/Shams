@@ -62,6 +62,15 @@ export type AskWatchOracleInput = z.infer<typeof AskWatchOracleSchema>;
 export const DiscussReadingSchema = z
   .object({
     readingId: z.string().min(1).max(128),
+    /**
+     * Other readings the seeker is comparing this one against — e.g. "which
+     * looks stronger, the business reading or the property one?" Bounded
+     * small, same reasoning as `turns` below: a discussion turn is not the
+     * place for an open-ended list. Ownership of each id is re-checked
+     * server-side in discussReading.ts; an id that fails the check is
+     * dropped rather than failing the whole call.
+     */
+    compareReadingIds: z.array(z.string().min(1).max(128)).max(4).optional(),
     message: z.string().trim().min(1).max(500),
     lang: LangSchema,
     turns: z

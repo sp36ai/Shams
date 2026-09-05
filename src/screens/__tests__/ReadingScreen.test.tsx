@@ -406,9 +406,11 @@ describe('ReadingScreen', () => {
 
       // A new matter gets its OWN Reading, cast for its own moment. This
       // Reading's context is never reused for it, and this Reading is not
-      // recast either.
+      // recast either. Its readingId travels forward as lineage, so the new
+      // Reading can be compared against it in discussion later.
       expect(mockPush).toHaveBeenCalledWith('Reading', {
         initialQuestion: 'Will my brother travel?',
+        relatedReadingIds: ['r1'],
       });
       expect(askCallable).toHaveBeenCalledTimes(1);
       expect(useReadingThreadsStore.getState().threads).toHaveLength(1);

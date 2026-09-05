@@ -24,6 +24,7 @@ import type { WatchReading } from '../../firebase/watchOracle';
 import RkpWatchCard, { STATE_HEADLINE } from './RkpWatchCard';
 import RemedyProtocolCard from './RemedyProtocolCard';
 import GuidanceCard from './GuidanceCard';
+import SuggestedQuestionsRow from './SuggestedQuestionsRow';
 import { directionalFocusFor } from '../../data/watchRemedyContext';
 import type { SpeakingStatus } from '@hooks/useTextToSpeech';
 
@@ -56,6 +57,8 @@ interface ChatBubbleProps {
   ttsStatus: SpeakingStatus;
   ttsActiveMessageId: string | null;
   onToggleSpeech: (messageId: string, text: string, lang: 'en' | 'ur' | 'hi') => void;
+  /** Fills the seeker's message box with the tapped suggestion. Never sends. */
+  onSelectSuggestedQuestion: (question: string) => void;
 }
 
 const ChatBubble: React.FC<ChatBubbleProps> = ({
@@ -66,6 +69,7 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({
   ttsStatus,
   ttsActiveMessageId,
   onToggleSpeech,
+  onSelectSuggestedQuestion,
 }) => {
   const colors = useColors();
   const typography = useTypography();
@@ -247,6 +251,12 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({
             {reading.oracle !== undefined && <RemedyProtocolCard composition={reading.oracle} />}
             {message.selectedRemedies !== undefined && (
               <GuidanceCard remedies={message.selectedRemedies} />
+            )}
+            {reading.oracle?.suggestedQuestions !== undefined && (
+              <SuggestedQuestionsRow
+                questions={reading.oracle.suggestedQuestions}
+                onSelect={onSelectSuggestedQuestion}
+              />
             )}
           </>
         )}

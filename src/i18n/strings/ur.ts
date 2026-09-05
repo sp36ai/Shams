@@ -165,6 +165,7 @@ export const ur: StringTable = {
     separateQuestionNote: 'یہ الگ سوال ہو سکتا ہے — اسے اپنا لمحہ درکار ہوگا۔',
     discussionUnavailable: 'اوریکل نے اس کا جواب نہیں دیا۔ دوبارہ پوچھیں۔',
     discussionReadingGone: 'یہ جواب اب گفتگو کے لیے دستیاب نہیں۔',
+    suggestedQuestionsLabel: 'آپ پوچھ سکتے ہیں',
   },
 
   reading: {

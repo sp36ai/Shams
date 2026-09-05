@@ -29,6 +29,7 @@ import { WATCH_ORACLE_SYNTHESIS_PROMPT } from '../prompts/watchOracleSynthesisPr
 import { diagnose, type RkpDiagnosis } from '../engine/rkp/diagnosis';
 import type { DisplayWatchVerdict } from '../engine/rkp/watchJudgment';
 import { selectRemedyProtocol, type RemedyProtocol } from './remedySelection';
+import { selectSuggestedQuestions } from './suggestedQuestions';
 import type { Tradition } from './remedyLibrary';
 
 // Raised from 25s — Claude Opus 5 thinks by default, so synthesis is slower
@@ -75,6 +76,13 @@ export interface WatchOracleComposition {
   readonly narration: NarrationFields | null;
   /** Fixed closing attribution — see ORACLE_BRAND_SEAL. Never model-written. */
   readonly brandSeal: string;
+  /**
+   * 2–4 follow-up questions this diagnosis actually supports, or none.
+   * Deterministic — see suggestedQuestions.ts. A tap only fills the seeker's
+   * message box; it never fires a reading on its own (see
+   * SuggestedQuestionsRow.tsx).
+   */
+  readonly suggestedQuestions: readonly string[];
   readonly diagnosis: {
     readonly outcome: string;
     readonly primaryPattern: string;
@@ -265,7 +273,12 @@ export async function composeWatchOracleResponse(
   // ── 3. Narration (best effort) ───────────────────────────────────────────
   const narration = await narrate(diagnosis, protocol, seekerName, motherName, question);
 
-  return Object.freeze({ narration, brandSeal: ORACLE_BRAND_SEAL, ...base });
+  return Object.freeze({
+    narration,
+    brandSeal: ORACLE_BRAND_SEAL,
+    suggestedQuestions: selectSuggestedQuestions(diagnosis),
+    ...base,
+  });
 }
 
 async function narrate(

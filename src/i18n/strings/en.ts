@@ -157,6 +157,7 @@ export const en: StringTable = {
     separateQuestionNote: 'This may be a separate question — it would need its own moment.',
     discussionUnavailable: 'The oracle did not answer that. Try asking again.',
     discussionReadingGone: 'That reading is no longer available to discuss.',
+    suggestedQuestionsLabel: 'You may ask',
   },
 
   reading: {

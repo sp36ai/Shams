@@ -53,6 +53,16 @@ import {
 } from '../oracle/discussionComposer';
 
 /**
+ * A short, server-derived tag for a reading — "the finance reading", never
+ * the seeker's own words and never something the model invents. Used only
+ * to distinguish readings from each other when more than one is in a brief;
+ * see buildDiscussionBrief's multi-reading branch.
+ */
+function labelFor(doc: ReadingDoc): string {
+  return `the ${doc.category} reading`;
+}
+
+/**
  * Narrow a stored `watchOracle` field back to a composition.
  *
  * ReadingDoc types it as unknown on purpose (see types.ts), and the value has
@@ -126,11 +136,19 @@ export const discussReading = onCall(
       // produced no reply — the same claim/refund shape askWatchOracle uses
       // for a quota slot, and for the same reason: a turn the seeker never
       // received must not be one they paid for.
+      // Other readings the seeker wants compared against this one — read-only
+      // context, ownership-checked the same way as the anchor, but never
+      // charged a discussion turn of their own: they are not being discussed
+      // as their own thread here, they are supporting context for this one.
+      const compareIds = (input.compareReadingIds ?? []).filter(id => id !== input.readingId);
+      const compareRefs = compareIds.map(id => db.collection('readings').doc(id));
+
       let doc: ReadingDoc;
       let turnsRemaining: number;
+      let compareDocs: ReadingDoc[];
 
       try {
-        ({ doc, turnsRemaining } = await db.runTransaction(async tx => {
+        ({ doc, turnsRemaining, compareDocs } = await db.runTransaction(async tx => {
           const snap = await tx.get(readingRef);
           if (!snap.exists) {
             throw new HttpsError('not-found', 'That reading is no longer available.');
@@ -150,8 +168,20 @@ export const discussReading = onCall(
             );
           }
 
+          // Best-effort, read-only: a stale or foreign comparison id is
+          // dropped rather than failing the seeker's actual question. Same
+          // ownership rule as the anchor, just silent instead of thrown.
+          const compareSnaps = await Promise.all(compareRefs.map(ref => tx.get(ref)));
+          const compare = compareSnaps
+            .map(s => (s.exists ? (s.data() as ReadingDoc) : null))
+            .filter((d): d is ReadingDoc => d !== null && d.userId === userId);
+
           tx.update(readingRef, { discussionTurns: FieldValue.increment(1) });
-          return { doc: data, turnsRemaining: DISCUSSION_TURN_LIMIT - used - 1 };
+          return {
+            doc: data,
+            turnsRemaining: DISCUSSION_TURN_LIMIT - used - 1,
+            compareDocs: compare,
+          };
         }));
       } catch (err) {
         // No turn was spent — a missing reading, a foreign one, an exhausted
@@ -165,17 +195,23 @@ export const discussReading = onCall(
         throw new HttpsError('internal', 'Could not open that reading.');
       }
 
-      const grounding: ReadingGrounding = {
-        question: doc.question,
-        verdict: doc.verdict,
-        confidence: doc.confidence,
+      const toGrounding = (d: ReadingDoc): ReadingGrounding => ({
+        label: labelFor(d),
+        question: d.question,
+        verdict: d.verdict,
+        confidence: d.confidence,
         computedAt:
-          doc.createdAt !== undefined && typeof doc.createdAt.toDate === 'function'
-            ? doc.createdAt.toDate().toISOString()
+          d.createdAt !== undefined && typeof d.createdAt.toDate === 'function'
+            ? d.createdAt.toDate().toISOString()
             : new Date().toISOString(),
-        oracle: asComposition(doc.watchOracle),
-        narration: doc.narration?.[input.lang] ?? doc.narration?.en ?? null,
-      };
+        oracle: asComposition(d.watchOracle),
+        narration: d.narration?.[input.lang] ?? d.narration?.en ?? null,
+      });
+
+      const groundings: [ReadingGrounding, ...ReadingGrounding[]] = [
+        toGrounding(doc),
+        ...compareDocs.map(toGrounding),
+      ];
 
       const turns: DiscussionTurn[] = (input.turns ?? []).map(turn => ({
         role: turn.role,
@@ -183,7 +219,7 @@ export const discussReading = onCall(
       }));
 
       const reply = await composeDiscussionReply({
-        grounding,
+        groundings,
         turns,
         message: input.message,
         replyLang: input.lang,

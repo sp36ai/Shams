@@ -140,6 +140,17 @@ export interface ReadingThread {
   /** Written once, when the chart lands. See this file's header. */
   context: ReadingContext | null;
   messages: ReadingMessage[];
+  /**
+   * Server reading ids of this thread's lineage — the thread(s) it was
+   * opened from via "ask as new question" or a tapped suggested question.
+   * Written once, at creation, from the parent thread's own `readingId`
+   * plus its `relatedReadingIds`, capped at 4. Sent as `compareReadingIds`
+   * on a discussion turn so the seeker can ask things like "which looks
+   * stronger?" across readings already cast — see discussReading.ts and
+   * ORACLE_DISCUSSION_PROMPT's multi-reading section. Absent on a thread
+   * with no such lineage, which is the common case.
+   */
+  relatedReadingIds?: readonly string[];
 }
 
 /** A Reading as the list needs it — no messages, so rows stay cheap. */
@@ -408,6 +419,8 @@ export interface ReadingThreadsState {
     requestId: string;
     question: string;
     questionLang: 'en' | 'ur' | 'hi';
+    /** Lineage this thread was opened from — see ReadingThread.relatedReadingIds. */
+    relatedReadingIds?: readonly string[];
   }) => ReadingThread;
 
   addMessage: (threadId: string, message: ReadingMessage) => void;
@@ -439,7 +452,13 @@ function touch(thread: ReadingThread, at: string): ReadingThread {
 export const useReadingThreadsStore = create<ReadingThreadsState>((set, get) => ({
   threads: readCache(),
 
-  createThread: ({ id, requestId, question, questionLang }): ReadingThread => {
+  createThread: ({
+    id,
+    requestId,
+    question,
+    questionLang,
+    relatedReadingIds,
+  }): ReadingThread => {
     const now = new Date().toISOString();
     const thread: ReadingThread = {
       id,
@@ -453,6 +472,9 @@ export const useReadingThreadsStore = create<ReadingThreadsState>((set, get) => 
       status: 'pending',
       context: null,
       messages: [],
+      ...(relatedReadingIds !== undefined && relatedReadingIds.length > 0
+        ? { relatedReadingIds: relatedReadingIds.slice(0, 4) }
+        : {}),
     };
     const next = [thread, ...get().threads];
     writeCache(next);
