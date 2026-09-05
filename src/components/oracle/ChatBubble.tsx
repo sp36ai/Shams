@@ -90,6 +90,11 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({
 
   // Oracle turn — sending / failed / sent.
   if (message.status === 'sending') {
+    // A real chart cast (askWatchOracle) gets the glass/3D calculation
+    // treatment — the "Oracle calculation state" priority zone. A discussion
+    // reply (discussReading) is prose-only and cheap, so it stays the plain
+    // bubble it always was: not every pending state deserves the same weight.
+    const isCasting = message.variant !== 'discussion';
     return (
       <View style={[styles.row, styles.rowOracle]}>
         <View
@@ -97,9 +102,26 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({
             styles.bubble,
             styles.oracleBubble,
             styles.pendingBubble,
-            { backgroundColor: colors.surface, borderColor: colors.border },
+            isCasting ? styles.castingBubble : null,
+            {
+              backgroundColor: colors.surface,
+              borderColor: colors.border,
+              ...(isCasting ? { shadowColor: colors.sacredGlow } : null),
+            },
           ]}
         >
+          {isCasting && (
+            <>
+              <View
+                pointerEvents="none"
+                style={[styles.glassOverlay, { backgroundColor: colors.manuscriptFog }]}
+              />
+              <View
+                pointerEvents="none"
+                style={[styles.topHighlight, { backgroundColor: colors.text + '14' }]}
+              />
+            </>
+          )}
           <ActivityIndicator size="small" color={colors.accent} />
           <Text style={[typography('caption'), { color: colors.textMuted, marginLeft: 8 }]}>
             {message.variant === 'discussion'
@@ -282,6 +304,23 @@ const styles = StyleSheet.create({
   pendingBubble: {
     flexDirection: 'row',
     alignItems: 'center',
+  },
+  castingBubble: {
+    overflow: 'hidden', // clips the glass overlay/highlight to the rounded corners
+    shadowOpacity: 0.3,
+    shadowRadius: 18,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 5,
+  },
+  glassOverlay: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  topHighlight: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 1,
   },
   retryBtn: {
     marginTop: 8,

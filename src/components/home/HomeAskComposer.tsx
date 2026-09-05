@@ -50,12 +50,31 @@ const HomeAskComposer: React.FC<HomeAskComposerProps> = ({ onSubmit, onOpenBlank
         {t('oracle.askPrompt')}
       </Text>
 
+      {/*
+        Glass+3D treatment — one of the two zones (with the Hora hero card)
+        the design spec marks as premium. No blur library is installed, so
+        this approximates glass with a translucent fog overlay
+        (colors.manuscriptFog), a soft top highlight, and a warm glow shadow
+        (colors.sacredGlow) rather than pulling in a new native dependency.
+      */}
       <View
         style={[
           styles.field,
-          { backgroundColor: colors.surface, borderColor: colors.borderAccent + '55' },
+          {
+            backgroundColor: colors.surface,
+            borderColor: colors.borderAccent + '55',
+            shadowColor: colors.sacredGlow,
+          },
         ]}
       >
+        <View
+          pointerEvents="none"
+          style={[styles.fieldGlassOverlay, { backgroundColor: colors.manuscriptFog }]}
+        />
+        <View
+          pointerEvents="none"
+          style={[styles.fieldTopHighlight, { backgroundColor: colors.text + '1A' }]}
+        />
         <TextInput
           style={[typography('body'), styles.input, { color: colors.text }]}
           value={text}
@@ -77,6 +96,17 @@ const HomeAskComposer: React.FC<HomeAskComposerProps> = ({ onSubmit, onOpenBlank
               backgroundColor: canSend ? colors.accent : colors.surfaceElevated,
               borderColor: canSend ? colors.accent : colors.border,
               opacity: pressed ? 0.8 : 1,
+              // Depth behind the CTA only once it's actually actionable —
+              // an idle send button stays flat.
+              ...(canSend
+                ? {
+                    shadowColor: colors.sacredGlow,
+                    shadowOpacity: 0.5,
+                    shadowRadius: 10,
+                    shadowOffset: { width: 0, height: 3 },
+                    elevation: 4,
+                  }
+                : null),
             },
           ]}
           accessibilityRole="button"
@@ -110,6 +140,21 @@ const styles = StyleSheet.create({
     paddingRight: 6,
     paddingVertical: 6,
     gap: 8,
+    overflow: 'hidden', // clips the glass overlay/highlight to the rounded corners
+    shadowOpacity: 0.25,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 4,
+  },
+  fieldGlassOverlay: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  fieldTopHighlight: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 1,
   },
   input: {
     flex: 1,
