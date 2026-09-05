@@ -18,7 +18,7 @@
 import { HOUSE_MATRIX, type QuestionType } from '@astrology/kp/rules/houseMatrix';
 import type { Planet } from '@astrology/types/chart';
 
-import { SIGN_META, type Direction, type HouseNumber } from './nomenclature';
+import { SIGN_META, gharLabel, type Direction, type HouseNumber } from './nomenclature';
 import { isBenefic, isMalefic, isStrong, isWeak, relationBetween, type Relation } from './rules';
 import { houseOf, type WatchChart } from './watchChart';
 
@@ -163,12 +163,12 @@ export function judgeWatchChart(chart: WatchChart, qType: QuestionType): WatchVe
   if (isStrong(rulerPos.dignity)) {
     score += 2;
     factors.push(
-      `${rulerPos.name} rules the ${targetHouse}th Ghar and is ${rulerPos.dignity} in ${SIGN_META[rulerPos.sign].name} — it holds real control of the matter.`,
+      `${rulerPos.name} rules the ${gharLabel(targetHouse)} and is ${rulerPos.dignity} in ${SIGN_META[rulerPos.sign].name} — it holds real control of the matter.`,
     );
   } else if (isWeak(rulerPos.dignity)) {
     score -= 2;
     factors.push(
-      `${rulerPos.name} rules the ${targetHouse}th Ghar but is ${rulerPos.dignity} in ${SIGN_META[rulerPos.sign].name} — it cannot deliver unaided.`,
+      `${rulerPos.name} rules the ${gharLabel(targetHouse)} but is ${rulerPos.dignity} in ${SIGN_META[rulerPos.sign].name} — it cannot deliver unaided.`,
     );
   }
 
@@ -196,11 +196,11 @@ export function judgeWatchChart(chart: WatchChart, qType: QuestionType): WatchVe
     if (isBenefic(planet)) {
       score += 2;
       sawBenefic = true;
-      factors.push(`${pos.name} ${how} the ${targetHouse}th Ghar — protection and expansion.`);
+      factors.push(`${pos.name} ${how} the ${gharLabel(targetHouse)} — protection and expansion.`);
     } else if (isMalefic(planet)) {
       score -= 2;
       sawMalefic = true;
-      factors.push(`${pos.name} ${how} the ${targetHouse}th Ghar — friction on the matter.`);
+      factors.push(`${pos.name} ${how} the ${gharLabel(targetHouse)} — friction on the matter.`);
     }
   }
 
@@ -224,12 +224,12 @@ export function judgeWatchChart(chart: WatchChart, qType: QuestionType): WatchVe
   if (matrix.favorable.includes(rulerPos.house)) {
     score += 1;
     factors.push(
-      `${rulerPos.name} has landed in the ${rulerPos.house}th Ghar, a supporting house for this question.`,
+      `${rulerPos.name} has landed in the ${gharLabel(rulerPos.house)}, a supporting house for this question.`,
     );
   } else if (matrix.denial.includes(rulerPos.house)) {
     score -= 1;
     factors.push(
-      `${rulerPos.name} has landed in the ${rulerPos.house}th Ghar, a denying house for this question.`,
+      `${rulerPos.name} has landed in the ${gharLabel(rulerPos.house)}, a denying house for this question.`,
     );
   }
 

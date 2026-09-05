@@ -30,7 +30,7 @@
 import { judgeWatchChart, type WatchVerdict } from '@astrology/rkp/watchJudgment';
 import type { WatchChart, WatchHouse, WatchPlanet } from '@astrology/rkp/watchChart';
 import { dignityOf, type Dignity } from '@astrology/rkp/rules';
-import { PLANET_NAME, SIGN_META, type HouseNumber } from '@astrology/rkp/nomenclature';
+import { PLANET_NAME, SIGN_META, gharLabel, type HouseNumber } from '@astrology/rkp/nomenclature';
 import { PLANETS, type Planet, type SignIndex } from '@astrology/types/chart';
 import { HOUSE_MATRIX, type QuestionType } from '@astrology/kp/rules/houseMatrix';
 
@@ -663,6 +663,56 @@ describe('timing multipliers (bespoke model — see audit finding #3)', () => {
 /* -------------------------------------------------------------------------- */
 /*  Shadow nodes — structural guarantee                                       */
 /* -------------------------------------------------------------------------- */
+
+describe('Ghar ordinals in factor prose', () => {
+  // Regression: the factor strings used to interpolate `${house}th Ghar`
+  // directly, so every question whose primary house is 1, 2 or 3 rendered
+  // "1th Ghar" / "2th Ghar" / "3th Ghar" — both here and in RkpWatchCard.
+  // gharLabel() already existed in nomenclature.ts to solve exactly this and
+  // was simply not being called. These assertions cover the wording only;
+  // no score is asserted, so they cannot mask a scoring-model change.
+  // Matches only the malformed forms. "11th"/"12th" Ghar are correct English
+  // and must not trip this, so the digit is anchored on both sides.
+  const MALFORMED = /(?<!\d)[123]th Ghar/;
+
+  it('renders 1st/2nd/3rd correctly for every reachable primary house', () => {
+    // health + general -> primary 1, finance + lostitem -> primary 2: the
+    // reachable cases the old interpolation got wrong. The ruler is driven
+    // Exalted and into a favorable house so the factors that name a Ghar
+    // actually fire.
+    for (const qType of ['health', 'general', 'finance', 'lostitem'] as QuestionType[]) {
+      const ruler = targetRulerFor(qType);
+      const chart = quietChart({
+        qType,
+        lagnaRuler: 'Jupiter',
+        overrides: {
+          [ruler]: {
+            dignity: 'Exalted' as Dignity,
+            house: HOUSE_MATRIX[qType].favorable[0] as HouseNumber,
+          },
+        },
+      });
+      const factors = judgeWatchChart(chart, qType).factors;
+      expect(factors.some(f => f.includes('Ghar'))).toBe(true); // guard: not vacuous
+      for (const factor of factors) {
+        expect(factor).not.toMatch(MALFORMED);
+      }
+    }
+  });
+
+  it('names the target Ghar with the shared ordinal helper', () => {
+    const qType: QuestionType = 'health'; // primary house 1
+    const ruler = targetRulerFor(qType);
+    const chart = quietChart({
+      qType,
+      lagnaRuler: 'Jupiter',
+      overrides: { [ruler]: { dignity: 'Exalted' as Dignity } },
+    });
+    const factors = judgeWatchChart(chart, qType).factors;
+    expect(factors.some(f => f.includes(gharLabel(1)))).toBe(true);
+    expect(factors.some(f => f.includes('1th Ghar'))).toBe(false);
+  });
+});
 
 describe('Rahu/Ketu structural guarantee', () => {
   it('never rule a sign, so they can never surface as targetRuler or lagnaRuler', () => {
