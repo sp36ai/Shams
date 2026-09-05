@@ -232,6 +232,9 @@ const OnboardingScreen: React.FC = () => {
                     key={cIndex}
                     onPress={onPress}
                     disabled={inferring || profile !== null}
+                    accessibilityRole="button"
+                    accessibilityLabel={choice.label}
+                    accessibilityState={{ disabled: inferring || profile !== null }}
                     style={({ pressed }) => [
                       styles.choiceCard,
                       {
