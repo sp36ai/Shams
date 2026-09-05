@@ -289,11 +289,13 @@ const OracleChatScreen: React.FC = () => {
   }, [stt.isListening, stt.partialText]);
 
   const micErrorText =
-    stt.error === 'permission-denied'
-      ? t('oracleChat.micPermissionDenied')
-      : stt.error === 'no-speech'
-        ? t('oracleChat.noSpeechDetected')
-        : null;
+    stt.error === 'unavailable'
+      ? t('oracleChat.voiceUnavailable')
+      : stt.error === 'permission-denied'
+        ? t('oracleChat.micPermissionDenied')
+        : stt.error === 'no-speech'
+          ? t('oracleChat.noSpeechDetected')
+          : null;
 
   // ── Scroll to the newest message whenever the list grows ──────────────────
   useEffect(() => {
@@ -367,6 +369,7 @@ const OracleChatScreen: React.FC = () => {
           isListening={stt.isListening}
           onMicPress={handleMicPress}
           micDisabled={sending}
+          micAvailable={stt.isAvailable}
         />
       </KeyboardAvoidingView>
     </SafeAreaView>

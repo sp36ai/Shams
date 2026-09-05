@@ -208,6 +208,8 @@ export interface StringTable {
     quotaExhausted: string;
     micPermissionDenied: string;
     noSpeechDetected: string;
+    /** Shown when the device/build has no speech recognizer at all. */
+    voiceUnavailable: string;
     errorTimeout: string;
     errorSignIn: string;
     listenToVerdict: string;

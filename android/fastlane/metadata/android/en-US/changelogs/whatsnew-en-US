@@ -1,7 +1,8 @@
-Watch Oracle is now the app's single reading mode — the Astronomical (KP) view has been retired.
+Stability release. One screen failing no longer stops the whole app.
 
-• Faster verdicts: instant 5-minute bracket readings, no location needed
-• Al-Falak now shows each planet's dignity at a glance
-• Fixed a bug that could reject valid subscription purchases
-• Fixed a case where the home screen stopped responding to taps
-• More reliable question submission
+• Fixed a crash that could leave the app on an error screen with no way back
+• A screen that does fail now names itself, and the rest of the app keeps working
+• Past readings open reliably, including ones saved by earlier versions
+• Voice input is hidden where the device does not support it
+• Signing out returns you to the sign-in screen
+• Swipe-back restored on Settings, Ask and Upgrade

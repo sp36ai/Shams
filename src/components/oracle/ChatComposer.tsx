@@ -33,6 +33,11 @@ interface ChatComposerProps {
   isListening: boolean;
   onMicPress: () => void;
   micDisabled?: boolean;
+  /**
+   * False when this build/device has no recognizer. The mic is then not
+   * rendered at all: a button that cannot work is worse than no button.
+   */
+  micAvailable?: boolean;
 }
 
 const ChatComposer: React.FC<ChatComposerProps> = ({
@@ -43,6 +48,7 @@ const ChatComposer: React.FC<ChatComposerProps> = ({
   isListening,
   onMicPress,
   micDisabled = false,
+  micAvailable = true,
 }) => {
   const colors = useColors();
   const typography = useTypography();
@@ -79,46 +85,50 @@ const ChatComposer: React.FC<ChatComposerProps> = ({
 
   return (
     <View style={[styles.wrap, { backgroundColor: colors.surface, borderTopColor: colors.border }]}>
-      <View style={styles.micWrap}>
-        {isListening && (
-          <Animated.View
-            pointerEvents="none"
-            style={[
-              styles.pulseRing,
+      {/* No recognizer in this build or on this device: the mic is not
+          rendered at all rather than offered and then failing. */}
+      {micAvailable && (
+        <View style={styles.micWrap}>
+          {isListening && (
+            <Animated.View
+              pointerEvents="none"
+              style={[
+                styles.pulseRing,
+                {
+                  borderColor: colors.negative,
+                  opacity: pulse.interpolate({ inputRange: [0, 1], outputRange: [0.7, 0] }),
+                  transform: [
+                    { scale: pulse.interpolate({ inputRange: [0, 1], outputRange: [1, 1.6] }) },
+                  ],
+                },
+              ]}
+            />
+          )}
+          <Pressable
+            onPress={onMicPress}
+            disabled={micDisabled}
+            style={({ pressed }) => [
+              styles.micBtn,
               {
-                borderColor: colors.negative,
-                opacity: pulse.interpolate({ inputRange: [0, 1], outputRange: [0.7, 0] }),
-                transform: [
-                  { scale: pulse.interpolate({ inputRange: [0, 1], outputRange: [1, 1.6] }) },
-                ],
+                backgroundColor: isListening ? colors.negative : colors.surfaceElevated,
+                borderColor: isListening ? colors.negative : colors.border,
+                opacity: micDisabled ? 0.4 : pressed ? 0.75 : 1,
               },
             ]}
-          />
-        )}
-        <Pressable
-          onPress={onMicPress}
-          disabled={micDisabled}
-          style={({ pressed }) => [
-            styles.micBtn,
-            {
-              backgroundColor: isListening ? colors.negative : colors.surfaceElevated,
-              borderColor: isListening ? colors.negative : colors.border,
-              opacity: micDisabled ? 0.4 : pressed ? 0.75 : 1,
-            },
-          ]}
-          accessibilityRole="button"
-          accessibilityLabel={
-            isListening ? t('oracleChat.stopRecording') : t('oracleChat.startRecording')
-          }
-          testID="oracle-chat-mic-btn"
-        >
-          <Animated.Text
-            style={{ fontSize: 18, color: isListening ? colors.textOnPrimary : colors.textMuted }}
+            accessibilityRole="button"
+            accessibilityLabel={
+              isListening ? t('oracleChat.stopRecording') : t('oracleChat.startRecording')
+            }
+            testID="oracle-chat-mic-btn"
           >
-            {'🎙'}
-          </Animated.Text>
-        </Pressable>
-      </View>
+            <Animated.Text
+              style={{ fontSize: 18, color: isListening ? colors.textOnPrimary : colors.textMuted }}
+            >
+              {'🎙'}
+            </Animated.Text>
+          </Pressable>
+        </View>
+      )}
 
       <TextInput
         style={[

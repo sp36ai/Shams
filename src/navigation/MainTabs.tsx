@@ -43,10 +43,20 @@ import { useTypography } from '@theme/useTypography';
 import { useTranslation } from '@i18n/I18nProvider';
 
 import TabIcon, { type IconName } from '@components/TabIcon';
+import { withScreenErrorBoundary } from '@components/ScreenErrorBoundary';
 
 import type { MainTabParamList } from './types';
 
 const Tab = createBottomTabNavigator<MainTabParamList>();
+
+/*
+ * Each tab is individually bounded, at module scope — see RootNavigator for
+ * both halves of the reasoning: a tab that throws must not take the tab bar
+ * down with it, and wrapping inline would remount every tab on each render.
+ */
+const HomeRoute = withScreenErrorBoundary(OracleScreen, 'Home');
+const AlFalakRoute = withScreenErrorBoundary(SkyClockScreen, 'Al-Falak');
+const HistoryRoute = withScreenErrorBoundary(HistoryScreen, 'Readings');
 
 // `useTranslation()` returns the callable t function directly (not { t }).
 // Re-exporting the type alias here keeps the screenOptions block readable.
@@ -164,15 +174,15 @@ const MainTabs: React.FC = () => {
         ),
       })}
     >
-      <Tab.Screen name="Home" component={OracleScreen} options={{ tabBarLabel: labels.Home }} />
+      <Tab.Screen name="Home" component={HomeRoute} options={{ tabBarLabel: labels.Home }} />
       <Tab.Screen
         name="AlFalak"
-        component={SkyClockScreen}
+        component={AlFalakRoute}
         options={{ tabBarLabel: labels.AlFalak }}
       />
       <Tab.Screen
         name="History"
-        component={HistoryScreen}
+        component={HistoryRoute}
         options={{ tabBarLabel: labels.History }}
       />
     </Tab.Navigator>
