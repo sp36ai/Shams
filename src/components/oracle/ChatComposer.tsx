@@ -3,9 +3,14 @@
  * --------------------------------------------------------------------------
  * Text input, mic button (animated while recording), and the ASK/SEND
  * action. Owns none of the STT/quota/network logic — every callback here is
- * a pass-through to whatever OracleChatScreen decides to do, so this file
+ * a pass-through to whatever ReadingScreen decides to do, so this file
  * stays pure presentation, easy to reuse or restyle without touching the
  * conversation logic.
+ *
+ * `mode` is derived by the Reading screen, never chosen here: before a chart
+ * has been cast the next send is the Reading's question, and after it every
+ * send is a follow-up about that Reading. The composer only reflects which,
+ * in its placeholder and its action label.
  */
 
 import React, { useEffect, useRef } from 'react';
@@ -23,6 +28,8 @@ import { useColors } from '@theme/ThemeProvider';
 import { useTypography } from '@theme/useTypography';
 import { useTranslation } from '@i18n/I18nProvider';
 
+export type ComposerMode = 'ask' | 'discuss';
+
 interface ChatComposerProps {
   value: string;
   onChangeText: (text: string) => void;
@@ -33,6 +40,13 @@ interface ChatComposerProps {
   isListening: boolean;
   onMicPress: () => void;
   micDisabled?: boolean;
+  /**
+   * False when this build/device has no recognizer. The mic is then not
+   * rendered at all: a button that cannot work is worse than no button.
+   */
+  micAvailable?: boolean;
+  /** Whether the next send opens this Reading or follows up on it. */
+  mode?: ComposerMode;
 }
 
 const ChatComposer: React.FC<ChatComposerProps> = ({
@@ -43,6 +57,8 @@ const ChatComposer: React.FC<ChatComposerProps> = ({
   isListening,
   onMicPress,
   micDisabled = false,
+  micAvailable = true,
+  mode = 'ask',
 }) => {
   const colors = useColors();
   const typography = useTypography();
@@ -79,46 +95,50 @@ const ChatComposer: React.FC<ChatComposerProps> = ({
 
   return (
     <View style={[styles.wrap, { backgroundColor: colors.surface, borderTopColor: colors.border }]}>
-      <View style={styles.micWrap}>
-        {isListening && (
-          <Animated.View
-            pointerEvents="none"
-            style={[
-              styles.pulseRing,
+      {/* No recognizer in this build or on this device: the mic is not
+          rendered at all rather than offered and then failing. */}
+      {micAvailable && (
+        <View style={styles.micWrap}>
+          {isListening && (
+            <Animated.View
+              pointerEvents="none"
+              style={[
+                styles.pulseRing,
+                {
+                  borderColor: colors.negative,
+                  opacity: pulse.interpolate({ inputRange: [0, 1], outputRange: [0.7, 0] }),
+                  transform: [
+                    { scale: pulse.interpolate({ inputRange: [0, 1], outputRange: [1, 1.6] }) },
+                  ],
+                },
+              ]}
+            />
+          )}
+          <Pressable
+            onPress={onMicPress}
+            disabled={micDisabled}
+            style={({ pressed }) => [
+              styles.micBtn,
               {
-                borderColor: colors.negative,
-                opacity: pulse.interpolate({ inputRange: [0, 1], outputRange: [0.7, 0] }),
-                transform: [
-                  { scale: pulse.interpolate({ inputRange: [0, 1], outputRange: [1, 1.6] }) },
-                ],
+                backgroundColor: isListening ? colors.negative : colors.surfaceElevated,
+                borderColor: isListening ? colors.negative : colors.border,
+                opacity: micDisabled ? 0.4 : pressed ? 0.75 : 1,
               },
             ]}
-          />
-        )}
-        <Pressable
-          onPress={onMicPress}
-          disabled={micDisabled}
-          style={({ pressed }) => [
-            styles.micBtn,
-            {
-              backgroundColor: isListening ? colors.negative : colors.surfaceElevated,
-              borderColor: isListening ? colors.negative : colors.border,
-              opacity: micDisabled ? 0.4 : pressed ? 0.75 : 1,
-            },
-          ]}
-          accessibilityRole="button"
-          accessibilityLabel={
-            isListening ? t('oracleChat.stopRecording') : t('oracleChat.startRecording')
-          }
-          testID="oracle-chat-mic-btn"
-        >
-          <Animated.Text
-            style={{ fontSize: 18, color: isListening ? colors.textOnPrimary : colors.textMuted }}
+            accessibilityRole="button"
+            accessibilityLabel={
+              isListening ? t('oracleChat.stopRecording') : t('oracleChat.startRecording')
+            }
+            testID="oracle-chat-mic-btn"
           >
-            {'🎙'}
-          </Animated.Text>
-        </Pressable>
-      </View>
+            <Animated.Text
+              style={{ fontSize: 18, color: isListening ? colors.textOnPrimary : colors.textMuted }}
+            >
+              {'🎙'}
+            </Animated.Text>
+          </Pressable>
+        </View>
+      )}
 
       <TextInput
         style={[
@@ -132,7 +152,13 @@ const ChatComposer: React.FC<ChatComposerProps> = ({
         ]}
         value={value}
         onChangeText={onChangeText}
-        placeholder={isListening ? t('oracleChat.listening') : t('oracleChat.placeholder')}
+        placeholder={
+          isListening
+            ? t('oracleChat.listening')
+            : mode === 'discuss'
+              ? t('oracleChat.placeholderDiscuss')
+              : t('oracleChat.placeholder')
+        }
         placeholderTextColor={colors.textFaint}
         editable={!sending}
         multiline
@@ -151,7 +177,7 @@ const ChatComposer: React.FC<ChatComposerProps> = ({
           },
         ]}
         accessibilityRole="button"
-        accessibilityLabel={t('oracleChat.send')}
+        accessibilityLabel={mode === 'discuss' ? t('oracleChat.reply') : t('oracleChat.send')}
         testID="oracle-chat-send-btn"
       >
         {sending ? (
@@ -163,7 +189,7 @@ const ChatComposer: React.FC<ChatComposerProps> = ({
               { color: canSend ? colors.textOnPrimary : colors.textFaint },
             ]}
           >
-            {t('oracleChat.send')}
+            {mode === 'discuss' ? t('oracleChat.reply') : t('oracleChat.send')}
           </Animated.Text>
         )}
       </Pressable>

@@ -1,8 +1,10 @@
-Oracle Chat is now a full conversation — ask by voice or text, hear the reading spoken aloud, and retry without losing your place.
+A reading is now something you can talk about, not just receive.
 
-• Sharper sky: Venus and Mars positions are far more accurate
-• Your reading now reflects the question you actually asked
-• Remedy guidance now appears with every verdict
-• Fixed a crash when leaving Oracle Chat
-• Fixed voice playback pausing, resuming and skipping ahead
-• Wording and label fixes throughout
+• Ask a follow-up on any reading — it costs no daily question
+• "Your Readings" keeps every reading and its conversation
+• Open an old reading in the moment it was cast
+• Ask by voice or text, and hear the reading spoken aloud
+• Sharper sky: Venus and Mars positions far more accurate
+• Remedy guidance appears with every verdict
+• Never charged twice for a question interrupted mid-cast
+• Crash, playback and wording fixes

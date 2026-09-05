@@ -89,6 +89,27 @@ function subscribe(type: TtsEventName, handler: (event: never) => void): Emitter
 }
 
 /**
+ * Whether the TTS native module is actually present in this build.
+ *
+ * Same hazard as the recognizer's, and the same consequence: `subscribe()`
+ * runs in this hook's MOUNT effect, so a missing or unlinked module threw
+ * during the render of any screen that reads a verdict aloud. With only a root
+ * error boundary above the navigator, that one throw replaced the entire app
+ * with the fallback — which is what "the Ask button gives an error" looks like
+ * from the outside.
+ *
+ * Narration is an enhancement; the verdict is readable on screen without it.
+ * So an absent engine silently disables playback and nothing else.
+ */
+const TTS_AVAILABLE: boolean = (() => {
+  try {
+    return typeof Tts?.speak === 'function' && typeof Tts?.addEventListener === 'function';
+  } catch {
+    return false;
+  }
+})();
+
+/**
  * How many characters into the current utterance the engine has reached.
  *
  * Android's onRangeStart sends `{utteranceId, start, end, frame}`
@@ -115,15 +136,25 @@ let ttsInitPromise: Promise<void> | null = null;
 
 /** getInitStatus() resolves once per process; safe to call from every mount. */
 function ensureTtsReady(): Promise<void> {
+  if (!TTS_AVAILABLE) {
+    return Promise.resolve();
+  }
   if (ttsInitPromise === null) {
-    ttsInitPromise = Tts.getInitStatus()
-      .then(() => undefined)
-      .catch((e: unknown) => {
-        log.warn('Tts.getInitStatus failed', { error: String(e) });
-        // Don't cache a rejected init as permanent — a transient engine
-        // hiccup shouldn't block every future speak() this session.
-        ttsInitPromise = null;
-      });
+    // Wrapped because a broken native module throws SYNCHRONOUSLY here rather
+    // than returning a rejected promise, which no .catch() below would see.
+    try {
+      ttsInitPromise = Tts.getInitStatus()
+        .then(() => undefined)
+        .catch((e: unknown) => {
+          log.warn('Tts.getInitStatus failed', { error: String(e) });
+          // Don't cache a rejected init as permanent — a transient engine
+          // hiccup shouldn't block every future speak() this session.
+          ttsInitPromise = null;
+        });
+    } catch (e) {
+      log.warn('Tts.getInitStatus threw — narration disabled', { error: String(e) });
+      return Promise.resolve();
+    }
   }
   return ttsInitPromise;
 }
@@ -205,18 +236,31 @@ export function useTextToSpeech(): TextToSpeechState {
       }
     };
 
-    const subscriptions = [
-      subscribe('tts-finish', onFinish),
-      subscribe('tts-cancel', onCancel),
-      subscribe('tts-error', onError),
-      subscribe('tts-progress', onProgress),
-    ];
+    if (!TTS_AVAILABLE) {
+      return;
+    }
+
+    let subscriptions: EmitterSubscription[] = [];
+    try {
+      subscriptions = [
+        subscribe('tts-finish', onFinish),
+        subscribe('tts-cancel', onCancel),
+        subscribe('tts-error', onError),
+        subscribe('tts-progress', onProgress),
+      ];
+    } catch (err) {
+      log.warn('tts listener setup failed — narration disabled', { error: String(err) });
+    }
 
     return () => {
       subscriptions.forEach(sub => sub.remove());
-      Tts.stop().catch(() => {
-        /* best-effort — screen is unmounting anyway */
-      });
+      try {
+        Tts.stop().catch(() => {
+          /* best-effort — screen is unmounting anyway */
+        });
+      } catch {
+        /* a module that never worked cannot fail the unmount */
+      }
     };
   }, []);
 

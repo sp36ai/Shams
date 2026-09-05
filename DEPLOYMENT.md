@@ -92,6 +92,22 @@ Follow these steps in [Firebase Console](https://console.firebase.google.com):
    - **Billing**: Requires billing enabled (see step 3 above)
 3. Do NOT use Firestore in Datastore mode (use Native mode)
 
+#### TTL policy — `idempotencyKeys` (required)
+
+`askWatchOracle` records each submission's `requestId` so a retry replays the
+original reading instead of casting and charging for a second one. Those
+records exist only to deduplicate a retry, and each carries an `expiresAt`
+timestamp 24 hours out — but Firestore only acts on it once a TTL policy names
+that field:
+
+1. Go to **Build → Firestore Database → Time-to-live (TTL)**
+2. **Create policy**
+   - Collection group: `idempotencyKeys`
+   - Timestamp field: `expiresAt`
+
+Skipping this is not a correctness problem — deduplication still works — but the
+collection then grows without bound, one document per question ever asked.
+
 ### Cloud Functions
 
 1. Go to **Build → Functions**

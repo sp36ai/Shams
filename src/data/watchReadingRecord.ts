@@ -1,8 +1,8 @@
 /**
  * watchReadingRecord — maps a WatchReading (askWatchOracle's response) onto
- * the Reading shape readingsStore/HistoryScreen already know how to render.
+ * the Reading shape readingsStore/ReadingsScreen already know how to render.
  * --------------------------------------------------------------------------
- * Deliberately lives outside OracleChatScreen: the screen calls this and
+ * Deliberately lives outside ReadingScreen: the screen calls this and
  * moves on, it does not itself reason about RkpOutcome/WatchState. Nothing
  * here recomputes or reinterprets the chart — every value is read straight
  * off the server's own response.

@@ -118,8 +118,34 @@ const RkpWatchCard: React.FC<RkpWatchCardProps> = ({
     mardood: colors.mardood,
     muted: colors.textMuted,
   };
-  const stateColor = tone[STATE_TONE[verdict.state]];
+  const stateColor = tone[STATE_TONE[verdict.state]] ?? colors.textMuted;
   const obstruction = obstructionLabel(verdict);
+
+  /*
+   * Defensive reads, because this card does not only render fresh server
+   * responses.
+   *
+   * A verdict reaches here from MMKV as often as from the network — the
+   * readings archive and the Reading threads both persist it, and a cache
+   * written by an older build outlives the build that wrote it. Every
+   * dereference below used to assume the current shape: `verdict.confidence
+   * .replace(...)`, `HOUSE_META[targetHouse].bait`, `verdict.factors.map(...)`.
+   * One missing field in one cached reading therefore threw during render,
+   * and — before per-screen boundaries — took the whole app down with it,
+   * permanently, because the same cache reloads on every launch.
+   *
+   * A reading that cannot be fully described should render as much as it can
+   * and say plainly what it cannot. It must never be unopenable.
+   */
+  const confidenceLabel =
+    typeof verdict.confidence === 'string'
+      ? verdict.confidence.replace('_', ' ').toLowerCase()
+      : 'unrecorded';
+  const houseMeta = HOUSE_META[verdict.targetHouse];
+  const rulerRelation =
+    typeof verdict.rulerRelation === 'string' ? verdict.rulerRelation.toLowerCase() : 'unrecorded';
+  const factors = Array.isArray(verdict.factors) ? verdict.factors : [];
+  const headline = STATE_HEADLINE[verdict.state] ?? 'This reading could not be described';
 
   return (
     <View
@@ -135,24 +161,26 @@ const RkpWatchCard: React.FC<RkpWatchCardProps> = ({
 
       {/* ── The answer ───────────────────────────────────────────────────── */}
       <Text style={[typography('heading'), styles.headline, { color: stateColor }]}>
-        {STATE_HEADLINE[verdict.state]}
+        {headline}
       </Text>
       <Text style={[typography('caption'), { color: colors.textMuted }]}>
-        {`${verdict.state} · confidence ${verdict.confidence.replace('_', ' ').toLowerCase()}`}
+        {`${verdict.state} · confidence ${confidenceLabel}`}
       </Text>
 
       <View style={[styles.rule, { backgroundColor: colors.border }]} />
 
       {/* ── What was judged ──────────────────────────────────────────────── */}
-      <Row
-        label={gharLabel(verdict.targetHouse)}
-        value={`${HOUSE_META[verdict.targetHouse].bait} — ${verdict.targetSignName}`}
-        colors={colors}
-        typography={typography}
-      />
+      {houseMeta !== undefined && (
+        <Row
+          label={gharLabel(verdict.targetHouse)}
+          value={`${houseMeta.bait} — ${verdict.targetSignName}`}
+          colors={colors}
+          typography={typography}
+        />
+      )}
       <Row
         label="Ruled by"
-        value={`${verdict.targetRulerName}, which your ruler ${lagnaRulerName} counts ${verdict.rulerRelation.toLowerCase()}`}
+        value={`${verdict.targetRulerName}, which your ruler ${lagnaRulerName} counts ${rulerRelation}`}
         colors={colors}
         typography={typography}
       />
@@ -187,7 +215,7 @@ const RkpWatchCard: React.FC<RkpWatchCardProps> = ({
       <Text style={[typography('label'), { color: colors.text, marginBottom: 6 }]}>
         {'How the chart reads'}
       </Text>
-      {verdict.factors.map((factor, i) => (
+      {factors.map((factor, i) => (
         <View key={`${i}-${factor.slice(0, 12)}`} style={styles.factorRow}>
           <Text style={[typography('caption'), { color: colors.goldBright }]}>{'✦'}</Text>
           <Text style={[typography('caption'), styles.factorText, { color: colors.textMuted }]}>

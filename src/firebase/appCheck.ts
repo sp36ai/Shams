@@ -97,7 +97,7 @@ export type AppCheckTokenResult = { ok: true; token: string } | { ok: false; err
  * indistinguishable from "App Check hasn't produced a token yet" to any
  * caller. That is exactly what was collapsing real Play Integrity/
  * attestation rejections into the generic "empty/undefined" reading in the
- * askWatchOracle diagnostic probe (OracleChatScreen.tsx), even after
+ * askWatchOracle diagnostic probe (ReadingScreen.tsx), even after
  * initializeAppCheckService() was fixed to stop swallowing its own init
  * rejection (see appCheck.ts init above) — that fix only covers the
  * initializeAppCheck() call, not this separate getToken() call. Mirror the

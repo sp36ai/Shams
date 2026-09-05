@@ -3,6 +3,7 @@
  *
  * Exported functions:
  *   askWatchOracle           — callable — Digital Watch Oracle reading (no location)
+ *   discussReading           — callable — follow-up conversation about a given reading
  *   activateTrial            — callable — idempotent server-side trial registration
  *   getQuota                 — callable — get caller's quota status
  *   syncReadings             — callable — bulk-sync local readings to Firestore
@@ -22,6 +23,7 @@
 import './utils/admin';
 
 export { askWatchOracle } from './functions/askWatchOracle';
+export { discussReading } from './functions/discussReading';
 export { activateTrial } from './functions/activateTrial';
 export { getQuota } from './functions/quota';
 export { syncReadings, deleteReading } from './functions/readings';
@@ -30,6 +32,5 @@ export { razorpayWebhook } from './functions/payments/razorpay';
 export { health } from './functions/health';
 export { setAdminClaim } from './functions/admin';
 export { classifyQuestion } from './functions/classifyQuestion';
-export { classifyIntent } from './functions/classifyIntent';
 export { inferProfile } from './functions/inferProfile';
 export { selectRemedies } from './functions/selectRemedies';

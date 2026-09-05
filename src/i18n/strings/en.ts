@@ -36,7 +36,7 @@ export const en: StringTable = {
   nav: {
     homeTab: 'Home',
     alFalakTab: 'Al-Falak',
-    historyTab: 'History',
+    readingsTab: 'Readings',
   },
 
   permission: {
@@ -112,7 +112,9 @@ export const en: StringTable = {
     todaysQuotaLabel: "Today's Quota",
     yourTierLabel: 'Your Tier',
     tierWanderer: 'Wanderer',
-    askNewQuestionCta: 'Ask New Question',
+    askNewQuestionCta: 'Ask Shams',
+    askPrompt: 'What would you like to ask?',
+    askPlaceholder: 'Ask Shams…',
     consultOracleSubtitle: 'Consult the Oracle',
     readingHistoryCta: 'Reading History',
     viewPastReadingsSubtitle: 'View your past readings',
@@ -135,7 +137,9 @@ export const en: StringTable = {
     quotaExhausted: "Today's questions are used. Come back tomorrow, or upgrade for unlimited.",
     micPermissionDenied: 'Microphone access is needed for voice questions. Enable it in Settings.',
     noSpeechDetected: "Didn't catch that — try again.",
+    voiceUnavailable: 'Voice input is not available on this device. Type your question instead.',
     errorTimeout: 'The oracle took too long to answer. Try again.',
+    errorAlreadyRunning: 'This question is already being read. Give it a moment, then try again.',
     errorSignIn: 'Please sign in again to continue.',
     listenToVerdict: 'Listen',
     playNarration: 'Play narration',
@@ -144,6 +148,22 @@ export const en: StringTable = {
     paused: 'Paused',
     emptyTitle: 'Ask your first question',
     emptyBody: 'Type it, or tap the mic to speak it. The oracle answers from this exact moment.',
+    reply: 'Reply',
+    considering: 'Considering your words…',
+    modeDiscuss: '💬 Discuss this reading',
+    modeNewQuestion: '✦ New question',
+    placeholderDiscuss: 'Ask about this reading…',
+    askAsNewQuestion: 'Start a new Reading for this',
+    separateQuestionNote: 'This may be a separate question — it would need its own moment.',
+    discussionUnavailable: 'The oracle did not answer that. Try asking again.',
+    discussionReadingGone: 'That reading is no longer available to discuss.',
+  },
+
+  reading: {
+    sectionLabel: 'THE READING',
+    yourQuestion: 'YOUR QUESTION',
+    newReading: 'New Reading',
+    shareReading: 'Share Reading',
   },
 
   skyClock: {
@@ -158,9 +178,9 @@ export const en: StringTable = {
   },
 
   history: {
-    headerTitle: 'Readings',
-    emptyTitle: 'No readings yet',
-    emptyBody: 'Your readings will appear here.',
+    headerTitle: 'Your Readings',
+    emptyTitle: 'Your first Reading will appear here.',
+    emptyBody: 'Ask Shams when something is on your mind.',
     filterAll: 'All',
     filterYes: 'Yes',
     filterNo: 'No',
@@ -169,6 +189,17 @@ export const en: StringTable = {
     sortOldest: 'Oldest first',
     deleteConfirm: 'Delete this reading? This cannot be undone.',
     deleteAction: 'Delete',
+    searchPlaceholder: 'Search readings',
+    noResults: 'No readings found.',
+    newReading: 'New Reading',
+    beginReading: 'Begin a Reading',
+    groupToday: 'TODAY',
+    groupYesterday: 'YESTERDAY',
+    groupPrevious7: 'PREVIOUS 7 DAYS',
+    groupPrevious30: 'PREVIOUS 30 DAYS',
+    groupOlder: 'EARLIER',
+    pendingReading: 'Reading the moment…',
+    failedReading: 'Unfinished',
   },
 
   premium: {

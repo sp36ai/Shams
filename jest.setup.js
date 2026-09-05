@@ -101,6 +101,10 @@ jest.mock('@react-navigation/native', () => {
     // change" contract.
     useFocusEffect: callback => React.useEffect(callback, [callback]),
     useIsFocused: jest.fn(() => true),
+    // Screens that read route params (ReadingScreen opens either an existing
+    // Reading or a new one, entirely on its params) get an empty route by
+    // default; a test overrides the return value to state which case it is.
+    useRoute: jest.fn(() => ({ key: 'test', name: 'Test', params: undefined })),
   };
 });
 

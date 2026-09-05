@@ -18,22 +18,27 @@ import { renderScreen } from '../../test-utils/renderScreen';
 import OracleScreen from '../OracleScreen';
 
 describe('OracleScreen navigation wiring', () => {
-  function mockNavigate() {
-    const navigate = jest.fn();
-    (useNavigation as jest.Mock).mockReturnValue({
-      navigate,
+  /**
+   * Home both navigates (tabs, Settings) and pushes (a Reading), so the mock
+   * hands back the whole handle rather than one method — asserting on the
+   * wrong one is how a push regression would slip past.
+   */
+  function mockNavigation() {
+    const handle = {
+      navigate: jest.fn(),
       goBack: jest.fn(),
       canGoBack: jest.fn(() => false),
       replace: jest.fn(),
       push: jest.fn(),
       setOptions: jest.fn(),
       addListener: jest.fn(() => jest.fn()),
-    });
-    return navigate;
+    };
+    (useNavigation as jest.Mock).mockReturnValue(handle);
+    return handle;
   }
 
   it('navigates to Settings when the header gear is pressed', async () => {
-    const navigate = mockNavigate();
+    const { navigate } = mockNavigation();
     await renderScreen(<OracleScreen />);
 
     const user = userEvent.setup();
@@ -42,13 +47,33 @@ describe('OracleScreen navigation wiring', () => {
     expect(navigate).toHaveBeenCalledWith('Settings');
   });
 
-  it('navigates to Oracle Chat when "Ask New Question" is pressed', async () => {
-    const navigate = mockNavigate();
+  it('opens an empty Reading when the ask button is pressed with nothing typed', async () => {
+    const { push } = mockNavigation();
     await renderScreen(<OracleScreen />);
 
     const user = userEvent.setup();
     await user.press(screen.getByTestId('ask-shams-btn'));
 
-    expect(navigate).toHaveBeenCalledWith('OracleChat');
+    // push, not navigate: a Reading is always its own screen, never a params
+    // update to one already on the stack.
+    expect(push).toHaveBeenCalledWith('Reading', {});
+  });
+
+  it('carries a typed question into the Reading it opens', async () => {
+    const { push } = mockNavigation();
+    await renderScreen(<OracleScreen />);
+
+    const user = userEvent.setup();
+    await user.type(
+      screen.getByTestId('home-ask-input'),
+      'Should I accept this business opportunity?',
+    );
+    await user.press(screen.getByTestId('ask-shams-btn'));
+
+    // Home owns the composer that STARTS a Reading; the Reading itself is
+    // created on the other side, when the question is actually submitted.
+    expect(push).toHaveBeenCalledWith('Reading', {
+      initialQuestion: 'Should I accept this business opportunity?',
+    });
   });
 });

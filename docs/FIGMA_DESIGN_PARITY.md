@@ -37,9 +37,9 @@ clone per remaining theme below it (variable-mode switched, not hand-recoloured)
 | Figma frame | Source | Verified against code |
 |---|---|---|
 | `OracleScreen — Home` | `src/screens/OracleScreen.tsx` | ✅ rebuilt from source |
-| `OracleChatScreen` | `src/screens/OracleChatScreen.tsx`, `components/oracle/ChatBubble.tsx`, `ChatComposer.tsx` | ✅ rebuilt from source |
+| `OracleChatScreen` | `src/screens/ReadingScreen.tsx`, `components/oracle/ChatBubble.tsx`, `ChatComposer.tsx` | ⚠️ **frame name is stale** — see *Screens renamed by #99* |
 | ↳ `RkpWatchCard` (inside the Oracle turn) | `src/components/oracle/RkpWatchCard.tsx` | ✅ rebuilt from source |
-| `HistoryScreen` | `src/screens/HistoryScreen.tsx` | ✅ rebuilt from source |
+| `HistoryScreen` | `src/screens/ReadingsScreen.tsx` | ⚠️ **frame name is stale** — see *Screens renamed by #99* |
 | `SkyClockScreen — Al-Falak` | `src/screens/SkyClockScreen.tsx` | ✅ rebuilt from source |
 | `SettingsScreen` | `src/screens/SettingsScreen.tsx` | ✅ rebuilt from source |
 | `PremiumScreen` | `src/screens/PremiumScreen.tsx` | ✅ rebuilt from source |
@@ -49,12 +49,34 @@ clone per remaining theme below it (variable-mode switched, not hand-recoloured)
 | `AuthScreen` | `src/screens/AuthScreen.tsx` | ✅ rebuilt from source |
 | `OracleChatScreen — Urdu (RTL)` | same, with `lang === 'ur'` | ✅ built from `ur.ts` + `typography.ts` — see *Localisation gap* |
 
+#### Screens renamed by #99
+
+PR #99 ("Make the Reading the domain object") reorganised the two screens the Figma file
+calls `OracleChatScreen` and `HistoryScreen`:
+
+| Figma frame (unchanged) | Was | Is now |
+|---|---|---|
+| `OracleChatScreen` | `src/screens/OracleChatScreen.tsx` | `src/screens/ReadingScreen.tsx` (route `Reading`) |
+| `HistoryScreen` | `src/screens/HistoryScreen.tsx` | `src/screens/ReadingsScreen.tsx` (tab `Readings`) |
+
+The frames were **not** renamed in Figma, and the rows above are therefore mapped by
+source path, not by name. This is a naming drift, not a layout drift: the layouts were
+verified against the old files and #99 did not restructure them, but a Reading now carries
+a follow-up conversation and a title, neither of which the frames show. Renaming the frames
+and drawing the follow-up turns is outstanding design work, not a code defect.
+
+Also new on `main` and **not** in the Figma file at all:
+
+- `src/components/home/HomeAskComposer.tsx` — asking straight from the home screen.
+- `src/components/ScreenErrorBoundary.tsx` — the per-screen boundary from #100. It has no
+  frame because it only renders on failure; its fallback is unstyled by design.
+
 ### Components page
 
 | Component set | Mirrors | Notes |
 |---|---|---|
-| `Verdict Badge` (5 variants) | `verdictBadgeFor()` + `verdictColorFor()` in `HistoryScreen.tsx` | Maqbool=YES, Mardood=NO/DENIED, Mashroot=CONDITIONAL, Takheer=DELAYED, GhayrWazeh=UNCLEAR/PENDING. **Used by History rows only** — `RkpWatchCard` has no badge. |
-| `Tab Bar Item` (Tab × State) | `src/navigation/MainTabs.tsx` | Oracle / Al-Falak / History, Active+Inactive. |
+| `Verdict Badge` (5 variants) | `verdictBadgeFor()` + `verdictColorFor()` in `ReadingsScreen.tsx` | Maqbool=YES, Mardood=NO/DENIED, Mashroot=CONDITIONAL, Takheer=DELAYED, GhayrWazeh=UNCLEAR/PENDING. **Used by History rows only** — `RkpWatchCard` has no badge. |
+| `Tab Bar Item` (Tab × State) | `src/navigation/MainTabs.tsx` | Home / Al-Falak / Readings, Active+Inactive. The third tab was `History` when the frames were drawn; #99 renamed it to `Readings`. |
 | `Button — PROPOSAL (no equivalent in code)` | **nothing** | See *The Button component is a proposal* below. Deliberately not instanced into any screen frame. |
 
 ---
