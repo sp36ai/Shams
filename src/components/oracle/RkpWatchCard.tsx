@@ -38,9 +38,9 @@ export const STATE_HEADLINE: Readonly<Record<WatchState, string>> = Object.freez
  * vocabulary is used: maqbool (accepted) for favourable, mardood (rejected) for
  * closed, caution for the states that stand but resist.
  */
-type ToneKey = 'maqbool' | 'caution' | 'mardood' | 'muted';
+export type ToneKey = 'maqbool' | 'caution' | 'mardood' | 'muted';
 
-const STATE_TONE: Readonly<Record<WatchState, ToneKey>> = Object.freeze({
+export const STATE_TONE: Readonly<Record<WatchState, ToneKey>> = Object.freeze({
   FULFILLED: 'maqbool',
   MOVING: 'maqbool',
   DELAYED: 'caution',

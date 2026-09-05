@@ -322,7 +322,7 @@ const SettingsScreen: React.FC = () => {
           )}
         </Section>
 
-        <Section title="Subscription">
+        <Section title={t('settings.subscriptionLabel')}>
           <SubscriptionCard
             plan={plan}
             questionsToday={questionsToday}

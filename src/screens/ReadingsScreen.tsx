@@ -52,7 +52,7 @@ import {
 import { readingTitleFor } from '../data/readingTitle';
 import { formatReadingMoment } from '@components/oracle/ReadingHeader';
 import StarfieldBackground from '@components/StarfieldBackground';
-import RkpWatchCard from '@components/oracle/RkpWatchCard';
+import RkpWatchCard, { STATE_TONE } from '@components/oracle/RkpWatchCard';
 import RemedyProtocolCard from '@components/oracle/RemedyProtocolCard';
 
 /* -------------------------------------------------------------------------- */
@@ -405,6 +405,28 @@ const ReadingsScreen: React.FC = () => {
  * A Reading with its conversation. Title first — it is what the seeker
  * recognises the Reading by — question second, moment last.
  */
+/**
+ * The most recently resolved chart-cast in a thread, if any — the same
+ * `WatchReading` RkpWatchCard already renders inside the conversation. A
+ * thread still pending, or one that failed before a chart ever landed, has
+ * none: `verdictBadge` below stays undefined and the row shows no badge,
+ * same as it always has for those threads.
+ */
+function latestReadingIn(thread: ReadingThread): ReadingThread['messages'][number]['reading'] {
+  for (let i = thread.messages.length - 1; i >= 0; i--) {
+    const m = thread.messages[i];
+    if (
+      m !== undefined &&
+      m.status === 'sent' &&
+      m.variant === 'reading' &&
+      m.reading !== undefined
+    ) {
+      return m.reading;
+    }
+  }
+  return undefined;
+}
+
 const ThreadRow: React.FC<{
   thread: ReadingThread;
   onPress: () => void;
@@ -421,6 +443,26 @@ const ThreadRow: React.FC<{
       : thread.status === 'error'
         ? t('history.failedReading')
         : null;
+
+  // Outcome badge — matches ArchiveRow below, but sourced from the live RKP
+  // verdict (STATE_TONE/STATE_HEADLINE, the same tables RkpWatchCard uses)
+  // rather than the legacy VerdictKind archive rows carry. This was a real
+  // gap: threads — the primary row type, not the pre-thread fallback — had
+  // no outcome visible at all, unlike ArchiveRow's verdictPill.
+  const reading = latestReadingIn(thread);
+  // `?? null` guards a state value from an older/corrupted cache that
+  // doesn't match a current WatchState key — same defensive reasoning
+  // RkpWatchCard and RemedyProtocolCard already apply to cached verdicts:
+  // an unrecognized value must degrade to "no badge", not to the literal
+  // string "undefined" leaking into a color.
+  const toneKey = reading !== undefined ? (STATE_TONE[reading.verdict.state] ?? null) : null;
+  const tone: Record<'maqbool' | 'caution' | 'mardood' | 'muted', string> = {
+    maqbool: colors.maqbool,
+    caution: colors.caution,
+    mardood: colors.mardood,
+    muted: colors.textMuted,
+  };
+  const badgeColor = toneKey !== null ? tone[toneKey] : null;
 
   return (
     <Pressable
@@ -459,7 +501,25 @@ const ThreadRow: React.FC<{
           )}
         </View>
       </View>
-      <Text style={[typography('label'), { color: colors.goldBright, opacity: 0.8 }]}>›</Text>
+      <View style={styles.rowTrailing}>
+        {reading !== undefined && badgeColor !== null && (
+          <View
+            style={[
+              styles.verdictPill,
+              styles.verdictPillCompact,
+              { borderColor: badgeColor, backgroundColor: badgeColor + '14' },
+            ]}
+          >
+            <Text
+              style={[typography('label'), { color: badgeColor, fontSize: 10, letterSpacing: 0.5 }]}
+              numberOfLines={1}
+            >
+              {reading.verdict.state}
+            </Text>
+          </View>
+        )}
+        <Text style={[typography('label'), { color: colors.goldBright, opacity: 0.8 }]}>›</Text>
+      </View>
     </Pressable>
   );
 });
@@ -953,6 +1013,7 @@ const styles = StyleSheet.create({
   },
   rowMain: { flex: 1, gap: 8 },
   rowMeta: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  rowTrailing: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   verdictPill: {
     borderWidth: StyleSheet.hairlineWidth,
     borderRadius: 999,
@@ -961,6 +1022,14 @@ const styles = StyleSheet.create({
     minWidth: 96,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  // ThreadRow's badge sits next to a chevron, not alone at the row's edge —
+  // narrower and without ArchiveRow's minWidth so short RKP state words
+  // (e.g. "MOVING") don't force extra row width.
+  verdictPillCompact: {
+    minWidth: 0,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
   },
   emptyWrap: {
     flex: 1,
