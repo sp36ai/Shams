@@ -509,7 +509,10 @@ const ArchiveRow: React.FC<{
         </View>
       </View>
       <View style={[styles.verdictPill, { borderColor: vColor, backgroundColor: vColor + '14' }]}>
-        <Text style={[typography('label'), { color: vColor, fontSize: 9, letterSpacing: 0.8 }]}>
+        <Text
+          style={[typography('label'), { color: vColor, fontSize: 11, letterSpacing: 0.6 }]}
+          numberOfLines={1}
+        >
           {verdictBadgeFor(reading.verdict)}
         </Text>
       </View>
@@ -955,7 +958,7 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     paddingHorizontal: 12,
     paddingVertical: 6,
-    minWidth: 84,
+    minWidth: 96,
     alignItems: 'center',
     justifyContent: 'center',
   },

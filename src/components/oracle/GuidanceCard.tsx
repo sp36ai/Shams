@@ -183,8 +183,8 @@ const styles = StyleSheet.create({
     paddingVertical: 3,
   },
   effectText: {
-    fontSize: 9,
-    letterSpacing: 0.8,
+    fontSize: 11,
+    letterSpacing: 0.6,
   },
 });
 

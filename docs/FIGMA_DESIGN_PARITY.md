@@ -252,6 +252,75 @@ themselves: the Active variants had the accent-glow `activeHalo` ellipse but wer
 `goldBright` `activeBar` — the 24×2.5 indicator bar `MainTabs.tsx` renders beneath the icon.
 Added to all three Active variants, bound to `color/goldBright`.
 
+---
+
+## PREMIUM VISUAL PASS — real defects found and fixed across the app
+
+A second pass, after Button/Tab Bar, went looking for the same class of gap in the four
+highest-traffic surfaces: the Reading card, the Readings list, Settings, and Premium. Two of
+the four had real, evidence-based defects; two were already at a premium bar and were left
+alone deliberately, not skipped.
+
+### `RkpWatchCard` had zero elevation
+
+The single most-viewed surface in the app — the verdict card rendered on every question — was
+a flat bordered box: `borderWidth: hairline`, no shadow at all, while `Button` (this file,
+above) already carries `ELEVATION.glow` and Readings rows already carry a verdict-tinted left
+stripe. Fixed in `RkpWatchCard.tsx`: `ELEVATION.rest` spread onto the card, plus a 3px
+state-tone left stripe reusing the exact pattern already established in `ReadingsScreen.tsx`
+(`borderLeftWidth: 3` / `borderLeftColor: vColor`) — not a new pattern, the existing one
+finally applied to the surface that most needed it. Mirrored onto all 7 `RkpWatchCard` frames
+in Figma (6 themes + the Urdu RTL reference), each stripe/shadow bound to whichever of
+`color/positive`/`negative`/`caution`/`textMuted` that instance's actual `WatchState` resolves
+to — read from the frame's own headline-text binding, not assumed.
+
+### The Figma `Verdict Badge` component had a real bug, not just a stale mirror
+
+While bumping the badge label off its undersized 9px (below), a closer look at the Figma
+component turned up something the earlier "rebuilt from source" pass had missed: **all five
+variants' fill, stroke, and label were bound to the same `color/textMuted` variable at full
+opacity** — meaning the pill's background and its own text were painted the same colour (the
+label was invisible against its background), and none of the five variants differed from each
+other regardless of verdict. This was a defect in the Figma file, not in the app —
+`verdictColorFor()` in `ReadingsScreen.tsx` was and is correct (`YES→positive`,
+`NO→negative`, `CONDITIONAL`/`DELAYED→caution`, default→`textMuted`). Rebound each variant to
+match: fill at 8% opacity (mirrors code's `vColor + '14'` hex-alpha suffix), stroke and label
+at full opacity, each to its own verdict's variable.
+
+### Three undersized captions, same anti-pattern, found by grep and fixed where safe
+
+A repo-wide scan for `fontSize` literals below 10 in screen/component styles surfaced several
+hits. Each was checked individually rather than bulk-edited — some are legitimate (SkyClock's
+planet-table column headers and TimingPill labels at 8px are dense data-table chrome in a
+fixed-width layout; enlarging them risks breaking that table and the confidence they're a
+defect, rather than a deliberate density choice, is low). Two were not defensible and were
+fixed:
+
+- **`ReadingsScreen`'s list-row verdict pill** — `typography('label')` (13px) overridden down
+  to `fontSize: 9`, the smallest text anywhere in the type system. Bumped to 11px,
+  `letterSpacing` 0.8→0.6, pill `minWidth` 84→96 to fit `GHAYR WAZEH` without wrapping. Mirrored
+  in the Figma `Verdict Badge` component alongside the bug fix above.
+- **`SettingsScreen`'s Reading-Stats `StatCard` label** and **`GuidanceCard`'s `effectPill`
+  label** — the same `typography('caption'|'label')` → `fontSize: 9` override, in an isolated
+  stat card and a `alignSelf: 'flex-start'` pill respectively (neither has a fixed-width
+  overflow risk). Both bumped to 11px.
+
+### One dead style found, removed
+
+`SettingsScreen`'s row style carried a hardcoded `backgroundColor: '#FFFFFF06'` that every
+call site overrides with `colors.surface` — dead code with zero visual effect, a leftover from
+before the row became theme-aware. Removed.
+
+### Settings and Premium: no action taken, and why
+
+Settings' rows already have real elevation (`shadowOpacity: 0.04`, deliberately subtle for a
+list of many rows, the same restraint `ReadingsScreen` uses) and a gold section-divider
+treatment. Premium's plan cards already differentiate the Khāṣṣ tier with a tuned glow
+(`shadowOpacity: 0.45`, `shadowRadius: 14`, gold-tinted) against the standard tier's
+(`0.1`/`4`, neutral) — exactly the kind of state-differentiated elevation this pass was adding
+elsewhere. Redesigning either would have been churn without a defect to justify it, so neither
+was touched.
+
 ## LOCALISATION GAP — the Oracle result cards are not translated
 
 Found while building the Urdu frame, and worth an owner decision:
@@ -329,11 +398,12 @@ Open, in rough priority order. None of these are claimed as done:
    names every 5s during the wait, but **it does not exist anywhere in `src/`**. The real
    pending state is a static `ActivityIndicator` + `oracleChat.readingChart`. Owner decision
    needed: build it, or drop it from the brief.
-6. **`Button` is unverified on-device.** Typecheck, lint and the full Jest suite pass with it
-   wired into all four screens, but no test renders it and asserts on its output, and it has
-   not been screenshotted on a real simulator/device across the six themes. The Figma
-   component set is the visual reference it was built from, not proof the RN implementation
-   matches pixel-for-pixel.
+6. **`Button` and the premium visual pass (`RkpWatchCard` elevation/stripe, `Verdict Badge`
+   fix, the three caption bumps) are unverified on-device.** Typecheck, lint and the full Jest
+   suite pass with all of them in place, but no test renders any of them and asserts on
+   output, and none has been screenshotted on a real simulator/device across the six themes —
+   only in Figma, where each render is a static reference showing one theme's resolved token
+   values, not the running app.
 
 ---
 

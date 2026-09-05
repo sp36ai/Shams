@@ -489,7 +489,10 @@ const StatCard: React.FC<{
   <View style={[styles.statCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
     <Text style={[typography('heading'), { color, textAlign: 'center' }]}>{value}</Text>
     <Text
-      style={[typography('caption'), { color: colors.textFaint, textAlign: 'center', fontSize: 9 }]}
+      style={[
+        typography('caption'),
+        { color: colors.textFaint, textAlign: 'center', fontSize: 11 },
+      ]}
     >
       {label}
     </Text>
@@ -604,7 +607,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     borderRadius: 16,
     borderWidth: StyleSheet.hairlineWidth,
-    backgroundColor: '#FFFFFF06',
     shadowColor: '#000',
     shadowOpacity: 0.04,
     shadowRadius: 10,

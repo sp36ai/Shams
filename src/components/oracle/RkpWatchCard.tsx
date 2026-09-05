@@ -14,6 +14,7 @@ import { StyleSheet, Text, View } from 'react-native';
 
 import { useColors } from '@theme/ThemeProvider';
 import { useTypography } from '@theme/useTypography';
+import { ELEVATION, RADIUS, SPACING } from '@theme/themes';
 import { HOUSE_META, PLANET_NAME, gharLabel } from '@astrology/rkp/nomenclature';
 import type { DisplayWatchVerdict, WatchState } from '@astrology/rkp/watchJudgment';
 import type { DirectionalFocus } from '../../data/watchRemedyContext';
@@ -149,7 +150,16 @@ const RkpWatchCard: React.FC<RkpWatchCardProps> = ({
 
   return (
     <View
-      style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border }]}
+      style={[
+        styles.card,
+        {
+          backgroundColor: colors.surface,
+          borderColor: colors.border,
+          borderLeftWidth: 3,
+          borderLeftColor: stateColor,
+          shadowColor: stateColor,
+        },
+      ]}
       accessibilityRole="summary"
     >
       {/* ── The window this reading was taken in ─────────────────────────── */}
@@ -247,10 +257,13 @@ const Row: React.FC<RowProps> = ({ label, value, colors, typography }) => (
 
 const styles = StyleSheet.create({
   card: {
-    borderRadius: 16,
+    borderRadius: RADIUS.lg,
     borderWidth: StyleSheet.hairlineWidth,
-    padding: 16,
-    marginTop: 12,
+    padding: SPACING.lg,
+    marginTop: SPACING.md,
+    ...ELEVATION.rest,
+    // shadowColor is set per-verdict (tinted to the state's tone) in the render below;
+    // this base spread supplies opacity/radius/offset/elevation only.
   },
   headline: {
     marginTop: 6,
