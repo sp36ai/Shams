@@ -29,8 +29,10 @@ function makeState(plan: PlanTier, questionsToday: number): QuotaState {
 }
 
 describe('FREE_DAILY_LIMIT', () => {
-  test('is 3 — the production paywall limit', () => {
-    expect(FREE_DAILY_LIMIT).toBe(3);
+  // TEMPORARY — raised to 50 for internal testing (see quotaStore.ts).
+  // Revert to `toBe(3)` alongside the constant once testing concludes.
+  test('is 50 — the temporary internal-testing paywall limit', () => {
+    expect(FREE_DAILY_LIMIT).toBe(50);
   });
 });
 

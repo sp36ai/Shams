@@ -780,8 +780,23 @@ export function tierMeetsRequirement(userTier: PlanTier, requiredTier: PlanTier)
   return TIER_RANK[userTier] >= TIER_RANK[requiredTier];
 }
 
+/**
+ * TEMPORARY — internal testing only. When true, every theme is selectable
+ * regardless of plan, so testers can see all 8 (including the two Khāṣṣ
+ * exclusives) without needing a live subscription on the test account.
+ *
+ * THEME_TIER and tierMeetsRequirement() are untouched and fully tested
+ * (see themeTiers.test.ts) — flip this back to `false` to re-enable real
+ * gating once testing concludes. That one-line flip is the entire revert;
+ * nothing else needs to change.
+ */
+const TESTING_MODE_ALL_THEMES_UNLOCKED = true;
+
 /** Is this theme selectable by a user on `userTier`? */
 export function isThemeUnlocked(id: ThemeId, userTier: PlanTier): boolean {
+  if (TESTING_MODE_ALL_THEMES_UNLOCKED) {
+    return true;
+  }
   return tierMeetsRequirement(userTier, THEME_TIER[id]);
 }
 

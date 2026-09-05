@@ -22,8 +22,13 @@ export type PlanTier = 'free' | 'mureed' | 'khass';
 
 // Paywall limits. Must stay in sync with the server
 // (functions/src/config.ts FREE_LIMIT / TRIAL_DAILY_LIMIT).
-export const FREE_DAILY_LIMIT = 3;
-export const TRIAL_DAILY_LIMIT = 5;
+//
+// TEMPORARY — raised from 3/5 to 50/50 for internal testing, so testers
+// aren't paywall-blocked mid-session while exercising the app. Revert both
+// this file and functions/src/config.ts to 3/5 once testing concludes —
+// tracked as an explicit owner decision, not a permanent pricing change.
+export const FREE_DAILY_LIMIT = 50;
+export const TRIAL_DAILY_LIMIT = 50;
 export const TRIAL_DURATION_DAYS = 7;
 
 /** Plans that get unlimited questions. */
