@@ -25,6 +25,23 @@
  *   screen throwing during render unmounted the whole NavigationContainer via
  *   the root boundary: no tab bar, no back button, no way out but a restart.
  *
+ * WHY THE PUSHED SCREENS SIT INSIDE THE AUTHENTICATED GROUP
+ *   They used to be registered unconditionally, as siblings of whichever gate
+ *   screen was showing. That looked harmless and was not: signing out from
+ *   Settings flips `isAuthenticated`, which swaps Main for Auth — but Settings
+ *   itself stayed registered and stayed on top of the stack, so the seeker
+ *   signed out and went on looking at their own settings page, over an Auth
+ *   screen they could not see. Same for Oracle Chat and Premium. Registering
+ *   them in the group means losing auth unmounts them, and the seeker lands
+ *   where they should: on Auth.
+ *
+ * EVERY SCREEN IS INDIVIDUALLY BOUNDED
+ *   withScreenErrorBoundary() wraps each route here rather than in the screen
+ *   files, so a screen added later is covered by construction. Without it, one
+ *   screen throwing during render unmounted the whole NavigationContainer via
+ *   the root boundary: no tab bar, no back button, no way out but a restart —
+ *   which made one broken screen indistinguishable from a broken app.
+ *
  * Firebase Auth bootstrap is awaited asynchronously via onAuthStateChanged;
  * while it resolves we stay on Splash so the user never sees a flash of the
  * Auth screen before session restoration completes. The auth gate is enforced

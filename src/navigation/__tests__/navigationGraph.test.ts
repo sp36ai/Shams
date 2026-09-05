@@ -118,9 +118,20 @@ describe('navigation graph', () => {
 describe('auth gating', () => {
   const source = readFileSync(join(NAV_DIR, 'RootNavigator.tsx'), 'utf8');
 
-  it('keeps Reading, Settings and Premium inside the authenticated group', () => {
+  /** The four screens that gate entry; everything else must be behind them. */
+  const GATE_SCREENS = ['Splash', 'Auth', 'LocationPermission', 'Onboarding'];
+
+  it('keeps the tabs and every pushed screen inside the authenticated group', () => {
     const group = /<RootStack\.Group>([\s\S]*?)<\/RootStack\.Group>/.exec(source)?.[1] ?? '';
-    for (const route of ['Main', 'Reading', 'Settings', 'Premium']) {
+    const pushed = [...source.matchAll(SCREEN_NAME_RE)]
+      .map(m => m[1])
+      .filter((name): name is string => name !== undefined && !GATE_SCREENS.includes(name));
+
+    // Derived rather than hardcoded, so renaming a route cannot quietly
+    // narrow what this guard covers.
+    expect(pushed).toContain('Main');
+    expect(pushed.length).toBeGreaterThan(1);
+    for (const route of pushed) {
       expect(group).toContain(`name="${route}"`);
     }
   });
@@ -131,9 +142,8 @@ describe('auth gating', () => {
     const outsideGroup = source
       .replace(/<RootStack\.Group>[\s\S]*?<\/RootStack\.Group>/, '')
       .matchAll(SCREEN_NAME_RE);
-    const gateScreens = ['Splash', 'Auth', 'LocationPermission', 'Onboarding'];
     for (const match of outsideGroup) {
-      expect(gateScreens).toContain(match[1]);
+      expect(GATE_SCREENS).toContain(match[1]);
     }
   });
 });
