@@ -36,6 +36,18 @@ import type { Tradition } from './remedyLibrary';
 // ORACLE_FUNCTION_OPTS (120s), so this stays well inside the function budget.
 const SYNTHESIS_TIMEOUT_MS = 40_000;
 
+/**
+ * The closing attribution, fixed and identical on every reading.
+ *
+ * Deliberately not part of `NarrationFields`: the model's own `signature` is
+ * a varied, one-off closing line, but this is a brand seal and must not
+ * drift with synthesis — it is attached here, after the model returns,
+ * exactly like remedy text. It is present even when narration fails, since
+ * it carries no judgment and a degraded reading is still Shams al-Asrār's.
+ */
+export const ORACLE_BRAND_SEAL =
+  '✨ "These words are unveiled under the banner of Shams al-Asrār, by Astro Sarfaraz." ✨';
+
 /** The prose Claude is permitted to write. No remedy content appears here. */
 interface NarrationFields {
   rkp_finding: string;
@@ -61,6 +73,8 @@ export interface OracleProtocolStep {
 export interface WatchOracleComposition {
   /** Model prose. Null throughout when synthesis failed. */
   readonly narration: NarrationFields | null;
+  /** Fixed closing attribution — see ORACLE_BRAND_SEAL. Never model-written. */
+  readonly brandSeal: string;
   readonly diagnosis: {
     readonly outcome: string;
     readonly primaryPattern: string;
@@ -251,7 +265,7 @@ export async function composeWatchOracleResponse(
   // ── 3. Narration (best effort) ───────────────────────────────────────────
   const narration = await narrate(diagnosis, protocol, seekerName, motherName, question);
 
-  return Object.freeze({ narration, ...base });
+  return Object.freeze({ narration, brandSeal: ORACLE_BRAND_SEAL, ...base });
 }
 
 async function narrate(
