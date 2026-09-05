@@ -361,7 +361,6 @@ const AuthScreen: React.FC = () => {
             </Text>
           </View>
 
-          {/* Form glass card */}
           {/* Tab row */}
           <View style={[styles.tabRow, { borderColor: colors.border }]}>
             <TabButton
