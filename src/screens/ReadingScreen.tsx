@@ -638,6 +638,8 @@ const ReadingScreen: React.FC = () => {
         }
       : null;
   const headerThread = thread ?? provisionalThread;
+  // Once a reading stands, every send in this Reading is a follow-up.
+  const isDiscussMode = thread !== null && thread.readingId !== null;
 
   return (
     <SafeAreaView style={[styles.root, { backgroundColor: theme.colors.bg }]} edges={['top']}>
@@ -700,6 +702,20 @@ const ReadingScreen: React.FC = () => {
           </View>
         )}
 
+        {/*
+         * A composer placeholder alone is easy to miss — it's unfocused
+         * gray text at the bottom of what can be a long scrolling thread,
+         * while attention is naturally on the verdict above. This label
+         * sits directly over the input the moment the mode actually
+         * changes, so the seeker sees "you can keep talking" without
+         * having to notice the placeholder swap first.
+         */}
+        {isDiscussMode && (
+          <Text style={[typography('caption'), styles.discussHint, { color: colors.textFaint }]}>
+            {t('oracleChat.modeDiscuss')}
+          </Text>
+        )}
+
         <ChatComposer
           value={inputText}
           onChangeText={setInputText}
@@ -710,7 +726,7 @@ const ReadingScreen: React.FC = () => {
           micDisabled={sending}
           micAvailable={stt.isAvailable}
           // Once a reading stands, every send in this Reading is a follow-up.
-          mode={thread !== null && thread.readingId !== null ? 'discuss' : 'ask'}
+          mode={isDiscussMode ? 'discuss' : 'ask'}
         />
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -751,6 +767,11 @@ const styles = StyleSheet.create({
   micErrorBanner: {
     paddingHorizontal: 16,
     paddingVertical: 8,
+  },
+  discussHint: {
+    textAlign: 'center',
+    paddingTop: 6,
+    paddingHorizontal: 16,
   },
 });
 
