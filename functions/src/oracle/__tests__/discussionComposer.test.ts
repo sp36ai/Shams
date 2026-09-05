@@ -34,7 +34,8 @@ const GROUNDING: ReadingGrounding = {
       why_this_remedy: 'Delay met with patience.',
       signature: 'The door is heavy, and it opens slowly.',
     },
-    brandSeal: '✨ "These words are unveiled under the banner of Shams al-Asrār, by Astro Sarfaraz." ✨',
+    brandSeal:
+      '✨ "These words are unveiled under the banner of Shams al-Asrār, by Astro Sarfaraz." ✨',
     suggestedQuestions: ['What is causing the delay?'],
     diagnosis: {
       outcome: 'CONDITIONAL',

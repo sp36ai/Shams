@@ -452,13 +452,7 @@ function touch(thread: ReadingThread, at: string): ReadingThread {
 export const useReadingThreadsStore = create<ReadingThreadsState>((set, get) => ({
   threads: readCache(),
 
-  createThread: ({
-    id,
-    requestId,
-    question,
-    questionLang,
-    relatedReadingIds,
-  }): ReadingThread => {
+  createThread: ({ id, requestId, question, questionLang, relatedReadingIds }): ReadingThread => {
     const now = new Date().toISOString();
     const thread: ReadingThread = {
       id,

@@ -195,7 +195,7 @@ export const REMEDY_LIBRARY: readonly Remedy[] = Object.freeze([
     duration: 'Before the decision, repeated as needed',
     evidenceType: 'scriptural',
     explanation:
-      "The prayer of seeking guidance is the established practice when a permissible choice remains genuinely open — which is what conflicting significators describe. It is the practice tradition connects to Yā Hādī, the Guide — asked for here as discernment, not a dream to be decoded.",
+      'The prayer of seeking guidance is the established practice when a permissible choice remains genuinely open — which is what conflicting significators describe. It is the practice tradition connects to Yā Hādī, the Guide — asked for here as discernment, not a dream to be decoded.',
     instructions: [
       'Pray two rakʿahs outside the obligatory prayers.',
       'Recite the duʿā of istikhārah, naming the matter plainly.',
