@@ -382,6 +382,25 @@ and confirmed the way `RkpWatchCard` was.
   Premium instead of switching — propose the upgrade, don't just disable, the same pattern
   the rest of the app already uses for paywalled actions.
 
+### TEMPORARY — all themes unlocked for internal testing
+
+`isThemeUnlocked()` in `themes.ts` currently short-circuits to `true` for every theme
+regardless of plan (`TESTING_MODE_ALL_THEMES_UNLOCKED = true`), by explicit request during
+internal testing — a tester saw the two Khāṣṣ themes correctly rendered as locked cards and
+wanted them explorable without needing a live Khāṣṣ subscription on the test account.
+
+`THEME_TIER` and `tierMeetsRequirement()` are untouched and still fully covered by
+`themeTiers.test.ts`'s "real per-tier gating decision" suite (the same 30 cases as before,
+now exercised directly rather than through `isThemeUnlocked()`). Reverting is a **one-line
+flip** — `TESTING_MODE_ALL_THEMES_UNLOCKED = false` — with a second test block in the same
+file (`"isThemeUnlocked — TEMPORARY testing-mode override"`) that should be deleted at the
+same time, since at that point `isThemeUnlocked()` and the real-decision helper are identical
+again and testing the override separately stops meaning anything.
+
+Alongside this: `FREE_DAILY_LIMIT`/`TRIAL_DAILY_LIMIT` in `quotaStore.ts` and
+`FREE_LIMIT`/`TRIAL_DAILY_LIMIT` in `functions/src/config.ts` were raised from 3/5 to 50/50,
+same rationale (don't paywall-block testers), same revert instruction in both files' comments.
+
 ### What this section does NOT cover
 
 - **Premium's marketing copy does not yet advertise theme unlocking as a plan benefit.**

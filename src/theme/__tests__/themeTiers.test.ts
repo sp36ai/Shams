@@ -57,7 +57,18 @@ describe('tierMeetsRequirement', () => {
   });
 });
 
-describe('isThemeUnlocked', () => {
+/**
+ * The real per-tier gating decision, independent of the testing-mode
+ * override in isThemeUnlocked(). This is exactly what isThemeUnlocked()
+ * computes when TESTING_MODE_ALL_THEMES_UNLOCKED is false — expressed here
+ * via tierMeetsRequirement()/THEME_TIER directly (both untouched by the
+ * override) so this coverage survives testing mode being on or off.
+ */
+function realGatingDecision(id: ThemeId, userTier: PlanTier): boolean {
+  return tierMeetsRequirement(userTier, THEME_TIER[id]);
+}
+
+describe('the real per-tier gating decision (bypassing testing mode)', () => {
   const casesByPlan: Record<PlanTier, { unlocked: ThemeId[]; locked: ThemeId[] }> = {
     free: {
       unlocked: ['darAlShams'],
@@ -92,13 +103,28 @@ describe('isThemeUnlocked', () => {
     describe(`on the ${plan} plan`, () => {
       for (const id of casesByPlan[plan].unlocked) {
         it(`unlocks ${id}`, () => {
-          expect(isThemeUnlocked(id, plan)).toBe(true);
+          expect(realGatingDecision(id, plan)).toBe(true);
         });
       }
       for (const id of casesByPlan[plan].locked) {
         it(`locks ${id}`, () => {
-          expect(isThemeUnlocked(id, plan)).toBe(false);
+          expect(realGatingDecision(id, plan)).toBe(false);
         });
+      }
+    });
+  }
+});
+
+describe('isThemeUnlocked — TEMPORARY testing-mode override', () => {
+  // TESTING_MODE_ALL_THEMES_UNLOCKED is true in themes.ts right now, so
+  // isThemeUnlocked() ignores tier entirely. Delete this describe block
+  // (and rely solely on the suite above) once that flag is reverted to
+  // false — at which point isThemeUnlocked() and realGatingDecision()
+  // become identical again.
+  for (const plan of ['free', 'mureed', 'khass'] as PlanTier[]) {
+    it(`unlocks every theme on the ${plan} plan while testing mode is on`, () => {
+      for (const id of THEME_IDS) {
+        expect(isThemeUnlocked(id, plan)).toBe(true);
       }
     });
   }

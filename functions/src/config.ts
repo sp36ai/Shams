@@ -10,8 +10,13 @@ export type PlanTier = 'free' | 'mureed' | 'khass';
 
 export const UNLIMITED_PLANS: PlanTier[] = ['mureed', 'khass'];
 // Paywall limits. Must stay in sync with the client (src/stores/quotaStore.ts).
-export const FREE_LIMIT = 3; // questions per UTC day — free plan
-export const TRIAL_DAILY_LIMIT = 5; // questions per UTC day — 7-day trial
+//
+// TEMPORARY — raised from 3/5 to 50/50 for internal testing, so testers
+// aren't paywall-blocked mid-session while exercising the app. Revert both
+// this file and src/stores/quotaStore.ts to 3/5 once testing concludes —
+// tracked as an explicit owner decision, not a permanent pricing change.
+export const FREE_LIMIT = 50; // questions per UTC day — free plan
+export const TRIAL_DAILY_LIMIT = 50; // questions per UTC day — 7-day trial
 export const TRIAL_DURATION_DAYS = 7;
 
 /** Return the ISO date string (YYYY-MM-DD) for the current UTC day. */
