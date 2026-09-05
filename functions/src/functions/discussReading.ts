@@ -243,6 +243,7 @@ export const discussReading = onCall(
         action: 'discussion_turn',
         questionHash: hashText(input.message),
         source: 'callable',
+        readingId: input.readingId,
       };
       try {
         await db.collection('auditLogs').add({ ...audit, ts: new Date() });

@@ -103,6 +103,20 @@ describe('selection quality', () => {
     const p = protocolFor({ obstruction: 'Saturn' });
     expect(p.steps.every(s => s.reason.length > 0)).toBe(true);
   });
+
+  it('scores an attachment pattern for the devotional Yā Laṭīf option, alongside the existing contemplative one', () => {
+    // Both are legitimate corresponding remedies for the same pattern; which
+    // one(s) survive the top-3 cap and the redundancy penalty for a second
+    // same-category entry is a scenario-dependent selection detail, not a
+    // guarantee either name enforces on its own — so this checks that
+    // devotional_ya_latif is a real, scorable candidate rather than that it
+    // always wins a slot.
+    const d = diagnose({ ...CLEAN, state: 'DELAYED', confidence: 'HIGH', obstruction: 'Venus' });
+    expect(d.primaryPattern).toBe('ATTACHMENT');
+    const yaLatif = REMEDY_LIBRARY.find(r => r.id === 'devotional_ya_latif');
+    expect(yaLatif?.targetConditions).toContain('ATTACHMENT');
+    expect(yaLatif?.suitableFor).toContain(d.outcome);
+  });
 });
 
 describe('determinism and serialisation', () => {

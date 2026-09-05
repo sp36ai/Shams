@@ -60,6 +60,7 @@ import { claimQuotaSlot, refundQuotaSlot } from '../utils/quotaSlots';
 import { claimRequest, completeRequest, releaseRequest } from '../utils/idempotency';
 import type { AuditLogDoc, ReadingDoc } from '../types';
 import type { VerdictKind } from '../engine/types/verdict';
+import { ENGINE_VERSION } from '../engine/primitives/chartBuilder';
 
 /* eslint-disable @typescript-eslint/no-var-requires */
 const { buildWatchChart } =
@@ -332,6 +333,9 @@ export const askWatchOracle = onCall(
         verdict: STATE_TO_VERDICT[verdict.state],
         plan,
         source: 'callable',
+        readingId: readingRef.id,
+        engineVersion: ENGINE_VERSION,
+        resultHash: hashText(JSON.stringify(verdict)),
       };
       try {
         await db.collection('auditLogs').add({ ...audit, ts: new Date() });
