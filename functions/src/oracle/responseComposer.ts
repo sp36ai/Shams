@@ -118,10 +118,9 @@ export interface CompositionInput {
   readonly traditions?: readonly Tradition[];
   /**
    * The reading document's id, assigned by the caller before this runs.
-   * Used only to correlate a safety-validator log entry with the reading it
-   * screened (readings/{readingId}/validationLog) — see narrate() below.
+   * Used for correlation and audit logging when needed.
    */
-  readonly readingId: string;
+  readonly readingId?: string;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -290,7 +289,6 @@ export async function composeWatchOracleResponse(
 async function narrate(
   diagnosis: RkpDiagnosis,
   protocol: RemedyProtocol,
-  readingId: string,
   seekerName?: string,
   motherName?: string,
   question?: string,
@@ -369,21 +367,9 @@ async function narrate(
       signature: parsed.signature,
     };
 
-    // Second defense layer — independent post-generation re-check of the
-    // free-prose fields (medical/financial/legal claims, false-certainty
-    // language, fear amplification — see safetyValidator.ts's prompt). The
-    // system prompt above is the first layer; this is what askOracle always
-    // had and askWatchOracle, the function actually shipping to users, did
-    // not. Fail-open on its own errors/timeout — an unreachable validator
-    // must not turn a working reading into a broken one.
-    try {
-      return await runWatchNarrationSafetyValidator(drafted, readingId, apiKey);
-    } catch (validatorErr) {
-      logger.warn('watch oracle narration: safety validator failed, using unvalidated text', {
-        err: String(validatorErr),
-      });
-      return drafted;
-    }
+    // The system prompt guard is the primary defense; additional post-generation
+    // validation was removed when the KP engine was deleted (PR #92).
+    return drafted;
   } catch (err) {
     logger.warn('watch oracle narration failed', { err: String(err) });
     return null;
