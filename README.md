@@ -304,3 +304,4 @@ See [ARCHITECTURE_AND_FLOWS_REPORT.md](./ARCHITECTURE_AND_FLOWS_REPORT.md) for:
 ---
 
 **Status**: Private beta with production-style backend controls. Production launch pending full test coverage and final security audit.
+<!-- Deployment trigger: 2026-09-06T11:24:34Z -->
