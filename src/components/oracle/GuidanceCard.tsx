@@ -27,6 +27,7 @@ import { StyleSheet, Text, View } from 'react-native';
 
 import { useColors } from '@theme/ThemeProvider';
 import { useTypography } from '@theme/useTypography';
+import { GlassSurface } from '@components/material/GlassSurface';
 import type { RenderedRemedy } from '../../data/remedyRenderer';
 
 /** Unicode geometry rather than emoji, matching the rest of the surface. */
@@ -79,9 +80,10 @@ const GuidanceCard: React.FC<GuidanceCardProps> = ({ remedies }) => {
   }
 
   return (
-    <View
-      style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border }]}
+    <GlassSurface
+      tint={colors.goldBright}
       accessibilityRole="summary"
+      style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border }]}
     >
       <Text style={[typography('label'), styles.heading, { color: colors.goldBright }]}>
         {'GUIDANCE FOR THIS MOMENT'}
@@ -137,7 +139,7 @@ const GuidanceCard: React.FC<GuidanceCardProps> = ({ remedies }) => {
           </View>
         </View>
       ))}
-    </View>
+    </GlassSurface>
   );
 };
 

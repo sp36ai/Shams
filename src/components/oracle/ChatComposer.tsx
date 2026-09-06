@@ -23,10 +23,40 @@ import {
   TextInput,
   View,
 } from 'react-native';
+import Svg, { Path } from 'react-native-svg';
 
 import { useColors } from '@theme/ThemeProvider';
 import { useTypography } from '@theme/useTypography';
 import { useTranslation } from '@i18n/I18nProvider';
+import { PressDepth } from '@components/material/PressDepth';
+
+/**
+ * Drawn mic glyph — replaces the 🎙 emoji per §06 (no emoji icons; one
+ * stroke geometry, 24×24 grid, 1.5px stroke, rounded caps). A raw emoji
+ * literal here was a real, repeatedly-flagged defect: it's the one place
+ * the app's icon language broke from "one coherent geometry" into "whatever
+ * the OS emoji font happens to render," which varies by device/OS version.
+ * Built from `Path` only (matching how the rest of this codebase's icons —
+ * `TabIcon.tsx`, `BackgroundLattice.tsx` — draw with react-native-svg;
+ * `Rect` isn't a valid named export in this installed version's typings).
+ */
+function MicGlyph({ color, size = 18 }: { color: string; size?: number }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path
+        d="M12 2a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"
+        stroke={color}
+        strokeWidth={1.5}
+      />
+      <Path
+        d="M5 11a7 7 0 0 0 14 0M12 18v3"
+        stroke={color}
+        strokeWidth={1.5}
+        strokeLinecap="round"
+      />
+    </Svg>
+  );
+}
 
 export type ComposerMode = 'ask' | 'discuss';
 
@@ -128,15 +158,15 @@ const ChatComposer: React.FC<ChatComposerProps> = ({
               />
             </>
           )}
-          <Pressable
+          <PressDepth
             onPress={onMicPress}
             disabled={micDisabled}
-            style={({ pressed }) => [
+            style={[
               styles.micBtn,
               {
                 backgroundColor: isListening ? colors.negative : colors.surfaceElevated,
                 borderColor: isListening ? colors.negative : colors.border,
-                opacity: micDisabled ? 0.4 : pressed ? 0.75 : 1,
+                opacity: micDisabled ? 0.4 : 1,
                 // Depth behind the mic only while it's actually doing
                 // something — an idle mic stays flat, same rule as the
                 // Home composer's send button.
@@ -157,12 +187,8 @@ const ChatComposer: React.FC<ChatComposerProps> = ({
             }
             testID="oracle-chat-mic-btn"
           >
-            <Animated.Text
-              style={{ fontSize: 18, color: isListening ? colors.textOnPrimary : colors.textMuted }}
-            >
-              {'🎙'}
-            </Animated.Text>
-          </Pressable>
+            <MicGlyph color={isListening ? colors.textOnPrimary : colors.textMuted} />
+          </PressDepth>
         </View>
       )}
 

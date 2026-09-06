@@ -24,6 +24,7 @@ import type { WatchReading } from '../../firebase/watchOracle';
 import RkpWatchCard, { STATE_HEADLINE } from './RkpWatchCard';
 import RemedyProtocolCard from './RemedyProtocolCard';
 import GuidanceCard from './GuidanceCard';
+import { DimensionalReveal } from '@components/material/DimensionalReveal';
 import { directionalFocusFor } from '../../data/watchRemedyContext';
 import type { SpeakingStatus } from '@hooks/useTextToSpeech';
 
@@ -259,17 +260,29 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({
                     : t('oracleChat.listenToVerdict')}
               </Text>
             </View>
-            <RkpWatchCard
-              window={reading.window}
-              lagnaSignName={reading.lagnaSignName}
-              lagnaRulerName={reading.lagnaRulerName}
-              verdict={reading.verdict}
-              directionalFocus={directionalFocusFor(reading.verdict)}
-            />
-            {reading.oracle !== undefined && <RemedyProtocolCard composition={reading.oracle} />}
-            {message.selectedRemedies !== undefined && (
-              <GuidanceCard remedies={message.selectedRemedies} />
-            )}
+            {/*
+              DimensionalReveal wraps the verdict's arrival (§12) — currently
+              mounted with animate={false}: there is no verified "this reading
+              just arrived this session" signal threaded from
+              readingThreadsStore yet, and animating on every render
+              (including reopening a thread from history) would directly
+              violate the spec's own rule that a settled reading never
+              replays its arrival. Wiring that signal is the next real step,
+              not silently guessed at here.
+            */}
+            <DimensionalReveal animate={false}>
+              <RkpWatchCard
+                window={reading.window}
+                lagnaSignName={reading.lagnaSignName}
+                lagnaRulerName={reading.lagnaRulerName}
+                verdict={reading.verdict}
+                directionalFocus={directionalFocusFor(reading.verdict)}
+              />
+              {reading.oracle !== undefined && <RemedyProtocolCard composition={reading.oracle} />}
+              {message.selectedRemedies !== undefined && (
+                <GuidanceCard remedies={message.selectedRemedies} />
+              )}
+            </DimensionalReveal>
           </>
         )}
       </View>

@@ -26,6 +26,7 @@ import { StyleSheet, Text, View } from 'react-native';
 
 import { useColors } from '@theme/ThemeProvider';
 import { useTypography } from '@theme/useTypography';
+import { GlassSurface } from '@components/material/GlassSurface';
 import type { RkpOutcome, TimingPosture } from '@astrology/rkp/diagnosis';
 import type {
   EvidenceType,
@@ -165,9 +166,10 @@ const RemedyProtocolCard: React.FC<RemedyProtocolCardProps> = ({ composition }) 
   const readingBg = outcomeColor + '08'; // Very subtle tint (5% opacity)
 
   return (
-    <View
-      style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border }]}
+    <GlassSurface
+      tint={outcomeColor}
       accessibilityRole="summary"
+      style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border }]}
     >
       {/* ── The finding ──────────────────────────────────────────────────── */}
       <View style={[styles.readingSection, { backgroundColor: readingBg }]}>
@@ -284,7 +286,7 @@ const RemedyProtocolCard: React.FC<RemedyProtocolCardProps> = ({ composition }) 
           {narration.signature}
         </Text>
       )}
-    </View>
+    </GlassSurface>
   );
 };
 
@@ -392,16 +394,12 @@ const Badge: React.FC<BadgeProps> = ({ text, color, typography }) => (
 );
 
 const styles = StyleSheet.create({
+  // Shadow/elevation now lives in GlassSurface (§01 Layer 5).
   card: {
     borderRadius: 16,
     borderWidth: StyleSheet.hairlineWidth,
     padding: 16,
     marginTop: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.04,
-    shadowRadius: 3,
-    elevation: 2,
   },
 
   /* ── Reading Section ──── */

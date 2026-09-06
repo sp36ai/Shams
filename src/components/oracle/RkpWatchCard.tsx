@@ -14,10 +14,11 @@ import { StyleSheet, Text, View } from 'react-native';
 
 import { useColors } from '@theme/ThemeProvider';
 import { useTypography } from '@theme/useTypography';
-import { ELEVATION, RADIUS, SPACING } from '@theme/themes';
+import { RADIUS, SPACING } from '@theme/themes';
 import { HOUSE_META, PLANET_NAME, gharLabel } from '@astrology/rkp/nomenclature';
 import type { DisplayWatchVerdict, WatchState } from '@astrology/rkp/watchJudgment';
 import type { DirectionalFocus } from '../../data/watchRemedyContext';
+import { GlassSurface } from '@components/material/GlassSurface';
 
 /* -------------------------------------------------------------------------- */
 /*  Presentation tables                                                       */
@@ -149,7 +150,9 @@ const RkpWatchCard: React.FC<RkpWatchCardProps> = ({
   const headline = STATE_HEADLINE[verdict.state] ?? 'This reading could not be described';
 
   return (
-    <View
+    <GlassSurface
+      tint={stateColor}
+      accessibilityRole="summary"
       style={[
         styles.card,
         {
@@ -157,29 +160,9 @@ const RkpWatchCard: React.FC<RkpWatchCardProps> = ({
           borderColor: colors.border,
           borderLeftWidth: 3,
           borderLeftColor: stateColor,
-          shadowColor: stateColor,
         },
       ]}
-      accessibilityRole="summary"
     >
-      {/*
-        Glass+3D elevation — this is the "elevated 3D Oracle result card" the
-        design spec calls out as a priority zone. No blur library is
-        installed, so glass is approximated with a translucent wash tinted to
-        the verdict's own state color (reusing `stateColor`, not a new value)
-        plus a soft top highlight, layered under the real content below.
-        Nothing here changes what the card shows — every field still reads
-        straight off `verdict`, unchanged.
-      */}
-      <View
-        pointerEvents="none"
-        style={[styles.glassOverlay, { backgroundColor: stateColor + '0F' }]}
-      />
-      <View
-        pointerEvents="none"
-        style={[styles.topHighlight, { backgroundColor: colors.text + '14' }]}
-      />
-
       {/* ── The window this reading was taken in ─────────────────────────── */}
       <Text style={[typography('caption'), { color: colors.textFaint, letterSpacing: 1.5 }]}>
         {`WATCH WINDOW  :${pad2(window.startMinute)}–:${pad2(
@@ -251,7 +234,7 @@ const RkpWatchCard: React.FC<RkpWatchCardProps> = ({
           </Text>
         </View>
       ))}
-    </View>
+    </GlassSurface>
   );
 };
 
@@ -274,27 +257,13 @@ const Row: React.FC<RowProps> = ({ label, value, colors, typography }) => (
 );
 
 const styles = StyleSheet.create({
+  // Shadow/elevation now lives in GlassSurface itself (§01 Layer 5) — this
+  // card supplies only its own geometry and the state-tinted left accent.
   card: {
     borderRadius: RADIUS.lg,
     borderWidth: StyleSheet.hairlineWidth,
     padding: SPACING.lg,
     marginTop: SPACING.md,
-    overflow: 'hidden', // clips the glass overlay/highlight to the rounded corners
-    ...ELEVATION.floating,
-    // shadowColor is set per-verdict (tinted to the state's tone) in the render below;
-    // this base spread supplies opacity/radius/offset/elevation only. Bumped
-    // from ELEVATION.rest to .floating — this card is a named glass/3D
-    // priority zone, meant to sit visibly above the conversation around it.
-  },
-  glassOverlay: {
-    ...StyleSheet.absoluteFillObject,
-  },
-  topHighlight: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    height: 1,
   },
   headline: {
     marginTop: 6,
