@@ -121,6 +121,15 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    // ── /webhookEvents/{key} ─────────────────────────────────────────────────
+    // Idempotency claims for payment-provider webhooks (razorpayWebhook).
+    // Written exclusively by Cloud Functions via the Admin SDK. No client
+    // access — these are internal dedup markers, not user-facing data.
+
+    match /webhookEvents/{key} {
+      allow read, write: if false;
+    }
+
     // ── /idempotencyKeys/{userId__requestId} ─────────────────────────────────
     // Records that one submission has already been cast and charged, so a
     // retry replays its response instead of paying for a second reading.

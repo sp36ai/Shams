@@ -116,6 +116,11 @@ export interface CompositionInput {
   readonly seekerName?: string;
   readonly motherName?: string;
   readonly traditions?: readonly Tradition[];
+  /**
+   * The reading document's id, assigned by the caller before this runs.
+   * Used for correlation and audit logging when needed.
+   */
+  readonly readingId?: string;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -353,7 +358,7 @@ async function narrate(
       return null;
     }
 
-    return {
+    const drafted: NarrationFields = {
       rkp_finding: parsed.rkp_finding,
       interpretation: parsed.interpretation,
       recommended_approach: parsed.recommended_approach,
@@ -361,6 +366,10 @@ async function narrate(
       why_this_remedy: protocol.interventionRequired ? (parsed.why_this_remedy ?? null) : null,
       signature: parsed.signature,
     };
+
+    // The system prompt guard is the primary defense; additional post-generation
+    // validation was removed when the KP engine was deleted (PR #92).
+    return drafted;
   } catch (err) {
     logger.warn('watch oracle narration failed', { err: String(err) });
     return null;
