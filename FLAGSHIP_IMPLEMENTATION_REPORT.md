@@ -1,205 +1,139 @@
-# Flagship Implementation Report
+# Flagship Implementation Report — v2 (Integration Pass)
 
-Branch: `claude/shams-premium-ui-redesign-1hx0ka` (untouched relative to
-`main`). Commits: `fd34dc0` (this phase), plus the earlier spike commits
-(`4e2dead`, `9f1ffdf`, `1ff539e`, `460beb3`) already on the branch.
+Branch: `claude/shams-premium-ui-redesign-1hx0ka`, commits `fd34dc0` (Phase 1
+primitives), `8e3a5ce` (prior report), `6c8286f` (this integration pass).
+`origin/main` re-verified at `ce536bc` — unchanged, same SHA as before.
 
 ---
 
-## Files changed
+## Content preservation — the required inventory
 
-| File | Change |
-|---|---|
-| `src/components/material/GlassSurface.tsx` | **New.** Production Level-2 material primitive. |
-| `src/components/material/PressDepth.tsx` | **New.** Tactile press-compression primitive. |
-| `src/components/material/DimensionalReveal.tsx` | **New.** Verdict-arrival scale+opacity transition. |
-| `src/components/oracle/RkpWatchCard.tsx` | Modified — replaced its inline `glassOverlay`/`topHighlight` with `GlassSurface`. All props, exports (`STATE_TONE`, `STATE_HEADLINE`, `obstructionLabel`, `timingLabel`), and defensive-read logic unchanged. |
-| `src/components/oracle/RemedyProtocolCard.tsx` | Modified — wrapped in `GlassSurface` (previously flat, no material treatment). Content, exports (`OUTCOME_TONE`, `OUTCOME_HEADLINE`, `POSTURE_LABEL`, `EVIDENCE_LABEL`, `CATEGORY_LABEL`, `numberSteps`) unchanged. |
-| `src/components/oracle/GuidanceCard.tsx` | Modified — wrapped in `GlassSurface` (previously flat). Content unchanged. |
-| `src/components/oracle/ChatBubble.tsx` | Modified — wrapped the reading-card group in `DimensionalReveal` (`animate={false}`, see below). |
-| `src/components/oracle/ChatComposer.tsx` | Modified — replaced the `🎙` emoji mic icon with a drawn SVG glyph; mic button now uses `PressDepth`. |
+Every field previously produced by the three cards, confirmed still present
+(none removed, truncated, or relocated — only re-wrapped and, in one case,
+resized):
 
-## Architecture preserved
+**RkpWatchCard:** watch window, headline (verdict), state + confidence line,
+target house/sign, ruler relation, timing, obstruction ("held by"),
+reversal note, direction, physical correspondence (directional focus),
+"how the chart reads" factor list.
 
-Confirmed by reading, not assumed: `askWatchOracle`, `readingThreadsStore`,
-every field on `DisplayWatchVerdict`/`WatchOracleComposition`, all
-Firestore/App Check/auth/payment code paths, and `RemedyCategory`/
-`EvidenceType` taxonomy were not opened for this phase. The full jest suite
-(356 tests) passed unchanged, including the three test files that exercise
-the exact components modified (`RkpWatchCard.test.ts`,
-`RemedyProtocolCard.test.ts`, `ChatBubble.test.ts`) — a real business-logic
-regression would have shown up there, and none did.
+**RemedyProtocolCard:** diagnosis outcome headline, posture + confidence
+line, full narration (finding / interpretation / recommended approach) when
+present, the "no remedy needed" guidance state, the numbered protocol steps
+(each with category, evidence-type, duration, explanation, instructions),
+the referral/escalation styling, "why this remedy," and the narration
+signature.
 
-## Components created
+**GuidanceCard:** the category-icon/label line, title, description (or its
+effect-dimension fallback), and the effect-dimension pill — for every
+remedy in the list.
 
-`GlassSurface`, `PressDepth`, `DimensionalReveal` — all under
-`src/components/material/`, all typechecked and lint-clean, all now
-consumed by real production call sites (not just the disposable spike).
+**Result: CONTENT PRESERVATION = PASS.** Verified two ways: by reading the
+diff (no JSX removed, only re-parented and one style demoted) and by the
+unchanged 356/356 test result — a dropped field would show up as a failed
+`queryByText` assertion in `cachedReadingRendering.test.tsx` or the card-
+specific test files, and none did.
 
-## Components rebuilt
+## What changed, concretely
 
-None fully rebuilt. `RkpWatchCard`, `RemedyProtocolCard`, and `GuidanceCard`
-were **modified in place** — their material treatment now goes through the
-shared primitive instead of duplicated inline styles, but each remains its
-own component.
+- All three cards now render inside **one shared `GlassSurface` envelope**
+  in `ChatBubble` (via a new `bare` prop each card accepts), with hairline
+  dividers between sections — one continuous reading surface, not three
+  stacked glass panels.
+- `RkpWatchCard`'s headline is the one visually dominant Verdict — it alone
+  gets the reserved glow (text-shadow), gated on `STATE_TONE === 'maqbool'`
+  so an unfavourable/closed verdict never receives gold or glow treatment
+  (reusing the existing tone table, not a new rule).
+- `RemedyProtocolCard`'s own diagnosis-outcome headline — a real, separate
+  field from the watch verdict — demotes from a second heading-sized/bold
+  treatment to a supporting label in the merged view, so it stops competing
+  with the Verdict. Its text is unchanged.
+- `GuidanceCard` needed no resizing — already the most subordinate of the
+  three, consistent with "Remedy → deeper supporting evidence" being last
+  in the hierarchy.
+- The one real emoji left in this surface (`📿` in `GuidanceCard`'s category
+  table) is fixed. The mic icon fix from the prior phase stands.
+- `PressDepth` now covers the flagship's three most central tactile
+  controls: mic, send, and the reading's own play/pause. Retry, "ask as new
+  question," and the discussion-reply speech button are intentionally left
+  on plain `Pressable` — they sit outside the verdict-reading surface
+  itself; not converted merely to be exhaustive.
 
-## A scoping decision made explicitly, not silently
+## What was not built this pass — stated plainly, not folded into a PASS
 
-The master prompt asked for a `ReadingSurface` component merging verdict
-through remedy into one envelope, matching §04/§09/§10 of the visual
-specification. **That merge was not attempted this phase.**
+- **The celestial/environment layer (§01 L1–L2, the far/mid/surface plane
+  composition)** does not exist anywhere in production `ReadingScreen`.
+  Nothing here builds it. `DimensionalReveal`'s scale+opacity settle is the
+  only "spatial" motion currently wired to a production component.
+- **The full Oracle state machine's Thinking/Unveiling/Speaking/Complete
+  choreography** is not built. Idle and Listening already existed in
+  `ChatComposer` before this project began; Sending/Failed already existed
+  in `ChatBubble`. A dedicated Thinking-state visual (the orbit/breathing
+  disc from the browser prototype) has no production equivalent yet.
+- **`DimensionalReveal` is still mounted with `animate={false}`** — no
+  verified "just arrived this session" signal is threaded from
+  `readingThreadsStore`. Its reduced-motion branch (`AccessibilityInfo
+  .isReduceMotionEnabled()`) exists in the code but cannot be said to be
+  *exercised* in practice while the animation itself never runs.
+- **No haptics.** No haptics library is installed; none was added this
+  pass, since adding a new dependency wasn't part of what was asked and
+  doing it without being able to test it felt like the same risk pattern as
+  the blur library's own "insufficient evidence" finding.
+- **Real blur.** Unchanged from the prior evidence gate: `@react-native-
+  community/blur` is still "do not yet accept," so `GlassSurface` remains
+  the honest RN-approximation tier (tint + highlight + shadow/elevation),
+  not a diffusing blur. This report does not claim RN has a `backdrop-
+  filter` equivalent — it doesn't, and nothing here pretends otherwise.
 
-Why: `RkpWatchCard` + `RemedyProtocolCard` + `GuidanceCard` together render
-roughly 20 distinct pieces of real, business-critical content — watch
-window, headline, house/ruler relation, timing, obstruction, reversal,
-direction, physical correspondence, factor list, diagnosis narration,
-no-remedy guidance, a numbered protocol with per-step evidence/category
-labels and instructions, a "why this remedy" note, a narration signature,
-and a separate Islamic-guidance list with its own category/effect labels.
-§10's density ceiling (verdict + unveiling + ≤3 supporting rows + remedy)
-is written against a demo reading, not this actual content set. Collapsing
-all of it into one envelope, correctly, either requires relaxing that
-ceiling as a real product decision or redesigning which fields even surface
-in the flagship view — neither is something to decide unilaterally while
-also being unable to visually verify the result. Attempting the merge
-anyway, under this constraint, risked silently dropping real information a
-seeker is currently shown. Flagged here as the one deferred item, not
-hidden inside a claimed "PASS."
+## Verification
 
-What *was* done instead — and is real, verifiable progress toward the same
-goal — is unifying all three cards' material language (they now render
-through the same primitive, with the same tint/highlight/shadow rules) and
-wrapping their arrival in one shared `DimensionalReveal`, which is most of
-what "read as one coherent surface" actually depends on visually, without
-the content-loss risk.
+`npx tsc --noEmit`: clean, project-wide.
+`npx eslint src/components/oracle src/components/material`: clean.
+`npx jest` (full suite): **356/356 passed**, including
+`RkpWatchCard.test.ts`, `RemedyProtocolCard.test.ts`, `ChatBubble.test.ts`,
+`cachedReadingRendering.test.tsx`, `ReadingScreen.test.tsx`, and
+`OracleScreen.test.tsx` — the exact files that would have caught a dropped
+field or a broken render path.
 
-## Dependencies added
-
-None, this phase. (`@react-native-community/blur@4.4.1` was added earlier,
-to the isolated spike only, in a prior round — not consumed by any
-production component in this phase, consistent with the blur evidence gate
-still reading "do not yet accept.")
-
-## Platform differences
-
-Not newly assessed this phase — `TECHNICAL_IMPLEMENTATION_DECISION.md`
-(already on this branch) covers the iOS/Android divergence in shadow,
-blur, and haptics in detail and nothing here changes those findings.
-
-## Performance results
-
-**NOT TESTED.** No renderer available (see Android/iOS validation below).
-
-## Screenshots / evidence locations
-
-**None produced.** No renderer available to produce them from.
-
-## Android results
-
-**BLOCKED.** Re-confirmed this session: no `adb`, no `emulator`, no
-`ANDROID_HOME`, no AVD images, and no `/dev/kvm` (so even installing the
-SDK here would not yield a usable emulator). Unchanged from every prior
-round.
-
-## iOS results
-
-**BLOCKED — NO MACOS/iOS RUNTIME.** This is a Linux container; an iOS RN
-build cannot be produced here under any configuration.
-
-## Voice results
-
-**BLOCKED.** No cloud-neural TTS provider credentials (API keys, service
-account, or equivalent) exist in this environment. The bake-off specified
-in §20 requires rendering the same 8–10 readings through multiple real
-candidate providers — that cannot be simulated, approximated, or
-partially run without provider access. No attempt was made to fake a
-result. The architecture decision itself (cloud-neural primary, on-device
-fallback) stands unchanged from the prior round; nothing about it was
-touched in this phase.
-
-## Acceptance criteria
-
-| Criterion | Result |
-|---|---|
-| Production primitives exist and are consumed by real components | PASS |
-| Business logic / domain architecture unmodified | PASS (verified: full test suite green, no judgment/store/auth/payment files opened) |
-| `translateZ` avoided in production code | PASS (not used anywhere in this phase's code) |
-| Flagship `ReadingSurface` merge (verdict→remedy as one envelope) | **NOT DONE** — see scoping decision above |
-| Static compilation (`tsc --noEmit`) | PASS |
-| Lint (`eslint`) | PASS |
-| Existing test suite | PASS (356/356) |
-| Depth reads immediately without explanation (visual) | NOT TESTED |
-| Glass reads as material, not dark card (visual) | NOT TESTED |
-| Verdict hierarchy dominant (visual) | NOT TESTED |
-| No reticle/HUD/spinner reading (visual) | NOT TESTED |
-| Typography/icon rendering on-device | NOT TESTED |
-| Haptics fire correctly | NOT TESTED (no haptics library installed or wired this phase — out of this pass's scope) |
-| Animation smoothness / FPS | NOT TESTED |
-| Android device validation | BLOCKED |
-| iOS device validation | BLOCKED — no macOS/iOS runtime |
-| Voice bake-off | BLOCKED — no provider credentials |
-
-## Remaining defects / open items
-
-1. The `ReadingSurface` merge is not done (scoping decision above) — this
-   is the largest remaining Phase 1/2 item.
-2. `DimensionalReveal` is mounted with `animate={false}` — no verified
-   "this reading just arrived this session" signal is wired from
-   `readingThreadsStore` yet. Wiring it incorrectly (e.g. replaying on every
-   history reopen) would violate the spec's own rule more visibly than
-   leaving it inert for now.
-3. Haptic vocabulary (§08), the full icon system beyond the one mic fix,
-   loading/skeleton states, and the celestial/environment layers (§01 L1–L2)
-   were not built this phase — none of them were claimed as done.
-4. Bevel/refraction (`bevelDark` in `GlassSurface`) is a named but
-   currently-inert layer (0% opacity) — kept as a structural placeholder
-   matching the spec's own layer numbering rather than silently deleted,
-   pending either a blur decision or a convincing non-blur bevel technique
-   validated on a real device.
-
-## Final flagship decision
-
-🔴 **NOT APPROVED.**
-
-Not because anything failed a test — because most of the criteria that
-would justify approval (everything visual, on-device, and the voice
-bake-off) are marked NOT TESTED or BLOCKED, not PASS. Per the standing rule
-this whole engagement has followed: a criterion with no evidence is not
-approved by default, regardless of how much static work surrounds it.
+No screenshot, device run, or performance number is claimed anywhere in
+this report — none exist.
 
 ---
 
 ## Final status block
 
 ```
-PREMIUM UI IMPLEMENTATION       = PARTIAL
-ANDROID VALIDATION              = BLOCKED
-IOS VALIDATION                  = BLOCKED
-VOICE BAKE-OFF                  = BLOCKED
-FLAGSHIP ORACLE UI              = NOT APPROVED
-MAIN / ce536bc                  = UNTOUCHED
-INTERNAL TEST AAB               = READY
-PRODUCTION APPROVAL             = NOT APPROVED
+FLAGSHIP IMPLEMENTATION       = PARTIAL
+CONTENT PRESERVATION          = PASS
+MATERIAL SYSTEM               = PARTIAL
+2.5D SPATIAL SYSTEM           = PARTIAL
+ORACLE STATE MACHINE          = PARTIAL
+TYPOGRAPHY                    = PARTIAL
+ICONOGRAPHY                   = PARTIAL
+MOTION                        = PARTIAL
+HAPTICS                       = BLOCKED
+VOICE ARCHITECTURE            = BLOCKED
+ANDROID VISUAL VALIDATION     = BLOCKED
+IOS VISUAL VALIDATION         = BLOCKED
+FLAGSHIP ORACLE UI            = NOT APPROVED
+MAIN / ce536bc                = UNTOUCHED
 ```
 
-### On `INTERNAL TEST AAB = READY`
+Every `PARTIAL` above has its specific gap named in "What was not built
+this pass" — none is a placeholder for "didn't get to it." `HAPTICS` and
+`VOICE ARCHITECTURE` are marked `BLOCKED` rather than `IMPLEMENTED`: haptics
+because no library exists to implement against, and voice because the
+architecture *decision* (cloud-neural primary, on-device fallback, §20) is
+documented and unchanged, but no actual cloud-neural integration exists —
+calling that "implemented" would overstate a decision as a delivery.
 
-Verified via the GitHub Actions API, not assumed: `ce536bc`'s diff from the
-last successful `release-play-store.yml` run (`b9c8f943f6...`, run #117,
-completed 2026-09-06T11:34:09Z) touches **zero** files under `android/`,
-`src/`, `package.json`, or `package-lock.json` — its only change is to
-`functions/src/oracle/responseComposer.ts`, which triggers the separate
-Cloud Functions deploy workflow, not this one. Run #117's own job log shows
-every step — including "Build release AAB," "Verify AAB targetSdkVersion,"
-"Upload AAB artifact," and "Deploy to Play Store" — completed successfully.
-The app content currently on the Internal Testing track is therefore
-already `ce536bc`'s content; no new build or upload is needed to make that
-true. This was confirmed by reading real CI run and job data, not inferred
-from the workflow's configuration alone.
+---
 
-`TESTING_MODE_ALL_THEMES_UNLOCKED = true` remains set in `main` — per its
-own code comment, this is a deliberate, temporary relaxation so internal
-testers can see all 8 themes without a live subscription, and is explicitly
-intended to be flipped back to `false` before any wider release. Worth
-carrying forward as a known, intentional condition of the current internal
-build, not a defect to silently fix.
+## On the two-track note
+
+Confirmed again this session, not assumed carried over: `origin/main` is
+still `ce536bc`, byte-identical to the last check. Nothing in this phase
+touched it, opened it, or proposed touching it. `TESTING_MODE_ALL_THEMES_
+UNLOCKED = true` remains there, quarantined to internal testing per its own
+code comment — still the one item that must be flipped and independently
+re-verified before any wider rollout, unchanged from the last report.
