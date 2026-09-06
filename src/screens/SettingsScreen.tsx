@@ -97,41 +97,37 @@ const SettingsScreen: React.FC = () => {
   // action every other destructive control in this screen (sign-out, reset
   // profile) handles with a single Alert.
   const handleDeleteAccount = useCallback(() => {
-    Alert.alert(
-      t('settings.deleteAccountConfirmTitle'),
-      t('settings.deleteAccountConfirmBody'),
-      [
-        { text: t('common.cancel'), style: 'cancel' },
-        {
-          text: t('settings.deleteAccount'),
-          style: 'destructive',
-          onPress: () => {
-            void (async (): Promise<void> => {
-              setIsDeletingAccount(true);
-              try {
-                await deleteAccount();
-                // Account and all server-side data are gone at this point.
-                // Clear the per-account local slate (seeker identity,
-                // onboarding flags) the same way a different-account sign-in
-                // does, then run the normal sign-out path to drop the now-
-                // invalid Firebase Auth session and local quota/readings
-                // cache. Order matters: reset local state before signOut()
-                // clears `user`, so nothing here reads a stale uid.
-                resetForNewAccount();
-                await signOut();
-              } catch (err) {
-                crashlytics().recordError(err instanceof Error ? err : new Error(String(err)));
-                Alert.alert(t('settings.deleteAccountError'), '', [
-                  { text: t('common.ok'), style: 'default' },
-                ]);
-              } finally {
-                setIsDeletingAccount(false);
-              }
-            })();
-          },
+    Alert.alert(t('settings.deleteAccountConfirmTitle'), t('settings.deleteAccountConfirmBody'), [
+      { text: t('common.cancel'), style: 'cancel' },
+      {
+        text: t('settings.deleteAccount'),
+        style: 'destructive',
+        onPress: () => {
+          void (async (): Promise<void> => {
+            setIsDeletingAccount(true);
+            try {
+              await deleteAccount();
+              // Account and all server-side data are gone at this point.
+              // Clear the per-account local slate (seeker identity,
+              // onboarding flags) the same way a different-account sign-in
+              // does, then run the normal sign-out path to drop the now-
+              // invalid Firebase Auth session and local quota/readings
+              // cache. Order matters: reset local state before signOut()
+              // clears `user`, so nothing here reads a stale uid.
+              resetForNewAccount();
+              await signOut();
+            } catch (err) {
+              crashlytics().recordError(err instanceof Error ? err : new Error(String(err)));
+              Alert.alert(t('settings.deleteAccountError'), '', [
+                { text: t('common.ok'), style: 'default' },
+              ]);
+            } finally {
+              setIsDeletingAccount(false);
+            }
+          })();
         },
-      ],
-    );
+      },
+    ]);
   }, [t, resetForNewAccount, signOut]);
 
   const handleLanguageChange = useCallback(
