@@ -249,16 +249,35 @@ const OracleScreen: React.FC = () => {
           </View>
         )}
 
-        {/* Current Hora — compact readout, seal as a small badge (not the hero) */}
+        {/* Current Hora — compact readout, seal as a small badge (not the hero).
+            Premium glass+3D treatment lives ONLY here and on the Ask composer
+            below — the two zones the design spec calls out as the Oracle
+            hero. No blur library is installed, so "glass" is approximated
+            with a translucent gold wash (colors.horaGradient[0] — an
+            existing, previously-unused token named for exactly this card),
+            a soft top highlight line, and a warm glow shadow, rather than a
+            new native dependency. */}
         <Pressable
           onPress={() => navigation.navigate('AlFalak')}
           style={[
             styles.heroCard,
-            { backgroundColor: colors.surface, borderColor: colors.borderAccent + '55' },
+            {
+              backgroundColor: colors.surface,
+              borderColor: colors.borderAccent + '55',
+              shadowColor: colors.sacredGlow,
+            },
           ]}
           accessibilityRole="button"
           accessibilityLabel="Open Al-Falak — Sky State timing panel"
         >
+          <View
+            pointerEvents="none"
+            style={[styles.heroGlassOverlay, { backgroundColor: colors.horaGradient[0] }]}
+          />
+          <View
+            pointerEvents="none"
+            style={[styles.heroTopHighlight, { backgroundColor: colors.text + '1A' }]}
+          />
           <View style={styles.heroTopRow}>
             <View style={styles.heroTextCol}>
               <Text
@@ -648,11 +667,27 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     borderRadius: RADIUS.xl,
     borderWidth: StyleSheet.hairlineWidth,
-    shadowColor: '#000',
-    shadowOpacity: 0.08,
-    shadowRadius: 16,
-    shadowOffset: { width: 0, height: 8 },
-    elevation: 3,
+    overflow: 'hidden', // clips the glass overlay/highlight to the rounded corners
+    // Warmer, deeper glow than the previous flat black shadow — shadowColor
+    // is set per-theme (colors.sacredGlow) in the JSX above.
+    shadowOpacity: 0.3,
+    shadowRadius: 22,
+    shadowOffset: { width: 0, height: 10 },
+    elevation: 6,
+  },
+  // Translucent gold wash standing in for backdrop blur (see comment at the
+  // call site) — absolutely filled behind the card's real content.
+  heroGlassOverlay: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  // A 1px lighter line along the top edge — the "soft inner highlight" a
+  // glass panel catches from above. Cheap enough to keep even without blur.
+  heroTopHighlight: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 1,
   },
   heroTopRow: {
     flexDirection: 'row',

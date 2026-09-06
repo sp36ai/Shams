@@ -346,7 +346,13 @@ const PremiumScreen: React.FC = () => {
         />
 
         {/* Restore */}
-        <Pressable onPress={handleRestore} style={styles.restoreBtn} hitSlop={8}>
+        <Pressable
+          onPress={handleRestore}
+          style={styles.restoreBtn}
+          hitSlop={8}
+          accessibilityRole="button"
+          accessibilityLabel="Restore previous purchase"
+        >
           <Text style={[typography('caption'), { color: colors.textFaint, textAlign: 'center' }]}>
             Restore previous purchase
           </Text>

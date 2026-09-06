@@ -264,13 +264,35 @@ const SkyClockScreen: React.FC = () => {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        {/* TimingBar */}
+        {/*
+          TimingBar — the real "current sky state" hero, and the one glass/3D
+          priority zone on this screen (per the design spec: celestial
+          elements get the premium treatment, the planet table below stays
+          flat/clean). No blur library is installed, so glass is approximated
+          with a translucent lunar-tinted wash (colors.lunarReflection) and a
+          soft top highlight, same idiom as the Home hero and RkpWatchCard.
+        */}
         <View
           style={[
             styles.timingBar,
-            { backgroundColor: colors.surface, borderColor: colors.border },
+            {
+              backgroundColor: colors.surface,
+              borderColor: colors.border,
+              shadowColor: colors.sacredGlow,
+            },
           ]}
         >
+          <View
+            pointerEvents="none"
+            style={[
+              styles.timingBarGlassOverlay,
+              { backgroundColor: colors.lunarReflection + '14' },
+            ]}
+          />
+          <View
+            pointerEvents="none"
+            style={[styles.timingBarTopHighlight, { backgroundColor: colors.text + '1A' }]}
+          />
           <TimingPill
             label="Hora"
             value={timing.horaLord}
@@ -555,11 +577,23 @@ const styles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth,
     paddingVertical: 12,
     paddingHorizontal: 8,
-    shadowColor: '#000',
-    shadowOpacity: 0.05,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 6 },
-    elevation: 1,
+    overflow: 'hidden', // clips the glass overlay/highlight to the rounded corners
+    // Deeper glow than the previous near-invisible flat shadow — shadowColor
+    // is set per-theme (colors.sacredGlow) at the call site.
+    shadowOpacity: 0.28,
+    shadowRadius: 20,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 5,
+  },
+  timingBarGlassOverlay: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  timingBarTopHighlight: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 1,
   },
   pill: {
     flex: 1,

@@ -38,9 +38,9 @@ export const STATE_HEADLINE: Readonly<Record<WatchState, string>> = Object.freez
  * vocabulary is used: maqbool (accepted) for favourable, mardood (rejected) for
  * closed, caution for the states that stand but resist.
  */
-type ToneKey = 'maqbool' | 'caution' | 'mardood' | 'muted';
+export type ToneKey = 'maqbool' | 'caution' | 'mardood' | 'muted';
 
-const STATE_TONE: Readonly<Record<WatchState, ToneKey>> = Object.freeze({
+export const STATE_TONE: Readonly<Record<WatchState, ToneKey>> = Object.freeze({
   FULFILLED: 'maqbool',
   MOVING: 'maqbool',
   DELAYED: 'caution',
@@ -162,6 +162,24 @@ const RkpWatchCard: React.FC<RkpWatchCardProps> = ({
       ]}
       accessibilityRole="summary"
     >
+      {/*
+        Glass+3D elevation — this is the "elevated 3D Oracle result card" the
+        design spec calls out as a priority zone. No blur library is
+        installed, so glass is approximated with a translucent wash tinted to
+        the verdict's own state color (reusing `stateColor`, not a new value)
+        plus a soft top highlight, layered under the real content below.
+        Nothing here changes what the card shows — every field still reads
+        straight off `verdict`, unchanged.
+      */}
+      <View
+        pointerEvents="none"
+        style={[styles.glassOverlay, { backgroundColor: stateColor + '0F' }]}
+      />
+      <View
+        pointerEvents="none"
+        style={[styles.topHighlight, { backgroundColor: colors.text + '14' }]}
+      />
+
       {/* ── The window this reading was taken in ─────────────────────────── */}
       <Text style={[typography('caption'), { color: colors.textFaint, letterSpacing: 1.5 }]}>
         {`WATCH WINDOW  :${pad2(window.startMinute)}–:${pad2(
@@ -261,9 +279,22 @@ const styles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth,
     padding: SPACING.lg,
     marginTop: SPACING.md,
-    ...ELEVATION.rest,
+    overflow: 'hidden', // clips the glass overlay/highlight to the rounded corners
+    ...ELEVATION.floating,
     // shadowColor is set per-verdict (tinted to the state's tone) in the render below;
-    // this base spread supplies opacity/radius/offset/elevation only.
+    // this base spread supplies opacity/radius/offset/elevation only. Bumped
+    // from ELEVATION.rest to .floating — this card is a named glass/3D
+    // priority zone, meant to sit visibly above the conversation around it.
+  },
+  glassOverlay: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  topHighlight: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 1,
   },
   headline: {
     marginTop: 6,
