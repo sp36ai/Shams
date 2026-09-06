@@ -14,15 +14,7 @@
  */
 
 import React, { useEffect, useRef } from 'react';
-import {
-  ActivityIndicator,
-  Animated,
-  Easing,
-  Pressable,
-  StyleSheet,
-  TextInput,
-  View,
-} from 'react-native';
+import { ActivityIndicator, Animated, Easing, StyleSheet, TextInput, View } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 
 import { useColors } from '@theme/ThemeProvider';
@@ -218,15 +210,12 @@ const ChatComposer: React.FC<ChatComposerProps> = ({
         testID="oracle-chat-input"
       />
 
-      <Pressable
+      <PressDepth
         onPress={onSend}
         disabled={!canSend}
-        style={({ pressed }) => [
+        style={[
           styles.sendBtn,
-          {
-            backgroundColor: canSend ? colors.accent : colors.surfaceElevated,
-            opacity: pressed && canSend ? 0.8 : 1,
-          },
+          { backgroundColor: canSend ? colors.accent : colors.surfaceElevated },
         ]}
         accessibilityRole="button"
         accessibilityLabel={mode === 'discuss' ? t('oracleChat.reply') : t('oracleChat.send')}
@@ -244,7 +233,7 @@ const ChatComposer: React.FC<ChatComposerProps> = ({
             {mode === 'discuss' ? t('oracleChat.reply') : t('oracleChat.send')}
           </Animated.Text>
         )}
-      </Pressable>
+      </PressDepth>
     </View>
   );
 };

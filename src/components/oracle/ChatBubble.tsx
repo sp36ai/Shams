@@ -15,16 +15,18 @@
 
 import React from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import { PressDepth } from '@components/material/PressDepth';
 
 import { useColors } from '@theme/ThemeProvider';
 import { useTypography } from '@theme/useTypography';
 import { useTranslation } from '@i18n/I18nProvider';
 import type { ReadingMessage } from '@stores/readingThreadsStore';
 import type { WatchReading } from '../../firebase/watchOracle';
-import RkpWatchCard, { STATE_HEADLINE } from './RkpWatchCard';
+import RkpWatchCard, { STATE_HEADLINE, stateColorFor } from './RkpWatchCard';
 import RemedyProtocolCard from './RemedyProtocolCard';
 import GuidanceCard from './GuidanceCard';
 import { DimensionalReveal } from '@components/material/DimensionalReveal';
+import { GlassSurface } from '@components/material/GlassSurface';
 import { directionalFocusFor } from '../../data/watchRemedyContext';
 import type { SpeakingStatus } from '@hooks/useTextToSpeech';
 
@@ -237,12 +239,15 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({
         {reading !== undefined && (
           <>
             <View style={styles.speechRow}>
-              <Pressable
+              {/* The reading's own play/pause control — one of the flagship's
+                  named tactile controls (§19), so it gets PressDepth rather
+                  than a plain opacity fade. The discussion-reply and retry/
+                  follow-up buttons below stay on Pressable: they sit outside
+                  the verdict-reading surface itself, and converting every
+                  Pressable in the file wasn't attempted just to be exhaustive. */}
+              <PressDepth
                 onPress={() => onToggleSpeech(message.id, speakableTextFor(reading), questionLang)}
-                style={({ pressed }) => [
-                  styles.speechBtn,
-                  { borderColor: colors.borderAccent, opacity: pressed ? 0.7 : 1 },
-                ]}
+                style={[styles.speechBtn, { borderColor: colors.borderAccent }]}
                 accessibilityRole="button"
                 accessibilityLabel={
                   isSpeaking ? t('oracleChat.pauseNarration') : t('oracleChat.playNarration')
@@ -251,7 +256,7 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({
                 <Text style={[typography('label'), { color: colors.goldBright }]}>
                   {isSpeaking ? '⏸' : '▶'}
                 </Text>
-              </Pressable>
+              </PressDepth>
               <Text style={[typography('caption'), { color: colors.textFaint, marginLeft: 6 }]}>
                 {isSpeaking
                   ? t('oracleChat.speaking')
@@ -261,27 +266,51 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({
               </Text>
             </View>
             {/*
-              DimensionalReveal wraps the verdict's arrival (§12) — currently
-              mounted with animate={false}: there is no verified "this reading
-              just arrived this session" signal threaded from
-              readingThreadsStore yet, and animating on every render
-              (including reopening a thread from history) would directly
-              violate the spec's own rule that a settled reading never
-              replays its arrival. Wiring that signal is the next real step,
-              not silently guessed at here.
+              §09: one continuous reading surface, not three stacked glass
+              cards. A single shared GlassSurface + DimensionalReveal wraps
+              all three cards in `bare` mode — every field each card renders
+              is unchanged; only the chrome (glass wrapper, shadow, and
+              RemedyProtocolCard's competing headline size) is unified.
+              Hierarchy inside: RkpWatchCard's headline is the one Verdict
+              (with its reserved glow, §05); RemedyProtocolCard's own
+              diagnosis-outcome headline is demoted to a supporting label;
+              GuidanceCard was already the most subordinate of the three.
+
+              DimensionalReveal is currently mounted with animate={false}:
+              there is no verified "this reading just arrived this session"
+              signal threaded from readingThreadsStore yet, and animating on
+              every render (including reopening a thread from history) would
+              directly violate the spec's own rule that a settled reading
+              never replays its arrival. Wiring that signal is the next real
+              step, not silently guessed at here.
             */}
             <DimensionalReveal animate={false}>
-              <RkpWatchCard
-                window={reading.window}
-                lagnaSignName={reading.lagnaSignName}
-                lagnaRulerName={reading.lagnaRulerName}
-                verdict={reading.verdict}
-                directionalFocus={directionalFocusFor(reading.verdict)}
-              />
-              {reading.oracle !== undefined && <RemedyProtocolCard composition={reading.oracle} />}
-              {message.selectedRemedies !== undefined && (
-                <GuidanceCard remedies={message.selectedRemedies} />
-              )}
+              <GlassSurface
+                tint={stateColorFor(reading.verdict.state, colors)}
+                accessibilityRole="summary"
+                style={[styles.readingSurface, { borderColor: colors.border }]}
+              >
+                <RkpWatchCard
+                  bare
+                  window={reading.window}
+                  lagnaSignName={reading.lagnaSignName}
+                  lagnaRulerName={reading.lagnaRulerName}
+                  verdict={reading.verdict}
+                  directionalFocus={directionalFocusFor(reading.verdict)}
+                />
+                {reading.oracle !== undefined && (
+                  <>
+                    <View style={[styles.sectionRule, { backgroundColor: colors.border }]} />
+                    <RemedyProtocolCard bare composition={reading.oracle} />
+                  </>
+                )}
+                {message.selectedRemedies !== undefined && (
+                  <>
+                    <View style={[styles.sectionRule, { backgroundColor: colors.border }]} />
+                    <GuidanceCard bare remedies={message.selectedRemedies} />
+                  </>
+                )}
+              </GlassSurface>
             </DimensionalReveal>
           </>
         )}
@@ -294,6 +323,20 @@ const styles = StyleSheet.create({
   row: {
     marginVertical: 6,
     paddingHorizontal: 12,
+  },
+  // §09's single reading envelope — one glass surface for verdict through
+  // remedy, replacing three separately-wrapped cards.
+  readingSurface: {
+    borderRadius: 20,
+    borderWidth: StyleSheet.hairlineWidth,
+    padding: 18,
+    marginTop: 12,
+  },
+  // Hairline divider between sections inside the merged envelope — the
+  // visual signal that these are parts of one reading, not separate cards.
+  sectionRule: {
+    height: StyleSheet.hairlineWidth,
+    marginVertical: 16,
   },
   rowUser: {
     alignItems: 'flex-end',

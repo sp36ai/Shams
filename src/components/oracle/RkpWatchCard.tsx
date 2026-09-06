@@ -92,6 +92,19 @@ function pad2(n: number): string {
 /*  Card                                                                      */
 /* -------------------------------------------------------------------------- */
 
+/** Resolves a WatchState to its tone color — shared with call sites (like the
+ * merged flagship envelope) that need this card's own tint before it renders,
+ * so the tone logic lives in exactly one place. */
+export function stateColorFor(state: WatchState, colors: ReturnType<typeof useColors>): string {
+  const tone: Record<ToneKey, string> = {
+    maqbool: colors.maqbool,
+    caution: colors.caution,
+    mardood: colors.mardood,
+    muted: colors.textMuted,
+  };
+  return tone[STATE_TONE[state]] ?? colors.textMuted;
+}
+
 export interface RkpWatchCardProps {
   /** The 5-minute bracket the question fell in. */
   window: { readonly startMinute: number; readonly endMinute: number };
@@ -102,6 +115,15 @@ export interface RkpWatchCardProps {
   verdict: DisplayWatchVerdict;
   /** Optional physical correspondence, from data/watchRemedyContext.ts. */
   directionalFocus?: DirectionalFocus | null;
+  /**
+   * True when a parent renders its own shared `GlassSurface` envelope around
+   * this card and its siblings (RemedyProtocolCard, GuidanceCard) — the
+   * flagship Oracle Chat composition. Skips this card's own glass wrapper
+   * and shadow so three cards read as one continuous reading surface rather
+   * than three stacked glass panels; every field below is unchanged either
+   * way — `bare` only changes the wrapper, never the content.
+   */
+  bare?: boolean;
 }
 
 const RkpWatchCard: React.FC<RkpWatchCardProps> = ({
@@ -110,17 +132,12 @@ const RkpWatchCard: React.FC<RkpWatchCardProps> = ({
   lagnaRulerName,
   verdict,
   directionalFocus,
+  bare = false,
 }) => {
   const colors = useColors();
   const typography = useTypography();
 
-  const tone: Record<ToneKey, string> = {
-    maqbool: colors.maqbool,
-    caution: colors.caution,
-    mardood: colors.mardood,
-    muted: colors.textMuted,
-  };
-  const stateColor = tone[STATE_TONE[verdict.state]] ?? colors.textMuted;
+  const stateColor = stateColorFor(verdict.state, colors);
   const obstruction = obstructionLabel(verdict);
 
   /*
@@ -149,20 +166,23 @@ const RkpWatchCard: React.FC<RkpWatchCardProps> = ({
   const factors = Array.isArray(verdict.factors) ? verdict.factors : [];
   const headline = STATE_HEADLINE[verdict.state] ?? 'This reading could not be described';
 
-  return (
-    <GlassSurface
-      tint={stateColor}
-      accessibilityRole="summary"
-      style={[
-        styles.card,
-        {
-          backgroundColor: colors.surface,
-          borderColor: colors.border,
-          borderLeftWidth: 3,
-          borderLeftColor: stateColor,
-        },
-      ]}
-    >
+  // Verdict glow — the one text-shadow the visual spec reserves exclusively
+  // for the verdict headline, per §05. Only fires for a favourable tone
+  // (maqbool): an unfavourable/closed verdict (mardood) never gets gold or a
+  // glow treatment, matching STATE_TONE's own mapping (BLOCKED → mardood)
+  // rather than adding a separate check — the tone table is already the
+  // single source of truth for "does this state look celebratory."
+  const isFavourable = STATE_TONE[verdict.state] === 'maqbool';
+  const verdictGlow = isFavourable
+    ? {
+        textShadowColor: stateColor + '70',
+        textShadowOffset: { width: 0, height: 0 },
+        textShadowRadius: 8,
+      }
+    : null;
+
+  const content = (
+    <>
       {/* ── The window this reading was taken in ─────────────────────────── */}
       <Text style={[typography('caption'), { color: colors.textFaint, letterSpacing: 1.5 }]}>
         {`WATCH WINDOW  :${pad2(window.startMinute)}–:${pad2(
@@ -170,8 +190,8 @@ const RkpWatchCard: React.FC<RkpWatchCardProps> = ({
         )}  ·  ${lagnaSignName}`}
       </Text>
 
-      {/* ── The answer ───────────────────────────────────────────────────── */}
-      <Text style={[typography('heading'), styles.headline, { color: stateColor }]}>
+      {/* ── The answer — the flagship's dominant element ─────────────────── */}
+      <Text style={[typography('heading'), styles.headline, { color: stateColor }, verdictGlow]}>
         {headline}
       </Text>
       <Text style={[typography('caption'), { color: colors.textMuted }]}>
@@ -234,6 +254,28 @@ const RkpWatchCard: React.FC<RkpWatchCardProps> = ({
           </Text>
         </View>
       ))}
+    </>
+  );
+
+  if (bare) {
+    return <View style={styles.bareContent}>{content}</View>;
+  }
+
+  return (
+    <GlassSurface
+      tint={stateColor}
+      accessibilityRole="summary"
+      style={[
+        styles.card,
+        {
+          backgroundColor: colors.surface,
+          borderColor: colors.border,
+          borderLeftWidth: 3,
+          borderLeftColor: stateColor,
+        },
+      ]}
+    >
+      {content}
     </GlassSurface>
   );
 };
@@ -264,6 +306,11 @@ const styles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth,
     padding: SPACING.lg,
     marginTop: SPACING.md,
+  },
+  // No chrome of its own — the merged flagship envelope (§09) supplies the
+  // glass/border/shadow once, shared across all three reading cards.
+  bareContent: {
+    paddingTop: SPACING.sm,
   },
   headline: {
     marginTop: 6,

@@ -133,9 +133,20 @@ export function numberSteps<T extends { isEscalation: boolean }>(
 
 export interface RemedyProtocolCardProps {
   composition: WatchOracleComposition;
+  /**
+   * True inside the merged flagship envelope (see RkpWatchCard's own `bare`
+   * doc). Two things change, content unchanged either way: this card skips
+   * its own glass wrapper, and its "reading" headline demotes from a second
+   * heading-sized/bold treatment to a supporting label — RkpWatchCard's
+   * headline is the one dominant Verdict in the merged view; this diagnosis
+   * outcome is real, separate information (the RKP diagnosis's own outcome,
+   * not the same field as WatchState) and stays fully visible, just no
+   * longer sized to compete with it.
+   */
+  bare?: boolean;
 }
 
-const RemedyProtocolCard: React.FC<RemedyProtocolCardProps> = ({ composition }) => {
+const RemedyProtocolCard: React.FC<RemedyProtocolCardProps> = ({ composition, bare = false }) => {
   const colors = useColors();
   const typography = useTypography();
 
@@ -165,20 +176,25 @@ const RemedyProtocolCard: React.FC<RemedyProtocolCardProps> = ({ composition }) 
   // Determine reading section background based on outcome tone
   const readingBg = outcomeColor + '08'; // Very subtle tint (5% opacity)
 
-  return (
-    <GlassSurface
-      tint={outcomeColor}
-      accessibilityRole="summary"
-      style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border }]}
-    >
-      {/* ── The finding ──────────────────────────────────────────────────── */}
+  const content = (
+    <>
+      {/* ── The finding — a supporting diagnosis label when bare (§09's
+          "nothing competes with Verdict"), a headline of its own when this
+          card is used standalone elsewhere ────────────────────────────── */}
       <View style={[styles.readingSection, { backgroundColor: readingBg }]}>
         <Text
           style={[typography('caption'), styles.eyebrow, { color: outcomeColor, opacity: 0.7 }]}
         >
           {'✧ THE READING'}
         </Text>
-        <Text style={[typography('heading'), styles.headline, { color: outcomeColor }]}>
+        <Text
+          style={[
+            bare ? typography('label') : typography('heading'),
+            styles.headline,
+            bare && styles.headlineBare,
+            { color: outcomeColor },
+          ]}
+        >
           {outcomeHeadline}
         </Text>
         <Text style={[typography('caption'), styles.subtiming, { color: colors.textMuted }]}>
@@ -286,6 +302,20 @@ const RemedyProtocolCard: React.FC<RemedyProtocolCardProps> = ({ composition }) 
           {narration.signature}
         </Text>
       )}
+    </>
+  );
+
+  if (bare) {
+    return <View style={styles.bareContent}>{content}</View>;
+  }
+
+  return (
+    <GlassSurface
+      tint={outcomeColor}
+      accessibilityRole="summary"
+      style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border }]}
+    >
+      {content}
     </GlassSurface>
   );
 };
@@ -401,6 +431,10 @@ const styles = StyleSheet.create({
     padding: 16,
     marginTop: 12,
   },
+  // No chrome of its own — see RkpWatchCard's identical bareContent doc.
+  bareContent: {
+    marginTop: 16,
+  },
 
   /* ── Reading Section ──── */
   readingSection: {
@@ -421,6 +455,15 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '600',
     letterSpacing: -0.3,
+  },
+  // Demoted size when nested under RkpWatchCard's own headline (§09) —
+  // the `typography('label')` variant already supplies the smaller weight;
+  // this only trims the leftover fontSize/letterSpacing the base `headline`
+  // style would otherwise still apply on top of it.
+  headlineBare: {
+    fontSize: 14,
+    fontWeight: '500',
+    letterSpacing: 0,
   },
   subtiming: {
     fontSize: 11,

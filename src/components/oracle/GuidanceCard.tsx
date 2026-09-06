@@ -30,7 +30,13 @@ import { useTypography } from '@theme/useTypography';
 import { GlassSurface } from '@components/material/GlassSurface';
 import type { RenderedRemedy } from '../../data/remedyRenderer';
 
-/** Unicode geometry rather than emoji, matching the rest of the surface. */
+/**
+ * Unicode geometry rather than emoji, matching the rest of the surface.
+ * `dhikr` used to be '📿' (prayer beads) — a genuine pictographic emoji, the
+ * one inconsistency in an otherwise deliberately emoji-free table (per the
+ * comment this table already carried). Replaced with a geometric glyph
+ * matching the others' register.
+ */
 const CATEGORY_ICON: Readonly<Record<string, string>> = Object.freeze({
   salawat: '☽',
   dua: '✦',
@@ -39,7 +45,7 @@ const CATEGORY_ICON: Readonly<Record<string, string>> = Object.freeze({
   charity: '◇',
   fasting: '◌',
   quran: '✧',
-  dhikr: '📿',
+  dhikr: '⊙',
   night_prayer: '★',
   silence: '◎',
   tawbah: '↩',
@@ -69,9 +75,15 @@ const EFFECT_LABEL: Readonly<Record<string, string>> = Object.freeze({
 
 export interface GuidanceCardProps {
   remedies: readonly RenderedRemedy[];
+  /** See RkpWatchCard's identical `bare` doc — skips this card's own glass
+   * wrapper inside the merged flagship envelope. Already the most visually
+   * subordinate of the three cards (small caps heading, muted body), so
+   * unlike RemedyProtocolCard nothing needs to shrink further — just the
+   * wrapper changes. */
+  bare?: boolean;
 }
 
-const GuidanceCard: React.FC<GuidanceCardProps> = ({ remedies }) => {
+const GuidanceCard: React.FC<GuidanceCardProps> = ({ remedies, bare = false }) => {
   const colors = useColors();
   const typography = useTypography();
 
@@ -79,12 +91,8 @@ const GuidanceCard: React.FC<GuidanceCardProps> = ({ remedies }) => {
     return null;
   }
 
-  return (
-    <GlassSurface
-      tint={colors.goldBright}
-      accessibilityRole="summary"
-      style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border }]}
-    >
+  const content = (
+    <>
       <Text style={[typography('label'), styles.heading, { color: colors.goldBright }]}>
         {'GUIDANCE FOR THIS MOMENT'}
       </Text>
@@ -139,6 +147,20 @@ const GuidanceCard: React.FC<GuidanceCardProps> = ({ remedies }) => {
           </View>
         </View>
       ))}
+    </>
+  );
+
+  if (bare) {
+    return <View style={styles.bareContent}>{content}</View>;
+  }
+
+  return (
+    <GlassSurface
+      tint={colors.goldBright}
+      accessibilityRole="summary"
+      style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border }]}
+    >
+      {content}
     </GlassSurface>
   );
 };
@@ -149,6 +171,9 @@ const styles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth,
     padding: 16,
     marginTop: 12,
+  },
+  bareContent: {
+    marginTop: 16,
   },
   heading: {
     textAlign: 'center',
