@@ -19,7 +19,6 @@ import React, { useCallback, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
-import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 import { useColors, useTheme } from '@theme/ThemeProvider';
 import { useTypography } from '@theme/useTypography';
@@ -29,7 +28,7 @@ import { buildChart } from '@astrology/primitives/chartBuilder';
 import { dignityOf, type Dignity } from '@astrology/rkp/rules';
 import StarfieldBackground from '@components/StarfieldBackground';
 import CosmicClock from '@components/home/CosmicClock';
-import type { RootStackParamList } from '@navigation/types';
+import type { AppNavigation } from '@navigation/types';
 import {
   SIGN_NAMES,
   displayLonSidereal,
@@ -177,10 +176,9 @@ const SkyClockScreen: React.FC = () => {
   const { theme } = useTheme();
   const colors = useColors();
   const typography = useTypography();
-  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const navigation = useNavigation<AppNavigation>();
   // Al-Falak is now a persistent tab — canGoBack() is false when reached by
   // tapping the tab directly, so the back arrow falls back to the Home tab.
-  const tabNavigation = useNavigation<{ navigate: (screen: string) => void }>();
 
   const lastLocation = useSettingsStore(
     (s: ReturnType<typeof useSettingsStore.getState>) => s.lastLocation,
@@ -231,7 +229,11 @@ const SkyClockScreen: React.FC = () => {
       >
         <Pressable
           onPress={() =>
-            navigation.canGoBack() ? navigation.goBack() : tabNavigation.navigate('Home')
+            // Al-Falak is a TAB, not a pushed screen: goBack() here returns
+            // to whichever tab was focused last, so the same arrow could land
+            // on Home or on Your Readings depending on history. This arrow
+            // means "back to Home" and now always does that.
+            navigation.navigate('Home')
           }
           style={styles.backBtn}
           accessibilityRole="button"
@@ -262,13 +264,35 @@ const SkyClockScreen: React.FC = () => {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        {/* TimingBar */}
+        {/*
+          TimingBar — the real "current sky state" hero, and the one glass/3D
+          priority zone on this screen (per the design spec: celestial
+          elements get the premium treatment, the planet table below stays
+          flat/clean). No blur library is installed, so glass is approximated
+          with a translucent lunar-tinted wash (colors.lunarReflection) and a
+          soft top highlight, same idiom as the Home hero and RkpWatchCard.
+        */}
         <View
           style={[
             styles.timingBar,
-            { backgroundColor: colors.surface, borderColor: colors.border },
+            {
+              backgroundColor: colors.surface,
+              borderColor: colors.border,
+              shadowColor: colors.sacredGlow,
+            },
           ]}
         >
+          <View
+            pointerEvents="none"
+            style={[
+              styles.timingBarGlassOverlay,
+              { backgroundColor: colors.lunarReflection + '14' },
+            ]}
+          />
+          <View
+            pointerEvents="none"
+            style={[styles.timingBarTopHighlight, { backgroundColor: colors.text + '1A' }]}
+          />
           <TimingPill
             label="Hora"
             value={timing.horaLord}
@@ -553,11 +577,23 @@ const styles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth,
     paddingVertical: 12,
     paddingHorizontal: 8,
-    shadowColor: '#000',
-    shadowOpacity: 0.05,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 6 },
-    elevation: 1,
+    overflow: 'hidden', // clips the glass overlay/highlight to the rounded corners
+    // Deeper glow than the previous near-invisible flat shadow — shadowColor
+    // is set per-theme (colors.sacredGlow) at the call site.
+    shadowOpacity: 0.28,
+    shadowRadius: 20,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 5,
+  },
+  timingBarGlassOverlay: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  timingBarTopHighlight: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 1,
   },
   pill: {
     flex: 1,

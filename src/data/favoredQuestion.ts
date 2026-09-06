@@ -3,7 +3,7 @@
  * --------------------------------------------------------------------------
  * Classical significations of the current hora lord, mapped onto the
  * existing quick-reply chip categories (see INITIAL_CHIPS in
- * OracleChatScreen) so the home screen can point at the exact chip that's
+ * oracleChips.ts) so the home screen can point at the exact chip that's
  * astrologically favored right now. Traditional rationale per planet:
  *
  *   Sun     — authority, standing, career

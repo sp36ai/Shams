@@ -147,3 +147,43 @@ export async function requestLocationPermission(): Promise<LocationPermissionRes
 export function isLocationUsable(status: LocationPermissionStatus): boolean {
   return status === 'granted-fine' || status === 'granted-coarse';
 }
+
+// ── Microphone (Oracle Chat voice input) ────────────────────────────────────
+
+export type MicrophonePermissionStatus = 'granted' | 'denied' | 'never-ask' | 'unavailable';
+
+const RECORD_AUDIO = PermissionsAndroid.PERMISSIONS.RECORD_AUDIO!;
+
+/** Check current mic permission WITHOUT prompting — safe to call on mount. */
+export async function checkMicrophonePermission(): Promise<MicrophonePermissionStatus> {
+  if (Platform.OS !== 'android') {
+    return 'unavailable';
+  }
+  try {
+    const granted = await PermissionsAndroid.check(RECORD_AUDIO);
+    return granted ? 'granted' : 'denied';
+  } catch (e) {
+    log.error('checkMicrophonePermission threw', { error: String(e) });
+    return 'unavailable';
+  }
+}
+
+/** Request mic permission, showing the system dialog if not already decided. */
+export async function requestMicrophonePermission(): Promise<MicrophonePermissionStatus> {
+  if (Platform.OS !== 'android') {
+    return 'unavailable';
+  }
+  try {
+    const result = await PermissionsAndroid.request(RECORD_AUDIO);
+    if (result === RESULT_GRANTED) {
+      return 'granted';
+    }
+    if (result === RESULT_NEVER_ASK) {
+      return 'never-ask';
+    }
+    return 'denied';
+  } catch (e) {
+    log.error('requestMicrophonePermission threw', { error: String(e) });
+    return 'unavailable';
+  }
+}

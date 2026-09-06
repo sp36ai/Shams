@@ -16,12 +16,14 @@
  *   computes the true Ascendant from RAMC, obliquity and geographic latitude.
  *   Both live in this repo and answer different questions:
  *
- *     Digital Watch Oracle  → this module. Frame from the watch minute.
- *     Astronomical Oracle   → primitives/chartBuilder.ts. Frame from the sky.
+ *     Watch frame  → this module. Frame from the watch minute.
+ *     Sky frame    → primitives/houseCusps.ts / chartBuilder.ts. Frame from
+ *                    the horizon, still used to place real planets.
  *
  *   Do not describe this module's output as "the Ascendant on the horizon",
- *   and do not swap it in behind the Astronomical Oracle. The two modes are
- *   surfaced separately to the user for exactly this reason.
+ *   and do not substitute one frame for the other. (The Astronomical/KP
+ *   Oracle that once surfaced the sky frame to users has been removed; the
+ *   distinction still matters because both frames remain in the engine.)
  *
  *   The PLANETS placed into this frame are real: true sidereal positions from
  *   the Meeus/VSOP87 ephemeris, with genuine retrograde and combustion state.

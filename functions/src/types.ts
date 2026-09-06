@@ -158,6 +158,20 @@ export interface ReadingDoc {
   reasoning: OracleResponse['reasoning'];
   createdAt: FirebaseFirestore.Timestamp;
   horaryNumber?: number;
+  /**
+   * The full watch-oracle composition (diagnosis + protocol + narration),
+   * written by askWatchOracle. Typed as unknown for the same reason as
+   * OracleResponse.watchOracle above — this file stays free of a dependency
+   * on the oracle module — and narrowed at the one place that reads it back
+   * (discussReading.ts). Absent on readings whose synthesis failed, so a
+   * reader must handle its absence rather than assume it.
+   */
+  watchOracle?: unknown;
+  /**
+   * Follow-up turns spent on this reading, capped at DISCUSSION_TURN_LIMIT.
+   * Incremented (and refunded on failure) by discussReading.
+   */
+  discussionTurns?: number;
 }
 
 /** Firestore /trials/{userId} document shape. */
@@ -179,6 +193,19 @@ export interface AuditLogDoc {
   ipHash?: string; // SHA-256 hash prefix of caller IP, never raw IP
   userAgent?: string;
   durationMs?: number;
+  /**
+   * The reading this entry is about, when there is one — the single id a
+   * report or support ticket can be traced back to for the full computed
+   * result (diagnosis, protocol, narration all live under /readings/{id}).
+   * Deliberately not split into separate "response generation" / "remedy
+   * selection" ids: one reading is one computation, and readingId already
+   * names it completely.
+   */
+  readingId?: string;
+  /** Which build of the chart/judgment engine produced this — see ENGINE_VERSION. */
+  engineVersion?: string;
+  /** FNV-1a of the verdict object — detects the stored result silently changing underneath its own audit entry. Never a substitute for the full record, which is the reading document itself. */
+  resultHash?: string;
   ts: FirebaseFirestore.Timestamp;
 }
 
@@ -193,4 +220,5 @@ export type AuditAction =
   | 'payment_play_fail'
   | 'plan_upgraded'
   | 'reading_synced'
-  | 'reading_deleted';
+  | 'reading_deleted'
+  | 'discussion_turn';

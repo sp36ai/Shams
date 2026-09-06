@@ -5,8 +5,9 @@
  * initial tab in MainTabs). Passive status surface only — no chat, no
  * composer. Hierarchy follows DĀR AL-SHAMS design system §Home Screen:
  * hora status → celestial state → ask entry → moon mansion → user tier.
- * Hands off to OracleChatScreen (via "Ask New Question") for the actual
- * question/verdict conversation.
+ * The one thing it is not passive about is the ask composer: a question
+ * typed here opens a Reading (ReadingScreen), which owns the verdict and the
+ * conversation about it.
  */
 
 import React, { useCallback, useEffect, useState } from 'react';
@@ -15,8 +16,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { acquireLocation } from '@utils/acquireLocation';
 import crashlytics from '@react-native-firebase/crashlytics';
 import { useNavigation } from '@react-navigation/native';
-import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import type { RootStackParamList } from '@navigation/types';
+import type { AppNavigation } from '@navigation/types';
 
 import { useColors, useTheme } from '@theme/ThemeProvider';
 import { useTypography } from '@theme/useTypography';
@@ -35,7 +35,7 @@ import TabIcon from '@components/TabIcon';
 import HoraBadge from '@components/home/HoraBadge';
 import ManzilEmblem from '@components/home/ManzilEmblem';
 import CornerBrackets from '@components/home/CornerBrackets';
-import GlowWash from '@components/home/GlowWash';
+import HomeAskComposer from '@components/home/HomeAskComposer';
 import { buildDailySkyMessage } from '@utils/dailySkyMessage';
 import { favoredChipForPlanet } from '../data/favoredQuestion';
 import { PLANET_DHIKR } from '../data/dailyDhikr';
@@ -62,10 +62,9 @@ const OracleScreen: React.FC = () => {
   const typography = useTypography();
   const t = useTranslation();
   const { lang } = useI18n();
-  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
-  // History lives on the sibling tab navigator, not the root stack — same
-  // loose-typing precedent as HistoryScreen's own navigation prop.
-  const tabNavigation = useNavigation<{ navigate: (screen: string) => void }>();
+  // One typed handle for both destinations: sibling tabs (AlFalak/History)
+  // and root-level pushes (Settings/Premium/Reading). See AppNavigation.
+  const navigation = useNavigation<AppNavigation>();
 
   const lastLocation = useSettingsStore(
     (s: ReturnType<typeof useSettingsStore.getState>) => s.lastLocation,
@@ -92,8 +91,6 @@ const OracleScreen: React.FC = () => {
 
   // Measured once via onLayout so the "Ask New Question" glow wash clips
   // exactly to the button's real rendered size (its width isn't known statically).
-  const [askBtnSize, setAskBtnSize] = useState<{ width: number; height: number } | null>(null);
-
   const evaluateTrialBanner = useCallback(() => {
     const { plan: currentPlan, checkTrial } = useQuotaStore.getState();
     if (currentPlan !== 'free') {
@@ -252,16 +249,35 @@ const OracleScreen: React.FC = () => {
           </View>
         )}
 
-        {/* Current Hora — compact readout, seal as a small badge (not the hero) */}
+        {/* Current Hora — compact readout, seal as a small badge (not the hero).
+            Premium glass+3D treatment lives ONLY here and on the Ask composer
+            below — the two zones the design spec calls out as the Oracle
+            hero. No blur library is installed, so "glass" is approximated
+            with a translucent gold wash (colors.horaGradient[0] — an
+            existing, previously-unused token named for exactly this card),
+            a soft top highlight line, and a warm glow shadow, rather than a
+            new native dependency. */}
         <Pressable
-          onPress={() => tabNavigation.navigate('AlFalak')}
+          onPress={() => navigation.navigate('AlFalak')}
           style={[
             styles.heroCard,
-            { backgroundColor: colors.surface, borderColor: colors.borderAccent + '55' },
+            {
+              backgroundColor: colors.surface,
+              borderColor: colors.borderAccent + '55',
+              shadowColor: colors.sacredGlow,
+            },
           ]}
           accessibilityRole="button"
           accessibilityLabel="Open Al-Falak — Sky State timing panel"
         >
+          <View
+            pointerEvents="none"
+            style={[styles.heroGlassOverlay, { backgroundColor: colors.horaGradient[0] }]}
+          />
+          <View
+            pointerEvents="none"
+            style={[styles.heroTopHighlight, { backgroundColor: colors.text + '1A' }]}
+          />
           <View style={styles.heroTopRow}>
             <View style={styles.heroTextCol}>
               <Text
@@ -389,50 +405,17 @@ const OracleScreen: React.FC = () => {
           )}
         </View>
 
-        {/* Ask New Question — opens the oracle chat conversation */}
-        <Pressable
-          testID="ask-shams-btn"
-          onPress={() => tabNavigation.navigate('Ask')}
-          onLayout={e => {
-            const { width, height } = e.nativeEvent.layout;
-            setAskBtnSize({ width, height });
-          }}
-          style={({ pressed }) => [
-            styles.actionBtn,
-            {
-              backgroundColor: colors.surface,
-              borderColor: colors.borderAccent + '55',
-              opacity: pressed ? 0.85 : 1,
-            },
-          ]}
-          accessibilityRole="button"
-          accessibilityLabel={t('oracle.askNewQuestionCta')}
-        >
-          {askBtnSize !== null && (
-            <GlowWash
-              width={askBtnSize.width}
-              height={askBtnSize.height}
-              color={colors.goldBright}
-              opacity={0.35}
-            />
-          )}
-          <View style={[styles.actionIconWrap, { borderColor: colors.borderAccent }]}>
-            <Text style={{ fontSize: 18, color: colors.goldBright }}>{'✦'}</Text>
-          </View>
-          <View style={styles.actionTextCol}>
-            <Text style={[typography('button'), { color: colors.goldBright, fontSize: 16 }]}>
-              {t('oracle.askNewQuestionCta')}
-            </Text>
-            <Text style={[typography('caption'), { color: colors.textMuted, marginTop: 2 }]}>
-              {t('oracle.consultOracleSubtitle')}
-            </Text>
-          </View>
-          <Text style={[typography('label'), { color: colors.goldBright, opacity: 0.85 }]}>›</Text>
-        </Pressable>
+        {/* Ask Shams — the primary action: a question becomes a Reading */}
+        <HomeAskComposer
+          // push, not navigate — see ReadingsScreen for why: a Reading is
+          // always its own screen, never a params update to one already open.
+          onSubmit={question => navigation.push('Reading', { initialQuestion: question })}
+          onOpenBlank={() => navigation.push('Reading', {})}
+        />
 
         {/* Reading History */}
         <Pressable
-          onPress={() => tabNavigation.navigate('History')}
+          onPress={() => navigation.navigate('Readings')}
           style={({ pressed }) => [
             styles.actionBtnSecondary,
             {
@@ -684,11 +667,27 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     borderRadius: RADIUS.xl,
     borderWidth: StyleSheet.hairlineWidth,
-    shadowColor: '#000',
-    shadowOpacity: 0.08,
-    shadowRadius: 16,
-    shadowOffset: { width: 0, height: 8 },
-    elevation: 3,
+    overflow: 'hidden', // clips the glass overlay/highlight to the rounded corners
+    // Warmer, deeper glow than the previous flat black shadow — shadowColor
+    // is set per-theme (colors.sacredGlow) in the JSX above.
+    shadowOpacity: 0.3,
+    shadowRadius: 22,
+    shadowOffset: { width: 0, height: 10 },
+    elevation: 6,
+  },
+  // Translucent gold wash standing in for backdrop blur (see comment at the
+  // call site) — absolutely filled behind the card's real content.
+  heroGlassOverlay: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  // A 1px lighter line along the top edge — the "soft inner highlight" a
+  // glass panel catches from above. Cheap enough to keep even without blur.
+  heroTopHighlight: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 1,
   },
   heroTopRow: {
     flexDirection: 'row',

@@ -195,7 +195,7 @@ export const REMEDY_LIBRARY: readonly Remedy[] = Object.freeze([
     duration: 'Before the decision, repeated as needed',
     evidenceType: 'scriptural',
     explanation:
-      'The prayer of seeking guidance is the established practice when a permissible choice remains genuinely open — which is what conflicting significators describe.',
+      'The prayer of seeking guidance is the established practice when a permissible choice remains genuinely open — which is what conflicting significators describe. It is the practice tradition connects to Yā Hādī, the Guide — asked for here as discernment, not a dream to be decoded.',
     instructions: [
       'Pray two rakʿahs outside the obligatory prayers.',
       'Recite the duʿā of istikhārah, naming the matter plainly.',
@@ -213,7 +213,7 @@ export const REMEDY_LIBRARY: readonly Remedy[] = Object.freeze([
     duration: 'Daily until the matter resolves',
     evidenceType: 'scriptural',
     explanation:
-      'Where the reading shows a path narrowed rather than closed, the traditional response is to ask for the narrowing to ease.',
+      'Where the reading shows a path narrowed rather than closed, the traditional response is to ask for the narrowing to ease — the opening this asks for is the province of Yā Fattāḥ, the Opener, invoked here for ease rather than for a guaranteed way through.',
     instructions: [
       'Recite: Allāhumma lā sahla illā mā jaʿaltahu sahlan.',
       '("O Allah, there is no ease except what You make easy.")',
@@ -262,7 +262,7 @@ export const REMEDY_LIBRARY: readonly Remedy[] = Object.freeze([
     duration: 'Daily while waiting',
     evidenceType: 'scriptural',
     explanation:
-      'A delayed reading asks for endurance rather than force. Sitting with the verses on hardship and ease reframes the wait as something with a shape.',
+      'A delayed reading asks for endurance rather than force. Sitting with the verses on hardship and ease reframes the wait as something with a shape — this is the domain tradition gives to Yā Ṣabūr, the Patient, asked for as the strength to hold steady rather than a shortcut through the wait.',
     instructions: [
       'Read Sūrah al-Sharḥ (94) slowly, once daily.',
       'Sit briefly with the repetition: with hardship comes ease.',
@@ -279,7 +279,7 @@ export const REMEDY_LIBRARY: readonly Remedy[] = Object.freeze([
     duration: '33 times, morning and evening',
     evidenceType: 'scriptural',
     explanation:
-      'Where the chart shows the matter liable to turn, the practice sought is steadiness in the seeker rather than control of the outcome.',
+      'Where the chart shows the matter liable to turn, the practice sought is steadiness in the seeker rather than control of the outcome — the steadiness and preservation this asks for is what tradition connects to Yā Ḥafīẓ, the Preserver, invoked here for a settled heart rather than a guarantee against reversal.',
     instructions: ['Recite Lā ḥawla wa lā quwwata illā billāh 33 times, morning and evening.'],
   },
   {
@@ -312,6 +312,28 @@ export const REMEDY_LIBRARY: readonly Remedy[] = Object.freeze([
     explanation:
       'Where the indication is already favourable, thanksgiving is the fitting response — not a further request.',
     instructions: ['Pray two rakʿahs of thanks once the matter settles.'],
+  },
+  {
+    id: 'devotional_ya_latif',
+    name: 'Dhikr of Yā Laṭīf',
+    category: 'devotional',
+    traditions: ['islamic'],
+    // The one pattern the rest of the devotional bank has no answer for:
+    // emotional attachment — grief, separation, a hurt that cannot be forced
+    // to resolve. Every other pattern here already has a fitting practice
+    // (see the explanations above for where each connects to its own Name);
+    // this is the one gap that was genuinely open.
+    targetConditions: ['ATTACHMENT'],
+    suitableFor: ['UNFAVOURABLE', 'DECLINING', 'CONDITIONAL', 'DELAYED'],
+    intensity: 'low',
+    duration: '100 times daily while the matter is tender',
+    evidenceType: 'scriptural',
+    explanation:
+      'Where the pattern is attachment — a hurt held onto, a matter that cannot be forced open by will alone — the traditional register is gentleness rather than pressure. Yā Laṭīf, the Subtle and Gentle, is invoked here for that kind of relief: not for a forced return or a resolved outcome, but for ease within what cannot yet be changed.',
+    instructions: [
+      'Recite Yā Laṭīf quietly, without counting toward an outcome, until the moment settles.',
+      'Pair it with one honest, undramatic word to whoever the hurt involves, if speaking is safe and wanted — the dhikr steadies you; it does not speak for you.',
+    ],
   },
 
   /* ── Level 3 — Astrological / traditional ────────────────────────────── */

@@ -10,14 +10,30 @@ export type PlanTier = 'free' | 'mureed' | 'khass';
 
 export const UNLIMITED_PLANS: PlanTier[] = ['mureed', 'khass'];
 // Paywall limits. Must stay in sync with the client (src/stores/quotaStore.ts).
-export const FREE_LIMIT = 3; // questions per UTC day — free plan
-export const TRIAL_DAILY_LIMIT = 5; // questions per UTC day — 7-day trial
+//
+// TEMPORARY — raised from 3/5 to 50/50 for internal testing, so testers
+// aren't paywall-blocked mid-session while exercising the app. Revert both
+// this file and src/stores/quotaStore.ts to 3/5 once testing concludes —
+// tracked as an explicit owner decision, not a permanent pricing change.
+export const FREE_LIMIT = 50; // questions per UTC day — free plan
+export const TRIAL_DAILY_LIMIT = 50; // questions per UTC day — 7-day trial
 export const TRIAL_DURATION_DAYS = 7;
 
 /** Return the ISO date string (YYYY-MM-DD) for the current UTC day. */
 export function todayKey(now = Date.now()): string {
   return new Date(now).toISOString().slice(0, 10);
 }
+
+/**
+ * How many follow-up turns one reading may carry.
+ *
+ * Discussion is free — the unit sold is the reading, not the conversation
+ * about it (see discussReading.ts) — so this bound, not the quota, is what
+ * keeps a single reading from becoming an unbounded chat session. Generous
+ * enough that no ordinary seeker meets it, low enough to cap the cost of one
+ * reading; a seeker who exhausts it has a new question, not a follow-up.
+ */
+export const DISCUSSION_TURN_LIMIT = 12;
 
 export const REGION = 'asia-south1'; // Mumbai — closest to primary user base
 

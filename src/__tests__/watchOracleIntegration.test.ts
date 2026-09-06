@@ -1,7 +1,7 @@
 /**
  * Watch Oracle Integration Test
  * ──────────────────────────────────────────────────────────────
- * Verifies that the watch oracle wiring into OracleChatScreen
+ * Verifies that the watch oracle wiring into ReadingScreen
  * correctly combines astronomical and watch oracle results into
  * a single Reading object for display.
  *

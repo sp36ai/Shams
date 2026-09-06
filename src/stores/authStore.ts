@@ -30,6 +30,7 @@ import { useQuotaStore, type PlanTier } from './quotaStore';
 import { useReadingsStore } from './readingsStore';
 import { useSettingsStore } from './settingsStore';
 import { invalidateQuotaCache } from '@hooks/useQuota';
+import { withTimeout } from '@utils/withTimeout';
 
 // Web client ID from Firebase Console → Authentication → Google → Web SDK configuration
 export const GOOGLE_WEB_CLIENT_ID =
@@ -65,6 +66,13 @@ export interface AuthState {
 let _authUnsubscribe: (() => void) | null = null;
 
 const AUTH_TOKEN_TIMEOUT_MS = 8000;
+// GoogleSignin.hasPlayServices()/signIn() drive native UI (an account picker,
+// a Play Services update dialog) that legitimately waits on a human, so this
+// is generous on purpose — it exists only to guarantee isLoading (and every
+// button gated on it, across AuthScreen and Settings' sign-out) eventually
+// unlocks if the native call itself hangs (never resolves/rejects) rather
+// than the user simply taking their time to pick an account.
+const GOOGLE_SIGNIN_TIMEOUT_MS = 120_000;
 
 /** After this many consecutive failed sign-ins, lock the button locally. */
 const MAX_SIGNIN_ATTEMPTS = 5;
@@ -74,29 +82,6 @@ const SIGNIN_LOCKOUT_MS = 30_000;
 function readLockoutUntil(): number | null {
   const v = storage.getNumber(KEYS.AUTH_LOCKOUT_UNTIL);
   return v !== undefined && v > Date.now() ? v : null;
-}
-
-/**
- * Resolves with `promise`'s value, or `undefined` after `ms` — whichever comes
- * first. Some real devices' network stacks let getIdTokenResult() hang
- * indefinitely (no resolve, no reject) rather than time out on their own,
- * which would otherwise leave the app on the Splash screen forever, since
- * nothing downstream ever flips `isLoading` back to false.
- */
-function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T | undefined> {
-  return new Promise<T | undefined>(resolve => {
-    const timer = setTimeout(() => resolve(undefined), ms);
-    promise.then(
-      value => {
-        clearTimeout(timer);
-        resolve(value);
-      },
-      () => {
-        clearTimeout(timer);
-        resolve(undefined);
-      },
-    );
-  });
 }
 
 /* -------------------------------------------------------------------------- */
@@ -248,14 +233,39 @@ export const useAuthStore = create<AuthState>(set => ({
   signInWithGoogle: async (): Promise<Error | null> => {
     set({ isLoading: true, error: null });
     try {
-      await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
-      const signInResult = await GoogleSignin.signIn();
+      // Bounded (see GOOGLE_SIGNIN_TIMEOUT_MS) so a native call that hangs
+      // instead of settling can't leave isLoading — and therefore every
+      // sign-in/sign-out button in the app — stuck disabled forever.
+      await withTimeout(
+        GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true }),
+        GOOGLE_SIGNIN_TIMEOUT_MS,
+      );
+      const signInResult = await withTimeout(GoogleSignin.signIn(), GOOGLE_SIGNIN_TIMEOUT_MS);
+      if (signInResult === undefined) {
+        throw new Error('Google sign-in timed out');
+      }
       const idToken = signInResult.data?.idToken ?? (signInResult as { idToken?: string }).idToken;
       if (!idToken) {
         throw new Error('Google sign-in returned no ID token');
       }
       const googleCredential = auth.GoogleAuthProvider.credential(idToken);
-      await auth().signInWithCredential(googleCredential);
+      // On real success, onAuthStateChanged (registered once in bootstrap())
+      // is what actually flips isLoading back to false, decoupled from this
+      // call stack — so if signInWithCredential() itself hangs at the native
+      // level, that listener never fires for this attempt either, and no
+      // amount of wrapping this specific await fixes that. What this timeout
+      // DOES guarantee: this function itself always returns, so the caller
+      // isn't left awaiting forever — and treating a timeout as a failure
+      // (rather than silently assuming success) puts isLoading back in the
+      // catch block's hands below instead of leaving it stuck on the hope
+      // that onAuthStateChanged eventually shows up.
+      const signInOutcome = await withTimeout(
+        auth().signInWithCredential(googleCredential),
+        AUTH_TOKEN_TIMEOUT_MS,
+      );
+      if (signInOutcome === undefined) {
+        throw new Error('Google credential sign-in timed out');
+      }
       return null;
     } catch (err) {
       // User dismissing the account picker is not a failure — don't surface
@@ -280,7 +290,17 @@ export const useAuthStore = create<AuthState>(set => ({
     // `isLoading` back, leaving the app stuck on Splash/loading forever.
     set({ isLoading: true });
     invalidateQuotaCache();
-    await auth().signOut();
+    // auth().signOut() is a native round-trip with no SDK-level timeout
+    // guarantee — same failure class as the App Check/ID-token probes this
+    // file already guards. Bound it, and clear local state unconditionally
+    // afterward (previously this call had no try/finally at all: any
+    // rejection, not just a hang, skipped every line below it, leaving
+    // `isLoading` stuck true and the Sign Out / Sign In buttons across the
+    // app dead for the rest of the session). Treating the querent as signed
+    // out locally even if the native call stalls or fails is the safer
+    // failure mode — a live but unreachable server session is far less
+    // costly than a permanently frozen auth UI.
+    await withTimeout(auth().signOut(), AUTH_TOKEN_TIMEOUT_MS);
     cacheUserLocally(null);
     useQuotaStore.getState().reset();
     useReadingsStore.getState().clearAll();

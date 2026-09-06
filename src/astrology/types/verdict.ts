@@ -1,20 +1,32 @@
 /**
  * Verdict types — Shams al-Asrār
  * --------------------------------------------------------------------------
- * The OUTPUT contract of the KP judgment layer. Every reading produces
- * exactly this shape; the UI Verdict card renders it; the History store
- * persists it; Phase 4 PDF export reads it.
- *
- * Shape mirrors the contract specified in the master build prompt
- * ("Output Contract — What the Engine Returns") and is FROZEN as of
- * Phase 1. Additive changes (new optional fields) are allowed in later
- * phases; renames/removals require a major engineVersion bump.
+ * The OUTPUT contract of the retired KP judgment engine (`askOracle`,
+ * removed — see git history for `kp/judgment/`). Kept only so History can
+ * still render readings taken before the RKP Watch migration; nothing
+ * live produces this shape anymore. New readings use `DisplayWatchVerdict`
+ * from `rkp/watchJudgment.ts` instead. Do not extend this file — it exists
+ * for backward-compatible rendering, not as an active contract.
  */
 
 import type { Chart, HouseIndex, Planet, Pada, NakshatraIndex, SignIndex } from './chart';
 import type { ClassifiedQuestion, QuestionType } from './question';
-import type { SignificatorSets } from '../kp/judgment/significators';
 import type { LangCode } from '@i18n/types';
+
+/**
+ * The KP engine's significator picture for a question — inlined here (was
+ * `kp/judgment/significators.ts::SignificatorSets`) since that module was
+ * deleted along with the rest of the retired judgment engine, but legacy
+ * readings already stored with this shape still need to type-check.
+ */
+export interface SignificatorSets {
+  /** Planets signifying the FAVORABLE houses (neutral witnesses removed). */
+  readonly favorable: readonly Planet[];
+  /** Planets signifying the DENIAL houses (neutral witnesses removed). */
+  readonly denial: readonly Planet[];
+  /** Planets signifying BOTH sides — excluded from scoring as contradictory. */
+  readonly neutral: readonly Planet[];
+}
 
 // ── Verdict enum ───────────────────────────────────────────────────────────
 

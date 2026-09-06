@@ -2,10 +2,8 @@
  * Cloud Functions entry point — Shams al-Asrar
  *
  * Exported functions:
- *   askOracle                — callable — DEPRECATED, not called by the shipped app;
- *                              see its own file header before removing or building on it
- *   askWatchOracle           — callable — the live Oracle path; compute a Digital Watch
- *                              Oracle reading (no location needed)
+ *   askWatchOracle           — callable — Digital Watch Oracle reading (no location)
+ *   discussReading           — callable — follow-up conversation about a given reading
  *   activateTrial            — callable — idempotent server-side trial registration
  *   getQuota                 — callable — get caller's quota status
  *   syncReadings             — callable — bulk-sync local readings to Firestore
@@ -25,8 +23,8 @@
 // Shared admin initialisation — must be imported first
 import './utils/admin';
 
-export { askOracle } from './functions/askOracle';
 export { askWatchOracle } from './functions/askWatchOracle';
+export { discussReading } from './functions/discussReading';
 export { activateTrial } from './functions/activateTrial';
 export { getQuota } from './functions/quota';
 export { syncReadings, deleteReading } from './functions/readings';
@@ -36,6 +34,5 @@ export { razorpayWebhook } from './functions/payments/razorpay';
 export { health } from './functions/health';
 export { setAdminClaim } from './functions/admin';
 export { classifyQuestion } from './functions/classifyQuestion';
-export { classifyIntent } from './functions/classifyIntent';
 export { inferProfile } from './functions/inferProfile';
 export { selectRemedies } from './functions/selectRemedies';

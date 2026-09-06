@@ -17,13 +17,73 @@
  */
 
 import { regionalFunctions } from './functionsRegion';
+import { withTimeout, withDeadline } from '../utils/withTimeout';
+import { ensureAppCheckReady } from './appCheck';
 import type { DisplayWatchVerdict } from '@astrology/rkp/watchJudgment';
 import type { WatchOracleComposition } from '../types/watchOracle';
+
+/**
+ * How long to give App Check a chance to attach a token before firing
+ * anyway. Not a correctness gate — the call proceeds regardless of whether
+ * this resolves, times out, or App Check itself rejects; existing
+ * server-side error handling already turns a genuinely missing/invalid
+ * token into a proper "seal of verification is absent" bubble. This exists
+ * only to close the common case: a fast cold start where Play Integrity's
+ * first token exchange (slower than Auth's, typically already cached)
+ * hasn't completed yet by the time the querent taps Ask.
+ */
+const APP_CHECK_GATE_TIMEOUT_MS = 8000;
+
+/**
+ * The server itself allows up to 120s (Anthropic synthesis ~25s + cold-start
+ * headroom) — see ORACLE_FUNCTION_OPTS in functions/src/config.ts. This is
+ * deliberately looser than that ceiling: it exists only to recover from a
+ * native callable invocation that hangs instead of ever resolving/rejecting
+ * (App Check/attestation round-trips are the known culprit — see
+ * withTimeout()'s docstring), not to race a normal, slower-than-usual
+ * response. Without this, that hang leaves `sendMessage()` awaiting forever
+ * with no spinner having ever had the chance to clear and no bubble ever
+ * rendered.
+ */
+const ASK_WATCH_ORACLE_TIMEOUT_MS = 45000;
+
+class AskWatchOracleTimeoutError extends Error {
+  code = 'deadline-exceeded';
+  constructor() {
+    super('askWatchOracle: no response within the client-side timeout');
+    this.name = 'AskWatchOracleTimeoutError';
+  }
+}
 
 export interface AskWatchOracleInput {
   question: string;
   questionLang: 'en' | 'ur' | 'hi';
   seekerProfile?: 'clarity' | 'comfort' | 'action' | 'surrender';
+  /**
+   * Identifies the user ACTION, not the call: generated once when the seeker
+   * submits, and reused byte-for-byte on every retry of that submission.
+   *
+   * This is what makes a charged reading safe to retry. The screen's
+   * re-entrancy guard only survives as long as the process does; if the app
+   * is killed after the server cast and charged but before the response
+   * landed, the retry arrives with the same id and the server replays the
+   * original reading instead of casting — and charging for — a second one.
+   * Send a NEW id only for a genuinely new question.
+   */
+  requestId?: string;
+}
+
+/**
+ * An id for one submission. Random and opaque: it identifies an action within
+ * one user's own history and carries nothing about the question or the seeker.
+ *
+ * `Math.random` is deliberate rather than a crypto import — a collision here
+ * would only affect this one user's own retries, and the id is not a secret,
+ * a token, or a key. 96 bits of it makes that collision negligible anyway.
+ */
+export function newRequestId(): string {
+  const part = (): string => Math.random().toString(36).slice(2, 10).padEnd(8, '0');
+  return `${part()}${part()}${part()}`;
 }
 
 export interface WatchReading {
@@ -67,6 +127,10 @@ export function deviceUtcOffsetMinutes(now: Date = new Date()): number {
 }
 
 export async function askWatchOracle(args: AskWatchOracleInput): Promise<AskWatchOracleResult> {
+  // Give App Check a bounded head start before firing — see
+  // APP_CHECK_GATE_TIMEOUT_MS above for why. Proceeds either way.
+  await withTimeout(ensureAppCheckReady(), APP_CHECK_GATE_TIMEOUT_MS);
+
   const fn = regionalFunctions().httpsCallable('askWatchOracle');
 
   const payload: Record<string, unknown> = {
@@ -74,9 +138,21 @@ export async function askWatchOracle(args: AskWatchOracleInput): Promise<AskWatc
     questionLang: args.questionLang,
     utcOffsetMinutes: deviceUtcOffsetMinutes(),
     ...(args.seekerProfile !== undefined ? { seekerProfile: args.seekerProfile } : {}),
+    ...(args.requestId !== undefined ? { requestId: args.requestId } : {}),
   };
 
-  const result = await fn(payload);
+  // withDeadline, not withTimeout: a callable's failure carries its meaning in
+  // `.code` — 'resource-exhausted' (out of questions), 'aborted' (this exact
+  // question is already being read), 'unauthenticated' — and the screen maps
+  // each to a different bubble. Collapsing them all into a timeout, as the
+  // fire-and-forget helper does, told every seeker their question had timed
+  // out. The timeout case still exists on top, for a native call that hangs
+  // without ever settling.
+  const result = await withDeadline(
+    fn(payload),
+    ASK_WATCH_ORACLE_TIMEOUT_MS,
+    () => new AskWatchOracleTimeoutError(),
+  );
   const data = result.data as WatchReading & { quotaRemaining: number | null };
 
   return {

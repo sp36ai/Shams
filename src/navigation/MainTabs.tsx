@@ -1,9 +1,9 @@
 /**
  * MainTabs — bottom tab navigator for the local RKP shell.
  * --------------------------------------------------------------------------
- * Tabs (in order): Home | Ask | Al-Falak | History — matches the Dār
- * al-Shams reference IA. Settings is NOT a tab; it's a root-level push
- * reached via the gear icon in Home's header.
+ * Tabs (in order): Home | Al-Falak | Readings — matches the Dār al-Shams
+ * reference IA. Settings is NOT a tab; it's a root-level push reached via
+ * the gear icon in Home's header.
  * Home is the initial route — it is the primary landing surface.
  *
  * Visual contract:
@@ -35,19 +35,28 @@ import {
 import { Pressable } from 'react-native';
 
 import OracleScreen from '@screens/OracleScreen';
-import OracleChatScreen from '@screens/OracleChatScreen';
 import SkyClockScreen from '@screens/SkyClockScreen';
-import HistoryScreen from '@screens/HistoryScreen';
+import ReadingsScreen from '@screens/ReadingsScreen';
 
 import { useColors } from '@theme/ThemeProvider';
 import { useTypography } from '@theme/useTypography';
 import { useTranslation } from '@i18n/I18nProvider';
 
 import TabIcon, { type IconName } from '@components/TabIcon';
+import { withScreenErrorBoundary } from '@components/ScreenErrorBoundary';
 
 import type { MainTabParamList } from './types';
 
 const Tab = createBottomTabNavigator<MainTabParamList>();
+
+/*
+ * Each tab is individually bounded, at module scope — see RootNavigator for
+ * both halves of the reasoning: a tab that throws must not take the tab bar
+ * down with it, and wrapping inline would remount every tab on each render.
+ */
+const HomeRoute = withScreenErrorBoundary(OracleScreen, 'Home');
+const AlFalakRoute = withScreenErrorBoundary(SkyClockScreen, 'Al-Falak');
+const ReadingsRoute = withScreenErrorBoundary(ReadingsScreen, 'Your Readings');
 
 // `useTranslation()` returns the callable t function directly (not { t }).
 // Re-exporting the type alias here keeps the screenOptions block readable.
@@ -87,18 +96,16 @@ const MainTabs: React.FC = () => {
   const labels = useMemo<Record<keyof MainTabParamList, string>>(
     () => ({
       Home: t('nav.homeTab' as TKey),
-      Ask: t('nav.askTab' as TKey),
       AlFalak: t('nav.alFalakTab' as TKey),
-      History: t('nav.historyTab' as TKey),
+      Readings: t('nav.readingsTab' as TKey),
     }),
     [t],
   );
 
   const iconNames: Record<keyof MainTabParamList, IconName> = {
     Home: 'oracle',
-    Ask: 'ask',
     AlFalak: 'skyclock',
-    History: 'history',
+    Readings: 'history',
   };
 
   return (
@@ -167,17 +174,16 @@ const MainTabs: React.FC = () => {
         ),
       })}
     >
-      <Tab.Screen name="Home" component={OracleScreen} options={{ tabBarLabel: labels.Home }} />
-      <Tab.Screen name="Ask" component={OracleChatScreen} options={{ tabBarLabel: labels.Ask }} />
+      <Tab.Screen name="Home" component={HomeRoute} options={{ tabBarLabel: labels.Home }} />
       <Tab.Screen
         name="AlFalak"
-        component={SkyClockScreen}
+        component={AlFalakRoute}
         options={{ tabBarLabel: labels.AlFalak }}
       />
       <Tab.Screen
-        name="History"
-        component={HistoryScreen}
-        options={{ tabBarLabel: labels.History }}
+        name="Readings"
+        component={ReadingsRoute}
+        options={{ tabBarLabel: labels.Readings }}
       />
     </Tab.Navigator>
   );

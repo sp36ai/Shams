@@ -1,12 +1,8 @@
 /**
  * RkpWatchCard — renders a Digital Watch Oracle verdict.
  * --------------------------------------------------------------------------
- * NAMING: this is deliberately NOT called WatchVerdictCard. That name is
- * already taken by a component which renders an `AstroVerdictResult` (the
- * ruling-planets view of an Astronomical Oracle reading) — it is a second
- * presentation of the astronomical reading, not a second engine. This card is
- * the one backed by the actual watch engine in `src/astrology/rkp/`, and takes
- * a `WatchVerdict`.
+ * Backed by the watch engine in `src/astrology/rkp/`; takes a
+ * `DisplayWatchVerdict` exactly as it arrives from askWatchOracle.
  *
  * The card is presentation only. Every value shown is read straight off the
  * verdict; nothing is recomputed here, so what the user sees is exactly what
@@ -18,7 +14,8 @@ import { StyleSheet, Text, View } from 'react-native';
 
 import { useColors } from '@theme/ThemeProvider';
 import { useTypography } from '@theme/useTypography';
-import { HOUSE_META, PLANET_NAME } from '@astrology/rkp/nomenclature';
+import { ELEVATION, RADIUS, SPACING } from '@theme/themes';
+import { HOUSE_META, PLANET_NAME, gharLabel } from '@astrology/rkp/nomenclature';
 import type { DisplayWatchVerdict, WatchState } from '@astrology/rkp/watchJudgment';
 import type { DirectionalFocus } from '../../data/watchRemedyContext';
 
@@ -41,9 +38,9 @@ export const STATE_HEADLINE: Readonly<Record<WatchState, string>> = Object.freez
  * vocabulary is used: maqbool (accepted) for favourable, mardood (rejected) for
  * closed, caution for the states that stand but resist.
  */
-type ToneKey = 'maqbool' | 'caution' | 'mardood' | 'muted';
+export type ToneKey = 'maqbool' | 'caution' | 'mardood' | 'muted';
 
-const STATE_TONE: Readonly<Record<WatchState, ToneKey>> = Object.freeze({
+export const STATE_TONE: Readonly<Record<WatchState, ToneKey>> = Object.freeze({
   FULFILLED: 'maqbool',
   MOVING: 'maqbool',
   DELAYED: 'caution',
@@ -104,8 +101,6 @@ export interface RkpWatchCardProps {
   verdict: DisplayWatchVerdict;
   /** Optional physical correspondence, from data/watchRemedyContext.ts. */
   directionalFocus?: DirectionalFocus | null;
-  /** Shown when the host screen offers a switch to the Astronomical Oracle. */
-  onSwitchMode?: () => void;
 }
 
 const RkpWatchCard: React.FC<RkpWatchCardProps> = ({
@@ -114,7 +109,6 @@ const RkpWatchCard: React.FC<RkpWatchCardProps> = ({
   lagnaRulerName,
   verdict,
   directionalFocus,
-  onSwitchMode,
 }) => {
   const colors = useColors();
   const typography = useTypography();
@@ -125,14 +119,67 @@ const RkpWatchCard: React.FC<RkpWatchCardProps> = ({
     mardood: colors.mardood,
     muted: colors.textMuted,
   };
-  const stateColor = tone[STATE_TONE[verdict.state]];
+  const stateColor = tone[STATE_TONE[verdict.state]] ?? colors.textMuted;
   const obstruction = obstructionLabel(verdict);
+
+  /*
+   * Defensive reads, because this card does not only render fresh server
+   * responses.
+   *
+   * A verdict reaches here from MMKV as often as from the network — the
+   * readings archive and the Reading threads both persist it, and a cache
+   * written by an older build outlives the build that wrote it. Every
+   * dereference below used to assume the current shape: `verdict.confidence
+   * .replace(...)`, `HOUSE_META[targetHouse].bait`, `verdict.factors.map(...)`.
+   * One missing field in one cached reading therefore threw during render,
+   * and — before per-screen boundaries — took the whole app down with it,
+   * permanently, because the same cache reloads on every launch.
+   *
+   * A reading that cannot be fully described should render as much as it can
+   * and say plainly what it cannot. It must never be unopenable.
+   */
+  const confidenceLabel =
+    typeof verdict.confidence === 'string'
+      ? verdict.confidence.replace('_', ' ').toLowerCase()
+      : 'unrecorded';
+  const houseMeta = HOUSE_META[verdict.targetHouse];
+  const rulerRelation =
+    typeof verdict.rulerRelation === 'string' ? verdict.rulerRelation.toLowerCase() : 'unrecorded';
+  const factors = Array.isArray(verdict.factors) ? verdict.factors : [];
+  const headline = STATE_HEADLINE[verdict.state] ?? 'This reading could not be described';
 
   return (
     <View
-      style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border }]}
+      style={[
+        styles.card,
+        {
+          backgroundColor: colors.surface,
+          borderColor: colors.border,
+          borderLeftWidth: 3,
+          borderLeftColor: stateColor,
+          shadowColor: stateColor,
+        },
+      ]}
       accessibilityRole="summary"
     >
+      {/*
+        Glass+3D elevation — this is the "elevated 3D Oracle result card" the
+        design spec calls out as a priority zone. No blur library is
+        installed, so glass is approximated with a translucent wash tinted to
+        the verdict's own state color (reusing `stateColor`, not a new value)
+        plus a soft top highlight, layered under the real content below.
+        Nothing here changes what the card shows — every field still reads
+        straight off `verdict`, unchanged.
+      */}
+      <View
+        pointerEvents="none"
+        style={[styles.glassOverlay, { backgroundColor: stateColor + '0F' }]}
+      />
+      <View
+        pointerEvents="none"
+        style={[styles.topHighlight, { backgroundColor: colors.text + '14' }]}
+      />
+
       {/* ── The window this reading was taken in ─────────────────────────── */}
       <Text style={[typography('caption'), { color: colors.textFaint, letterSpacing: 1.5 }]}>
         {`WATCH WINDOW  :${pad2(window.startMinute)}–:${pad2(
@@ -142,24 +189,26 @@ const RkpWatchCard: React.FC<RkpWatchCardProps> = ({
 
       {/* ── The answer ───────────────────────────────────────────────────── */}
       <Text style={[typography('heading'), styles.headline, { color: stateColor }]}>
-        {STATE_HEADLINE[verdict.state]}
+        {headline}
       </Text>
       <Text style={[typography('caption'), { color: colors.textMuted }]}>
-        {`${verdict.state} · confidence ${verdict.confidence.replace('_', ' ').toLowerCase()}`}
+        {`${verdict.state} · confidence ${confidenceLabel}`}
       </Text>
 
       <View style={[styles.rule, { backgroundColor: colors.border }]} />
 
       {/* ── What was judged ──────────────────────────────────────────────── */}
-      <Row
-        label={`${verdict.targetHouse}th Ghar`}
-        value={`${HOUSE_META[verdict.targetHouse].bait} — ${verdict.targetSignName}`}
-        colors={colors}
-        typography={typography}
-      />
+      {houseMeta !== undefined && (
+        <Row
+          label={gharLabel(verdict.targetHouse)}
+          value={`${houseMeta.bait} — ${verdict.targetSignName}`}
+          colors={colors}
+          typography={typography}
+        />
+      )}
       <Row
         label="Ruled by"
-        value={`${verdict.targetRulerName}, which your ruler ${lagnaRulerName} counts ${verdict.rulerRelation.toLowerCase()}`}
+        value={`${verdict.targetRulerName}, which your ruler ${lagnaRulerName} counts ${rulerRelation}`}
         colors={colors}
         typography={typography}
       />
@@ -194,7 +243,7 @@ const RkpWatchCard: React.FC<RkpWatchCardProps> = ({
       <Text style={[typography('label'), { color: colors.text, marginBottom: 6 }]}>
         {'How the chart reads'}
       </Text>
-      {verdict.factors.map((factor, i) => (
+      {factors.map((factor, i) => (
         <View key={`${i}-${factor.slice(0, 12)}`} style={styles.factorRow}>
           <Text style={[typography('caption'), { color: colors.goldBright }]}>{'✦'}</Text>
           <Text style={[typography('caption'), styles.factorText, { color: colors.textMuted }]}>
@@ -202,16 +251,6 @@ const RkpWatchCard: React.FC<RkpWatchCardProps> = ({
           </Text>
         </View>
       ))}
-
-      {onSwitchMode !== undefined && (
-        <Text
-          onPress={onSwitchMode}
-          accessibilityRole="button"
-          style={[typography('caption'), styles.switch, { color: colors.accent }]}
-        >
-          {'View the Astronomical Oracle instead'}
-        </Text>
-      )}
     </View>
   );
 };
@@ -236,10 +275,26 @@ const Row: React.FC<RowProps> = ({ label, value, colors, typography }) => (
 
 const styles = StyleSheet.create({
   card: {
-    borderRadius: 16,
+    borderRadius: RADIUS.lg,
     borderWidth: StyleSheet.hairlineWidth,
-    padding: 16,
-    marginTop: 12,
+    padding: SPACING.lg,
+    marginTop: SPACING.md,
+    overflow: 'hidden', // clips the glass overlay/highlight to the rounded corners
+    ...ELEVATION.floating,
+    // shadowColor is set per-verdict (tinted to the state's tone) in the render below;
+    // this base spread supplies opacity/radius/offset/elevation only. Bumped
+    // from ELEVATION.rest to .floating — this card is a named glass/3D
+    // priority zone, meant to sit visibly above the conversation around it.
+  },
+  glassOverlay: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  topHighlight: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 1,
   },
   headline: {
     marginTop: 6,
@@ -273,10 +328,6 @@ const styles = StyleSheet.create({
   },
   factorText: {
     flex: 1,
-  },
-  switch: {
-    marginTop: 14,
-    textDecorationLine: 'underline',
   },
 });
 

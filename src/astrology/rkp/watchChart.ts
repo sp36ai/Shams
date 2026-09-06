@@ -10,7 +10,8 @@
  *   5. Dignity and aspects are read off the tables  → rules.ts
  *
  * Step 3 is the point worth protecting: the planets are not simulated. They
- * come from the same Meeus/VSOP87 ephemeris the Astronomical Oracle uses, with
+ * come from the same Meeus/VSOP87 ephemeris the sky-frame chart builder uses,
+ * with
  * genuine sidereal longitudes, retrograde motion and combustion. Only the
  * HOUSE FRAME is watch-derived (see the header of watchGrid.ts).
  *
@@ -105,8 +106,8 @@ export function buildWatchChart(
   const window = watchWindowFromIso(iso8601);
   const lagnaSign = window.lagnaSign;
 
-  // Real ephemeris. Only `.planets` is consumed — the cusps belong to the
-  // Astronomical Oracle and are replaced here by the watch frame.
+  // Real ephemeris. Only `.planets` is consumed — the horizon-derived cusps
+  // are discarded and replaced here by the watch frame.
   const { planets: realPlanets } = buildChart(iso8601, location.lat, location.lon);
 
   // Place each planet into the Ghar whose sign it really occupies.

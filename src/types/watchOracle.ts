@@ -55,6 +55,20 @@ export interface OracleNarration {
 
 export interface WatchOracleComposition {
   readonly narration: OracleNarration | null;
+  /**
+   * Fixed closing attribution, identical on every reading and never
+   * model-written — the server's counterpart is ORACLE_BRAND_SEAL in
+   * functions/src/oracle/responseComposer.ts. Optional here so cached
+   * readings written by a build predating this field still satisfy the type.
+   */
+  readonly brandSeal?: string;
+  /**
+   * 2–4 follow-up questions this diagnosis actually supports, or none.
+   * Deterministic (functions/src/oracle/suggestedQuestions.ts) — never
+   * model-written. Optional here for the same cached-reading-compat reason
+   * as brandSeal.
+   */
+  readonly suggestedQuestions?: readonly string[];
   readonly diagnosis: {
     readonly outcome: RkpOutcome;
     readonly primaryPattern: ImbalancePattern;

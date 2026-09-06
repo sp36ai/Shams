@@ -6,15 +6,19 @@
  *   2. Firebase Auth       — request.auth UID verified by the runtime
  *   3. Input validation    — Zod, strict
  *   4. Rate limit          — shared limiter, per user
- *   5. Quota check         — claimQuotaSlot(), the SAME helper askOracle uses,
+ *   5. Idempotency claim   — claimRequest(), so one user action casts one
+ *                            chart and spends one slot even if the app dies
+ *                            mid-call and the seeker retries
+ *   6. Quota check         — claimQuotaSlot(), the SAME helper askOracle uses,
  *                            so a watch reading costs exactly what an
  *                            astronomical one costs. No free side door.
- *   6. Build watch chart   — server-side; the APK still contains zero engine
- *   7. Classify question   — shared keyword matcher
- *   8. Judge               — RKP watch judgment
- *   9. Persist reading     — /readings/{id}, so watch readings appear in the
+ *   7. Build watch chart   — server-side; the APK still contains zero engine
+ *   8. Classify question   — shared keyword matcher
+ *   9. Judge               — RKP watch judgment
+ *  10. Persist reading     — /readings/{id}, so watch readings appear in the
  *                            same history as astronomical ones
- *  10. Audit log           — no PII
+ *  11. Record the response — against the requestId, so a retry replays it
+ *  12. Audit log           — no PII
  *
  * WHY THERE IS NO lat/lon
  *   The watch frame replaces the house cusps, and planetary positions are
@@ -52,9 +56,11 @@ import { logger, hashText } from '../utils/logger';
 import { localIsoFromOffset } from '../utils/localTime';
 import { toBoundaryPlanetName } from '../utils/planetBoundaryName';
 import { ORACLE_FUNCTION_OPTS, ANTHROPIC_API_KEY } from '../config';
-import { claimQuotaSlot, refundQuotaSlot } from './askOracle';
+import { claimQuotaSlot, refundQuotaSlot } from '../utils/quotaSlots';
+import { claimRequest, completeRequest, releaseRequest } from '../utils/idempotency';
 import type { AuditLogDoc, ReadingDoc } from '../types';
 import type { VerdictKind } from '../engine/types/verdict';
+import { ENGINE_VERSION } from '../engine/primitives/chartBuilder';
 
 /* eslint-disable @typescript-eslint/no-var-requires */
 const { buildWatchChart } =
@@ -155,8 +161,38 @@ export const askWatchOracle = onCall(
 
       await enforceRateLimit(userId);
 
+      // ── Idempotency, BEFORE anything is charged or cast ──────────────────
+      //
+      // A client-side guard cannot survive process death: if this function
+      // charged and cast, then the app died before the response landed, the
+      // seeker's retry would otherwise pay twice for one question. The claim
+      // is taken first so the quota slot below is only ever spent by the
+      // attempt that owns the request. See utils/idempotency.ts.
+      const { requestId } = input;
+      if (requestId !== undefined) {
+        const { replay } = await claimRequest<WatchOracleResponse>(userId, requestId);
+        if (replay !== null) {
+          return replay;
+        }
+      }
+
+      const release = async (): Promise<void> => {
+        if (requestId !== undefined) {
+          await releaseRequest(userId, requestId);
+        }
+      };
+
       // Costs the same as an astronomical reading — same helper, same ledger.
-      const { plan, remaining } = await claimQuotaSlot(userId);
+      let plan: Awaited<ReturnType<typeof claimQuotaSlot>>['plan'];
+      let remaining: Awaited<ReturnType<typeof claimQuotaSlot>>['remaining'];
+      try {
+        ({ plan, remaining } = await claimQuotaSlot(userId));
+      } catch (err) {
+        // Out of quota, or the ledger failed: nothing was cast, so the claim
+        // must not outlive the attempt — tomorrow's retry is a real attempt.
+        await release();
+        throw err;
+      }
 
       // Everything below spends the slot just claimed. If any of it throws —
       // a chart/judgment edge case, a Firestore write failure — the querent
@@ -172,13 +208,23 @@ export const askWatchOracle = onCall(
       let oracleResponse: WatchOracleComposition | null = null;
       let readingRef: DocumentReference;
 
+      // Updated right before each step below so a throw's log line names the
+      // stage that actually failed, instead of leaving every failure in this
+      // block indistinguishable as "askWatchOracle: engine failure". This is
+      // the whole reason the next occurrence of this error is fast to
+      // pinpoint from Cloud Logging alone.
+      let stage = 'local-time';
+
       try {
         // Instant is ours; only the zone comes from the caller.
         instant = new Date();
         localMoment = localIsoFromOffset(instant, input.utcOffsetMinutes);
 
+        stage = 'chart-build';
         chart = buildWatchChart(localMoment);
+        stage = 'classify-question';
         qType = classifyQuestion(input.question);
+        stage = 'judge-chart';
         verdict = judgeWatchChart(chart, qType);
 
         // Shadow-node boundary mapping — obstruction/targetRuler/lagnaRuler are
@@ -200,9 +246,16 @@ export const askWatchOracle = onCall(
         readingRef = db.collection('readings').doc();
 
         // ── Diagnosis → remedy protocol → narration ──────────────────────────
+        stage = 'oracle-composition';
         try {
           oracleResponse = await composeWatchOracleResponse({
             verdict: publicVerdict,
+            // The seeker's own words. Without them the narration is written
+            // from the verdict alone, so two different questions that judge
+            // to the same state read identically — which is exactly what
+            // seekers reported. The diagnosis above is already settled and
+            // the prompt treats this strictly as subject matter.
+            question: input.question,
             seekerName: input.seekerName,
             motherName: input.motherName,
             readingId: readingRef.id,
@@ -216,6 +269,7 @@ export const askWatchOracle = onCall(
           oracleResponse = null;
         }
 
+        stage = 'reading-doc-assembly';
         const narration = oracleResponse?.narration?.interpretation || verdict.factors.join(' ');
         const readingDoc: Omit<ReadingDoc, 'createdAt'> = {
           userId,
@@ -241,6 +295,7 @@ export const askWatchOracle = onCall(
           ...(oracleResponse ? { watchOracle: oracleResponse } : {}),
         };
 
+        stage = 'firestore-write';
         await readingRef.set({
           ...readingDoc,
           createdAt: new Date(),
@@ -256,7 +311,11 @@ export const askWatchOracle = onCall(
         // client regardless of what's logged here — the stack trace below
         // is only visible in Cloud Logging (Firebase Console → Functions →
         // Logs, filter on "askWatchOracle: engine failure"), not to the app.
+        // `stage` names which of the steps above actually threw, so this one
+        // line is enough to jump straight to the offending code without
+        // re-deriving it from the stack trace.
         logger.error('askWatchOracle: engine failure', {
+          stage,
           err: String(err),
           stack: err instanceof Error ? err.stack : undefined,
           userId,
@@ -267,6 +326,9 @@ export const askWatchOracle = onCall(
             userId,
           });
         });
+        // The seeker was not charged and holds no reading, so their retry has
+        // to be able to run. Released after the refund, never before.
+        await release();
         throw err;
       }
 
@@ -277,6 +339,9 @@ export const askWatchOracle = onCall(
         verdict: STATE_TO_VERDICT[verdict.state],
         plan,
         source: 'callable',
+        readingId: readingRef.id,
+        engineVersion: ENGINE_VERSION,
+        resultHash: hashText(JSON.stringify(verdict)),
       };
       try {
         await db.collection('auditLogs').add({ ...audit, ts: new Date() });
@@ -284,7 +349,7 @@ export const askWatchOracle = onCall(
         logger.warn('askWatchOracle: audit log write failed', { err: String(err) });
       }
 
-      return {
+      const response: WatchOracleResponse = {
         readingId: readingRef.id,
         computedAt: instant.toISOString(),
         localMoment,
@@ -299,6 +364,14 @@ export const askWatchOracle = onCall(
         ...(oracleResponse ? { oracle: oracleResponse } : {}),
         quotaRemaining: remaining,
       };
+
+      // Stored, not just acknowledged: a retry of this same action replays
+      // THIS reading rather than casting a second one for a later moment.
+      if (requestId !== undefined) {
+        await completeRequest(userId, requestId, response);
+      }
+
+      return response;
     });
   },
 );

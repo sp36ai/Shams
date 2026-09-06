@@ -8,7 +8,7 @@
  * Two navigators:
  *   - RootStack  : top-level switch between Splash → Permission → Main.
  *                  Implemented as a native-stack with conditional screens.
- *   - MainTabs   : bottom-tabs for the local RKP shell: Home | Ask | Al-Falak | History.
+ *   - MainTabs   : bottom-tabs for the local RKP shell: Home | Al-Falak | Readings.
  *                  Settings lives on RootStack, reached via the Home header's
  *                  gear icon rather than a tab (matches the Dār al-Shams
  *                  reference IA).
@@ -19,9 +19,12 @@
  * these param types with optional URL params.
  */
 
-import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import type { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
-import type { CompositeScreenProps } from '@react-navigation/native';
+import type {
+  NativeStackNavigationProp,
+  NativeStackScreenProps,
+} from '@react-navigation/native-stack';
+import type { BottomTabNavigationProp, BottomTabScreenProps } from '@react-navigation/bottom-tabs';
+import type { CompositeNavigationProp, CompositeScreenProps } from '@react-navigation/native';
 
 /* -------------------------------------------------------------------------- */
 /*  Root stack                                                                */
@@ -36,6 +39,27 @@ export type RootStackParamList = {
   Premium: undefined;
   /** Settings — reached via the gear icon in the Home dashboard header. */
   Settings: undefined;
+  /**
+   * One Reading — its verdict and the conversation belonging to it. A
+   * root-level push, not a persistent tab.
+   *
+   * The params are the whole distinction between opening a Reading and
+   * beginning one:
+   *   - `threadId`        opens an existing Reading; it is restored exactly
+   *                       as it was cast and nothing is recomputed.
+   *   - `initialQuestion` begins a new Reading and submits that question on
+   *                       arrival (Home owns the composer that starts one).
+   *   - neither           begins a new Reading with an empty composer.
+   * The Reading itself is created on submit, never on arrival.
+   *
+   * `relatedReadingIds` carries lineage when this Reading is opened from
+   * another one (via "ask as new question") — the new thread can then be
+   * compared against them in discussion. Meaningless without
+   * `initialQuestion`; ignored when opening an existing thread.
+   */
+  Reading:
+    | { threadId?: string; initialQuestion?: string; relatedReadingIds?: readonly string[] }
+    | undefined;
 };
 
 export type RootStackScreenProps<RouteName extends keyof RootStackParamList> =
@@ -48,11 +72,10 @@ export type RootStackScreenProps<RouteName extends keyof RootStackParamList> =
 export type MainTabParamList = {
   /** Home dashboard — formerly the "Oracle" tab; content unchanged, renamed to match the reference IA. */
   Home: undefined;
-  /** Oracle chat — the question/verdict conversation, now a persistent tab. */
-  Ask: undefined;
   /** Al-Falak — Sky State timing/context panel, now a persistent tab. */
   AlFalak: undefined;
-  History: undefined;
+  /** Your Readings — the archive of past Readings, searchable. */
+  Readings: undefined;
 };
 
 /**
@@ -73,3 +96,27 @@ declare global {
     interface RootParamList extends RootStackParamList {}
   }
 }
+
+/* -------------------------------------------------------------------------- */
+/*  Typed navigation for tab screens                                          */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * What `useNavigation()` should return inside any screen hosted by MainTabs.
+ *
+ * Tab screens navigate to BOTH sibling tabs (Home/AlFalak/History) and
+ * root-level pushes (Settings/Premium/Reading), so neither param list
+ * alone types them. Composing the two is what makes `navigate()` reject a
+ * route that does not exist.
+ *
+ * This exists because it was previously typed as
+ * `useNavigation<{ navigate: (screen: string) => void }>()` — which accepts
+ * ANY string. That is not a stylistic detail: when the "Ask" tab was removed,
+ * `navigate('Ask')` in the readings list kept compiling and silently became a
+ * no-op at runtime. Widening to `string` turns a compile error into a dead
+ * button, so prefer this type over a hand-rolled shape.
+ */
+export type AppNavigation = CompositeNavigationProp<
+  BottomTabNavigationProp<MainTabParamList>,
+  NativeStackNavigationProp<RootStackParamList>
+>;

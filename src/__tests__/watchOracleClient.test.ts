@@ -1,4 +1,4 @@
-import { deviceUtcOffsetMinutes } from '../firebase/watchOracle';
+import { deviceUtcOffsetMinutes, newRequestId } from '../firebase/watchOracle';
 
 /**
  * getTimezoneOffset reports minutes to ADD to local time to reach UTC, which is
@@ -30,5 +30,25 @@ describe('deviceUtcOffsetMinutes', () => {
       // JS remainder takes the dividend's sign, so -300 % 15 is -0. Compare magnitude.
       expect(Math.abs(offset % 15)).toBe(0);
     }
+  });
+});
+
+/**
+ * newRequestId — identifies one act of asking.
+ *
+ * It only has to be unique within a single user's own history and carry
+ * nothing about them; these two properties are the whole contract.
+ */
+describe('newRequestId', () => {
+  it('is long enough that two submissions never collide in practice', () => {
+    const ids = new Set(Array.from({ length: 2000 }, () => newRequestId()));
+    expect(ids.size).toBe(2000);
+    for (const id of ids) {
+      expect(id.length).toBeGreaterThanOrEqual(20);
+    }
+  });
+
+  it('carries nothing but randomness', () => {
+    expect(newRequestId()).toMatch(/^[a-z0-9]+$/);
   });
 });

@@ -11,8 +11,6 @@ import { HttpsError } from 'firebase-functions/v2/https';
 
 // ── Shared primitives ────────────────────────────────────────────────────────
 
-const LatSchema = z.number().min(-90).max(90);
-const LonSchema = z.number().min(-180).max(180);
 const LangSchema = z.enum(['en', 'ur', 'hi']);
 
 /**
@@ -49,19 +47,6 @@ const NameSchema = z
 
 // ── Function-specific schemas ────────────────────────────────────────────────
 
-export const AskOracleSchema = z
-  .object({
-    question: z.string().trim().min(5).max(500),
-    lat: LatSchema,
-    lon: LonSchema,
-    questionLang: LangSchema,
-    seekerProfile: z.enum(['clarity', 'comfort', 'action', 'surrender']).optional(),
-    seekerName: NameSchema.optional(),
-    motherName: NameSchema.optional(),
-  })
-  .strict();
-
-export type AskOracleInput = z.infer<typeof AskOracleSchema>;
 
 /**
  * askWatchOracle input.
@@ -82,10 +67,66 @@ export const AskWatchOracleSchema = z
     seekerProfile: z.enum(['clarity', 'comfort', 'action', 'surrender']).optional(),
     seekerName: NameSchema.optional(),
     motherName: NameSchema.optional(),
+    /**
+     * Client-generated, once per user action and reused on every retry of
+     * that action. It is what lets the server tell a retry from a second
+     * question — see utils/idempotency.ts. Optional so a client that predates
+     * it still works; such a call simply gets no deduplication.
+     */
+    requestId: z.string().trim().min(8).max(128).optional(),
   })
   .strict();
 
 export type AskWatchOracleInput = z.infer<typeof AskWatchOracleSchema>;
+
+/**
+ * discussReading input.
+ *
+ * Note what is NOT here: no verdict, no diagnosis, no timing. A follow-up
+ * names the reading it is about and nothing more — the grounding facts are
+ * loaded from Firestore server-side, so the caller cannot present the oracle
+ * with a reading it never gave (see discussReading.ts).
+ *
+ * `turns` is the recent transcript, oldest first, sent so the reply follows
+ * the conversation rather than restarting it. It is the seeker's own words
+ * and the oracle's own earlier replies, so it carries no authority beyond
+ * context; it is capped here and flattened again before it reaches the model.
+ */
+export const DiscussReadingSchema = z
+  .object({
+    readingId: z.string().min(1).max(128),
+    /**
+     * Other readings the seeker is comparing this one against — e.g. "which
+     * looks stronger, the business reading or the property one?" Bounded
+     * small, same reasoning as `turns` below: a discussion turn is not the
+     * place for an open-ended list. Ownership of each id is re-checked
+     * server-side in discussReading.ts; an id that fails the check is
+     * dropped rather than failing the whole call.
+     */
+    compareReadingIds: z.array(z.string().min(1).max(128)).max(4).optional(),
+    message: z.string().trim().min(1).max(500),
+    lang: LangSchema,
+    turns: z
+      .array(
+        z
+          .object({
+            role: z.enum(['seeker', 'oracle']),
+            text: z.string().max(4000),
+          })
+          .strict(),
+      )
+      .max(20)
+      .optional(),
+    /**
+     * Client-generated, once per follow-up and reused on every retry of it —
+     * same contract as askWatchOracle's. Optional so an older client still
+     * works, at the cost of deduplication.
+     */
+    requestId: z.string().trim().min(8).max(128).optional(),
+  })
+  .strict();
+
+export type DiscussReadingInput = z.infer<typeof DiscussReadingSchema>;
 
 export const SyncReadingsSchema = z
   .object({

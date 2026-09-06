@@ -116,9 +116,8 @@ export interface StringTable {
   };
   nav: {
     homeTab: string;
-    askTab: string;
     alFalakTab: string;
-    historyTab: string;
+    readingsTab: string;
   };
   permission: {
     locationTitle: string;
@@ -162,16 +161,6 @@ export interface StringTable {
   };
   oracle: {
     headerTitle: string;
-    welcomeMessage: string;
-    placeholder: string;
-    sendButton: string;
-    quotaRemaining: string;
-    quotaExhausted: string;
-    upgradeCta: string;
-    enginePending: string;
-    thinking: string;
-    askFollowUp: string;
-    askNewQuestion: string;
     verdictYes: string;
     verdictNo: string;
     verdictConditional: string;
@@ -181,8 +170,6 @@ export interface StringTable {
     reasoningLabel: string;
     timingLabel: string;
     remedyLabel: string;
-    chartMomentLabel: string;
-    locationLabel: string;
     dailySkyTitle: string;
     askShamsCta: string;
     moonWatchTitle: string;
@@ -200,15 +187,64 @@ export interface StringTable {
     yourTierLabel: string;
     tierWanderer: string;
     askNewQuestionCta: string;
+    /** Home composer — the line above the field, and the field's own hint. */
+    askPrompt: string;
+    askPlaceholder: string;
     consultOracleSubtitle: string;
     readingHistoryCta: string;
     viewPastReadingsSubtitle: string;
     moonManzilTitle: string;
-    askQuestionTitle: string;
-    chartCastSubtitle: string;
     rulingPlanetsNowLabel: string;
     currentHoraLordLabel: string;
-    sealAskCta: string;
+  };
+  oracleChat: {
+    headerTitle: string;
+    placeholder: string;
+    listening: string;
+    send: string;
+    voiceInputTag: string;
+    startRecording: string;
+    stopRecording: string;
+    readingChart: string;
+    retry: string;
+    failedGeneric: string;
+    quotaExhausted: string;
+    micPermissionDenied: string;
+    noSpeechDetected: string;
+    /** Shown when the device/build has no speech recognizer at all. */
+    voiceUnavailable: string;
+    errorTimeout: string;
+    /** The server is already reading this exact submission. */
+    errorAlreadyRunning: string;
+    errorSignIn: string;
+    listenToVerdict: string;
+    playNarration: string;
+    pauseNarration: string;
+    speaking: string;
+    paused: string;
+    emptyTitle: string;
+    emptyBody: string;
+    /** Send-button label while the composer is in discussion mode. */
+    reply: string;
+    /** Pending-bubble caption for a follow-up — no chart is being read. */
+    considering: string;
+    modeDiscuss: string;
+    modeNewQuestion: string;
+    placeholderDiscuss: string;
+    askAsNewQuestion: string;
+    /** Suggestion above that action — never phrased as a refusal. */
+    separateQuestionNote: string;
+    discussionUnavailable: string;
+    discussionReadingGone: string;
+    /** Header over the suggested-follow-up-question chips. */
+    suggestedQuestionsLabel: string;
+  };
+  /** One Reading — its header, its actions, its states. */
+  reading: {
+    sectionLabel: string;
+    yourQuestion: string;
+    newReading: string;
+    shareReading: string;
   };
   skyClock: {
     headerTitle: string;
@@ -232,6 +268,18 @@ export interface StringTable {
     sortOldest: string;
     deleteConfirm: string;
     deleteAction: string;
+    /** Your Readings — search, grouping and empty states. */
+    searchPlaceholder: string;
+    noResults: string;
+    newReading: string;
+    beginReading: string;
+    groupToday: string;
+    groupYesterday: string;
+    groupPrevious7: string;
+    groupPrevious30: string;
+    groupOlder: string;
+    pendingReading: string;
+    failedReading: string;
   };
   premium: {
     headerTitle: string;
