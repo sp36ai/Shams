@@ -31,6 +31,8 @@ import type { DisplayWatchVerdict } from '../engine/rkp/watchJudgment';
 import { selectRemedyProtocol, type RemedyProtocol } from './remedySelection';
 import { selectSuggestedQuestions } from './suggestedQuestions';
 import type { Tradition } from './remedyLibrary';
+import { validateNarrationResponse } from './responseValidator';
+import { filterNarration } from './terminologyFilter';
 
 // Raised from 25s — Claude Opus 5 thinks by default, so synthesis is slower
 // than it was on the non-thinking Opus 4.1. askWatchOracle runs under
@@ -353,7 +355,7 @@ async function narrate(
       return null;
     }
 
-    return {
+    const drafted: NarrationFields = {
       rkp_finding: parsed.rkp_finding,
       interpretation: parsed.interpretation,
       recommended_approach: parsed.recommended_approach,
@@ -361,6 +363,30 @@ async function narrate(
       why_this_remedy: protocol.interventionRequired ? (parsed.why_this_remedy ?? null) : null,
       signature: parsed.signature,
     };
+
+    // ── Layer 1: Validation gate ────────────────────────────────────────────
+    const validation = validateNarrationResponse(drafted);
+    if (validation.severity === 'critical') {
+      logger.warn('watch oracle narration failed validation (critical issues)', {
+        issues: validation.issues,
+        narration: drafted,
+      });
+      // Return anyway (best-effort); diagnosis and protocol still stand
+    }
+
+    // ── Layer 2: Terminology safety filter ──────────────────────────────────
+    const filtered = filterNarration(drafted);
+
+    // ── Layer 3: Double-check after filtering ──────────────────────────────
+    const postFilterValidation = validateNarrationResponse(filtered);
+    if (postFilterValidation.issues.length > 0) {
+      logger.info('watch oracle narration cleaned by terminology filter', {
+        issuesRemoved: validation.issues.length - postFilterValidation.issues.length,
+        remainingIssues: postFilterValidation.issues,
+      });
+    }
+
+    return filtered;
   } catch (err) {
     logger.warn('watch oracle narration failed', { err: String(err) });
     return null;
