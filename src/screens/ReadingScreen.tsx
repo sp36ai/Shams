@@ -364,6 +364,7 @@ const ReadingScreen: React.FC = () => {
           readingId,
           message,
           lang,
+          compareReadingIds: current?.relatedReadingIds,
           turns: current === null ? [] : discussionTurnsFor(current, userMessageId),
           // Carried on the oracle message, so a retry — including one after
           // the app was killed — replays this answer rather than spending a
@@ -410,6 +411,7 @@ const ReadingScreen: React.FC = () => {
           requestId: newRequestId(),
           question: trimmed,
           questionLang: lang,
+          relatedReadingIds: route.params?.relatedReadingIds,
         });
       if (existing === null) {
         setThreadId(target.id);
@@ -467,7 +469,7 @@ const ReadingScreen: React.FC = () => {
         setSending(false);
       });
     },
-    [threadId, lang, createThread, restateQuestion, addMessage, runAsk, runDiscuss],
+    [threadId, lang, createThread, restateQuestion, addMessage, runAsk, runDiscuss, route],
   );
 
   const handleSend = useCallback(() => {
@@ -546,7 +548,19 @@ const ReadingScreen: React.FC = () => {
       if (userMsg === undefined) {
         return;
       }
-      navigation.push('Reading', { initialQuestion: userMsg.text });
+      // Carry this Reading forward as lineage: the new one can then be
+      // compared against it (and whatever it was itself descended from) in
+      // discussion — see ReadingThread.relatedReadingIds.
+      const lineage = [
+        ...(thread?.readingId !== null && thread?.readingId !== undefined
+          ? [thread.readingId]
+          : []),
+        ...(thread?.relatedReadingIds ?? []),
+      ].slice(0, 4);
+      navigation.push('Reading', {
+        initialQuestion: userMsg.text,
+        ...(lineage.length > 0 ? { relatedReadingIds: lineage } : {}),
+      });
     },
     [thread, navigation],
   );
@@ -609,9 +623,18 @@ const ReadingScreen: React.FC = () => {
         ttsStatus={tts.status}
         ttsActiveMessageId={tts.activeMessageId}
         onToggleSpeech={tts.toggle}
+        onSelectSuggestedQuestion={setInputText}
       />
     ),
-    [lang, handleRetry, handleAskAsNewReading, tts.status, tts.activeMessageId, tts.toggle],
+    [
+      lang,
+      handleRetry,
+      handleAskAsNewReading,
+      tts.status,
+      tts.activeMessageId,
+      tts.toggle,
+      setInputText,
+    ],
   );
 
   const shareable = thread !== null && canShare(thread);

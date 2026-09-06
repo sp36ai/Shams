@@ -46,6 +46,13 @@ export interface DiscussReadingInput {
   readingId: string;
   message: string;
   lang: 'en' | 'ur' | 'hi';
+  /**
+   * Other readings the seeker is comparing this one against — e.g. from a
+   * thread's `relatedReadingIds`. Capped server-side at 4; ownership of each
+   * is re-checked there too, and any that fails is dropped silently rather
+   * than failing the call. Omit when there's no lineage to offer.
+   */
+  compareReadingIds?: readonly string[];
   /** Recent transcript, oldest first. Capped server-side at 20 turns. */
   turns: DiscussionTurn[];
   /**
@@ -87,6 +94,9 @@ export async function discussReading(args: DiscussReadingInput): Promise<Discuss
       message: args.message,
       lang: args.lang,
       turns: args.turns.slice(-MAX_DISCUSSION_TURNS_SENT),
+      ...(args.compareReadingIds !== undefined && args.compareReadingIds.length > 0
+        ? { compareReadingIds: args.compareReadingIds }
+        : {}),
       ...(args.requestId !== undefined ? { requestId: args.requestId } : {}),
     }),
     DISCUSS_READING_TIMEOUT_MS,

@@ -236,6 +236,8 @@ export interface StringTable {
     separateQuestionNote: string;
     discussionUnavailable: string;
     discussionReadingGone: string;
+    /** Header over the suggested-follow-up-question chips. */
+    suggestedQuestionsLabel: string;
   };
   /** One Reading — its header, its actions, its states. */
   reading: {

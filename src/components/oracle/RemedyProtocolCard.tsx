@@ -284,6 +284,13 @@ const RemedyProtocolCard: React.FC<RemedyProtocolCardProps> = ({ composition }) 
           {narration.signature}
         </Text>
       )}
+
+      {/* ── Brand seal — fixed text, present even on a degraded reading ──── */}
+      {composition.brandSeal !== null && composition.brandSeal !== undefined && (
+        <Text style={[typography('caption'), styles.brandSeal, { color: colors.textFaint }]}>
+          {composition.brandSeal}
+        </Text>
+      )}
     </View>
   );
 };
@@ -563,6 +570,12 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
     fontSize: 12,
     letterSpacing: 0.1,
+  },
+  brandSeal: {
+    marginTop: 10,
+    textAlign: 'center',
+    fontSize: 11,
+    letterSpacing: 0.2,
   },
 });
 

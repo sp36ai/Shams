@@ -193,6 +193,19 @@ export interface AuditLogDoc {
   ipHash?: string; // SHA-256 hash prefix of caller IP, never raw IP
   userAgent?: string;
   durationMs?: number;
+  /**
+   * The reading this entry is about, when there is one — the single id a
+   * report or support ticket can be traced back to for the full computed
+   * result (diagnosis, protocol, narration all live under /readings/{id}).
+   * Deliberately not split into separate "response generation" / "remedy
+   * selection" ids: one reading is one computation, and readingId already
+   * names it completely.
+   */
+  readingId?: string;
+  /** Which build of the chart/judgment engine produced this — see ENGINE_VERSION. */
+  engineVersion?: string;
+  /** FNV-1a of the verdict object — detects the stored result silently changing underneath its own audit entry. Never a substitute for the full record, which is the reading document itself. */
+  resultHash?: string;
   ts: FirebaseFirestore.Timestamp;
 }
 

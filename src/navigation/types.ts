@@ -51,8 +51,15 @@ export type RootStackParamList = {
    *                       arrival (Home owns the composer that starts one).
    *   - neither           begins a new Reading with an empty composer.
    * The Reading itself is created on submit, never on arrival.
+   *
+   * `relatedReadingIds` carries lineage when this Reading is opened from
+   * another one (via "ask as new question") — the new thread can then be
+   * compared against them in discussion. Meaningless without
+   * `initialQuestion`; ignored when opening an existing thread.
    */
-  Reading: { threadId?: string; initialQuestion?: string } | undefined;
+  Reading:
+    | { threadId?: string; initialQuestion?: string; relatedReadingIds?: readonly string[] }
+    | undefined;
 };
 
 export type RootStackScreenProps<RouteName extends keyof RootStackParamList> =
