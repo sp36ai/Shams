@@ -21,6 +21,13 @@
  *
  * This file sits outside src/engine/, which is a generated mirror of
  * src/astrology/ and is pruned on every build.
+ *
+ * DEPLOYMENT NOTE:
+ * The mystical Shams al-Asrār narration voice is loaded from
+ * watchOracleSynthesisPrompt.ts (WATCH_ORACLE_SYNTHESIS_PROMPT constant).
+ * This orchestrates the response composition with Claude Opus 5 using the
+ * mystical manuscript register, proper confidence calibration, and full
+ * remedy protocol integration. Verify Cloud Functions redeploy.
  */
 
 import { ANTHROPIC_API_KEY } from '../config';
