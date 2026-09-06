@@ -26,15 +26,17 @@ const LangSchema = z.enum(['en', 'ur', 'hi']);
  * hyphenated and apostrophe'd ones across scripts, are unaffected.
  */
 function sanitizeName(raw: string): string {
-  return raw
-    .normalize('NFKC')
-    // Unicode "Cc" (control) category — covers newlines/tabs/C0/DEL without
-    // spelling out raw control bytes or \u-escaped ranges in the source.
-    .replace(/\p{Cc}/gu, '')
-    .replace(/[`"{}[\]<>\\|~^]/g, '')
-    .replace(/\s+/g, ' ')
-    .trim()
-    .slice(0, 100);
+  return (
+    raw
+      .normalize('NFKC')
+      // Unicode "Cc" (control) category — covers newlines/tabs/C0/DEL without
+      // spelling out raw control bytes or \u-escaped ranges in the source.
+      .replace(/\p{Cc}/gu, '')
+      .replace(/[`"{}[\]<>\\|~^]/g, '')
+      .replace(/\s+/g, ' ')
+      .trim()
+      .slice(0, 100)
+  );
 }
 
 const NameSchema = z
@@ -46,7 +48,6 @@ const NameSchema = z
   .pipe(z.string().min(1).max(100));
 
 // ── Function-specific schemas ────────────────────────────────────────────────
-
 
 /**
  * askWatchOracle input.
