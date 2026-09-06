@@ -54,6 +54,7 @@
     ]
   },
   "dependencies": {
+    "@react-native-community/blur": "^4.4.1",
     "@react-native-community/geolocation": "3.4.0",
     "@react-native-firebase/app": "19.3.0",
     "@react-native-firebase/app-check": "19.3.0",
