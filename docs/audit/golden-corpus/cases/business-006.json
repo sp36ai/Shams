@@ -1,0 +1,94 @@
+{
+  "id": "business-006",
+  "coverageLabel": "business",
+  "input": {
+    "question": "Is my business partner trustworthy?",
+    "utcInstant": "2026-08-15T06:31:00.000Z",
+    "utcOffsetMinutes": 300,
+    "latLon": "NOT APPLICABLE — watch-frame judgment does not consume location; see note above."
+  },
+  "derived": {
+    "localMoment": "2026-08-15T11:31:00+05:00",
+    "normalizedQuestionType": "marriage",
+    "chartFingerprint": "7bc3d76b496c3f0a89377632f50d65ffc8bc3ac0171405b48c565f0ebe1cd844"
+  },
+  "verdict": {
+    "qType": "marriage",
+    "targetHouse": 7,
+    "targetSignName": "Burj Hamal",
+    "targetRuler": "Mars",
+    "targetRulerName": "Mirrikh",
+    "fulfilmentHouse": 11,
+    "lagnaRuler": "Venus",
+    "rulerRelation": "Neutral",
+    "state": "BLOCKED",
+    "confidence": "VERY_HIGH",
+    "score": -8,
+    "obstruction": "Dhanab",
+    "reversal": "NONE",
+    "timing": {
+      "minDays": 45,
+      "maxDays": 90
+    },
+    "direction": "East",
+    "afflictedDirection": "East",
+    "controllerProfile": "Assertive",
+    "factors": [
+      "Mirrikh rules the 7th Ghar but is EnemySign in Jauza — it cannot deliver unaided.",
+      "Dhanab al-Tinnin casts its gaze on the 7th Ghar — friction on the matter.",
+      "Dhanab al-Tinnin weighs on the 11th Ghar — fulfilment itself is obstructed.",
+      "Ras al-Tinnin weighs on the 11th Ghar — fulfilment itself is obstructed."
+    ]
+  },
+  "diagnosis": {
+    "outcome": "UNFAVOURABLE",
+    "primaryPattern": "UNCERTAINTY",
+    "secondaryPatterns": [
+      "INSTABILITY",
+      "OBSTRUCTION",
+      "NEEDS_PATIENCE",
+      "EXTERNAL_OPPOSITION"
+    ],
+    "timingPosture": "WAIT",
+    "confidence": 0.95,
+    "interventionNeeded": true,
+    "obstructingAgent": "Dhanab",
+    "qType": "marriage",
+    "targetHouse": 7,
+    "supportingHouses": [
+      7,
+      11,
+      2
+    ],
+    "obstructingHouses": [
+      6,
+      8,
+      12
+    ],
+    "timing": {
+      "minDays": 45,
+      "maxDays": 90
+    },
+    "rationale": [
+      "Watch state BLOCKED reads as UNFAVOURABLE.",
+      "Obstruction by Dhanab indicates UNCERTAINTY + INSTABILITY.",
+      "An assertive party controls the matter while the chart denies it."
+    ]
+  },
+  "remedyProtocol": {
+    "interventionRequired": true,
+    "guidance": null,
+    "rationale": [
+      "Safety filter: escalated to Consider Relationship Counselling.",
+      "32 of 32 remedies eligible by tradition.",
+      "Selected 3 intervention(s) across 3 categor(ies)."
+    ],
+    "stepIds": [
+      "practical_counselling",
+      "astro_saturn_discipline",
+      "contemplative_silence",
+      "devotional_tahajjud"
+    ]
+  },
+  "narration": null
+}

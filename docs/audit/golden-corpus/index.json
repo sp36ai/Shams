@@ -1,0 +1,693 @@
+{
+  "generatedBy": "functions/scripts/generate-golden-corpus.ts",
+  "generatedAtNote": "Deterministic generator — rerun to regenerate; the file mtime is not meaningful, only diff-against-committed-output is.",
+  "engineVersionSource": "functions/src/engine (synced from src/astrology by sync-engine.mjs)",
+  "totalCases": 111,
+  "countsByCoverageLabel": {
+    "marriage": 8,
+    "business": 11,
+    "employment": 9,
+    "finance": 9,
+    "property": 7,
+    "travel": 7,
+    "education": 7,
+    "family": 7,
+    "disputes": 7,
+    "health": 2,
+    "spiritual": 3,
+    "lostitem": 2,
+    "general": 4,
+    "ambiguous": 3,
+    "multi-intent": 3,
+    "timing-sensitive": 18,
+    "relationship": 4
+  },
+  "cases": [
+    {
+      "id": "marriage-001",
+      "coverageLabel": "marriage",
+      "question": "Will I marry the person I love?",
+      "file": "cases/marriage-001.json"
+    },
+    {
+      "id": "marriage-002",
+      "coverageLabel": "marriage",
+      "question": "When will my marriage proposal be accepted?",
+      "file": "cases/marriage-002.json"
+    },
+    {
+      "id": "marriage-003",
+      "coverageLabel": "marriage",
+      "question": "Should I marry the person my family has chosen?",
+      "file": "cases/marriage-003.json"
+    },
+    {
+      "id": "marriage-004",
+      "coverageLabel": "marriage",
+      "question": "Will my engagement survive?",
+      "file": "cases/marriage-004.json"
+    },
+    {
+      "id": "marriage-005",
+      "coverageLabel": "marriage",
+      "question": "Is my spouse being faithful to me?",
+      "file": "cases/marriage-005.json"
+    },
+    {
+      "id": "marriage-006",
+      "coverageLabel": "marriage",
+      "question": "Will my divorce be finalised soon?",
+      "file": "cases/marriage-006.json"
+    },
+    {
+      "id": "marriage-007",
+      "coverageLabel": "marriage",
+      "question": "Should I reconcile with my ex-partner?",
+      "file": "cases/marriage-007.json"
+    },
+    {
+      "id": "marriage-008",
+      "coverageLabel": "marriage",
+      "question": "Will my in-laws accept me?",
+      "file": "cases/marriage-008.json"
+    },
+    {
+      "id": "business-001",
+      "coverageLabel": "business",
+      "question": "Will my new business succeed?",
+      "file": "cases/business-001.json"
+    },
+    {
+      "id": "business-002",
+      "coverageLabel": "business",
+      "question": "Should I take on a business partner?",
+      "file": "cases/business-002.json"
+    },
+    {
+      "id": "business-003",
+      "coverageLabel": "business",
+      "question": "Will my shop turn a profit this year?",
+      "file": "cases/business-003.json"
+    },
+    {
+      "id": "business-004",
+      "coverageLabel": "business",
+      "question": "Should I expand my business to a new city?",
+      "file": "cases/business-004.json"
+    },
+    {
+      "id": "business-005",
+      "coverageLabel": "business",
+      "question": "Will my startup get funded?",
+      "file": "cases/business-005.json"
+    },
+    {
+      "id": "business-006",
+      "coverageLabel": "business",
+      "question": "Is my business partner trustworthy?",
+      "file": "cases/business-006.json"
+    },
+    {
+      "id": "business-007",
+      "coverageLabel": "business",
+      "question": "Should I close my failing business?",
+      "file": "cases/business-007.json"
+    },
+    {
+      "id": "employment-001",
+      "coverageLabel": "employment",
+      "question": "Will I get the job I interviewed for?",
+      "file": "cases/employment-001.json"
+    },
+    {
+      "id": "employment-002",
+      "coverageLabel": "employment",
+      "question": "Should I resign from my current job?",
+      "file": "cases/employment-002.json"
+    },
+    {
+      "id": "employment-003",
+      "coverageLabel": "employment",
+      "question": "Will I get promoted this year?",
+      "file": "cases/employment-003.json"
+    },
+    {
+      "id": "employment-004",
+      "coverageLabel": "employment",
+      "question": "Is my job at risk of layoffs?",
+      "file": "cases/employment-004.json"
+    },
+    {
+      "id": "employment-005",
+      "coverageLabel": "employment",
+      "question": "Should I switch careers entirely?",
+      "file": "cases/employment-005.json"
+    },
+    {
+      "id": "employment-006",
+      "coverageLabel": "employment",
+      "question": "Will my visa sponsorship for this job be approved?",
+      "file": "cases/employment-006.json"
+    },
+    {
+      "id": "finance-001",
+      "coverageLabel": "finance",
+      "question": "Will I recover the money I lent?",
+      "file": "cases/finance-001.json"
+    },
+    {
+      "id": "finance-002",
+      "coverageLabel": "finance",
+      "question": "Should I invest my savings in this fund?",
+      "file": "cases/finance-002.json"
+    },
+    {
+      "id": "finance-003",
+      "coverageLabel": "finance",
+      "question": "Will I get out of debt this year?",
+      "file": "cases/finance-003.json"
+    },
+    {
+      "id": "finance-004",
+      "coverageLabel": "finance",
+      "question": "Will my loan application be approved?",
+      "file": "cases/finance-004.json"
+    },
+    {
+      "id": "finance-005",
+      "coverageLabel": "finance",
+      "question": "Is it safe to buy gold now?",
+      "file": "cases/finance-005.json"
+    },
+    {
+      "id": "finance-006",
+      "coverageLabel": "finance",
+      "question": "Will my inheritance dispute be resolved in my favour?",
+      "file": "cases/finance-006.json"
+    },
+    {
+      "id": "property-001",
+      "coverageLabel": "property",
+      "question": "Will I be able to buy this house?",
+      "file": "cases/property-001.json"
+    },
+    {
+      "id": "property-002",
+      "coverageLabel": "property",
+      "question": "Should I sell my land now or wait?",
+      "file": "cases/property-002.json"
+    },
+    {
+      "id": "property-003",
+      "coverageLabel": "property",
+      "question": "Will the property dispute with my neighbour end well?",
+      "file": "cases/property-003.json"
+    },
+    {
+      "id": "property-004",
+      "coverageLabel": "property",
+      "question": "Will my rental agreement be renewed?",
+      "file": "cases/property-004.json"
+    },
+    {
+      "id": "property-005",
+      "coverageLabel": "property",
+      "question": "Should I take a mortgage for this property?",
+      "file": "cases/property-005.json"
+    },
+    {
+      "id": "travel-001",
+      "coverageLabel": "travel",
+      "question": "Will my visa be approved for the trip?",
+      "file": "cases/travel-001.json"
+    },
+    {
+      "id": "travel-002",
+      "coverageLabel": "travel",
+      "question": "Should I travel abroad this month?",
+      "file": "cases/travel-002.json"
+    },
+    {
+      "id": "travel-003",
+      "coverageLabel": "travel",
+      "question": "Will my flight be delayed?",
+      "file": "cases/travel-003.json"
+    },
+    {
+      "id": "travel-004",
+      "coverageLabel": "travel",
+      "question": "Is it a good time to relocate to another country?",
+      "file": "cases/travel-004.json"
+    },
+    {
+      "id": "travel-005",
+      "coverageLabel": "travel",
+      "question": "Will my pilgrimage journey go smoothly?",
+      "file": "cases/travel-005.json"
+    },
+    {
+      "id": "education-001",
+      "coverageLabel": "education",
+      "question": "Will I pass my upcoming exam?",
+      "file": "cases/education-001.json"
+    },
+    {
+      "id": "education-002",
+      "coverageLabel": "education",
+      "question": "Will I get admission to this university?",
+      "file": "cases/education-002.json"
+    },
+    {
+      "id": "education-003",
+      "coverageLabel": "education",
+      "question": "Should I pursue a higher degree abroad?",
+      "file": "cases/education-003.json"
+    },
+    {
+      "id": "education-004",
+      "coverageLabel": "education",
+      "question": "Will I win the scholarship I applied for?",
+      "file": "cases/education-004.json"
+    },
+    {
+      "id": "education-005",
+      "coverageLabel": "education",
+      "question": "Should my child change schools?",
+      "file": "cases/education-005.json"
+    },
+    {
+      "id": "family-001",
+      "coverageLabel": "family",
+      "question": "Will I be blessed with a child soon?",
+      "file": "cases/family-001.json"
+    },
+    {
+      "id": "family-002",
+      "coverageLabel": "family",
+      "question": "Will my family conflict be resolved?",
+      "file": "cases/family-002.json"
+    },
+    {
+      "id": "family-003",
+      "coverageLabel": "family",
+      "question": "Is my son's health going to improve?",
+      "file": "cases/family-003.json"
+    },
+    {
+      "id": "family-004",
+      "coverageLabel": "family",
+      "question": "Will my parents reconcile?",
+      "file": "cases/family-004.json"
+    },
+    {
+      "id": "family-005",
+      "coverageLabel": "family",
+      "question": "Will my daughter's custody case go in my favour?",
+      "file": "cases/family-005.json"
+    },
+    {
+      "id": "disputes-001",
+      "coverageLabel": "disputes",
+      "question": "Will I win my court case?",
+      "file": "cases/disputes-001.json"
+    },
+    {
+      "id": "disputes-002",
+      "coverageLabel": "disputes",
+      "question": "Is my business rival trying to sabotage me?",
+      "file": "cases/disputes-002.json"
+    },
+    {
+      "id": "disputes-003",
+      "coverageLabel": "disputes",
+      "question": "Will the legal notice against me be withdrawn?",
+      "file": "cases/disputes-003.json"
+    },
+    {
+      "id": "disputes-004",
+      "coverageLabel": "disputes",
+      "question": "Should I settle out of court?",
+      "file": "cases/disputes-004.json"
+    },
+    {
+      "id": "disputes-005",
+      "coverageLabel": "disputes",
+      "question": "Does my colleague mean me harm?",
+      "file": "cases/disputes-005.json"
+    },
+    {
+      "id": "health-001",
+      "coverageLabel": "health",
+      "question": "Will my illness be cured soon?",
+      "file": "cases/health-001.json"
+    },
+    {
+      "id": "health-002",
+      "coverageLabel": "health",
+      "question": "Should I undergo the surgery my doctor recommends?",
+      "file": "cases/health-002.json"
+    },
+    {
+      "id": "spiritual-001",
+      "coverageLabel": "spiritual",
+      "question": "Am I under the effect of black magic?",
+      "file": "cases/spiritual-001.json"
+    },
+    {
+      "id": "spiritual-002",
+      "coverageLabel": "spiritual",
+      "question": "Will my dua for guidance be answered?",
+      "file": "cases/spiritual-002.json"
+    },
+    {
+      "id": "lostitem-001",
+      "coverageLabel": "lostitem",
+      "question": "Will I recover my lost ring?",
+      "file": "cases/lostitem-001.json"
+    },
+    {
+      "id": "general-001",
+      "coverageLabel": "general",
+      "question": "What does my future hold?",
+      "file": "cases/general-001.json"
+    },
+    {
+      "id": "general-002",
+      "coverageLabel": "general",
+      "question": "Is this a good time for me overall?",
+      "file": "cases/general-002.json"
+    },
+    {
+      "id": "ambiguous-001",
+      "coverageLabel": "ambiguous",
+      "question": "Will it work out?",
+      "file": "cases/ambiguous-001.json"
+    },
+    {
+      "id": "ambiguous-002",
+      "coverageLabel": "ambiguous",
+      "question": "Should I do it or not?",
+      "file": "cases/ambiguous-002.json"
+    },
+    {
+      "id": "ambiguous-003",
+      "coverageLabel": "ambiguous",
+      "question": "What should I do?",
+      "file": "cases/ambiguous-003.json"
+    },
+    {
+      "id": "multiintent-001",
+      "coverageLabel": "multi-intent",
+      "question": "Will I get the job and also be able to marry my partner this year?",
+      "file": "cases/multiintent-001.json"
+    },
+    {
+      "id": "multiintent-002",
+      "coverageLabel": "multi-intent",
+      "question": "Should I take the loan to start my business and move house at the same time?",
+      "file": "cases/multiintent-002.json"
+    },
+    {
+      "id": "multiintent-003",
+      "coverageLabel": "multi-intent",
+      "question": "Will my health improve and will I also win the court case?",
+      "file": "cases/multiintent-003.json"
+    },
+    {
+      "id": "timing-00",
+      "coverageLabel": "timing-sensitive",
+      "question": "Will I get the job I interviewed for?",
+      "file": "cases/timing-00.json"
+    },
+    {
+      "id": "timing-01",
+      "coverageLabel": "timing-sensitive",
+      "question": "Will I get the job I interviewed for?",
+      "file": "cases/timing-01.json"
+    },
+    {
+      "id": "timing-04",
+      "coverageLabel": "timing-sensitive",
+      "question": "Will I get the job I interviewed for?",
+      "file": "cases/timing-04.json"
+    },
+    {
+      "id": "timing-05",
+      "coverageLabel": "timing-sensitive",
+      "question": "Will I get the job I interviewed for?",
+      "file": "cases/timing-05.json"
+    },
+    {
+      "id": "timing-06",
+      "coverageLabel": "timing-sensitive",
+      "question": "Will I get the job I interviewed for?",
+      "file": "cases/timing-06.json"
+    },
+    {
+      "id": "timing-09",
+      "coverageLabel": "timing-sensitive",
+      "question": "Will I get the job I interviewed for?",
+      "file": "cases/timing-09.json"
+    },
+    {
+      "id": "timing-10",
+      "coverageLabel": "timing-sensitive",
+      "question": "Will I get the job I interviewed for?",
+      "file": "cases/timing-10.json"
+    },
+    {
+      "id": "timing-14",
+      "coverageLabel": "timing-sensitive",
+      "question": "Will I get the job I interviewed for?",
+      "file": "cases/timing-14.json"
+    },
+    {
+      "id": "timing-15",
+      "coverageLabel": "timing-sensitive",
+      "question": "Will I get the job I interviewed for?",
+      "file": "cases/timing-15.json"
+    },
+    {
+      "id": "timing-19",
+      "coverageLabel": "timing-sensitive",
+      "question": "Will I get the job I interviewed for?",
+      "file": "cases/timing-19.json"
+    },
+    {
+      "id": "timing-20",
+      "coverageLabel": "timing-sensitive",
+      "question": "Will I get the job I interviewed for?",
+      "file": "cases/timing-20.json"
+    },
+    {
+      "id": "timing-24",
+      "coverageLabel": "timing-sensitive",
+      "question": "Will I get the job I interviewed for?",
+      "file": "cases/timing-24.json"
+    },
+    {
+      "id": "timing-25",
+      "coverageLabel": "timing-sensitive",
+      "question": "Will I get the job I interviewed for?",
+      "file": "cases/timing-25.json"
+    },
+    {
+      "id": "timing-29",
+      "coverageLabel": "timing-sensitive",
+      "question": "Will I get the job I interviewed for?",
+      "file": "cases/timing-29.json"
+    },
+    {
+      "id": "timing-30",
+      "coverageLabel": "timing-sensitive",
+      "question": "Will I get the job I interviewed for?",
+      "file": "cases/timing-30.json"
+    },
+    {
+      "id": "timing-44",
+      "coverageLabel": "timing-sensitive",
+      "question": "Will I get the job I interviewed for?",
+      "file": "cases/timing-44.json"
+    },
+    {
+      "id": "timing-45",
+      "coverageLabel": "timing-sensitive",
+      "question": "Will I get the job I interviewed for?",
+      "file": "cases/timing-45.json"
+    },
+    {
+      "id": "timing-59",
+      "coverageLabel": "timing-sensitive",
+      "question": "Will I get the job I interviewed for?",
+      "file": "cases/timing-59.json"
+    },
+    {
+      "id": "pad-relationship-01",
+      "coverageLabel": "relationship",
+      "question": "Will my relationship with my partner last?",
+      "file": "cases/pad-relationship-01.json"
+    },
+    {
+      "id": "pad-relationship-02",
+      "coverageLabel": "relationship",
+      "question": "Should I trust my partner right now?",
+      "file": "cases/pad-relationship-02.json"
+    },
+    {
+      "id": "pad-relationship-03",
+      "coverageLabel": "relationship",
+      "question": "Will my long-distance relationship survive?",
+      "file": "cases/pad-relationship-03.json"
+    },
+    {
+      "id": "pad-relationship-04",
+      "coverageLabel": "relationship",
+      "question": "Will my ex come back to me?",
+      "file": "cases/pad-relationship-04.json"
+    },
+    {
+      "id": "pad-business-05",
+      "coverageLabel": "business",
+      "question": "Will my business deal close this week?",
+      "file": "cases/pad-business-05.json"
+    },
+    {
+      "id": "pad-business-06",
+      "coverageLabel": "business",
+      "question": "Should I sign the new business contract?",
+      "file": "cases/pad-business-06.json"
+    },
+    {
+      "id": "pad-business-07",
+      "coverageLabel": "business",
+      "question": "Will my e-commerce store take off?",
+      "file": "cases/pad-business-07.json"
+    },
+    {
+      "id": "pad-business-08",
+      "coverageLabel": "business",
+      "question": "Will I be able to hire the right staff for my business?",
+      "file": "cases/pad-business-08.json"
+    },
+    {
+      "id": "pad-employment-09",
+      "coverageLabel": "employment",
+      "question": "Will my transfer request at work be approved?",
+      "file": "cases/pad-employment-09.json"
+    },
+    {
+      "id": "pad-employment-10",
+      "coverageLabel": "employment",
+      "question": "Will I clear my job probation period?",
+      "file": "cases/pad-employment-10.json"
+    },
+    {
+      "id": "pad-employment-11",
+      "coverageLabel": "employment",
+      "question": "Should I ask for a raise this quarter?",
+      "file": "cases/pad-employment-11.json"
+    },
+    {
+      "id": "pad-finance-12",
+      "coverageLabel": "finance",
+      "question": "Will I be able to pay off my credit card debt?",
+      "file": "cases/pad-finance-12.json"
+    },
+    {
+      "id": "pad-finance-13",
+      "coverageLabel": "finance",
+      "question": "Will the stock I bought recover?",
+      "file": "cases/pad-finance-13.json"
+    },
+    {
+      "id": "pad-finance-14",
+      "coverageLabel": "finance",
+      "question": "Will my salary increase this year?",
+      "file": "cases/pad-finance-14.json"
+    },
+    {
+      "id": "pad-property-15",
+      "coverageLabel": "property",
+      "question": "Will construction on my new house finish on time?",
+      "file": "cases/pad-property-15.json"
+    },
+    {
+      "id": "pad-property-16",
+      "coverageLabel": "property",
+      "question": "Should I buy agricultural land this season?",
+      "file": "cases/pad-property-16.json"
+    },
+    {
+      "id": "pad-travel-17",
+      "coverageLabel": "travel",
+      "question": "Will my visa interview go well?",
+      "file": "cases/pad-travel-17.json"
+    },
+    {
+      "id": "pad-travel-18",
+      "coverageLabel": "travel",
+      "question": "Is it safe for me to travel by road tomorrow?",
+      "file": "cases/pad-travel-18.json"
+    },
+    {
+      "id": "pad-education-19",
+      "coverageLabel": "education",
+      "question": "Will I clear my entrance test this attempt?",
+      "file": "cases/pad-education-19.json"
+    },
+    {
+      "id": "pad-education-20",
+      "coverageLabel": "education",
+      "question": "Should I choose engineering or medicine?",
+      "file": "cases/pad-education-20.json"
+    },
+    {
+      "id": "pad-family-21",
+      "coverageLabel": "family",
+      "question": "Will my grandmother recover from her illness?",
+      "file": "cases/pad-family-21.json"
+    },
+    {
+      "id": "pad-family-22",
+      "coverageLabel": "family",
+      "question": "Will my brother and I reconcile?",
+      "file": "cases/pad-family-22.json"
+    },
+    {
+      "id": "pad-disputes-23",
+      "coverageLabel": "disputes",
+      "question": "Will my neighbour drop the complaint against me?",
+      "file": "cases/pad-disputes-23.json"
+    },
+    {
+      "id": "pad-disputes-24",
+      "coverageLabel": "disputes",
+      "question": "Should I file a police report about this matter?",
+      "file": "cases/pad-disputes-24.json"
+    },
+    {
+      "id": "pad-spiritual-25",
+      "coverageLabel": "spiritual",
+      "question": "Will I overcome the evil eye affecting me?",
+      "file": "cases/pad-spiritual-25.json"
+    },
+    {
+      "id": "pad-lostitem-26",
+      "coverageLabel": "lostitem",
+      "question": "Will my missing phone be found?",
+      "file": "cases/pad-lostitem-26.json"
+    },
+    {
+      "id": "pad-general-27",
+      "coverageLabel": "general",
+      "question": "Is now a favourable time to start something new?",
+      "file": "cases/pad-general-27.json"
+    },
+    {
+      "id": "pad-general-28",
+      "coverageLabel": "general",
+      "question": "Will things improve for me soon?",
+      "file": "cases/pad-general-28.json"
+    }
+  ]
+}

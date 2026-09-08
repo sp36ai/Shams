@@ -1,0 +1,95 @@
+{
+  "id": "education-002",
+  "coverageLabel": "education",
+  "input": {
+    "question": "Will I get admission to this university?",
+    "utcInstant": "2026-08-15T11:07:00.000Z",
+    "utcOffsetMinutes": 330,
+    "latLon": "NOT APPLICABLE — watch-frame judgment does not consume location; see note above."
+  },
+  "derived": {
+    "localMoment": "2026-08-15T16:37:00+05:30",
+    "normalizedQuestionType": "education",
+    "chartFingerprint": "a53c7fba0830e0000f50c73188286c7cdef7c0f1cd518ffefd116b52d8c336de"
+  },
+  "verdict": {
+    "qType": "education",
+    "targetHouse": 4,
+    "targetSignName": "Burj Dalw",
+    "targetRuler": "Saturn",
+    "targetRulerName": "Zuhal",
+    "fulfilmentHouse": 11,
+    "lagnaRuler": "Mars",
+    "rulerRelation": "Neutral",
+    "state": "BLOCKED",
+    "confidence": "VERY_HIGH",
+    "score": -6,
+    "obstruction": "Ras",
+    "reversal": "POSSIBLE",
+    "timing": {
+      "minDays": 135,
+      "maxDays": 225
+    },
+    "direction": "West",
+    "afflictedDirection": "West",
+    "controllerProfile": "Assertive",
+    "factors": [
+      "Ras al-Tinnin sits in the 4th Ghar — friction on the matter.",
+      "Dhanab al-Tinnin casts its gaze on the 4th Ghar — friction on the matter.",
+      "Zuhrah supports the 11th Ghar — the desire has room to materialise.",
+      "Mirrikh weighs on the 11th Ghar — fulfilment itself is obstructed.",
+      "Zuhal weighs on the 11th Ghar — fulfilment itself is obstructed.",
+      "Zuhal is retrograde — decisions already taken on this matter are liable to be reopened."
+    ]
+  },
+  "diagnosis": {
+    "outcome": "UNFAVOURABLE",
+    "primaryPattern": "UNCERTAINTY",
+    "secondaryPatterns": [
+      "ATTACHMENT",
+      "OBSTRUCTION",
+      "NEEDS_PATIENCE",
+      "INSTABILITY",
+      "EXTERNAL_OPPOSITION"
+    ],
+    "timingPosture": "WAIT",
+    "confidence": 0.95,
+    "interventionNeeded": true,
+    "obstructingAgent": "Ras",
+    "qType": "education",
+    "targetHouse": 4,
+    "supportingHouses": [
+      4,
+      9,
+      11
+    ],
+    "obstructingHouses": [
+      8,
+      12
+    ],
+    "timing": {
+      "minDays": 135,
+      "maxDays": 225
+    },
+    "rationale": [
+      "Watch state BLOCKED reads as UNFAVOURABLE.",
+      "A ruling planet is retrograde — reversal remains possible.",
+      "Obstruction by Ras indicates UNCERTAINTY + ATTACHMENT.",
+      "An assertive party controls the matter while the chart denies it."
+    ]
+  },
+  "remedyProtocol": {
+    "interventionRequired": true,
+    "guidance": null,
+    "rationale": [
+      "32 of 32 remedies eligible by tradition.",
+      "Selected 3 intervention(s) across 3 categor(ies)."
+    ],
+    "stepIds": [
+      "astro_saturn_discipline",
+      "contemplative_silence",
+      "devotional_tahajjud"
+    ]
+  },
+  "narration": null
+}

@@ -1,0 +1,90 @@
+{
+  "id": "finance-001",
+  "coverageLabel": "finance",
+  "input": {
+    "question": "Will I recover the money I lent?",
+    "utcInstant": "2026-08-15T08:00:00.000Z",
+    "utcOffsetMinutes": 0,
+    "latLon": "NOT APPLICABLE — watch-frame judgment does not consume location; see note above."
+  },
+  "derived": {
+    "localMoment": "2026-08-15T08:00:00+00:00",
+    "normalizedQuestionType": "finance",
+    "chartFingerprint": "deec7ea5d5f166ec2d12bb086f95520df9fdbfb4beba81ebd965c22234679e73"
+  },
+  "verdict": {
+    "qType": "finance",
+    "targetHouse": 2,
+    "targetSignName": "Burj Saur",
+    "targetRuler": "Venus",
+    "targetRulerName": "Zuhrah",
+    "fulfilmentHouse": 11,
+    "lagnaRuler": "Mars",
+    "rulerRelation": "Neutral",
+    "state": "BLOCKED",
+    "confidence": "VERY_HIGH",
+    "score": -7,
+    "obstruction": "Saturn",
+    "reversal": "NONE",
+    "timing": {
+      "minDays": 15,
+      "maxDays": 32
+    },
+    "direction": "South",
+    "afflictedDirection": "North",
+    "controllerProfile": "Receptive",
+    "factors": [
+      "Zuhrah rules the 2th Ghar but is Debilitated in Sunbula — it cannot deliver unaided.",
+      "Zuhal casts its gaze on the 2th Ghar — friction on the matter.",
+      "Ras al-Tinnin weighs on the 11th Ghar — fulfilment itself is obstructed.",
+      "Dhanab al-Tinnin weighs on the 11th Ghar — fulfilment itself is obstructed.",
+      "Zuhrah has landed in the 6th Ghar, a supporting house for this question."
+    ]
+  },
+  "diagnosis": {
+    "outcome": "UNFAVOURABLE",
+    "primaryPattern": "OBSTRUCTION",
+    "secondaryPatterns": [
+      "NEEDS_PATIENCE"
+    ],
+    "timingPosture": "WAIT",
+    "confidence": 0.95,
+    "interventionNeeded": true,
+    "obstructingAgent": "Saturn",
+    "qType": "finance",
+    "targetHouse": 2,
+    "supportingHouses": [
+      2,
+      6,
+      11
+    ],
+    "obstructingHouses": [
+      8,
+      12
+    ],
+    "timing": {
+      "minDays": 15,
+      "maxDays": 32
+    },
+    "rationale": [
+      "Watch state BLOCKED reads as UNFAVOURABLE.",
+      "Obstruction by Saturn indicates OBSTRUCTION + NEEDS_PATIENCE."
+    ]
+  },
+  "remedyProtocol": {
+    "interventionRequired": true,
+    "guidance": null,
+    "rationale": [
+      "Safety filter: escalated to Consult an Independent Financial Adviser.",
+      "32 of 32 remedies eligible by tradition.",
+      "Selected 3 intervention(s) across 3 categor(ies)."
+    ],
+    "stepIds": [
+      "practical_financial",
+      "astro_saturn_discipline",
+      "devotional_dua_ease",
+      "behavioral_defer_irreversible"
+    ]
+  },
+  "narration": null
+}

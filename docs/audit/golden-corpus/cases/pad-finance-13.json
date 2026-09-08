@@ -1,0 +1,97 @@
+{
+  "id": "pad-finance-13",
+  "coverageLabel": "finance",
+  "input": {
+    "question": "Will the stock I bought recover?",
+    "utcInstant": "2026-08-16T06:26:00.000Z",
+    "utcOffsetMinutes": 330,
+    "latLon": "NOT APPLICABLE — watch-frame judgment does not consume location; see note above."
+  },
+  "derived": {
+    "localMoment": "2026-08-16T11:56:00+05:30",
+    "normalizedQuestionType": "health",
+    "chartFingerprint": "f7db702777c345e6f4033b066054f8d0d843b0cef15df2150d2929233150e836"
+  },
+  "verdict": {
+    "qType": "health",
+    "targetHouse": 1,
+    "targetSignName": "Burj Hoot",
+    "targetRuler": "Jupiter",
+    "targetRulerName": "Mushtari",
+    "fulfilmentHouse": 11,
+    "lagnaRuler": "Jupiter",
+    "rulerRelation": "Friend",
+    "state": "FULFILLED",
+    "confidence": "HIGH",
+    "score": 7,
+    "obstruction": "Saturn",
+    "reversal": "NONE",
+    "timing": {
+      "minDays": 42,
+      "maxDays": 63
+    },
+    "direction": "North",
+    "afflictedDirection": "North",
+    "controllerProfile": "Receptive",
+    "factors": [
+      "Mushtari rules the 1th Ghar and is Exalted in Sartan — it holds real control of the matter.",
+      "Mushtari (your own ruler) counts Mushtari a friend — the matter is disposed to cooperate with you.",
+      "Zuhal sits in the 1th Ghar — friction on the matter.",
+      "Mushtari casts its gaze on the 1th Ghar — protection and expansion.",
+      "Zuhrah casts its gaze on the 1th Ghar — protection and expansion.",
+      "Mirrikh weighs on the 11th Ghar — fulfilment itself is obstructed.",
+      "Mushtari supports the 11th Ghar — the desire has room to materialise.",
+      "Mushtari has landed in the 5th Ghar, a supporting house for this question.",
+      "Benefic and malefic witnesses both fall on the matter — the reading carries genuine conflict."
+    ]
+  },
+  "diagnosis": {
+    "outcome": "CONDITIONAL",
+    "primaryPattern": "OBSTRUCTION",
+    "secondaryPatterns": [
+      "NEEDS_PATIENCE",
+      "UNCERTAINTY"
+    ],
+    "timingPosture": "WAIT_LONG",
+    "confidence": 0.8,
+    "interventionNeeded": true,
+    "obstructingAgent": "Saturn",
+    "qType": "health",
+    "targetHouse": 1,
+    "supportingHouses": [
+      1,
+      5,
+      11
+    ],
+    "obstructingHouses": [
+      6,
+      8,
+      12
+    ],
+    "timing": {
+      "minDays": 42,
+      "maxDays": 63
+    },
+    "rationale": [
+      "Watch state FULFILLED reads as FAVOURABLE.",
+      "Saturn obstructs an otherwise supported matter, making the outcome conditional.",
+      "Obstruction by Saturn indicates OBSTRUCTION + NEEDS_PATIENCE."
+    ]
+  },
+  "remedyProtocol": {
+    "interventionRequired": true,
+    "guidance": null,
+    "rationale": [
+      "Safety filter: escalated to Consult a Medical Professional.",
+      "32 of 32 remedies eligible by tradition.",
+      "Selected 3 intervention(s) across 3 categor(ies)."
+    ],
+    "stepIds": [
+      "practical_medical",
+      "astro_saturn_discipline",
+      "devotional_dua_ease",
+      "behavioral_second_opinion"
+    ]
+  },
+  "narration": null
+}

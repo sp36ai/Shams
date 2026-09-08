@@ -1,0 +1,94 @@
+{
+  "id": "finance-002",
+  "coverageLabel": "finance",
+  "input": {
+    "question": "Should I invest my savings in this fund?",
+    "utcInstant": "2026-08-15T08:07:00.000Z",
+    "utcOffsetMinutes": 0,
+    "latLon": "NOT APPLICABLE — watch-frame judgment does not consume location; see note above."
+  },
+  "derived": {
+    "localMoment": "2026-08-15T08:07:00+00:00",
+    "normalizedQuestionType": "finance",
+    "chartFingerprint": "86e628f36ecb9c977533236ec6540cfd87a495dbfbe314057d3e07489aa6ac43"
+  },
+  "verdict": {
+    "qType": "finance",
+    "targetHouse": 2,
+    "targetSignName": "Burj Jauza",
+    "targetRuler": "Mercury",
+    "targetRulerName": "Utarid",
+    "fulfilmentHouse": 11,
+    "lagnaRuler": "Venus",
+    "rulerRelation": "Friend",
+    "state": "DELAYED",
+    "confidence": "MODERATE",
+    "score": -3,
+    "obstruction": "Mars",
+    "reversal": "NONE",
+    "timing": {
+      "minDays": 11,
+      "maxDays": 21
+    },
+    "direction": "West",
+    "afflictedDirection": "West",
+    "controllerProfile": "Assertive",
+    "factors": [
+      "Utarid rules the 2th Ghar but is EnemySign in Sartan — it cannot deliver unaided.",
+      "Zuhrah (your own ruler) counts Utarid a friend — the matter is disposed to cooperate with you.",
+      "Mirrikh sits in the 2th Ghar — friction on the matter.",
+      "Ras al-Tinnin casts its gaze on the 2th Ghar — friction on the matter.",
+      "Zuhal weighs on the 11th Ghar — fulfilment itself is obstructed.",
+      "Mushtari supports the 11th Ghar — the desire has room to materialise.",
+      "Zuhrah supports the 11th Ghar — the desire has room to materialise.",
+      "Utarid is combust under Shams — the matter's own agent is obscured from view."
+    ]
+  },
+  "diagnosis": {
+    "outcome": "DELAYED",
+    "primaryPattern": "CONFLICT",
+    "secondaryPatterns": [
+      "HASTE",
+      "NEEDS_PATIENCE",
+      "POOR_TIMING",
+      "ATTACHMENT"
+    ],
+    "timingPosture": "WAIT",
+    "confidence": 0.6,
+    "interventionNeeded": true,
+    "obstructingAgent": "Mars",
+    "qType": "finance",
+    "targetHouse": 2,
+    "supportingHouses": [
+      2,
+      6,
+      11
+    ],
+    "obstructingHouses": [
+      8,
+      12
+    ],
+    "timing": {
+      "minDays": 11,
+      "maxDays": 21
+    },
+    "rationale": [
+      "Watch state DELAYED reads as DELAYED.",
+      "Obstruction by Mars indicates CONFLICT + HASTE."
+    ]
+  },
+  "remedyProtocol": {
+    "interventionRequired": true,
+    "guidance": null,
+    "rationale": [
+      "32 of 32 remedies eligible by tradition.",
+      "Selected 3 intervention(s) across 3 categor(ies)."
+    ],
+    "stepIds": [
+      "behavioral_defer_irreversible",
+      "contemplative_pause",
+      "devotional_quran_patience"
+    ]
+  },
+  "narration": null
+}

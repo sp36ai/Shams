@@ -1,0 +1,90 @@
+{
+  "id": "marriage-004",
+  "coverageLabel": "marriage",
+  "input": {
+    "question": "Will my engagement survive?",
+    "utcInstant": "2026-08-15T05:19:00.000Z",
+    "utcOffsetMinutes": 330,
+    "latLon": "NOT APPLICABLE — watch-frame judgment does not consume location; see note above."
+  },
+  "derived": {
+    "localMoment": "2026-08-15T10:49:00+05:30",
+    "normalizedQuestionType": "general",
+    "chartFingerprint": "a8afac7f86ec0caf58a8681a342be893bad3bdce8712cb9e21130777a6701b63"
+  },
+  "verdict": {
+    "qType": "general",
+    "targetHouse": 1,
+    "targetSignName": "Burj Jadi",
+    "targetRuler": "Saturn",
+    "targetRulerName": "Zuhal",
+    "fulfilmentHouse": 11,
+    "lagnaRuler": "Saturn",
+    "rulerRelation": "Friend",
+    "state": "REVERSING",
+    "confidence": "MODERATE",
+    "score": 4,
+    "obstruction": "Mars",
+    "reversal": "POSSIBLE",
+    "timing": {
+      "minDays": 135,
+      "maxDays": 225
+    },
+    "direction": "South",
+    "afflictedDirection": "West",
+    "controllerProfile": "Receptive",
+    "factors": [
+      "Zuhal (your own ruler) counts Zuhal a friend — the matter is disposed to cooperate with you.",
+      "Mirrikh casts its gaze on the 1th Ghar — friction on the matter.",
+      "Mushtari casts its gaze on the 1th Ghar — protection and expansion.",
+      "Mushtari supports the 11th Ghar — the desire has room to materialise.",
+      "Zuhal is retrograde — decisions already taken on this matter are liable to be reopened.",
+      "Benefic and malefic witnesses both fall on the matter — the reading carries genuine conflict."
+    ]
+  },
+  "diagnosis": {
+    "outcome": "DECLINING",
+    "primaryPattern": "CONFLICT",
+    "secondaryPatterns": [
+      "HASTE",
+      "INSTABILITY",
+      "NEEDS_DECISIVE_ACTION"
+    ],
+    "timingPosture": "WAIT_LONG",
+    "confidence": 0.6,
+    "interventionNeeded": true,
+    "obstructingAgent": "Mars",
+    "qType": "general",
+    "targetHouse": 1,
+    "supportingHouses": [
+      1,
+      11
+    ],
+    "obstructingHouses": [
+      8,
+      12
+    ],
+    "timing": {
+      "minDays": 135,
+      "maxDays": 225
+    },
+    "rationale": [
+      "Watch state REVERSING reads as DECLINING.",
+      "Obstruction by Mars indicates CONFLICT + HASTE."
+    ]
+  },
+  "remedyProtocol": {
+    "interventionRequired": true,
+    "guidance": null,
+    "rationale": [
+      "32 of 32 remedies eligible by tradition.",
+      "Selected 3 intervention(s) across 3 categor(ies)."
+    ],
+    "stepIds": [
+      "astro_mars_restraint",
+      "behavioral_direct_conversation",
+      "contemplative_silence"
+    ]
+  },
+  "narration": null
+}

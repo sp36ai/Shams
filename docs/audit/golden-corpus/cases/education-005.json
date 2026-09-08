@@ -1,0 +1,85 @@
+{
+  "id": "education-005",
+  "coverageLabel": "education",
+  "input": {
+    "question": "Should my child change schools?",
+    "utcInstant": "2026-08-15T11:25:00.000Z",
+    "utcOffsetMinutes": 330,
+    "latLon": "NOT APPLICABLE — watch-frame judgment does not consume location; see note above."
+  },
+  "derived": {
+    "localMoment": "2026-08-15T16:55:00+05:30",
+    "normalizedQuestionType": "children",
+    "chartFingerprint": "b647527ff4b6cb1d0ff85542d6ba8c0ce6c9202cd88798e7010d088635756bb2"
+  },
+  "verdict": {
+    "qType": "children",
+    "targetHouse": 5,
+    "targetSignName": "Burj Sartan",
+    "targetRuler": "Moon",
+    "targetRulerName": "Qamar",
+    "fulfilmentHouse": 11,
+    "lagnaRuler": "Jupiter",
+    "rulerRelation": "Friend",
+    "state": "MOVING",
+    "confidence": "HIGH",
+    "score": 4,
+    "obstruction": "None",
+    "reversal": "NONE",
+    "timing": {
+      "minDays": 3,
+      "maxDays": 7
+    },
+    "direction": "North",
+    "afflictedDirection": null,
+    "controllerProfile": "Receptive",
+    "factors": [
+      "Mushtari (your own ruler) counts Qamar a friend — the matter is disposed to cooperate with you.",
+      "Mushtari sits in the 5th Ghar — protection and expansion.",
+      "Mirrikh weighs on the 11th Ghar — fulfilment itself is obstructed.",
+      "Mushtari supports the 11th Ghar — the desire has room to materialise."
+    ]
+  },
+  "diagnosis": {
+    "outcome": "ESCALATING",
+    "primaryPattern": "NEEDS_DECISIVE_ACTION",
+    "secondaryPatterns": [],
+    "timingPosture": "ACT_SOON",
+    "confidence": 0.8,
+    "interventionNeeded": true,
+    "obstructingAgent": null,
+    "qType": "children",
+    "targetHouse": 5,
+    "supportingHouses": [
+      2,
+      5,
+      11
+    ],
+    "obstructingHouses": [
+      1,
+      4,
+      10
+    ],
+    "timing": {
+      "minDays": 3,
+      "maxDays": 7
+    },
+    "rationale": [
+      "Watch state MOVING reads as ESCALATING."
+    ]
+  },
+  "remedyProtocol": {
+    "interventionRequired": true,
+    "guidance": null,
+    "rationale": [
+      "32 of 32 remedies eligible by tradition.",
+      "Selected 3 intervention(s) across 3 categor(ies)."
+    ],
+    "stepIds": [
+      "astro_favourable_window",
+      "behavioral_commit",
+      "contemplative_decision_review"
+    ]
+  },
+  "narration": null
+}

@@ -1,0 +1,97 @@
+{
+  "id": "timing-20",
+  "coverageLabel": "timing-sensitive",
+  "input": {
+    "question": "Will I get the job I interviewed for?",
+    "utcInstant": "2026-08-15T16:20:00.000Z",
+    "utcOffsetMinutes": 330,
+    "latLon": "NOT APPLICABLE — watch-frame judgment does not consume location; see note above."
+  },
+  "derived": {
+    "localMoment": "2026-08-15T21:50:00+05:30",
+    "normalizedQuestionType": "career",
+    "chartFingerprint": "1fdbc12659cfaf07f245a9ba3243a8c0304f859329feb843046f1ffd633ad6ff"
+  },
+  "verdict": {
+    "qType": "career",
+    "targetHouse": 10,
+    "targetSignName": "Burj Aqrab",
+    "targetRuler": "Mars",
+    "targetRulerName": "Mirrikh",
+    "fulfilmentHouse": 11,
+    "lagnaRuler": "Saturn",
+    "rulerRelation": "Enemy",
+    "state": "BLOCKED",
+    "confidence": "HIGH",
+    "score": -9,
+    "obstruction": "MoonDisagreement",
+    "reversal": "POSSIBLE",
+    "timing": {
+      "minDays": 45,
+      "maxDays": 90
+    },
+    "direction": "North",
+    "afflictedDirection": null,
+    "controllerProfile": "Receptive",
+    "factors": [
+      "Mirrikh rules the 10th Ghar but is EnemySign in Jauza — it cannot deliver unaided.",
+      "Zuhal (your own ruler) counts Mirrikh an enemy — expect rigidity and refusal to adjust.",
+      "Mushtari casts its gaze on the 10th Ghar — protection and expansion.",
+      "Mirrikh weighs on the 11th Ghar — fulfilment itself is obstructed.",
+      "Zuhal weighs on the 11th Ghar — fulfilment itself is obstructed.",
+      "Dhanab al-Tinnin weighs on the 11th Ghar — fulfilment itself is obstructed.",
+      "Mirrikh has landed in the 5th Ghar, a denying house for this question.",
+      "Qamar occupies a denying Ghar for this question — the mind behind the question is not settled, which clouds the reading."
+    ]
+  },
+  "diagnosis": {
+    "outcome": "UNFAVOURABLE",
+    "primaryPattern": "UNCERTAINTY",
+    "secondaryPatterns": [
+      "OBSTRUCTION",
+      "NEEDS_PATIENCE",
+      "EXTERNAL_OPPOSITION",
+      "INSTABILITY"
+    ],
+    "timingPosture": "WAIT",
+    "confidence": 0.8,
+    "interventionNeeded": true,
+    "obstructingAgent": "MoonDisagreement",
+    "qType": "career",
+    "targetHouse": 10,
+    "supportingHouses": [
+      6,
+      10,
+      11
+    ],
+    "obstructingHouses": [
+      5,
+      8,
+      12
+    ],
+    "timing": {
+      "minDays": 45,
+      "maxDays": 90
+    },
+    "rationale": [
+      "Watch state BLOCKED reads as UNFAVOURABLE.",
+      "A ruling planet is retrograde — reversal remains possible.",
+      "Obstruction by MoonDisagreement indicates UNCERTAINTY.",
+      "The querent's ruler regards the ruler of the matter as an enemy."
+    ]
+  },
+  "remedyProtocol": {
+    "interventionRequired": true,
+    "guidance": null,
+    "rationale": [
+      "32 of 32 remedies eligible by tradition.",
+      "Selected 3 intervention(s) across 3 categor(ies)."
+    ],
+    "stepIds": [
+      "astro_saturn_discipline",
+      "contemplative_silence",
+      "devotional_tahajjud"
+    ]
+  },
+  "narration": null
+}

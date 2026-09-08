@@ -1,0 +1,95 @@
+{
+  "id": "employment-001",
+  "coverageLabel": "employment",
+  "input": {
+    "question": "Will I get the job I interviewed for?",
+    "utcInstant": "2026-08-15T07:00:00.000Z",
+    "utcOffsetMinutes": 240,
+    "latLon": "NOT APPLICABLE — watch-frame judgment does not consume location; see note above."
+  },
+  "derived": {
+    "localMoment": "2026-08-15T11:00:00+04:00",
+    "normalizedQuestionType": "career",
+    "chartFingerprint": "c7ebf16dd1af8382a43e9ab4a1e50f72798a706ec174e5d299f7500885b80df2"
+  },
+  "verdict": {
+    "qType": "career",
+    "targetHouse": 10,
+    "targetSignName": "Burj Jadi",
+    "targetRuler": "Saturn",
+    "targetRulerName": "Zuhal",
+    "fulfilmentHouse": 11,
+    "lagnaRuler": "Mars",
+    "rulerRelation": "Neutral",
+    "state": "BLOCKED",
+    "confidence": "MODERATE",
+    "score": -5,
+    "obstruction": "Mars",
+    "reversal": "POSSIBLE",
+    "timing": {
+      "minDays": 135,
+      "maxDays": 225
+    },
+    "direction": "South",
+    "afflictedDirection": "West",
+    "controllerProfile": "Receptive",
+    "factors": [
+      "Mirrikh casts its gaze on the 10th Ghar — friction on the matter.",
+      "Mushtari casts its gaze on the 10th Ghar — protection and expansion.",
+      "Ras al-Tinnin weighs on the 11th Ghar — fulfilment itself is obstructed.",
+      "Dhanab al-Tinnin weighs on the 11th Ghar — fulfilment itself is obstructed.",
+      "Zuhal has landed in the 12th Ghar, a denying house for this question.",
+      "Zuhal is retrograde — decisions already taken on this matter are liable to be reopened.",
+      "Benefic and malefic witnesses both fall on the matter — the reading carries genuine conflict."
+    ]
+  },
+  "diagnosis": {
+    "outcome": "UNFAVOURABLE",
+    "primaryPattern": "CONFLICT",
+    "secondaryPatterns": [
+      "HASTE",
+      "OBSTRUCTION",
+      "NEEDS_PATIENCE",
+      "INSTABILITY"
+    ],
+    "timingPosture": "WAIT",
+    "confidence": 0.6,
+    "interventionNeeded": true,
+    "obstructingAgent": "Mars",
+    "qType": "career",
+    "targetHouse": 10,
+    "supportingHouses": [
+      6,
+      10,
+      11
+    ],
+    "obstructingHouses": [
+      5,
+      8,
+      12
+    ],
+    "timing": {
+      "minDays": 135,
+      "maxDays": 225
+    },
+    "rationale": [
+      "Watch state BLOCKED reads as UNFAVOURABLE.",
+      "A ruling planet is retrograde — reversal remains possible.",
+      "Obstruction by Mars indicates CONFLICT + HASTE."
+    ]
+  },
+  "remedyProtocol": {
+    "interventionRequired": true,
+    "guidance": null,
+    "rationale": [
+      "32 of 32 remedies eligible by tradition.",
+      "Selected 3 intervention(s) across 3 categor(ies)."
+    ],
+    "stepIds": [
+      "astro_mars_restraint",
+      "devotional_istighfar",
+      "behavioral_defer_irreversible"
+    ]
+  },
+  "narration": null
+}

@@ -1,0 +1,85 @@
+{
+  "id": "property-002",
+  "coverageLabel": "property",
+  "input": {
+    "question": "Should I sell my land now or wait?",
+    "utcInstant": "2026-08-15T09:07:00.000Z",
+    "utcOffsetMinutes": -300,
+    "latLon": "NOT APPLICABLE — watch-frame judgment does not consume location; see note above."
+  },
+  "derived": {
+    "localMoment": "2026-08-15T04:07:00-05:00",
+    "normalizedQuestionType": "property",
+    "chartFingerprint": "069996c1d17df1f09d810feea3719f22f00496e03aa323fe275d8b2296f383ce"
+  },
+  "verdict": {
+    "qType": "property",
+    "targetHouse": 4,
+    "targetSignName": "Burj Asad",
+    "targetRuler": "Sun",
+    "targetRulerName": "Shams",
+    "fulfilmentHouse": 11,
+    "lagnaRuler": "Venus",
+    "rulerRelation": "Enemy",
+    "state": "UNFORMED",
+    "confidence": "HIGH",
+    "score": -4,
+    "obstruction": "Dhanab",
+    "reversal": "NONE",
+    "timing": null,
+    "direction": "East",
+    "afflictedDirection": "East",
+    "controllerProfile": "Assertive",
+    "factors": [
+      "Zuhrah (your own ruler) counts Shams an enemy — expect rigidity and refusal to adjust.",
+      "Dhanab al-Tinnin sits in the 4th Ghar — friction on the matter.",
+      "Ras al-Tinnin casts its gaze on the 4th Ghar — friction on the matter.",
+      "Zuhal weighs on the 11th Ghar — fulfilment itself is obstructed.",
+      "Mushtari supports the 11th Ghar — the desire has room to materialise.",
+      "Zuhrah supports the 11th Ghar — the desire has room to materialise."
+    ]
+  },
+  "diagnosis": {
+    "outcome": "UNCERTAIN",
+    "primaryPattern": "UNCERTAINTY",
+    "secondaryPatterns": [
+      "INSTABILITY",
+      "EXTERNAL_OPPOSITION"
+    ],
+    "timingPosture": "UNKNOWN",
+    "confidence": 0.8,
+    "interventionNeeded": true,
+    "obstructingAgent": "Dhanab",
+    "qType": "property",
+    "targetHouse": 4,
+    "supportingHouses": [
+      4,
+      11,
+      2
+    ],
+    "obstructingHouses": [
+      8,
+      12
+    ],
+    "timing": null,
+    "rationale": [
+      "Watch state UNFORMED reads as UNCERTAIN.",
+      "Obstruction by Dhanab indicates UNCERTAINTY + INSTABILITY.",
+      "The querent's ruler regards the ruler of the matter as an enemy."
+    ]
+  },
+  "remedyProtocol": {
+    "interventionRequired": true,
+    "guidance": null,
+    "rationale": [
+      "32 of 32 remedies eligible by tradition.",
+      "Selected 3 intervention(s) across 3 categor(ies)."
+    ],
+    "stepIds": [
+      "behavioral_written_terms",
+      "astro_node_clarification",
+      "contemplative_silence"
+    ]
+  },
+  "narration": null
+}

@@ -1,0 +1,84 @@
+{
+  "id": "timing-09",
+  "coverageLabel": "timing-sensitive",
+  "input": {
+    "question": "Will I get the job I interviewed for?",
+    "utcInstant": "2026-08-15T16:09:00.000Z",
+    "utcOffsetMinutes": 330,
+    "latLon": "NOT APPLICABLE — watch-frame judgment does not consume location; see note above."
+  },
+  "derived": {
+    "localMoment": "2026-08-15T21:39:00+05:30",
+    "normalizedQuestionType": "career",
+    "chartFingerprint": "2dec4b9b23a9828bc6897c7ed5dd52be83ded10018932c8210d325de6475ef14"
+  },
+  "verdict": {
+    "qType": "career",
+    "targetHouse": 10,
+    "targetSignName": "Burj Asad",
+    "targetRuler": "Sun",
+    "targetRulerName": "Shams",
+    "fulfilmentHouse": 11,
+    "lagnaRuler": "Mars",
+    "rulerRelation": "Friend",
+    "state": "UNFORMED",
+    "confidence": "HIGH",
+    "score": -4,
+    "obstruction": "Dhanab",
+    "reversal": "NONE",
+    "timing": null,
+    "direction": "East",
+    "afflictedDirection": "East",
+    "controllerProfile": "Assertive",
+    "factors": [
+      "Mirrikh (your own ruler) counts Shams a friend — the matter is disposed to cooperate with you.",
+      "Dhanab al-Tinnin sits in the 10th Ghar — friction on the matter.",
+      "Ras al-Tinnin casts its gaze on the 10th Ghar — friction on the matter.",
+      "Zuhrah supports the 11th Ghar — the desire has room to materialise.",
+      "Mirrikh weighs on the 11th Ghar — fulfilment itself is obstructed.",
+      "Zuhal weighs on the 11th Ghar — fulfilment itself is obstructed."
+    ]
+  },
+  "diagnosis": {
+    "outcome": "UNCERTAIN",
+    "primaryPattern": "UNCERTAINTY",
+    "secondaryPatterns": [
+      "INSTABILITY"
+    ],
+    "timingPosture": "UNKNOWN",
+    "confidence": 0.8,
+    "interventionNeeded": true,
+    "obstructingAgent": "Dhanab",
+    "qType": "career",
+    "targetHouse": 10,
+    "supportingHouses": [
+      6,
+      10,
+      11
+    ],
+    "obstructingHouses": [
+      5,
+      8,
+      12
+    ],
+    "timing": null,
+    "rationale": [
+      "Watch state UNFORMED reads as UNCERTAIN.",
+      "Obstruction by Dhanab indicates UNCERTAINTY + INSTABILITY."
+    ]
+  },
+  "remedyProtocol": {
+    "interventionRequired": true,
+    "guidance": null,
+    "rationale": [
+      "32 of 32 remedies eligible by tradition.",
+      "Selected 3 intervention(s) across 3 categor(ies)."
+    ],
+    "stepIds": [
+      "astro_node_clarification",
+      "devotional_dhikr_steadiness",
+      "behavioral_second_opinion"
+    ]
+  },
+  "narration": null
+}

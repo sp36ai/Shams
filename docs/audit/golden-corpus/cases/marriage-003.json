@@ -1,0 +1,98 @@
+{
+  "id": "marriage-003",
+  "coverageLabel": "marriage",
+  "input": {
+    "question": "Should I marry the person my family has chosen?",
+    "utcInstant": "2026-08-15T05:13:00.000Z",
+    "utcOffsetMinutes": 330,
+    "latLon": "NOT APPLICABLE — watch-frame judgment does not consume location; see note above."
+  },
+  "derived": {
+    "localMoment": "2026-08-15T10:43:00+05:30",
+    "normalizedQuestionType": "marriage",
+    "chartFingerprint": "6ca3b362c243fa06eeb8dcac69399f2055f548f8cc5f1aaee2b94a14b33f6342"
+  },
+  "verdict": {
+    "qType": "marriage",
+    "targetHouse": 7,
+    "targetSignName": "Burj Jauza",
+    "targetRuler": "Mercury",
+    "targetRulerName": "Utarid",
+    "fulfilmentHouse": 11,
+    "lagnaRuler": "Jupiter",
+    "rulerRelation": "Enemy",
+    "state": "BLOCKED",
+    "confidence": "VERY_HIGH",
+    "score": -12,
+    "obstruction": "Mars",
+    "reversal": "NONE",
+    "timing": {
+      "minDays": 11,
+      "maxDays": 21
+    },
+    "direction": "West",
+    "afflictedDirection": "West",
+    "controllerProfile": "Assertive",
+    "factors": [
+      "Utarid rules the 7th Ghar but is EnemySign in Sartan — it cannot deliver unaided.",
+      "Mushtari (your own ruler) counts Utarid an enemy — expect rigidity and refusal to adjust.",
+      "Mirrikh sits in the 7th Ghar — friction on the matter.",
+      "Ras al-Tinnin casts its gaze on the 7th Ghar — friction on the matter.",
+      "Ras al-Tinnin weighs on the 11th Ghar — fulfilment itself is obstructed.",
+      "Utarid has landed in the 8th Ghar, a denying house for this question.",
+      "Utarid is combust under Shams — the matter's own agent is obscured from view."
+    ]
+  },
+  "diagnosis": {
+    "outcome": "UNFAVOURABLE",
+    "primaryPattern": "CONFLICT",
+    "secondaryPatterns": [
+      "HASTE",
+      "OBSTRUCTION",
+      "NEEDS_PATIENCE",
+      "EXTERNAL_OPPOSITION"
+    ],
+    "timingPosture": "WAIT",
+    "confidence": 0.95,
+    "interventionNeeded": true,
+    "obstructingAgent": "Mars",
+    "qType": "marriage",
+    "targetHouse": 7,
+    "supportingHouses": [
+      7,
+      11,
+      2
+    ],
+    "obstructingHouses": [
+      6,
+      8,
+      12
+    ],
+    "timing": {
+      "minDays": 11,
+      "maxDays": 21
+    },
+    "rationale": [
+      "Watch state BLOCKED reads as UNFAVOURABLE.",
+      "Obstruction by Mars indicates CONFLICT + HASTE.",
+      "The querent's ruler regards the ruler of the matter as an enemy.",
+      "An assertive party controls the matter while the chart denies it."
+    ]
+  },
+  "remedyProtocol": {
+    "interventionRequired": true,
+    "guidance": null,
+    "rationale": [
+      "Safety filter: escalated to Consider Relationship Counselling.",
+      "32 of 32 remedies eligible by tradition.",
+      "Selected 3 intervention(s) across 3 categor(ies)."
+    ],
+    "stepIds": [
+      "practical_counselling",
+      "astro_mars_restraint",
+      "behavioral_direct_conversation",
+      "contemplative_silence"
+    ]
+  },
+  "narration": null
+}

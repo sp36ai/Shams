@@ -1,0 +1,97 @@
+{
+  "id": "marriage-005",
+  "coverageLabel": "marriage",
+  "input": {
+    "question": "Is my spouse being faithful to me?",
+    "utcInstant": "2026-08-15T05:25:00.000Z",
+    "utcOffsetMinutes": 330,
+    "latLon": "NOT APPLICABLE — watch-frame judgment does not consume location; see note above."
+  },
+  "derived": {
+    "localMoment": "2026-08-15T10:55:00+05:30",
+    "normalizedQuestionType": "marriage",
+    "chartFingerprint": "94d0a59ad2f95cf128af2326e164c926048231d6f7367d8b283fc23974011387"
+  },
+  "verdict": {
+    "qType": "marriage",
+    "targetHouse": 7,
+    "targetSignName": "Burj Sunbula",
+    "targetRuler": "Mercury",
+    "targetRulerName": "Utarid",
+    "fulfilmentHouse": 11,
+    "lagnaRuler": "Jupiter",
+    "rulerRelation": "Enemy",
+    "state": "BLOCKED",
+    "confidence": "HIGH",
+    "score": -7,
+    "obstruction": "Saturn",
+    "reversal": "NONE",
+    "timing": {
+      "minDays": 11,
+      "maxDays": 21
+    },
+    "direction": "South",
+    "afflictedDirection": "North",
+    "controllerProfile": "Receptive",
+    "factors": [
+      "Utarid rules the 7th Ghar but is EnemySign in Sartan — it cannot deliver unaided.",
+      "Mushtari (your own ruler) counts Utarid an enemy — expect rigidity and refusal to adjust.",
+      "Zuhrah sits in the 7th Ghar — protection and expansion.",
+      "Mirrikh casts its gaze on the 7th Ghar — friction on the matter.",
+      "Zuhal casts its gaze on the 7th Ghar — friction on the matter.",
+      "Mirrikh weighs on the 11th Ghar — fulfilment itself is obstructed.",
+      "Mushtari supports the 11th Ghar — the desire has room to materialise.",
+      "Utarid is combust under Shams — the matter's own agent is obscured from view.",
+      "Benefic and malefic witnesses both fall on the matter — the reading carries genuine conflict."
+    ]
+  },
+  "diagnosis": {
+    "outcome": "UNFAVOURABLE",
+    "primaryPattern": "OBSTRUCTION",
+    "secondaryPatterns": [
+      "NEEDS_PATIENCE",
+      "EXTERNAL_OPPOSITION"
+    ],
+    "timingPosture": "WAIT",
+    "confidence": 0.8,
+    "interventionNeeded": true,
+    "obstructingAgent": "Saturn",
+    "qType": "marriage",
+    "targetHouse": 7,
+    "supportingHouses": [
+      7,
+      11,
+      2
+    ],
+    "obstructingHouses": [
+      6,
+      8,
+      12
+    ],
+    "timing": {
+      "minDays": 11,
+      "maxDays": 21
+    },
+    "rationale": [
+      "Watch state BLOCKED reads as UNFAVOURABLE.",
+      "Obstruction by Saturn indicates OBSTRUCTION + NEEDS_PATIENCE.",
+      "The querent's ruler regards the ruler of the matter as an enemy."
+    ]
+  },
+  "remedyProtocol": {
+    "interventionRequired": true,
+    "guidance": null,
+    "rationale": [
+      "Safety filter: escalated to Consider Relationship Counselling.",
+      "32 of 32 remedies eligible by tradition.",
+      "Selected 3 intervention(s) across 3 categor(ies)."
+    ],
+    "stepIds": [
+      "practical_counselling",
+      "astro_saturn_discipline",
+      "devotional_tahajjud",
+      "behavioral_defer_irreversible"
+    ]
+  },
+  "narration": null
+}

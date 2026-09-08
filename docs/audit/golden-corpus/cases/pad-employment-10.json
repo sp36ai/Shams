@@ -1,0 +1,94 @@
+{
+  "id": "pad-employment-10",
+  "coverageLabel": "employment",
+  "input": {
+    "question": "Will I clear my job probation period?",
+    "utcInstant": "2026-08-16T15:05:00.000Z",
+    "utcOffsetMinutes": 0,
+    "latLon": "NOT APPLICABLE — watch-frame judgment does not consume location; see note above."
+  },
+  "derived": {
+    "localMoment": "2026-08-16T15:05:00+00:00",
+    "normalizedQuestionType": "career",
+    "chartFingerprint": "fe9133239f8dd3026f91b78030d2d4e269888b8a54cf53a0519448395bfd3bb1"
+  },
+  "verdict": {
+    "qType": "career",
+    "targetHouse": 10,
+    "targetSignName": "Burj Dalw",
+    "targetRuler": "Saturn",
+    "targetRulerName": "Zuhal",
+    "fulfilmentHouse": 11,
+    "lagnaRuler": "Venus",
+    "rulerRelation": "Friend",
+    "state": "REVERSING",
+    "confidence": "LOW",
+    "score": 1,
+    "obstruction": "Ras",
+    "reversal": "POSSIBLE",
+    "timing": {
+      "minDays": 135,
+      "maxDays": 225
+    },
+    "direction": "West",
+    "afflictedDirection": "West",
+    "controllerProfile": "Assertive",
+    "factors": [
+      "Zuhrah (your own ruler) counts Zuhal a friend — the matter is disposed to cooperate with you.",
+      "Ras al-Tinnin sits in the 10th Ghar — friction on the matter.",
+      "Dhanab al-Tinnin casts its gaze on the 10th Ghar — friction on the matter.",
+      "Zuhal weighs on the 11th Ghar — fulfilment itself is obstructed.",
+      "Mushtari supports the 11th Ghar — the desire has room to materialise.",
+      "Zuhrah supports the 11th Ghar — the desire has room to materialise.",
+      "Zuhal has landed in the 11th Ghar, a supporting house for this question.",
+      "Zuhal is retrograde — decisions already taken on this matter are liable to be reopened."
+    ]
+  },
+  "diagnosis": {
+    "outcome": "DECLINING",
+    "primaryPattern": "UNCERTAINTY",
+    "secondaryPatterns": [
+      "ATTACHMENT",
+      "INSTABILITY",
+      "NEEDS_DECISIVE_ACTION"
+    ],
+    "timingPosture": "WAIT_LONG",
+    "confidence": 0.4,
+    "interventionNeeded": true,
+    "obstructingAgent": "Ras",
+    "qType": "career",
+    "targetHouse": 10,
+    "supportingHouses": [
+      6,
+      10,
+      11
+    ],
+    "obstructingHouses": [
+      5,
+      8,
+      12
+    ],
+    "timing": {
+      "minDays": 135,
+      "maxDays": 225
+    },
+    "rationale": [
+      "Watch state REVERSING reads as DECLINING.",
+      "Obstruction by Ras indicates UNCERTAINTY + ATTACHMENT."
+    ]
+  },
+  "remedyProtocol": {
+    "interventionRequired": true,
+    "guidance": null,
+    "rationale": [
+      "32 of 32 remedies eligible by tradition.",
+      "Selected 3 intervention(s) across 3 categor(ies)."
+    ],
+    "stepIds": [
+      "astro_node_clarification",
+      "behavioral_second_opinion",
+      "devotional_dhikr_steadiness"
+    ]
+  },
+  "narration": null
+}

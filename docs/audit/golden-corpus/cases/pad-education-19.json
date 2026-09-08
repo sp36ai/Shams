@@ -1,0 +1,88 @@
+{
+  "id": "pad-education-19",
+  "coverageLabel": "education",
+  "input": {
+    "question": "Will I clear my entrance test this attempt?",
+    "utcInstant": "2026-08-16T12:08:00.000Z",
+    "utcOffsetMinutes": 330,
+    "latLon": "NOT APPLICABLE — watch-frame judgment does not consume location; see note above."
+  },
+  "derived": {
+    "localMoment": "2026-08-16T17:38:00+05:30",
+    "normalizedQuestionType": "general",
+    "chartFingerprint": "b9857a2b57d7958e8347ecac0e2e021f47f2850123011643d51d853ef9c3d149"
+  },
+  "verdict": {
+    "qType": "general",
+    "targetHouse": 1,
+    "targetSignName": "Burj Aqrab",
+    "targetRuler": "Mars",
+    "targetRulerName": "Mirrikh",
+    "fulfilmentHouse": 11,
+    "lagnaRuler": "Mars",
+    "rulerRelation": "Friend",
+    "state": "DELAYED",
+    "confidence": "LOW",
+    "score": -1,
+    "obstruction": "None",
+    "reversal": "NONE",
+    "timing": {
+      "minDays": 45,
+      "maxDays": 90
+    },
+    "direction": "North",
+    "afflictedDirection": null,
+    "controllerProfile": "Receptive",
+    "factors": [
+      "Mirrikh rules the 1th Ghar but is EnemySign in Jauza — it cannot deliver unaided.",
+      "Mirrikh (your own ruler) counts Mirrikh a friend — the matter is disposed to cooperate with you.",
+      "Mushtari casts its gaze on the 1th Ghar — protection and expansion.",
+      "Zuhrah supports the 11th Ghar — the desire has room to materialise.",
+      "Mirrikh weighs on the 11th Ghar — fulfilment itself is obstructed.",
+      "Zuhal weighs on the 11th Ghar — fulfilment itself is obstructed.",
+      "Mirrikh has landed in the 8th Ghar, a denying house for this question."
+    ]
+  },
+  "diagnosis": {
+    "outcome": "DELAYED",
+    "primaryPattern": "NEEDS_PATIENCE",
+    "secondaryPatterns": [
+      "POOR_TIMING"
+    ],
+    "timingPosture": "WAIT_LONG",
+    "confidence": 0.4,
+    "interventionNeeded": true,
+    "obstructingAgent": null,
+    "qType": "general",
+    "targetHouse": 1,
+    "supportingHouses": [
+      1,
+      11
+    ],
+    "obstructingHouses": [
+      8,
+      12
+    ],
+    "timing": {
+      "minDays": 45,
+      "maxDays": 90
+    },
+    "rationale": [
+      "Watch state DELAYED reads as DELAYED."
+    ]
+  },
+  "remedyProtocol": {
+    "interventionRequired": true,
+    "guidance": null,
+    "rationale": [
+      "32 of 32 remedies eligible by tradition.",
+      "Selected 3 intervention(s) across 3 categor(ies)."
+    ],
+    "stepIds": [
+      "behavioral_defer_irreversible",
+      "contemplative_pause",
+      "devotional_quran_patience"
+    ]
+  },
+  "narration": null
+}

@@ -1,0 +1,89 @@
+{
+  "id": "travel-001",
+  "coverageLabel": "travel",
+  "input": {
+    "question": "Will my visa be approved for the trip?",
+    "utcInstant": "2026-08-15T10:00:00.000Z",
+    "utcOffsetMinutes": 540,
+    "latLon": "NOT APPLICABLE — watch-frame judgment does not consume location; see note above."
+  },
+  "derived": {
+    "localMoment": "2026-08-15T19:00:00+09:00",
+    "normalizedQuestionType": "travel",
+    "chartFingerprint": "d8da662000c4cd78909c212ef52ec259e2bcbd3d29a00f49ce895ffe89f22fee"
+  },
+  "verdict": {
+    "qType": "travel",
+    "targetHouse": 9,
+    "targetSignName": "Burj Qaus",
+    "targetRuler": "Jupiter",
+    "targetRulerName": "Mushtari",
+    "fulfilmentHouse": 11,
+    "lagnaRuler": "Mars",
+    "rulerRelation": "Friend",
+    "state": "BLOCKED",
+    "confidence": "VERY_HIGH",
+    "score": -6,
+    "obstruction": "Saturn",
+    "reversal": "NONE",
+    "timing": {
+      "minDays": 42,
+      "maxDays": 63
+    },
+    "direction": "East",
+    "afflictedDirection": "North",
+    "controllerProfile": "Assertive",
+    "factors": [
+      "Mushtari rules the 9th Ghar and is Exalted in Sartan — it holds real control of the matter.",
+      "Mirrikh (your own ruler) counts Mushtari a friend — the matter is disposed to cooperate with you.",
+      "Mirrikh casts its gaze on the 9th Ghar — friction on the matter.",
+      "Zuhal casts its gaze on the 9th Ghar — friction on the matter.",
+      "Dhanab al-Tinnin casts its gaze on the 9th Ghar — friction on the matter.",
+      "Ras al-Tinnin weighs on the 11th Ghar — fulfilment itself is obstructed.",
+      "Dhanab al-Tinnin weighs on the 11th Ghar — fulfilment itself is obstructed."
+    ]
+  },
+  "diagnosis": {
+    "outcome": "UNFAVOURABLE",
+    "primaryPattern": "OBSTRUCTION",
+    "secondaryPatterns": [
+      "NEEDS_PATIENCE",
+      "EXTERNAL_OPPOSITION"
+    ],
+    "timingPosture": "WAIT",
+    "confidence": 0.95,
+    "interventionNeeded": true,
+    "obstructingAgent": "Saturn",
+    "qType": "travel",
+    "targetHouse": 9,
+    "supportingHouses": [
+      3,
+      9,
+      12
+    ],
+    "obstructingHouses": [],
+    "timing": {
+      "minDays": 42,
+      "maxDays": 63
+    },
+    "rationale": [
+      "Watch state BLOCKED reads as UNFAVOURABLE.",
+      "Obstruction by Saturn indicates OBSTRUCTION + NEEDS_PATIENCE.",
+      "An assertive party controls the matter while the chart denies it."
+    ]
+  },
+  "remedyProtocol": {
+    "interventionRequired": true,
+    "guidance": null,
+    "rationale": [
+      "32 of 32 remedies eligible by tradition.",
+      "Selected 3 intervention(s) across 3 categor(ies)."
+    ],
+    "stepIds": [
+      "astro_saturn_discipline",
+      "devotional_tahajjud",
+      "behavioral_defer_irreversible"
+    ]
+  },
+  "narration": null
+}

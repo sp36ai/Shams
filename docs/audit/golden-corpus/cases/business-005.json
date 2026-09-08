@@ -1,0 +1,93 @@
+{
+  "id": "business-005",
+  "coverageLabel": "business",
+  "input": {
+    "question": "Will my startup get funded?",
+    "utcInstant": "2026-08-15T06:25:00.000Z",
+    "utcOffsetMinutes": 300,
+    "latLon": "NOT APPLICABLE — watch-frame judgment does not consume location; see note above."
+  },
+  "derived": {
+    "localMoment": "2026-08-15T11:25:00+05:00",
+    "normalizedQuestionType": "business",
+    "chartFingerprint": "24e175f8bb5f57953d9d8889bcef16da2baae28ca26be9af24d1962c903ea85a"
+  },
+  "verdict": {
+    "qType": "business",
+    "targetHouse": 7,
+    "targetSignName": "Burj Hoot",
+    "targetRuler": "Jupiter",
+    "targetRulerName": "Mushtari",
+    "fulfilmentHouse": 11,
+    "lagnaRuler": "Mercury",
+    "rulerRelation": "Neutral",
+    "state": "FULFILLED",
+    "confidence": "HIGH",
+    "score": 7,
+    "obstruction": "Saturn",
+    "reversal": "NONE",
+    "timing": {
+      "minDays": 42,
+      "maxDays": 63
+    },
+    "direction": "North",
+    "afflictedDirection": "North",
+    "controllerProfile": "Receptive",
+    "factors": [
+      "Mushtari rules the 7th Ghar and is Exalted in Sartan — it holds real control of the matter.",
+      "Zuhal sits in the 7th Ghar — friction on the matter.",
+      "Mushtari casts its gaze on the 7th Ghar — protection and expansion.",
+      "Zuhrah casts its gaze on the 7th Ghar — protection and expansion.",
+      "Mushtari supports the 11th Ghar — the desire has room to materialise.",
+      "Mushtari has landed in the 11th Ghar, a supporting house for this question.",
+      "Benefic and malefic witnesses both fall on the matter — the reading carries genuine conflict."
+    ]
+  },
+  "diagnosis": {
+    "outcome": "CONDITIONAL",
+    "primaryPattern": "OBSTRUCTION",
+    "secondaryPatterns": [
+      "NEEDS_PATIENCE",
+      "UNCERTAINTY"
+    ],
+    "timingPosture": "WAIT_LONG",
+    "confidence": 0.8,
+    "interventionNeeded": true,
+    "obstructingAgent": "Saturn",
+    "qType": "business",
+    "targetHouse": 7,
+    "supportingHouses": [
+      7,
+      10,
+      11
+    ],
+    "obstructingHouses": [
+      6,
+      8,
+      12
+    ],
+    "timing": {
+      "minDays": 42,
+      "maxDays": 63
+    },
+    "rationale": [
+      "Watch state FULFILLED reads as FAVOURABLE.",
+      "Saturn obstructs an otherwise supported matter, making the outcome conditional.",
+      "Obstruction by Saturn indicates OBSTRUCTION + NEEDS_PATIENCE."
+    ]
+  },
+  "remedyProtocol": {
+    "interventionRequired": true,
+    "guidance": null,
+    "rationale": [
+      "32 of 32 remedies eligible by tradition.",
+      "Selected 3 intervention(s) across 3 categor(ies)."
+    ],
+    "stepIds": [
+      "astro_saturn_discipline",
+      "devotional_dua_ease",
+      "behavioral_second_opinion"
+    ]
+  },
+  "narration": null
+}

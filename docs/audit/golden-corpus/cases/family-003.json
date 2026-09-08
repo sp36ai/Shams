@@ -1,0 +1,96 @@
+{
+  "id": "family-003",
+  "coverageLabel": "family",
+  "input": {
+    "question": "Is my son's health going to improve?",
+    "utcInstant": "2026-08-15T12:13:00.000Z",
+    "utcOffsetMinutes": 300,
+    "latLon": "NOT APPLICABLE — watch-frame judgment does not consume location; see note above."
+  },
+  "derived": {
+    "localMoment": "2026-08-15T17:13:00+05:00",
+    "normalizedQuestionType": "health",
+    "chartFingerprint": "eca5898acb065f84800615d9b4320f47886b739ef88e11b9b24a277bc42fdb1f"
+  },
+  "verdict": {
+    "qType": "health",
+    "targetHouse": 1,
+    "targetSignName": "Burj Jauza",
+    "targetRuler": "Mercury",
+    "targetRulerName": "Utarid",
+    "fulfilmentHouse": 11,
+    "lagnaRuler": "Mercury",
+    "rulerRelation": "Friend",
+    "state": "BLOCKED",
+    "confidence": "VERY_HIGH",
+    "score": -7,
+    "obstruction": "Mars",
+    "reversal": "NONE",
+    "timing": {
+      "minDays": 11,
+      "maxDays": 21
+    },
+    "direction": "West",
+    "afflictedDirection": "West",
+    "controllerProfile": "Assertive",
+    "factors": [
+      "Utarid rules the 1th Ghar but is EnemySign in Sartan — it cannot deliver unaided.",
+      "Utarid (your own ruler) counts Utarid a friend — the matter is disposed to cooperate with you.",
+      "Mirrikh sits in the 1th Ghar — friction on the matter.",
+      "Ras al-Tinnin casts its gaze on the 1th Ghar — friction on the matter.",
+      "Dhanab al-Tinnin weighs on the 11th Ghar — fulfilment itself is obstructed.",
+      "Utarid is combust under Shams — the matter's own agent is obscured from view."
+    ]
+  },
+  "diagnosis": {
+    "outcome": "UNFAVOURABLE",
+    "primaryPattern": "CONFLICT",
+    "secondaryPatterns": [
+      "HASTE",
+      "OBSTRUCTION",
+      "NEEDS_PATIENCE",
+      "EXTERNAL_OPPOSITION"
+    ],
+    "timingPosture": "WAIT",
+    "confidence": 0.95,
+    "interventionNeeded": true,
+    "obstructingAgent": "Mars",
+    "qType": "health",
+    "targetHouse": 1,
+    "supportingHouses": [
+      1,
+      5,
+      11
+    ],
+    "obstructingHouses": [
+      6,
+      8,
+      12
+    ],
+    "timing": {
+      "minDays": 11,
+      "maxDays": 21
+    },
+    "rationale": [
+      "Watch state BLOCKED reads as UNFAVOURABLE.",
+      "Obstruction by Mars indicates CONFLICT + HASTE.",
+      "An assertive party controls the matter while the chart denies it."
+    ]
+  },
+  "remedyProtocol": {
+    "interventionRequired": true,
+    "guidance": null,
+    "rationale": [
+      "Safety filter: escalated to Consult a Medical Professional.",
+      "32 of 32 remedies eligible by tradition.",
+      "Selected 3 intervention(s) across 3 categor(ies)."
+    ],
+    "stepIds": [
+      "practical_medical",
+      "astro_mars_restraint",
+      "behavioral_direct_conversation",
+      "contemplative_silence"
+    ]
+  },
+  "narration": null
+}

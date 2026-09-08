@@ -1,0 +1,89 @@
+{
+  "id": "business-002",
+  "coverageLabel": "business",
+  "input": {
+    "question": "Should I take on a business partner?",
+    "utcInstant": "2026-08-15T06:07:00.000Z",
+    "utcOffsetMinutes": 300,
+    "latLon": "NOT APPLICABLE — watch-frame judgment does not consume location; see note above."
+  },
+  "derived": {
+    "localMoment": "2026-08-15T11:07:00+05:00",
+    "normalizedQuestionType": "marriage",
+    "chartFingerprint": "0cd81d2f8213ef066f1ded97f083b1a12fc5e4a05887db99b52068611d6815dc"
+  },
+  "verdict": {
+    "qType": "marriage",
+    "targetHouse": 7,
+    "targetSignName": "Burj Aqrab",
+    "targetRuler": "Mars",
+    "targetRulerName": "Mirrikh",
+    "fulfilmentHouse": 11,
+    "lagnaRuler": "Venus",
+    "rulerRelation": "Neutral",
+    "state": "DELAYED",
+    "confidence": "MODERATE",
+    "score": 3,
+    "obstruction": "None",
+    "reversal": "NONE",
+    "timing": {
+      "minDays": 45,
+      "maxDays": 90
+    },
+    "direction": "North",
+    "afflictedDirection": null,
+    "controllerProfile": "Receptive",
+    "factors": [
+      "Mirrikh rules the 7th Ghar but is EnemySign in Jauza — it cannot deliver unaided.",
+      "Mushtari casts its gaze on the 7th Ghar — protection and expansion.",
+      "Zuhal weighs on the 11th Ghar — fulfilment itself is obstructed.",
+      "Mushtari supports the 11th Ghar — the desire has room to materialise.",
+      "Zuhrah supports the 11th Ghar — the desire has room to materialise.",
+      "Mirrikh has landed in the 2th Ghar, a supporting house for this question."
+    ]
+  },
+  "diagnosis": {
+    "outcome": "DELAYED",
+    "primaryPattern": "NEEDS_PATIENCE",
+    "secondaryPatterns": [
+      "POOR_TIMING"
+    ],
+    "timingPosture": "WAIT_LONG",
+    "confidence": 0.6,
+    "interventionNeeded": true,
+    "obstructingAgent": null,
+    "qType": "marriage",
+    "targetHouse": 7,
+    "supportingHouses": [
+      7,
+      11,
+      2
+    ],
+    "obstructingHouses": [
+      6,
+      8,
+      12
+    ],
+    "timing": {
+      "minDays": 45,
+      "maxDays": 90
+    },
+    "rationale": [
+      "Watch state DELAYED reads as DELAYED."
+    ]
+  },
+  "remedyProtocol": {
+    "interventionRequired": true,
+    "guidance": null,
+    "rationale": [
+      "32 of 32 remedies eligible by tradition.",
+      "Selected 3 intervention(s) across 3 categor(ies)."
+    ],
+    "stepIds": [
+      "behavioral_defer_irreversible",
+      "contemplative_pause",
+      "devotional_quran_patience"
+    ]
+  },
+  "narration": null
+}

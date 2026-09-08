@@ -1,0 +1,93 @@
+{
+  "id": "property-003",
+  "coverageLabel": "property",
+  "input": {
+    "question": "Will the property dispute with my neighbour end well?",
+    "utcInstant": "2026-08-15T09:13:00.000Z",
+    "utcOffsetMinutes": -300,
+    "latLon": "NOT APPLICABLE — watch-frame judgment does not consume location; see note above."
+  },
+  "derived": {
+    "localMoment": "2026-08-15T04:13:00-05:00",
+    "normalizedQuestionType": "property",
+    "chartFingerprint": "c3d39584eabd91dc853ca5d2796ecc9475f6dfce632c62381775c6409a2957c5"
+  },
+  "verdict": {
+    "qType": "property",
+    "targetHouse": 4,
+    "targetSignName": "Burj Sunbula",
+    "targetRuler": "Mercury",
+    "targetRulerName": "Utarid",
+    "fulfilmentHouse": 11,
+    "lagnaRuler": "Mercury",
+    "rulerRelation": "Friend",
+    "state": "DELAYED",
+    "confidence": "MODERATE",
+    "score": -4,
+    "obstruction": "Saturn",
+    "reversal": "NONE",
+    "timing": {
+      "minDays": 11,
+      "maxDays": 21
+    },
+    "direction": "South",
+    "afflictedDirection": "North",
+    "controllerProfile": "Receptive",
+    "factors": [
+      "Utarid rules the 4th Ghar but is EnemySign in Sartan — it cannot deliver unaided.",
+      "Utarid (your own ruler) counts Utarid a friend — the matter is disposed to cooperate with you.",
+      "Zuhrah sits in the 4th Ghar — protection and expansion.",
+      "Mirrikh casts its gaze on the 4th Ghar — friction on the matter.",
+      "Zuhal casts its gaze on the 4th Ghar — friction on the matter.",
+      "Dhanab al-Tinnin weighs on the 11th Ghar — fulfilment itself is obstructed.",
+      "Utarid has landed in the 2th Ghar, a supporting house for this question.",
+      "Utarid is combust under Shams — the matter's own agent is obscured from view.",
+      "Benefic and malefic witnesses both fall on the matter — the reading carries genuine conflict."
+    ]
+  },
+  "diagnosis": {
+    "outcome": "DELAYED",
+    "primaryPattern": "OBSTRUCTION",
+    "secondaryPatterns": [
+      "NEEDS_PATIENCE",
+      "POOR_TIMING"
+    ],
+    "timingPosture": "WAIT",
+    "confidence": 0.6,
+    "interventionNeeded": true,
+    "obstructingAgent": "Saturn",
+    "qType": "property",
+    "targetHouse": 4,
+    "supportingHouses": [
+      4,
+      11,
+      2
+    ],
+    "obstructingHouses": [
+      8,
+      12
+    ],
+    "timing": {
+      "minDays": 11,
+      "maxDays": 21
+    },
+    "rationale": [
+      "Watch state DELAYED reads as DELAYED.",
+      "Obstruction by Saturn indicates OBSTRUCTION + NEEDS_PATIENCE."
+    ]
+  },
+  "remedyProtocol": {
+    "interventionRequired": true,
+    "guidance": null,
+    "rationale": [
+      "32 of 32 remedies eligible by tradition.",
+      "Selected 3 intervention(s) across 3 categor(ies)."
+    ],
+    "stepIds": [
+      "astro_saturn_discipline",
+      "devotional_dua_ease",
+      "behavioral_defer_irreversible"
+    ]
+  },
+  "narration": null
+}

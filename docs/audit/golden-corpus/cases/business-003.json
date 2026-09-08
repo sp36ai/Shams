@@ -1,0 +1,80 @@
+{
+  "id": "business-003",
+  "coverageLabel": "business",
+  "input": {
+    "question": "Will my shop turn a profit this year?",
+    "utcInstant": "2026-08-15T06:13:00.000Z",
+    "utcOffsetMinutes": 300,
+    "latLon": "NOT APPLICABLE — watch-frame judgment does not consume location; see note above."
+  },
+  "derived": {
+    "localMoment": "2026-08-15T11:13:00+05:00",
+    "normalizedQuestionType": "finance",
+    "chartFingerprint": "cb4d0c8c8b818c9215d9acb7c1c7c8e1bfc2732865348b2e1da99d9530c79e62"
+  },
+  "verdict": {
+    "qType": "finance",
+    "targetHouse": 2,
+    "targetSignName": "Burj Sartan",
+    "targetRuler": "Moon",
+    "targetRulerName": "Qamar",
+    "fulfilmentHouse": 11,
+    "lagnaRuler": "Mercury",
+    "rulerRelation": "Enemy",
+    "state": "UNFORMED",
+    "confidence": "MODERATE",
+    "score": -2,
+    "obstruction": "None",
+    "reversal": "NONE",
+    "timing": null,
+    "direction": "North",
+    "afflictedDirection": null,
+    "controllerProfile": "Receptive",
+    "factors": [
+      "Utarid (your own ruler) counts Qamar an enemy — expect rigidity and refusal to adjust.",
+      "Mushtari sits in the 2th Ghar — protection and expansion.",
+      "Dhanab al-Tinnin weighs on the 11th Ghar — fulfilment itself is obstructed."
+    ]
+  },
+  "diagnosis": {
+    "outcome": "UNCERTAIN",
+    "primaryPattern": "UNCERTAINTY",
+    "secondaryPatterns": [
+      "EXTERNAL_OPPOSITION"
+    ],
+    "timingPosture": "UNKNOWN",
+    "confidence": 0.6,
+    "interventionNeeded": true,
+    "obstructingAgent": null,
+    "qType": "finance",
+    "targetHouse": 2,
+    "supportingHouses": [
+      2,
+      6,
+      11
+    ],
+    "obstructingHouses": [
+      8,
+      12
+    ],
+    "timing": null,
+    "rationale": [
+      "Watch state UNFORMED reads as UNCERTAIN.",
+      "The querent's ruler regards the ruler of the matter as an enemy."
+    ]
+  },
+  "remedyProtocol": {
+    "interventionRequired": true,
+    "guidance": null,
+    "rationale": [
+      "32 of 32 remedies eligible by tradition.",
+      "Selected 3 intervention(s) across 3 categor(ies)."
+    ],
+    "stepIds": [
+      "behavioral_written_terms",
+      "contemplative_silence",
+      "astro_node_clarification"
+    ]
+  },
+  "narration": null
+}

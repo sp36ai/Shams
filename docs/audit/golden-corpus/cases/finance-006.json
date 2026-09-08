@@ -1,0 +1,92 @@
+{
+  "id": "finance-006",
+  "coverageLabel": "finance",
+  "input": {
+    "question": "Will my inheritance dispute be resolved in my favour?",
+    "utcInstant": "2026-08-15T08:31:00.000Z",
+    "utcOffsetMinutes": 0,
+    "latLon": "NOT APPLICABLE — watch-frame judgment does not consume location; see note above."
+  },
+  "derived": {
+    "localMoment": "2026-08-15T08:31:00+00:00",
+    "normalizedQuestionType": "legal",
+    "chartFingerprint": "ae78715c8fb03a2e93d90419eb5f4266d1ff655fba03e7a2cdb7cda4774c430e"
+  },
+  "verdict": {
+    "qType": "legal",
+    "targetHouse": 6,
+    "targetSignName": "Burj Hoot",
+    "targetRuler": "Jupiter",
+    "targetRulerName": "Mushtari",
+    "fulfilmentHouse": 11,
+    "lagnaRuler": "Venus",
+    "rulerRelation": "Neutral",
+    "state": "DELAYED",
+    "confidence": "UNCERTAIN",
+    "score": 0,
+    "obstruction": "Saturn",
+    "reversal": "NONE",
+    "timing": {
+      "minDays": 42,
+      "maxDays": 63
+    },
+    "direction": "North",
+    "afflictedDirection": "North",
+    "controllerProfile": "Receptive",
+    "factors": [
+      "Mushtari rules the 6th Ghar and is Exalted in Sartan — it holds real control of the matter.",
+      "Zuhal sits in the 6th Ghar — friction on the matter.",
+      "Mushtari casts its gaze on the 6th Ghar — protection and expansion.",
+      "Zuhrah casts its gaze on the 6th Ghar — protection and expansion.",
+      "Dhanab al-Tinnin weighs on the 11th Ghar — fulfilment itself is obstructed.",
+      "Ras al-Tinnin weighs on the 11th Ghar — fulfilment itself is obstructed.",
+      "Benefic and malefic witnesses both fall on the matter — the reading carries genuine conflict."
+    ]
+  },
+  "diagnosis": {
+    "outcome": "DELAYED",
+    "primaryPattern": "OBSTRUCTION",
+    "secondaryPatterns": [
+      "NEEDS_PATIENCE",
+      "POOR_TIMING"
+    ],
+    "timingPosture": "WAIT_LONG",
+    "confidence": 0.2,
+    "interventionNeeded": true,
+    "obstructingAgent": "Saturn",
+    "qType": "legal",
+    "targetHouse": 6,
+    "supportingHouses": [
+      6,
+      11
+    ],
+    "obstructingHouses": [
+      8,
+      12
+    ],
+    "timing": {
+      "minDays": 42,
+      "maxDays": 63
+    },
+    "rationale": [
+      "Watch state DELAYED reads as DELAYED.",
+      "Obstruction by Saturn indicates OBSTRUCTION + NEEDS_PATIENCE."
+    ]
+  },
+  "remedyProtocol": {
+    "interventionRequired": true,
+    "guidance": null,
+    "rationale": [
+      "Safety filter: escalated to Consult a Qualified Lawyer.",
+      "32 of 32 remedies eligible by tradition.",
+      "Selected 3 intervention(s) across 3 categor(ies)."
+    ],
+    "stepIds": [
+      "practical_legal",
+      "astro_saturn_discipline",
+      "devotional_dua_ease",
+      "behavioral_defer_irreversible"
+    ]
+  },
+  "narration": null
+}

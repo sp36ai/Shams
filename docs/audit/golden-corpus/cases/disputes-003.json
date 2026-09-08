@@ -1,0 +1,86 @@
+{
+  "id": "disputes-003",
+  "coverageLabel": "disputes",
+  "input": {
+    "question": "Will the legal notice against me be withdrawn?",
+    "utcInstant": "2026-08-15T13:13:00.000Z",
+    "utcOffsetMinutes": 240,
+    "latLon": "NOT APPLICABLE — watch-frame judgment does not consume location; see note above."
+  },
+  "derived": {
+    "localMoment": "2026-08-15T17:13:00+04:00",
+    "normalizedQuestionType": "legal",
+    "chartFingerprint": "dca2c4e1410c2b377b4fb5669d54ac3c2bb80bb02a99886e8b9053a44bf8cbd3"
+  },
+  "verdict": {
+    "qType": "legal",
+    "targetHouse": 6,
+    "targetSignName": "Burj Aqrab",
+    "targetRuler": "Mars",
+    "targetRulerName": "Mirrikh",
+    "fulfilmentHouse": 11,
+    "lagnaRuler": "Mercury",
+    "rulerRelation": "Neutral",
+    "state": "DELAYED",
+    "confidence": "MODERATE",
+    "score": -2,
+    "obstruction": "None",
+    "reversal": "NONE",
+    "timing": {
+      "minDays": 45,
+      "maxDays": 90
+    },
+    "direction": "North",
+    "afflictedDirection": null,
+    "controllerProfile": "Receptive",
+    "factors": [
+      "Mirrikh rules the 6th Ghar but is EnemySign in Jauza — it cannot deliver unaided.",
+      "Mushtari casts its gaze on the 6th Ghar — protection and expansion.",
+      "Dhanab al-Tinnin weighs on the 11th Ghar — fulfilment itself is obstructed."
+    ]
+  },
+  "diagnosis": {
+    "outcome": "DELAYED",
+    "primaryPattern": "NEEDS_PATIENCE",
+    "secondaryPatterns": [
+      "POOR_TIMING"
+    ],
+    "timingPosture": "WAIT_LONG",
+    "confidence": 0.6,
+    "interventionNeeded": true,
+    "obstructingAgent": null,
+    "qType": "legal",
+    "targetHouse": 6,
+    "supportingHouses": [
+      6,
+      11
+    ],
+    "obstructingHouses": [
+      8,
+      12
+    ],
+    "timing": {
+      "minDays": 45,
+      "maxDays": 90
+    },
+    "rationale": [
+      "Watch state DELAYED reads as DELAYED."
+    ]
+  },
+  "remedyProtocol": {
+    "interventionRequired": true,
+    "guidance": null,
+    "rationale": [
+      "Safety filter: escalated to Consult a Qualified Lawyer.",
+      "32 of 32 remedies eligible by tradition.",
+      "Selected 3 intervention(s) across 3 categor(ies)."
+    ],
+    "stepIds": [
+      "practical_legal",
+      "behavioral_defer_irreversible",
+      "contemplative_pause",
+      "devotional_quran_patience"
+    ]
+  },
+  "narration": null
+}

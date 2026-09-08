@@ -1,0 +1,99 @@
+{
+  "id": "pad-business-08",
+  "coverageLabel": "business",
+  "input": {
+    "question": "Will I be able to hire the right staff for my business?",
+    "utcInstant": "2026-08-16T13:51:00.000Z",
+    "utcOffsetMinutes": 300,
+    "latLon": "NOT APPLICABLE — watch-frame judgment does not consume location; see note above."
+  },
+  "derived": {
+    "localMoment": "2026-08-16T18:51:00+05:00",
+    "normalizedQuestionType": "business",
+    "chartFingerprint": "0bb8db1b3c982c8ae8286d0fa77b10dea2d39651726a67781eb027c0e325c4d7"
+  },
+  "verdict": {
+    "qType": "business",
+    "targetHouse": 7,
+    "targetSignName": "Burj Asad",
+    "targetRuler": "Sun",
+    "targetRulerName": "Shams",
+    "fulfilmentHouse": 11,
+    "lagnaRuler": "Saturn",
+    "rulerRelation": "Enemy",
+    "state": "BLOCKED",
+    "confidence": "VERY_HIGH",
+    "score": -13,
+    "obstruction": "Dhanab",
+    "reversal": "POSSIBLE",
+    "timing": {
+      "minDays": 14,
+      "maxDays": 30
+    },
+    "direction": "East",
+    "afflictedDirection": "East",
+    "controllerProfile": "Assertive",
+    "factors": [
+      "Zuhal (your own ruler) counts Shams an enemy — expect rigidity and refusal to adjust.",
+      "Dhanab al-Tinnin sits in the 7th Ghar — friction on the matter.",
+      "Ras al-Tinnin casts its gaze on the 7th Ghar — friction on the matter.",
+      "Mirrikh weighs on the 11th Ghar — fulfilment itself is obstructed.",
+      "Zuhal weighs on the 11th Ghar — fulfilment itself is obstructed.",
+      "Dhanab al-Tinnin weighs on the 11th Ghar — fulfilment itself is obstructed.",
+      "Shams has landed in the 6th Ghar, a denying house for this question."
+    ]
+  },
+  "diagnosis": {
+    "outcome": "UNFAVOURABLE",
+    "primaryPattern": "UNCERTAINTY",
+    "secondaryPatterns": [
+      "INSTABILITY",
+      "OBSTRUCTION",
+      "NEEDS_PATIENCE",
+      "EXTERNAL_OPPOSITION"
+    ],
+    "timingPosture": "WAIT",
+    "confidence": 0.95,
+    "interventionNeeded": true,
+    "obstructingAgent": "Dhanab",
+    "qType": "business",
+    "targetHouse": 7,
+    "supportingHouses": [
+      7,
+      10,
+      11
+    ],
+    "obstructingHouses": [
+      6,
+      8,
+      12
+    ],
+    "timing": {
+      "minDays": 14,
+      "maxDays": 30
+    },
+    "rationale": [
+      "Watch state BLOCKED reads as UNFAVOURABLE.",
+      "A ruling planet is retrograde — reversal remains possible.",
+      "Obstruction by Dhanab indicates UNCERTAINTY + INSTABILITY.",
+      "The querent's ruler regards the ruler of the matter as an enemy.",
+      "An assertive party controls the matter while the chart denies it."
+    ]
+  },
+  "remedyProtocol": {
+    "interventionRequired": true,
+    "guidance": null,
+    "rationale": [
+      "Safety filter: escalated to Consult an Independent Financial Adviser.",
+      "32 of 32 remedies eligible by tradition.",
+      "Selected 3 intervention(s) across 3 categor(ies)."
+    ],
+    "stepIds": [
+      "practical_financial",
+      "astro_saturn_discipline",
+      "contemplative_silence",
+      "devotional_tahajjud"
+    ]
+  },
+  "narration": null
+}

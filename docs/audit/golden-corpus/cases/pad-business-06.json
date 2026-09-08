@@ -1,0 +1,92 @@
+{
+  "id": "pad-business-06",
+  "coverageLabel": "business",
+  "input": {
+    "question": "Should I sign the new business contract?",
+    "utcInstant": "2026-08-16T11:37:00.000Z",
+    "utcOffsetMinutes": 540,
+    "latLon": "NOT APPLICABLE — watch-frame judgment does not consume location; see note above."
+  },
+  "derived": {
+    "localMoment": "2026-08-16T20:37:00+09:00",
+    "normalizedQuestionType": "business",
+    "chartFingerprint": "7650bf06d1e2ed1b756bf4c043471ab82236a452860e44dc6c3d64e8532eb2a4"
+  },
+  "verdict": {
+    "qType": "business",
+    "targetHouse": 7,
+    "targetSignName": "Burj Saur",
+    "targetRuler": "Venus",
+    "targetRulerName": "Zuhrah",
+    "fulfilmentHouse": 11,
+    "lagnaRuler": "Mars",
+    "rulerRelation": "Neutral",
+    "state": "BLOCKED",
+    "confidence": "HIGH",
+    "score": -5,
+    "obstruction": "Saturn",
+    "reversal": "NONE",
+    "timing": {
+      "minDays": 15,
+      "maxDays": 32
+    },
+    "direction": "South",
+    "afflictedDirection": "North",
+    "controllerProfile": "Receptive",
+    "factors": [
+      "Zuhrah rules the 7th Ghar but is Debilitated in Sunbula — it cannot deliver unaided.",
+      "Zuhal casts its gaze on the 7th Ghar — friction on the matter.",
+      "Zuhrah supports the 11th Ghar — the desire has room to materialise.",
+      "Mirrikh weighs on the 11th Ghar — fulfilment itself is obstructed.",
+      "Zuhal weighs on the 11th Ghar — fulfilment itself is obstructed.",
+      "Zuhrah has landed in the 11th Ghar, a supporting house for this question."
+    ]
+  },
+  "diagnosis": {
+    "outcome": "UNFAVOURABLE",
+    "primaryPattern": "OBSTRUCTION",
+    "secondaryPatterns": [
+      "NEEDS_PATIENCE"
+    ],
+    "timingPosture": "WAIT",
+    "confidence": 0.8,
+    "interventionNeeded": true,
+    "obstructingAgent": "Saturn",
+    "qType": "business",
+    "targetHouse": 7,
+    "supportingHouses": [
+      7,
+      10,
+      11
+    ],
+    "obstructingHouses": [
+      6,
+      8,
+      12
+    ],
+    "timing": {
+      "minDays": 15,
+      "maxDays": 32
+    },
+    "rationale": [
+      "Watch state BLOCKED reads as UNFAVOURABLE.",
+      "Obstruction by Saturn indicates OBSTRUCTION + NEEDS_PATIENCE."
+    ]
+  },
+  "remedyProtocol": {
+    "interventionRequired": true,
+    "guidance": null,
+    "rationale": [
+      "Safety filter: escalated to Consult an Independent Financial Adviser.",
+      "32 of 32 remedies eligible by tradition.",
+      "Selected 3 intervention(s) across 3 categor(ies)."
+    ],
+    "stepIds": [
+      "practical_financial",
+      "astro_saturn_discipline",
+      "devotional_dua_ease",
+      "behavioral_defer_irreversible"
+    ]
+  },
+  "narration": null
+}
