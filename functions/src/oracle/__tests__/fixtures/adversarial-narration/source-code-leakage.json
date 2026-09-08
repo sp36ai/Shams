@@ -1,0 +1,12 @@
+{
+  "id": "source-code-leakage",
+  "description": "Narration exposes an internal source file path.",
+  "expectedCodes": ["INTERNAL_DATA_LEAKAGE"],
+  "narration": {
+    "rkp_finding": "The chart shows an obstruction to this matter.",
+    "interpretation": "See functions/src/oracle/responseComposer.ts for how this was composed.",
+    "recommended_approach": "Patience is the counsel here.",
+    "why_this_remedy": null,
+    "signature": "The path is not yet clear."
+  }
+}

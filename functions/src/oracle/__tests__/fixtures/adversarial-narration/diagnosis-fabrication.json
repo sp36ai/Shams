@@ -1,0 +1,12 @@
+{
+  "id": "diagnosis-fabrication",
+  "description": "Narration names a specific planet as the obstruction that is not diagnosis.obstructingAgent for this reading.",
+  "expectedCodes": ["DIAGNOSIS_CONTRADICTION"],
+  "narration": {
+    "rkp_finding": "Mirrikh obstructs this matter and must be appeased.",
+    "interpretation": "This is a matter still finding its shape.",
+    "recommended_approach": "Patience is the counsel here.",
+    "why_this_remedy": null,
+    "signature": "The path is not yet clear."
+  }
+}

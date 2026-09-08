@@ -50,6 +50,8 @@ import { selectSuggestedQuestions } from './suggestedQuestions';
 import type { Tradition } from './remedyLibrary';
 import { buildReadingContract, computeContractFingerprint } from './readingContract';
 import { toNarrationContext, type NarrationContext } from './narrationContext';
+import { validateNarration } from './narrationValidator';
+import { buildDeterministicFallbackNarration } from './narrationFallback';
 
 // Raised from 25s — Claude Opus 5 thinks by default, so synthesis is slower
 // than it was on the non-thinking Opus 4.1. askWatchOracle runs under
@@ -68,8 +70,12 @@ const SYNTHESIS_TIMEOUT_MS = 40_000;
 export const ORACLE_BRAND_SEAL =
   '✨ "These words are unveiled under the banner of Shams al-Asrār, by Astro Sarfaraz." ✨';
 
-/** The prose Claude is permitted to write. No remedy content appears here. */
-interface NarrationFields {
+/**
+ * The prose Claude is permitted to write. No remedy content appears here.
+ * Exported (PHASE 4) so narrationValidator.ts can type-check against the
+ * exact shape it validates, without redeclaring it.
+ */
+export interface NarrationFields {
   rkp_finding: string;
   interpretation: string;
   recommended_approach: string;
@@ -335,7 +341,28 @@ export async function composeWatchOracleResponse(
   const narrationContext = toNarrationContext(contract, { seekerName, motherName });
 
   // ── 3. Narration (best effort) ───────────────────────────────────────────
-  const narration = await narrate(narrationContext);
+  const drafted = await narrate(narrationContext);
+
+  // ── PHASE 4: deterministic validation, independent of Claude ─────────────
+  // Runs only when synthesis actually produced something — a null `drafted`
+  // (synthesis timeout/HTTP error/malformed JSON, all pre-existing failure
+  // modes narrate() already handles) is a DIFFERENT, already-handled case,
+  // not a validation failure; it is left exactly as it already was.
+  let narration: NarrationFields | null = drafted;
+  if (drafted !== null) {
+    const result = validateNarration(contract, drafted);
+    if (!result.valid) {
+      logger.warn('watch oracle narration failed validation — using deterministic fallback', {
+        readingId: contract.provenance.readingId,
+        engineVersion: contract.provenance.engineVersion,
+        contractVersion: contract.provenance.contractVersion,
+        contractFingerprint: computeContractFingerprint(contract),
+        failures: result.failures.map(f => ({ code: f.code, field: f.field, detail: f.detail })),
+        fallbackUsed: true,
+      });
+      narration = buildDeterministicFallbackNarration(contract);
+    }
+  }
 
   return Object.freeze({
     narration,
