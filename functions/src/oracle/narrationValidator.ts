@@ -1158,19 +1158,38 @@ export function checkRulerRelationClaims(
  * targets exactly the one demonstrated idiom word ("fortune"), in either
  * word order relative to "reversal" — not a general idiom dictionary, and
  * not a broadening of `REVERSAL_CLAIM_PATTERN` itself.
+ *
+ * PHASE 5E-R4: `docs/audit/PHASE_5E_R3_REVIEW.md` found the widened,
+ * unanchored `span.includes('fortune')` check from Phase 5E-R3 also
+ * matches the substring "fortune" INSIDE the ordinary word "misfortune"
+ * (and "misfortunes") — a real P1 false negative, since it silently
+ * excluded a genuine, contract-contradicting reversal claim ("Despite
+ * past misfortune, a reversal of this outcome is possible."). Fixed by
+ * anchoring the exclusion to a standalone word
+ * (`REVERSAL_IDIOM_EXCLUSION_PATTERN = /\bfortune\b/i`) instead of a bare
+ * substring search. `\bfortune\b` requires a non-word character (or
+ * string boundary) immediately before AND after "fortune" — "misfortune"
+ * has no such boundary before its embedded "fortune" (preceded by "s," a
+ * word character), so it no longer matches, while every genuine idiom
+ * shape ("fortune", "Fortune's", "fortune is", "fortune remains" — always
+ * word-bounded by whitespace, punctuation, or an apostrophe) is
+ * unaffected. Verified against real positive/negative controls — see
+ * `docs/audit/PHASE_5E_R4_HARDENING.md` — before this was implemented.
+ * The 20-character lookback window itself is unchanged; only what counts
+ * as "fortune" within it was narrowed to a real word match.
  */
 const REVERSAL_CLAIM_PATTERN =
   /\breversal\b[\s\S]{0,40}?\b(?:is|remains)\s+(none|not\s+possible|unlikely|possible|likely|a\s+real\s+possibility)\b/i;
 const REVERSAL_POSSIBLE_WORDS = new Set(['possible', 'likely', 'a real possibility']);
 const REVERSAL_NONE_WORDS = new Set(['none', 'not possible', 'unlikely']);
-const REVERSAL_IDIOM_EXCLUSION = 'fortune';
+const REVERSAL_IDIOM_EXCLUSION_PATTERN = /\bfortune\b/i;
 /** How far before the "reversal ... is/remains X" match to also look for "fortune" — enough for "Fortune's " (10 chars) plus slack, not an arbitrary sentence-wide search. */
 const FORTUNE_LOOKBACK_WINDOW = 20;
 
 function isReversalOfFortuneIdiom(text: string, match: RegExpExecArray): boolean {
   const start = Math.max(0, match.index - FORTUNE_LOOKBACK_WINDOW);
-  const span = text.slice(start, match.index + match[0].length).toLowerCase();
-  return span.includes(REVERSAL_IDIOM_EXCLUSION);
+  const span = text.slice(start, match.index + match[0].length);
+  return REVERSAL_IDIOM_EXCLUSION_PATTERN.test(span);
 }
 
 export function checkReversalClaims(

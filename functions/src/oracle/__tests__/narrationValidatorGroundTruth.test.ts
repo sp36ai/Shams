@@ -682,6 +682,124 @@ describe('PHASE 5E-R3 — reversal-of-fortune idiom family, both word orders, st
   });
 });
 
+/* -------------------------------------------------------------------------- */
+/*  PHASE 5E-R4 -- word-boundary anchor on the "fortune" exclusion,          */
+/*  docs/audit/PHASE_5E_R3_REVIEW.md's new P1 finding (the "misfortune"     */
+/*  substring bypass)                                                       */
+/* -------------------------------------------------------------------------- */
+
+describe('PHASE 5E-R4 — the "fortune" exclusion no longer matches inside other words', () => {
+  // `secondary` (business-007-equivalent): reversal is 'NONE'.
+  it('FIXED: "misfortune" no longer suppresses a genuine reversal claim — the exact review reproduction', () => {
+    const narration = baseNarration({
+      interpretation: 'Despite past misfortune, a reversal of this outcome is possible.',
+    });
+    const result = validateNarration(secondary, narration);
+    expect(result.valid).toBe(false);
+    if (!result.valid) {
+      expect(result.failures.some(f => f.code === 'REVERSAL_CLAIM_CONTRADICTION')).toBe(true);
+    }
+  });
+
+  it('FIXED: "misfortunes" (plural) no longer suppresses a genuine reversal claim', () => {
+    const narration = baseNarration({
+      interpretation: 'Despite recent misfortunes, a reversal of this outcome is possible.',
+    });
+    const result = validateNarration(secondary, narration);
+    expect(result.valid).toBe(false);
+    if (!result.valid) {
+      expect(result.failures.some(f => f.code === 'REVERSAL_CLAIM_CONTRADICTION')).toBe(true);
+    }
+  });
+
+  it('"fortunate" (never actually contained "fortune" as a substring, but confirmed with a word-boundary anchor too) does not suppress a genuine claim', () => {
+    const narration = baseNarration({
+      interpretation: 'A fortunate turn aside, a reversal of this outcome is possible.',
+    });
+    const result = validateNarration(secondary, narration);
+    expect(result.valid).toBe(false);
+    if (!result.valid) {
+      expect(result.failures.some(f => f.code === 'REVERSAL_CLAIM_CONTRADICTION')).toBe(true);
+    }
+  });
+
+  it('"fortunately" does not suppress a genuine claim', () => {
+    const narration = baseNarration({
+      interpretation: 'Fortunately, a reversal of this outcome is possible.',
+    });
+    const result = validateNarration(secondary, narration);
+    expect(result.valid).toBe(false);
+    if (!result.valid) {
+      expect(result.failures.some(f => f.code === 'REVERSAL_CLAIM_CONTRADICTION')).toBe(true);
+    }
+  });
+
+  it('the idiom family itself is still recognized: "reversal of fortune" (original order) stays VALID', () => {
+    const narration = baseNarration({
+      interpretation: 'A reversal of fortune is possible if effort continues.',
+    });
+    expect(validateNarration(secondary, narration).valid).toBe(true);
+  });
+
+  it('the idiom family itself is still recognized: "Fortune\'s reversal" (reordered) stays VALID', () => {
+    const narration = baseNarration({ interpretation: "Fortune's reversal is possible." });
+    expect(validateNarration(secondary, narration).valid).toBe(true);
+  });
+
+  it('the idiom family itself is still recognized: capitalization variant stays VALID', () => {
+    const narration = baseNarration({ interpretation: 'A REVERSAL OF FORTUNE IS POSSIBLE HERE.' });
+    expect(validateNarration(secondary, narration).valid).toBe(true);
+  });
+
+  it('the idiom family itself is still recognized: whitespace variant stays VALID', () => {
+    const narration = baseNarration({ interpretation: "Fortune's  reversal  remains possible." });
+    expect(validateNarration(secondary, narration).valid).toBe(true);
+  });
+
+  it('the idiom family itself is still recognized: punctuation variant stays VALID', () => {
+    const narration = baseNarration({ interpretation: "Fortune's, reversal is possible." });
+    expect(validateNarration(secondary, narration).valid).toBe(true);
+  });
+
+  it('boundary: a genuine standalone "fortune" word 11 chars before the match still excludes (inside the 20-char window, unchanged from 5E-R3)', () => {
+    const narration = baseNarration({
+      interpretation: 'fortune yyyyyyyyyyy reversal is possible.',
+    });
+    expect(validateNarration(secondary, narration).valid).toBe(true);
+  });
+
+  it('boundary: a genuine standalone "fortune" word 12 chars before the match no longer excludes (outside the 20-char window, unchanged from 5E-R3)', () => {
+    const narration = baseNarration({
+      interpretation: 'fortune yyyyyyyyyyyy reversal is possible.',
+    });
+    const result = validateNarration(secondary, narration);
+    expect(result.valid).toBe(false);
+    if (!result.valid) {
+      expect(result.failures.some(f => f.code === 'REVERSAL_CLAIM_CONTRADICTION')).toBe(true);
+    }
+  });
+
+  it('multiple standalone "fortune" occurrences do not accidentally suppress a genuine, unrelated claim', () => {
+    const narration = baseNarration({
+      interpretation:
+        'Fortune favors the bold, fortune smiles on the patient, but a reversal of this outcome is possible regardless.',
+    });
+    const result = validateNarration(secondary, narration);
+    expect(result.valid).toBe(false);
+    if (!result.valid) {
+      expect(result.failures.some(f => f.code === 'REVERSAL_CLAIM_CONTRADICTION')).toBe(true);
+    }
+  });
+
+  it('the previously-accepted residual (5E-R2-Review-4: ZWJ inside "fortune") remains unchanged, not fixed or worsened by this phase', () => {
+    const narration = baseNarration({ interpretation: 'A reversal of fort‍une is possible here.' });
+    // Documented residual: still INVALID (the ZWJ defeats the word-boundary
+    // match on the raw-text fallback tier, same interaction
+    // PHASE_5E_R2_REVIEW.md's Finding 5E-R2-Review-4 already recorded).
+    expect(validateNarration(secondary, narration).valid).toBe(false);
+  });
+});
+
 describe('PHASE 5E-R2 — direction: proper nouns containing a direction word stay VALID', () => {
   // `primary` (employment-001-equivalent): direction is 'South'.
   it('"points toward the North Star" stays VALID — the exact review reproduction', () => {
