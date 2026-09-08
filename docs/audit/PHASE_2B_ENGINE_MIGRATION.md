@@ -301,16 +301,153 @@ coverage elsewhere (every other suite passed before and after, unchanged).
 | Functions/app/typecheck/lint clean | **Met** — §H |
 | Documentation reflects resulting architecture | **Met** — `AUTHORITY_MATRIX.md` updated this phase |
 
-**Partially open, disclosed rather than hidden:** the six deprecated files
-(§E) are proven unreachable but not physically deleted, due to a tooling
-restriction encountered this session, not a decision that they should stay.
-The content-migration question (§E) is a genuine open product decision, not
-resolved by this phase and not invented in its absence.
+**Partially open at the time this section was first written:** the six
+deprecated files (§E) were proven unreachable but not physically deleted,
+due to a tooling restriction encountered in that session. **Resolved below
+— Phase 2B-F.**
+
+---
+
+## STOP (original)
+
+This concluded the initial Phase 2B pass. The safety validator was not
+implemented. Oracle narration was not redesigned. No Phase 3/4 work was
+started.
+
+---
+
+## J. Phase 2B-F — Orphan Cleanup & Final Authority Verification
+
+Completion gate for Phase 2B, addressing the one item §E left open: the six
+files proven unreachable but not deleted. This section is additive; nothing
+above was rewritten.
+
+### J.1 — Independent re-verification before deleting anything
+
+Before deleting, re-ran the reachability proof from scratch (not reused from
+§E) against the exact paths named there:
+
+| File | Real (non-comment) importers found | Config/script/CI/dynamic-import references |
+|---|---|---|
+| `src/components/oracle/GuidanceCard.tsx` | **None** | None |
+| `src/data/remedySelector.ts` | **None** (its own test file's import — see below — was the only one) | None |
+| `src/data/rankCandidates.ts` | **None** outside `remedySelector.ts` and its own test | None |
+| `src/data/remedyLibrary.ts` (client) | **None** outside `rankCandidates.ts`/`remedyRenderer.ts` (both themselves orphaned) | None |
+| `src/data/remedyRenderer.ts` | **None** outside `GuidanceCard.tsx`, `remedySelector.ts`, and `remedySelector.test.ts` | None |
+| `functions/src/functions/selectRemedies.ts` | **None** — zero occurrences of the string `selectRemedies` as a real import or the callable name `'selectRemedies'` anywhere outside the file itself and comments | Not exported from `index.ts` (removed in §D); zero references in `package.json`, `functions/package.json`, `metro.config.js`, `babel.config.js`, `tsconfig.json`, `functions/tsconfig.json`, `jest.setup.js`, `react-native.config.js`, `.github/workflows/*`, or `functions/scripts/`/`scripts/` |
+
+Distinguished real imports (`^import`/`from '...'`) from comment-only
+mentions throughout — several files (`ChatBubble.tsx`, `ReadingScreen.tsx`,
+`watchRemedyContext.ts`, `functions/src/index.ts`, `dailyDhikr.ts`)
+mentioned these names only in prose explaining the Phase 2B disconnection,
+not as live dependencies; each was checked individually. Also searched for
+dynamic `import()`/`require()` patterns and double-quoted import variants —
+none found. No live dependency remained on any of the six files.
+
+**One additional, necessary finding:** `src/data/remedySelector.ts` and
+`src/data/rankCandidates.ts` each had exactly one real remaining importer —
+their own test files, `src/data/__tests__/remedySelector.test.ts` and
+`src/data/__tests__/rankCandidates.test.ts`, which Phase 2B had deliberately
+left in place because the modules they tested still existed. Deleting the
+modules makes these two test files reference nothing; they were deleted
+alongside their subjects (§J.2) as a direct, necessary consequence, not a
+separate cleanup decision.
+
+### J.2 — Files deleted (all six proven-orphaned files, plus their now-obsolete tests)
+
+```
+src/components/oracle/GuidanceCard.tsx
+src/data/remedySelector.ts
+src/data/rankCandidates.ts
+src/data/remedyLibrary.ts
+src/data/remedyRenderer.ts
+functions/src/functions/selectRemedies.ts
+src/data/__tests__/remedySelector.test.ts       (tested only the deleted remedySelector.ts)
+src/data/__tests__/rankCandidates.test.ts       (tested only the deleted rankCandidates.ts)
+```
+
+**Not deleted, verified untouched:** any `kp/rules/*` file, any Watch engine
+file, `functions/src/oracle/remedySelection.ts`,
+`functions/src/oracle/remedyLibrary.ts` (Path A, canonical),
+`functions/src/oracle/responseComposer.ts`, any file related to the
+historical safety validator, and every other file not explicitly named
+above — confirmed by `git diff --stat` against
+`functions/src/engine/{kp,rkp}`, `functions/src/oracle/{remedySelection,remedyLibrary}.ts`,
+and `src/astrology/` showing zero changes.
+
+### J.3 — Stale references removed (not general documentation cleanup)
+
+After deletion, re-searched the repository for the six files' names and
+exported symbols. Found and corrected five comments that had described these
+files as "retained on disk" / "deprecated, not deleted" — true when written
+in Phase 2B, false after this cleanup:
+
+- `src/components/oracle/ChatBubble.tsx` — updated to state the component
+  was deleted, not merely disconnected.
+- `src/screens/ReadingScreen.tsx` — updated the Phase 2B note's file list to
+  state deletion rather than retention.
+- `src/data/watchRemedyContext.ts` — updated its header note, which had
+  explicitly called `remedySelector.ts`/`rankCandidates.ts` "*retained*
+  files."
+- `functions/src/index.ts` — updated the `selectRemedies` export-removal
+  comment from "retained on disk" to "deleted outright."
+- `src/data/dailyDhikr.ts` — its cross-reference to `data/remedySelector.ts`
+  (now nonexistent) was repointed to the actual canonical remedy
+  implementation, `functions/src/oracle/remedySelection.ts`.
+
+No other documentation was rewritten — this was a targeted correction of
+comments made factually false by the deletion, not a general pass.
+
+### J.4 — Test matrix (post-deletion)
+
+| Check | Result |
+|---|---|
+| App jest | **27 suites, 304 tests, all passing** (was 29/340 before this cleanup; the two deleted test files accounted for exactly 6 + 30 = 36 tests — confirmed by counting `it(` blocks in each file before deletion) |
+| App typecheck | Clean |
+| App lint | Clean |
+| App `check:orphans` | Unchanged in kind — only test files and `.d.ts` files listed, as before; no new production-code orphan introduced by this cleanup |
+| Functions vitest | **10 files, 89 tests, all passing — unchanged** |
+| Functions typecheck | Clean |
+| Functions lint | Clean |
+| 111-case golden corpus | **Byte-identical** to the Phase 2A/2B baseline (`diff -rq` → zero differences) |
+| 24-case in-process replay | **24/24 identical** |
+
+No deterministic result changed. No STOP condition triggered.
+
+### J.5 — Final authority search
+
+- **Remedy authority:** `grep`-confirmed exactly one call site for
+  `selectRemedyProtocol(` in the entire repository
+  (`oracle/responseComposer.ts:253`); zero occurrences of `SELECTION_PROMPT`
+  or `generateDescription` (Path B's LLM-prompt functions) anywhere.
+- **Client boundary:** the only client-side `judgeWatchChart`/`diagnose`
+  function definitions are in `src/astrology/rkp/` — the *source* tree
+  `sync-engine.mjs` mirrors into `functions/src/engine/rkp/`, not a runtime
+  call site (established in Phase 0/1, re-confirmed here: no non-type
+  import of either function exists under `src/` outside that source tree
+  and its own tests).
+- **Legacy Path B:** zero occurrences of the string `selectRemedies` as an
+  import or callable name anywhere in the repository (comments aside).
+- **KP:** zero occurrences of `judgeHorary` anywhere in the repository —
+  confirmed still gone, not reintroduced; `git diff` against every
+  `kp/rules/*` path shows no change this phase or the prior one.
+
+### J.6 — Unresolved
+
+**Remedy content-migration question — still open, unchanged from §E,
+correctly not decided here.** Path B's unique library content
+(`src/data/remedyLibrary.ts`, now deleted but recoverable from git history
+at this commit's parent if ever needed) was not migrated into Path A's
+canonical library, for the reason given in §E/"Decision 2": the two
+taxonomies overlap on only 4 of 18 tags, and forcing the rest would mean
+inventing product semantics. This remains a genuine open decision for the
+project owner, to be made deliberately in its own pass — not folded into
+either this cleanup or the upcoming safety/narration work.
 
 ---
 
 ## STOP
 
-This concludes Phase 2B. The safety validator was not implemented. Oracle
-narration was not redesigned. No Phase 3/4 work was started. Awaiting
-review.
+Phase 2B, including its 2B-F completion gate, concludes here. The safety
+validator was not implemented. Oracle narration was not redesigned. No
+Phase 3/4 work was started. Awaiting review.

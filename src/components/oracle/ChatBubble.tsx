@@ -270,10 +270,11 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({
               directionalFocus={directionalFocusFor(reading.verdict)}
             />
             {reading.oracle !== undefined && <RemedyProtocolCard composition={reading.oracle} />}
-            {/* PHASE 2B: GuidanceCard's data source (message.selectedRemedies,
-                populated by the second, LLM-driven remedy path) was
-                disconnected — see docs/audit/PHASE_2B_ENGINE_MIGRATION.md.
-                RemedyProtocolCard above is now the reading's sole remedy
+            {/* PHASE 2B/2B-F: this used to also render a GuidanceCard, fed by
+                a second, LLM-driven remedy path — disconnected in 2B,
+                its now-unreachable component deleted in 2B-F. See
+                docs/audit/PHASE_2B_ENGINE_MIGRATION.md.
+                RemedyProtocolCard above is the reading's sole remedy
                 presentation. */}
             {reading.oracle?.suggestedQuestions !== undefined && (
               <SuggestedQuestionsRow

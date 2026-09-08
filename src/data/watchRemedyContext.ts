@@ -9,13 +9,10 @@
  * docs/audit/PHASE_2B_ENGINE_MIGRATION.md and
  * docs/audit/REMEDY_MIGRATION_PLAN.md for the full trace — and
  * `watchVerdictToRankingContext` was removed along with it, since
- * `src/screens/ReadingScreen.tsx` was its only caller. Removed rather than
- * left in place, because leaving a fully-orphaned ranking-context builder
- * around numbers among exactly the kind of "second decision path" this
- * migration exists to eliminate — as distinct from the still-orphaned but
- * *retained* files (`remedySelector.ts`, `rankCandidates.ts`, etc.), which
- * are left on disk, deprecated, because this session's tooling could not
- * delete whole files this phase (documented in the migration doc).
+ * `src/screens/ReadingScreen.tsx` was its only caller. `remedySelector.ts`,
+ * `rankCandidates.ts`, and the rest of Path B's implementation files were
+ * proven equally orphaned and have since been deleted outright (Phase
+ * 2B-F) — see the migration doc's final cleanup section.
  *
  * What remains is unrelated: the physical-correspondence direction display
  * (`directionalFocusFor`), which RkpWatchCard renders regardless of remedy

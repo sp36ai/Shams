@@ -1,10 +1,11 @@
 /**
  * dailyDhikr — a short dhikr tied to today's day lord.
  * --------------------------------------------------------------------------
- * Distinct from the per-reading remedy pipeline (data/remedySelector.ts),
- * which needs a specific verdict/severity context and calls a Cloud
- * Function. This is a general, always-available home-screen card, so it's
- * a small curated table instead — one of the 99 Names (Asma al-Husna)
+ * Distinct from the RKP engine's own per-reading remedy protocol
+ * (functions/src/oracle/remedySelection.ts), which needs a specific
+ * diagnosis and runs server-side. This is a general, always-available
+ * home-screen card, so it's a small curated table instead — one of the 99
+ * Names (Asma al-Husna)
  * classically associated with each planet's nature, same voice as the
  * "asma" field already used in oracle verdict remedies.
  */

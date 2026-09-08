@@ -239,13 +239,12 @@ const ReadingScreen: React.FC = () => {
   // docs/audit/PHASE_2B_ENGINE_MIGRATION.md for the full trace and the
   // reasoning for disconnecting it here. Path A (the RKP-diagnosis-driven
   // protocol already inside `reading.oracle.protocol`, rendered by
-  // RemedyProtocolCard) is now the sole remedy authority a reading produces.
+  // RemedyProtocolCard) is the sole remedy authority a reading produces.
   // src/data/{remedySelector,rankCandidates,remedyLibrary,remedyRenderer}.ts,
   // src/components/oracle/GuidanceCard.tsx, and
-  // functions/src/functions/selectRemedies.ts are retained on disk,
-  // unexported/unreachable, marked deprecated — see those files' own
-  // headers — pending an explicit deletion decision this phase's tooling
-  // could not carry out (see the migration doc's "Unresolved" section).
+  // functions/src/functions/selectRemedies.ts — proven to have zero
+  // remaining callers — were deleted outright in the Phase 2B-F cleanup
+  // pass; see the migration doc's final cleanup section.
 
   /** Cast the chart for a thread's opening question. Spends a quota slot. */
   const runAsk = useCallback(
