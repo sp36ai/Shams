@@ -23,7 +23,9 @@
 import type { ReadingContract } from './readingContract';
 import type { NarrationFields } from './responseComposer';
 import { REMEDY_LIBRARY } from './remedyLibrary';
-import { PLANET_NAME, PLANET_NAME_SHORT } from '../engine/rkp/nomenclature';
+import { PLANET_NAME, PLANET_NAME_SHORT, SIGN_META } from '../engine/rkp/nomenclature';
+import type { Direction } from '../engine/rkp/nomenclature';
+import type { SignIndex } from '../engine/types/chart';
 import type { Planet } from '../engine/types/chart';
 import {
   canonicalizeForSecurityMatching,
@@ -46,7 +48,17 @@ export type ValidationFailureCode =
   | 'TERMINOLOGY_LEAKAGE'
   | 'INTERNAL_DATA_LEAKAGE'
   | 'PROMPT_INJECTION_ARTIFACT'
-  | 'MALFORMED_OUTPUT';
+  | 'MALFORMED_OUTPUT'
+  // PHASE 5E-R — deterministic ground-truth claim checks. See §F2 below and
+  // docs/audit/PHASE_5E_R_HARDENING.md for the full field-provenance and
+  // claim-recognition-strategy record.
+  | 'HOUSE_CLAIM_CONTRADICTION'
+  | 'SUPPORTING_HOUSE_CONTRADICTION'
+  | 'SIGN_CLAIM_CONTRADICTION'
+  | 'DIRECTION_CLAIM_CONTRADICTION'
+  | 'RETROGRADE_CLAIM_CONTRADICTION'
+  | 'RULER_RELATION_CONTRADICTION'
+  | 'REVERSAL_CLAIM_CONTRADICTION';
 
 export interface ValidationFailure {
   readonly code: ValidationFailureCode;
@@ -375,8 +387,32 @@ const WEEKDAY_NAMES = [
   'saturday',
   'sunday',
 ];
-/** Matches "the 15th", "on 3/4", "2026-08-15" — anything shaped like a real calendar date. */
-const DATE_LIKE_PATTERN = /\b\d{1,4}[/-]\d{1,2}([/-]\d{1,4})?\b|\bthe\s+\d{1,2}(st|nd|rd|th)\b/i;
+/**
+ * Matches "the 15th", "on 3/4", "2026-08-15" — anything shaped like a real
+ * calendar date.
+ *
+ * PHASE 5E-R: the bare-ordinal alternative (`the 15th`) originally matched
+ * unconditionally, with no requirement that a date be plausibly meant at
+ * all — `docs/audit/PHASE_5E_RECONNAISSANCE.md` §7 (Finding 5E-2)
+ * demonstrated this rejects "the 10th house," a claim
+ * `docs/audit/PHASE_3_CLAIM_SURFACE.md` explicitly lists as Allowed
+ * ("Which house governs the matter"), and even ordinal text with no house
+ * or date meaning at all ("Consider the 3rd point carefully"). Fixed
+ * narrowly, not generally: a negative lookahead excludes only the
+ * demonstrated collision — an ordinal directly followed by "house" or
+ * "ghar" (this codebase's own two words for a chart house; see
+ * `engine/rkp/nomenclature.ts`'s `gharLabel()` and `HOUSE_META`, and the
+ * golden corpus's own "2nd Ghar" phrasing). It does NOT exempt every
+ * ordinal that isn't a date (e.g. "the 3rd point" still matches, unchanged
+ * from before this phase) — that would require guessing the referent of
+ * an arbitrary noun following an ordinal, which is exactly the kind of
+ * generic natural-language interpretation this phase was instructed not to
+ * build. Recorded as a known, pre-existing, out-of-scope residual in
+ * `docs/audit/PHASE_5E_R_HARDENING.md`, not silently expanded past the
+ * one demonstrated collision.
+ */
+const DATE_LIKE_PATTERN =
+  /\b\d{1,4}[/-]\d{1,2}([/-]\d{1,4})?\b|\bthe\s+\d{1,2}(st|nd|rd|th)\b(?!\s+(?:house|ghar)\b)/i;
 
 /**
  * PHASE 4A: split into two tiers, per the review gate's demonstrated
@@ -720,6 +756,339 @@ function findSentenceContaining(text: string, needle: string): string {
 }
 
 /* -------------------------------------------------------------------------- */
+/*  E2. Ground-truth structural/relational claim checks (PHASE 5E-R)          */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * PHASE 5E-R. `docs/audit/PHASE_5E_RECONNAISSANCE.md` (Finding 5E-1) showed
+ * `judgment.targetHouse`, `.targetSignName`, `.direction`, `.rulerRelation`,
+ * `.reversal`, and `diagnosis.supportingHouses` are structured facts the
+ * contract already carries, verbatim from the engine, that narration could
+ * contradict with zero detection — the same "ground-truth cross-check" gap
+ * `docs/audit/SAFETY_VALIDATION_REDESIGN.md` named and Phase 4/4A only
+ * partially closed (verdict polarity, timing posture, one obstruction
+ * phrase). Every check below follows that same, already-established idiom:
+ * a small, named phrase list (or a single bounded regex) anchors on a
+ * specific claim SHAPE, `findSentenceContaining()` narrows to the sentence
+ * making it, a small bounded extractor reads the claimed value out of that
+ * sentence, and the result is compared against one specific
+ * `ReadingContract` field. None of this derives a new judgment — every
+ * comparison is against a value `judgeWatchChart()`/`diagnose()` already
+ * computed and the contract already carries frozen. See
+ * `docs/audit/PHASE_5E_R_HARDENING.md` for the full field-provenance trace,
+ * why each detector is scoped exactly this narrowly, and why the eighth
+ * category Finding 5E-1 named — "invented diagnostic cause"
+ * (`diagnosis.rationale`'s free-text content) — is NOT implemented here:
+ * recognizing an arbitrary narrated "because X" clause well enough to
+ * compare it against a free-text rationale array reliably would require
+ * exactly the generic natural-language interpretation this phase was
+ * instructed not to build, so it is documented as an open finding instead
+ * of a fragile keyword heuristic.
+ */
+
+/**
+ * Extracts a 1-12 house number from "house number N" / "house N" / "house
+ * #N", or "Nth house" / "Nth ghar" (this codebase's own two words for a
+ * chart house — see `engine/rkp/nomenclature.ts`'s `gharLabel()`/
+ * `HOUSE_META`). Deliberately two fixed shapes, not a general number
+ * parser — a sentence with neither shape yields no claim, not a guess.
+ */
+const HOUSE_NUMBER_PATTERN =
+  /\bhouse\s*(?:number|#)?\s*(\d{1,2})\b|\b(\d{1,2})(?:st|nd|rd|th)\s+(?:house|ghar)\b/gi;
+
+function extractHouseNumbers(sentence: string): number[] {
+  const found: number[] = [];
+  for (const match of sentence.matchAll(HOUSE_NUMBER_PATTERN)) {
+    const raw = match[1] ?? match[2];
+    const n = raw ? Number.parseInt(raw, 10) : NaN;
+    if (n >= 1 && n <= 12) {
+      found.push(n);
+    }
+  }
+  return found;
+}
+
+/**
+ * Target-house claim: does narration say a specific house "governs"/"rules"
+ * this matter, and if so, does the number match `judgment.targetHouse`?
+ * Bounded to this one claim shape — restating a house number in any other
+ * sentence structure is simply not checked, per this phase's explicit
+ * instruction to prefer an explicit, bounded detector over a generic parser.
+ */
+const TARGET_HOUSE_PHRASES: readonly string[] = Object.freeze([
+  'governs this matter',
+  'rules this matter',
+  'is the house of this matter',
+]);
+
+export function checkHouseClaims(
+  contract: ReadingContract,
+  field: keyof NarrationFields,
+  text: string,
+): ValidationFailure | null {
+  const lower = text.toLowerCase();
+  const phraseHit = TARGET_HOUSE_PHRASES.find(p => lower.includes(p));
+  if (!phraseHit) {
+    return null;
+  }
+  const claimed = extractHouseNumbers(findSentenceContaining(text, phraseHit));
+  const actual = contract.judgment.targetHouse;
+  const wrong = claimed.find(h => h !== actual);
+  if (wrong !== undefined) {
+    return {
+      code: 'HOUSE_CLAIM_CONTRADICTION',
+      field,
+      detail: `narration claims house ${wrong} governs this matter, but judgment.targetHouse is ${actual}`,
+    };
+  }
+  return null;
+}
+
+/**
+ * Supporting-house claim: does narration say a specific house "supports"/
+ * "favors" this outcome, and if so, is that house actually in
+ * `diagnosis.supportingHouses`? Same bounded shape as the target-house
+ * check above, against the sibling field.
+ */
+const SUPPORTING_HOUSE_PHRASES: readonly string[] = Object.freeze([
+  'supports this outcome',
+  'actively supports',
+  'favors this outcome',
+  'favours this outcome',
+]);
+
+export function checkSupportingHouseClaims(
+  contract: ReadingContract,
+  field: keyof NarrationFields,
+  text: string,
+): ValidationFailure | null {
+  const lower = text.toLowerCase();
+  const phraseHit = SUPPORTING_HOUSE_PHRASES.find(p => lower.includes(p));
+  if (!phraseHit) {
+    return null;
+  }
+  const claimed = extractHouseNumbers(findSentenceContaining(text, phraseHit));
+  const supporting = new Set(contract.diagnosis.supportingHouses);
+  const wrong = claimed.find(h => !supporting.has(h));
+  if (wrong !== undefined) {
+    return {
+      code: 'SUPPORTING_HOUSE_CONTRADICTION',
+      field,
+      detail: `narration claims house ${wrong} supports this outcome, but diagnosis.supportingHouses is [${contract.diagnosis.supportingHouses.join(', ')}]`,
+    };
+  }
+  return null;
+}
+
+/**
+ * Sign claim: does narration say the matter is ruled "through"/"in"/"under"
+ * the sign of a NAMED sign, and if so, does that sign match
+ * `judgment.targetSignName`? Compares against every known alias of every
+ * sign (classical name, "Burj <name>", and the English gloss —
+ * `SIGN_META`'s own three name fields, the same alias breadth
+ * `PLANET_ALIASES` already gives planets below) so narration using any of
+ * this reading's own legitimate naming registers for the CORRECT sign is
+ * never flagged; only a DIFFERENT sign's name in this exact claim shape is.
+ */
+const SIGN_PHRASES: readonly string[] = Object.freeze([
+  'through the sign of',
+  'in the sign of',
+  'under the sign of',
+]);
+
+const ALL_SIGN_INDICES: readonly SignIndex[] = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
+
+function signAliases(index: SignIndex): readonly string[] {
+  const meta = SIGN_META[index];
+  return [meta.name, `Burj ${meta.name}`, meta.englishName];
+}
+
+/** `judgment.targetSignName` is already `"Burj <name>"` (see watchChart.ts) — resolve it back to its index. */
+function resolveTargetSignIndex(targetSignName: string): SignIndex | null {
+  const lower = targetSignName.toLowerCase();
+  return (
+    ALL_SIGN_INDICES.find(idx => `burj ${SIGN_META[idx].name}`.toLowerCase() === lower) ?? null
+  );
+}
+
+export function checkSignClaims(
+  contract: ReadingContract,
+  field: keyof NarrationFields,
+  text: string,
+): ValidationFailure | null {
+  const lower = text.toLowerCase();
+  const phraseHit = SIGN_PHRASES.find(p => lower.includes(p));
+  if (!phraseHit) {
+    return null;
+  }
+  const sentence = findSentenceContaining(text, phraseHit);
+  const actualIndex = resolveTargetSignIndex(contract.judgment.targetSignName);
+  for (const idx of ALL_SIGN_INDICES) {
+    if (idx === actualIndex) {
+      continue;
+    }
+    const hit = signAliases(idx).find(alias =>
+      new RegExp(`\\b${escapeRegExp(alias)}\\b`, 'i').test(sentence),
+    );
+    if (hit) {
+      return {
+        code: 'SIGN_CLAIM_CONTRADICTION',
+        field,
+        detail: `narration claims the sign "${hit}", but judgment.targetSignName is ${contract.judgment.targetSignName}`,
+      };
+    }
+  }
+  return null;
+}
+
+/**
+ * Direction claim: does narration say the matter's direction is a NAMED
+ * cardinal direction, and if so, does it match `judgment.direction`? The
+ * engine only ever produces one of the four cardinal directions (see
+ * `Direction` in nomenclature.ts) — no intercardinal claim ("Northeast")
+ * is even representable by the contract, so none is checked against; a
+ * narration using one would simply not match any of the four names below
+ * and would pass through unflagged, same as any other unrecognized claim
+ * shape.
+ */
+const DIRECTION_PHRASES: readonly string[] = Object.freeze([
+  'points toward the',
+  'points to the',
+  'energy points toward',
+  'direction of this matter is',
+]);
+const DIRECTIONS: readonly Direction[] = ['East', 'South', 'West', 'North'];
+
+export function checkDirectionClaims(
+  contract: ReadingContract,
+  field: keyof NarrationFields,
+  text: string,
+): ValidationFailure | null {
+  const lower = text.toLowerCase();
+  const phraseHit = DIRECTION_PHRASES.find(p => lower.includes(p));
+  if (!phraseHit) {
+    return null;
+  }
+  const sentence = findSentenceContaining(text, phraseHit);
+  const claimed = DIRECTIONS.find(d => new RegExp(`\\b${d}\\b`, 'i').test(sentence));
+  if (claimed && claimed !== contract.judgment.direction) {
+    return {
+      code: 'DIRECTION_CLAIM_CONTRADICTION',
+      field,
+      detail: `narration claims direction "${claimed}", but judgment.direction is ${contract.judgment.direction}`,
+    };
+  }
+  return null;
+}
+
+/**
+ * Retrograde claim: does narration assert a planet is retrograde, and if
+ * so, does the ENGINE'S OWN output actually say so? `WatchVerdict` carries
+ * no standalone retrograde boolean — but `judgment.factors` and
+ * `diagnosis.rationale` are both engine-generated, verbatim text arrays
+ * that DO contain a literal "is retrograde" sentence, and ONLY when
+ * `rulerPos.isRetrograde` is genuinely true (confirmed by reading
+ * `watchJudgment.ts`'s own `factors.push(...)` call site, gated by
+ * `if (rulerPos.isRetrograde)`, and the equivalent gate in `diagnosis.ts`).
+ * This is therefore a genuine ground-truth cross-check, not a blanket
+ * deny-list on the word "retrograde" — an earlier draft of this check
+ * rejected the word unconditionally, which `docs/audit/PHASE_5E_R_HARDENING.md`
+ * records finding a real false-positive against: contract `employment-001`
+ * in the existing real 11-contract pool genuinely has a retrograde ruler,
+ * and its own `factors`/`rationale` say so — narration accurately
+ * reflecting that must stay VALID, and only a retrograde claim UNSUPPORTED
+ * by the contract's own text is a contradiction.
+ */
+export function checkRetrogradeClaims(
+  contract: ReadingContract,
+  field: keyof NarrationFields,
+  text: string,
+): ValidationFailure | null {
+  if (!/\bretrograde\b/i.test(text)) {
+    return null;
+  }
+  const engineAssertsRetrograde =
+    contract.judgment.factors.some(f => /\bretrograde\b/i.test(f)) ||
+    contract.diagnosis.rationale.some(r => /\bretrograde\b/i.test(r));
+  if (!engineAssertsRetrograde) {
+    return {
+      code: 'RETROGRADE_CLAIM_CONTRADICTION',
+      field,
+      detail:
+        'narration asserts retrograde status, but neither judgment.factors nor diagnosis.rationale supports it for this reading',
+    };
+  }
+  return null;
+}
+
+/**
+ * Ruler-relation claim: does narration say the querent's ruler "regards"
+ * the matter's ruler "as a friend/enemy/neutral", and if so, does it match
+ * `judgment.rulerRelation`? One bounded regex, not a phrase list, because
+ * the claimed word itself needs to be captured, not just detected.
+ */
+const RULER_RELATION_PATTERN =
+  /\bregards?\b[\s\S]{0,60}?\bas\s+(?:an?\s+)?(friend|enemy|neutral)\b/i;
+
+export function checkRulerRelationClaims(
+  contract: ReadingContract,
+  field: keyof NarrationFields,
+  text: string,
+): ValidationFailure | null {
+  const match = RULER_RELATION_PATTERN.exec(text);
+  if (!match) {
+    return null;
+  }
+  const claimed = match[1]!.toLowerCase();
+  const actual = contract.judgment.rulerRelation;
+  if (claimed !== actual.toLowerCase()) {
+    return {
+      code: 'RULER_RELATION_CONTRADICTION',
+      field,
+      detail: `narration claims the ruler relation is "${claimed}", but judgment.rulerRelation is ${actual}`,
+    };
+  }
+  return null;
+}
+
+/**
+ * Reversal-likelihood claim: does narration say a reversal "is"/"remains" a
+ * specific likelihood word, and if so, does it match `judgment.reversal`
+ * ('POSSIBLE'/'NONE')? "Remains" is included alongside "is" because that is
+ * the engine's own phrasing in `diagnosis.ts`'s real rationale text ("A
+ * ruling planet is retrograde — reversal remains possible") — grounding the
+ * detector's shape in genuine engine-produced language, not an invented
+ * phrasing.
+ */
+const REVERSAL_CLAIM_PATTERN =
+  /\breversal\b[\s\S]{0,40}?\b(?:is|remains)\s+(none|not\s+possible|unlikely|possible|likely|a\s+real\s+possibility)\b/i;
+const REVERSAL_POSSIBLE_WORDS = new Set(['possible', 'likely', 'a real possibility']);
+const REVERSAL_NONE_WORDS = new Set(['none', 'not possible', 'unlikely']);
+
+export function checkReversalClaims(
+  contract: ReadingContract,
+  field: keyof NarrationFields,
+  text: string,
+): ValidationFailure | null {
+  const match = REVERSAL_CLAIM_PATTERN.exec(text);
+  if (!match) {
+    return null;
+  }
+  const claimed = match[1]!.toLowerCase().replace(/\s+/g, ' ');
+  const { reversal } = contract.judgment;
+  const claimsPossible = REVERSAL_POSSIBLE_WORDS.has(claimed);
+  const claimsNone = REVERSAL_NONE_WORDS.has(claimed);
+  if ((claimsPossible && reversal !== 'POSSIBLE') || (claimsNone && reversal !== 'NONE')) {
+    return {
+      code: 'REVERSAL_CLAIM_CONTRADICTION',
+      field,
+      detail: `narration claims reversal "${claimed}", but judgment.reversal is ${reversal}`,
+    };
+  }
+  return null;
+}
+
+/* -------------------------------------------------------------------------- */
 /*  F. Unsupported certainty                                                  */
 /* -------------------------------------------------------------------------- */
 
@@ -915,6 +1284,13 @@ const CHECKS: readonly ((
   checkRemedyConsistency,
   checkCelestialEntities,
   checkDiagnosisConsistency,
+  checkHouseClaims,
+  checkSupportingHouseClaims,
+  checkSignClaims,
+  checkDirectionClaims,
+  checkRetrogradeClaims,
+  checkRulerRelationClaims,
+  checkReversalClaims,
   checkUnsupportedCertainty,
   (_contract, field, text) => checkTerminologyLeakage(field, text),
   (_contract, field, text) => checkInternalDataLeakage(field, text),
