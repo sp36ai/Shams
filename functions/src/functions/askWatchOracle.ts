@@ -74,6 +74,7 @@ const { composeWatchOracleResponse } =
 /* eslint-enable @typescript-eslint/no-var-requires */
 
 import type { WatchOracleComposition } from '../oracle/responseComposer';
+import type { ReadingContract } from '../oracle/readingContract';
 
 import type { WatchState, WatchVerdict } from '../engine/rkp/watchJudgment';
 
@@ -206,6 +207,10 @@ export const askWatchOracle = onCall(
       let verdict: WatchVerdict;
       let publicVerdict: PublicWatchVerdict;
       let oracleResponse: WatchOracleComposition | null = null;
+      // PHASE 5F: the ReadingContract oracleResponse (if any) was validated
+      // against — server-persisted only, never sent to the client. See
+      // responseComposer.ts's WatchOracleCompositionResult doc comment.
+      let readingContract: ReadingContract | null = null;
       let readingRef: DocumentReference;
 
       // Updated right before each step below so a throw's log line names the
@@ -251,7 +256,7 @@ export const askWatchOracle = onCall(
         // ── Diagnosis → remedy protocol → narration ──────────────────────────
         stage = 'oracle-composition';
         try {
-          oracleResponse = await composeWatchOracleResponse({
+          const result = await composeWatchOracleResponse({
             verdict: publicVerdict,
             // The seeker's own words. Without them the narration is written
             // from the verdict alone, so two different questions that judge
@@ -269,6 +274,8 @@ export const askWatchOracle = onCall(
             // independently-taken instant a few milliseconds later.
             computedAt: instant,
           });
+          oracleResponse = result.composition;
+          readingContract = result.contract;
         } catch (err) {
           logger.warn('askWatchOracle: oracle composition failed', {
             err: String(err),
@@ -276,6 +283,7 @@ export const askWatchOracle = onCall(
           });
           // Non-fatal: the reading still stands on its verdict.
           oracleResponse = null;
+          readingContract = null;
         }
 
         stage = 'reading-doc-assembly';
@@ -302,6 +310,11 @@ export const askWatchOracle = onCall(
           // watch protocol is persisted in full under `watchOracle` instead.
           remedy: null,
           ...(oracleResponse ? { watchOracle: oracleResponse } : {}),
+          // PHASE 5F: server-only ground truth for discussReading.ts to
+          // validate follow-up replies against — never part of `response`
+          // below, which is what the client actually receives. See
+          // types.ts's own comment on this field.
+          ...(readingContract ? { readingContract } : {}),
           // PHASE 2B: recorded on the reading itself, not just the audit log
           // entry below — see ReadingDoc.engineVersion's doc comment.
           engineVersion: ENGINE_VERSION,

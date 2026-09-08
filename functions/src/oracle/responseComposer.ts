@@ -48,7 +48,11 @@ import type { DisplayWatchVerdict } from '../engine/rkp/watchJudgment';
 import { selectRemedyProtocol } from './remedySelection';
 import { selectSuggestedQuestions } from './suggestedQuestions';
 import type { Tradition } from './remedyLibrary';
-import { buildReadingContract, computeContractFingerprint } from './readingContract';
+import {
+  buildReadingContract,
+  computeContractFingerprint,
+  type ReadingContract,
+} from './readingContract';
 import { toNarrationContext, type NarrationContext } from './narrationContext';
 import { validateNarration } from './narrationValidator';
 import { buildDeterministicFallbackNarration } from './narrationFallback';
@@ -278,6 +282,25 @@ MOTHER_NAME: ${ctx.motherName || 'not provided'}
 /* -------------------------------------------------------------------------- */
 
 /**
+ * PHASE 5F: `composeWatchOracleResponse()`'s result, split into the
+ * client-facing composition and the server-only contract it was validated
+ * against. Kept as two separate fields, never merged into one object,
+ * specifically so a caller that spreads `composition` into a client
+ * response (as `askWatchOracle.ts` already does) cannot accidentally leak
+ * `contract` along with it — `WatchOracleComposition`'s own shape is
+ * unchanged by this phase, and nothing about what the client receives is
+ * different. `contract` exists so `askWatchOracle.ts` can persist it
+ * (readings/{id}.readingContract — see `types.ts`'s own comment on that
+ * field) for `discussReading.ts` to validate follow-up replies against the
+ * same ground truth the primary narration was already checked against —
+ * see `docs/audit/PHASE_5F_HARDENING.md`.
+ */
+export interface WatchOracleCompositionResult {
+  readonly composition: WatchOracleComposition;
+  readonly contract: ReadingContract;
+}
+
+/**
  * Run the full RKP → diagnosis → remedy → narration pipeline.
  *
  * Never throws for synthesis problems: the diagnosis and protocol are computed
@@ -287,7 +310,7 @@ MOTHER_NAME: ${ctx.motherName || 'not provided'}
  */
 export async function composeWatchOracleResponse(
   input: CompositionInput,
-): Promise<WatchOracleComposition> {
+): Promise<WatchOracleCompositionResult> {
   const { verdict, question, seekerName, motherName, traditions, readingId, computedAt } = input;
 
   // ── 1. Diagnosis (deterministic) ─────────────────────────────────────────
@@ -364,13 +387,15 @@ export async function composeWatchOracleResponse(
     }
   }
 
-  return Object.freeze({
+  const composition: WatchOracleComposition = Object.freeze({
     narration,
     brandSeal: ORACLE_BRAND_SEAL,
     suggestedQuestions: selectSuggestedQuestions(diagnosis),
     ...base,
     contractFingerprint: computeContractFingerprint(contract),
   });
+
+  return { composition, contract };
 }
 
 async function narrate(ctx: NarrationContext): Promise<NarrationFields | null> {

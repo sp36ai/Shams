@@ -26,13 +26,38 @@
  * Unlike narration, this layer has no deterministic fallback: a reply that
  * failed to generate is simply not a reply. It returns null and the callable
  * turns that into an error the client can retry, rather than inventing prose.
+ *
+ * PHASE 5F: those two structural guarantees kept an injected/forged reading
+ * out of the brief, but nothing checked what the model said back — a real
+ * gap `docs/audit/PHASE_5F_RECONNAISSANCE.md` (Finding F1) identified: this
+ * file had zero deterministic content validation, unlike responseComposer.ts,
+ * which has had one since Phase 4. Closed the same way, reusing the exact
+ * same architecture rather than building a second one:
+ * `validateDiscussionReply()` below wraps the reply's free text into the
+ * same `NarrationFields` shape `validateNarration()` already checks, and
+ * calls that function unchanged — every check Phase 4/4A/5C-R/5D-R/5E built
+ * (verdict/timing/remedy/celestial/diagnosis consistency, unsupported
+ * certainty, terminology/internal-data leakage, prompt-injection artifacts,
+ * and the seven Phase 5E ground-truth checks) now runs against a discussion
+ * reply exactly as it runs against fresh narration. `composeDiscussionReply()`
+ * calls it internally and, on failure, follows the SAME established
+ * precedent this file already used for a generation failure — return `null`
+ * and let the caller's existing "no reply" handling take over (refund the
+ * turn, surface a retry-prompting error) — not a new, invented policy. See
+ * `docs/audit/PHASE_5F_HARDENING.md` for the full record, including why the
+ * anchor reading's `ReadingContract` is the only one validated against
+ * (comparison readings, if any, are out of this phase's scope), and why a
+ * reading cast before this phase shipped (no persisted contract) skips
+ * validation rather than being rejected outright.
  */
 
 import { ANTHROPIC_API_KEY } from '../config';
 import { logger } from '../utils/logger';
 import { ORACLE_DISCUSSION_PROMPT } from '../prompts/oracleDiscussionPrompt';
 import { sanitizeQuestion } from './responseComposer';
-import type { WatchOracleComposition } from './responseComposer';
+import type { WatchOracleComposition, NarrationFields } from './responseComposer';
+import { validateNarration } from './narrationValidator';
+import type { ReadingContract } from './readingContract';
 import type { LangCode } from '../types';
 
 /**
@@ -88,6 +113,18 @@ export interface DiscussionInput {
   /** The new follow-up. */
   readonly message: string;
   readonly replyLang: LangCode;
+  /**
+   * PHASE 5F: the anchor reading's `ReadingContract` (`groundings[0]`'s own
+   * ground truth) — the deterministic authority `validateDiscussionReply()`
+   * checks the reply against, below. `null` when the anchor reading was
+   * cast before Phase 5F shipped (no persisted contract) or its synthesis
+   * failed before one was assembled — in either case validation is skipped
+   * rather than rejecting the reply, preserving this reading's existing
+   * discussion behavior exactly as it was before this phase. Only the
+   * anchor is validated against; a comparison reading's own claims are not
+   * — see this file's header.
+   */
+  readonly contract: ReadingContract | null;
 }
 
 export interface DiscussionReply {
@@ -265,11 +302,69 @@ export function toApiMessages(
 }
 
 /**
+ * PHASE 5F: wrap a discussion reply's free text into the same
+ * `NarrationFields` shape `validateNarration()` already checks, so this
+ * surface reuses the exact same deterministic check pipeline the primary
+ * narration surface uses — not a second validator. The reply is not
+ * naturally shaped like five distinct fields (`rkp_finding`,
+ * `interpretation`, ... — those exist because Claude drafts a fresh
+ * reading's prose as five separate sections), so the same text is placed
+ * in all five: every check operates on whatever `text` it receives
+ * regardless of which field name it is nominally paired with (confirmed by
+ * reading every check function in narrationValidator.ts — none branches on
+ * `field`, it is carried through only for audit logging), so this produces
+ * exactly the same detection as validating the reply once, just through
+ * the unmodified existing per-field loop rather than a new one.
+ *
+ * Exported for direct testing.
+ */
+export function wrapReplyAsNarrationFields(answer: string): NarrationFields {
+  return {
+    rkp_finding: answer,
+    interpretation: answer,
+    recommended_approach: answer,
+    why_this_remedy: answer,
+    signature: answer,
+  };
+}
+
+/**
+ * PHASE 5F: does this discussion reply agree with the anchor reading's
+ * `ReadingContract`? `contract` may be `null` (a reading cast before this
+ * phase shipped, or whose synthesis failed before a contract was
+ * assembled) — validation is skipped in that case, not failed, exactly
+ * preserving this reading's existing discussion behavior.
+ *
+ * Exported for direct testing.
+ */
+export function validateDiscussionReply(
+  contract: ReadingContract | null,
+  answer: string,
+): { readonly valid: true } | { readonly valid: false; readonly failures: readonly string[] } {
+  if (contract === null) {
+    return { valid: true };
+  }
+  const result = validateNarration(contract, wrapReplyAsNarrationFields(answer));
+  if (result.valid) {
+    return { valid: true };
+  }
+  return {
+    valid: false,
+    failures: result.failures.map(f => `${f.code}: ${f.detail}`),
+  };
+}
+
+/**
  * Answer one follow-up about an existing reading.
  *
  * Returns null — never throws — for every failure mode below the caller's
  * concern: no API key bound, HTTP error, timeout, unparseable JSON. The
  * caller decides what the seeker sees.
+ *
+ * PHASE 5F: also returns null — the same, pre-existing "no reply" outcome,
+ * not a new one — when the model's reply fails `validateDiscussionReply()`
+ * against `input.contract`. See this file's header for why this reuses
+ * that exact precedent instead of inventing a deterministic fallback reply.
  */
 export async function composeDiscussionReply(
   input: DiscussionInput,
@@ -336,8 +431,22 @@ export async function composeDiscussionReply(
       return null;
     }
 
+    const answer = parsed.answer.trim();
+
+    // PHASE 5F: deterministic validation, independent of Claude — see this
+    // file's header. Runs only when this reading has a persisted contract
+    // to validate against; see validateDiscussionReply()'s own doc comment
+    // for why a missing contract skips validation rather than failing it.
+    const validation = validateDiscussionReply(input.contract, answer);
+    if (!validation.valid) {
+      logger.warn('oracle discussion reply failed validation — no reply returned', {
+        failures: validation.failures,
+      });
+      return null;
+    }
+
     return {
-      answer: parsed.answer.trim(),
+      answer,
       isNewQuestion: parsed.is_new_question === true,
     };
   } catch (err) {

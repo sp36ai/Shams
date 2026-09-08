@@ -46,6 +46,7 @@ import { ORACLE_FUNCTION_OPTS, ANTHROPIC_API_KEY, DISCUSSION_TURN_LIMIT } from '
 import { claimRequest, completeRequest, releaseRequest } from '../utils/idempotency';
 import type { AuditLogDoc, ReadingDoc } from '../types';
 import type { WatchOracleComposition } from '../oracle/responseComposer';
+import type { ReadingContract } from '../oracle/readingContract';
 import {
   composeDiscussionReply,
   type DiscussionTurn,
@@ -82,6 +83,38 @@ function asComposition(value: unknown): WatchOracleComposition | null {
     return null;
   }
   return value as WatchOracleComposition;
+}
+
+/**
+ * PHASE 5F: narrow a stored `readingContract` field back to a
+ * `ReadingContract`, the same way `asComposition` above narrows
+ * `watchOracle` — shape-checked, not asserted, since Firestore round-trips
+ * are outside TypeScript's own guarantees. `null` for a reading cast
+ * before this phase shipped, or whose synthesis failed before a contract
+ * was assembled; `composeDiscussionReply()`'s own validation step treats
+ * that as "skip validation," not "fail" — see discussionComposer.ts.
+ */
+function asReadingContract(value: unknown): ReadingContract | null {
+  if (typeof value !== 'object' || value === null) {
+    return null;
+  }
+  const o = value as Record<string, unknown>;
+  if (typeof o.provenance !== 'object' || o.provenance === null) {
+    return null;
+  }
+  if (typeof o.judgment !== 'object' || o.judgment === null) {
+    return null;
+  }
+  if (typeof o.diagnosis !== 'object' || o.diagnosis === null) {
+    return null;
+  }
+  if (typeof o.remedy !== 'object' || o.remedy === null) {
+    return null;
+  }
+  if (!Array.isArray(o.celestialEntities)) {
+    return null;
+  }
+  return value as ReadingContract;
 }
 
 export interface DiscussReadingResponse {
@@ -218,17 +251,30 @@ export const discussReading = onCall(
         text: turn.text,
       }));
 
+      // PHASE 5F: the anchor reading's own ground truth, if this reading
+      // was cast after this phase shipped and carries one — see
+      // asReadingContract's and DiscussionInput.contract's own doc
+      // comments for why a comparison reading's contract is not also
+      // loaded here (only the anchor is validated against) and why a
+      // missing contract is not itself an error.
+      const contract = asReadingContract(doc.readingContract);
+
       const reply = await composeDiscussionReply({
         groundings,
         turns,
         message: input.message,
         replyLang: input.lang,
+        contract,
       });
 
       if (reply === null) {
         // No deterministic fallback exists for a conversational reply — see
-        // discussionComposer's header. Give the turn back and let the client
-        // offer a retry rather than serving invented prose.
+        // discussionComposer's header. This is also where a reply that
+        // failed PHASE 5F's own validation lands, by design (see that
+        // file's header for why it reuses this exact "no reply" outcome
+        // rather than inventing a new one). Give the turn back and let the
+        // client offer a retry rather than serving invented or ungrounded
+        // prose.
         await readingRef.update({ discussionTurns: FieldValue.increment(-1) }).catch(refundErr => {
           logger.warn('discussReading: turn refund failed', {
             err: String(refundErr),
