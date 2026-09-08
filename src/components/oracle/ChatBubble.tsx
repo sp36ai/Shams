@@ -3,9 +3,11 @@
  * --------------------------------------------------------------------------
  * Presentation only, same discipline as RkpWatchCard/RemedyProtocolCard: a
  * 'sent' oracle message renders those two cards from `message.reading`
- * exactly as returned, nothing recomputed here. This file's only original
- * logic is `speakableTextFor`, which concatenates already-composed prose
- * fields into one string for text-to-speech — string assembly, not judgment.
+ * exactly as returned, nothing recomputed here. `speakableTextFor` (PHASE
+ * 5H-R) used to be this file's one piece of original logic — it assembled
+ * the text-to-speech string itself by joining prose fields — but now simply
+ * relays the server-computed, server-validated `oracle.speakableText`; see
+ * its own doc comment for why that moved server-side.
  *
  * An oracle turn comes in two shapes and this file renders both: a reading
  * (the verdict cards) and a follow-up reply (prose, spoken the same way).
@@ -28,17 +30,27 @@ import { directionalFocusFor } from '../../data/watchRemedyContext';
 import type { SpeakingStatus } from '@hooks/useTextToSpeech';
 
 /**
- * The text a 'sent' oracle message's play/pause button speaks. Prefers the
- * full narration prose; falls back to the plain-language state headline
- * when synthesis didn't produce one (`oracle` absent — a degraded but
- * intact protocol still has a verdict worth reading aloud).
+ * The text a 'sent' oracle message's play/pause button speaks.
+ *
+ * PHASE 5H-R: reads `oracle.speakableText` directly rather than joining
+ * `narration`'s own fields itself, as this function used to. That join was
+ * exactly Finding 5H-1
+ * (`docs/audit/PHASE_5H_RECONNAISSANCE.md`): the per-field deterministic
+ * validator never saw the three-field concatenation this function produced,
+ * so a claim split across a field boundary could reach TTS unvalidated even
+ * though every individual field passed. The server now performs the
+ * identical join and validates the result before this composition ever
+ * reaches the client — see responseComposer.ts's own comment on
+ * `speakableText`. Falls back to the plain-language state headline both
+ * when synthesis produced no narration at all (`oracle` absent) AND when
+ * `speakableText` itself is absent (a reading composed before this field
+ * existed) — reconstructing the join here for a legacy reading would
+ * reopen the exact gap this field closes, so it is never attempted.
  */
 export function speakableTextFor(reading: WatchReading): string {
-  const narration = reading.oracle?.narration;
-  if (narration !== null && narration !== undefined) {
-    return [narration.rkp_finding, narration.interpretation, narration.recommended_approach]
-      .filter(s => s.length > 0)
-      .join('. ');
+  const speakableText = reading.oracle?.speakableText;
+  if (speakableText !== null && speakableText !== undefined) {
+    return speakableText;
   }
   return STATE_HEADLINE[reading.verdict.state];
 }

@@ -103,6 +103,24 @@ export interface OracleProtocolStep {
 export interface WatchOracleComposition {
   /** Model prose. Null throughout when synthesis failed. */
   readonly narration: NarrationFields | null;
+  /**
+   * PHASE 5H-R: the exact string safe to hand to on-device text-to-speech —
+   * `ChatBubble.speakableTextFor()`'s own former transformation
+   * (`[rkp_finding, interpretation, recommended_approach].filter(s =>
+   * s.length > 0).join('. ')`), now computed and validated HERE, once,
+   * server-side, rather than reconstructed client-side from the individual
+   * fields. `docs/audit/PHASE_5H_RECONNAISSANCE.md` (Finding 5H-1)
+   * demonstrated that per-field validation alone does not cover this
+   * three-field join: a claim can be split across the `rkp_finding` /
+   * `interpretation` boundary so that neither field alone trips a check,
+   * while the concatenation a seeker actually hears does. Validated below
+   * the same way `wrapAsAllNarrationFields()` reuses `validateNarration()`
+   * for a single string (the exact technique
+   * `discussionComposer.ts`'s `wrapReplyAsNarrationFields()` established in
+   * Phase 5F) — not a second validator. `null` when `narration` itself is
+   * null (synthesis failed outright — nothing to speak).
+   */
+  readonly speakableText: string | null;
   /** Fixed closing attribution — see ORACLE_BRAND_SEAL. Never model-written. */
   readonly brandSeal: string;
   /**
@@ -278,6 +296,52 @@ MOTHER_NAME: ${ctx.motherName || 'not provided'}
 }
 
 /* -------------------------------------------------------------------------- */
+/*  PHASE 5H-R: the TTS artifact boundary                                     */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * The exact transformation `ChatBubble.speakableTextFor()` used to perform
+ * client-side — now the single place this join happens at all. Reproduced
+ * field-for-field, filter-for-filter, separator-for-separator against the
+ * real production function during Phase 5H-R's own pre-implementation
+ * probing (see `docs/audit/PHASE_5H_R_HARDENING.md`): three of the five
+ * fields, empty ones dropped, joined with `'. '`. `why_this_remedy` and
+ * `signature` are deliberately excluded, matching what the client always
+ * spoke — this phase changes WHERE this string is computed and that it is
+ * now validated before anything ever reads it, not WHAT it contains.
+ *
+ * Exported for direct testing.
+ */
+export function buildSpeakableText(narration: NarrationFields): string {
+  return [narration.rkp_finding, narration.interpretation, narration.recommended_approach]
+    .filter(s => s.length > 0)
+    .join('. ');
+}
+
+/**
+ * Wrap a single string into the same `NarrationFields` shape
+ * `validateNarration()` already checks, so the TTS artifact is checked by
+ * the exact same, unmodified per-field loop every other narration surface
+ * uses — not a second validator. Deliberately a LOCAL, second copy of
+ * `discussionComposer.ts`'s `wrapReplyAsNarrationFields()` (itself just this
+ * six-line mapping, not validator logic) rather than an import from that
+ * file: `discussionComposer.ts` already imports types FROM this file, and
+ * `narrationValidator.ts` — the one module both composers do share — is an
+ * explicitly prohibited edit for this phase. See this file's header.
+ *
+ * Exported for direct testing.
+ */
+export function wrapAsAllNarrationFields(text: string): NarrationFields {
+  return {
+    rkp_finding: text,
+    interpretation: text,
+    recommended_approach: text,
+    why_this_remedy: text,
+    signature: text,
+  };
+}
+
+/* -------------------------------------------------------------------------- */
 /*  Composition                                                               */
 /* -------------------------------------------------------------------------- */
 
@@ -374,21 +438,47 @@ export async function composeWatchOracleResponse(
   let narration: NarrationFields | null = drafted;
   if (drafted !== null) {
     const result = validateNarration(contract, drafted);
-    if (!result.valid) {
+    // PHASE 5H-R: per-field validation alone does not cover the three-field
+    // join `speakableTextFor()` (formerly client-side, now buildSpeakableText
+    // below) produces — see this file's header on `speakableText` and
+    // docs/audit/PHASE_5H_RECONNAISSANCE.md (Finding 5H-1). Checked here,
+    // against the SAME candidate `drafted` fields, so a claim split across a
+    // field boundary that only becomes visible once joined is caught before
+    // anything — client or server — ever reads this composition, not just
+    // before TTS specifically.
+    const speakableResult = validateNarration(
+      contract,
+      wrapAsAllNarrationFields(buildSpeakableText(drafted)),
+    );
+    if (!result.valid || !speakableResult.valid) {
+      const failures = [
+        ...(result.valid ? [] : result.failures),
+        ...(speakableResult.valid ? [] : speakableResult.failures),
+      ];
       logger.warn('watch oracle narration failed validation — using deterministic fallback', {
         readingId: contract.provenance.readingId,
         engineVersion: contract.provenance.engineVersion,
         contractVersion: contract.provenance.contractVersion,
         contractFingerprint: computeContractFingerprint(contract),
-        failures: result.failures.map(f => ({ code: f.code, field: f.field, detail: f.detail })),
+        failures: failures.map(f => ({ code: f.code, field: f.field, detail: f.detail })),
+        speakableTextFailed: !speakableResult.valid,
         fallbackUsed: true,
       });
       narration = buildDeterministicFallbackNarration(contract);
     }
   }
 
+  // PHASE 5H-R: computed from whichever `narration` was actually decided
+  // above — the validated draft, or the deterministic fallback (itself
+  // built only from `contract` fields, so its own three-field join cannot
+  // introduce a claim `contract` doesn't already support; not re-validated
+  // for the same reason `buildDeterministicFallbackNarration()`'s own output
+  // never has been). `null` only when synthesis produced nothing to speak.
+  const speakableText = narration !== null ? buildSpeakableText(narration) : null;
+
   const composition: WatchOracleComposition = Object.freeze({
     narration,
+    speakableText,
     brandSeal: ORACLE_BRAND_SEAL,
     suggestedQuestions: selectSuggestedQuestions(diagnosis),
     ...base,
