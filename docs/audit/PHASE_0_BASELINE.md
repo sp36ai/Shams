@@ -340,7 +340,149 @@ those boundaries, despite the repository's own prior audit believing it was.
 
 ---
 
+## Addendum — evidence tightening (requested after provisional acceptance)
+
+This addendum was added in a second inspection pass, in response to a request to
+prove §I finding 1 and §E finding 2 with exact repository evidence rather than
+prose summary, produce a precise `kp/` dependency table, and confirm baseline
+integrity. **No application source was changed to produce this addendum** — see
+§4 below. Historical claims below are git evidence (commit hash, author, date,
+diff content, quoted verbatim); anything not directly evidenced is labeled
+inference or marked UNRESOLVED.
+
+### 1. P0 validator regression — exact evidence chain
+
+| Step | Commit | Date | Evidence |
+|---|---|---|---|
+| **Introduced** | `3db4c65` "Stop leaking raw API errors into oracle readings shown to users (#56)" | 2026-08-07 19:23:01 +0530 | First commit to add `functions/src/functions/safetyValidator.ts` (`git log --diff-filter=A`). |
+| **Generalized + wired into the live path** | `08aac2b` "Restore AI output defense-in-depth on the live askWatchOracle path" | 2026-08-23 06:06:03 +0000 | Diff (already quoted in the original report) adds `runFieldValidation`/`runWatchNarrationSafetyValidator` and a call site in `responseComposer.ts`: `return await runWatchNarrationSafetyValidator(drafted, readingId, apiKey);`. Commit message: *"That function turned out to be dead code the shipped app never calls... askWatchOracle, the function actually shipping to users, had only its system-prompt guardrails as a single line of defense."* |
+| **Marked CLOSED in repo's own audit doc** | `b13f8c7` "Adopt precise CLOSED/OPEN status taxonomy for the two remaining gate items" (content originates same-day in `d3c3417`) | 2026-08-23 06:36:11 +0000 (30 min after `08aac2b`) | `PRODUCTION_AUDIT_2026-08-23.md`, still present verbatim at current `HEAD`: status table row `\| AI output defense-in-depth \| **CLOSED** \|`, and detail row #5: *"Closed. `safetyValidator.ts`'s per-field validation engine was generalized (`runFieldValidation`) and a new `runWatchNarrationSafetyValidator` wraps it for `askWatchOracle`'s narration fields. Wired into `oracle/responseComposer.ts`'s `narrate()`..."* This doc has **not** been updated since — it still asserts CLOSED today. |
+| **File deleted** | `18232d7` "Delete the retired KP/Astronomical judgment engine — completely, not just unwired (#92)" | 2026-08-25 16:49:57 +0530 | `git show 18232d7 --stat`: `functions/src/functions/safetyValidator.ts \| 182 -----` (182 deletions, file removed). Commit message's own stated rationale: *"Its dedicated LLM voice-composition prompt (prompts/oracleSynthesisPrompt.ts) and its dedicated safety-validation gate (functions/safetyValidator.ts, used nowhere else — askWatchOracle.ts never called it)."* **This claim was false at the time it was merged to `main`**, but not through negligence on this commit's own terms: `git merge-base --is-ancestor 08aac2b 18232d7` returns **false** — `08aac2b` is not an ancestor of `18232d7`. The branch `18232d7` was built on forked before `08aac2b` landed, so from that branch's own point of view the claim was accurate; it became stale only once the two histories were merged. `18232d7` itself does **not** touch `responseComposer.ts` at all (`git show 18232d7 -- functions/src/oracle/responseComposer.ts` returns empty) — so the call site survived this commit intact and pointed at a now-missing file, in the merged history. |
+| **Call site removed** | `e326807` "Fix responseComposer conflicts post-merge" | 2026-09-06 09:27:14 +0000 | Full diff quoted in the original report. Commit message states plainly: *"Remove safetyValidator.ts import and call (file deleted in PR #92)"* and *"Simplify safety layer comment: only system prompt guardrails remain."* This is the commit that actually took the validator off the live path — a **deliberate, documented choice made while resolving a merge conflict** (choosing to drop the caller rather than restore the deleted file), not a silent accident. It is also the commit that introduced the now-misleading comment at `responseComposer.ts:377-378`. |
+
+**Current state, directly verified at `HEAD` (`241dd96` / `21278cf`):**
+- `grep -rn "safetyValidator\|runWatchNarrationSafetyValidator\|runFieldValidation" functions/src src` → **zero matches** (exit code 1).
+- `functions/src/functions/safetyValidator.ts` does not exist in the working tree or at `HEAD` (`git show HEAD:functions/src/functions/safetyValidator.ts` → `fatal: path ... does not exist in 'HEAD'`).
+- `functions/src/oracle/responseComposer.ts:377-378` currently reads: *"The system prompt guard is the primary defense; additional post-generation validation was removed when the KP engine was deleted (PR #92)."* This sentence is misleading on two independently verifiable points: (a) the validator was not deleted *because* it was KP functionality — the deletion commit's own text describes it as "used nowhere else," a claim about reachability, not about being part of the KP engine; safetyValidator.ts validated the watch-oracle narration fields, unrelated to `judgeHorary`/KP; (b) its removal from the live call path did not happen in PR #92 at all — it happened three weeks later, in a separate merge-conflict-resolution commit (`e326807`).
+
+**Distinguishing evidence from inference:** every commit hash, date, diff line, and quoted sentence above was read directly from `git log`/`git show` output in this session. The characterization of `e326807`'s removal as "deliberate" is drawn directly from that commit's own message, not inferred. The characterization of `18232d7`'s claim as "false when merged, accurate on its own branch" is inference from the ancestry check (`merge-base --is-ancestor`) plus the empty diff against `responseComposer.ts`, not a git fact stated anywhere directly — flagged as inference. **Not restored. Not modified.**
+
+### 2. Remedy duplicate-authority finding — traced conclusively, not left unresolved
+
+This was traceable to a definite conclusion, not left uncertain — reported as
+**CONFIRMED LIVE**, not UNRESOLVED, because every link in the call chain was
+followed to source.
+
+**Caller inventory:**
+
+| Caller | Kind | Reachable? | Side |
+|---|---|---|---|
+| `src/screens/ReadingScreen.tsx:249` — `runGuidanceSelection()` | Production | **Yes — unconditional.** Called at `ReadingScreen.tsx:317`, directly inside `runAsk()`'s success path, immediately after every successful `askWatchOracle()` call (`result.reading` is typed `WatchReading`, confirming this fires on watch-oracle readings, not just legacy ones). No feature flag or gating condition around the call. | Client → calls server `selectRemedies` callable |
+| `functions/src/functions/selectRemedies.ts` | Production (exported from `index.ts`, confirmed in original report §B) | Yes | Server |
+| `src/data/remedySelector.ts` (`enrichWithDescriptions`, `selectRemedies` wrapper) | Production | Yes, imported and called as above | Client |
+| `src/data/__tests__/remedySelector.test.ts` | Test | N/A (test-only import of `enrichWithDescriptions`) | — |
+| `src/data/watchRemedyContext.ts` | Production | Imports `categoryToThemes` from `remedySelector.ts` — live, used for the deterministic-side context building, not the LLM call itself | Client |
+
+**Can it produce user-visible remedies?** Yes, directly verified in
+`src/components/oracle/ChatBubble.tsx:273-276`:
+```
+{reading.oracle !== undefined && <RemedyProtocolCard composition={reading.oracle} />}
+{message.selectedRemedies !== undefined && (
+  <GuidanceCard remedies={message.selectedRemedies} />
+```
+Both cards render in the same chat bubble, unconditionally, whenever both pieces
+of data are present — which, given `runGuidanceSelection` fires on every
+successful reading, is the common case for any reading that hasn't failed or
+finished loading yet.
+
+**Does the Watch protocol's own deterministic remedy selection also produce
+user-visible remedies?** Yes — `RemedyProtocolCard` renders `reading.oracle`
+(`WatchOracleComposition.protocol`), sourced from `oracle/remedySelection.ts` +
+`oracle/remedyLibrary.ts` inside `askWatchOracle`'s own response (traced in the
+original report §B/§C). This is the same response object `runGuidanceSelection`
+reads `reading.verdict` from to build its own, separate request.
+
+**Can the two paths disagree?** Structurally, yes — confirmed by direct
+comparison, not assumption. They draw from two **entirely separate remedy
+libraries** with disjoint id namespaces:
+- `functions/src/oracle/remedyLibrary.ts` (653 lines) — ids like
+  `astro_favourable_window`, `behavioral_commit`, `devotional_dhikr_steadiness`
+  — selected **deterministically** by `selectRemedyProtocol()` from the settled
+  RKP diagnosis.
+- `src/data/remedyLibrary.ts` (411 lines) — ids like `salawat_01`, `dua_01`,
+  `istikhara_01` — up to 8 candidates ranked client-side
+  (`rankCandidates.ts`), then **an LLM (`selectRemedies`'s `SELECTION_PROMPT`,
+  server-side) picks 1-3** from those candidates.
+
+`diff` of the two id sets confirms **zero overlap**.
+
+**Is this an accident or a documented design?** `src/components/oracle/GuidanceCard.tsx`'s
+own header comment states this is intentional, verbatim: *"They share no remedy
+ids and are not alternatives to each other; showing both is the intent, which is
+why this renders below the protocol rather than in place of it."* So the
+codebase's own authors framed this as two answers to two different questions
+(RKP's prescribed intervention vs. an LLM-suggested devotional practice), not as
+an unintentional duplicate. **This report does not resolve the tension between
+that stated intent and the constitution's "ONE ENGINE AUTHORITY" / "remedy is
+machine-owned" rules** — it is reported as a fact for owner scoping, not
+adjudicated here. What is conclusively established, and not in question: a
+second, LLM-driven selection mechanism, reading from a second library, does
+currently determine part of the user-visible remedy content on every reading,
+live, in production, today.
+
+### 3. KP namespace classification — precise table
+
+Every path under a `kp/` directory found in the repository (`functions/src/engine/kp/`
+and `src/astrology/kp/` — no other `kp/` directories exist per repo-wide search),
+with concrete importer evidence rather than directory-name inference:
+
+| Path | Imported by | Runtime? | Purpose | Canonical? | Phase 2 candidate action (not performed) |
+|---|---|---|---|---|---|
+| `functions/src/engine/kp/rules/houseMatrix.ts` | `engine/types/question.ts`, `engine/rkp/diagnosis.ts`, `engine/rkp/watchJudgment.ts`, `oracle/remedySelection.ts`, `oracle/suggestedQuestions.ts`, `oracle/remedyLibrary.ts` | **Yes** — reachable from live `askWatchOracle` via `diagnosis.ts`/`watchJudgment.ts` | House→question-type matrix + `QuestionType` union — shared astrological reference data | Yes, as data (not judgment logic) | None identified — leave in place; directory name is the only thing "legacy" about it |
+| `src/astrology/kp/rules/houseMatrix.ts` | `stores/readingsStore.ts` (type-only), `astrology/types/question.ts`, `astrology/rkp/diagnosis.ts`, `astrology/rkp/watchJudgment.ts` | Yes — this is the **source**; `sync-engine.mjs` mirrors it into the `functions/` copy above | Same as above | Yes | Same as above |
+| `functions/src/engine/kp/rules/nakshatras.ts` | `engine/primitives/subLord.ts` | **Yes** — `subLord.ts` is imported by `chartBuilder.ts`, which builds every watch chart | Nakshatra index/lord table | Yes, as data | None identified |
+| `src/astrology/kp/rules/nakshatras.ts` | `astrology/primitives/subLord.ts` | Yes — source copy | Same | Yes | Same |
+| `functions/src/engine/kp/rules/vimshottari.ts` | `engine/primitives/subLord.ts` | **Yes** — same reachability as nakshatras.ts above | Vimshottari dasha lord sequence | Yes, as data | None identified |
+| `src/astrology/kp/rules/vimshottari.ts` | `astrology/primitives/subLord.ts` | Yes — source copy | Same | Yes | Same |
+| `functions/src/engine/kp/rules/questionKeywords.ts` | `functions/functions/askWatchOracle.ts` (direct `require()`) | **Yes** — directly required on the live reading path (step 7 of the pipeline in original report §B) | Keyword-based question classifier (`classifyQuestion`) | Yes | None identified |
+| `src/astrology/kp/rules/questionKeywords.ts` | **No client-side call site found** (`classifyQuestion` from this module has zero callers under `src/` outside its own file/tests) | Source copy only — inert client-side, becomes live only via the synced server copy above | Same classifier, client source | Yes (as the source of the live server copy), but note it is not itself directly exercised client-side | None identified — this is expected given the sync-engine architecture, not a finding |
+| `functions/src/engine/kp/judgment/__tests__/judgeHorary.test.ts` | Nothing — it is a leaf test file | **No.** `import { judgeHorary } from '../judgeHorary'` resolves to a file that does not exist anywhere in the repository (confirmed by repo-wide search; `judgeHorary.ts`, `significations.ts`, `significators.ts`, `timing.ts` were all deleted by `18232d7`, which the commit message itself lists explicitly: *"judgeHorary() and its three helpers... The full KP verdict algorithm."*) | Orphaned regression test for a deleted engine | No | **Genuinely dead** — candidate for deletion once Phase 1 explicitly authorizes it; currently breaks `functions/`'s `npm test` (§H of the original report) |
+
+No `kp/`-named path was classified as legacy solely because of its directory
+name — the four `rules/*` files are classified **RUNTIME / canonical** precisely
+*despite* living under `kp/`, on the strength of direct importer evidence. Only
+`judgment/__tests__/judgeHorary.test.ts` is classified dead, and that is because
+its one and only import target does not exist in the repository, not because of
+its path.
+
+### 4. Baseline integrity — confirmed
+
+- `origin/main` SHA (unchanged since Phase 0 began): `ce536bcba19b3c145e4820fefa3b19bcd9d7049f`
+- Working branch: `claude/shams-phase-0-baseline-lnlmy6`
+- Current `HEAD`: `241dd967a2ffed2597936fb6d71105895a1acb08`
+- `git log origin/main..HEAD --oneline`: exactly one commit —
+  `241dd96 Phase 0: baseline forensic audit (inspection only, no behavior changes)`
+- `git diff origin/main..HEAD --stat`:
+  ```
+  docs/audit/PHASE_0_BASELINE.md | 346 +++++++++++++++++++++++++++++++++++++++++
+  1 file changed, 346 insertions(+)
+  ```
+  **One file changed. Zero application source files touched. Zero deletions
+  (nothing removed, including no removal of `kp/` paths, the validator, or the
+  remedy-selection duplication).**
+- `git status --short`: empty — working tree clean; this addendum's own edit to
+  `docs/audit/PHASE_0_BASELINE.md` is the only pending change, still confined to
+  the same audit-documentation file.
+- No judgment behavior changed: no file under `functions/src/engine/`,
+  `functions/src/oracle/`, `functions/src/functions/`, `src/astrology/`, or
+  `src/` was modified in this pass — every finding above was produced by `git
+  log`/`git show`/`grep`/`diff` against existing history and the current working
+  tree, not by editing code.
+
+---
+
 ## STOP
 
-This concludes Phase 0. No fixes were applied. Awaiting review before Phase 1 is
-defined.
+This concludes the Phase 0 addendum. No fixes were applied — the P0 validator
+was not restored, the remedy-selection duplication was not touched, and no
+`kp/`-named path was modified or removed. Awaiting the next phase instruction.
