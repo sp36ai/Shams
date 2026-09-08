@@ -627,3 +627,40 @@ STOP. Phase 5C is not started. No findings were fixed. No refactor was
 performed. No file was renamed. No module was moved. No `kp/` primitive
 was deleted or renamed. The 4/18 remedy taxonomy question was not
 reopened. No unrelated cleanup was performed.
+
+---
+
+## Addendum — 2026-09-08: Phase 5B-R remediation
+
+Both P2 findings above were remediated under the separately-authorized
+Phase 5B-R. Full rationale, implementation, and evidence live in
+`docs/audit/PHASE_5B_REMEDIATION.md`; this addendum records the outcome
+against this report's own findings.
+
+**P5B-1 — REMEDIATED.** `sync-engine.mjs` gained a `--check` mode that
+detects, without writing, any disagreement between `src/astrology/` and
+the committed `functions/src/engine/` mirror. This check now runs (a) as
+a dedicated, named CI step before `Lint`/`Build`, and (b) as a `vitest`
+`globalSetup` hook on every test invocation regardless of how it is
+started — proven to abort the entire run, loudly, before any test
+executes, when a deliberate divergence was introduced and reproduced
+(`docs/audit/PHASE_5B_REMEDIATION.md` §E). The specific drift this phase
+found (`watchJudgment.ts`'s "Nth Ghar" rationale text) was corrected via
+the same, unmodified sync mechanism.
+
+**P5B-2 — REMEDIATED.** `pruneDir()` now skips `__tests__` directories,
+matching the copy step's own long-standing exemption. The 17 previously-
+silently-deleted tests
+(`functions/src/engine/primitives/__tests__/{chartBuilder,julianDay}.test.ts`)
+were proven to survive a real `npm run build` and to actually execute
+and pass afterward (`docs/audit/PHASE_5B_REMEDIATION.md` §I-J).
+
+**One item deliberately left open, per this phase's own "if golden
+corpus changes: STOP" instruction:** regenerating the golden corpus
+against the now-corrected engine mirror changes 44 of 111 cases,
+exclusively in "Nth Ghar" rationale text (confirmed, zero decision-field
+impact) — this was generated once to characterize the change, then
+reverted, and left for an explicit follow-up decision rather than
+committed. See `docs/audit/PHASE_5B_REMEDIATION.md` §M.
+
+**PHASE 5B-R: PASS WITH DOCUMENTED FINDING**
