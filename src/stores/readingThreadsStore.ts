@@ -34,7 +34,6 @@
 import { create } from 'zustand';
 
 import type { WatchReading } from '../firebase/watchOracle';
-import type { RenderedRemedy } from '../data/remedyRenderer';
 import { readingTitleFor } from '../data/readingTitle';
 import { storage, KEYS } from '@storage/mmkv';
 
@@ -62,12 +61,13 @@ export interface ReadingMessage {
   /** Present once a 'sent' oracle message of variant 'reading' resolves. */
   reading?: WatchReading;
   /**
-   * Islamic-practice guidance for this reading, chosen by the selectRemedies
-   * Cloud Function from the client's own candidate ranking. Arrives after the
-   * verdict (a second, non-blocking round trip), so a 'sent' reading message
-   * legitimately renders without it.
+   * PHASE 2B: was populated by the second, LLM-driven remedy path
+   * (selectRemedies Cloud Function) — disconnected, see
+   * docs/audit/PHASE_2B_ENGINE_MIGRATION.md. No longer written. Not
+   * redeclared here: MMKV is untyped JSON, so a `selectedRemedies` key left
+   * over on an existing user's stored message from before this change is
+   * simply ignored by TypeScript now, not corrupted or lost.
    */
-  selectedRemedies?: RenderedRemedy[];
   /** On a 'discussion' message: the oracle judged this follow-up to be its own
    *  horary question and declined to answer it from the standing reading. */
   suggestsNewQuestion?: boolean;

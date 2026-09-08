@@ -1,3 +1,19 @@
+/**
+ * DEPRECATED — PHASE 2B, disconnected, zero production callers. This is the
+ * second remedy library (see docs/audit/REMEDY_AUTHORITY_ANALYSIS.md's
+ * "Path B") — 38 entries under salawat_NN, dua_NN, istikhara_NN etc. ids,
+ * disjoint from the canonical functions/src/oracle/remedyLibrary.ts.
+ * Content migration into the canonical library was evaluated and
+ * deliberately NOT performed this phase: the two libraries' tagging
+ * vocabularies (RemedyTag here vs. ImbalancePattern there) overlap on only
+ * 4 of 18 terms (OBSTRUCTION, ATTACHMENT, HASTE, CONFLICT); mapping the
+ * other 14 would mean inventing semantic correspondences no evidence
+ * settles, which is a content/product design decision, not an engineering
+ * one — see docs/audit/PHASE_2B_ENGINE_MIGRATION.md's remedy-migration
+ * section for the full reasoning. Retained on disk, not deleted — see that
+ * document's Unresolved section.
+ */
+
 // ── Canonical tag vocabulary — 18 tags, derived bottom-up from the 38 remedies ──
 
 export type RemedyTag =

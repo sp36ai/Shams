@@ -293,6 +293,9 @@ export const askWatchOracle = onCall(
           // watch protocol is persisted in full under `watchOracle` instead.
           remedy: null,
           ...(oracleResponse ? { watchOracle: oracleResponse } : {}),
+          // PHASE 2B: recorded on the reading itself, not just the audit log
+          // entry below — see ReadingDoc.engineVersion's doc comment.
+          engineVersion: ENGINE_VERSION,
         };
 
         stage = 'firestore-write';

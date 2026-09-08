@@ -1,3 +1,13 @@
+/**
+ * DEPRECATED — PHASE 2B, unexported from index.ts, no longer deployed as
+ * of the next deploy after this change. This was the second, LLM-driven
+ * remedy-selection authority — see docs/audit/REMEDY_MIGRATION_PLAN.md and
+ * docs/audit/PHASE_2B_ENGINE_MIGRATION.md for the full trace. Its one
+ * client caller (src/data/remedySelector.ts) was disconnected in the same
+ * phase. Retained on disk, not deleted — see the migration doc's
+ * Unresolved section.
+ */
+
 import { onCall } from 'firebase-functions/v2/https';
 import { FieldValue } from 'firebase-admin/firestore';
 import { db } from '../utils/admin';

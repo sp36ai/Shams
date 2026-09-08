@@ -1,4 +1,11 @@
 /**
+ * DEPRECATED — PHASE 2B, disconnected, zero production callers. Its only
+ * production callers (src/data/remedySelector.ts, and
+ * src/components/oracle/GuidanceCard.tsx via its RenderedRemedy type) are
+ * themselves deprecated for the same reason — see
+ * docs/audit/PHASE_2B_ENGINE_MIGRATION.md. Retained on disk, not deleted —
+ * see that document's Unresolved section.
+ * --------------------------------------------------------------------------
  * remedyRenderer — display-ready remedy objects for the UI layer.
  *
  * The library stores no descriptions — titles come from the library,

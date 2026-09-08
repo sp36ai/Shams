@@ -23,7 +23,6 @@ import type { ReadingMessage } from '@stores/readingThreadsStore';
 import type { WatchReading } from '../../firebase/watchOracle';
 import RkpWatchCard, { STATE_HEADLINE } from './RkpWatchCard';
 import RemedyProtocolCard from './RemedyProtocolCard';
-import GuidanceCard from './GuidanceCard';
 import SuggestedQuestionsRow from './SuggestedQuestionsRow';
 import { directionalFocusFor } from '../../data/watchRemedyContext';
 import type { SpeakingStatus } from '@hooks/useTextToSpeech';
@@ -271,9 +270,11 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({
               directionalFocus={directionalFocusFor(reading.verdict)}
             />
             {reading.oracle !== undefined && <RemedyProtocolCard composition={reading.oracle} />}
-            {message.selectedRemedies !== undefined && (
-              <GuidanceCard remedies={message.selectedRemedies} />
-            )}
+            {/* PHASE 2B: GuidanceCard's data source (message.selectedRemedies,
+                populated by the second, LLM-driven remedy path) was
+                disconnected — see docs/audit/PHASE_2B_ENGINE_MIGRATION.md.
+                RemedyProtocolCard above is now the reading's sole remedy
+                presentation. */}
             {reading.oracle?.suggestedQuestions !== undefined && (
               <SuggestedQuestionsRow
                 questions={reading.oracle.suggestedQuestions}

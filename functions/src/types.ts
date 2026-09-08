@@ -172,6 +172,16 @@ export interface ReadingDoc {
    * Incremented (and refunded on failure) by discussReading.
    */
   discussionTurns?: number;
+  /**
+   * PHASE 2B: which build of the chart/judgment engine produced this
+   * reading — see ENGINE_VERSION (engine/primitives/chartBuilder.ts).
+   * Previously recorded only on the audit log entry (AuditLogDoc.engineVersion
+   * above), which is enough to trace a single incident but not to look up
+   * "which readings came from engine version X" starting from the readings
+   * themselves. Purely additive metadata — carries no judgment semantics
+   * and does not change what any reading computes.
+   */
+  engineVersion?: string;
 }
 
 /** Firestore /trials/{userId} document shape. */

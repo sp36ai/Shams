@@ -1,4 +1,20 @@
 /**
+ * DEPRECATED — PHASE 2B, disconnected, zero production callers.
+ * --------------------------------------------------------------------------
+ * As of Phase 2B, nothing calls this component: its data source
+ * (ReadingMessage.selectedRemedies, populated by the second, LLM-driven
+ * remedy path) was disconnected in src/screens/ReadingScreen.tsx, and its
+ * render site was removed from src/components/oracle/ChatBubble.tsx. See
+ * docs/audit/PHASE_2B_ENGINE_MIGRATION.md and
+ * docs/audit/REMEDY_MIGRATION_PLAN.md for the full trace and reasoning.
+ *
+ * Retained on disk rather than deleted: this session's tooling declined to
+ * perform the file deletion this phase's own "prove zero runtime callers,
+ * then delete" rule calls for once that proof exists (see the migration
+ * doc's Unresolved section) — not a decision that this file should stay.
+ * Treat this as ready for deletion once that tooling constraint is not in
+ * the way; do not restore its call site as a fix for that instead.
+ * --------------------------------------------------------------------------
  * GuidanceCard — the Islamic-practice guidance chosen for one reading.
  * --------------------------------------------------------------------------
  * Renders what the selectRemedies Cloud Function picked from the client's own

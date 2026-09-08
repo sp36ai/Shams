@@ -35,4 +35,11 @@ export { health } from './functions/health';
 export { setAdminClaim } from './functions/admin';
 export { classifyQuestion } from './functions/classifyQuestion';
 export { inferProfile } from './functions/inferProfile';
-export { selectRemedies } from './functions/selectRemedies';
+// selectRemedies — PHASE 2B: unexported. It was the second, LLM-driven
+// remedy-selection authority (see docs/audit/REMEDY_MIGRATION_PLAN.md and
+// docs/audit/PHASE_2B_ENGINE_MIGRATION.md); its one client caller was
+// disconnected in ReadingScreen.tsx this same phase. Removing the export
+// here means the next deploy stops shipping this callable at all — the
+// authoritative fix, not just a client-side one. The implementation file
+// (functions/src/functions/selectRemedies.ts) is retained on disk,
+// deprecated, not deleted — see that file's own header.

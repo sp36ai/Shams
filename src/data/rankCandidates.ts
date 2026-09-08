@@ -1,3 +1,13 @@
+/**
+ * DEPRECATED — PHASE 2B, disconnected, zero production callers. This was
+ * the deterministic candidate-ranking stage of the second, LLM-driven
+ * remedy path — see docs/audit/REMEDY_MIGRATION_PLAN.md and
+ * docs/audit/PHASE_2B_ENGINE_MIGRATION.md. Its only production caller
+ * (src/data/remedySelector.ts) is itself deprecated for the same reason.
+ * Retained on disk, not deleted — see the migration doc's Unresolved
+ * section.
+ */
+
 import {
   REMEDY_LIBRARY,
   type RemedyTag,

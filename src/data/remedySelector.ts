@@ -1,4 +1,10 @@
 /**
+ * DEPRECATED — PHASE 2B, disconnected, zero production callers. Retained
+ * on disk (not deleted — see docs/audit/PHASE_2B_ENGINE_MIGRATION.md's
+ * Unresolved section) after its one caller, ReadingScreen.tsx's
+ * runGuidanceSelection, was removed. See docs/audit/REMEDY_MIGRATION_PLAN.md
+ * for the full trace of what this used to do and why it was disconnected.
+ * --------------------------------------------------------------------------
  * remedySelector — LLM selection layer (Phase 3).
  *
  * Takes the top-8 candidates from rankCandidates(), calls the selectRemedies

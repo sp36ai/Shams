@@ -72,14 +72,11 @@ import {
   type ReadingThread,
 } from '@stores/readingThreadsStore';
 import { useReadingsStore } from '@stores/readingsStore';
-import { askWatchOracle, newRequestId, type WatchReading } from '../firebase/watchOracle';
+import { askWatchOracle, newRequestId } from '../firebase/watchOracle';
 import { discussReading } from '../firebase/oracleDiscussion';
 import { toReadingRecord } from '../data/watchReadingRecord';
-import { selectRemedies } from '../data/remedySelector';
-import { watchVerdictToRankingContext } from '../data/watchRemedyContext';
 import { buildShareText, canShare } from '../data/readingShare';
 import { readingTitleFor } from '../data/readingTitle';
-import { speakableTextFor } from '@components/oracle/ChatBubble';
 import StarfieldBackground from '@components/StarfieldBackground';
 import ChatBubble from '@components/oracle/ChatBubble';
 import ChatComposer from '@components/oracle/ChatComposer';
@@ -228,47 +225,27 @@ const ReadingScreen: React.FC = () => {
       : thread.messages.filter(m => m.id !== openingId);
   }, [thread]);
 
-  /**
-   * Second, non-blocking round trip: pick the devotional practice that suits
-   * this reading, from the app's own tagged Islamic remedy library.
-   *
-   * Deliberately fired AFTER the verdict is already on screen and never
-   * awaited by the ask path — the verdict is the answer, and guidance is an
-   * enrichment. A slow or failed selection must not delay or fail a reading
-   * that already succeeded, so this swallows its own errors: the bubble
-   * simply renders without a GuidanceCard.
-   */
-  const runGuidanceSelection = useCallback(
-    (
-      targetThreadId: string,
-      oracleMessageId: string,
-      question: string,
-      reading: WatchReading,
-    ): void => {
-      const ranking = watchVerdictToRankingContext(reading.verdict, seekerProfile);
-      selectRemedies({
-        ...ranking,
-        readingId: reading.readingId,
-        // Never shown to the user — context for the selector only.
-        oracleSummary: speakableTextFor(reading).slice(0, 200),
-        questionText: question,
-        seekerProfile,
-      })
-        .then(result => {
-          if (result.selectedRemedies.length > 0) {
-            updateMessage(targetThreadId, oracleMessageId, {
-              selectedRemedies: result.selectedRemedies,
-            });
-          }
-        })
-        .catch(() => {
-          // Enrichment only — the verdict already stands.
-        });
-    },
-    [seekerProfile, updateMessage],
-  );
-
   // ── The two send paths ────────────────────────────────────────────────────
+  //
+  // PHASE 2B NOTE: this file used to also fire a second, non-blocking round
+  // trip here (runGuidanceSelection) that called the `selectRemedies` Cloud
+  // Function — an LLM picking 1-3 entries from a second, separately-tagged
+  // remedy library (src/data/remedyLibrary.ts) and rendering them in a
+  // GuidanceCard alongside the RKP engine's own authoritative
+  // RemedyProtocolCard. That was a second, independent remedy-selection
+  // authority running in parallel with the deterministic one
+  // (oracle/remedySelection.ts, server-side) — see
+  // docs/audit/REMEDY_MIGRATION_PLAN.md and
+  // docs/audit/PHASE_2B_ENGINE_MIGRATION.md for the full trace and the
+  // reasoning for disconnecting it here. Path A (the RKP-diagnosis-driven
+  // protocol already inside `reading.oracle.protocol`, rendered by
+  // RemedyProtocolCard) is now the sole remedy authority a reading produces.
+  // src/data/{remedySelector,rankCandidates,remedyLibrary,remedyRenderer}.ts,
+  // src/components/oracle/GuidanceCard.tsx, and
+  // functions/src/functions/selectRemedies.ts are retained on disk,
+  // unexported/unreachable, marked deprecated — see those files' own
+  // headers — pending an explicit deletion decision this phase's tooling
+  // could not carry out (see the migration doc's "Unresolved" section).
 
   /** Cast the chart for a thread's opening question. Spends a quota slot. */
   const runAsk = useCallback(
@@ -313,8 +290,6 @@ const ReadingScreen: React.FC = () => {
             reading: result.reading,
           }),
         );
-
-        runGuidanceSelection(targetThreadId, oracleMessageId, question, result.reading);
       } catch (err) {
         // consumeOne() already charged the local quota counter before the
         // network call — give it back on failure, same reasoning as the
@@ -337,7 +312,6 @@ const ReadingScreen: React.FC = () => {
       setThreadStatus,
       addReading,
       t,
-      runGuidanceSelection,
     ],
   );
 
