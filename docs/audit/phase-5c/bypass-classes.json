@@ -1,0 +1,206 @@
+[
+  {
+    "key": "timing::strong-unicode-obfuscated",
+    "count": 360,
+    "sample": [
+      {
+        "id": "timing-000981",
+        "category": "timing",
+        "contractId": "employment-001",
+        "expected": "INVALID",
+        "actualValid": true,
+        "threw": null,
+        "failureCodes": [],
+        "outcome": "FALSE_NEGATIVE",
+        "mutationMeta": {
+          "subtype": "strong-unicode-obfuscated",
+          "phrase": "tomorrow",
+          "mutator": "zeroWidthJoiner"
+        }
+      },
+      {
+        "id": "timing-000982",
+        "category": "timing",
+        "contractId": "employment-001",
+        "expected": "INVALID",
+        "actualValid": true,
+        "threw": null,
+        "failureCodes": [],
+        "outcome": "FALSE_NEGATIVE",
+        "mutationMeta": {
+          "subtype": "strong-unicode-obfuscated",
+          "phrase": "tomorrow",
+          "mutator": "zeroWidthNonJoiner"
+        }
+      },
+      {
+        "id": "timing-000983",
+        "category": "timing",
+        "contractId": "employment-001",
+        "expected": "INVALID",
+        "actualValid": true,
+        "threw": null,
+        "failureCodes": [],
+        "outcome": "FALSE_NEGATIVE",
+        "mutationMeta": {
+          "subtype": "strong-unicode-obfuscated",
+          "phrase": "tomorrow",
+          "mutator": "zeroWidthSpace"
+        }
+      }
+    ]
+  },
+  {
+    "key": "certainty::certainty-phrase-mutated",
+    "count": 549,
+    "sample": [
+      {
+        "id": "certainty-002685",
+        "category": "certainty",
+        "contractId": "employment-001",
+        "expected": "INVALID",
+        "actualValid": true,
+        "threw": null,
+        "failureCodes": [],
+        "outcome": "FALSE_NEGATIVE",
+        "mutationMeta": {
+          "subtype": "certainty-phrase-mutated",
+          "phrase": "guaranteed",
+          "mutator": "zeroWidthJoiner"
+        }
+      },
+      {
+        "id": "certainty-002686",
+        "category": "certainty",
+        "contractId": "employment-001",
+        "expected": "INVALID",
+        "actualValid": true,
+        "threw": null,
+        "failureCodes": [],
+        "outcome": "FALSE_NEGATIVE",
+        "mutationMeta": {
+          "subtype": "certainty-phrase-mutated",
+          "phrase": "guaranteed",
+          "mutator": "zeroWidthNonJoiner"
+        }
+      },
+      {
+        "id": "certainty-002687",
+        "category": "certainty",
+        "contractId": "employment-001",
+        "expected": "INVALID",
+        "actualValid": true,
+        "threw": null,
+        "failureCodes": [],
+        "outcome": "FALSE_NEGATIVE",
+        "mutationMeta": {
+          "subtype": "certainty-phrase-mutated",
+          "phrase": "guaranteed",
+          "mutator": "zeroWidthSpace"
+        }
+      }
+    ]
+  },
+  {
+    "key": "terminology::prohibited-term",
+    "count": 528,
+    "sample": [
+      {
+        "id": "terminology-004738",
+        "category": "terminology",
+        "contractId": "finance-002",
+        "expected": "INVALID",
+        "actualValid": true,
+        "threw": null,
+        "failureCodes": [],
+        "outcome": "FALSE_NEGATIVE",
+        "mutationMeta": {
+          "subtype": "prohibited-term",
+          "term": "Krishnamurti",
+          "mutator": "zeroWidthJoiner"
+        }
+      },
+      {
+        "id": "terminology-004739",
+        "category": "terminology",
+        "contractId": "family-002",
+        "expected": "INVALID",
+        "actualValid": true,
+        "threw": null,
+        "failureCodes": [],
+        "outcome": "FALSE_NEGATIVE",
+        "mutationMeta": {
+          "subtype": "prohibited-term",
+          "term": "Krishnamurti",
+          "mutator": "zeroWidthJoiner"
+        }
+      },
+      {
+        "id": "terminology-004740",
+        "category": "terminology",
+        "contractId": "business-002",
+        "expected": "INVALID",
+        "actualValid": true,
+        "threw": null,
+        "failureCodes": [],
+        "outcome": "FALSE_NEGATIVE",
+        "mutationMeta": {
+          "subtype": "prohibited-term",
+          "term": "Krishnamurti",
+          "mutator": "zeroWidthJoiner"
+        }
+      }
+    ]
+  },
+  {
+    "key": "celestial-entities::unauthorized-planet-unicode-obfuscated",
+    "count": 165,
+    "sample": [
+      {
+        "id": "celestial-006824",
+        "category": "celestial-entities",
+        "contractId": "employment-001",
+        "expected": "INVALID",
+        "actualValid": true,
+        "threw": null,
+        "failureCodes": [],
+        "outcome": "FALSE_NEGATIVE",
+        "mutationMeta": {
+          "subtype": "unauthorized-planet-unicode-obfuscated",
+          "name": "Zuhrah",
+          "mutator": "zeroWidthJoiner"
+        }
+      },
+      {
+        "id": "celestial-006825",
+        "category": "celestial-entities",
+        "contractId": "employment-001",
+        "expected": "INVALID",
+        "actualValid": true,
+        "threw": null,
+        "failureCodes": [],
+        "outcome": "FALSE_NEGATIVE",
+        "mutationMeta": {
+          "subtype": "unauthorized-planet-unicode-obfuscated",
+          "name": "Zuhrah",
+          "mutator": "zeroWidthNonJoiner"
+        }
+      },
+      {
+        "id": "celestial-006826",
+        "category": "celestial-entities",
+        "contractId": "employment-001",
+        "expected": "INVALID",
+        "actualValid": true,
+        "threw": null,
+        "failureCodes": [],
+        "outcome": "FALSE_NEGATIVE",
+        "mutationMeta": {
+          "subtype": "unauthorized-planet-unicode-obfuscated",
+          "name": "Zuhrah",
+          "mutator": "zeroWidthSpace"
+        }
+      }
+    ]
+  }
+]

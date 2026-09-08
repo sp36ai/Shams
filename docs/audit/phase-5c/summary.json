@@ -1,0 +1,81 @@
+{
+  "generated": 10435,
+  "executed": 10435,
+  "expectedInvalid": 9102,
+  "expectedValid": 1333,
+  "caught": 7500,
+  "accepted": 1333,
+  "falseNegativeCount": 1602,
+  "falsePositiveCount": 0,
+  "exceptionCount": 0,
+  "contractMutations": 0,
+  "uniqueBypassClassCount": 4,
+  "byCategory": {
+    "presentation-neutral": {
+      "total": 864,
+      "falseNeg": 0,
+      "falsePos": 0,
+      "exceptions": 0
+    },
+    "timing": {
+      "total": 1815,
+      "falseNeg": 360,
+      "falsePos": 0,
+      "exceptions": 0
+    },
+    "certainty": {
+      "total": 1836,
+      "falseNeg": 549,
+      "falsePos": 0,
+      "exceptions": 0
+    },
+    "terminology": {
+      "total": 2212,
+      "falseNeg": 528,
+      "falsePos": 0,
+      "exceptions": 0
+    },
+    "celestial-entities": {
+      "total": 1155,
+      "falseNeg": 165,
+      "falsePos": 0,
+      "exceptions": 0
+    },
+    "verdict": {
+      "total": 1190,
+      "falseNeg": 0,
+      "falsePos": 0,
+      "exceptions": 0
+    },
+    "remedy": {
+      "total": 770,
+      "falseNeg": 0,
+      "falsePos": 0,
+      "exceptions": 0
+    },
+    "diagnosis": {
+      "total": 495,
+      "falseNeg": 0,
+      "falsePos": 0,
+      "exceptions": 0
+    },
+    "internal-data-leakage": {
+      "total": 40,
+      "falseNeg": 0,
+      "falsePos": 0,
+      "exceptions": 0
+    },
+    "injection-artifacts": {
+      "total": 35,
+      "falseNeg": 0,
+      "falsePos": 0,
+      "exceptions": 0
+    },
+    "malformed-output": {
+      "total": 23,
+      "falseNeg": 0,
+      "falsePos": 0,
+      "exceptions": 0
+    }
+  }
+}
