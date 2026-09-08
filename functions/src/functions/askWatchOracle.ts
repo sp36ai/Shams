@@ -259,6 +259,12 @@ export const askWatchOracle = onCall(
             seekerName: input.seekerName,
             motherName: input.motherName,
             readingId: readingRef.id,
+            // PHASE 3: the same authoritative instant the rest of this
+            // request already uses (see this file's "WHERE THE MINUTE
+            // COMES FROM" comment) — becomes
+            // ReadingContract.provenance.computedAt, not a second,
+            // independently-taken instant a few milliseconds later.
+            computedAt: instant,
           });
         } catch (err) {
           logger.warn('askWatchOracle: oracle composition failed', {

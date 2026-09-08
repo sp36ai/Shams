@@ -64,6 +64,7 @@ const GROUNDING: ReadingGrounding = {
       ],
       rationale: ['Delay pattern.'],
     },
+    contractFingerprint: 'test-fixture-fingerprint',
   },
 };
 
