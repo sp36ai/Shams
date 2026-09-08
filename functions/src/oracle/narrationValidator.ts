@@ -25,7 +25,10 @@ import type { NarrationFields } from './responseComposer';
 import { REMEDY_LIBRARY } from './remedyLibrary';
 import { PLANET_NAME, PLANET_NAME_SHORT } from '../engine/rkp/nomenclature';
 import type { Planet } from '../engine/types/chart';
-import { canonicalizeForSecurityMatching } from './textSecurity';
+import {
+  canonicalizeForSecurityMatching,
+  stripUnicodeNoiseForSecurityMatching,
+} from './textSecurity';
 
 /* -------------------------------------------------------------------------- */
 /*  Result types                                                              */
@@ -951,9 +954,44 @@ export function validateNarration(
     // from this function, stay untouched — see this file's non-mutation
     // test in narrationValidatorUnicodeSecurity.test.ts).
     const canonicalText = canonicalizeForSecurityMatching(text);
+    // PHASE 5D-R: the Unicode-only pass (Phase 5C-R's original transform,
+    // without the new confusable fold / punctuation bridge) — see below.
+    const unicodeOnlyText = stripUnicodeNoiseForSecurityMatching(text);
     for (const check of CHECKS) {
       try {
-        const failure = check(contract, field, canonicalText);
+        // PHASE 5D-R: try the fully-canonicalized text first, then fall
+        // back through progressively less-transformed text, down to the
+        // untouched raw string. Discovered necessary during 5D-R's own
+        // testing: the mid-word punctuation bridge and confusable fold,
+        // applied to narration text only (never to the deny-lists/patterns
+        // being compared against), can incidentally strip or fold a
+        // character that a pre-existing, unrelated detector depends on
+        // literally —
+        //   - "HOUSE_MATRIX" bridging to "HOUSEMATRIX" (the deny-list term
+        //     itself keeps its underscore): caught by the raw-text fallback.
+        //   - "narrationValidator.ts" bridging to "...torts"
+        //     (INTERNAL_DATA_PATTERNS' `/\.ts\b/` depends on the literal
+        //     period): also caught by the raw-text fallback.
+        //   - a zero-width joiner planted inside "HOUSE_MATRIX"'s own
+        //     underscore: the full pass strips the ZWJ *and* bridges the
+        //     underscore (losing the exact term); the raw pass keeps the
+        //     underscore but still has the ZWJ splitting the substring.
+        //     Neither alone catches it — only the Unicode-only middle tier
+        //     does, since it removes the ZWJ without touching the
+        //     underscore.
+        // Each earlier tier is a strict specialization of a later one for
+        // this purpose (full text obfuscation-closure > Unicode-noise
+        // closure > exact pre-5C-R matching), so trying them in this order
+        // never produces fewer detections than any single tier alone, and
+        // the raw tier is exactly this validator's pre-5C-R behavior, so
+        // it introduces no new false positive. See
+        // docs/audit/PHASE_5D_R_HARDENING.md's "newly discovered findings"
+        // section for the concrete regressions this closed and the
+        // adversarial-harness evidence.
+        const failure =
+          check(contract, field, canonicalText) ??
+          check(contract, field, unicodeOnlyText) ??
+          check(contract, field, text);
         if (failure) {
           failures.push(failure);
         }

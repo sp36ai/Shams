@@ -133,16 +133,86 @@ describe('canonicalizeForSecurityMatching', () => {
     expect(canonicalizeForSecurityMatching('house\tmatrix')).toBe('house matrix');
   });
 
-  it('does NOT fold a homoglyph/confusable to its Latin look-alike (explicitly out of scope)', () => {
-    // Cyrillic о (U+043E) is not touched -- this function's own header
-    // documents this is a deliberate boundary, not an oversight.
+  it('PHASE 5D-R: DOES fold the evidence-backed Cyrillic о confusable to Latin o', () => {
+    // Cyrillic о (U+043E) IS now folded -- Phase 5D reconnaissance measured
+    // a 100% validator bypass using this exact substitution, and Phase 5D-R
+    // was explicitly authorized to close it for this evidenced set. See
+    // CONFUSABLE_MAP in textSecurity.ts and docs/audit/PHASE_5D_R_HARDENING.md.
     const withCyrillic = 'tomоrrow';
-    expect(canonicalizeForSecurityMatching(withCyrillic)).toBe(withCyrillic);
+    expect(canonicalizeForSecurityMatching(withCyrillic)).toBe('tomorrow');
+  });
+
+  it('still does NOT fold confusables outside the evidence-backed set (general Unicode confusable resolution remains out of scope)', () => {
+    // Greek omicron U+03BF looks identical to Latin o but has no Phase 5D
+    // evidence behind it, so it must remain untouched -- this proves the
+    // boundary is the narrow, named CONFUSABLE_MAP, not general UTS #39
+    // confusable folding.
+    const withGreekOmicron = 'tomοrrow';
+    expect(canonicalizeForSecurityMatching(withGreekOmicron)).toBe(withGreekOmicron);
   });
 
   it('is idempotent', () => {
     const once = canonicalizeForSecurityMatching('tom‍orrow  house\tmatrix');
     expect(canonicalizeForSecurityMatching(once)).toBe(once);
+  });
+
+  /* ------------------------------------------------------------------ */
+  /*  PHASE 5D-R — mid-word ASCII punctuation bridging                   */
+  /* ------------------------------------------------------------------ */
+
+  it('PHASE 5D-R: bridges a mid-word period ("guarant.eed" attack shape)', () => {
+    expect(canonicalizeForSecurityMatching('guarant.eed')).toBe('guaranteed');
+  });
+
+  it('PHASE 5D-R: bridges a mid-word hyphen', () => {
+    expect(canonicalizeForSecurityMatching('guarant-eed')).toBe('guaranteed');
+  });
+
+  it('PHASE 5D-R: bridges a mid-word underscore', () => {
+    expect(canonicalizeForSecurityMatching('guarant_eed')).toBe('guaranteed');
+  });
+
+  it('PHASE 5D-R: bridges a chain of single separators between single letters ("R.K.P." fully collapses)', () => {
+    // The load-bearing case: a naive non-overlapping regex only merges the
+    // first pair ("R.K" -> "RK.P."), leaving the acronym recoverable by a
+    // plain .includes() scan. The lookahead-based implementation collapses
+    // the whole chain.
+    expect(canonicalizeForSecurityMatching('R.K.P.')).toBe('RKP.');
+    expect(canonicalizeForSecurityMatching('R.K.P.').toLowerCase()).toContain('rkp');
+  });
+
+  it('PHASE 5D-R: does NOT bridge a forward slash (excluded to preserve internal-data-leakage file-path detection)', () => {
+    expect(canonicalizeForSecurityMatching('functions/src/oracle')).toBe('functions/src/oracle');
+  });
+
+  it('PHASE 5D-R: does NOT bridge an apostrophe (contractions must remain intact)', () => {
+    expect(canonicalizeForSecurityMatching("it's")).toBe("it's");
+    expect(canonicalizeForSecurityMatching("don't")).toBe("don't");
+  });
+
+  it('PHASE 5D-R: does NOT bridge a comma, colon, or parentheses', () => {
+    expect(canonicalizeForSecurityMatching('a,b')).toBe('a,b');
+    expect(canonicalizeForSecurityMatching('a:b')).toBe('a:b');
+    expect(canonicalizeForSecurityMatching('a(b)c')).toBe('a(b)c');
+  });
+
+  it('PHASE 5D-R: does NOT bridge a run of two or more punctuation characters in a row (documented residual)', () => {
+    expect(canonicalizeForSecurityMatching('a..b')).toBe('a..b');
+  });
+
+  it('PHASE 5D-R: leaves a trailing separator with no following letter untouched', () => {
+    expect(canonicalizeForSecurityMatching('etc.')).toBe('etc.');
+  });
+
+  it('PHASE 5D-R: leaves ordinary hyphenated compounds and sentence punctuation untouched in shape (only the letter-punct-letter gap collapses)', () => {
+    // "well-known" IS a mid-word-hyphen shape and DOES bridge -- this is the
+    // documented, accepted trade-off (Phase 5D-R hardening.md's
+    // false-positive analysis): the mechanism cannot distinguish a
+    // legitimate hyphenated compound from an attack shape by structure
+    // alone, since both are "letter-hyphen-letter." Recorded here as an
+    // explicit, intentional assertion rather than left as an undocumented
+    // side effect.
+    expect(canonicalizeForSecurityMatching('well-known')).toBe('wellknown');
   });
 });
 
@@ -259,6 +329,25 @@ describe('PHASE 5C-R — expanded metamorphic coverage per mutation category', (
     combiningMark: (w: string) => w.replace(/[aeiou]/g, ch => ch + '́'),
     precomposedAccent: (w: string) =>
       w.replace(/[aeiou]/g, ch => ({ a: 'á', e: 'é', i: 'í', o: 'ó', u: 'ú' })[ch] ?? ch),
+    // PHASE 5D-R additions -- the two newly-closed bypass classes, run
+    // through the exact same real-contract/real-validateNarration() table
+    // as every Phase 5C-R mutation already above.
+    cyrillicConfusable: (w: string) =>
+      Array.from(w)
+        .map(ch => ({ a: 'а', e: 'е', o: 'о', p: 'р', c: 'с', x: 'х', i: 'і', y: 'у' })[ch] ?? ch)
+        .join(''),
+    midWordPeriod: (w: string) => {
+      const mid = Math.floor(w.length / 2);
+      return w.slice(0, mid) + '.' + w.slice(mid);
+    },
+    midWordHyphen: (w: string) => {
+      const mid = Math.floor(w.length / 2);
+      return w.slice(0, mid) + '-' + w.slice(mid);
+    },
+    midWordUnderscore: (w: string) => {
+      const mid = Math.floor(w.length / 2);
+      return w.slice(0, mid) + '_' + w.slice(mid);
+    },
   };
 
   const timingContract = waitContract();
@@ -376,6 +465,63 @@ describe('PHASE 5C-R — symmetric canonicalization does not break or over-widen
 });
 
 /* -------------------------------------------------------------------------- */
+/*  PHASE 5D-R -- legitimate-text controls stay VALID end-to-end              */
+/* -------------------------------------------------------------------------- */
+
+describe('PHASE 5D-R — ordinary prose containing the newly-bridged punctuation forms and non-evidenced Unicode stays VALID', () => {
+  it('a contraction ("it\'s", "don\'t") does not trip validation', () => {
+    const contract = waitContract();
+    const narration = baseNarration({
+      interpretation: "It's too early to say, but the matter doesn't appear settled yet.",
+    });
+    expect(validateNarration(contract, narration).valid).toBe(true);
+  });
+
+  it('a hyphenated compound ("well-known", "self-aware") does not trip validation', () => {
+    const contract = waitContract();
+    const narration = baseNarration({
+      interpretation: 'This is a well-known pattern requiring self-aware patience.',
+    });
+    expect(validateNarration(contract, narration).valid).toBe(true);
+  });
+
+  it('an abbreviation with a trailing period ("etc.") does not trip validation', () => {
+    const contract = waitContract();
+    const narration = baseNarration({
+      interpretation: 'Consider timing, readiness, resources, etc. before acting.',
+    });
+    expect(validateNarration(contract, narration).valid).toBe(true);
+  });
+
+  it('ordinary sentence punctuation (comma, colon, parentheses) does not trip validation', () => {
+    const contract = waitContract();
+    const narration = baseNarration({
+      interpretation: 'The matter is unsettled: patience (not haste) is called for, still.',
+    });
+    expect(validateNarration(contract, narration).valid).toBe(true);
+  });
+
+  it('legitimate Arabic/Urdu diacritic terminology unrelated to the remedy library does not trip validation', () => {
+    const contract = waitContract();
+    const narration = baseNarration({
+      interpretation:
+        'Ṣabr — patient endurance — is the counsel here, God willing (in shāʾ Allāh).',
+    });
+    expect(validateNarration(contract, narration).valid).toBe(true);
+  });
+
+  it('a non-evidenced confusable-looking character (Greek omicron) inside otherwise plain prose does not trip validation', () => {
+    const contract = waitContract();
+    const narration = baseNarration({
+      interpretation: 'Consider the matter cautiously, tomοrrow may bring more clarity.',
+    });
+    // Greek omicron is not in the evidenced CONFUSABLE_MAP, and this text
+    // has no other adversarial shape, so this must stay VALID.
+    expect(validateNarration(contract, narration).valid).toBe(true);
+  });
+});
+
+/* -------------------------------------------------------------------------- */
 /*  Non-mutation proof                                                        */
 /* -------------------------------------------------------------------------- */
 
@@ -419,5 +565,21 @@ describe('PHASE 5C-R — canonicalization never mutates its inputs', () => {
     expect(Object.isFrozen(contract.diagnosis)).toBe(true);
     expect(Object.isFrozen(contract.remedy)).toBe(true);
     expect(Object.isFrozen(contract.celestialEntities)).toBe(true);
+  });
+
+  it('PHASE 5D-R: the narration object is byte-identical before/after validation of a confusable-obfuscated string', () => {
+    const contract = waitContract();
+    const narration = baseNarration({ interpretation: 'This will resolve tomоrrow.' });
+    const before = JSON.stringify(narration);
+    validateNarration(contract, narration);
+    expect(JSON.stringify(narration)).toBe(before);
+  });
+
+  it('PHASE 5D-R: the narration object is byte-identical before/after validation of a punctuation-obfuscated string', () => {
+    const contract = waitContract();
+    const narration = baseNarration({ interpretation: 'This is guarant.eed.' });
+    const before = JSON.stringify(narration);
+    validateNarration(contract, narration);
+    expect(JSON.stringify(narration)).toBe(before);
   });
 });
