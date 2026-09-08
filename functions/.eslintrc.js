@@ -46,5 +46,13 @@ module.exports = {
     // tsconfig already does) is correct regardless of which files happen
     // to be transitively reachable at any given moment.
     'src/engine/',
+    // Phase 1/2A audit scaffolding (generate-golden-corpus.ts,
+    // replay-check.ts, run via `npx vite-node`, never `tsc`) — same root
+    // cause as src/engine/ above: tsconfig.json's `include` is `["src"]`,
+    // scripts/ sits outside it, so typed linting fails to parse these
+    // files with the same "not included in the TSConfig" error rather than
+    // reporting anything about the code itself. Not part of the deployed
+    // bundle or `npm run build`.
+    'scripts/',
   ],
 };

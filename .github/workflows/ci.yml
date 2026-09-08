@@ -169,7 +169,14 @@ jobs:
             adb install -r android/app/build/outputs/apk/debug/app-debug.apk
             adb emu geo fix 67.0011 24.8607
             curl -Ls "https://get.maestro.mobile.dev" | MAESTRO_VERSION=1.39.0 bash
-            "$HOME/.maestro/bin/maestro" test --format junit --output maestro-results.xml .maestro/ci/ || true
+            # No `|| true` here: a real Maestro failure must fail this step,
+            # and therefore the job. The two steps below both run
+            # `if: always()`, so removing `|| true` does not stop the JUnit
+            # report from being generated (Maestro writes maestro-results.xml
+            # on its own regardless of overall pass/fail) or from being
+            # uploaded/published — see PHASE_2A_REPORT.md for the reasoning
+            # and what could only be verified by an actual GitHub Actions run.
+            "$HOME/.maestro/bin/maestro" test --format junit --output maestro-results.xml .maestro/ci/
 
       - name: Upload Maestro results
         if: always()
@@ -187,4 +194,10 @@ jobs:
           name: Maestro E2E Results
           path: maestro-results.xml
           reporter: java-junit
-          fail-on-error: false
+          # Was `false` — dorny/test-reporter's own documented default is
+          # `true` ("fail the build if there are test failures"); this had
+          # been explicitly overridden to `true`'s opposite, which is a
+          # second, independent way a real Maestro failure could still leave
+          # the job green even if the `|| true` above were ever fixed.
+          # Corrected so a report showing failed tests fails this step too.
+          fail-on-error: true
