@@ -630,3 +630,128 @@ not mine to make unilaterally.
 No code was changed. No Phase 5 work was started. Awaiting your decision on
 the timing-immediacy gap and the other findings above before any further
 implementation.
+
+---
+
+## Addendum — 2026-09-08: Phase 4A surgical remediation
+
+Following the "CONDITIONAL PASS" verdict above, the user authorized a
+narrowly-scoped follow-up (Phase 4A) to fix the P1 timing gap and the P2
+findings, without redesigning the validator. Full rationale and evidence
+live in `docs/audit/PHASE_4A_HARDENING.md`; this addendum records the
+outcome against this document's own findings, in order.
+
+### §4 — Timing: the "tomorrow" bypass (P1)
+
+- **Old behavior:** `IMMEDIACY_SIGNALS` was a single flat list
+  (`immediately`, `right now`, `today`, `this instant`, `without delay`)
+  checked unconditionally on a WAIT/WAIT_LONG reading. It did not include
+  `tomorrow`, `right away`, `this week`, `soon`, or `shortly` — so "This
+  will resolve tomorrow." on a 45-90 day WAIT reading passed every check.
+- **New behavior:** the list is split into `STRONG_IMMEDIACY_SIGNALS`
+  (adds `tomorrow`, `right away`, `this week`, `immediate resolution`;
+  flagged unconditionally) and `SOFT_IMMEDIACY_SIGNALS` (`soon`,
+  `shortly`; flagged only when the same sentence contains no
+  `HEDGE_QUALIFIERS` word — `may`, `might`, `could`, `possibly`,
+  `perhaps`), using the existing `findSentenceContaining()` helper for
+  sentence scoping.
+- **Test proving the fix:**
+  `narrationValidatorHardening.test.ts` → `PHASE 4A — timing:` describe
+  block, case `MUST REJECT: "This will resolve tomorrow."`; also
+  `fixtures/adversarial-narration/timing-immediacy-bypass.json`.
+- **False-positive guard proven:** the same describe block's `SHOULD
+  ACCEPT` cases, taken verbatim from this brief's own required-accept
+  matrix, including the hedged-"soon" sentence quoted in the Phase 4A
+  instruction itself.
+
+### §5/§6 — Verdict negation false positive
+
+Left unchanged, as directed (Low priority, "keep as fail-safe/document").
+It fails toward the safe deterministic fallback, not toward harm.
+
+### §8 — Certainty ordering ("will definitely" vs "definitely will")
+
+- **Old behavior:** `CERTAINTY_PHRASES` contained `definitely will` and
+  `absolutely will` but not the equally natural `will definitely` / `will
+  certainly` / `certainly will` orderings.
+- **New behavior:** the three missing literal orderings were added to the
+  same flat list — no normalization engine, no word-order-agnostic
+  matching.
+- **Test proving the fix:** `PHASE 4A — certainty: word-order regression`
+  describe block, case `"will definitely"`; also
+  `fixtures/adversarial-narration/certainty-word-order.json`.
+
+### §9 — RKP terminology obfuscation ("R.K.P.")
+
+- **Old behavior:** `checkTerminologyLeakage` ran a plain substring
+  deny-list scan (`scanForDenyList`) against `PROHIBITED_TERMINOLOGY`,
+  which requires the literal contiguous string `RKP`. `R.K.P.`, `R-K-P`,
+  and `R K P` all bypassed it.
+- **New behavior:** one additional regex,
+  `/r[\s.\-_]+k[\s.\-_]+p\b/i`, scoped to "RKP" only — not applied to
+  "KP" or any other list entry, for the collision-risk reasons recorded
+  in the code comment and re-derived in `PHASE_4A_HARDENING.md`'s
+  false-positive analysis.
+- **Test proving the fix:** `PHASE 4A — terminology: obfuscation
+  regression` describe block (bare uppercase, dotted, dotted lowercase,
+  hyphenated, spaced); also
+  `fixtures/adversarial-narration/terminology-obfuscation.json`.
+- **False-positive guard proven:** the same describe block's "her keen
+  partner" case — a deliberately constructed three-letter-in-a-row
+  collision risk — correctly does not trigger.
+
+### §10 — Celestial transliteration ("Zohal" vs "Zuhal")
+
+**Weakness intentionally left unchanged.** Investigated per instruction
+before writing any code: grepped `src/i18n/strings/{en,ur,hi}.ts` and
+`functions/src/prompts/watchOracleSynthesisPrompt.ts` for any precedent of
+an alternate Latin transliteration convention for `Zuhal` (or any other
+planet). Found none — every Latin-script planet reference in this
+repository uses the single canonical spelling from
+`nomenclature.ts`'s `PLANET_NAME`/`PLANET_NAME_SHORT` tables. Per this
+brief's explicit instruction not to invent aliases without repository
+evidence, no alias was added. Two things support leaving this as a
+documented gap rather than a silent one: (1) the synthesis prompt already
+instructs Claude to "use only the name given in the brief," which is the
+existing, prompt-level mitigation for this exact failure mode; (2) adding
+an unattested spelling would itself be the kind of speculative widening
+this phase was explicitly told not to do. This is recorded as a test in
+`narrationValidatorHardening.test.ts` (`PHASE 4A — celestial
+transliteration`) so the gap stays visible and regression-tracked rather
+than silently unverified.
+
+### Comment correction
+
+`askWatchOracle.ts`'s stale comment (claiming a
+`readings/{readingId}/validationLog` Firestore subcollection) was
+corrected to describe the actual mechanism — `logger.warn()` inside
+`responseComposer.ts` — with a citation back to this document's §1.
+Comment-only change; zero behavior difference (confirmed via `git diff`
+showing only comment lines changed).
+
+### Regression results (Phase 4A pass)
+
+- `functions`: `npx vitest run` → **189/189 passed** (154 pre-existing +
+  32 new in `narrationValidatorHardening.test.ts`; the 13
+  pre-existing adversarial fixtures plus 3 new ones bring
+  `adversarialNarration.test.ts` to 16/16).
+- `functions`: `npx tsc --noEmit` → clean.
+- `functions`: `npm run lint` (tsc + eslint --max-warnings=0) → clean.
+- App root: `npm run typecheck` → clean. `npm run lint` → clean. `npm run
+  test` (Jest) → **304/304 passed**.
+- Golden corpus: `generate-golden-corpus.ts` re-run, diffed byte-for-byte
+  against a pre-run backup → **111/111 identical, corpus untouched**.
+- Replay check: `replay-check.ts` → **24/24 identical**, zero
+  nondeterminism.
+- `git diff --stat` against `functions/src/engine/`,
+  `functions/src/engine/rkp/watchJudgment.ts`,
+  `functions/src/engine/rkp/diagnosis.ts`,
+  `functions/src/oracle/remedySelection.ts`, `functions/src/prompts/`,
+  `functions/src/oracle/readingContract.ts`,
+  `functions/src/oracle/responseComposer.ts`, and `src/` → **empty on
+  every one** — zero engine, prompt, contract, or app drift. Only
+  `functions/src/oracle/narrationValidator.ts` and
+  `functions/src/functions/askWatchOracle.ts` were modified, plus new
+  test/fixture files.
+
+**PHASE 4A: PASS.**

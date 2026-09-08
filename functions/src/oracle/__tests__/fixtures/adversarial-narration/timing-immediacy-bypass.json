@@ -1,0 +1,12 @@
+{
+  "id": "timing-immediacy-bypass",
+  "description": "PHASE 4A: narration claims resolution 'tomorrow' on a PRIMARY (WAIT, 45-90 day) reading, with no other contradicting phrase — the exact bypass demonstrated in docs/audit/PHASE_4_REVIEW_GATE.md §4, previously uncaught by any check.",
+  "expectedCodes": ["TIMING_ALTERATION"],
+  "narration": {
+    "rkp_finding": "The chart shows an obstruction to this matter.",
+    "interpretation": "This will resolve tomorrow.",
+    "recommended_approach": "Prepare for the shift right away.",
+    "why_this_remedy": null,
+    "signature": "The path is not yet clear."
+  }
+}

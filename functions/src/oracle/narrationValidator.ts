@@ -328,6 +328,20 @@ export function checkVerdictConsistency(
 /*  B. Timing consistency                                                     */
 /* -------------------------------------------------------------------------- */
 
+/**
+ * PHASE 4A: found while verifying the timing fixes below, not previously
+ * documented — a real, material false-positive bug distinct from the
+ * review gate's own findings. The original bare-word MONTH_NAMES list
+ * included "may", which collides with the modal verb "may" ("Movement MAY
+ * begin before the final outcome" — the review gate's own required-accept
+ * example) and flagged it as a fabricated date. Fixed by requiring a month
+ * name to be ADJACENT to a day number to count as a date (a bare month
+ * mention like "since September" isn't naming a specific day either, so
+ * this is a correctness improvement, not just a workaround for "may").
+ * "march" and "august" carry the same lower-grade risk (real English
+ * words) and get the same treatment for consistency, not because either
+ * was separately demonstrated to collide.
+ */
 const MONTH_NAMES = [
   'january',
   'february',
@@ -342,6 +356,12 @@ const MONTH_NAMES = [
   'november',
   'december',
 ];
+const MONTH_PATTERN_SOURCE = MONTH_NAMES.join('|');
+/** A month name adjacent to a 1-2 digit day number, either order — "September 19", "19 September", "May 15th". */
+const MONTH_DATE_PATTERN = new RegExp(
+  `\\b(${MONTH_PATTERN_SOURCE})\\b[\\s,]*\\d{1,2}(st|nd|rd|th)?\\b|\\b\\d{1,2}(st|nd|rd|th)?[\\s,]*(of\\s+)?\\b(${MONTH_PATTERN_SOURCE})\\b`,
+  'i',
+);
 const WEEKDAY_NAMES = [
   'monday',
   'tuesday',
@@ -354,12 +374,45 @@ const WEEKDAY_NAMES = [
 /** Matches "the 15th", "on 3/4", "2026-08-15" — anything shaped like a real calendar date. */
 const DATE_LIKE_PATTERN = /\b\d{1,4}[/-]\d{1,2}([/-]\d{1,4})?\b|\bthe\s+\d{1,2}(st|nd|rd|th)\b/i;
 
-const IMMEDIACY_SIGNALS: readonly string[] = Object.freeze([
+/**
+ * PHASE 4A: split into two tiers, per the review gate's demonstrated
+ * "tomorrow"/"soon"/"this week" bypass (docs/audit/PHASE_4_REVIEW_GATE.md
+ * §4). STRONG signals name a specific, concrete near-term point (a day
+ * name, "today", "immediately") and are flagged unconditionally on a
+ * WAIT/WAIT_LONG reading — hedging language does not make "this will
+ * resolve tomorrow" a faithful presentation of a 45-90 day window. SOFT
+ * signals ("soon", "shortly") are vaguer and commonly used even in
+ * genuinely cautious prose (see the review gate's own "may begin moving
+ * soon, but the final outcome remains within the indicated period"
+ * example) — flagged only when NOT accompanied by a hedge word
+ * (HEDGE_QUALIFIERS) in the same sentence. This is the smallest
+ * deterministic distinction that passes the review gate's required
+ * matrix without over-rejecting genuinely hedged prose — not a general
+ * sentiment/certainty model.
+ */
+const STRONG_IMMEDIACY_SIGNALS: readonly string[] = Object.freeze([
   'immediately',
+  'immediate resolution',
   'right now',
+  'right away',
   'today',
+  'tomorrow',
   'this instant',
+  'this week',
   'without delay',
+]);
+
+const SOFT_IMMEDIACY_SIGNALS: readonly string[] = Object.freeze(['soon', 'shortly']);
+
+/** Same list `checkUnsupportedCertainty` treats as legitimate hedges — kept
+ *  local rather than imported to avoid coupling the two checks' internals;
+ *  both lists exist for the same reason and are intentionally short. */
+const HEDGE_QUALIFIERS: readonly string[] = Object.freeze([
+  'may',
+  'might',
+  'could',
+  'possibly',
+  'perhaps',
 ]);
 
 /** Extracts every "N day(s)"-shaped number mentioned in the text. */
@@ -390,27 +443,39 @@ export function checkTimingConsistency(
 ): ValidationFailure | null {
   const lower = text.toLowerCase();
 
-  const monthHit = MONTH_NAMES.find(m => lower.includes(m));
+  const monthDateMatch = MONTH_DATE_PATTERN.exec(text);
   const weekdayHit = WEEKDAY_NAMES.find(d => lower.includes(d));
   const dateMatch = DATE_LIKE_PATTERN.exec(text);
-  if (monthHit || weekdayHit || dateMatch) {
+  if (monthDateMatch || weekdayHit || dateMatch) {
     return {
       code: 'TIMING_FABRICATION',
       field,
-      detail: `narration names a specific calendar date/day ("${monthHit ?? weekdayHit ?? dateMatch?.[0]}"), which the engine never produces`,
+      detail: `narration names a specific calendar date/day ("${monthDateMatch?.[0] ?? weekdayHit ?? dateMatch?.[0]}"), which the engine never produces`,
     };
   }
 
   const { timing, timingPosture } = contract.diagnosis;
 
   if (timingPosture === 'WAIT' || timingPosture === 'WAIT_LONG') {
-    const hit = IMMEDIACY_SIGNALS.find(s => lower.includes(s));
-    if (hit) {
+    const strongHit = STRONG_IMMEDIACY_SIGNALS.find(s => lower.includes(s));
+    if (strongHit) {
       return {
         code: 'TIMING_ALTERATION',
         field,
-        detail: `asserted immediacy ("${hit}") but timingPosture is ${timingPosture}`,
+        detail: `asserted immediacy ("${strongHit}") but timingPosture is ${timingPosture}`,
       };
+    }
+    const softHit = SOFT_IMMEDIACY_SIGNALS.find(s => lower.includes(s));
+    if (softHit) {
+      const sentence = findSentenceContaining(text, softHit).toLowerCase();
+      const hedged = HEDGE_QUALIFIERS.some(h => sentence.includes(h));
+      if (!hedged) {
+        return {
+          code: 'TIMING_ALTERATION',
+          field,
+          detail: `asserted immediacy ("${softHit}") but timingPosture is ${timingPosture}`,
+        };
+      }
     }
   }
 
@@ -631,6 +696,13 @@ function findSentenceContaining(text: string, needle: string): string {
 /*  F. Unsupported certainty                                                  */
 /* -------------------------------------------------------------------------- */
 
+/**
+ * PHASE 4A: added the natural "will definitely"/"will certainly" word
+ * order alongside the original "definitely will"/"absolutely will" —
+ * the review gate demonstrated the original list was order-sensitive
+ * (docs/audit/PHASE_4_REVIEW_GATE.md §8). Smallest possible fix: two
+ * literal additions, not a normalization engine.
+ */
 const CERTAINTY_PHRASES: readonly string[] = Object.freeze([
   'guaranteed',
   'without any doubt',
@@ -638,6 +710,9 @@ const CERTAINTY_PHRASES: readonly string[] = Object.freeze([
   'there is no question',
   'absolutely will',
   'definitely will',
+  'will definitely',
+  'will certainly',
+  'certainly will',
 ]);
 
 /**
@@ -676,6 +751,24 @@ export function checkUnsupportedCertainty(
 /*  G/H. Terminology and internal-data leakage                                */
 /* -------------------------------------------------------------------------- */
 
+/**
+ * PHASE 4A: the review gate demonstrated "R.K.P."/"R-K-P"/"R K P" bypass
+ * the plain substring scan below (docs/audit/PHASE_4_REVIEW_GATE.md §9).
+ * Fixed narrowly, not generally: a separator-tolerant pattern for "RKP"
+ * specifically (the one demonstrated bypass), not a general fuzzy matcher
+ * over the whole PROHIBITED_TERMINOLOGY list. Deliberately NOT applied to
+ * "KP" — a 2-letter pair is common enough at ordinary word boundaries
+ * ("walk past", "look positive") that a separator-tolerant pattern for it
+ * would false-positive on legitimate prose; "RKP"'s three letters make
+ * that collision implausible (the pattern requires each letter to be
+ * followed by ONLY whitespace/punctuation before the next, which real
+ * word boundaries essentially never satisfy three letters in a row for
+ * "r", "k", "p" specifically). Also not applied to multi-word terms like
+ * "house matrix" — this obfuscation shape (single letters separated by
+ * punctuation) only makes sense for acronyms.
+ */
+const RKP_OBFUSCATED_PATTERN = /r[\s.\-_]+k[\s.\-_]+p\b/i;
+
 export function checkTerminologyLeakage(
   field: keyof NarrationFields,
   text: string,
@@ -683,6 +776,13 @@ export function checkTerminologyLeakage(
   const hit = scanForDenyList(text, PROHIBITED_TERMINOLOGY);
   if (hit) {
     return { code: 'TERMINOLOGY_LEAKAGE', field, detail: `prohibited term "${hit}" found` };
+  }
+  if (RKP_OBFUSCATED_PATTERN.test(text)) {
+    return {
+      code: 'TERMINOLOGY_LEAKAGE',
+      field,
+      detail: 'prohibited term "RKP" found (separator-obfuscated form)',
+    };
   }
   return null;
 }

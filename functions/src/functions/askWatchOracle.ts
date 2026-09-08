@@ -240,9 +240,12 @@ export const askWatchOracle = onCall(
         };
 
         // Allocated here (not after composition, as before) so its id can be
-        // passed into composeWatchOracleResponse — the safety validator logs
-        // its result under readings/{readingId}/validationLog, and needs the
-        // id before the reading document itself is written.
+        // passed into composeWatchOracleResponse — the reading contract's
+        // provenance.readingId, and any validation-failure log line
+        // (logger.warn in responseComposer.ts, not a Firestore subcollection
+        // — see docs/audit/PHASE_4_REVIEW_GATE.md §1 for why this comment
+        // was corrected in Phase 4A), needs the id before the reading
+        // document itself is written.
         readingRef = db.collection('readings').doc();
 
         // ── Diagnosis → remedy protocol → narration ──────────────────────────
