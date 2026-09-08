@@ -591,6 +591,97 @@ describe('PHASE 5E-R2 — reversal: the "reversal of fortune" idiom stays VALID'
   });
 });
 
+/* -------------------------------------------------------------------------- */
+/*  PHASE 5E-R3 -- reversal-of-fortune idiom, reordered ("Fortune's          */
+/*  reversal"), docs/audit/PHASE_5E_R2_REVIEW.md Finding 5E-R2-Review-3      */
+/* -------------------------------------------------------------------------- */
+
+describe('PHASE 5E-R3 — reversal-of-fortune idiom family, both word orders, stays VALID', () => {
+  // `secondary` (business-007-equivalent): reversal is 'NONE'.
+  it('"reversal of fortune" (original order) stays VALID', () => {
+    const narration = baseNarration({
+      interpretation: 'A reversal of fortune is possible if effort continues.',
+    });
+    expect(validateNarration(secondary, narration).valid).toBe(true);
+  });
+
+  it('"Fortune\'s reversal" (reordered) stays VALID — the exact 5E-R2 review reproduction', () => {
+    const narration = baseNarration({ interpretation: "Fortune's reversal is possible." });
+    expect(validateNarration(secondary, narration).valid).toBe(true);
+  });
+
+  it('reordered form with "remains" instead of "is" stays VALID', () => {
+    const narration = baseNarration({ interpretation: "Fortune's reversal remains possible." });
+    expect(validateNarration(secondary, narration).valid).toBe(true);
+  });
+
+  it('capitalization variant (ALL CAPS, reordered) stays VALID', () => {
+    const narration = baseNarration({ interpretation: "FORTUNE'S REVERSAL IS POSSIBLE." });
+    expect(validateNarration(secondary, narration).valid).toBe(true);
+  });
+
+  it('capitalization variant (Title Case, original order) stays VALID', () => {
+    const narration = baseNarration({ interpretation: 'A Reversal Of Fortune Is Possible.' });
+    expect(validateNarration(secondary, narration).valid).toBe(true);
+  });
+
+  it('punctuation/whitespace variant (extra spacing, original order) stays VALID', () => {
+    const narration = baseNarration({ interpretation: 'A reversal of  fortune  is possible.' });
+    expect(validateNarration(secondary, narration).valid).toBe(true);
+  });
+
+  it('punctuation/whitespace variant (extra spacing, reordered) stays VALID', () => {
+    const narration = baseNarration({ interpretation: "Fortune's  reversal  remains possible." });
+    expect(validateNarration(secondary, narration).valid).toBe(true);
+  });
+
+  it('genuine contract-grounded claim: "a reversal of this outcome is possible" (no "fortune" anywhere) still INVALID', () => {
+    const narration = baseNarration({ interpretation: 'A reversal of this outcome is possible.' });
+    const result = validateNarration(secondary, narration);
+    expect(result.valid).toBe(false);
+    if (!result.valid) {
+      expect(result.failures.some(f => f.code === 'REVERSAL_CLAIM_CONTRADICTION')).toBe(true);
+    }
+  });
+
+  it('genuine contract-grounded claim: the engine\'s own bare phrasing ("reversal remains possible") still INVALID', () => {
+    const narration = baseNarration({ interpretation: 'A reversal remains possible here.' });
+    expect(validateNarration(secondary, narration).valid).toBe(false);
+  });
+
+  it('genuine contract-grounded claim: "reversal is not possible" (no "fortune") still INVALID on a POSSIBLE reading', () => {
+    const narration = baseNarration({
+      interpretation: 'A reversal is not possible without real change.',
+    });
+    const result = validateNarration(primary, narration); // primary: reversal is 'POSSIBLE'
+    expect(result.valid).toBe(false);
+    if (!result.valid) {
+      expect(result.failures.some(f => f.code === 'REVERSAL_CLAIM_CONTRADICTION')).toBe(true);
+    }
+  });
+
+  it('ordinary non-reversal prose is unaffected (no "reversal" word at all)', () => {
+    const narration = baseNarration({
+      interpretation: 'This matter requires patience and careful reflection.',
+    });
+    expect(validateNarration(secondary, narration).valid).toBe(true);
+  });
+
+  it('"fortune" appearing far from "reversal" (outside the lookback window) does not suppress a genuine claim', () => {
+    // "fortune" here is nowhere near "reversal" -- well past the bounded
+    // lookback window -- so the genuine claim must still be caught.
+    const narration = baseNarration({
+      interpretation:
+        'Speak plainly of fortune and fate first, then note separately: a reversal of this outcome is possible.',
+    });
+    const result = validateNarration(secondary, narration);
+    expect(result.valid).toBe(false);
+    if (!result.valid) {
+      expect(result.failures.some(f => f.code === 'REVERSAL_CLAIM_CONTRADICTION')).toBe(true);
+    }
+  });
+});
+
 describe('PHASE 5E-R2 — direction: proper nouns containing a direction word stay VALID', () => {
   // `primary` (employment-001-equivalent): direction is 'South'.
   it('"points toward the North Star" stays VALID — the exact review reproduction', () => {
