@@ -1,5 +1,6 @@
 /**
- * PHASE 5H-R — permanent regression coverage for the TTS artifact boundary.
+ * PHASE 5H-R / 5H-R2 — permanent regression coverage for the TTS artifact
+ * boundary.
  * --------------------------------------------------------------------------
  * Covers Finding 5H-1 (`docs/audit/PHASE_5H_RECONNAISSANCE.md`): the string
  * `ChatBubble.speakableTextFor()` built for text-to-speech joined three of
@@ -13,7 +14,19 @@
  * `buildSpeakableText()` and `wrapAsAllNarrationFields()`, and
  * `docs/audit/PHASE_5H_R_HARDENING.md`.
  *
- * Three tiers, matching this codebase's established pattern:
+ * PHASE 5H-R2 also covers Finding 5H-R-Review-1
+ * (`docs/audit/PHASE_5H_R_REVIEW.md`): the ORIGINAL `'. '` join separator
+ * manufactured a sentence boundary the model's own text never wrote, and
+ * six of `narrationValidator.ts`'s sentence-scoped ground-truth checks
+ * (house, supporting-house, sign, direction, retrograde, ruler-relation)
+ * trust literal `.` characters as sentence boundaries — so a claim split
+ * across the exact seam that separator inserted evaded all six, regardless
+ * of wording. Closed by changing the separator to a single space (see
+ * `buildSpeakableText()`'s own updated comment) — see
+ * `docs/audit/PHASE_5H_R2_HARDENING.md`. Section A below is updated for the
+ * new separator; section D is new, covering all six claim families.
+ *
+ * Four tiers, matching this codebase's established pattern:
  *   1. `buildSpeakableText()` unit tests — the exact transformation
  *      semantics, reproduced against the real production function (not a
  *      hand-written approximation).
@@ -23,6 +36,9 @@
  *      mocked — proves the wiring: a failing TTS-artifact check actually
  *      changes what the composition returns, not just that the check would
  *      say so in isolation.
+ *   4. (PHASE 5H-R2) The full six-claim-family seam-boundary matrix: split
+ *      fabricated / unsplit fabricated / split genuine / unsplit genuine,
+ *      for each claim type.
  */
 
 import { afterEach, describe, expect, it, vi } from 'vitest';
@@ -91,11 +107,11 @@ const noneReversal = contractFor(
 /*  A. buildSpeakableText — exact transformation semantics                    */
 /* -------------------------------------------------------------------------- */
 
-describe('PHASE 5H-R — buildSpeakableText: exact production transformation', () => {
-  // Verified during pre-implementation reconnaissance against the real,
-  // then-still-client-side speakableTextFor() before this change moved it
-  // here — every case below reproduces that verification's own results.
-  it('joins all three fields with ". " when all are populated', () => {
+describe('PHASE 5H-R2 — buildSpeakableText: exact production transformation (single-space join)', () => {
+  // Verified during Phase 5H-R2's own pre-implementation discriminator
+  // probing before buildSpeakableText() was changed — every case below
+  // reproduces that verification's own results.
+  it('joins all three fields with a single space when all are populated', () => {
     const fields: NarrationFields = {
       rkp_finding: 'A.',
       interpretation: 'B.',
@@ -103,7 +119,7 @@ describe('PHASE 5H-R — buildSpeakableText: exact production transformation', (
       why_this_remedy: 'D.',
       signature: 'S.',
     };
-    expect(buildSpeakableText(fields)).toBe('A.. B.. C.');
+    expect(buildSpeakableText(fields)).toBe('A. B. C.');
   });
 
   it('drops an empty middle field without leaving an extra separator', () => {
@@ -114,7 +130,7 @@ describe('PHASE 5H-R — buildSpeakableText: exact production transformation', (
       why_this_remedy: null,
       signature: 'S.',
     };
-    expect(buildSpeakableText(fields)).toBe('A.. C.');
+    expect(buildSpeakableText(fields)).toBe('A. C.');
   });
 
   it('returns a single field unjoined when only one is populated', () => {
@@ -147,7 +163,7 @@ describe('PHASE 5H-R — buildSpeakableText: exact production transformation', (
       why_this_remedy: null,
       signature: 'S.',
     };
-    expect(buildSpeakableText(fields)).toBe('Zuḥal — retrograde؟. नमस्ते, यह जारी है।. Wait…');
+    expect(buildSpeakableText(fields)).toBe('Zuḥal — retrograde؟ नमस्ते, यह जारी है। Wait…');
   });
 
   it('does not treat a whitespace-only field as empty (matches the real filter: s.length > 0)', () => {
@@ -158,7 +174,7 @@ describe('PHASE 5H-R — buildSpeakableText: exact production transformation', (
       why_this_remedy: null,
       signature: 'S.',
     };
-    expect(buildSpeakableText(fields)).toBe('A..    . C.');
+    expect(buildSpeakableText(fields)).toBe('A.     C.');
   });
 
   it('excludes why_this_remedy and signature, exactly like the transformation it replaced', () => {
@@ -171,7 +187,20 @@ describe('PHASE 5H-R — buildSpeakableText: exact production transformation', (
     };
     const spoken = buildSpeakableText(fields);
     expect(spoken).not.toContain('THIS MUST NOT APPEAR');
-    expect(spoken).toBe('F.. I.. R.');
+    expect(spoken).toBe('F. I. R.');
+  });
+
+  it('never inserts a period the model did not already write — two independently period-terminated fields still read as two sentences, not run together', () => {
+    const fields: NarrationFields = {
+      rkp_finding: 'The tenth house carries this matter.',
+      interpretation: 'Patience is called for.',
+      recommended_approach: '',
+      why_this_remedy: null,
+      signature: 'S.',
+    };
+    expect(buildSpeakableText(fields)).toBe(
+      'The tenth house carries this matter. Patience is called for.',
+    );
   });
 });
 
@@ -405,5 +434,403 @@ describe('PHASE 5H-R — composeWatchOracleResponse: the TTS artifact check is w
 
     expect(composition.narration).toBeNull();
     expect(composition.speakableText).toBeNull();
+  });
+});
+
+/* -------------------------------------------------------------------------- */
+/*  D. PHASE 5H-R2 — the full six-claim-family seam-boundary matrix          */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * For every one of the six sentence-scoped ground-truth checks Finding
+ * 5H-R-Review-1 found bypassable, four cases: a fabricated claim split
+ * across the rkp_finding/interpretation seam (must reject), the identical
+ * fabricated claim contained within one field (must reject — control,
+ * isolates the fix to the seam itself), a genuine contract-supported claim
+ * split across the same seam (must accept — no over-tightening), and the
+ * genuine claim within one field (must accept — control). Uses the exact
+ * TTS artifact (buildSpeakableText → wrapAsAllNarrationFields →
+ * validateNarration), the same path composeWatchOracleResponse() itself
+ * checks.
+ */
+function speakableValid(contract: ReadingContract, fields: NarrationFields): boolean {
+  return validateNarration(contract, wrapAsAllNarrationFields(buildSpeakableText(fields))).valid;
+}
+
+describe('PHASE 5H-R2 — seam-boundary matrix: house claims', () => {
+  it('split fabricated → REJECT', () => {
+    const wrong = noneReversal.judgment.targetHouse === 3 ? 4 : 3;
+    expect(
+      speakableValid(noneReversal, {
+        rkp_finding: `Consider this: house number ${wrong}`,
+        interpretation: 'governs this matter above all else in the chart.',
+        recommended_approach: 'Move forward.',
+        why_this_remedy: null,
+        signature: 'S.',
+      }),
+    ).toBe(false);
+  });
+  it('unsplit fabricated → REJECT (control)', () => {
+    const wrong = noneReversal.judgment.targetHouse === 3 ? 4 : 3;
+    expect(
+      speakableValid(noneReversal, {
+        rkp_finding: `House number ${wrong} governs this matter entirely.`,
+        interpretation: 'Significant.',
+        recommended_approach: 'Move forward.',
+        why_this_remedy: null,
+        signature: 'S.',
+      }),
+    ).toBe(false);
+  });
+  it('split genuine → ACCEPT', () => {
+    expect(
+      speakableValid(noneReversal, {
+        rkp_finding: `Notably, house number ${noneReversal.judgment.targetHouse}`,
+        interpretation: 'governs this matter above all else.',
+        recommended_approach: 'Move forward.',
+        why_this_remedy: null,
+        signature: 'S.',
+      }),
+    ).toBe(true);
+  });
+  it('unsplit genuine → ACCEPT (control)', () => {
+    expect(
+      speakableValid(noneReversal, {
+        rkp_finding: `House number ${noneReversal.judgment.targetHouse} governs this matter, as the chart shows.`,
+        interpretation: 'Significant.',
+        recommended_approach: 'Move forward.',
+        why_this_remedy: null,
+        signature: 'S.',
+      }),
+    ).toBe(true);
+  });
+});
+
+describe('PHASE 5H-R2 — seam-boundary matrix: supporting-house claims', () => {
+  const supporting = new Set(noneReversal.diagnosis.supportingHouses);
+  const notSupporting = [1, 2, 3, 4, 5, 6, 8, 9, 12].find(h => !supporting.has(h))!;
+  const isSupporting = [...supporting][0]!;
+
+  it('split fabricated → REJECT', () => {
+    expect(
+      speakableValid(noneReversal, {
+        rkp_finding: `Notably, house number ${notSupporting}`,
+        interpretation: 'actively supports this outcome as things stand.',
+        recommended_approach: 'Move forward.',
+        why_this_remedy: null,
+        signature: 'S.',
+      }),
+    ).toBe(false);
+  });
+  it('unsplit fabricated → REJECT (control)', () => {
+    expect(
+      speakableValid(noneReversal, {
+        rkp_finding: `House number ${notSupporting} actively supports this outcome.`,
+        interpretation: 'Significant.',
+        recommended_approach: 'Move forward.',
+        why_this_remedy: null,
+        signature: 'S.',
+      }),
+    ).toBe(false);
+  });
+  it('split genuine → ACCEPT', () => {
+    expect(
+      speakableValid(noneReversal, {
+        rkp_finding: `Notably, house number ${isSupporting}`,
+        interpretation: 'actively supports this outcome as things stand.',
+        recommended_approach: 'Move forward.',
+        why_this_remedy: null,
+        signature: 'S.',
+      }),
+    ).toBe(true);
+  });
+  it('unsplit genuine → ACCEPT (control)', () => {
+    expect(
+      speakableValid(noneReversal, {
+        rkp_finding: `House number ${isSupporting} actively supports this outcome.`,
+        interpretation: 'Significant.',
+        recommended_approach: 'Move forward.',
+        why_this_remedy: null,
+        signature: 'S.',
+      }),
+    ).toBe(true);
+  });
+});
+
+describe('PHASE 5H-R2 — seam-boundary matrix: sign claims', () => {
+  const wrongSign = noneReversal.judgment.targetSignName.includes('Saur') ? 'Hamal' : 'Saur';
+
+  it('split fabricated → REJECT', () => {
+    expect(
+      speakableValid(noneReversal, {
+        rkp_finding: 'This unfolds through the sign of',
+        interpretation: `${wrongSign}, more than any other influence here.`,
+        recommended_approach: 'Move forward.',
+        why_this_remedy: null,
+        signature: 'S.',
+      }),
+    ).toBe(false);
+  });
+  it('unsplit fabricated → REJECT (control)', () => {
+    expect(
+      speakableValid(noneReversal, {
+        rkp_finding: `This unfolds through the sign of ${wrongSign}, plainly.`,
+        interpretation: 'Significant.',
+        recommended_approach: 'Move forward.',
+        why_this_remedy: null,
+        signature: 'S.',
+      }),
+    ).toBe(false);
+  });
+  it('split genuine → ACCEPT', () => {
+    const correctSign = noneReversal.judgment.targetSignName.replace('Burj ', '');
+    expect(
+      speakableValid(noneReversal, {
+        rkp_finding: 'This unfolds through the sign of',
+        interpretation: `${correctSign}, more than any other influence here.`,
+        recommended_approach: 'Move forward.',
+        why_this_remedy: null,
+        signature: 'S.',
+      }),
+    ).toBe(true);
+  });
+  it('unsplit genuine → ACCEPT (control)', () => {
+    const correctSign = noneReversal.judgment.targetSignName.replace('Burj ', '');
+    expect(
+      speakableValid(noneReversal, {
+        rkp_finding: `This unfolds through the sign of ${correctSign}, plainly.`,
+        interpretation: 'Significant.',
+        recommended_approach: 'Move forward.',
+        why_this_remedy: null,
+        signature: 'S.',
+      }),
+    ).toBe(true);
+  });
+});
+
+describe('PHASE 5H-R2 — seam-boundary matrix: direction claims', () => {
+  const wrongDirection = noneReversal.judgment.direction === 'North' ? 'South' : 'North';
+
+  it('split fabricated → REJECT', () => {
+    expect(
+      speakableValid(noneReversal, {
+        rkp_finding: 'From where you are, the energy points toward the',
+        interpretation: `${wrongDirection}, more than any other direction.`,
+        recommended_approach: 'Move forward.',
+        why_this_remedy: null,
+        signature: 'S.',
+      }),
+    ).toBe(false);
+  });
+  it('unsplit fabricated → REJECT (control)', () => {
+    expect(
+      speakableValid(noneReversal, {
+        rkp_finding: `The energy points toward the ${wrongDirection}, plainly.`,
+        interpretation: 'Significant.',
+        recommended_approach: 'Move forward.',
+        why_this_remedy: null,
+        signature: 'S.',
+      }),
+    ).toBe(false);
+  });
+  it('split genuine → ACCEPT', () => {
+    expect(
+      speakableValid(noneReversal, {
+        rkp_finding: 'From where you are, the energy points toward the',
+        interpretation: `${noneReversal.judgment.direction}, more than any other direction.`,
+        recommended_approach: 'Move forward.',
+        why_this_remedy: null,
+        signature: 'S.',
+      }),
+    ).toBe(true);
+  });
+  it('unsplit genuine → ACCEPT (control)', () => {
+    expect(
+      speakableValid(noneReversal, {
+        rkp_finding: `The energy points toward the ${noneReversal.judgment.direction}, plainly.`,
+        interpretation: 'Significant.',
+        recommended_approach: 'Move forward.',
+        why_this_remedy: null,
+        signature: 'S.',
+      }),
+    ).toBe(true);
+  });
+});
+
+describe('PHASE 5H-R2 — seam-boundary matrix: retrograde claims', () => {
+  // noneReversal's ruler is NOT retrograde; possibleReversal's IS.
+  it('split fabricated → REJECT (claimed on the non-retrograde contract)', () => {
+    expect(
+      speakableValid(noneReversal, {
+        rkp_finding: 'I want to flag something: the ruler is currently',
+        interpretation: 'retrograde, and that is complicating matters here.',
+        recommended_approach: 'Move forward.',
+        why_this_remedy: null,
+        signature: 'S.',
+      }),
+    ).toBe(false);
+  });
+  it('unsplit fabricated → REJECT (control)', () => {
+    expect(
+      speakableValid(noneReversal, {
+        rkp_finding: 'The ruler is currently retrograde, plainly.',
+        interpretation: 'Significant.',
+        recommended_approach: 'Move forward.',
+        why_this_remedy: null,
+        signature: 'S.',
+      }),
+    ).toBe(false);
+  });
+  it('split genuine → ACCEPT (claimed on the genuinely retrograde contract)', () => {
+    expect(
+      speakableValid(possibleReversal, {
+        rkp_finding: 'I want to flag something: the ruler is currently',
+        interpretation: 'retrograde, and that is complicating matters here.',
+        recommended_approach: 'Move forward.',
+        why_this_remedy: null,
+        signature: 'S.',
+      }),
+    ).toBe(true);
+  });
+  it('unsplit genuine → ACCEPT (control)', () => {
+    expect(
+      speakableValid(possibleReversal, {
+        rkp_finding: 'The ruler is currently retrograde, plainly.',
+        interpretation: 'Significant.',
+        recommended_approach: 'Move forward.',
+        why_this_remedy: null,
+        signature: 'S.',
+      }),
+    ).toBe(true);
+  });
+});
+
+describe('PHASE 5H-R2 — seam-boundary matrix: ruler-relation claims', () => {
+  const actual = noneReversal.judgment.rulerRelation;
+  const wrong = actual === 'Friend' ? 'enemy' : 'friend';
+
+  it('split fabricated → REJECT', () => {
+    expect(
+      speakableValid(noneReversal, {
+        rkp_finding: "Your ruler regards the matter's ruler as a",
+        interpretation: `${wrong}, which shapes the outcome considerably.`,
+        recommended_approach: 'Move forward.',
+        why_this_remedy: null,
+        signature: 'S.',
+      }),
+    ).toBe(false);
+  });
+  it('unsplit fabricated → REJECT (control)', () => {
+    expect(
+      speakableValid(noneReversal, {
+        rkp_finding: `Your ruler regards the matter's ruler as a ${wrong}, plainly.`,
+        interpretation: 'Significant.',
+        recommended_approach: 'Move forward.',
+        why_this_remedy: null,
+        signature: 'S.',
+      }),
+    ).toBe(false);
+  });
+  it('split genuine → ACCEPT', () => {
+    expect(
+      speakableValid(noneReversal, {
+        rkp_finding: "Your ruler regards the matter's ruler as a",
+        interpretation: `${actual.toLowerCase()}, which shapes the outcome considerably.`,
+        recommended_approach: 'Move forward.',
+        why_this_remedy: null,
+        signature: 'S.',
+      }),
+    ).toBe(true);
+  });
+  it('unsplit genuine → ACCEPT (control)', () => {
+    expect(
+      speakableValid(noneReversal, {
+        rkp_finding: `Your ruler regards the matter's ruler as a ${actual.toLowerCase()}, plainly.`,
+        interpretation: 'Significant.',
+        recommended_approach: 'Move forward.',
+        why_this_remedy: null,
+        signature: 'S.',
+      }),
+    ).toBe(true);
+  });
+});
+
+/* -------------------------------------------------------------------------- */
+/*  E. PHASE 5H-R2 — existing protections, re-tested through the fixed artifact */
+/* -------------------------------------------------------------------------- */
+
+describe('PHASE 5H-R2 — existing protections through the fixed TTS artifact', () => {
+  it('house claim split + Cyrillic confusable substitution combined → still REJECT', () => {
+    const wrong = noneReversal.judgment.targetHouse === 3 ? 4 : 3;
+    expect(
+      speakableValid(noneReversal, {
+        rkp_finding: `In this rеading, house numbеr ${wrong}`, // Cyrillic е (U+0435)
+        interpretation: 'govеrns this mattеr beyond question.',
+        recommended_approach: 'Move forward.',
+        why_this_remedy: null,
+        signature: 'S.',
+      }),
+    ).toBe(false);
+  });
+
+  it('house claim split + mid-word ASCII punctuation bridging combined → still REJECT', () => {
+    const wrong = noneReversal.judgment.targetHouse === 3 ? 4 : 3;
+    expect(
+      speakableValid(noneReversal, {
+        rkp_finding: `Take note: h.o.u.s.e number ${wrong}`,
+        interpretation: 'governs this matter, plainly.',
+        recommended_approach: 'Move forward.',
+        why_this_remedy: null,
+        signature: 'S.',
+      }),
+    ).toBe(false);
+  });
+
+  it('reversal claim split + zero-width-joiner obfuscation combined → still REJECT', () => {
+    expect(
+      speakableValid(noneReversal, {
+        rkp_finding: 'I should mention, before anything else — a rev‍ersal',
+        interpretation: 'remains possible, though nothing about this is settled yet.',
+        recommended_approach: 'Move forward.',
+        why_this_remedy: null,
+        signature: 'S.',
+      }),
+    ).toBe(false);
+  });
+
+  it('terminology leakage still caught through the fixed artifact', () => {
+    expect(
+      speakableValid(noneReversal, {
+        rkp_finding: 'Behind the scenes, our RKP Watch Engine ran a judgment pass',
+        interpretation: 'and flagged this internally, for what it is worth.',
+        recommended_approach: 'Move forward.',
+        why_this_remedy: null,
+        signature: 'S.',
+      }),
+    ).toBe(false);
+  });
+
+  it('internal-data leakage pattern still caught through the fixed artifact', () => {
+    expect(
+      speakableValid(noneReversal, {
+        rkp_finding: 'For reference, this reading is stored at /var/data/readings/internal.json',
+        interpretation: 'though that detail hardly matters to you.',
+        recommended_approach: 'Move forward.',
+        why_this_remedy: null,
+        signature: 'S.',
+      }),
+    ).toBe(false);
+  });
+
+  it('the adjacency false-positive risk case: an unrelated number with no terminal punctuation before a genuine house claim → still ACCEPT', () => {
+    expect(
+      speakableValid(noneReversal, {
+        rkp_finding: 'This should resolve within about 3',
+        interpretation: `months, and house number ${noneReversal.judgment.targetHouse} governs this matter, as the chart shows.`,
+        recommended_approach: 'Move forward.',
+        why_this_remedy: null,
+        signature: 'S.',
+      }),
+    ).toBe(true);
   });
 });

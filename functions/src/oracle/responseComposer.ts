@@ -107,15 +107,16 @@ export interface WatchOracleComposition {
    * PHASE 5H-R: the exact string safe to hand to on-device text-to-speech —
    * `ChatBubble.speakableTextFor()`'s own former transformation
    * (`[rkp_finding, interpretation, recommended_approach].filter(s =>
-   * s.length > 0).join('. ')`), now computed and validated HERE, once,
-   * server-side, rather than reconstructed client-side from the individual
-   * fields. `docs/audit/PHASE_5H_RECONNAISSANCE.md` (Finding 5H-1)
-   * demonstrated that per-field validation alone does not cover this
-   * three-field join: a claim can be split across the `rkp_finding` /
-   * `interpretation` boundary so that neither field alone trips a check,
-   * while the concatenation a seeker actually hears does. Validated below
-   * the same way `wrapAsAllNarrationFields()` reuses `validateNarration()`
-   * for a single string (the exact technique
+   * s.length > 0).join(...)` — see `buildSpeakableText()`'s own comment for
+   * the exact separator and PHASE 5H-R2's reason for it), now computed and
+   * validated HERE, once, server-side, rather than reconstructed
+   * client-side from the individual fields. `docs/audit/PHASE_5H_RECONNAISSANCE.md`
+   * (Finding 5H-1) demonstrated that per-field validation alone does not
+   * cover this three-field join: a claim can be split across the
+   * `rkp_finding` / `interpretation` boundary so that neither field alone
+   * trips a check, while the concatenation a seeker actually hears does.
+   * Validated below the same way `wrapAsAllNarrationFields()` reuses
+   * `validateNarration()` for a single string (the exact technique
    * `discussionComposer.ts`'s `wrapReplyAsNarrationFields()` established in
    * Phase 5F) — not a second validator. `null` when `narration` itself is
    * null (synthesis failed outright — nothing to speak).
@@ -300,22 +301,39 @@ MOTHER_NAME: ${ctx.motherName || 'not provided'}
 /* -------------------------------------------------------------------------- */
 
 /**
- * The exact transformation `ChatBubble.speakableTextFor()` used to perform
- * client-side — now the single place this join happens at all. Reproduced
- * field-for-field, filter-for-filter, separator-for-separator against the
- * real production function during Phase 5H-R's own pre-implementation
- * probing (see `docs/audit/PHASE_5H_R_HARDENING.md`): three of the five
- * fields, empty ones dropped, joined with `'. '`. `why_this_remedy` and
+ * Three of the five fields, empty ones dropped — `why_this_remedy` and
  * `signature` are deliberately excluded, matching what the client always
- * spoke — this phase changes WHERE this string is computed and that it is
- * now validated before anything ever reads it, not WHAT it contains.
+ * spoke (established Phase 5H-R). This is the single place this join
+ * happens at all; the join's own separator is PHASE 5H-R2's fix, not
+ * incidental formatting — see the paragraph below.
+ *
+ * PHASE 5H-R2: joined with a single space, never an inserted period.
+ * `docs/audit/PHASE_5H_R_REVIEW.md` (Finding 5H-R-Review-1) demonstrated
+ * that Phase 5H-R's original `'. '` separator manufactured a sentence
+ * boundary the model's own text never wrote — and six of
+ * `narrationValidator.ts`'s ground-truth checks (house, supporting-house,
+ * sign, direction, retrograde, ruler-relation) are sentence-scoped via
+ * `findSentenceContaining()`, which trusts literal `.` characters as
+ * sentence boundaries. An injected period at exactly the field seam let a
+ * claim split across it evade every one of those six checks, independent
+ * of wording. A single space introduces no boundary the fields didn't
+ * already have: two fields that each end in genuine terminal punctuation
+ * still read as separate sentences (unchanged from before); two fields
+ * where the first ends mid-thought now correctly read as ONE continuous
+ * run of text for validation — exactly how a listener actually perceives
+ * TTS-spoken prose with no hard pause inserted, and exactly what lets the
+ * SAME sentence-scoped checks see a split claim as one sentence again,
+ * with no change to `narrationValidator.ts` itself. Verified against all
+ * six claim families, both split and unsplit, both fabricated and
+ * genuine, before this was implemented — see
+ * `docs/audit/PHASE_5H_R2_HARDENING.md`.
  *
  * Exported for direct testing.
  */
 export function buildSpeakableText(narration: NarrationFields): string {
   return [narration.rkp_finding, narration.interpretation, narration.recommended_approach]
     .filter(s => s.length > 0)
-    .join('. ');
+    .join(' ');
 }
 
 /**
