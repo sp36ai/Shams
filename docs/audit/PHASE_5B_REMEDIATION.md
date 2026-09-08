@@ -325,3 +325,40 @@ decided unilaterally.
   agree on the wrong thing). This is an inherent limit of "detect
   disagreement between two runs of the same script," not something this
   phase's narrow scope was asked to solve further.
+
+---
+
+## Addendum — 2026-09-08: Phase 5B-R2 golden baseline reconciliation
+
+The one item §M left open — whether the 44 (corrected to **45**, see
+below) golden-corpus differences were safe to regenerate — was resolved
+under the separately-authorized Phase 5B-R2. Full field-by-field proof
+lives in `docs/audit/PHASE_5B_R2_GOLDEN_BASELINE.md`.
+
+**Correction:** this document's §M stated "44 of 111" cases differ. A
+scripted, exhaustive re-count found **45**, not 44 (an off-by-one in the
+original manual `diff -rq` read). The conclusion is unaffected — all 45
+were proven presentation-only, not just the 44 originally counted.
+
+Every one of the 45 cases was compared field-by-field against the
+corpus's actual schema (34 decision-bearing paths, 3 presentation paths,
+plus provenance fields) — not sampled, not assumed. Result: **zero
+decision-bearing field differed in any case**; the only field that ever
+changed was `verdict.factors` (107 individual array-element strings
+across the 45 cases), and every one of those 107 changed lines reduces
+to byte-identical text once the "Nth" ordinal suffix is stripped — no
+other wording changed anywhere. The change was traced to the single
+`gharLabel()` mirror-sync correction from Phase 5B-R, with no other code
+path touching `verdict.factors`.
+
+The golden corpus was regenerated from the synchronized, canonical engine
+(`sync-engine --check` confirmed clean immediately before generation) and
+proven deterministic (two consecutive runs, byte-identical). Full
+regression: functions 189/189, app 304/304, both typecheck/lint clean,
+replay 24/24, mirror sync check passing. Zero unauthorized production
+changes (verified via scoped `git diff --stat` against every prohibited
+path).
+
+**P5B-1 — REMEDIATED**
+**P5B-2 — REMEDIATED**
+**P5B-R2 — PASS**
