@@ -18,6 +18,14 @@
  * proved that; this is a redundant, cheap runtime confirmation specific to
  * this harness's own inputs, not a re-litigation of that proof) and
  * captures any thrown exception as its own reportable class of finding.
+ *
+ * PHASE 5C-R: output directory is overridable via `--out-dir=<path>` (or
+ * the HARNESS_OUT_DIR env var) — the default `docs/audit/phase-5c` is
+ * Phase 5C's own historical evidence and must never be silently
+ * overwritten by a later re-run (e.g. a post-remediation verification
+ * pass); such a run should write to a clearly-dated, separate directory
+ * instead, exactly as docs/audit/phase-5c-r/ does for this phase's own
+ * post-fix evidence.
  */
 
 import { writeFileSync, mkdirSync } from 'node:fs';
@@ -30,7 +38,10 @@ import { validateNarration } from '../../src/oracle/narrationValidator';
 import type { GeneratedCase } from './types';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const OUT_DIR = resolve(__dirname, '../../../docs/audit/phase-5c');
+const outDirArg = process.argv.find(a => a.startsWith('--out-dir='))?.slice('--out-dir='.length);
+const OUT_DIR = outDirArg
+  ? resolve(process.cwd(), outDirArg)
+  : (process.env.HARNESS_OUT_DIR ?? resolve(__dirname, '../../../docs/audit/phase-5c'));
 
 interface CaseResult {
   readonly id: string;

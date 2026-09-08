@@ -25,6 +25,7 @@ import type { NarrationFields } from './responseComposer';
 import { REMEDY_LIBRARY } from './remedyLibrary';
 import { PLANET_NAME, PLANET_NAME_SHORT } from '../engine/rkp/nomenclature';
 import type { Planet } from '../engine/types/chart';
+import { canonicalizeForSecurityMatching } from './textSecurity';
 
 /* -------------------------------------------------------------------------- */
 /*  Result types                                                              */
@@ -515,6 +516,17 @@ const REMEDY_OVERRIDE_PHRASES: readonly string[] = Object.freeze([
 ]);
 
 /**
+ * PHASE 5C-R: `REMEDY_LIBRARY` name, canonicalized once at module load
+ * (the library is a static, frozen constant — never worth recomputing per
+ * call) and lowercased, keyed by remedy id. See `checkRemedyConsistency`'s
+ * own comment for why this side of the comparison must be canonicalized
+ * too, not just the incoming narration text.
+ */
+const CANONICAL_REMEDY_NAMES: ReadonlyMap<string, string> = new Map(
+  REMEDY_LIBRARY.map(r => [r.id, canonicalizeForSecurityMatching(r.name).toLowerCase()]),
+);
+
+/**
  * Structural check first: does the narration name a REAL remedy (matched
  * against the full REMEDY_LIBRARY by exact name) that this reading did NOT
  * select? An exact name match against real library content is unambiguous
@@ -536,7 +548,19 @@ export function checkRemedyConsistency(
     if (selectedIds.has(remedy.id)) {
       continue;
     }
-    if (lower.includes(remedy.name.toLowerCase())) {
+    // PHASE 5C-R: `text` (renamed to `lower` above) already arrives
+    // canonicalized (see validateNarration's call site) — a handful of
+    // REMEDY_LIBRARY names carry legitimate diacritics ("Ṣalāt
+    // al-Istikhārah", "Duʿā for Ease", "Qurʾānic Contemplation on
+    // Patience", "Dhikr of Yā Laṭīf"). Canonicalizing this side of the
+    // comparison too keeps matching symmetric: a canonicalized mention of
+    // one of these names (with or without its diacritics — both reduce to
+    // the same canonical form) is still correctly recognized, rather than
+    // silently stopping to match once the incoming text side lost its
+    // diacritics to canonicalization. Verified this does not change
+    // behavior for any non-diacritic remedy name (canonicalization of
+    // plain ASCII is a no-op).
+    if (lower.includes(CANONICAL_REMEDY_NAMES.get(remedy.id)!)) {
       return {
         code: contract.remedy.steps.length > 0 ? 'REMEDY_SUBSTITUTION' : 'REMEDY_ADDITION',
         field,
@@ -920,9 +944,16 @@ export function validateNarration(
     if (typeof text !== 'string' || text.length === 0) {
       continue; // why_this_remedy may legitimately be null
     }
+    // PHASE 5C-R: every check receives a canonicalized copy of the text,
+    // never the raw string — see textSecurity.ts's own header for exactly
+    // what this strips and why, and for the explicit boundary (this is
+    // matching-only; `narration`/`fields` above, and everything returned
+    // from this function, stay untouched — see this file's non-mutation
+    // test in narrationValidatorUnicodeSecurity.test.ts).
+    const canonicalText = canonicalizeForSecurityMatching(text);
     for (const check of CHECKS) {
       try {
-        const failure = check(contract, field, text);
+        const failure = check(contract, field, canonicalText);
         if (failure) {
           failures.push(failure);
         }

@@ -73,9 +73,48 @@ export function fullwidthify(s: string): string {
   return s.replace(/[aeiostr]/g, ch => map[ch] ?? ch);
 }
 
-/** Adds combining diacritics after vowels. */
+/** Adds combining diacritics after vowels (decomposed form — base + combining mark, two codepoints). */
 export function addCombiningMarks(s: string): string {
   return s.replace(/[aeiou]/g, ch => ch + '́');
+}
+
+/**
+ * PHASE 5C-R: same visual effect as `addCombiningMarks`, but PRECOMPOSED —
+ * a single codepoint (e.g. "á" U+00E1) rather than base+combining-mark.
+ * Distinct attack shape: a naive "strip Unicode category Mn" fix (compose
+ * first via NFKC, then strip Mn) would miss this, since a precomposed
+ * character carries no separate Mn codepoint to strip — the actual reason
+ * `canonicalizeForSecurityMatching` decomposes (NFKD) BEFORE stripping,
+ * not after. This mutator exists specifically to prove that ordering
+ * matters, not just to duplicate `addCombiningMarks`.
+ */
+export function precomposedAccent(s: string): string {
+  const map: Record<string, string> = { a: 'á', e: 'é', i: 'í', o: 'ó', u: 'ú' };
+  return s.replace(/[aeiou]/g, ch => map[ch] ?? ch);
+}
+
+/** Inserts a word joiner (U+2060, category Cf) inside every word longer than 3 chars. */
+export function insertWordJoiner(s: string): string {
+  return s.replace(/\b(\w{4,})\b/g, w => {
+    const mid = Math.floor(w.length / 2);
+    return w.slice(0, mid) + '⁠' + w.slice(mid);
+  });
+}
+
+/** Inserts a left-to-right mark (U+200E, category Cf, a bidi control) inside every word longer than 3 chars. */
+export function insertBidiControl(s: string): string {
+  return s.replace(/\b(\w{4,})\b/g, w => {
+    const mid = Math.floor(w.length / 2);
+    return w.slice(0, mid) + '‎' + w.slice(mid);
+  });
+}
+
+/** Inserts a variation selector (U+FE0F, category Mn) inside every word longer than 3 chars. */
+export function insertVariationSelector(s: string): string {
+  return s.replace(/\b(\w{4,})\b/g, w => {
+    const mid = Math.floor(w.length / 2);
+    return w.slice(0, mid) + '️' + w.slice(mid);
+  });
 }
 
 /** Adds excessive punctuation. */
@@ -118,9 +157,13 @@ export const PRESENTATION_MUTATORS: ReadonlyArray<{ name: string; fn: (s: string
   { name: 'zeroWidthJoiner', fn: insertZeroWidthJoiner },
   { name: 'zeroWidthNonJoiner', fn: insertZeroWidthNonJoiner },
   { name: 'zeroWidthSpace', fn: insertZeroWidthSpace },
+  { name: 'wordJoiner', fn: insertWordJoiner },
+  { name: 'bidiControl', fn: insertBidiControl },
+  { name: 'variationSelector', fn: insertVariationSelector },
   { name: 'wrapRtl', fn: wrapRtl },
   { name: 'fullwidthify', fn: fullwidthify },
   { name: 'addCombiningMarks', fn: addCombiningMarks },
+  { name: 'precomposedAccent', fn: precomposedAccent },
   { name: 'excessivePunctuation', fn: excessivePunctuation },
   { name: 'smartQuotes', fn: smartQuotes },
   { name: 'titleCase', fn: titleCase },

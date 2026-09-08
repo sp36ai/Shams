@@ -454,3 +454,37 @@ STOP. No remediation was performed. No Phase 5D work was started. No
 `kp/` primitive was touched. The 4/18 remedy-taxonomy decision was not
 reopened. No unrelated cleanup was performed. Awaiting review before any
 further action.
+
+---
+
+## Addendum — 2026-09-08: Phase 5C-R remediation
+
+All four P1 findings above (P5C-1 through P5C-4, plus the narrower
+"house matrix" whitespace gap folded into P5C-3) were remediated under
+the separately-authorized Phase 5C-R. Full rationale, implementation, and
+evidence live in `docs/audit/PHASE_5C_R_REMEDIATION.md`.
+
+One canonical text-normalization primitive
+(`functions/src/oracle/textSecurity.ts`) is now applied once per
+narration field inside `validateNarration()`'s own loop — not four
+independent patches. The full generative corpus (widened from 10,435 to
+11,923 cases to cover additional Unicode axes within the same authorized
+mechanism: word joiner, bidi controls, variation selectors, precomposed
+accents) now reports **0 false negatives, 0 false positives, 0
+exceptions, 0 contract mutations**. A 57-test permanent regression suite
+(`narrationValidatorUnicodeSecurity.test.ts`) covers the primitive
+directly, the four original bypass strings through the real production
+path, an expanded per-category metamorphic table, the symmetric-diacritic
+remedy-name correctness case, and a dedicated non-mutation proof.
+
+Three additional bypasses found during this phase's own reconnaissance
+(homoglyph/confusable substitution, repeated-character padding, mid-word
+ASCII punctuation insertion) were confirmed real but explicitly left
+unfixed — a different mechanism, out of this phase's authorized Unicode/
+obfuscation scope — and remain documented, open findings.
+
+**P5C-1 — REMEDIATED**
+**P5C-2 — REMEDIATED**
+**P5C-3 — REMEDIATED**
+**P5C-4 — REMEDIATED**
+**PHASE 5C-R: PASS**

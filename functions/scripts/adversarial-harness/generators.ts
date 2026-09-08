@@ -104,7 +104,17 @@ const SOFT_PHRASES = ['soon', 'shortly'];
 const HEDGES = ['may', 'might', 'could', 'possibly', 'perhaps'];
 const EXACT_DATES = ['9/19', '2026-09-19', 'September 19', '19th of May', 'next Monday', 'next Friday', '3/4/2027'];
 const UNICODE_AXES = PRESENTATION_MUTATORS.filter(m =>
-  ['zeroWidthJoiner', 'zeroWidthNonJoiner', 'zeroWidthSpace', 'fullwidthify', 'addCombiningMarks'].includes(m.name),
+  [
+    'zeroWidthJoiner',
+    'zeroWidthNonJoiner',
+    'zeroWidthSpace',
+    'wordJoiner',
+    'bidiControl',
+    'variationSelector',
+    'fullwidthify',
+    'addCombiningMarks',
+    'precomposedAccent',
+  ].includes(m.name),
 );
 
 export function genTiming(pool: readonly ContractProfile[]): GeneratedCase[] {
