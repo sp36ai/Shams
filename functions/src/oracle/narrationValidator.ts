@@ -950,6 +950,16 @@ export function checkSignClaims(
  * narration using one would simply not match any of the four names below
  * and would pass through unflagged, same as any other unrecognized claim
  * shape.
+ *
+ * PHASE 5E-R2: `docs/audit/PHASE_5E_R_REVIEW_GATE.md` (Finding
+ * 5E-R-Review-4) found the bare-word extraction below flagged "points
+ * toward the North Star" — the direction word sitting inside a multi-word
+ * proper noun, not a genuine direction claim. `claimedDirection()` adds
+ * one narrow, evidence-based discriminator: a direction word is a genuine
+ * claim only when NOT immediately followed by whitespace and another
+ * capitalized word (the exact shape "North Star"/"South Pole" etc. take).
+ * A direction word ending the clause ("...toward the South.") or followed
+ * by ordinary lowercase prose is unaffected.
  */
 const DIRECTION_PHRASES: readonly string[] = Object.freeze([
   'points toward the',
@@ -958,6 +968,24 @@ const DIRECTION_PHRASES: readonly string[] = Object.freeze([
   'direction of this matter is',
 ]);
 const DIRECTIONS: readonly Direction[] = ['East', 'South', 'West', 'North'];
+/** Matches a direction word immediately continued by another capitalized word — "North Star", "South Pole". */
+const PROPER_NOUN_CONTINUATION = /^\s+[A-Z]/;
+
+function claimedDirection(sentence: string): Direction | null {
+  for (const d of DIRECTIONS) {
+    const re = new RegExp(`\\b${d}\\b`, 'gi');
+    let match: RegExpExecArray | null;
+    while ((match = re.exec(sentence))) {
+      const after = sentence.slice(match.index + match[0].length);
+      if (!PROPER_NOUN_CONTINUATION.test(after)) {
+        return d; // a genuine bare directional claim, not part of a proper noun
+      }
+      // else: this occurrence is "<Direction> <CapitalizedWord>" (e.g. "North
+      // Star") — skip it and keep scanning for another, genuine occurrence.
+    }
+  }
+  return null;
+}
 
 export function checkDirectionClaims(
   contract: ReadingContract,
@@ -970,7 +998,7 @@ export function checkDirectionClaims(
     return null;
   }
   const sentence = findSentenceContaining(text, phraseHit);
-  const claimed = DIRECTIONS.find(d => new RegExp(`\\b${d}\\b`, 'i').test(sentence));
+  const claimed = claimedDirection(sentence);
   if (claimed && claimed !== contract.judgment.direction) {
     return {
       code: 'DIRECTION_CLAIM_CONTRADICTION',
@@ -998,14 +1026,41 @@ export function checkDirectionClaims(
  * and its own `factors`/`rationale` say so — narration accurately
  * reflecting that must stay VALID, and only a retrograde claim UNSUPPORTED
  * by the contract's own text is a contradiction.
+ *
+ * PHASE 5E-R2: `docs/audit/PHASE_5E_R_REVIEW_GATE.md` (Finding
+ * 5E-R-Review-2) found the bare word "retrograde" also fires on ordinary,
+ * non-astrological use ("this situation feels retrograde"). Fixed by
+ * requiring the SAME SENTENCE to also name a planet (any `PLANET_ALIASES`
+ * surface form — already the codebase's own alias table, not invented
+ * here) or use "ruler"/"ruling planet"/"planet" — exactly the two real
+ * phrasings the engine's own generated text uses (`watchJudgment.ts`'s
+ * factors: "<planet name> is retrograde"; `diagnosis.ts`'s rationale: "A
+ * ruling planet is retrograde"), so this narrows the false-positive
+ * without losing either engine-native phrasing or the original Finding
+ * 5E-1 reproduction ("Zuhal is currently retrograde...").
  */
+const RETROGRADE_CONTEXT_WORDS: readonly string[] = Object.freeze([
+  'ruler',
+  'ruling planet',
+  'planet',
+]);
+
 export function checkRetrogradeClaims(
   contract: ReadingContract,
   field: keyof NarrationFields,
   text: string,
 ): ValidationFailure | null {
-  if (!/\bretrograde\b/i.test(text)) {
+  const lower = text.toLowerCase();
+  if (!/\bretrograde\b/i.test(lower)) {
     return null;
+  }
+  const sentence = findSentenceContaining(text, 'retrograde').toLowerCase();
+  const namesAPlanet = ALL_PLANETS.some(p =>
+    PLANET_ALIASES[p].some(alias => sentence.includes(alias.toLowerCase())),
+  );
+  const namesRulerOrPlanet = RETROGRADE_CONTEXT_WORDS.some(w => sentence.includes(w));
+  if (!namesAPlanet && !namesRulerOrPlanet) {
+    return null; // "retrograde" used without naming any planet/ruler -- not an astrological claim
   }
   const engineAssertsRetrograde =
     contract.judgment.factors.some(f => /\bretrograde\b/i.test(f)) ||
@@ -1026,6 +1081,20 @@ export function checkRetrogradeClaims(
  * the matter's ruler "as a friend/enemy/neutral", and if so, does it match
  * `judgment.rulerRelation`? One bounded regex, not a phrase list, because
  * the claimed word itself needs to be captured, not just detected.
+ *
+ * PHASE 5E-R2: `docs/audit/PHASE_5E_R_REVIEW_GATE.md` (Finding
+ * 5E-R-Review-1) found this pattern also fires on ordinary
+ * human-relationship prose ("a colleague regards them as a friend").
+ * Fixed by requiring the word "ruler" in the SAME SENTENCE — this is not
+ * an invented keyword: `watchJudgment.ts`'s own field comment ("How the
+ * querent's ruler regards the ruler of the matter") and this codebase's
+ * only existing narration precedent for this claim (both the original
+ * Finding 5E-1 reproduction and this suite's own committed tests: "The
+ * querent's ruler regards the matter's ruler as a...") always use exactly
+ * this word for it. A narration that instead named the two planets
+ * directly ("Zuhal regards Mushtari as a friend") would not be recognized
+ * either way — documented as an accepted, bounded residual in
+ * `docs/audit/PHASE_5E_R2_HARDENING.md`, not a regression this fix causes.
  */
 const RULER_RELATION_PATTERN =
   /\bregards?\b[\s\S]{0,60}?\bas\s+(?:an?\s+)?(friend|enemy|neutral)\b/i;
@@ -1038,6 +1107,10 @@ export function checkRulerRelationClaims(
   const match = RULER_RELATION_PATTERN.exec(text);
   if (!match) {
     return null;
+  }
+  const sentence = findSentenceContaining(text, match[0].toLowerCase());
+  if (!/\bruler\b/i.test(sentence)) {
+    return null; // not a claim about a ruler relation at all
   }
   const claimed = match[1]!.toLowerCase();
   const actual = contract.judgment.rulerRelation;
@@ -1059,11 +1132,23 @@ export function checkRulerRelationClaims(
  * ruling planet is retrograde — reversal remains possible") — grounding the
  * detector's shape in genuine engine-produced language, not an invented
  * phrasing.
+ *
+ * PHASE 5E-R2: `docs/audit/PHASE_5E_R_REVIEW_GATE.md` (Finding
+ * 5E-R-Review-3, raised to P1) found this pattern also fires on the
+ * standard English idiom "a reversal of fortune is possible" — unrelated
+ * to `judgment.reversal`'s specific technical meaning (whether a past
+ * decision/action on this matter is liable to be reopened). Fixed by
+ * excluding matches whose text contains "of fortune" — the exact
+ * demonstrated idiom, not a general narrowing: the original Finding 5E-1
+ * reproduction ("A reversal of this outcome is none") does not contain
+ * that phrase and is unaffected (verified in
+ * `docs/audit/PHASE_5E_R2_HARDENING.md`).
  */
 const REVERSAL_CLAIM_PATTERN =
   /\breversal\b[\s\S]{0,40}?\b(?:is|remains)\s+(none|not\s+possible|unlikely|possible|likely|a\s+real\s+possibility)\b/i;
 const REVERSAL_POSSIBLE_WORDS = new Set(['possible', 'likely', 'a real possibility']);
 const REVERSAL_NONE_WORDS = new Set(['none', 'not possible', 'unlikely']);
+const REVERSAL_IDIOM_EXCLUSION = 'of fortune';
 
 export function checkReversalClaims(
   contract: ReadingContract,
@@ -1073,6 +1158,9 @@ export function checkReversalClaims(
   const match = REVERSAL_CLAIM_PATTERN.exec(text);
   if (!match) {
     return null;
+  }
+  if (match[0].toLowerCase().includes(REVERSAL_IDIOM_EXCLUSION)) {
+    return null; // "reversal of fortune" -- the demonstrated idiom, not a claim about judgment.reversal
   }
   const claimed = match[1]!.toLowerCase().replace(/\s+/g, ' ');
   const { reversal } = contract.judgment;

@@ -460,3 +460,183 @@ describe('PHASE 5E-R — Finding 5E-2: ordinal/date collision fix', () => {
     expect(result.valid).toBe(false); // still a false positive, unchanged from before this phase
   });
 });
+
+/* -------------------------------------------------------------------------- */
+/*  PHASE 5E-R2 -- false-positive collision fixes                             */
+/*  (docs/audit/PHASE_5E_R_REVIEW_GATE.md Findings 5E-R-Review-1..4)          */
+/* -------------------------------------------------------------------------- */
+
+describe('PHASE 5E-R2 — ruler-relation: ordinary human-relationship prose stays VALID', () => {
+  // `primary` (employment-001-equivalent): rulerRelation is 'Neutral'.
+  it('"a colleague regards them as a friend" (no "ruler") stays VALID — the exact review reproduction', () => {
+    const narration = baseNarration({
+      interpretation: "The seeker's colleague regards them as a friend, which brings comfort.",
+    });
+    expect(validateNarration(primary, narration).valid).toBe(true);
+  });
+
+  it('near-miss: "many regard them as a friend" (different verb form, no "ruler") stays VALID', () => {
+    const narration = baseNarration({
+      interpretation: "Many in the seeker's life regard them as a friend and confidant.",
+    });
+    expect(validateNarration(primary, narration).valid).toBe(true);
+  });
+
+  it('near-miss: case variation ("REGARDS...AS A FRIEND", no "ruler") stays VALID', () => {
+    const narration = baseNarration({
+      interpretation: 'THE COLLEAGUE REGARDS THEM AS A FRIEND IN THIS MATTER.',
+    });
+    expect(validateNarration(primary, narration).valid).toBe(true);
+  });
+
+  it('genuine claim: "the querent\'s ruler regards the matter\'s ruler as an enemy" (contradicts Neutral) still INVALID', () => {
+    const narration = baseNarration({
+      interpretation: "The querent's ruler regards the matter's ruler as an enemy.",
+    });
+    const result = validateNarration(primary, narration);
+    expect(result.valid).toBe(false);
+    if (!result.valid) {
+      expect(result.failures.some(f => f.code === 'RULER_RELATION_CONTRADICTION')).toBe(true);
+    }
+  });
+
+  it('genuine claim with punctuation obfuscation ("rul.er") + "ruler" present still INVALID', () => {
+    const narration = baseNarration({
+      interpretation: "The querent's rul.er regards the matter's ruler as an enemy.",
+    });
+    expect(validateNarration(primary, narration).valid).toBe(false);
+  });
+});
+
+describe('PHASE 5E-R2 — retrograde: non-astrological use of the word stays VALID', () => {
+  // `secondary` (business-007-equivalent): not retrograde.
+  it('"this situation feels retrograde" (no planet/ruler named) stays VALID — the exact review reproduction', () => {
+    const narration = baseNarration({
+      interpretation: 'This situation feels retrograde compared to last year.',
+    });
+    expect(validateNarration(secondary, narration).valid).toBe(true);
+  });
+
+  it('near-miss: "a retrograde approach" (no planet/ruler named) stays VALID', () => {
+    const narration = baseNarration({
+      interpretation: 'A retrograde approach will not help here.',
+    });
+    expect(validateNarration(secondary, narration).valid).toBe(true);
+  });
+
+  it('near-miss: case variation ("RETROGRADE", no planet/ruler) stays VALID', () => {
+    const narration = baseNarration({
+      interpretation: 'THIS FEELS RETROGRADE, NOT FORWARD-MOVING.',
+    });
+    expect(validateNarration(secondary, narration).valid).toBe(true);
+  });
+
+  it('genuine claim naming a planet directly ("Zuhal is retrograde") on a non-retrograde reading still INVALID', () => {
+    const narration = baseNarration({
+      interpretation: 'Zuhal is currently retrograde, which complicates this matter further.',
+    });
+    const result = validateNarration(secondary, narration);
+    expect(result.valid).toBe(false);
+    if (!result.valid) {
+      expect(result.failures.some(f => f.code === 'RETROGRADE_CLAIM_CONTRADICTION')).toBe(true);
+    }
+  });
+
+  it('genuine claim using the engine\'s own "ruling planet" phrasing on a non-retrograde reading still INVALID', () => {
+    const narration = baseNarration({
+      interpretation: 'The ruling planet is retrograde in this matter.',
+    });
+    expect(validateNarration(secondary, narration).valid).toBe(false);
+  });
+
+  it('genuine claim naming a planet, on the GENUINELY retrograde reading (primary), still VALID (ground truth match, unaffected by this fix)', () => {
+    const narration = baseNarration({
+      interpretation: 'Zuhal is currently retrograde, which complicates this matter further.',
+    });
+    expect(validateNarration(primary, narration).valid).toBe(true);
+  });
+});
+
+describe('PHASE 5E-R2 — reversal: the "reversal of fortune" idiom stays VALID', () => {
+  // `secondary` (business-007-equivalent): reversal is 'NONE'.
+  it('"a reversal of fortune is possible" stays VALID — the exact review reproduction', () => {
+    const narration = baseNarration({
+      interpretation: 'A reversal of fortune is possible if effort continues.',
+    });
+    expect(validateNarration(secondary, narration).valid).toBe(true);
+  });
+
+  it('near-miss: "reversal of fortune" with "remains" instead of "is" stays VALID', () => {
+    const narration = baseNarration({ interpretation: 'A reversal of fortune remains possible.' });
+    expect(validateNarration(secondary, narration).valid).toBe(true);
+  });
+
+  it('near-miss: case variation ("REVERSAL OF FORTUNE") stays VALID', () => {
+    const narration = baseNarration({ interpretation: 'A REVERSAL OF FORTUNE IS POSSIBLE HERE.' });
+    expect(validateNarration(secondary, narration).valid).toBe(true);
+  });
+
+  it('genuine claim: "a reversal of this outcome is possible" (not the fortune idiom) still INVALID', () => {
+    const narration = baseNarration({ interpretation: 'A reversal of this outcome is possible.' });
+    const result = validateNarration(secondary, narration);
+    expect(result.valid).toBe(false);
+    if (!result.valid) {
+      expect(result.failures.some(f => f.code === 'REVERSAL_CLAIM_CONTRADICTION')).toBe(true);
+    }
+  });
+
+  it('genuine claim: the engine\'s own bare phrasing ("reversal remains possible") still INVALID on a NONE reading', () => {
+    const narration = baseNarration({ interpretation: 'A reversal remains possible here.' });
+    expect(validateNarration(secondary, narration).valid).toBe(false);
+  });
+});
+
+describe('PHASE 5E-R2 — direction: proper nouns containing a direction word stay VALID', () => {
+  // `primary` (employment-001-equivalent): direction is 'South'.
+  it('"points toward the North Star" stays VALID — the exact review reproduction', () => {
+    const narration = baseNarration({
+      interpretation:
+        'The evidence points toward the North Star as a symbol of steadfastness, not an actual direction claim.',
+    });
+    expect(validateNarration(primary, narration).valid).toBe(true);
+  });
+
+  it('near-miss: "points toward the South Pole" (a different proper noun, same shape) stays VALID even though the reading\'s own direction is South', () => {
+    const narration = baseNarration({
+      interpretation: 'The metaphor points toward the South Pole, a place of extremes.',
+    });
+    expect(validateNarration(primary, narration).valid).toBe(true);
+  });
+
+  it('near-miss: case variation ("NORTH STAR") stays VALID', () => {
+    const narration = baseNarration({
+      interpretation: 'THE EVIDENCE POINTS TOWARD THE NORTH STAR AS A SYMBOL.',
+    });
+    expect(validateNarration(primary, narration).valid).toBe(true);
+  });
+
+  it('genuine claim: a bare direction word at the end of the clause still INVALID', () => {
+    const narration = baseNarration({
+      interpretation: "The matter's energy points toward the North.",
+    });
+    const result = validateNarration(primary, narration);
+    expect(result.valid).toBe(false);
+    if (!result.valid) {
+      expect(result.failures.some(f => f.code === 'DIRECTION_CLAIM_CONTRADICTION')).toBe(true);
+    }
+  });
+
+  it('genuine claim: a bare direction word followed by lowercase prose still INVALID', () => {
+    const narration = baseNarration({
+      interpretation: "The matter's energy points toward the north, quite clearly.",
+    });
+    expect(validateNarration(primary, narration).valid).toBe(false);
+  });
+
+  it('genuine claim: a bare direction word followed by a comma still INVALID', () => {
+    const narration = baseNarration({
+      interpretation: "The matter's energy points toward the North, unmistakably.",
+    });
+    expect(validateNarration(primary, narration).valid).toBe(false);
+  });
+});
