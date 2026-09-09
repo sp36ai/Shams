@@ -118,6 +118,27 @@ const PROHIBITED_TERMINOLOGY: readonly string[] = Object.freeze([
   'ENGINE_VERSION',
   'engineVersion',
   'contractFingerprint',
+  // PHASE 5I: the list above is this app's OWN internal architecture
+  // vocabulary; reproduced (docs/audit/PHASE_5I_HARDENING.md, 5I-E) that it
+  // has no coverage at all for vendor/infrastructure/AI-industry identity
+  // terms — narration naming the underlying model or cloud provider would
+  // reach the seeker uncaught. The mystical Shams al-Asrār voice never
+  // names these deliberately, but this check is defense-in-depth for
+  // exactly the same reason the app-internal terms above are, not a
+  // reflection of expected model behavior. Narrow, evidence-driven
+  // addition — not a general vendor-name scanner.
+  'Claude',
+  'Anthropic',
+  'OpenAI',
+  'GPT',
+  'Firebase',
+  'Firestore',
+  'Cloud Function',
+  'large language model',
+  'machine learning',
+  'neural network',
+  'training data',
+  'system prompt',
 ]);
 
 /**
