@@ -56,6 +56,20 @@ export interface OracleNarration {
 export interface WatchOracleComposition {
   readonly narration: OracleNarration | null;
   /**
+   * PHASE 5H-R: the exact string safe to pass to on-device text-to-speech —
+   * server-computed and server-validated (see responseComposer.ts's own
+   * comment on this field). `ChatBubble.speakableTextFor()` reads this
+   * directly rather than reconstructing it from `narration`'s own fields:
+   * `docs/audit/PHASE_5H_RECONNAISSANCE.md` (Finding 5H-1) found that a
+   * client-side reconstruction is a claim the per-field validator never
+   * checked as a whole. Optional/nullable here for the same cached-reading-
+   * compat reason as brandSeal below — a reading composed before this field
+   * existed has none, and `speakableTextFor()` falls back to the
+   * deterministic verdict headline rather than rebuilding this string
+   * itself, which would reopen exactly the gap this field closes.
+   */
+  readonly speakableText?: string | null;
+  /**
    * Fixed closing attribution, identical on every reading and never
    * model-written — the server's counterpart is ORACLE_BRAND_SEAL in
    * functions/src/oracle/responseComposer.ts. Optional here so cached

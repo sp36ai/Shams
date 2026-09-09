@@ -1,0 +1,81 @@
+{
+  "id": "pad-finance-12",
+  "coverageLabel": "finance",
+  "input": {
+    "question": "Will I be able to pay off my credit card debt?",
+    "utcInstant": "2026-08-16T17:19:00.000Z",
+    "utcOffsetMinutes": 540,
+    "latLon": "NOT APPLICABLE — watch-frame judgment does not consume location; see note above."
+  },
+  "derived": {
+    "localMoment": "2026-08-17T02:19:00+09:00",
+    "normalizedQuestionType": "finance",
+    "chartFingerprint": "5cb746e18b4f645f4028cfae96b15a203f51349b34175ee05e7c4aa16a8f2981"
+  },
+  "verdict": {
+    "qType": "finance",
+    "targetHouse": 2,
+    "targetSignName": "Burj Asad",
+    "targetRuler": "Sun",
+    "targetRulerName": "Shams",
+    "fulfilmentHouse": 11,
+    "lagnaRuler": "Moon",
+    "rulerRelation": "Friend",
+    "state": "UNFORMED",
+    "confidence": "HIGH",
+    "score": -4,
+    "obstruction": "Dhanab",
+    "reversal": "NONE",
+    "timing": null,
+    "direction": "East",
+    "afflictedDirection": "East",
+    "controllerProfile": "Assertive",
+    "factors": [
+      "Qamar (your own ruler) counts Shams a friend — the matter is disposed to cooperate with you.",
+      "Dhanab al-Tinnin sits in the 2nd Ghar — friction on the matter.",
+      "Ras al-Tinnin casts its gaze on the 2nd Ghar — friction on the matter.",
+      "Zuhal weighs on the 11th Ghar — fulfilment itself is obstructed."
+    ]
+  },
+  "diagnosis": {
+    "outcome": "UNCERTAIN",
+    "primaryPattern": "UNCERTAINTY",
+    "secondaryPatterns": [
+      "INSTABILITY"
+    ],
+    "timingPosture": "UNKNOWN",
+    "confidence": 0.8,
+    "interventionNeeded": true,
+    "obstructingAgent": "Dhanab",
+    "qType": "finance",
+    "targetHouse": 2,
+    "supportingHouses": [
+      2,
+      6,
+      11
+    ],
+    "obstructingHouses": [
+      8,
+      12
+    ],
+    "timing": null,
+    "rationale": [
+      "Watch state UNFORMED reads as UNCERTAIN.",
+      "Obstruction by Dhanab indicates UNCERTAINTY + INSTABILITY."
+    ]
+  },
+  "remedyProtocol": {
+    "interventionRequired": true,
+    "guidance": null,
+    "rationale": [
+      "32 of 32 remedies eligible by tradition.",
+      "Selected 3 intervention(s) across 3 categor(ies)."
+    ],
+    "stepIds": [
+      "astro_node_clarification",
+      "devotional_dhikr_steadiness",
+      "behavioral_second_opinion"
+    ]
+  },
+  "narration": null
+}

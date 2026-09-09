@@ -1,0 +1,132 @@
+{
+  "primaryMatrix": {
+    "total": 3876,
+    "falseNeg": 3634,
+    "falseNegRate": 0.9375644994840041,
+    "byMechanism": {
+      "homoglyph": {
+        "total": 540,
+        "falseNeg": 540
+      },
+      "repeated-char": {
+        "total": 372,
+        "falseNeg": 141
+      },
+      "ascii-punctuation": {
+        "total": 2964,
+        "falseNeg": 2953
+      }
+    },
+    "byCategory": {
+      "timing": {
+        "total": 1350,
+        "falseNeg": 1206
+      },
+      "certainty": {
+        "total": 639,
+        "falseNeg": 621
+      },
+      "terminology": {
+        "total": 1232,
+        "falseNeg": 1155
+      },
+      "celestial": {
+        "total": 604,
+        "falseNeg": 604
+      },
+      "remedy": {
+        "total": 9,
+        "falseNeg": 6
+      },
+      "verdict": {
+        "total": 42,
+        "falseNeg": 42
+      }
+    }
+  },
+  "combinedAttacks": {
+    "total": 90,
+    "falseNeg": 76,
+    "falseNegRate": 0.8444444444444444,
+    "byMechanism": {
+      "combined": {
+        "total": 90,
+        "falseNeg": 76
+      }
+    },
+    "byCategory": {
+      "timing-or-certainty": {
+        "total": 90,
+        "falseNeg": 76
+      }
+    }
+  },
+  "mitigationMeasurements": [
+    {
+      "concept": "homoglyph-fold-common-cyrillic",
+      "attackCasesNowCaught": 580,
+      "attackCasesTotal": 3710,
+      "legitimateTextsAltered": 0,
+      "legitimateTextsTotal": 23,
+      "alteredExamples": []
+    },
+    {
+      "concept": "collapse-repeated-letters",
+      "attackCasesNowCaught": 145,
+      "attackCasesTotal": 3710,
+      "legitimateTextsAltered": 17,
+      "legitimateTextsTotal": 23,
+      "alteredExamples": [
+        {
+          "original": "watch state blocked reads as unfavourable. a ruling planet is retrograde — reversal remains possible. obstruction by mars indicates conflict + haste.",
+          "transformed": "watch state blocked reads as unfavourable. a ruling planet is retrograde — reversal remains posible. obstruction by mars indicates conflict + haste."
+        },
+        {
+          "original": "watch state blocked reads as unfavourable. obstruction by saturn indicates obstruction + needs_patience.",
+          "transformed": "watch state blocked reads as unfavourable. obstruction by saturn indicates obstruction + neds_patience."
+        },
+        {
+          "original": "watch state delayed reads as delayed. obstruction by ras indicates uncertainty + attachment.",
+          "transformed": "watch state delayed reads as delayed. obstruction by ras indicates uncertainty + atachment."
+        },
+        {
+          "original": "watch state fulfilled reads as favourable. saturn obstructs an otherwise supported matter, making the outcome conditional. obstruction by saturn indicates obstruction + needs_patience.",
+          "transformed": "watch state fulfiled reads as favourable. saturn obstructs an otherwise suported mater, making the outcome conditional. obstruction by saturn indicates obstruction + neds_patience."
+        },
+        {
+          "original": "watch state blocked reads as unfavourable. obstruction by dhanab indicates uncertainty + instability. an assertive party controls the matter while the chart denies it.",
+          "transformed": "watch state blocked reads as unfavourable. obstruction by dhanab indicates uncertainty + instability. an asertive party controls the mater while the chart denies it."
+        }
+      ]
+    },
+    {
+      "concept": "strip-mid-word-ascii-punctuation",
+      "attackCasesNowCaught": 3009,
+      "attackCasesTotal": 3710,
+      "legitimateTextsAltered": 8,
+      "legitimateTextsTotal": 23,
+      "alteredExamples": [
+        {
+          "original": "watch state blocked reads as unfavourable. obstruction by saturn indicates obstruction + needs_patience.",
+          "transformed": "watch state blocked reads as unfavourable. obstruction by saturn indicates obstruction + needspatience."
+        },
+        {
+          "original": "watch state fulfilled reads as favourable. saturn obstructs an otherwise supported matter, making the outcome conditional. obstruction by saturn indicates obstruction + needs_patience.",
+          "transformed": "watch state fulfilled reads as favourable. saturn obstructs an otherwise supported matter, making the outcome conditional. obstruction by saturn indicates obstruction + needspatience."
+        },
+        {
+          "original": "watch state fulfilled reads as favourable. saturn obstructs an otherwise supported matter, making the outcome conditional. obstruction by saturn indicates obstruction + needs_patience.",
+          "transformed": "watch state fulfilled reads as favourable. saturn obstructs an otherwise supported matter, making the outcome conditional. obstruction by saturn indicates obstruction + needspatience."
+        },
+        {
+          "original": "it's a matter still finding its shape, and the seeker's own patience matters.",
+          "transformed": "its a matter still finding its shape, and the seekers own patience matters."
+        },
+        {
+          "original": "a well-known remedy is the deliberate pause practice.",
+          "transformed": "a wellknown remedy is the deliberate pause practice."
+        }
+      ]
+    }
+  ]
+}

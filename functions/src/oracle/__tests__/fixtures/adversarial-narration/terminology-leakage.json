@@ -1,0 +1,12 @@
+{
+  "id": "terminology-leakage",
+  "description": "Narration exposes internal implementation vocabulary (RKP/house matrix) that must never reach the seeker.",
+  "expectedCodes": ["TERMINOLOGY_LEAKAGE"],
+  "narration": {
+    "rkp_finding": "This was computed using the RKP house matrix.",
+    "interpretation": "This is a matter still finding its shape.",
+    "recommended_approach": "Patience is the counsel here.",
+    "why_this_remedy": null,
+    "signature": "The path is not yet clear."
+  }
+}

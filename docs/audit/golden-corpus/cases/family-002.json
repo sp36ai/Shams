@@ -1,0 +1,92 @@
+{
+  "id": "family-002",
+  "coverageLabel": "family",
+  "input": {
+    "question": "Will my family conflict be resolved?",
+    "utcInstant": "2026-08-15T12:07:00.000Z",
+    "utcOffsetMinutes": 300,
+    "latLon": "NOT APPLICABLE — watch-frame judgment does not consume location; see note above."
+  },
+  "derived": {
+    "localMoment": "2026-08-15T17:07:00+05:00",
+    "normalizedQuestionType": "enemies",
+    "chartFingerprint": "2c3033bcd0ee744ac5dbe452f37d3c33d83f83632e37b86e3e41b010ec741298"
+  },
+  "verdict": {
+    "qType": "enemies",
+    "targetHouse": 6,
+    "targetSignName": "Burj Meezan",
+    "targetRuler": "Venus",
+    "targetRulerName": "Zuhrah",
+    "fulfilmentHouse": 11,
+    "lagnaRuler": "Venus",
+    "rulerRelation": "Friend",
+    "state": "DELAYED",
+    "confidence": "UNCERTAIN",
+    "score": 0,
+    "obstruction": "Ras",
+    "reversal": "NONE",
+    "timing": {
+      "minDays": 15,
+      "maxDays": 32
+    },
+    "direction": "West",
+    "afflictedDirection": "West",
+    "controllerProfile": "Assertive",
+    "factors": [
+      "Zuhrah rules the 6th Ghar but is Debilitated in Sunbula — it cannot deliver unaided.",
+      "Zuhrah (your own ruler) counts Zuhrah a friend — the matter is disposed to cooperate with you.",
+      "Ras al-Tinnin casts its gaze on the 6th Ghar — friction on the matter.",
+      "Zuhal weighs on the 11th Ghar — fulfilment itself is obstructed.",
+      "Mushtari supports the 11th Ghar — the desire has room to materialise.",
+      "Zuhrah supports the 11th Ghar — the desire has room to materialise."
+    ]
+  },
+  "diagnosis": {
+    "outcome": "DELAYED",
+    "primaryPattern": "UNCERTAINTY",
+    "secondaryPatterns": [
+      "ATTACHMENT",
+      "NEEDS_PATIENCE",
+      "POOR_TIMING"
+    ],
+    "timingPosture": "WAIT",
+    "confidence": 0.2,
+    "interventionNeeded": true,
+    "obstructingAgent": "Ras",
+    "qType": "enemies",
+    "targetHouse": 6,
+    "supportingHouses": [
+      6,
+      11
+    ],
+    "obstructingHouses": [
+      8,
+      12
+    ],
+    "timing": {
+      "minDays": 15,
+      "maxDays": 32
+    },
+    "rationale": [
+      "Watch state DELAYED reads as DELAYED.",
+      "Obstruction by Ras indicates UNCERTAINTY + ATTACHMENT."
+    ]
+  },
+  "remedyProtocol": {
+    "interventionRequired": true,
+    "guidance": null,
+    "rationale": [
+      "Safety filter: escalated to Contact Appropriate Support Services.",
+      "32 of 32 remedies eligible by tradition.",
+      "Selected 3 intervention(s) across 3 categor(ies)."
+    ],
+    "stepIds": [
+      "practical_safety",
+      "behavioral_verify",
+      "astro_node_clarification",
+      "contemplative_journal"
+    ]
+  },
+  "narration": null
+}

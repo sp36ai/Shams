@@ -1,0 +1,88 @@
+{
+  "id": "disputes-002",
+  "coverageLabel": "disputes",
+  "input": {
+    "question": "Is my business rival trying to sabotage me?",
+    "utcInstant": "2026-08-15T13:07:00.000Z",
+    "utcOffsetMinutes": 240,
+    "latLon": "NOT APPLICABLE — watch-frame judgment does not consume location; see note above."
+  },
+  "derived": {
+    "localMoment": "2026-08-15T17:07:00+04:00",
+    "normalizedQuestionType": "business",
+    "chartFingerprint": "106c2ed33820961f99642f0a483cef9b1f3bbc3d03e8e7861e883b8cc148e8cf"
+  },
+  "verdict": {
+    "qType": "business",
+    "targetHouse": 7,
+    "targetSignName": "Burj Aqrab",
+    "targetRuler": "Mars",
+    "targetRulerName": "Mirrikh",
+    "fulfilmentHouse": 11,
+    "lagnaRuler": "Venus",
+    "rulerRelation": "Neutral",
+    "state": "DELAYED",
+    "confidence": "MODERATE",
+    "score": 2,
+    "obstruction": "None",
+    "reversal": "NONE",
+    "timing": {
+      "minDays": 45,
+      "maxDays": 90
+    },
+    "direction": "North",
+    "afflictedDirection": null,
+    "controllerProfile": "Receptive",
+    "factors": [
+      "Mirrikh rules the 7th Ghar but is EnemySign in Jauza — it cannot deliver unaided.",
+      "Mushtari casts its gaze on the 7th Ghar — protection and expansion.",
+      "Zuhal weighs on the 11th Ghar — fulfilment itself is obstructed.",
+      "Mushtari supports the 11th Ghar — the desire has room to materialise.",
+      "Zuhrah supports the 11th Ghar — the desire has room to materialise."
+    ]
+  },
+  "diagnosis": {
+    "outcome": "DELAYED",
+    "primaryPattern": "NEEDS_PATIENCE",
+    "secondaryPatterns": [
+      "POOR_TIMING"
+    ],
+    "timingPosture": "WAIT_LONG",
+    "confidence": 0.6,
+    "interventionNeeded": true,
+    "obstructingAgent": null,
+    "qType": "business",
+    "targetHouse": 7,
+    "supportingHouses": [
+      7,
+      10,
+      11
+    ],
+    "obstructingHouses": [
+      6,
+      8,
+      12
+    ],
+    "timing": {
+      "minDays": 45,
+      "maxDays": 90
+    },
+    "rationale": [
+      "Watch state DELAYED reads as DELAYED."
+    ]
+  },
+  "remedyProtocol": {
+    "interventionRequired": true,
+    "guidance": null,
+    "rationale": [
+      "32 of 32 remedies eligible by tradition.",
+      "Selected 3 intervention(s) across 3 categor(ies)."
+    ],
+    "stepIds": [
+      "behavioral_defer_irreversible",
+      "contemplative_pause",
+      "devotional_quran_patience"
+    ]
+  },
+  "narration": null
+}

@@ -1,0 +1,56 @@
+[
+  {
+    "concept": "homoglyph-fold-common-cyrillic",
+    "attackCasesNowCaught": 238,
+    "attackCasesTotal": 2307,
+    "legitimateTextsAltered": 0,
+    "legitimateTextsTotal": 23,
+    "alteredExamples": []
+  },
+  {
+    "concept": "collapse-repeated-letters",
+    "attackCasesNowCaught": 277,
+    "attackCasesTotal": 2307,
+    "legitimateTextsAltered": 17,
+    "legitimateTextsTotal": 23,
+    "alteredExamples": [
+      {
+        "original": "watch state blocked reads as unfavourable. a ruling planet is retrograde — reversal remains possible. obstruction by mars indicates conflict + haste.",
+        "transformed": "watch state blocked reads as unfavourable. a ruling planet is retrograde — reversal remains posible. obstruction by mars indicates conflict + haste."
+      },
+      {
+        "original": "watch state blocked reads as unfavourable. obstruction by saturn indicates obstruction + needspatience.",
+        "transformed": "watch state blocked reads as unfavourable. obstruction by saturn indicates obstruction + nedspatience."
+      },
+      {
+        "original": "watch state delayed reads as delayed. obstruction by ras indicates uncertainty + attachment.",
+        "transformed": "watch state delayed reads as delayed. obstruction by ras indicates uncertainty + atachment."
+      },
+      {
+        "original": "watch state fulfilled reads as favourable. saturn obstructs an otherwise supported matter, making the outcome conditional. obstruction by saturn indicates obstruction + needspatience.",
+        "transformed": "watch state fulfiled reads as favourable. saturn obstructs an otherwise suported mater, making the outcome conditional. obstruction by saturn indicates obstruction + nedspatience."
+      },
+      {
+        "original": "watch state blocked reads as unfavourable. obstruction by dhanab indicates uncertainty + instability. an assertive party controls the matter while the chart denies it.",
+        "transformed": "watch state blocked reads as unfavourable. obstruction by dhanab indicates uncertainty + instability. an asertive party controls the mater while the chart denies it."
+      }
+    ]
+  },
+  {
+    "concept": "strip-mid-word-ascii-punctuation",
+    "attackCasesNowCaught": 2098,
+    "attackCasesTotal": 2307,
+    "legitimateTextsAltered": 2,
+    "legitimateTextsTotal": 23,
+    "alteredExamples": [
+      {
+        "original": "it's a matter still finding its shape, and the seeker's own patience matters.",
+        "transformed": "its a matter still finding its shape, and the seekers own patience matters."
+      },
+      {
+        "original": "a rocksolid foundation isn't built overnight; take the wellworn path.",
+        "transformed": "a rocksolid foundation isnt built overnight; take the wellworn path."
+      }
+    ]
+  }
+]

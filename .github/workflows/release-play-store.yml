@@ -13,15 +13,17 @@ concurrency:
   group: release-play-store
   cancel-in-progress: false
 
+# PHASE 6D-1: gated on CI, not on a bare push to main — see
+# deploy-functions.yml's own header comment for the full rationale and the
+# disclosed `paths` side effect this same change carries here too. A
+# workflow_run-triggered release always uses the default 'internal' track
+# (github.event.inputs is unset for that event, same as today); track
+# selection remains a workflow_dispatch-only capability, unchanged.
 on:
-  push:
+  workflow_run:
+    workflows: ['CI']
+    types: [completed]
     branches: [main]
-    paths:
-      - 'android/**'
-      - 'src/**'
-      - 'package.json'
-      - 'package-lock.json'
-      - '.github/workflows/release-play-store.yml'
   workflow_dispatch:
     inputs:
       track:
@@ -42,9 +44,12 @@ jobs:
   release:
     name: Build AAB and deploy to Play Store
     runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
     steps:
       - name: Checkout
         uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
 
       - name: Setup Node.js
         uses: actions/setup-node@v5

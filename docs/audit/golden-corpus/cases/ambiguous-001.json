@@ -1,0 +1,91 @@
+{
+  "id": "ambiguous-001",
+  "coverageLabel": "ambiguous",
+  "input": {
+    "question": "Will it work out?",
+    "utcInstant": "2026-08-15T15:13:00.000Z",
+    "utcOffsetMinutes": -300,
+    "latLon": "NOT APPLICABLE — watch-frame judgment does not consume location; see note above."
+  },
+  "derived": {
+    "localMoment": "2026-08-15T10:13:00-05:00",
+    "normalizedQuestionType": "career",
+    "chartFingerprint": "aac5ce43a410764e8ed0d86053b1823d0332b3158d96feb2e08416c9e5f2dd14"
+  },
+  "verdict": {
+    "qType": "career",
+    "targetHouse": 10,
+    "targetSignName": "Burj Hoot",
+    "targetRuler": "Jupiter",
+    "targetRulerName": "Mushtari",
+    "fulfilmentHouse": 11,
+    "lagnaRuler": "Mercury",
+    "rulerRelation": "Neutral",
+    "state": "DELAYED",
+    "confidence": "LOW",
+    "score": 2,
+    "obstruction": "Saturn",
+    "reversal": "NONE",
+    "timing": {
+      "minDays": 42,
+      "maxDays": 63
+    },
+    "direction": "North",
+    "afflictedDirection": "North",
+    "controllerProfile": "Receptive",
+    "factors": [
+      "Mushtari rules the 10th Ghar and is Exalted in Sartan — it holds real control of the matter.",
+      "Zuhal sits in the 10th Ghar — friction on the matter.",
+      "Mushtari casts its gaze on the 10th Ghar — protection and expansion.",
+      "Zuhrah casts its gaze on the 10th Ghar — protection and expansion.",
+      "Dhanab al-Tinnin weighs on the 11th Ghar — fulfilment itself is obstructed.",
+      "Benefic and malefic witnesses both fall on the matter — the reading carries genuine conflict."
+    ]
+  },
+  "diagnosis": {
+    "outcome": "DELAYED",
+    "primaryPattern": "OBSTRUCTION",
+    "secondaryPatterns": [
+      "NEEDS_PATIENCE",
+      "POOR_TIMING"
+    ],
+    "timingPosture": "WAIT_LONG",
+    "confidence": 0.4,
+    "interventionNeeded": true,
+    "obstructingAgent": "Saturn",
+    "qType": "career",
+    "targetHouse": 10,
+    "supportingHouses": [
+      6,
+      10,
+      11
+    ],
+    "obstructingHouses": [
+      5,
+      8,
+      12
+    ],
+    "timing": {
+      "minDays": 42,
+      "maxDays": 63
+    },
+    "rationale": [
+      "Watch state DELAYED reads as DELAYED.",
+      "Obstruction by Saturn indicates OBSTRUCTION + NEEDS_PATIENCE."
+    ]
+  },
+  "remedyProtocol": {
+    "interventionRequired": true,
+    "guidance": null,
+    "rationale": [
+      "32 of 32 remedies eligible by tradition.",
+      "Selected 3 intervention(s) across 3 categor(ies)."
+    ],
+    "stepIds": [
+      "astro_saturn_discipline",
+      "devotional_dua_ease",
+      "behavioral_defer_irreversible"
+    ]
+  },
+  "narration": null
+}

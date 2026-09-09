@@ -46,6 +46,7 @@ import { ORACLE_FUNCTION_OPTS, ANTHROPIC_API_KEY, DISCUSSION_TURN_LIMIT } from '
 import { claimRequest, completeRequest, releaseRequest } from '../utils/idempotency';
 import type { AuditLogDoc, ReadingDoc } from '../types';
 import type { WatchOracleComposition } from '../oracle/responseComposer';
+import type { ReadingContract } from '../oracle/readingContract';
 import {
   composeDiscussionReply,
   type DiscussionTurn,
@@ -57,9 +58,65 @@ import {
  * the seeker's own words and never something the model invents. Used only
  * to distinguish readings from each other when more than one is in a brief;
  * see buildDiscussionBrief's multi-reading branch.
+ *
+ * PHASE 5F-R2: labels for a single call are now assigned together
+ * (`labelsFor` below), not one document at a time, so a repeated category
+ * across two distinct readings in the same brief (e.g. two separate
+ * "finance" readings being compared) can be disambiguated — otherwise
+ * `discussionComposer.ts`'s label-based claim attribution
+ * (`segmentReplyByGrounding`) would see two identical labels and correctly
+ * fall back to anchor-only validation for the whole reply, silently losing
+ * the very comparison-reading coverage this phase adds. This function is
+ * kept as the single-document primitive `labelsFor` calls internally.
  */
 function labelFor(doc: ReadingDoc): string {
   return `the ${doc.category} reading`;
+}
+
+/**
+ * PHASE 5F-R2: assign every reading in this call (anchor first, then each
+ * comparison reading, in the order they will become `groundings`) a label,
+ * appending a numeric suffix — " (2)", " (3)", ... — the second and later
+ * times a category repeats. The anchor is always index 0, so it is always
+ * the FIRST occurrence of its own category and therefore never suffixed;
+ * only a later reading that repeats an already-used category gets one.
+ * Deterministic and order-only — no randomness, no reliance on document
+ * ids or Firestore ordering beyond the order this function is given.
+ *
+ * Exported for direct testing.
+ */
+export function labelsFor(docs: readonly ReadingDoc[]): string[] {
+  const counts = new Map<string, number>();
+  return docs.map(doc => {
+    const base = labelFor(doc);
+    const seen = (counts.get(base) ?? 0) + 1;
+    counts.set(base, seen);
+    return seen === 1 ? base : `${base} (${seen})`;
+  });
+}
+
+/**
+ * PHASE 5F-R2: de-duplicate a caller-supplied list of comparison reading
+ * ids, first occurrence wins, order preserved. Determinism for the
+ * "duplicate comparison ids" case: without this, the same reading document
+ * would be read twice inside the transaction below and appear twice in
+ * `groundings` with an identical label — exactly the ambiguity
+ * `segmentReplyByGrounding()` is built to fall back safely from, but
+ * de-duplicating here means that fallback is never even reached for this
+ * specific, entirely avoidable case.
+ *
+ * Exported for direct testing.
+ */
+export function dedupeIds(ids: readonly string[]): string[] {
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const id of ids) {
+    if (!seen.has(id)) {
+      seen.add(id);
+      out.push(id);
+    }
+  }
+  return out;
 }
 
 /**
@@ -82,6 +139,38 @@ function asComposition(value: unknown): WatchOracleComposition | null {
     return null;
   }
   return value as WatchOracleComposition;
+}
+
+/**
+ * PHASE 5F: narrow a stored `readingContract` field back to a
+ * `ReadingContract`, the same way `asComposition` above narrows
+ * `watchOracle` — shape-checked, not asserted, since Firestore round-trips
+ * are outside TypeScript's own guarantees. `null` for a reading cast
+ * before this phase shipped, or whose synthesis failed before a contract
+ * was assembled; `composeDiscussionReply()`'s own validation step treats
+ * that as "skip validation," not "fail" — see discussionComposer.ts.
+ */
+function asReadingContract(value: unknown): ReadingContract | null {
+  if (typeof value !== 'object' || value === null) {
+    return null;
+  }
+  const o = value as Record<string, unknown>;
+  if (typeof o.provenance !== 'object' || o.provenance === null) {
+    return null;
+  }
+  if (typeof o.judgment !== 'object' || o.judgment === null) {
+    return null;
+  }
+  if (typeof o.diagnosis !== 'object' || o.diagnosis === null) {
+    return null;
+  }
+  if (typeof o.remedy !== 'object' || o.remedy === null) {
+    return null;
+  }
+  if (!Array.isArray(o.celestialEntities)) {
+    return null;
+  }
+  return value as ReadingContract;
 }
 
 export interface DiscussReadingResponse {
@@ -140,7 +229,11 @@ export const discussReading = onCall(
       // context, ownership-checked the same way as the anchor, but never
       // charged a discussion turn of their own: they are not being discussed
       // as their own thread here, they are supporting context for this one.
-      const compareIds = (input.compareReadingIds ?? []).filter(id => id !== input.readingId);
+      // PHASE 5F-R2: de-duplicated — see dedupeIds's own doc comment for why
+      // a repeated id must not silently produce two identical groundings.
+      const compareIds = dedupeIds(
+        (input.compareReadingIds ?? []).filter(id => id !== input.readingId),
+      );
       const compareRefs = compareIds.map(id => db.collection('readings').doc(id));
 
       let doc: ReadingDoc;
@@ -195,8 +288,17 @@ export const discussReading = onCall(
         throw new HttpsError('internal', 'Could not open that reading.');
       }
 
-      const toGrounding = (d: ReadingDoc): ReadingGrounding => ({
-        label: labelFor(d),
+      // PHASE 5F-R2: every reading in this call — anchor first, comparisons
+      // after, same order groundings will use — gets both a disambiguated
+      // label (labelsFor) and its OWN persisted contract (asReadingContract),
+      // not just the anchor. See discussionComposer.ts's header for why
+      // this closes the comparison-reading validation gap without a second
+      // validator.
+      const allDocs = [doc, ...compareDocs];
+      const labels = labelsFor(allDocs);
+
+      const toGrounding = (d: ReadingDoc, label: string): ReadingGrounding => ({
+        label,
         question: d.question,
         verdict: d.verdict,
         confidence: d.confidence,
@@ -206,11 +308,12 @@ export const discussReading = onCall(
             : new Date().toISOString(),
         oracle: asComposition(d.watchOracle),
         narration: d.narration?.[input.lang] ?? d.narration?.en ?? null,
+        contract: asReadingContract(d.readingContract),
       });
 
       const groundings: [ReadingGrounding, ...ReadingGrounding[]] = [
-        toGrounding(doc),
-        ...compareDocs.map(toGrounding),
+        toGrounding(allDocs[0]!, labels[0]!),
+        ...allDocs.slice(1).map((d, i) => toGrounding(d, labels[i + 1]!)),
       ];
 
       const turns: DiscussionTurn[] = (input.turns ?? []).map(turn => ({
@@ -227,8 +330,12 @@ export const discussReading = onCall(
 
       if (reply === null) {
         // No deterministic fallback exists for a conversational reply — see
-        // discussionComposer's header. Give the turn back and let the client
-        // offer a retry rather than serving invented prose.
+        // discussionComposer's header. This is also where a reply that
+        // failed PHASE 5F's own validation lands, by design (see that
+        // file's header for why it reuses this exact "no reply" outcome
+        // rather than inventing a new one). Give the turn back and let the
+        // client offer a retry rather than serving invented or ungrounded
+        // prose.
         await readingRef.update({ discussionTurns: FieldValue.increment(-1) }).catch(refundErr => {
           logger.warn('discussReading: turn refund failed', {
             err: String(refundErr),

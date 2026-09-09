@@ -74,6 +74,7 @@ const { composeWatchOracleResponse } =
 /* eslint-enable @typescript-eslint/no-var-requires */
 
 import type { WatchOracleComposition } from '../oracle/responseComposer';
+import type { ReadingContract } from '../oracle/readingContract';
 
 import type { WatchState, WatchVerdict } from '../engine/rkp/watchJudgment';
 
@@ -206,6 +207,10 @@ export const askWatchOracle = onCall(
       let verdict: WatchVerdict;
       let publicVerdict: PublicWatchVerdict;
       let oracleResponse: WatchOracleComposition | null = null;
+      // PHASE 5F: the ReadingContract oracleResponse (if any) was validated
+      // against — server-persisted only, never sent to the client. See
+      // responseComposer.ts's WatchOracleCompositionResult doc comment.
+      let readingContract: ReadingContract | null = null;
       let readingRef: DocumentReference;
 
       // Updated right before each step below so a throw's log line names the
@@ -240,15 +245,18 @@ export const askWatchOracle = onCall(
         };
 
         // Allocated here (not after composition, as before) so its id can be
-        // passed into composeWatchOracleResponse — the safety validator logs
-        // its result under readings/{readingId}/validationLog, and needs the
-        // id before the reading document itself is written.
+        // passed into composeWatchOracleResponse — the reading contract's
+        // provenance.readingId, and any validation-failure log line
+        // (logger.warn in responseComposer.ts, not a Firestore subcollection
+        // — see docs/audit/PHASE_4_REVIEW_GATE.md §1 for why this comment
+        // was corrected in Phase 4A), needs the id before the reading
+        // document itself is written.
         readingRef = db.collection('readings').doc();
 
         // ── Diagnosis → remedy protocol → narration ──────────────────────────
         stage = 'oracle-composition';
         try {
-          oracleResponse = await composeWatchOracleResponse({
+          const result = await composeWatchOracleResponse({
             verdict: publicVerdict,
             // The seeker's own words. Without them the narration is written
             // from the verdict alone, so two different questions that judge
@@ -259,7 +267,15 @@ export const askWatchOracle = onCall(
             seekerName: input.seekerName,
             motherName: input.motherName,
             readingId: readingRef.id,
+            // PHASE 3: the same authoritative instant the rest of this
+            // request already uses (see this file's "WHERE THE MINUTE
+            // COMES FROM" comment) — becomes
+            // ReadingContract.provenance.computedAt, not a second,
+            // independently-taken instant a few milliseconds later.
+            computedAt: instant,
           });
+          oracleResponse = result.composition;
+          readingContract = result.contract;
         } catch (err) {
           logger.warn('askWatchOracle: oracle composition failed', {
             err: String(err),
@@ -267,6 +283,7 @@ export const askWatchOracle = onCall(
           });
           // Non-fatal: the reading still stands on its verdict.
           oracleResponse = null;
+          readingContract = null;
         }
 
         stage = 'reading-doc-assembly';
@@ -293,6 +310,14 @@ export const askWatchOracle = onCall(
           // watch protocol is persisted in full under `watchOracle` instead.
           remedy: null,
           ...(oracleResponse ? { watchOracle: oracleResponse } : {}),
+          // PHASE 5F: server-only ground truth for discussReading.ts to
+          // validate follow-up replies against — never part of `response`
+          // below, which is what the client actually receives. See
+          // types.ts's own comment on this field.
+          ...(readingContract ? { readingContract } : {}),
+          // PHASE 2B: recorded on the reading itself, not just the audit log
+          // entry below — see ReadingDoc.engineVersion's doc comment.
+          engineVersion: ENGINE_VERSION,
         };
 
         stage = 'firestore-write';

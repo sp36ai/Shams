@@ -1,0 +1,12 @@
+{
+  "id": "unauthorized-planet",
+  "description": "Narration asserts a planet not present in this reading's celestialEntities allow-list as governing the matter.",
+  "expectedCodes": ["UNAUTHORIZED_CELESTIAL_ENTITY"],
+  "narration": {
+    "rkp_finding": "Mushtari governs this matter and brings expansion.",
+    "interpretation": "This is a matter still finding its shape.",
+    "recommended_approach": "Patience is the counsel here.",
+    "why_this_remedy": null,
+    "signature": "The path is not yet clear."
+  }
+}

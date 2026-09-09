@@ -1,0 +1,12 @@
+{
+  "id": "malformed-response",
+  "description": "Narration is missing a required field entirely (simulates a truncated/malformed model response).",
+  "expectedCodes": ["MALFORMED_OUTPUT"],
+  "narration": {
+    "rkp_finding": "",
+    "interpretation": "This is a matter still finding its shape.",
+    "recommended_approach": "Patience is the counsel here.",
+    "why_this_remedy": null,
+    "signature": "The path is not yet clear."
+  }
+}

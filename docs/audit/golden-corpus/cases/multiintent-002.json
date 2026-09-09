@@ -1,0 +1,93 @@
+{
+  "id": "multiintent-002",
+  "coverageLabel": "multi-intent",
+  "input": {
+    "question": "Should I take the loan to start my business and move house at the same time?",
+    "utcInstant": "2026-08-15T15:37:00.000Z",
+    "utcOffsetMinutes": -300,
+    "latLon": "NOT APPLICABLE — watch-frame judgment does not consume location; see note above."
+  },
+  "derived": {
+    "localMoment": "2026-08-15T10:37:00-05:00",
+    "normalizedQuestionType": "finance",
+    "chartFingerprint": "67e2d13635d1a5df3ee06175cf040de011c1d03049ba8f698bf5ad1086935ed1"
+  },
+  "verdict": {
+    "qType": "finance",
+    "targetHouse": 2,
+    "targetSignName": "Burj Qaus",
+    "targetRuler": "Jupiter",
+    "targetRulerName": "Mushtari",
+    "fulfilmentHouse": 11,
+    "lagnaRuler": "Mars",
+    "rulerRelation": "Friend",
+    "state": "DELAYED",
+    "confidence": "HIGH",
+    "score": -4,
+    "obstruction": "Saturn",
+    "reversal": "NONE",
+    "timing": {
+      "minDays": 42,
+      "maxDays": 63
+    },
+    "direction": "East",
+    "afflictedDirection": "North",
+    "controllerProfile": "Assertive",
+    "factors": [
+      "Mushtari rules the 2nd Ghar and is Exalted in Sartan — it holds real control of the matter.",
+      "Mirrikh (your own ruler) counts Mushtari a friend — the matter is disposed to cooperate with you.",
+      "Mirrikh casts its gaze on the 2nd Ghar — friction on the matter.",
+      "Zuhal casts its gaze on the 2nd Ghar — friction on the matter.",
+      "Dhanab al-Tinnin casts its gaze on the 2nd Ghar — friction on the matter.",
+      "Zuhrah supports the 11th Ghar — the desire has room to materialise.",
+      "Mirrikh weighs on the 11th Ghar — fulfilment itself is obstructed.",
+      "Zuhal weighs on the 11th Ghar — fulfilment itself is obstructed."
+    ]
+  },
+  "diagnosis": {
+    "outcome": "DELAYED",
+    "primaryPattern": "OBSTRUCTION",
+    "secondaryPatterns": [
+      "NEEDS_PATIENCE",
+      "POOR_TIMING",
+      "ATTACHMENT"
+    ],
+    "timingPosture": "WAIT_LONG",
+    "confidence": 0.8,
+    "interventionNeeded": true,
+    "obstructingAgent": "Saturn",
+    "qType": "finance",
+    "targetHouse": 2,
+    "supportingHouses": [
+      2,
+      6,
+      11
+    ],
+    "obstructingHouses": [
+      8,
+      12
+    ],
+    "timing": {
+      "minDays": 42,
+      "maxDays": 63
+    },
+    "rationale": [
+      "Watch state DELAYED reads as DELAYED.",
+      "Obstruction by Saturn indicates OBSTRUCTION + NEEDS_PATIENCE."
+    ]
+  },
+  "remedyProtocol": {
+    "interventionRequired": true,
+    "guidance": null,
+    "rationale": [
+      "32 of 32 remedies eligible by tradition.",
+      "Selected 3 intervention(s) across 3 categor(ies)."
+    ],
+    "stepIds": [
+      "astro_saturn_discipline",
+      "devotional_dua_ease",
+      "behavioral_defer_irreversible"
+    ]
+  },
+  "narration": null
+}

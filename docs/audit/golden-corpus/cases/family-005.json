@@ -1,0 +1,90 @@
+{
+  "id": "family-005",
+  "coverageLabel": "family",
+  "input": {
+    "question": "Will my daughter's custody case go in my favour?",
+    "utcInstant": "2026-08-15T12:25:00.000Z",
+    "utcOffsetMinutes": 300,
+    "latLon": "NOT APPLICABLE — watch-frame judgment does not consume location; see note above."
+  },
+  "derived": {
+    "localMoment": "2026-08-15T17:25:00+05:00",
+    "normalizedQuestionType": "legal",
+    "chartFingerprint": "84030547c69cc1cce3e641cdcc28a490d356624d8987becadf784ab4a2fb9ed3"
+  },
+  "verdict": {
+    "qType": "legal",
+    "targetHouse": 6,
+    "targetSignName": "Burj Dalw",
+    "targetRuler": "Saturn",
+    "targetRulerName": "Zuhal",
+    "fulfilmentHouse": 11,
+    "lagnaRuler": "Mercury",
+    "rulerRelation": "Neutral",
+    "state": "REVERSING",
+    "confidence": "MODERATE",
+    "score": -2,
+    "obstruction": "Ras",
+    "reversal": "POSSIBLE",
+    "timing": {
+      "minDays": 135,
+      "maxDays": 225
+    },
+    "direction": "West",
+    "afflictedDirection": "West",
+    "controllerProfile": "Assertive",
+    "factors": [
+      "Ras al-Tinnin sits in the 6th Ghar — friction on the matter.",
+      "Dhanab al-Tinnin casts its gaze on the 6th Ghar — friction on the matter.",
+      "Mushtari supports the 11th Ghar — the desire has room to materialise.",
+      "Zuhal is retrograde — decisions already taken on this matter are liable to be reopened."
+    ]
+  },
+  "diagnosis": {
+    "outcome": "DECLINING",
+    "primaryPattern": "UNCERTAINTY",
+    "secondaryPatterns": [
+      "ATTACHMENT",
+      "INSTABILITY",
+      "NEEDS_DECISIVE_ACTION"
+    ],
+    "timingPosture": "WAIT_LONG",
+    "confidence": 0.6,
+    "interventionNeeded": true,
+    "obstructingAgent": "Ras",
+    "qType": "legal",
+    "targetHouse": 6,
+    "supportingHouses": [
+      6,
+      11
+    ],
+    "obstructingHouses": [
+      8,
+      12
+    ],
+    "timing": {
+      "minDays": 135,
+      "maxDays": 225
+    },
+    "rationale": [
+      "Watch state REVERSING reads as DECLINING.",
+      "Obstruction by Ras indicates UNCERTAINTY + ATTACHMENT."
+    ]
+  },
+  "remedyProtocol": {
+    "interventionRequired": true,
+    "guidance": null,
+    "rationale": [
+      "Safety filter: escalated to Consult a Qualified Lawyer.",
+      "32 of 32 remedies eligible by tradition.",
+      "Selected 3 intervention(s) across 3 categor(ies)."
+    ],
+    "stepIds": [
+      "practical_legal",
+      "astro_node_clarification",
+      "behavioral_second_opinion",
+      "devotional_dhikr_steadiness"
+    ]
+  },
+  "narration": null
+}

@@ -35,4 +35,9 @@ export { health } from './functions/health';
 export { setAdminClaim } from './functions/admin';
 export { classifyQuestion } from './functions/classifyQuestion';
 export { inferProfile } from './functions/inferProfile';
-export { selectRemedies } from './functions/selectRemedies';
+// selectRemedies — removed. It was the second, LLM-driven remedy-selection
+// authority (see docs/audit/REMEDY_MIGRATION_PLAN.md and
+// docs/audit/PHASE_2B_ENGINE_MIGRATION.md); unexported in Phase 2B once its
+// one client caller was disconnected, then deleted outright
+// (functions/src/functions/selectRemedies.ts, proven to have zero
+// remaining callers) in the Phase 2B-F cleanup pass.

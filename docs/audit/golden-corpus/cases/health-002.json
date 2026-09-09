@@ -1,0 +1,94 @@
+{
+  "id": "health-002",
+  "coverageLabel": "health",
+  "input": {
+    "question": "Should I undergo the surgery my doctor recommends?",
+    "utcInstant": "2026-08-15T14:07:00.000Z",
+    "utcOffsetMinutes": 0,
+    "latLon": "NOT APPLICABLE — watch-frame judgment does not consume location; see note above."
+  },
+  "derived": {
+    "localMoment": "2026-08-15T14:07:00+00:00",
+    "normalizedQuestionType": "health",
+    "chartFingerprint": "b39d629e7f258449c3ca7ea2491e62cd9c4b836519cb40e172e02b7470765470"
+  },
+  "verdict": {
+    "qType": "health",
+    "targetHouse": 1,
+    "targetSignName": "Burj Saur",
+    "targetRuler": "Venus",
+    "targetRulerName": "Zuhrah",
+    "fulfilmentHouse": 11,
+    "lagnaRuler": "Venus",
+    "rulerRelation": "Friend",
+    "state": "DELAYED",
+    "confidence": "LOW",
+    "score": 1,
+    "obstruction": "Saturn",
+    "reversal": "NONE",
+    "timing": {
+      "minDays": 15,
+      "maxDays": 32
+    },
+    "direction": "South",
+    "afflictedDirection": "North",
+    "controllerProfile": "Receptive",
+    "factors": [
+      "Zuhrah rules the 1st Ghar but is Debilitated in Sunbula — it cannot deliver unaided.",
+      "Zuhrah (your own ruler) counts Zuhrah a friend — the matter is disposed to cooperate with you.",
+      "Zuhal casts its gaze on the 1st Ghar — friction on the matter.",
+      "Zuhal weighs on the 11th Ghar — fulfilment itself is obstructed.",
+      "Mushtari supports the 11th Ghar — the desire has room to materialise.",
+      "Zuhrah supports the 11th Ghar — the desire has room to materialise.",
+      "Zuhrah has landed in the 5th Ghar, a supporting house for this question."
+    ]
+  },
+  "diagnosis": {
+    "outcome": "DELAYED",
+    "primaryPattern": "OBSTRUCTION",
+    "secondaryPatterns": [
+      "NEEDS_PATIENCE",
+      "POOR_TIMING"
+    ],
+    "timingPosture": "WAIT",
+    "confidence": 0.4,
+    "interventionNeeded": true,
+    "obstructingAgent": "Saturn",
+    "qType": "health",
+    "targetHouse": 1,
+    "supportingHouses": [
+      1,
+      5,
+      11
+    ],
+    "obstructingHouses": [
+      6,
+      8,
+      12
+    ],
+    "timing": {
+      "minDays": 15,
+      "maxDays": 32
+    },
+    "rationale": [
+      "Watch state DELAYED reads as DELAYED.",
+      "Obstruction by Saturn indicates OBSTRUCTION + NEEDS_PATIENCE."
+    ]
+  },
+  "remedyProtocol": {
+    "interventionRequired": true,
+    "guidance": null,
+    "rationale": [
+      "Safety filter: escalated to Consult a Medical Professional.",
+      "32 of 32 remedies eligible by tradition.",
+      "Selected 3 intervention(s) across 3 categor(ies)."
+    ],
+    "stepIds": [
+      "practical_medical",
+      "astro_saturn_discipline",
+      "devotional_dua_ease",
+      "behavioral_defer_irreversible"
+    ]
+  },
+  "narration": null
+}

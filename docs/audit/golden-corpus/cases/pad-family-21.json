@@ -1,0 +1,96 @@
+{
+  "id": "pad-family-21",
+  "coverageLabel": "family",
+  "input": {
+    "question": "Will my grandmother recover from her illness?",
+    "utcInstant": "2026-08-16T14:22:00.000Z",
+    "utcOffsetMinutes": 240,
+    "latLon": "NOT APPLICABLE — watch-frame judgment does not consume location; see note above."
+  },
+  "derived": {
+    "localMoment": "2026-08-16T18:22:00+04:00",
+    "normalizedQuestionType": "health",
+    "chartFingerprint": "0f6ac4cbd1a49eeef3852a74d3004685bb7adaf1714b380f5d39c8252f0700b3"
+  },
+  "verdict": {
+    "qType": "health",
+    "targetHouse": 1,
+    "targetSignName": "Burj Asad",
+    "targetRuler": "Sun",
+    "targetRulerName": "Shams",
+    "fulfilmentHouse": 11,
+    "lagnaRuler": "Sun",
+    "rulerRelation": "Friend",
+    "state": "BLOCKED",
+    "confidence": "VERY_HIGH",
+    "score": -7,
+    "obstruction": "Dhanab",
+    "reversal": "NONE",
+    "timing": {
+      "minDays": 14,
+      "maxDays": 30
+    },
+    "direction": "East",
+    "afflictedDirection": "East",
+    "controllerProfile": "Assertive",
+    "factors": [
+      "Shams (your own ruler) counts Shams a friend — the matter is disposed to cooperate with you.",
+      "Dhanab al-Tinnin sits in the 1st Ghar — friction on the matter.",
+      "Ras al-Tinnin casts its gaze on the 1st Ghar — friction on the matter.",
+      "Mirrikh weighs on the 11th Ghar — fulfilment itself is obstructed.",
+      "Ras al-Tinnin weighs on the 11th Ghar — fulfilment itself is obstructed.",
+      "Shams has landed in the 12th Ghar, a denying house for this question."
+    ]
+  },
+  "diagnosis": {
+    "outcome": "UNFAVOURABLE",
+    "primaryPattern": "UNCERTAINTY",
+    "secondaryPatterns": [
+      "INSTABILITY",
+      "OBSTRUCTION",
+      "NEEDS_PATIENCE",
+      "EXTERNAL_OPPOSITION"
+    ],
+    "timingPosture": "WAIT",
+    "confidence": 0.95,
+    "interventionNeeded": true,
+    "obstructingAgent": "Dhanab",
+    "qType": "health",
+    "targetHouse": 1,
+    "supportingHouses": [
+      1,
+      5,
+      11
+    ],
+    "obstructingHouses": [
+      6,
+      8,
+      12
+    ],
+    "timing": {
+      "minDays": 14,
+      "maxDays": 30
+    },
+    "rationale": [
+      "Watch state BLOCKED reads as UNFAVOURABLE.",
+      "Obstruction by Dhanab indicates UNCERTAINTY + INSTABILITY.",
+      "An assertive party controls the matter while the chart denies it."
+    ]
+  },
+  "remedyProtocol": {
+    "interventionRequired": true,
+    "guidance": null,
+    "rationale": [
+      "Safety filter: escalated to Consult a Medical Professional.",
+      "32 of 32 remedies eligible by tradition.",
+      "Selected 3 intervention(s) across 3 categor(ies)."
+    ],
+    "stepIds": [
+      "practical_medical",
+      "astro_saturn_discipline",
+      "contemplative_silence",
+      "devotional_tahajjud"
+    ]
+  },
+  "narration": null
+}

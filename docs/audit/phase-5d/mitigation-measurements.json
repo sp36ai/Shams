@@ -1,0 +1,68 @@
+[
+  {
+    "concept": "homoglyph-fold-common-cyrillic",
+    "attackCasesNowCaught": 580,
+    "attackCasesTotal": 3710,
+    "legitimateTextsAltered": 0,
+    "legitimateTextsTotal": 23,
+    "alteredExamples": []
+  },
+  {
+    "concept": "collapse-repeated-letters",
+    "attackCasesNowCaught": 145,
+    "attackCasesTotal": 3710,
+    "legitimateTextsAltered": 17,
+    "legitimateTextsTotal": 23,
+    "alteredExamples": [
+      {
+        "original": "watch state blocked reads as unfavourable. a ruling planet is retrograde — reversal remains possible. obstruction by mars indicates conflict + haste.",
+        "transformed": "watch state blocked reads as unfavourable. a ruling planet is retrograde — reversal remains posible. obstruction by mars indicates conflict + haste."
+      },
+      {
+        "original": "watch state blocked reads as unfavourable. obstruction by saturn indicates obstruction + needs_patience.",
+        "transformed": "watch state blocked reads as unfavourable. obstruction by saturn indicates obstruction + neds_patience."
+      },
+      {
+        "original": "watch state delayed reads as delayed. obstruction by ras indicates uncertainty + attachment.",
+        "transformed": "watch state delayed reads as delayed. obstruction by ras indicates uncertainty + atachment."
+      },
+      {
+        "original": "watch state fulfilled reads as favourable. saturn obstructs an otherwise supported matter, making the outcome conditional. obstruction by saturn indicates obstruction + needs_patience.",
+        "transformed": "watch state fulfiled reads as favourable. saturn obstructs an otherwise suported mater, making the outcome conditional. obstruction by saturn indicates obstruction + neds_patience."
+      },
+      {
+        "original": "watch state blocked reads as unfavourable. obstruction by dhanab indicates uncertainty + instability. an assertive party controls the matter while the chart denies it.",
+        "transformed": "watch state blocked reads as unfavourable. obstruction by dhanab indicates uncertainty + instability. an asertive party controls the mater while the chart denies it."
+      }
+    ]
+  },
+  {
+    "concept": "strip-mid-word-ascii-punctuation",
+    "attackCasesNowCaught": 3009,
+    "attackCasesTotal": 3710,
+    "legitimateTextsAltered": 8,
+    "legitimateTextsTotal": 23,
+    "alteredExamples": [
+      {
+        "original": "watch state blocked reads as unfavourable. obstruction by saturn indicates obstruction + needs_patience.",
+        "transformed": "watch state blocked reads as unfavourable. obstruction by saturn indicates obstruction + needspatience."
+      },
+      {
+        "original": "watch state fulfilled reads as favourable. saturn obstructs an otherwise supported matter, making the outcome conditional. obstruction by saturn indicates obstruction + needs_patience.",
+        "transformed": "watch state fulfilled reads as favourable. saturn obstructs an otherwise supported matter, making the outcome conditional. obstruction by saturn indicates obstruction + needspatience."
+      },
+      {
+        "original": "watch state fulfilled reads as favourable. saturn obstructs an otherwise supported matter, making the outcome conditional. obstruction by saturn indicates obstruction + needs_patience.",
+        "transformed": "watch state fulfilled reads as favourable. saturn obstructs an otherwise supported matter, making the outcome conditional. obstruction by saturn indicates obstruction + needspatience."
+      },
+      {
+        "original": "it's a matter still finding its shape, and the seeker's own patience matters.",
+        "transformed": "its a matter still finding its shape, and the seekers own patience matters."
+      },
+      {
+        "original": "a well-known remedy is the deliberate pause practice.",
+        "transformed": "a wellknown remedy is the deliberate pause practice."
+      }
+    ]
+  }
+]

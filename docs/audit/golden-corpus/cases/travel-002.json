@@ -1,0 +1,90 @@
+{
+  "id": "travel-002",
+  "coverageLabel": "travel",
+  "input": {
+    "question": "Should I travel abroad this month?",
+    "utcInstant": "2026-08-15T10:07:00.000Z",
+    "utcOffsetMinutes": 540,
+    "latLon": "NOT APPLICABLE — watch-frame judgment does not consume location; see note above."
+  },
+  "derived": {
+    "localMoment": "2026-08-15T19:07:00+09:00",
+    "normalizedQuestionType": "travel",
+    "chartFingerprint": "e2febc9565549142704b72a43400e7cc11543ff026dacf3f41ed9be9a0df0967"
+  },
+  "verdict": {
+    "qType": "travel",
+    "targetHouse": 9,
+    "targetSignName": "Burj Jadi",
+    "targetRuler": "Saturn",
+    "targetRulerName": "Zuhal",
+    "fulfilmentHouse": 11,
+    "lagnaRuler": "Venus",
+    "rulerRelation": "Friend",
+    "state": "REVERSING",
+    "confidence": "MODERATE",
+    "score": 4,
+    "obstruction": "Mars",
+    "reversal": "POSSIBLE",
+    "timing": {
+      "minDays": 135,
+      "maxDays": 225
+    },
+    "direction": "South",
+    "afflictedDirection": "West",
+    "controllerProfile": "Receptive",
+    "factors": [
+      "Zuhrah (your own ruler) counts Zuhal a friend — the matter is disposed to cooperate with you.",
+      "Mirrikh casts its gaze on the 9th Ghar — friction on the matter.",
+      "Mushtari casts its gaze on the 9th Ghar — protection and expansion.",
+      "Zuhal weighs on the 11th Ghar — fulfilment itself is obstructed.",
+      "Mushtari supports the 11th Ghar — the desire has room to materialise.",
+      "Zuhrah supports the 11th Ghar — the desire has room to materialise.",
+      "Zuhal is retrograde — decisions already taken on this matter are liable to be reopened.",
+      "Benefic and malefic witnesses both fall on the matter — the reading carries genuine conflict."
+    ]
+  },
+  "diagnosis": {
+    "outcome": "DECLINING",
+    "primaryPattern": "CONFLICT",
+    "secondaryPatterns": [
+      "HASTE",
+      "INSTABILITY",
+      "NEEDS_DECISIVE_ACTION"
+    ],
+    "timingPosture": "WAIT_LONG",
+    "confidence": 0.6,
+    "interventionNeeded": true,
+    "obstructingAgent": "Mars",
+    "qType": "travel",
+    "targetHouse": 9,
+    "supportingHouses": [
+      3,
+      9,
+      12
+    ],
+    "obstructingHouses": [],
+    "timing": {
+      "minDays": 135,
+      "maxDays": 225
+    },
+    "rationale": [
+      "Watch state REVERSING reads as DECLINING.",
+      "Obstruction by Mars indicates CONFLICT + HASTE."
+    ]
+  },
+  "remedyProtocol": {
+    "interventionRequired": true,
+    "guidance": null,
+    "rationale": [
+      "32 of 32 remedies eligible by tradition.",
+      "Selected 3 intervention(s) across 3 categor(ies)."
+    ],
+    "stepIds": [
+      "astro_mars_restraint",
+      "behavioral_direct_conversation",
+      "contemplative_silence"
+    ]
+  },
+  "narration": null
+}

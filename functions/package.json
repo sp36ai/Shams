@@ -4,6 +4,7 @@
   "main": "lib/index.js",
   "scripts": {
     "sync-engine": "node scripts/sync-engine.mjs",
+    "verify-engine-sync": "node scripts/sync-engine.mjs --check",
     "build": "npm run sync-engine && tsc",
     "build:watch": "tsc --watch",
     "serve": "npm run build && firebase emulators:start --only functions,firestore",

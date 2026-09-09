@@ -3,14 +3,29 @@ name: Deploy Cloud Functions
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
 
+# PHASE 6D-1: gated on CI, not on a bare push to main.
+#
+# Previously this workflow triggered directly on `push: branches: [main]`,
+# independently of whether the "CI" workflow (ci.yml) had passed for that
+# same commit — a push that failed lint/typecheck/tests could still deploy
+# straight to production. `workflow_run` makes this workflow fire only
+# after "CI" (ci.yml's own `name:`) finishes; the job itself then checks
+# `conclusion == 'success'` before doing anything. `workflow_dispatch` is
+# kept as a deliberate manual override, unaffected by this gate.
+#
+# Known, disclosed side effect: `workflow_run` does not support a `paths`
+# filter (GitHub Actions rejects one under this trigger type), so the
+# previous `paths: ['functions/**', 'src/astrology/**', ...]` scoping is
+# necessarily dropped — this workflow now runs on every successful CI
+# completion on `main`, not only ones touching those paths. The deploy
+# step below (`--force`) is idempotent, so an unnecessary run redeploys
+# identical code rather than doing anything unsafe; the cost is wasted CI
+# minutes, not incorrect behavior. See docs/audit/PHASE_6D_1_REMEDIATION.md.
 on:
-  push:
-    branches:
-      - main
-    paths:
-      - 'functions/**'
-      - 'src/astrology/**'
-      - '.github/workflows/deploy-functions.yml'
+  workflow_run:
+    workflows: ['CI']
+    types: [completed]
+    branches: [main]
   workflow_dispatch:
 
 permissions:
@@ -20,9 +35,19 @@ jobs:
   deploy:
     name: Deploy to asia-south1
     runs-on: ubuntu-latest
+    # Manual dispatch always runs; a CI-triggered run only proceeds if CI
+    # actually passed — a failed or cancelled CI run must not deploy.
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          # Deploy the exact commit CI validated, not just "main" at
+          # whatever point this job happens to run (which could have moved
+          # on if another push landed in between). Falls back to the
+          # triggering ref for a manual workflow_dispatch run, where
+          # workflow_run context does not exist.
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
 
       - name: Setup Node.js
         uses: actions/setup-node@v4

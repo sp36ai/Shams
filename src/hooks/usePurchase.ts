@@ -13,6 +13,8 @@ import {
 } from 'react-native-iap';
 
 import { regionalFunctions } from '../firebase/functionsRegion';
+import { ensureAppCheckReady } from '../firebase/appCheck';
+import { withTimeout } from '../utils/withTimeout';
 import { useQuotaStore } from '@stores/quotaStore';
 import type { PlanTier } from '@stores/quotaStore';
 
@@ -30,6 +32,14 @@ export const SKU_MAP: Record<PurchasePlan, string> = {
 };
 
 const PACKAGE_NAME = 'com.astrosarfaraz.shamsalasrar';
+
+// PHASE 6D-4: see appCheck.ts's own doc comment for the cold-start race this
+// closes. The purchaseUpdatedListener path below is the one that matters
+// most here — a deferred/renewal purchase delivered by the native IAP layer
+// has no user-facing retry if verification fails, unlike purchase()/restore()
+// which return their failure to a caller that can react — see
+// docs/audit/PHASE_6D_4_REVIEW.md §6.
+const APP_CHECK_GATE_TIMEOUT_MS = 8000;
 
 function tierFromPlan(plan: PurchasePlan): PlanTier {
   return plan.startsWith('mureed') ? 'mureed' : 'khass';
@@ -68,6 +78,8 @@ export function usePurchase(): PurchaseState {
       productId: string,
     ): Promise<{ verified: boolean; planExpiry?: string }> => {
       try {
+        await withTimeout(ensureAppCheckReady(), APP_CHECK_GATE_TIMEOUT_MS);
+
         const fn = regionalFunctions().httpsCallable('verifyGooglePlayPurchase');
         const result = await fn({ purchaseToken, productId, packageName: PACKAGE_NAME });
         const data = result.data as { plan?: string; planExpiry?: string } | null;

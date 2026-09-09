@@ -193,70 +193,15 @@ describe('ReadingScreen', () => {
     });
   });
 
-  it('runs the guidance pipeline after a successful reading and attaches the remedies', async () => {
-    const selectCallable = jest.fn(() =>
-      Promise.resolve({
-        data: {
-          selectedIds: ['dhikr_01', 'quran_01'],
-          selectionReason: 'suits a delayed matter',
-          descriptions: { dhikr_01: 'Steady the heart with remembrance.' },
-        },
-      }),
-    );
-    (httpsCallable as jest.Mock).mockImplementation((name: string) => {
-      if (name === 'askWatchOracle') {
-        return jest.fn(() => Promise.resolve({ data: successPayload() }));
-      }
-      if (name === 'selectRemedies') {
-        return selectCallable;
-      }
-      return defaultImpl(name);
-    });
-
-    await renderScreen(<ReadingScreen />);
-    const user = userEvent.setup();
-    await user.type(screen.getByTestId('oracle-chat-input'), 'Will I get the job?');
-    await user.press(screen.getByTestId('oracle-chat-send-btn'));
-
-    await waitFor(() => {
-      const oracleMsg = oracleMessages()[0];
-      expect(oracleMsg?.selectedRemedies?.length).toBeGreaterThan(0);
-    });
-
-    // The selection is driven by the watch verdict, not a coarse verdict string.
-    expect(selectCallable).toHaveBeenCalled();
-    const oracleMsg = oracleMessages()[0];
-    expect(oracleMsg?.selectedRemedies?.map(r => r.id)).toEqual(['dhikr_01', 'quran_01']);
-    // Generated descriptions from the selector win over the library default.
-    expect(oracleMsg?.selectedRemedies?.[0]?.description).toBe(
-      'Steady the heart with remembrance.',
-    );
-  });
-
-  it('still shows the verdict when the guidance selection fails', async () => {
-    // The verdict is the answer; guidance is enrichment. A selector failure
-    // must never downgrade a reading that already succeeded.
-    (httpsCallable as jest.Mock).mockImplementation((name: string) => {
-      if (name === 'askWatchOracle') {
-        return jest.fn(() => Promise.resolve({ data: successPayload() }));
-      }
-      if (name === 'selectRemedies') {
-        return jest.fn(() => Promise.reject(new Error('selector down')));
-      }
-      return defaultImpl(name);
-    });
-
-    await renderScreen(<ReadingScreen />);
-    const user = userEvent.setup();
-    await user.type(screen.getByTestId('oracle-chat-input'), 'Will I get the job?');
-    await user.press(screen.getByTestId('oracle-chat-send-btn'));
-
-    await waitFor(() => {
-      const oracleMsg = oracleMessages()[0];
-      expect(oracleMsg?.status).toBe('sent');
-    });
-    expect(oracleMessages()[0]?.reading?.readingId).toBe('r1');
-  });
+  // PHASE 2B: the guidance-pipeline tests that used to live here
+  // ("runs the guidance pipeline after a successful reading and attaches
+  // the remedies", "still shows the verdict when the guidance selection
+  // fails") tested runGuidanceSelection's call to the `selectRemedies`
+  // Cloud Function — the second, LLM-driven remedy path. That call site
+  // was removed from ReadingScreen.tsx this phase (see
+  // docs/audit/PHASE_2B_ENGINE_MIGRATION.md); there is no longer a
+  // guidance pipeline for this screen to run. Removed rather than left
+  // failing.
 
   it('shows a quota-exhausted failed bubble without calling askWatchOracle when quota is spent', async () => {
     useQuotaStore.setState({ plan: 'free', questionsToday: 999 });

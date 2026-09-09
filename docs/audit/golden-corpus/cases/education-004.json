@@ -1,0 +1,93 @@
+{
+  "id": "education-004",
+  "coverageLabel": "education",
+  "input": {
+    "question": "Will I win the scholarship I applied for?",
+    "utcInstant": "2026-08-15T11:19:00.000Z",
+    "utcOffsetMinutes": 330,
+    "latLon": "NOT APPLICABLE — watch-frame judgment does not consume location; see note above."
+  },
+  "derived": {
+    "localMoment": "2026-08-15T16:49:00+05:30",
+    "normalizedQuestionType": "education",
+    "chartFingerprint": "4ccc91538c2243416df4ea99016e292f61b2967e9e2d20b24674fd17df07e7cf"
+  },
+  "verdict": {
+    "qType": "education",
+    "targetHouse": 4,
+    "targetSignName": "Burj Hamal",
+    "targetRuler": "Mars",
+    "targetRulerName": "Mirrikh",
+    "fulfilmentHouse": 11,
+    "lagnaRuler": "Saturn",
+    "rulerRelation": "Enemy",
+    "state": "DELAYED",
+    "confidence": "HIGH",
+    "score": -4,
+    "obstruction": "Dhanab",
+    "reversal": "POSSIBLE",
+    "timing": {
+      "minDays": 45,
+      "maxDays": 90
+    },
+    "direction": "East",
+    "afflictedDirection": "East",
+    "controllerProfile": "Assertive",
+    "factors": [
+      "Mirrikh rules the 4th Ghar but is EnemySign in Jauza — it cannot deliver unaided.",
+      "Zuhal (your own ruler) counts Mirrikh an enemy — expect rigidity and refusal to adjust.",
+      "Dhanab al-Tinnin casts its gaze on the 4th Ghar — friction on the matter.",
+      "Mushtari supports the 11th Ghar — the desire has room to materialise."
+    ]
+  },
+  "diagnosis": {
+    "outcome": "DELAYED",
+    "primaryPattern": "UNCERTAINTY",
+    "secondaryPatterns": [
+      "INSTABILITY",
+      "NEEDS_PATIENCE",
+      "POOR_TIMING",
+      "EXTERNAL_OPPOSITION",
+      "ATTACHMENT"
+    ],
+    "timingPosture": "WAIT_LONG",
+    "confidence": 0.8,
+    "interventionNeeded": true,
+    "obstructingAgent": "Dhanab",
+    "qType": "education",
+    "targetHouse": 4,
+    "supportingHouses": [
+      4,
+      9,
+      11
+    ],
+    "obstructingHouses": [
+      8,
+      12
+    ],
+    "timing": {
+      "minDays": 45,
+      "maxDays": 90
+    },
+    "rationale": [
+      "Watch state DELAYED reads as DELAYED.",
+      "A ruling planet is retrograde — reversal remains possible.",
+      "Obstruction by Dhanab indicates UNCERTAINTY + INSTABILITY.",
+      "The querent's ruler regards the ruler of the matter as an enemy."
+    ]
+  },
+  "remedyProtocol": {
+    "interventionRequired": true,
+    "guidance": null,
+    "rationale": [
+      "32 of 32 remedies eligible by tradition.",
+      "Selected 3 intervention(s) across 3 categor(ies)."
+    ],
+    "stepIds": [
+      "behavioral_verify",
+      "astro_node_clarification",
+      "contemplative_journal"
+    ]
+  },
+  "narration": null
+}

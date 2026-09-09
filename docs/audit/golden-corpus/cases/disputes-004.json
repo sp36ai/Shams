@@ -1,0 +1,91 @@
+{
+  "id": "disputes-004",
+  "coverageLabel": "disputes",
+  "input": {
+    "question": "Should I settle out of court?",
+    "utcInstant": "2026-08-15T13:19:00.000Z",
+    "utcOffsetMinutes": 240,
+    "latLon": "NOT APPLICABLE — watch-frame judgment does not consume location; see note above."
+  },
+  "derived": {
+    "localMoment": "2026-08-15T17:19:00+04:00",
+    "normalizedQuestionType": "legal",
+    "chartFingerprint": "b657d8b685f54b3f4b83d6e192a6fa770eed919921a190c1b9926aa9b53e137b"
+  },
+  "verdict": {
+    "qType": "legal",
+    "targetHouse": 6,
+    "targetSignName": "Burj Qaus",
+    "targetRuler": "Jupiter",
+    "targetRulerName": "Mushtari",
+    "fulfilmentHouse": 11,
+    "lagnaRuler": "Moon",
+    "rulerRelation": "Neutral",
+    "state": "BLOCKED",
+    "confidence": "VERY_HIGH",
+    "score": -6,
+    "obstruction": "Saturn",
+    "reversal": "NONE",
+    "timing": {
+      "minDays": 42,
+      "maxDays": 63
+    },
+    "direction": "East",
+    "afflictedDirection": "North",
+    "controllerProfile": "Assertive",
+    "factors": [
+      "Mushtari rules the 6th Ghar and is Exalted in Sartan — it holds real control of the matter.",
+      "Mirrikh casts its gaze on the 6th Ghar — friction on the matter.",
+      "Zuhal casts its gaze on the 6th Ghar — friction on the matter.",
+      "Dhanab al-Tinnin casts its gaze on the 6th Ghar — friction on the matter.",
+      "Zuhal weighs on the 11th Ghar — fulfilment itself is obstructed."
+    ]
+  },
+  "diagnosis": {
+    "outcome": "UNFAVOURABLE",
+    "primaryPattern": "OBSTRUCTION",
+    "secondaryPatterns": [
+      "NEEDS_PATIENCE",
+      "EXTERNAL_OPPOSITION"
+    ],
+    "timingPosture": "WAIT",
+    "confidence": 0.95,
+    "interventionNeeded": true,
+    "obstructingAgent": "Saturn",
+    "qType": "legal",
+    "targetHouse": 6,
+    "supportingHouses": [
+      6,
+      11
+    ],
+    "obstructingHouses": [
+      8,
+      12
+    ],
+    "timing": {
+      "minDays": 42,
+      "maxDays": 63
+    },
+    "rationale": [
+      "Watch state BLOCKED reads as UNFAVOURABLE.",
+      "Obstruction by Saturn indicates OBSTRUCTION + NEEDS_PATIENCE.",
+      "An assertive party controls the matter while the chart denies it."
+    ]
+  },
+  "remedyProtocol": {
+    "interventionRequired": true,
+    "guidance": null,
+    "rationale": [
+      "Safety filter: escalated to Consult a Qualified Lawyer.",
+      "32 of 32 remedies eligible by tradition.",
+      "Selected 3 intervention(s) across 3 categor(ies)."
+    ],
+    "stepIds": [
+      "practical_legal",
+      "astro_saturn_discipline",
+      "devotional_tahajjud",
+      "behavioral_defer_irreversible"
+    ]
+  },
+  "narration": null
+}

@@ -1,0 +1,128 @@
+[
+  {
+    "name": "checkVerdictConsistency",
+    "inputField": "text (per NarrationFields field)",
+    "mechanism": "substring",
+    "listsOrPatterns": "POSITIVE_ASSERTIONS (7), NEGATIVE_ASSERTIONS (7) — multi-word phrases",
+    "matchType": "lower.includes(phrase)",
+    "normalizationPath": "canonicalizeForSecurityMatching() (5C-R) then .toLowerCase()",
+    "knownBypassMechanisms": "homoglyph, repeated-char, ASCII punctuation inside any word of the phrase"
+  },
+  {
+    "name": "checkTimingConsistency (date fabrication)",
+    "inputField": "text",
+    "mechanism": "regex",
+    "listsOrPatterns": "MONTH_DATE_PATTERN, WEEKDAY_NAMES (7), DATE_LIKE_PATTERN",
+    "matchType": "regex.exec / lower.includes",
+    "normalizationPath": "canonicalizeForSecurityMatching() then .toLowerCase()",
+    "knownBypassMechanisms": "homoglyph/repeated-char/punctuation inside a weekday name defeats WEEKDAY_NAMES; MONTH_DATE_PATTERN/DATE_LIKE_PATTERN are numeric/structural, largely unaffected"
+  },
+  {
+    "name": "checkTimingConsistency (immediacy)",
+    "inputField": "text",
+    "mechanism": "substring",
+    "listsOrPatterns": "STRONG_IMMEDIACY_SIGNALS (9), SOFT_IMMEDIACY_SIGNALS (2), HEDGE_QUALIFIERS (5)",
+    "matchType": "lower.includes(phrase)",
+    "normalizationPath": "canonicalizeForSecurityMatching() then .toLowerCase()",
+    "knownBypassMechanisms": "homoglyph, repeated-char, ASCII punctuation inside the phrase"
+  },
+  {
+    "name": "checkTimingConsistency (day count)",
+    "inputField": "text",
+    "mechanism": "regex",
+    "listsOrPatterns": "/(\\d+)\\s*day/gi",
+    "matchType": "regex.exec",
+    "normalizationPath": "canonicalizeForSecurityMatching()",
+    "knownBypassMechanisms": "none of the three mechanisms apply — purely numeric"
+  },
+  {
+    "name": "checkRemedyConsistency (structural remedy-name match)",
+    "inputField": "text",
+    "mechanism": "substring",
+    "listsOrPatterns": "REMEDY_LIBRARY names (33), CANONICAL_REMEDY_NAMES map",
+    "matchType": "lower.includes(canonicalRemedyName)",
+    "normalizationPath": "canonicalizeForSecurityMatching() on both sides (5C-R)",
+    "knownBypassMechanisms": "homoglyph, repeated-char, ASCII punctuation inside a remedy name"
+  },
+  {
+    "name": "checkRemedyConsistency (override phrases)",
+    "inputField": "text",
+    "mechanism": "substring",
+    "listsOrPatterns": "REMEDY_OVERRIDE_PHRASES (6)",
+    "matchType": "lower.includes(phrase)",
+    "normalizationPath": "canonicalizeForSecurityMatching() then .toLowerCase()",
+    "knownBypassMechanisms": "homoglyph, repeated-char, ASCII punctuation"
+  },
+  {
+    "name": "checkCelestialEntities",
+    "inputField": "text",
+    "mechanism": "word-boundary-regex",
+    "listsOrPatterns": "disallowedEntityNames() — PLANET_ALIASES for all 9 planets, minus this reading's allow-list (widened by remedy-step names)",
+    "matchType": "new RegExp('\\\\b'+escapeRegExp(name)+'\\\\b','i').test(text)",
+    "normalizationPath": "canonicalizeForSecurityMatching()",
+    "knownBypassMechanisms": "homoglyph, repeated-char, ASCII punctuation inside a planet name"
+  },
+  {
+    "name": "checkDiagnosisConsistency",
+    "inputField": "text",
+    "mechanism": "substring",
+    "listsOrPatterns": "OBSTRUCTION_PHRASES (3) + PLANET_ALIASES, sentence-scoped via findSentenceContaining",
+    "matchType": "lower.includes(phrase), then substring for planet name inside the matched sentence",
+    "normalizationPath": "canonicalizeForSecurityMatching() then .toLowerCase()",
+    "knownBypassMechanisms": "homoglyph/repeated-char/punctuation could defeat the OBSTRUCTION_PHRASES match itself (lower severity: if the phrase itself is not recognized, the check no-ops entirely rather than mis-attributing)"
+  },
+  {
+    "name": "checkUnsupportedCertainty",
+    "inputField": "text",
+    "mechanism": "substring",
+    "listsOrPatterns": "CERTAINTY_PHRASES (9)",
+    "matchType": "lower.includes(phrase)",
+    "normalizationPath": "canonicalizeForSecurityMatching() then .toLowerCase()",
+    "knownBypassMechanisms": "homoglyph, repeated-char, ASCII punctuation inside the phrase"
+  },
+  {
+    "name": "checkTerminologyLeakage (deny-list)",
+    "inputField": "text",
+    "mechanism": "substring",
+    "listsOrPatterns": "PROHIBITED_TERMINOLOGY (22 entries, 1 multi-word: \"house matrix\")",
+    "matchType": "lower.includes(term.toLowerCase())",
+    "normalizationPath": "canonicalizeForSecurityMatching() then .toLowerCase()",
+    "knownBypassMechanisms": "homoglyph, repeated-char, ASCII punctuation inside any term"
+  },
+  {
+    "name": "checkTerminologyLeakage (RKP-obfuscated pattern)",
+    "inputField": "text",
+    "mechanism": "regex",
+    "listsOrPatterns": "RKP_OBFUSCATED_PATTERN = /r[\\s.\\-_]+k[\\s.\\-_]+p\\b/i",
+    "matchType": "pattern.test(text)",
+    "normalizationPath": "canonicalizeForSecurityMatching()",
+    "knownBypassMechanisms": "ASCII punctuation is ALREADY tolerated by design (the pattern IS the punctuation-tolerant fix); homoglyph substitution of r/k/p themselves is not covered"
+  },
+  {
+    "name": "checkInternalDataLeakage",
+    "inputField": "text",
+    "mechanism": "regex",
+    "listsOrPatterns": "INTERNAL_DATA_PATTERNS (8) — file paths, API-key shapes",
+    "matchType": "pattern.test(text)",
+    "normalizationPath": "canonicalizeForSecurityMatching()",
+    "knownBypassMechanisms": "the three mechanisms are largely irrelevant here (these are structural/shape patterns, not natural-language phrases)"
+  },
+  {
+    "name": "checkPromptInjectionArtifacts",
+    "inputField": "text",
+    "mechanism": "substring",
+    "listsOrPatterns": "INJECTION_COMPLIANCE_PHRASES (7)",
+    "matchType": "lower.includes(phrase)",
+    "normalizationPath": "canonicalizeForSecurityMatching() then .toLowerCase()",
+    "knownBypassMechanisms": "homoglyph, repeated-char, ASCII punctuation inside the phrase"
+  },
+  {
+    "name": "checkWellFormed",
+    "inputField": "whole NarrationFields object (structural, not text content)",
+    "mechanism": "structural",
+    "listsOrPatterns": "n/a — type/emptiness checks only",
+    "matchType": "typeof / trim().length",
+    "normalizationPath": "none — runs before per-field canonicalization",
+    "knownBypassMechanisms": "not applicable — no text-matching involved"
+  }
+]

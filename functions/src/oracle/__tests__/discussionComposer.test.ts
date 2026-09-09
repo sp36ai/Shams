@@ -26,6 +26,10 @@ const GROUNDING: ReadingGrounding = {
   confidence: 0.72,
   computedAt: '2026-08-08T05:43:00.000Z',
   narration: null,
+  // Brief-construction tests below don't exercise validation — see
+  // discussionValidation.test.ts and discussionComparisonValidation.test.ts
+  // for that.
+  contract: null,
   oracle: {
     narration: {
       rkp_finding: 'The house that carries the sale is supported.',
@@ -34,6 +38,8 @@ const GROUNDING: ReadingGrounding = {
       why_this_remedy: 'Delay met with patience.',
       signature: 'The door is heavy, and it opens slowly.',
     },
+    speakableText:
+      'The house that carries the sale is supported.. This is not a denial.. Let the window arrive.',
     brandSeal:
       '✨ "These words are unveiled under the banner of Shams al-Asrār, by Astro Sarfaraz." ✨',
     suggestedQuestions: ['What is causing the delay?'],
@@ -64,6 +70,7 @@ const GROUNDING: ReadingGrounding = {
       ],
       rationale: ['Delay pattern.'],
     },
+    contractFingerprint: 'test-fixture-fingerprint',
   },
 };
 

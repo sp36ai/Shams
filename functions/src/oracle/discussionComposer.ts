@@ -26,13 +26,54 @@
  * Unlike narration, this layer has no deterministic fallback: a reply that
  * failed to generate is simply not a reply. It returns null and the callable
  * turns that into an error the client can retry, rather than inventing prose.
+ *
+ * PHASE 5F: those two structural guarantees kept an injected/forged reading
+ * out of the brief, but nothing checked what the model said back — a real
+ * gap `docs/audit/PHASE_5F_RECONNAISSANCE.md` (Finding F1) identified: this
+ * file had zero deterministic content validation, unlike responseComposer.ts,
+ * which has had one since Phase 4. Closed the same way, reusing the exact
+ * same architecture rather than building a second one:
+ * `validateDiscussionReply()` below wraps the reply's free text into the
+ * same `NarrationFields` shape `validateNarration()` already checks, and
+ * calls that function unchanged — every check Phase 4/4A/5C-R/5D-R/5E built
+ * (verdict/timing/remedy/celestial/diagnosis consistency, unsupported
+ * certainty, terminology/internal-data leakage, prompt-injection artifacts,
+ * and the seven Phase 5E ground-truth checks) now runs against a discussion
+ * reply exactly as it runs against fresh narration. `composeDiscussionReply()`
+ * calls it internally and, on failure, follows the SAME established
+ * precedent this file already used for a generation failure — return `null`
+ * and let the caller's existing "no reply" handling take over (refund the
+ * turn, surface a retry-prompting error) — not a new, invented policy. See
+ * `docs/audit/PHASE_5F_HARDENING.md` for the full record, including why a
+ * reading cast before this phase shipped (no persisted contract) skips
+ * validation rather than being rejected outright.
+ *
+ * PHASE 5F-R2: Phase 5F validated the reply against the anchor reading's
+ * contract only — a comparison reading's own claims went entirely
+ * unchecked, a gap identified at the Phase 5 Residual Disposition Gate
+ * (`docs/audit/PHASE_5_RESIDUAL_DISPOSITION.md`, item 6) as a live
+ * production trust-boundary defect, not an accepted residual. Closed the
+ * same way 5F itself closed F1 — reusing the existing single-contract
+ * `validateDiscussionReply()` unchanged, not building a second validator —
+ * by first attributing the reply to the specific grounding(s) it actually
+ * names (`segmentReplyByGrounding()`) and then calling
+ * `validateDiscussionReply()` once per attributed segment
+ * (`validateDiscussionReplyAgainstGroundings()`, what
+ * `composeDiscussionReply()` now calls). Every `ReadingGrounding` — anchor
+ * and comparison alike — now carries its own `contract`, so "the anchor is
+ * the only authority" is no longer a structural asymmetry: it is simply
+ * what a single-reading thread's one grounding already was. See
+ * `docs/audit/PHASE_5F_R2_HARDENING.md` for the full record, including the
+ * documented residual limitation of label-based attribution.
  */
 
 import { ANTHROPIC_API_KEY } from '../config';
 import { logger } from '../utils/logger';
 import { ORACLE_DISCUSSION_PROMPT } from '../prompts/oracleDiscussionPrompt';
 import { sanitizeQuestion } from './responseComposer';
-import type { WatchOracleComposition } from './responseComposer';
+import type { WatchOracleComposition, NarrationFields } from './responseComposer';
+import { validateNarration } from './narrationValidator';
+import type { ReadingContract } from './readingContract';
 import type { LangCode } from '../types';
 
 /**
@@ -66,6 +107,19 @@ export interface ReadingGrounding {
   readonly oracle: WatchOracleComposition | null;
   /** Fallback prose when there is no composition — the stored narration. */
   readonly narration: string | null;
+  /**
+   * PHASE 5F-R2: THIS reading's own ground truth — the deterministic
+   * authority any claim about THIS reading is checked against, below.
+   * `null` when this reading was cast before Phase 5F shipped (no
+   * persisted contract) or its synthesis failed before one was assembled
+   * — in either case, claims attributed to this reading skip validation
+   * rather than being rejected, exactly the precedent Phase 5F established
+   * for the anchor and now applied uniformly to every grounding, anchor or
+   * comparison alike. See `segmentReplyByGrounding()` and
+   * `validateDiscussionReplyAgainstGroundings()` below for how a reply is
+   * attributed to the correct grounding's contract.
+   */
+  readonly contract: ReadingContract | null;
 }
 
 export type DiscussionRole = 'seeker' | 'oracle';
@@ -265,11 +319,221 @@ export function toApiMessages(
 }
 
 /**
+ * PHASE 5F: wrap a discussion reply's free text into the same
+ * `NarrationFields` shape `validateNarration()` already checks, so this
+ * surface reuses the exact same deterministic check pipeline the primary
+ * narration surface uses — not a second validator. The reply is not
+ * naturally shaped like five distinct fields (`rkp_finding`,
+ * `interpretation`, ... — those exist because Claude drafts a fresh
+ * reading's prose as five separate sections), so the same text is placed
+ * in all five: every check operates on whatever `text` it receives
+ * regardless of which field name it is nominally paired with (confirmed by
+ * reading every check function in narrationValidator.ts — none branches on
+ * `field`, it is carried through only for audit logging), so this produces
+ * exactly the same detection as validating the reply once, just through
+ * the unmodified existing per-field loop rather than a new one.
+ *
+ * Exported for direct testing.
+ */
+export function wrapReplyAsNarrationFields(answer: string): NarrationFields {
+  return {
+    rkp_finding: answer,
+    interpretation: answer,
+    recommended_approach: answer,
+    why_this_remedy: answer,
+    signature: answer,
+  };
+}
+
+/**
+ * PHASE 5F: does this discussion reply agree with a SINGLE reading's
+ * `ReadingContract`? `contract` may be `null` (a reading cast before Phase
+ * 5F shipped, or whose synthesis failed before a contract was assembled) —
+ * validation is skipped in that case, not failed, exactly preserving this
+ * reading's existing discussion behavior. This is the single-contract
+ * primitive; `validateDiscussionReplyAgainstGroundings()` below is what
+ * `composeDiscussionReply()` actually calls — it attributes the reply to
+ * the correct grounding(s) first, then calls this function once per
+ * attributed segment, unmodified.
+ *
+ * Exported for direct testing.
+ */
+export function validateDiscussionReply(
+  contract: ReadingContract | null,
+  answer: string,
+): { readonly valid: true } | { readonly valid: false; readonly failures: readonly string[] } {
+  if (contract === null) {
+    return { valid: true };
+  }
+  const result = validateNarration(contract, wrapReplyAsNarrationFields(answer));
+  if (result.valid) {
+    return { valid: true };
+  }
+  return {
+    valid: false,
+    failures: result.failures.map(f => `${f.code}: ${f.detail}`),
+  };
+}
+
+/** One contiguous run of the reply text, attributed to a single grounding. */
+export interface AttributedSegment {
+  /** The grounding this text is checked against. */
+  readonly grounding: ReadingGrounding;
+  readonly text: string;
+}
+
+/**
+ * PHASE 5F-R2: attribute every part of a discussion reply to the specific
+ * grounding it is actually about, closing Finding bf5198c-6 (the Phase 5
+ * Residual Disposition Gate's item 6) — comparison readings previously had
+ * zero validation coverage at all; only the anchor's contract was ever
+ * checked, regardless of which reading a claim in the reply actually named.
+ *
+ * SINGLE-READING THREADS (the overwhelming majority; `groundings.length ===
+ * 1`): the entire reply is one segment against the anchor, byte-for-byte
+ * the same call shape Phase 5F originally established. No behavior change
+ * for this case, which is also the only case any pre-5F-R2 test exercises.
+ *
+ * MULTI-READING THREADS: each grounding carries a short, server-assigned
+ * label (`ReadingGrounding.label`, e.g. "the finance reading" —
+ * disambiguated with a numeric suffix by the caller when two groundings in
+ * the same brief would otherwise share one, see `discussReading.ts`'s
+ * `labelsFor()`). The model sees these labels in the brief
+ * (`buildDiscussionBrief`) and the discussion prompt's own "WHEN MORE THAN
+ * ONE READING IS IN THE BRIEF" section is the only place multi-reading
+ * replies are invited at all, so a reply that discusses a specific
+ * comparison reading's own facts has a concrete reason to name it. This
+ * function finds the first literal (case-insensitive) occurrence of each
+ * grounding's label in the answer text; text from one label's occurrence up
+ * to the next label's occurrence (or the end of the string) is attributed
+ * to that label's reading. Text before the first label occurrence — the
+ * common case of a reply that never explicitly invokes a comparison label
+ * at all — is attributed to the ANCHOR, exactly matching pre-5F-R2 behavior
+ * for that reply.
+ *
+ * Two deliberately conservative fallbacks, both because attribution must be
+ * a strict improvement over "unchecked," never a way to make an existing,
+ * already-checked claim easier to pass:
+ *
+ *   - If any two groundings in this call share an identical label (an
+ *     attribution ambiguity `discussReading.ts`'s disambiguation is meant to
+ *     prevent, but this function does not trust that invariant blindly),
+ *     segmentation is abandoned and the ENTIRE reply is checked as one
+ *     segment against the anchor only — the exact pre-5F-R2 behavior. This
+ *     never weakens what was already checked; it only means a genuine
+ *     comparison-reading claim in that reply is checked against the wrong
+ *     contract (may over-reject) rather than not fixing anything.
+ *   - A known residual limitation, not a fallback: text that is actually
+ *     about the anchor but appears AFTER a comparison label's occurrence
+ *     (e.g. "As for the finance reading, X. But on the original question,
+ *     Y.") is attributed to that comparison reading's contract, not the
+ *     anchor's, until the next label or the string's end. This can over-
+ *     reject a genuine trailing anchor claim; it can never under-reject,
+ *     since the comparison reading's own contract is still a genuine,
+ *     validated authority, just possibly the wrong one for that specific
+ *     sentence. See `docs/audit/PHASE_5F_R2_HARDENING.md` §residual
+ *     limitations for the full discussion and why a full semantic
+ *     claim-attribution parser was judged out of this phase's scope.
+ *
+ * Exported for direct testing.
+ */
+export function segmentReplyByGrounding(
+  answer: string,
+  groundings: readonly [ReadingGrounding, ...ReadingGrounding[]],
+): readonly AttributedSegment[] {
+  if (groundings.length === 1) {
+    return [{ grounding: groundings[0], text: answer }];
+  }
+
+  const lowerAnswer = answer.toLowerCase();
+  const labelsSeen = new Set<string>();
+  let ambiguous = false;
+  const occurrences: Array<{ index: number; grounding: ReadingGrounding }> = [];
+
+  for (const grounding of groundings) {
+    const label = grounding.label.toLowerCase().trim();
+    if (label.length === 0) {
+      continue;
+    }
+    if (labelsSeen.has(label)) {
+      ambiguous = true;
+    }
+    labelsSeen.add(label);
+    const index = lowerAnswer.indexOf(label);
+    if (index !== -1) {
+      occurrences.push({ index, grounding });
+    }
+  }
+
+  if (ambiguous || occurrences.length === 0) {
+    // Duplicate labels, or the reply never names any grounding explicitly —
+    // both fall back to the entire reply checked against the anchor only,
+    // exactly as before this phase.
+    return [{ grounding: groundings[0], text: answer }];
+  }
+
+  occurrences.sort((a, b) => a.index - b.index);
+
+  const segments: AttributedSegment[] = [];
+  const firstIndex = occurrences[0]?.index ?? 0;
+  if (firstIndex > 0) {
+    segments.push({ grounding: groundings[0], text: answer.slice(0, firstIndex) });
+  }
+  for (let i = 0; i < occurrences.length; i++) {
+    const start = occurrences[i]!.index;
+    const end = occurrences[i + 1]?.index ?? answer.length;
+    segments.push({ grounding: occurrences[i]!.grounding, text: answer.slice(start, end) });
+  }
+  return segments;
+}
+
+/**
+ * PHASE 5F-R2: does this discussion reply agree with EVERY grounding it is
+ * actually attributed to, anchor and comparison readings alike? Segments
+ * the reply via `segmentReplyByGrounding()`, then runs the unmodified
+ * single-contract `validateDiscussionReply()` once per segment — no new
+ * check, no new validator, the exact same Phase 4/4A/5C-R/5D-R/5E pipeline
+ * reused once per attributed piece of text instead of once for the whole
+ * reply. A grounding with no persisted contract (`contract: null`) skips
+ * validation for its own segment only, mirroring Phase 5F's own anchor
+ * precedent — not a new policy, the same one applied uniformly.
+ *
+ * This is what `composeDiscussionReply()` actually calls.
+ *
+ * Exported for direct testing.
+ */
+export function validateDiscussionReplyAgainstGroundings(
+  groundings: readonly [ReadingGrounding, ...ReadingGrounding[]],
+  answer: string,
+): { readonly valid: true } | { readonly valid: false; readonly failures: readonly string[] } {
+  const segments = segmentReplyByGrounding(answer, groundings);
+  const failures: string[] = [];
+  for (const segment of segments) {
+    if (segment.text.trim().length === 0) {
+      continue;
+    }
+    const result = validateDiscussionReply(segment.grounding.contract, segment.text);
+    if (!result.valid) {
+      failures.push(...result.failures.map(f => `[${segment.grounding.label}] ${f}`));
+    }
+  }
+  if (failures.length > 0) {
+    return { valid: false, failures };
+  }
+  return { valid: true };
+}
+
+/**
  * Answer one follow-up about an existing reading.
  *
  * Returns null — never throws — for every failure mode below the caller's
  * concern: no API key bound, HTTP error, timeout, unparseable JSON. The
  * caller decides what the seeker sees.
+ *
+ * PHASE 5F: also returns null — the same, pre-existing "no reply" outcome,
+ * not a new one — when the model's reply fails `validateDiscussionReply()`
+ * against `input.contract`. See this file's header for why this reuses
+ * that exact precedent instead of inventing a deterministic fallback reply.
  */
 export async function composeDiscussionReply(
   input: DiscussionInput,
@@ -336,8 +600,24 @@ export async function composeDiscussionReply(
       return null;
     }
 
+    const answer = parsed.answer.trim();
+
+    // PHASE 5F / 5F-R2: deterministic validation, independent of Claude —
+    // see this file's header. Attributes the reply to the grounding(s) it
+    // actually names (segmentReplyByGrounding) and checks each attributed
+    // piece against ITS OWN persisted contract, anchor and comparison
+    // readings alike; a grounding with no persisted contract skips
+    // validation for its own segment rather than failing it.
+    const validation = validateDiscussionReplyAgainstGroundings(input.groundings, answer);
+    if (!validation.valid) {
+      logger.warn('oracle discussion reply failed validation — no reply returned', {
+        failures: validation.failures,
+      });
+      return null;
+    }
+
     return {
-      answer: parsed.answer.trim(),
+      answer,
       isNewQuestion: parsed.is_new_question === true,
     };
   } catch (err) {

@@ -1,0 +1,94 @@
+{
+  "id": "timing-25",
+  "coverageLabel": "timing-sensitive",
+  "input": {
+    "question": "Will I get the job I interviewed for?",
+    "utcInstant": "2026-08-15T16:25:00.000Z",
+    "utcOffsetMinutes": 330,
+    "latLon": "NOT APPLICABLE — watch-frame judgment does not consume location; see note above."
+  },
+  "derived": {
+    "localMoment": "2026-08-15T21:55:00+05:30",
+    "normalizedQuestionType": "career",
+    "chartFingerprint": "a9c5323de8de195d7b6df864537fedf3e7635a8f31d5b65deb7b3ee3d3dcf375"
+  },
+  "verdict": {
+    "qType": "career",
+    "targetHouse": 10,
+    "targetSignName": "Burj Qaus",
+    "targetRuler": "Jupiter",
+    "targetRulerName": "Mushtari",
+    "fulfilmentHouse": 11,
+    "lagnaRuler": "Jupiter",
+    "rulerRelation": "Friend",
+    "state": "DELAYED",
+    "confidence": "MODERATE",
+    "score": -3,
+    "obstruction": "Saturn",
+    "reversal": "NONE",
+    "timing": {
+      "minDays": 42,
+      "maxDays": 63
+    },
+    "direction": "East",
+    "afflictedDirection": "North",
+    "controllerProfile": "Assertive",
+    "factors": [
+      "Mushtari rules the 10th Ghar and is Exalted in Sartan — it holds real control of the matter.",
+      "Mushtari (your own ruler) counts Mushtari a friend — the matter is disposed to cooperate with you.",
+      "Mirrikh casts its gaze on the 10th Ghar — friction on the matter.",
+      "Zuhal casts its gaze on the 10th Ghar — friction on the matter.",
+      "Dhanab al-Tinnin casts its gaze on the 10th Ghar — friction on the matter.",
+      "Mirrikh weighs on the 11th Ghar — fulfilment itself is obstructed.",
+      "Mushtari supports the 11th Ghar — the desire has room to materialise.",
+      "Mushtari has landed in the 5th Ghar, a denying house for this question."
+    ]
+  },
+  "diagnosis": {
+    "outcome": "DELAYED",
+    "primaryPattern": "OBSTRUCTION",
+    "secondaryPatterns": [
+      "NEEDS_PATIENCE",
+      "POOR_TIMING",
+      "ATTACHMENT"
+    ],
+    "timingPosture": "WAIT_LONG",
+    "confidence": 0.6,
+    "interventionNeeded": true,
+    "obstructingAgent": "Saturn",
+    "qType": "career",
+    "targetHouse": 10,
+    "supportingHouses": [
+      6,
+      10,
+      11
+    ],
+    "obstructingHouses": [
+      5,
+      8,
+      12
+    ],
+    "timing": {
+      "minDays": 42,
+      "maxDays": 63
+    },
+    "rationale": [
+      "Watch state DELAYED reads as DELAYED.",
+      "Obstruction by Saturn indicates OBSTRUCTION + NEEDS_PATIENCE."
+    ]
+  },
+  "remedyProtocol": {
+    "interventionRequired": true,
+    "guidance": null,
+    "rationale": [
+      "32 of 32 remedies eligible by tradition.",
+      "Selected 3 intervention(s) across 3 categor(ies)."
+    ],
+    "stepIds": [
+      "astro_saturn_discipline",
+      "devotional_dua_ease",
+      "behavioral_defer_irreversible"
+    ]
+  },
+  "narration": null
+}

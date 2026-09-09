@@ -1,0 +1,92 @@
+{
+  "id": "timing-15",
+  "coverageLabel": "timing-sensitive",
+  "input": {
+    "question": "Will I get the job I interviewed for?",
+    "utcInstant": "2026-08-15T16:15:00.000Z",
+    "utcOffsetMinutes": 330,
+    "latLon": "NOT APPLICABLE — watch-frame judgment does not consume location; see note above."
+  },
+  "derived": {
+    "localMoment": "2026-08-15T21:45:00+05:30",
+    "normalizedQuestionType": "career",
+    "chartFingerprint": "0343d9fa6ec48556cf52b87c1a67f74a32f16cac0ab811737bea476245cb5dc2"
+  },
+  "verdict": {
+    "qType": "career",
+    "targetHouse": 10,
+    "targetSignName": "Burj Meezan",
+    "targetRuler": "Venus",
+    "targetRulerName": "Zuhrah",
+    "fulfilmentHouse": 11,
+    "lagnaRuler": "Saturn",
+    "rulerRelation": "Friend",
+    "state": "DELAYED",
+    "confidence": "UNCERTAIN",
+    "score": 0,
+    "obstruction": "Ras",
+    "reversal": "POSSIBLE",
+    "timing": {
+      "minDays": 15,
+      "maxDays": 32
+    },
+    "direction": "West",
+    "afflictedDirection": "West",
+    "controllerProfile": "Assertive",
+    "factors": [
+      "Zuhrah rules the 10th Ghar but is Debilitated in Sunbula — it cannot deliver unaided.",
+      "Zuhal (your own ruler) counts Zuhrah a friend — the matter is disposed to cooperate with you.",
+      "Ras al-Tinnin casts its gaze on the 10th Ghar — friction on the matter.",
+      "Mushtari supports the 11th Ghar — the desire has room to materialise."
+    ]
+  },
+  "diagnosis": {
+    "outcome": "DELAYED",
+    "primaryPattern": "UNCERTAINTY",
+    "secondaryPatterns": [
+      "ATTACHMENT",
+      "NEEDS_PATIENCE",
+      "POOR_TIMING",
+      "INSTABILITY"
+    ],
+    "timingPosture": "WAIT",
+    "confidence": 0.2,
+    "interventionNeeded": true,
+    "obstructingAgent": "Ras",
+    "qType": "career",
+    "targetHouse": 10,
+    "supportingHouses": [
+      6,
+      10,
+      11
+    ],
+    "obstructingHouses": [
+      5,
+      8,
+      12
+    ],
+    "timing": {
+      "minDays": 15,
+      "maxDays": 32
+    },
+    "rationale": [
+      "Watch state DELAYED reads as DELAYED.",
+      "A ruling planet is retrograde — reversal remains possible.",
+      "Obstruction by Ras indicates UNCERTAINTY + ATTACHMENT."
+    ]
+  },
+  "remedyProtocol": {
+    "interventionRequired": true,
+    "guidance": null,
+    "rationale": [
+      "32 of 32 remedies eligible by tradition.",
+      "Selected 3 intervention(s) across 3 categor(ies)."
+    ],
+    "stepIds": [
+      "behavioral_verify",
+      "astro_node_clarification",
+      "contemplative_journal"
+    ]
+  },
+  "narration": null
+}

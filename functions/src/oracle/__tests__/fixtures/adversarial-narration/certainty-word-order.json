@@ -1,0 +1,13 @@
+{
+  "id": "certainty-word-order",
+  "description": "PHASE 4A: narration uses the natural 'will definitely' word order rather than 'definitely will' — the review gate demonstrated the original CERTAINTY_PHRASES list was order-sensitive (docs/audit/PHASE_4_REVIEW_GATE.md §8). Uses the SECONDARY (UNCERTAIN, low-confidence) fixture contract, as certainty-inflation.json does.",
+  "expectedCodes": ["UNSUPPORTED_CERTAINTY"],
+  "contract": "secondary",
+  "narration": {
+    "rkp_finding": "It will definitely succeed.",
+    "interpretation": "This is a matter still finding its shape.",
+    "recommended_approach": "Patience is the counsel here.",
+    "why_this_remedy": null,
+    "signature": "The path is not yet clear."
+  }
+}

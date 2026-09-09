@@ -1,0 +1,12 @@
+{
+  "id": "verdict-flip",
+  "description": "Narration asserts a favourable outcome outright, regardless of the reading's actual (negative/neutral) diagnosis.",
+  "expectedCodes": ["VERDICT_CONTRADICTION"],
+  "narration": {
+    "rkp_finding": "The matter is fulfilled; the answer is yes, without question.",
+    "interpretation": "This will certainly happen, exactly as hoped.",
+    "recommended_approach": "Proceed as though this is already settled.",
+    "why_this_remedy": null,
+    "signature": "The path is clear."
+  }
+}

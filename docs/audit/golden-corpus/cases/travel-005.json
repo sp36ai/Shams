@@ -1,0 +1,85 @@
+{
+  "id": "travel-005",
+  "coverageLabel": "travel",
+  "input": {
+    "question": "Will my pilgrimage journey go smoothly?",
+    "utcInstant": "2026-08-15T10:25:00.000Z",
+    "utcOffsetMinutes": 540,
+    "latLon": "NOT APPLICABLE — watch-frame judgment does not consume location; see note above."
+  },
+  "derived": {
+    "localMoment": "2026-08-15T19:25:00+09:00",
+    "normalizedQuestionType": "travel",
+    "chartFingerprint": "26e79fa9064c5d137669f03ced72f5409e888a7b890664e4c54e073dee6b2b63"
+  },
+  "verdict": {
+    "qType": "travel",
+    "targetHouse": 9,
+    "targetSignName": "Burj Saur",
+    "targetRuler": "Venus",
+    "targetRulerName": "Zuhrah",
+    "fulfilmentHouse": 11,
+    "lagnaRuler": "Mercury",
+    "rulerRelation": "Friend",
+    "state": "DELAYED",
+    "confidence": "UNCERTAIN",
+    "score": 0,
+    "obstruction": "Saturn",
+    "reversal": "NONE",
+    "timing": {
+      "minDays": 15,
+      "maxDays": 32
+    },
+    "direction": "South",
+    "afflictedDirection": "North",
+    "controllerProfile": "Receptive",
+    "factors": [
+      "Zuhrah rules the 9th Ghar but is Debilitated in Sunbula — it cannot deliver unaided.",
+      "Utarid (your own ruler) counts Zuhrah a friend — the matter is disposed to cooperate with you.",
+      "Zuhal casts its gaze on the 9th Ghar — friction on the matter.",
+      "Mushtari supports the 11th Ghar — the desire has room to materialise."
+    ]
+  },
+  "diagnosis": {
+    "outcome": "DELAYED",
+    "primaryPattern": "OBSTRUCTION",
+    "secondaryPatterns": [
+      "NEEDS_PATIENCE",
+      "POOR_TIMING"
+    ],
+    "timingPosture": "WAIT",
+    "confidence": 0.2,
+    "interventionNeeded": true,
+    "obstructingAgent": "Saturn",
+    "qType": "travel",
+    "targetHouse": 9,
+    "supportingHouses": [
+      3,
+      9,
+      12
+    ],
+    "obstructingHouses": [],
+    "timing": {
+      "minDays": 15,
+      "maxDays": 32
+    },
+    "rationale": [
+      "Watch state DELAYED reads as DELAYED.",
+      "Obstruction by Saturn indicates OBSTRUCTION + NEEDS_PATIENCE."
+    ]
+  },
+  "remedyProtocol": {
+    "interventionRequired": true,
+    "guidance": null,
+    "rationale": [
+      "32 of 32 remedies eligible by tradition.",
+      "Selected 3 intervention(s) across 3 categor(ies)."
+    ],
+    "stepIds": [
+      "astro_saturn_discipline",
+      "devotional_dua_ease",
+      "behavioral_defer_irreversible"
+    ]
+  },
+  "narration": null
+}

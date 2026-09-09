@@ -168,10 +168,35 @@ export interface ReadingDoc {
    */
   watchOracle?: unknown;
   /**
+   * PHASE 5F: the frozen `ReadingContract` this reading's narration was
+   * validated against at cast time (readingContract.ts) — the same object
+   * `composeWatchOracleResponse()` already builds and discards today,
+   * persisted verbatim so `discussReading.ts` can validate follow-up
+   * replies against genuine ground truth instead of the reduced
+   * `verdict`/`confidence` fields above, which do not carry
+   * `judgment`'s structural facts (house, sign, direction, retrograde,
+   * ruler-relation, reversal) at all. Typed as `unknown` for the same
+   * reason as `watchOracle` above, and narrowed at the one place that
+   * reads it back. Absent on readings cast before this phase shipped, or
+   * whose synthesis failed before the contract was assembled — a reader
+   * must handle its absence rather than assume it.
+   */
+  readingContract?: unknown;
+  /**
    * Follow-up turns spent on this reading, capped at DISCUSSION_TURN_LIMIT.
    * Incremented (and refunded on failure) by discussReading.
    */
   discussionTurns?: number;
+  /**
+   * PHASE 2B: which build of the chart/judgment engine produced this
+   * reading — see ENGINE_VERSION (engine/primitives/chartBuilder.ts).
+   * Previously recorded only on the audit log entry (AuditLogDoc.engineVersion
+   * above), which is enough to trace a single incident but not to look up
+   * "which readings came from engine version X" starting from the readings
+   * themselves. Purely additive metadata — carries no judgment semantics
+   * and does not change what any reading computes.
+   */
+  engineVersion?: string;
 }
 
 /** Firestore /trials/{userId} document shape. */

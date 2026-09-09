@@ -1,0 +1,93 @@
+{
+  "id": "business-004",
+  "coverageLabel": "business",
+  "input": {
+    "question": "Should I expand my business to a new city?",
+    "utcInstant": "2026-08-15T06:19:00.000Z",
+    "utcOffsetMinutes": 300,
+    "latLon": "NOT APPLICABLE — watch-frame judgment does not consume location; see note above."
+  },
+  "derived": {
+    "localMoment": "2026-08-15T11:19:00+05:00",
+    "normalizedQuestionType": "business",
+    "chartFingerprint": "168514674698d3f53d887274af07009cf4c3974a1b992252e7ff1fa73e36a33e"
+  },
+  "verdict": {
+    "qType": "business",
+    "targetHouse": 7,
+    "targetSignName": "Burj Jadi",
+    "targetRuler": "Saturn",
+    "targetRulerName": "Zuhal",
+    "fulfilmentHouse": 11,
+    "lagnaRuler": "Moon",
+    "rulerRelation": "Neutral",
+    "state": "REVERSING",
+    "confidence": "LOW",
+    "score": -2,
+    "obstruction": "Mars",
+    "reversal": "POSSIBLE",
+    "timing": {
+      "minDays": 135,
+      "maxDays": 225
+    },
+    "direction": "South",
+    "afflictedDirection": "West",
+    "controllerProfile": "Receptive",
+    "factors": [
+      "Mirrikh casts its gaze on the 7th Ghar — friction on the matter.",
+      "Mushtari casts its gaze on the 7th Ghar — protection and expansion.",
+      "Zuhal weighs on the 11th Ghar — fulfilment itself is obstructed.",
+      "Zuhal is retrograde — decisions already taken on this matter are liable to be reopened.",
+      "Benefic and malefic witnesses both fall on the matter — the reading carries genuine conflict."
+    ]
+  },
+  "diagnosis": {
+    "outcome": "DECLINING",
+    "primaryPattern": "CONFLICT",
+    "secondaryPatterns": [
+      "HASTE",
+      "INSTABILITY",
+      "NEEDS_DECISIVE_ACTION"
+    ],
+    "timingPosture": "WAIT_LONG",
+    "confidence": 0.4,
+    "interventionNeeded": true,
+    "obstructingAgent": "Mars",
+    "qType": "business",
+    "targetHouse": 7,
+    "supportingHouses": [
+      7,
+      10,
+      11
+    ],
+    "obstructingHouses": [
+      6,
+      8,
+      12
+    ],
+    "timing": {
+      "minDays": 135,
+      "maxDays": 225
+    },
+    "rationale": [
+      "Watch state REVERSING reads as DECLINING.",
+      "Obstruction by Mars indicates CONFLICT + HASTE."
+    ]
+  },
+  "remedyProtocol": {
+    "interventionRequired": true,
+    "guidance": null,
+    "rationale": [
+      "Safety filter: escalated to Consult an Independent Financial Adviser.",
+      "32 of 32 remedies eligible by tradition.",
+      "Selected 3 intervention(s) across 3 categor(ies)."
+    ],
+    "stepIds": [
+      "practical_financial",
+      "astro_mars_restraint",
+      "behavioral_defer_irreversible",
+      "contemplative_silence"
+    ]
+  },
+  "narration": null
+}

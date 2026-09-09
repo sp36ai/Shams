@@ -1,0 +1,12 @@
+{
+  "id": "timing-fabrication",
+  "description": "Narration invents a specific calendar date the engine never produced (the engine only ever produces a day-count range or null).",
+  "expectedCodes": ["TIMING_FABRICATION"],
+  "narration": {
+    "rkp_finding": "The chart shows an obstruction to this matter.",
+    "interpretation": "This is a matter still finding its shape.",
+    "recommended_approach": "Expect resolution by the 22nd of September, a Tuesday.",
+    "why_this_remedy": null,
+    "signature": "The path is not yet clear."
+  }
+}

@@ -1,0 +1,93 @@
+{
+  "id": "timing-04",
+  "coverageLabel": "timing-sensitive",
+  "input": {
+    "question": "Will I get the job I interviewed for?",
+    "utcInstant": "2026-08-15T16:04:00.000Z",
+    "utcOffsetMinutes": 330,
+    "latLon": "NOT APPLICABLE — watch-frame judgment does not consume location; see note above."
+  },
+  "derived": {
+    "localMoment": "2026-08-15T21:34:00+05:30",
+    "normalizedQuestionType": "career",
+    "chartFingerprint": "775da7c5f54661cca58ab1451c533fc43f1f497149bd9e5e1dd1ec54a48f741d"
+  },
+  "verdict": {
+    "qType": "career",
+    "targetHouse": 10,
+    "targetSignName": "Burj Sartan",
+    "targetRuler": "Moon",
+    "targetRulerName": "Qamar",
+    "fulfilmentHouse": 11,
+    "lagnaRuler": "Venus",
+    "rulerRelation": "Enemy",
+    "state": "BLOCKED",
+    "confidence": "MODERATE",
+    "score": -5,
+    "obstruction": "MoonDisagreement",
+    "reversal": "NONE",
+    "timing": {
+      "minDays": 3,
+      "maxDays": 7
+    },
+    "direction": "North",
+    "afflictedDirection": null,
+    "controllerProfile": "Receptive",
+    "factors": [
+      "Zuhrah (your own ruler) counts Qamar an enemy — expect rigidity and refusal to adjust.",
+      "Mushtari sits in the 10th Ghar — protection and expansion.",
+      "Dhanab al-Tinnin weighs on the 11th Ghar — fulfilment itself is obstructed.",
+      "Ras al-Tinnin weighs on the 11th Ghar — fulfilment itself is obstructed.",
+      "Qamar has landed in the 12th Ghar, a denying house for this question.",
+      "Qamar occupies a denying Ghar for this question — the mind behind the question is not settled, which clouds the reading."
+    ]
+  },
+  "diagnosis": {
+    "outcome": "UNFAVOURABLE",
+    "primaryPattern": "UNCERTAINTY",
+    "secondaryPatterns": [
+      "OBSTRUCTION",
+      "NEEDS_PATIENCE",
+      "EXTERNAL_OPPOSITION"
+    ],
+    "timingPosture": "WAIT",
+    "confidence": 0.6,
+    "interventionNeeded": true,
+    "obstructingAgent": "MoonDisagreement",
+    "qType": "career",
+    "targetHouse": 10,
+    "supportingHouses": [
+      6,
+      10,
+      11
+    ],
+    "obstructingHouses": [
+      5,
+      8,
+      12
+    ],
+    "timing": {
+      "minDays": 3,
+      "maxDays": 7
+    },
+    "rationale": [
+      "Watch state BLOCKED reads as UNFAVOURABLE.",
+      "Obstruction by MoonDisagreement indicates UNCERTAINTY.",
+      "The querent's ruler regards the ruler of the matter as an enemy."
+    ]
+  },
+  "remedyProtocol": {
+    "interventionRequired": true,
+    "guidance": null,
+    "rationale": [
+      "32 of 32 remedies eligible by tradition.",
+      "Selected 3 intervention(s) across 3 categor(ies)."
+    ],
+    "stepIds": [
+      "astro_saturn_discipline",
+      "contemplative_silence",
+      "devotional_dua_ease"
+    ]
+  },
+  "narration": null
+}

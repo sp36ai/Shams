@@ -1,0 +1,13 @@
+{
+  "id": "certainty-inflation",
+  "description": "Narration asserts unconditional certainty on a reading the engine itself diagnosed as UNCERTAIN at low confidence. Uses the SECONDARY fixture contract (see adversarialNarration.test.ts), not the shared PRIMARY one.",
+  "expectedCodes": ["UNSUPPORTED_CERTAINTY"],
+  "contract": "secondary",
+  "narration": {
+    "rkp_finding": "This is guaranteed, without any doubt.",
+    "interpretation": "There is no question about the outcome.",
+    "recommended_approach": "Proceed with full confidence.",
+    "why_this_remedy": null,
+    "signature": "The path is certain."
+  }
+}

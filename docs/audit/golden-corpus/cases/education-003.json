@@ -1,0 +1,78 @@
+{
+  "id": "education-003",
+  "coverageLabel": "education",
+  "input": {
+    "question": "Should I pursue a higher degree abroad?",
+    "utcInstant": "2026-08-15T11:13:00.000Z",
+    "utcOffsetMinutes": 330,
+    "latLon": "NOT APPLICABLE — watch-frame judgment does not consume location; see note above."
+  },
+  "derived": {
+    "localMoment": "2026-08-15T16:43:00+05:30",
+    "normalizedQuestionType": "travel",
+    "chartFingerprint": "6ecf73d530fbecba687ddecbc884473b6f393b4b9389908484a7cd058ccdaa73"
+  },
+  "verdict": {
+    "qType": "travel",
+    "targetHouse": 9,
+    "targetSignName": "Burj Asad",
+    "targetRuler": "Sun",
+    "targetRulerName": "Shams",
+    "fulfilmentHouse": 11,
+    "lagnaRuler": "Jupiter",
+    "rulerRelation": "Friend",
+    "state": "UNFORMED",
+    "confidence": "HIGH",
+    "score": -4,
+    "obstruction": "Dhanab",
+    "reversal": "NONE",
+    "timing": null,
+    "direction": "East",
+    "afflictedDirection": "East",
+    "controllerProfile": "Assertive",
+    "factors": [
+      "Mushtari (your own ruler) counts Shams a friend — the matter is disposed to cooperate with you.",
+      "Dhanab al-Tinnin sits in the 9th Ghar — friction on the matter.",
+      "Ras al-Tinnin casts its gaze on the 9th Ghar — friction on the matter.",
+      "Ras al-Tinnin weighs on the 11th Ghar — fulfilment itself is obstructed."
+    ]
+  },
+  "diagnosis": {
+    "outcome": "UNCERTAIN",
+    "primaryPattern": "UNCERTAINTY",
+    "secondaryPatterns": [
+      "INSTABILITY"
+    ],
+    "timingPosture": "UNKNOWN",
+    "confidence": 0.8,
+    "interventionNeeded": true,
+    "obstructingAgent": "Dhanab",
+    "qType": "travel",
+    "targetHouse": 9,
+    "supportingHouses": [
+      3,
+      9,
+      12
+    ],
+    "obstructingHouses": [],
+    "timing": null,
+    "rationale": [
+      "Watch state UNFORMED reads as UNCERTAIN.",
+      "Obstruction by Dhanab indicates UNCERTAINTY + INSTABILITY."
+    ]
+  },
+  "remedyProtocol": {
+    "interventionRequired": true,
+    "guidance": null,
+    "rationale": [
+      "32 of 32 remedies eligible by tradition.",
+      "Selected 3 intervention(s) across 3 categor(ies)."
+    ],
+    "stepIds": [
+      "astro_moon_settling",
+      "devotional_dhikr_steadiness",
+      "behavioral_second_opinion"
+    ]
+  },
+  "narration": null
+}

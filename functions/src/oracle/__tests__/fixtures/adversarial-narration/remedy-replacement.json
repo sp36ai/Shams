@@ -1,0 +1,12 @@
+{
+  "id": "remedy-replacement",
+  "description": "Narration proposes a real remedy-library practice this reading did not select, as an outright substitute.",
+  "expectedCodes": ["REMEDY_SUBSTITUTION", "REMEDY_ADDITION"],
+  "narration": {
+    "rkp_finding": "The chart shows an obstruction to this matter.",
+    "interpretation": "This is a matter still finding its shape.",
+    "recommended_approach": "Patience is the counsel here.",
+    "why_this_remedy": "Instead of this remedy, the Deliberate Pause practice would serve you better.",
+    "signature": "The path is not yet clear."
+  }
+}

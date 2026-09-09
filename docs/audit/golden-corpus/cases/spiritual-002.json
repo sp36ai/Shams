@@ -1,0 +1,82 @@
+{
+  "id": "spiritual-002",
+  "coverageLabel": "spiritual",
+  "input": {
+    "question": "Will my dua for guidance be answered?",
+    "utcInstant": "2026-08-15T14:19:00.000Z",
+    "utcOffsetMinutes": 0,
+    "latLon": "NOT APPLICABLE — watch-frame judgment does not consume location; see note above."
+  },
+  "derived": {
+    "localMoment": "2026-08-15T14:19:00+00:00",
+    "normalizedQuestionType": "general",
+    "chartFingerprint": "9cc603fa0ea70429431176aaab652af638b82ce4838136f9a000b2f44a33174d"
+  },
+  "verdict": {
+    "qType": "general",
+    "targetHouse": 1,
+    "targetSignName": "Burj Sartan",
+    "targetRuler": "Moon",
+    "targetRulerName": "Qamar",
+    "fulfilmentHouse": 11,
+    "lagnaRuler": "Moon",
+    "rulerRelation": "Friend",
+    "state": "MOVING",
+    "confidence": "MODERATE",
+    "score": 2,
+    "obstruction": "None",
+    "reversal": "NONE",
+    "timing": {
+      "minDays": 3,
+      "maxDays": 7
+    },
+    "direction": "North",
+    "afflictedDirection": null,
+    "controllerProfile": "Receptive",
+    "factors": [
+      "Qamar (your own ruler) counts Qamar a friend — the matter is disposed to cooperate with you.",
+      "Mushtari sits in the 1st Ghar — protection and expansion.",
+      "Zuhal weighs on the 11th Ghar — fulfilment itself is obstructed."
+    ]
+  },
+  "diagnosis": {
+    "outcome": "ESCALATING",
+    "primaryPattern": "NEEDS_DECISIVE_ACTION",
+    "secondaryPatterns": [],
+    "timingPosture": "ACT_SOON",
+    "confidence": 0.6,
+    "interventionNeeded": true,
+    "obstructingAgent": null,
+    "qType": "general",
+    "targetHouse": 1,
+    "supportingHouses": [
+      1,
+      11
+    ],
+    "obstructingHouses": [
+      8,
+      12
+    ],
+    "timing": {
+      "minDays": 3,
+      "maxDays": 7
+    },
+    "rationale": [
+      "Watch state MOVING reads as ESCALATING."
+    ]
+  },
+  "remedyProtocol": {
+    "interventionRequired": true,
+    "guidance": null,
+    "rationale": [
+      "32 of 32 remedies eligible by tradition.",
+      "Selected 3 intervention(s) across 3 categor(ies)."
+    ],
+    "stepIds": [
+      "astro_favourable_window",
+      "behavioral_commit",
+      "contemplative_decision_review"
+    ]
+  },
+  "narration": null
+}

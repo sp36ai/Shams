@@ -14,6 +14,7 @@ import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import { FieldValue } from 'firebase-admin/firestore';
 import { db } from '../utils/admin';
 import { verifyAuth } from '../middleware/auth';
+import { enforceRateLimit } from '../middleware/rateLimit';
 import { FUNCTION_OPTS, TRIAL_DURATION_DAYS } from '../config';
 import { measure } from '../middleware/telemetry';
 import type { TrialDoc } from '../types';
@@ -30,6 +31,8 @@ export const activateTrial = onCall(
     const { userId } = verifyAuth(request);
 
     return measure<ActivateTrialResponse>('activateTrial', userId, async () => {
+      await enforceRateLimit(userId);
+
       const trialRef = db.collection('trials').doc(userId);
 
       return db.runTransaction(async tx => {
