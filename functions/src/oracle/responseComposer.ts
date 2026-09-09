@@ -581,8 +581,18 @@ async function narrate(ctx: NarrationContext): Promise<NarrationFields | null> {
       signature: parsed.signature,
     };
 
-    // The system prompt guard is the primary defense; additional post-generation
-    // validation was removed when the KP engine was deleted (PR #92).
+    // narrate() only fetches and shapes the model's draft — it does not
+    // decide whether to trust it. The system prompt guard is the first
+    // line of defense; independent, deterministic post-generation
+    // validation runs one call up, in composeWatchOracleResponse() (PHASE
+    // 4, see narrationValidator.ts), against every field this function
+    // returns. This comment previously (and, on `main`, still does) read
+    // "additional post-generation validation was removed when the KP
+    // engine was deleted (PR #92)" — accurate when written, but stale on
+    // this branch since Phase 4 restored the control here; left uncorrected
+    // it invites exactly the misreading that produced the error corrected
+    // in docs/audit/PHASE_7B_REVIEW.md's dated addendum. See
+    // docs/audit/PHASE_8A_3_REMEDIATION.md.
     return drafted;
   } catch (err) {
     logger.warn('watch oracle narration failed', { err: String(err) });
