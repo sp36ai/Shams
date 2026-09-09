@@ -20,7 +20,7 @@
     "test:watch": "jest --watch --testPathIgnorePatterns=firestore.rules.test.ts --testPathIgnorePatterns=functions/",
     "test:web": "npx serve ./hosting",
     "test:coverage": "jest --coverage --testPathIgnorePatterns=firestore.rules.test.ts --testPathIgnorePatterns=functions/",
-    "test:rules": "firebase emulators:exec --config firebase.test.json --only firestore \"jest firestore.rules.test.ts --testEnvironment node --runInBand\"",
+    "test:rules": "npx --yes firebase-tools@15.29.0 emulators:exec --config firebase.test.json --only firestore \"jest firestore.rules.test.ts --testEnvironment node --runInBand\"",
     "test:e2e": "maestro test .maestro/",
     "test:e2e:single": "maestro test",
     "check:orphans": "npx madge --extensions ts,tsx --ts-config tsconfig.json --orphans src",

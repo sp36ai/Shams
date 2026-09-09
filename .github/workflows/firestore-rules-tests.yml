@@ -26,55 +26,36 @@ permissions:
   contents: read
 
 jobs:
-  rules-validation:
-    name: Validate Security Rules
+  rules-tests:
+    name: Run Security Rules Tests
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repo
         uses: actions/checkout@v4
 
-      - name: Validate Firestore Rules Syntax
-        run: |
-          echo "Validating firestore.rules file..."
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
 
-          # Check file exists
-          if [ ! -f firestore.rules ]; then
-            echo "✗ firestore.rules file not found"
-            exit 1
-          fi
-          echo "✓ firestore.rules file exists"
+      # The Firestore emulator (spawned by `firebase emulators:exec` below)
+      # is a JVM process — it will not start without a JRE on PATH.
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
 
-          # Check basic syntax
-          if grep -q "rules_version = '2'" firestore.rules; then
-            echo "✓ Has rules_version = '2'"
-          else
-            echo "✗ Missing or incorrect rules_version"
-            exit 1
-          fi
+      - name: Install dependencies
+        run: npm ci
 
-          if grep -q "service cloud.firestore" firestore.rules; then
-            echo "✓ Has service cloud.firestore"
-          else
-            echo "✗ Missing service cloud.firestore"
-            exit 1
-          fi
-
-          if grep -q "match /databases/{database}/documents" firestore.rules; then
-            echo "✓ Has database documents matcher"
-          else
-            echo "✗ Missing database documents matcher"
-            exit 1
-          fi
-
-          # Check for mismatched braces
-          open_braces=$(grep -o '{' firestore.rules | wc -l)
-          close_braces=$(grep -o '}' firestore.rules | wc -l)
-          if [ "$open_braces" -eq "$close_braces" ]; then
-            echo "✓ Brace count balanced ($open_braces opening, $close_braces closing)"
-          else
-            echo "✗ Mismatched braces ($open_braces opening, $close_braces closing)"
-            exit 1
-          fi
-
-          echo ""
-          echo "✅ Firestore rules validation passed"
+      # PHASE 6C-1: runs the real behavioral Firestore Rules test suite
+      # (firestore.rules.test.ts, @firebase/rules-unit-testing) against a
+      # live local Firestore emulator, via the repo's own `test:rules`
+      # script — the same command a contributor runs locally. This job
+      # previously only ran a static syntax/brace-balance check on
+      # firestore.rules and never executed the behavioral suite at all;
+      # see docs/audit/PHASE_6C_1_REMEDIATION.md.
+      - name: Run Firestore Rules test suite (emulator + jest)
+        run: npm run test:rules
