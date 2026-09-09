@@ -287,7 +287,7 @@ vi.mock('firebase-functions/v2', () => ({
   logger: { warn: vi.fn(), error: vi.fn(), info: vi.fn(), debug: vi.fn() },
 }));
 
-function grounding(): [ReadingGrounding, ...ReadingGrounding[]] {
+function grounding(contract: ReadingContract | null): [ReadingGrounding, ...ReadingGrounding[]] {
   return [
     {
       label: 'the career reading',
@@ -297,6 +297,7 @@ function grounding(): [ReadingGrounding, ...ReadingGrounding[]] {
       computedAt: '2026-08-15T00:00:00.000Z',
       oracle: null,
       narration: null,
+      contract,
     },
   ];
 }
@@ -321,11 +322,10 @@ describe('PHASE 5F — composeDiscussionReply integration: invalid output never 
   it('a contract-contradicting reply is not returned — composeDiscussionReply() returns null', async () => {
     mockFetchAnswer('Yes, this is guaranteed, absolutely certain to happen.');
     const reply = await composeDiscussionReply({
-      groundings: grounding(),
+      groundings: grounding(primary),
       turns: [],
       message: 'Will it happen soon?',
       replyLang: 'en',
-      contract: primary,
     });
     expect(reply).toBeNull();
   });
@@ -333,11 +333,10 @@ describe('PHASE 5F — composeDiscussionReply integration: invalid output never 
   it('a genuine, contract-consistent reply is returned normally', async () => {
     mockFetchAnswer('The chart still shows delay, not denial — patience remains the guidance.');
     const reply = await composeDiscussionReply({
-      groundings: grounding(),
+      groundings: grounding(primary),
       turns: [],
       message: 'What does the reading say?',
       replyLang: 'en',
-      contract: primary,
     });
     expect(reply).not.toBeNull();
     expect(reply?.answer).toBe(
@@ -348,11 +347,10 @@ describe('PHASE 5F — composeDiscussionReply integration: invalid output never 
   it('a null contract (legacy reading) does not block an otherwise-normal reply', async () => {
     mockFetchAnswer('Yes, this is guaranteed, absolutely certain to happen.');
     const reply = await composeDiscussionReply({
-      groundings: grounding(),
+      groundings: grounding(null),
       turns: [],
       message: 'Will it happen soon?',
       replyLang: 'en',
-      contract: null,
     });
     // Not validated (no contract) — existing pre-5F behavior preserved.
     expect(reply).not.toBeNull();

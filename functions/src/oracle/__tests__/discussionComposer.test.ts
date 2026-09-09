@@ -26,6 +26,10 @@ const GROUNDING: ReadingGrounding = {
   confidence: 0.72,
   computedAt: '2026-08-08T05:43:00.000Z',
   narration: null,
+  // Brief-construction tests below don't exercise validation — see
+  // discussionValidation.test.ts and discussionComparisonValidation.test.ts
+  // for that.
+  contract: null,
   oracle: {
     narration: {
       rkp_finding: 'The house that carries the sale is supported.',

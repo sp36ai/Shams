@@ -58,9 +58,65 @@ import {
  * the seeker's own words and never something the model invents. Used only
  * to distinguish readings from each other when more than one is in a brief;
  * see buildDiscussionBrief's multi-reading branch.
+ *
+ * PHASE 5F-R2: labels for a single call are now assigned together
+ * (`labelsFor` below), not one document at a time, so a repeated category
+ * across two distinct readings in the same brief (e.g. two separate
+ * "finance" readings being compared) can be disambiguated — otherwise
+ * `discussionComposer.ts`'s label-based claim attribution
+ * (`segmentReplyByGrounding`) would see two identical labels and correctly
+ * fall back to anchor-only validation for the whole reply, silently losing
+ * the very comparison-reading coverage this phase adds. This function is
+ * kept as the single-document primitive `labelsFor` calls internally.
  */
 function labelFor(doc: ReadingDoc): string {
   return `the ${doc.category} reading`;
+}
+
+/**
+ * PHASE 5F-R2: assign every reading in this call (anchor first, then each
+ * comparison reading, in the order they will become `groundings`) a label,
+ * appending a numeric suffix — " (2)", " (3)", ... — the second and later
+ * times a category repeats. The anchor is always index 0, so it is always
+ * the FIRST occurrence of its own category and therefore never suffixed;
+ * only a later reading that repeats an already-used category gets one.
+ * Deterministic and order-only — no randomness, no reliance on document
+ * ids or Firestore ordering beyond the order this function is given.
+ *
+ * Exported for direct testing.
+ */
+export function labelsFor(docs: readonly ReadingDoc[]): string[] {
+  const counts = new Map<string, number>();
+  return docs.map(doc => {
+    const base = labelFor(doc);
+    const seen = (counts.get(base) ?? 0) + 1;
+    counts.set(base, seen);
+    return seen === 1 ? base : `${base} (${seen})`;
+  });
+}
+
+/**
+ * PHASE 5F-R2: de-duplicate a caller-supplied list of comparison reading
+ * ids, first occurrence wins, order preserved. Determinism for the
+ * "duplicate comparison ids" case: without this, the same reading document
+ * would be read twice inside the transaction below and appear twice in
+ * `groundings` with an identical label — exactly the ambiguity
+ * `segmentReplyByGrounding()` is built to fall back safely from, but
+ * de-duplicating here means that fallback is never even reached for this
+ * specific, entirely avoidable case.
+ *
+ * Exported for direct testing.
+ */
+export function dedupeIds(ids: readonly string[]): string[] {
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const id of ids) {
+    if (!seen.has(id)) {
+      seen.add(id);
+      out.push(id);
+    }
+  }
+  return out;
 }
 
 /**
@@ -173,7 +229,11 @@ export const discussReading = onCall(
       // context, ownership-checked the same way as the anchor, but never
       // charged a discussion turn of their own: they are not being discussed
       // as their own thread here, they are supporting context for this one.
-      const compareIds = (input.compareReadingIds ?? []).filter(id => id !== input.readingId);
+      // PHASE 5F-R2: de-duplicated — see dedupeIds's own doc comment for why
+      // a repeated id must not silently produce two identical groundings.
+      const compareIds = dedupeIds(
+        (input.compareReadingIds ?? []).filter(id => id !== input.readingId),
+      );
       const compareRefs = compareIds.map(id => db.collection('readings').doc(id));
 
       let doc: ReadingDoc;
@@ -228,8 +288,17 @@ export const discussReading = onCall(
         throw new HttpsError('internal', 'Could not open that reading.');
       }
 
-      const toGrounding = (d: ReadingDoc): ReadingGrounding => ({
-        label: labelFor(d),
+      // PHASE 5F-R2: every reading in this call — anchor first, comparisons
+      // after, same order groundings will use — gets both a disambiguated
+      // label (labelsFor) and its OWN persisted contract (asReadingContract),
+      // not just the anchor. See discussionComposer.ts's header for why
+      // this closes the comparison-reading validation gap without a second
+      // validator.
+      const allDocs = [doc, ...compareDocs];
+      const labels = labelsFor(allDocs);
+
+      const toGrounding = (d: ReadingDoc, label: string): ReadingGrounding => ({
+        label,
         question: d.question,
         verdict: d.verdict,
         confidence: d.confidence,
@@ -239,11 +308,12 @@ export const discussReading = onCall(
             : new Date().toISOString(),
         oracle: asComposition(d.watchOracle),
         narration: d.narration?.[input.lang] ?? d.narration?.en ?? null,
+        contract: asReadingContract(d.readingContract),
       });
 
       const groundings: [ReadingGrounding, ...ReadingGrounding[]] = [
-        toGrounding(doc),
-        ...compareDocs.map(toGrounding),
+        toGrounding(allDocs[0]!, labels[0]!),
+        ...allDocs.slice(1).map((d, i) => toGrounding(d, labels[i + 1]!)),
       ];
 
       const turns: DiscussionTurn[] = (input.turns ?? []).map(turn => ({
@@ -251,20 +321,11 @@ export const discussReading = onCall(
         text: turn.text,
       }));
 
-      // PHASE 5F: the anchor reading's own ground truth, if this reading
-      // was cast after this phase shipped and carries one — see
-      // asReadingContract's and DiscussionInput.contract's own doc
-      // comments for why a comparison reading's contract is not also
-      // loaded here (only the anchor is validated against) and why a
-      // missing contract is not itself an error.
-      const contract = asReadingContract(doc.readingContract);
-
       const reply = await composeDiscussionReply({
         groundings,
         turns,
         message: input.message,
         replyLang: input.lang,
-        contract,
       });
 
       if (reply === null) {
