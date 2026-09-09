@@ -14,6 +14,42 @@
  *   4. Update /quotas/{userId}.plan in Firestore
  *   5. Set Firebase Auth custom claims ({ plan, planExpiry })
  *   6. Write audit log
+ *
+ * PHASE 6A-R1 — trust model, stated precisely (see
+ * docs/audit/PHASE_6A_R1_OWNERSHIP_ENTITLEMENT_HARDENING.md §B for the
+ * full finding and remediation record):
+ *
+ * The HMAC signature above proves ONE thing: this payload was produced
+ * by Razorpay's own servers, using the shared webhook secret. It does
+ * NOT prove that `notes.userId` — the value that actually receives the
+ * plan upgrade — names the account that made the payment, or any
+ * account at all. `notes.userId` is set wherever the Razorpay order was
+ * originally created, and this repository contains NO order-creation
+ * code (`docs/audit/PHASE_6A_F1_OWNERSHIP_INVESTIGATION.md` §5
+ * confirmed this by exhaustive search). A genuine payer→order→uid
+ * binding, verified server-side at order-creation time the way
+ * `verifyGooglePlayPurchase` binds a purchase token to its redeeming
+ * account (`payments/googlePlay.ts`), would require that missing
+ * integration piece — inventing one here, without the code that would
+ * make it true, would misrepresent what this endpoint actually
+ * verifies. This function therefore does NOT claim payer identity is
+ * cryptographically bound to `notes.userId`; it only guarantees the
+ * three things achievable entirely within the code that exists today:
+ *   1. the event genuinely came from Razorpay (HMAC, unchanged);
+ *   2. `notes.userId` and the plan-identifying field are well-formed,
+ *      non-empty strings, not merely truthy values of unknown shape
+ *      (`extractNonEmptyString()` below — previously a bare `!userId`
+ *      check let a non-string JSON value reach `auth.getUser()`/
+ *      Firestore as an uncontrolled type error, caught only by the
+ *      outer catch-all rather than rejected deliberately);
+ *   3. an entitlement grant aimed at a `notes.userId` with no matching
+ *      Firebase Auth account is recorded as a distinct, higher-signal
+ *      `securityEvents` entry (`razorpay_entitlement_target_unverifiable`),
+ *      not folded into the same generic `payment_razorpay_fail` bucket
+ *      every transient failure already used.
+ * If/when a real order-creation integration exists, binding entitlement
+ * to a verified payer is the next authorized phase's work — not
+ * something this phase invents without it.
  */
 
 import * as crypto from 'crypto';
@@ -139,6 +175,74 @@ function verifyRazorpaySignature(rawBody: Buffer, signature: string): boolean {
     Buffer.from(expected, 'hex'),
     Buffer.from(signature.toLowerCase(), 'hex'),
   );
+}
+
+/**
+ * PHASE 6A-R1: extract a genuinely well-formed, non-empty string from an
+ * arbitrary parsed-JSON value — deliberately NOT trusting the
+ * `Record<string, string>` casts on `notes`/`entity` above, since a cast
+ * is a compile-time promise, not a runtime check. A malformed webhook
+ * payload (a number, an object, an empty string, `null`) previously read
+ * as merely "falsy or not" (`!userId`), which correctly rejected
+ * `undefined`/`""`/`null` but let a non-string truthy value (e.g. a JSON
+ * number or object at that key) flow into `auth.getUser()`/Firestore's
+ * `.doc()` as an uncontrolled type error, caught only by the generic
+ * outer catch rather than rejected deliberately and specifically.
+ *
+ * Exported for direct testing.
+ */
+export function extractNonEmptyString(value: unknown): string | undefined {
+  if (typeof value !== 'string') {
+    return undefined;
+  }
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : undefined;
+}
+
+/**
+ * PHASE 6A-R1: is this webhook-processing failure specifically "the
+ * entitlement target named in `notes.userId` does not exist as a
+ * Firebase Auth account"? Firebase Admin Auth throws with this exact
+ * code from `auth.getUser()` for an unknown uid — see `upgradePlan()`
+ * below. Distinguished from every other failure (a transient Firestore
+ * error, a network blip) because it is the strongest available signal,
+ * within this integration's current trust model (see this file's
+ * header), that the payload's `notes.userId` does not name a real,
+ * verifiable entitlement target — worth its own securityEvents record
+ * rather than the same generic `payment_razorpay_fail` bucket every
+ * other failure already uses.
+ *
+ * Exported for direct testing.
+ */
+export function isUnverifiableEntitlementTarget(err: unknown): boolean {
+  return (
+    typeof err === 'object' &&
+    err !== null &&
+    'code' in err &&
+    (err as { code?: unknown }).code === 'auth/user-not-found'
+  );
+}
+
+/**
+ * PHASE 6A-R1: record the distinct securityEvents entry for
+ * `isUnverifiableEntitlementTarget()` — see this file's header for why
+ * this is worth its own record rather than the generic
+ * `payment_razorpay_fail` audit log every other failure already writes
+ * to (that generic write still happens too, via the outer catch; this
+ * is additive, not a replacement).
+ */
+async function recordUnverifiableEntitlementTarget(
+  userId: string,
+  requestMeta: RequestAuditMeta,
+): Promise<void> {
+  await db.collection('securityEvents').add({
+    type: 'razorpay_entitlement_target_unverifiable',
+    userId,
+    source: requestMeta.source,
+    ipHash: requestMeta.ipHash,
+    userAgent: requestMeta.userAgent,
+    ts: FieldValue.serverTimestamp(),
+  });
 }
 
 async function upgradePlan(
@@ -296,9 +400,10 @@ export const razorpayWebhook = onRequest(
         const entity = payment?.entity as Record<string, unknown> | undefined;
         const notes = entity?.notes as Record<string, string> | undefined;
 
-        const userId = notes?.userId;
-        const razorPlan = notes?.planId ?? (entity?.description as string | undefined);
-        const paymentId = entity?.id as string | undefined;
+        const userId = extractNonEmptyString(notes?.userId);
+        const razorPlan =
+          extractNonEmptyString(notes?.planId) ?? extractNonEmptyString(entity?.description);
+        const paymentId = extractNonEmptyString(entity?.id);
 
         if (!userId || !razorPlan) {
           logger.warn('razorpay payment.captured: missing userId or planId in notes', {
@@ -341,6 +446,9 @@ export const razorpayWebhook = onRequest(
           if (paymentId) {
             await releaseWebhookEvent(`payment.captured:${paymentId}`);
           }
+          if (isUnverifiableEntitlementTarget(err)) {
+            await recordUnverifiableEntitlementTarget(userId, requestMeta);
+          }
           throw err;
         }
       } else if (eventType === 'subscription.activated') {
@@ -350,9 +458,9 @@ export const razorpayWebhook = onRequest(
         const entity = sub?.entity as Record<string, unknown> | undefined;
         const notes = entity?.notes as Record<string, string> | undefined;
 
-        const userId = notes?.userId;
-        const razorPlan = entity?.plan_id as string | undefined;
-        const subscriptionId = entity?.id as string | undefined;
+        const userId = extractNonEmptyString(notes?.userId);
+        const razorPlan = extractNonEmptyString(entity?.plan_id);
+        const subscriptionId = extractNonEmptyString(entity?.id);
 
         if (!userId || !razorPlan || !subscriptionId) {
           logger.warn('razorpay subscription.activated: missing userId, plan_id, or entity id', {
@@ -383,6 +491,9 @@ export const razorpayWebhook = onRequest(
             await upgradePlan(userId, plan, requestMeta);
           } catch (err) {
             await releaseWebhookEvent(claimKey);
+            if (isUnverifiableEntitlementTarget(err)) {
+              await recordUnverifiableEntitlementTarget(userId, requestMeta);
+            }
             throw err;
           }
         }
