@@ -105,3 +105,28 @@ authorized steps, per the sequence already agreed.
 | 5I | 🔒 implementation + review PASS — closure record not yet authorized |
 
 Awaiting the separate Phase 5I formal closure authorization next.
+
+---
+
+## Addendum — 2026-09-09: comparison-reading residual since resolved
+
+§2's residual list, restated from `PHASE_5E_CLOSURE.md`/`PHASE_5F_CLOSURE.md`/
+`PHASE_5G_CLOSURE.md` as they stood at this document's own commit
+(`528211c`), included:
+
+> Discussion-reply validation covers only the anchor reading, not
+> `compareReadingIds` comparison readings (5F).
+
+This was accurate at the time. It is **no longer accurate**: Phase 5F-R2
+(`docs/audit/PHASE_5F_R2_HARDENING.md` / `_REVIEW.md` / `_CLOSURE.md`,
+implementation `a33b183`, independent review PASS `a1510f9`, formal
+closure `5b44018`) closed this specific item, extending validation to
+every comparison reading a discussion reply names, independently
+authoritative against its own persisted `ReadingContract`. This addendum
+does not alter §2's original text (an accurate record of this document's
+own commit) and does not reopen Phase 5H — it corrects a reader's
+understanding of the item's *current* status, per this project's
+established append-only audit convention. See
+`docs/audit/PHASE_5_FINAL_RESIDUAL_GATE.md` §6 for the discovery of this
+staleness and `docs/audit/PHASE_5_CLOSURE.md` for the fully reconciled,
+current disposition of every Phase 5 residual.
