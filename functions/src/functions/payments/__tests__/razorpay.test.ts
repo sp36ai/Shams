@@ -23,13 +23,20 @@ const WEBHOOK_SECRET = 'test-webhook-secret';
 const securityEvents: Array<Record<string, unknown>> = [];
 const auditLogs: Array<Record<string, unknown>> = [];
 const quotaWrites: Array<{ userId: string; data: Record<string, unknown> }> = [];
+const claimsWrites: Array<{ userId: string; claims: Record<string, unknown> }> = [];
 const claimedEvents = new Set<string>();
 const existingAuthUsers = new Set<string>(['real-uid-1']);
+// Pre-existing custom claims on real-uid-1, to prove they survive a merge
+// (admin: true must never be wiped by an entitlement update).
+const existingClaimsByUid = new Map<string, Record<string, unknown>>([
+  ['real-uid-1', { admin: true }],
+]);
 
 function reset(): void {
   securityEvents.length = 0;
   auditLogs.length = 0;
   quotaWrites.length = 0;
+  claimsWrites.length = 0;
   claimedEvents.clear();
 }
 
@@ -100,9 +107,12 @@ vi.mock('../../../utils/admin', () => ({
         err.code = 'auth/user-not-found';
         return Promise.reject(err);
       }
-      return Promise.resolve({ customClaims: {} });
+      return Promise.resolve({ customClaims: existingClaimsByUid.get(uid) ?? {} });
     },
-    setCustomUserClaims: () => Promise.resolve(undefined),
+    setCustomUserClaims: (uid: string, claims: Record<string, unknown>) => {
+      claimsWrites.push({ userId: uid, claims });
+      return Promise.resolve(undefined);
+    },
   },
   FieldValue: { serverTimestamp: () => 'SERVER_TIMESTAMP' },
 }));
@@ -238,29 +248,25 @@ describe('PHASE 6A-R1 — razorpayWebhook fail-safe boundary (end to end)', () =
     expect(quotaWrites).toHaveLength(0);
   });
 
-  it('a well-formed but nonexistent uid is recorded as a distinct securityEvent — KNOWN OPEN GAP: the quota write still happens first', async () => {
-    // PHASE 6A-R1 HARD-STOP (reported, not remediated — see
-    // docs/audit/PHASE_6A_R1_OWNERSHIP_ENTITLEMENT_HARDENING.md §C):
-    // upgradePlan() writes /quotas/{userId} BEFORE calling
-    // auth.getUser(userId) to verify the uid exists at all. This test
-    // pins that CURRENT, NOT-YET-FIXED behavior exactly as found —
-    // discovered by this very test during 6A-R1's own development — so
-    // a future fix changes this assertion, not silently regresses past
-    // an unnoticed one. This is not treated as safe; it is the open
-    // finding itself, documented in the permanent suite per this
-    // project's own evidence-over-assumption discipline.
+  it('a well-formed but nonexistent uid produces ZERO entitlement mutation — the §C hard-stop, now closed', async () => {
+    // PHASE 6A-R1 continuation (closes the §C hard-stop reported in
+    // docs/audit/PHASE_6A_R1_OWNERSHIP_ENTITLEMENT_HARDENING.md):
+    // upgradePlan() previously wrote /quotas/{userId} BEFORE calling
+    // auth.getUser(userId) to verify the uid exists at all — a
+    // nonexistent uid still received an orphaned Firestore write. This
+    // test proves the corrected ordering: auth.getUser() runs first,
+    // throws for a nonexistent uid, and NEITHER the Firestore quota
+    // document NOR the Auth custom claim is ever touched.
     const { razorpayWebhook } = await import('../razorpay');
     const { req, res } = fakeReqRes(paymentCapturedPayload({ userId: 'ghost-uid-does-not-exist' }));
     await razorpayWebhook(req as never, res as never);
 
     expect(res.statusCode).toBe(200); // still acknowledged — Razorpay must not retry forever
-    // KNOWN GAP, not the intended final behavior: the Firestore quota
-    // write already happened before auth.getUser() rejected the uid.
-    expect(quotaWrites).toHaveLength(1);
-    expect(quotaWrites[0]?.userId).toBe('ghost-uid-does-not-exist');
-    // What DID get fixed in this phase: the failure is now recorded as
-    // a distinct, higher-signal security event, not folded into the
-    // same generic bucket as a transient error.
+    // The fix: zero entitlement mutation of any kind for an unverified uid.
+    expect(quotaWrites).toHaveLength(0);
+    expect(claimsWrites).toHaveLength(0);
+    // The failure is recorded as a distinct, higher-signal security event,
+    // not folded into the same generic bucket as a transient error.
     expect(
       securityEvents.some(
         e =>
@@ -272,6 +278,34 @@ describe('PHASE 6A-R1 — razorpayWebhook fail-safe boundary (end to end)', () =
     expect(auditLogs.some(a => a.action === 'payment_razorpay_fail')).toBe(true);
   });
 
+  it('the same nonexistent-uid guarantee holds for subscription.activated, not only payment.captured', async () => {
+    const { razorpayWebhook } = await import('../razorpay');
+    const { req, res } = fakeReqRes({
+      event: 'subscription.activated',
+      payload: {
+        subscription: {
+          entity: {
+            id: 'sub_test_ghost',
+            plan_id: 'plan_mureed_monthly',
+            notes: { userId: 'ghost-uid-does-not-exist' },
+          },
+        },
+      },
+    });
+    await razorpayWebhook(req as never, res as never);
+
+    expect(res.statusCode).toBe(200);
+    expect(quotaWrites).toHaveLength(0);
+    expect(claimsWrites).toHaveLength(0);
+    expect(
+      securityEvents.some(
+        e =>
+          e.type === 'razorpay_entitlement_target_unverifiable' &&
+          e.userId === 'ghost-uid-does-not-exist',
+      ),
+    ).toBe(true);
+  });
+
   it('a genuine, well-formed, existing uid still receives its entitlement — no regression', async () => {
     const { razorpayWebhook } = await import('../razorpay');
     const { req, res } = fakeReqRes(paymentCapturedPayload({ userId: 'real-uid-1' }));
@@ -281,7 +315,60 @@ describe('PHASE 6A-R1 — razorpayWebhook fail-safe boundary (end to end)', () =
     expect(quotaWrites).toHaveLength(1);
     expect(quotaWrites[0]?.userId).toBe('real-uid-1');
     expect(quotaWrites[0]?.data.plan).toBe('mureed');
+    // Existing plan/expiry write shape is unchanged by the reorder.
+    expect(quotaWrites[0]?.data.planExpiry).toEqual(expect.any(String));
     expect(securityEvents).toHaveLength(0);
+  });
+
+  it('existing custom claims (e.g. admin: true) survive the merge — the reorder did not change claim semantics', async () => {
+    const { razorpayWebhook } = await import('../razorpay');
+    const { req, res } = fakeReqRes(paymentCapturedPayload({ userId: 'real-uid-1' }));
+    await razorpayWebhook(req as never, res as never);
+
+    expect(claimsWrites).toHaveLength(1);
+    expect(claimsWrites[0]?.userId).toBe('real-uid-1');
+    expect(claimsWrites[0]?.claims).toMatchObject({ admin: true, plan: 'mureed' });
+    expect(claimsWrites[0]?.claims.planExpiry).toEqual(expect.any(String));
+  });
+
+  it('subscription.activated exercises the same corrected ordering for a genuine, existing uid', async () => {
+    const { razorpayWebhook } = await import('../razorpay');
+    const { req, res } = fakeReqRes({
+      event: 'subscription.activated',
+      payload: {
+        subscription: {
+          entity: {
+            id: 'sub_test_real',
+            plan_id: 'plan_khass_annual',
+            notes: { userId: 'real-uid-1' },
+          },
+        },
+      },
+    });
+    await razorpayWebhook(req as never, res as never);
+
+    expect(res.statusCode).toBe(200);
+    expect(quotaWrites).toHaveLength(1);
+    expect(quotaWrites[0]?.data.plan).toBe('khass');
+    expect(claimsWrites).toHaveLength(1);
+    expect(claimsWrites[0]?.claims).toMatchObject({ admin: true, plan: 'khass' });
+  });
+
+  it('idempotency/replay behavior is unchanged — a duplicate payment.captured event grants entitlement only once', async () => {
+    const { razorpayWebhook } = await import('../razorpay');
+    const payload = paymentCapturedPayload({ userId: 'real-uid-1' });
+
+    const first = fakeReqRes(payload);
+    await razorpayWebhook(first.req as never, first.res as never);
+    const second = fakeReqRes(payload);
+    await razorpayWebhook(second.req as never, second.res as never);
+
+    expect(first.res.statusCode).toBe(200);
+    expect(second.res.statusCode).toBe(200);
+    // Same paymentId ("pay_test_1") both times — claimWebhookEvent's
+    // existing dedup must still suppress the second write.
+    expect(quotaWrites).toHaveLength(1);
+    expect(claimsWrites).toHaveLength(1);
   });
 
   it('an invalid HMAC signature is still rejected outright — untouched by this phase', async () => {

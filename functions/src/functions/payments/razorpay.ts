@@ -254,7 +254,22 @@ async function upgradePlan(
   const durationDays = PLAN_DURATION_DAYS[plan];
   const expiresAt = new Date(Date.now() + durationDays * 86_400_000);
 
-  // Firestore update (authoritative for quota checks)
+  // PHASE 6A-R1 (continuation — the §C hard-stop): verify the target
+  // identity FIRST. Previously the Firestore quota write below ran
+  // before this call, so a well-formed but nonexistent uid still left
+  // an orphaned /quotas/{userId} entitlement document even though
+  // auth.getUser() was about to reject it — the exact "entitlement
+  // persisted before the identity receiving it was verified" defect
+  // docs/audit/PHASE_6A_R1_OWNERSHIP_ENTITLEMENT_HARDENING.md §C
+  // reported. auth.getUser() throwing (caught by this function's own
+  // caller — isUnverifiableEntitlementTarget() there recognizes exactly
+  // this) now happens before ANY mutation, Firestore or Auth, so a
+  // nonexistent uid produces zero entitlement mutation of any kind.
+  const existingUser = await auth.getUser(userId);
+  const currentClaims = existingUser.customClaims ?? {};
+
+  // Firestore update (authoritative for quota checks) — only after the
+  // identity above is confirmed real.
   await db.collection('quotas').doc(userId).set(
     {
       plan,
@@ -265,8 +280,6 @@ async function upgradePlan(
   );
 
   // Merge into existing claims — do NOT replace (would wipe admin: true, etc.)
-  const existingUser = await auth.getUser(userId);
-  const currentClaims = existingUser.customClaims ?? {};
   await auth.setCustomUserClaims(userId, {
     ...currentClaims,
     plan,

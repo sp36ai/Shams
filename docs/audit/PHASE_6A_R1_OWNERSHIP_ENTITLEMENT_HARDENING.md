@@ -119,7 +119,20 @@ webhook-invocation tests (real HMAC signing, the real exported
 first test file this callable has ever had (its absence is itself
 recorded here, not silently corrected into "always existed").
 
-## C. Hard-stop — new finding, reported, not remediated
+## C. Hard-stop — discovered, then remediated under a continuation authorization
+
+This section is preserved in two parts, in the order events actually
+happened, per this project's append-only audit convention: **C.1** is
+the original discovery, exactly as first reported (this document's own
+prior committed text, unmodified) — at that point genuinely "reported,
+not remediated." **C.2**, added afterward under a separate, explicit
+continuation authorization ("6A-R1 continuation — Entitlement
+Write-Ordering Hardening"), records the fix. Do not read C.1 as
+describing the code's current behavior — C.2 supersedes it; C.1 is kept
+verbatim as the historical record of what was found and why it was not
+fixed in the same pass it was discovered in.
+
+### C.1 — Original discovery (historical; superseded by C.2 below)
 
 While developing the required end-to-end Razorpay boundary tests, one of
 them (exercising a well-formed but nonexistent `notes.userId`) caught a
@@ -185,13 +198,106 @@ first; write `/quotas/{userId}` only after that succeeds) is the shape
 such a fix would likely take, not prescribed further here since scoping
 it is the next authorization's decision.
 
-## D. Regression results (full matrix, re-run fresh)
+### C.2 — Remediation (this continuation)
+
+Authorized directly: *"fold it into the same 6A-R1 remediation... the
+critical invariant is now explicit: No server-side entitlement may be
+persisted until the identity receiving that entitlement has been
+verified."*
+
+**The fix — before/after, exact:**
+
+```diff
+   const durationDays = PLAN_DURATION_DAYS[plan];
+   const expiresAt = new Date(Date.now() + durationDays * 86_400_000);
+
+-  // Firestore update (authoritative for quota checks)
+-  await db.collection('quotas').doc(userId).set(
+-    { plan, planExpiry: expiresAt.toISOString(), updatedAt: FieldValue.serverTimestamp() },
+-    { merge: true },
+-  );
+-
+-  // Merge into existing claims — do NOT replace (would wipe admin: true, etc.)
+-  const existingUser = await auth.getUser(userId);
+-  const currentClaims = existingUser.customClaims ?? {};
+-  await auth.setCustomUserClaims(userId, { ...currentClaims, plan, planExpiry: expiresAt.toISOString() });
++  // Verify the target identity FIRST — see this file's own header.
++  const existingUser = await auth.getUser(userId);
++  const currentClaims = existingUser.customClaims ?? {};
++
++  // Firestore update (authoritative for quota checks) — only after the
++  // identity above is confirmed real.
++  await db.collection('quotas').doc(userId).set(
++    { plan, planExpiry: expiresAt.toISOString(), updatedAt: FieldValue.serverTimestamp() },
++    { merge: true },
++  );
++
++  // Merge into existing claims — do NOT replace (would wipe admin: true, etc.)
++  await auth.setCustomUserClaims(userId, { ...currentClaims, plan, planExpiry: expiresAt.toISOString() });
+```
+
+`auth.getUser(userId)` now runs before either mutation. When it throws
+(`auth/user-not-found`), the caller's existing catch block —
+`isUnverifiableEntitlementTarget(err)` — recognizes exactly this error
+and records the distinct `securityEvents` entry (§B.1); neither the
+Firestore quota document nor the Auth custom claim is ever touched.
+Custom-claim merge semantics (`{...currentClaims, plan, planExpiry}`,
+never a destructive replace) are byte-for-byte unchanged. Both event
+branches (`payment.captured`, `subscription.activated`) call the same
+`upgradePlan()`, so both are corrected by the one change — no second
+remediation architecture was needed or built.
+
+**Proof that a nonexistent uid now produces zero entitlement mutation**
+— the permanent test this remediation added/updated
+(`razorpay.test.ts`, *"a well-formed but nonexistent uid produces ZERO
+entitlement mutation — the §C hard-stop, now closed"*) asserts, for the
+exact same reproduction C.1 used:
+- `quotaWrites` has length 0 (previously 1 — this is the fix, proven by
+  the same test that first proved the bug, not a new, differently-shaped
+  assertion);
+- `claimsWrites` (new tracking added to the test's fake `auth`) has
+  length 0;
+- the `razorpay_entitlement_target_unverifiable` securityEvents entry is
+  still recorded (unchanged from C.1's own fix in §B.1);
+- the generic `payment_razorpay_fail` audit-log entry is still recorded
+  (unchanged).
+
+A second, new test proves the same guarantee for `subscription.activated`
+independently, not merely inferred from `payment.captured`'s coverage.
+
+**Mandatory regression cases — all satisfied:**
+
+| # | Case | Result |
+|---|---|---|
+| 1 | Valid existing uid → quota entitlement succeeds | Proven — `quotaWrites` length 1, `plan` correct |
+| 2 | Nonexistent uid → rejected | Proven — `auth.getUser()` throws, function exits via the catch |
+| 3 | Nonexistent uid → `/quotas/{uid}` does not exist or change | Proven — `quotaWrites` length 0 |
+| 4 | Valid HMAC + nonexistent uid → cannot create entitlement | Proven — the end-to-end test signs a real HMAC and still gets zero mutation |
+| 5 | Both webhook event types exercise the corrected path | Proven — dedicated tests for `payment.captured` and `subscription.activated`, both the nonexistent- and existing-uid cases |
+| 6 | Existing user claims remain intact | Proven — a new test seeds `real-uid-1` with a pre-existing `admin: true` claim and asserts it survives the merge alongside the new `plan`/`planExpiry` |
+| 7 | Existing plan/expiry behavior remains intact | Proven — `quotaWrites[0].data.plan`/`.planExpiry` assertions unchanged in shape from before the reorder |
+| 8 | Malformed/unverifiable `notes.userId` remains fail-safe | Proven — the malformed-value and absent-value tests from the original §B pass unchanged |
+| 9 | Replay/idempotency behavior is unchanged | Proven — a new test sends the same `payment.captured` payload (same `paymentId`) twice; `claimWebhookEvent`'s existing dedup still suppresses the second write, `quotaWrites`/`claimsWrites` both length 1 |
+
+**Residual Razorpay external-integration boundary — restated, unchanged
+by this remediation:** this fix closes the write-ordering defect
+entirely within code that already existed. It does **not**, and was not
+authorized to, bind `notes.userId` to a verified payer/order
+relationship — that still requires an order-creation integration this
+repository does not contain (`docs/audit/PHASE_6A_F1_OWNERSHIP_INVESTIGATION.md`
+§5). The file's header (§B.1) continues to state this precisely: HMAC
+proves Razorpay origin, not payer identity. What this remediation adds
+is narrower and unconditional regardless of that missing integration:
+whatever identity `notes.userId` names, no entitlement is persisted for
+it unless that identity is confirmed to exist in Firebase Auth first.
+
+## D. Regression results (full matrix, re-run fresh after the C.2 fix)
 
 | Check | Result |
 |---|---|
 | `cd functions && npx tsc --noEmit` | clean |
 | `cd functions && npm run lint` | clean |
-| `cd functions && npx vitest run` | **525/525** (23 files; was 489 — 36 new: 15 + 21) |
+| `cd functions && npx vitest run` | **529/529** (23 files; was 525 before this continuation, 489 before §A/§B) |
 | `npm run typecheck` (app root) | clean |
 | `npm run lint` (app root) | clean |
 | `npm run test` (app root) | **306/306**, unaffected |
@@ -200,39 +306,44 @@ it is the next authorization's decision.
 | Replay check | **24/24**, byte-identical |
 | 11,923-case adversarial harness (scratch out-dir, outside the repository) | **0** false negatives, **0** false positives, **0** exceptions, **0** contract mutations |
 | Prohibited-path diff (`90a7a9c..HEAD`, all ten paths plus `classifyQuestion.ts`) | **empty** |
-| Full working-tree diff | exactly `functions/src/functions/payments/razorpay.ts`, `functions/src/functions/readings.ts` (production), plus the two new test files |
+| This continuation's own working-tree diff | exactly `functions/src/functions/payments/razorpay.ts` (production, the reorder) and `functions/src/functions/payments/__tests__/razorpay.test.ts` (tests) — `readings.ts`/`readings.test.ts` untouched, confirmed by the same diff |
 
 ## E. Scope discipline
 
 - `classifyQuestion.ts` — untouched (confirmed in the prohibited-path
-  diff above).
+  diff above), both in §A/§B and in this continuation.
 - Phase 5 oracle/narration code (`narrationValidator.ts`, `textSecurity.ts`,
   `readingContract.ts`, `remedySelection.ts`, `remedyLibrary.ts`, the
   engine, `kp/`) — untouched.
-- `firestore.rules` — untouched; this phase's fix operates entirely
-  server-side via the Admin SDK, which does not go through Firestore
-  Security Rules at all — no rule change was needed or made.
+- `firestore.rules` — untouched; every fix in this phase operates
+  entirely server-side via the Admin SDK, which does not go through
+  Firestore Security Rules at all — no rule change was needed or made
+  at any point.
 - Payment credentials/secrets — untouched.
 - Production Firebase configuration — untouched.
+- `syncReadings`/`readings.ts` — untouched by this continuation (the new
+  tests did not expose any regression there, so per the authorization's
+  own instruction it was not touched again).
 - No unrelated callable was modified.
+- No second remediation architecture was built — the single reorder in
+  `upgradePlan()` closes the finding for both event branches.
 - No Phase 6B implementation was performed.
-- No production-readiness claim is made anywhere in this document — see
-  §C for the one item that specifically remains open.
+- No production-readiness claim is made anywhere in this document.
 
 ## F. Final status
 
-**PHASE 6A-R1: IMPLEMENTATION CHECKPOINT — PARTIAL.**
+**PHASE 6A-R1: IMPLEMENTATION CHECKPOINT — COMPLETE.**
 
-- **§A (`syncReadings`) — fully remediated and tested.** The finding this
-  phase's own authorization named as "mandatory remediation" is closed.
+- **§A (`syncReadings`) — fully remediated and tested.**
 - **§B (`razorpayWebhook` fail-safe boundary) — fully remediated within
-  its authorized scope.** No payer/order-binding architecture was
-  invented; the boundary is documented, not pretended solved.
-- **§C — a new, distinct hard-stop finding, reported, not remediated.**
+  its authorized scope.** No payer/order-binding architecture invented.
+- **§C — discovered (C.1) and remediated (C.2).** The write-ordering
+  defect is closed for both webhook event types, with the residual
+  external-integration boundary (payer verification itself) restated,
+  not silently expanded past what was authorized.
 
-This document does not close 6A-R1. Per the governing authorization's
-own sequence (6A-F1 PASS → 6A-R1 implementation → independent Review
-Gate → 6A-R1 Closure → continue Phase 6 reconnaissance), the next step
-is your decision on §C — fold its remediation into this same
-authorization, or scope it as its own distinct follow-up — before an
-independent Review Gate is meaningful for the whole of 6A-R1.
+This document still does not close 6A-R1. Per the governing
+authorization's own sequence (6A-F1 → 6A-R1 implementation → 6A-R1
+Review Gate → 6A-R1 Closure → Phase 6B reconnaissance), the next step is
+the independent Review Gate — not performed by this document, and not
+self-certified here.
