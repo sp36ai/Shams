@@ -231,3 +231,111 @@ production-readiness verdict; it certifies that Phase 7A's evidence is
 accurate and its classification discipline held, which is the input
 Phase 7C needs, not a substitute for it. Finding 3's Options A/B
 remain undecided, untouched by this review.
+
+---
+
+## Addendum (dated 2026-09-09) — Correction to §4.4
+
+This document is append-only per this audit chain's own discipline;
+this addendum corrects an error in §4.4 above rather than editing it.
+Authorized as its own, separately and explicitly scoped action ("7B
+Review Correction Addendum authorization — baseline 773e2c4"), issued
+after `docs/audit/PHASE_8A_1_RECONNAISSANCE.md` (`82b7c03`) and
+`docs/audit/PHASE_8A_2_REVIEW.md` (`773e2c4`) established the facts
+this addendum restates.
+
+### What §4.4 incorrectly concluded
+
+§4.4 characterized the prior audit's item 5 ("AI output defense-in-depth
+via what is now called `validateNarration()`") as a **naming drift** —
+stating: *"the *mechanism* the prior audit described... is confirmed
+present and functioning; only its name has changed since 2026-08-23"*
+and *"The 'closed' claim holds."*
+
+**This conclusion was wrong.** The correct characterization, established
+at `PHASE_8A_1_RECONNAISSANCE.md` §1–§3 and independently re-verified at
+`PHASE_8A_2_REVIEW.md` §2: **`main` (`ce536bc`) has no output-side
+narration safety validation mechanism at all, under any name.** Neither
+`safetyValidator.ts` (the prior audit's own name) nor
+`narrationValidator.ts` (the hardened branch's replacement) exists on
+`main`'s tree. The prior audit's item 5 is **not closed on `main`** — it
+was closed only on the hardened branch, which had not yet merged with
+`main`'s KP-engine-deletion work (PR #92) at the time the prior audit
+was written, and the mechanism was lost as unreviewed conflict-resolution
+fallout when that merge later happened (`main` commit `f6505df`).
+
+### Why the conclusion was wrong — the exact methodological error
+
+The grep commands in §4.4 (`grep -n "NameSchema" ...`, `grep -n
+"claimWebhookEvent" ...`, and the `validateNarration()` check) were run
+as plain `grep` against files in the **local working tree** — which at
+the time of that review was the hardened branch (`a2e716d`) checked out
+in this session's working directory — **not** `git show ce536bc:...`
+against `main`'s own committed tree, the method §4.1–§4.3 of this same
+document correctly used for the file-existence and deletion checks
+immediately above it. `NameSchema` and `claimWebhookEvent` genuinely do
+exist on `main` (those two spot-checks were not wrong), but the
+`validateNarration()` check silently checked the wrong branch's
+filesystem and found the hardened branch's own file, mistaking the
+hardened branch's own code for evidence about `main`.
+
+### The production consequence
+
+Cloud Functions are confirmed deployed at exactly `main`'s tip
+(`ce536bc`) per `docs/audit/PHASE_7C_FINAL_DECISION.md` §4. This
+methodological error meant a live, P1-severity gap in the deployed
+production narration path — no independent check on Anthropic-generated
+text reaching real users, confirmed present at two call sites
+(`responseComposer.ts` and `discussionComposer.ts` per
+`PHASE_8A_2_REVIEW.md` §3) — went unreported through Phase 7B, Phase 7C,
+and the start of Phase 8A, until an unrelated diff-scoping step at the
+beginning of Phase 8A's promotion reconnaissance surfaced it by
+accident, not through this review's own diligence.
+
+### The corrected evidence
+
+Restated precisely from `PHASE_8A_1_RECONNAISSANCE.md` and
+`PHASE_8A_2_REVIEW.md`, not re-derived a third time by this addendum:
+
+- `git show ce536bc:functions/src/oracle/safetyValidator.ts` → absent.
+- `git show ce536bc:functions/src/oracle/narrationValidator.ts` → absent.
+- `main`'s own `responseComposer.ts` documents the gap in its own code
+  comment: *"The system prompt guard is the primary defense; additional
+  post-generation validation was removed when the KP engine was deleted
+  (PR #92)."*
+- `main`'s `discussionComposer.ts` has the identical gap — no import of
+  any validator — confirmed at `PHASE_8A_2_REVIEW.md` §3, a second call
+  site this review's own §4.4 did not check at all.
+- `main` has zero tests asserting output-side narration safety.
+
+### What this addendum does and does not change
+
+- **§4.4 above is left exactly as originally written** — struck through
+  by nothing, edited nowhere — per this project's append-only-with-dated-
+  addenda discipline. This addendum is the correction of record.
+- **The original Phase 7B disposition (§9, "PASS") is not retracted by
+  this addendum.** Phase 7B's actual charge was verifying
+  `PHASE_7A_RECONNAISSANCE.md`'s claims about the merge gap, the prior
+  audit's file contents, and the regression matrix — all of which were
+  independently re-verified correctly, and remain correct. §4.4 was
+  reconnaissance-beyond-Phase-7B's-own-required-scope — genuine
+  additional verification work this review chose to do, not something
+  the 7A reconnaissance itself asked to be checked — which makes the
+  error real but does not retroactively fail the parts of Phase 7B that
+  were in scope and were done correctly.
+- **What this addendum does state plainly**: *the original Phase 7B PASS
+  does not validate the AI-output narration safety control on `main`.*
+  Any future reader relying on Phase 7B for that specific claim must
+  rely on `PHASE_8A_1_RECONNAISSANCE.md` and `PHASE_8A_2_REVIEW.md`
+  instead, not on §4.4 of this document.
+- **No remediation, merge, or deployment is authorized by this
+  addendum.** It is a correction to the audit record only.
+
+### Exact repository state at the time of this addendum
+
+- Repository: `sp36ai/shams`, branch `claude/shams-phase-0-baseline-lnlmy6`.
+- Parent commit this addendum is written against: `773e2c4` (Phase 8A-2
+  Independent Review PASS with scope refinement).
+- Working tree: clean before and after this addendum.
+- No file other than this one (`docs/audit/PHASE_7B_REVIEW.md`, via this
+  appended section) is touched by this addendum.
