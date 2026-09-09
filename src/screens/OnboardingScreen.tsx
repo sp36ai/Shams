@@ -10,6 +10,8 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { regionalFunctions } from '../firebase/functionsRegion';
+import { ensureAppCheckReady } from '../firebase/appCheck';
+import { withTimeout } from '../utils/withTimeout';
 
 import { useColors, useTheme } from '@theme/ThemeProvider';
 import { useTypography } from '@theme/useTypography';
@@ -67,8 +69,17 @@ const QUESTIONS: Question[] = [
 
 const VALID_PROFILES = new Set<SeekerProfile>(['clarity', 'comfort', 'action', 'surrender']);
 
+// PHASE 6D-4: see appCheck.ts's own doc comment for the cold-start race this
+// closes. Onboarding is specifically the first-launch, never-before-
+// attested-device scenario that comment identifies as the worst case for
+// Play Integrity's first exchange — see docs/audit/PHASE_6D_4_RECONNAISSANCE.md
+// §3 and docs/audit/PHASE_6D_4_REVIEW.md §4.5.
+const APP_CHECK_GATE_TIMEOUT_MS = 8000;
+
 async function inferProfile(answers: [string, string, string]): Promise<SeekerProfile> {
   try {
+    await withTimeout(ensureAppCheckReady(), APP_CHECK_GATE_TIMEOUT_MS);
+
     const fn = regionalFunctions().httpsCallable<{ answers: string[] }, { profile: string }>(
       'inferProfile',
     );
