@@ -3,12 +3,14 @@ name: Deploy Firebase Hosting
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
 
+# PHASE 6D-1: gated on CI, not on a bare push to main — see
+# deploy-functions.yml's own header comment for the full rationale and the
+# disclosed `paths` side effect this same change carries here too.
 on:
-  push:
+  workflow_run:
+    workflows: ['CI']
+    types: [completed]
     branches: [main]
-    paths:
-      - 'hosting/**'
-      - 'firebase.json'
   workflow_dispatch:
 
 permissions:
@@ -17,9 +19,12 @@ permissions:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
 
       - name: Deploy to Firebase Hosting
         uses: FirebaseExtended/action-hosting-deploy@v0
