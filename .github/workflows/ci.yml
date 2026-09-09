@@ -154,6 +154,16 @@ jobs:
           name: app-debug-apk
           path: android/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: warn
+          # Bounded explicitly rather than left on the account default
+          # (commonly 90 days) — this is a debug sideload build for the run
+          # that produced it, not a release artifact anyone needs months
+          # later, and the account default let ~33MB APKs from hundreds of
+          # runs accumulate until Actions artifact storage quota was
+          # exhausted, failing CI's E2E job before Maestro ever ran (see
+          # docs/audit/PHASE_8A_10_ARTIFACT_QUOTA_INVESTIGATION.md). 7 days
+          # is enough to pull down a recent run's APK for manual device
+          # testing without re-accumulating the same problem.
+          retention-days: 7
 
       - name: Enable KVM (emulator acceleration)
         run: |
@@ -195,6 +205,10 @@ jobs:
           path: |
             maestro-results.xml
             ~/.maestro/tests/
+          # Same reasoning as the debug-APK upload above — bounded
+          # explicitly instead of the account default, so this artifact
+          # stops contributing to the same storage-quota accumulation.
+          retention-days: 7
 
       - name: Publish test report
         if: always()
