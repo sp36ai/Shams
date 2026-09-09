@@ -30,6 +30,7 @@ import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import { FieldValue } from 'firebase-admin/firestore';
 import { db } from '../utils/admin';
 import { verifyAuth } from '../middleware/auth';
+import { enforceRateLimit } from '../middleware/rateLimit';
 import { parse, SyncReadingsSchema, DeleteReadingSchema } from '../middleware/validate';
 import { logger } from '../utils/logger';
 import { FUNCTION_OPTS } from '../config';
@@ -86,6 +87,7 @@ export const syncReadings = onCall(
   async request => {
     const { userId } = verifyAuth(request);
     const { readings } = parse(SyncReadingsSchema, request.data);
+    await enforceRateLimit(userId);
 
     if (readings.length === 0) {
       return { synced: 0 };
@@ -145,6 +147,7 @@ export const deleteReading = onCall(
   async request => {
     const { userId } = verifyAuth(request);
     const { readingId } = parse(DeleteReadingSchema, request.data);
+    await enforceRateLimit(userId);
 
     try {
       const ref = db.collection('readings').doc(readingId);

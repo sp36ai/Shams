@@ -18,7 +18,7 @@
  * the property under test.
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, type Mock } from 'vitest';
 import { HttpsError } from 'firebase-functions/v2/https';
 
 interface FakeDoc {
@@ -102,10 +102,21 @@ vi.mock('firebase-functions/v2', () => ({
   logger: { warn: vi.fn(), error: vi.fn(), info: vi.fn(), debug: vi.fn() },
 }));
 
+// PHASE 6C-2: syncReadings/deleteReading now call enforceRateLimit(); mocked
+// so existing tests exercise the real callable without hitting a real
+// Firestore transaction. Defaults to allowing every call; individual tests
+// below flip this to reject to prove the rate-limit gate is actually wired
+// in, not merely imported.
+const enforceRateLimitMock: Mock = vi.fn().mockResolvedValue(undefined);
+vi.mock('../../middleware/rateLimit', () => ({
+  enforceRateLimit: (userId: string) => enforceRateLimitMock(userId) as Promise<void>,
+}));
+
 import { checkReadingOwnership, syncReadings, deleteReading } from '../readings';
 
 beforeEach(() => {
   reset();
+  enforceRateLimitMock.mockReset().mockResolvedValue(undefined);
 });
 
 /* -------------------------------------------------------------------------- */
@@ -290,5 +301,51 @@ describe('PHASE 6A-R1 — deleteReading: unchanged, still ownership-checked (req
     await expect(invokeDeleteReading('ghost', 'alice')).rejects.toMatchObject({
       code: 'not-found',
     });
+  });
+});
+
+/* -------------------------------------------------------------------------- */
+/*  PHASE 6C-2 — rate limiting is genuinely enforced, not merely imported     */
+/* -------------------------------------------------------------------------- */
+
+describe('PHASE 6C-2 — syncReadings and deleteReading are rate-limited', () => {
+  it("syncReadings calls enforceRateLimit with the caller's own uid", async () => {
+    await invokeSyncReadings([reading({ id: 'r1' })], 'alice');
+    expect(enforceRateLimitMock).toHaveBeenCalledWith('alice');
+  });
+
+  it('a rate-limit rejection blocks syncReadings before any write happens', async () => {
+    enforceRateLimitMock.mockRejectedValueOnce(
+      new HttpsError(
+        'resource-exhausted',
+        'Too many requests. Please wait a moment before trying again.',
+      ),
+    );
+    await expect(invokeSyncReadings([reading({ id: 'r1' })], 'alice')).rejects.toMatchObject({
+      code: 'resource-exhausted',
+    });
+    expect(committedWrites).toHaveLength(0);
+    expect(existing.has('r1')).toBe(false);
+  });
+
+  it("deleteReading calls enforceRateLimit with the caller's own uid", async () => {
+    existing.set('mine', { userId: 'alice' });
+    await invokeDeleteReading('mine', 'alice');
+    expect(enforceRateLimitMock).toHaveBeenCalledWith('alice');
+  });
+
+  it('a rate-limit rejection blocks deleteReading before any delete happens', async () => {
+    existing.set('mine', { userId: 'alice' });
+    enforceRateLimitMock.mockRejectedValueOnce(
+      new HttpsError(
+        'resource-exhausted',
+        'Too many requests. Please wait a moment before trying again.',
+      ),
+    );
+    await expect(invokeDeleteReading('mine', 'alice')).rejects.toMatchObject({
+      code: 'resource-exhausted',
+    });
+    // The document must still exist — the rejection happened before the delete.
+    expect(existing.has('mine')).toBe(true);
   });
 });

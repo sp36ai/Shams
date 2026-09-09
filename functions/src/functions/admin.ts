@@ -4,6 +4,7 @@
 
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import { auth } from '../utils/admin';
+import { enforceRateLimit } from '../middleware/rateLimit';
 import { FUNCTION_OPTS } from '../config';
 import { logger } from '../utils/logger';
 
@@ -31,6 +32,10 @@ export const setAdminClaim = onCall(
         'Unauthorized: Only admins can manage administrative claims.',
       );
     }
+
+    // PHASE 6C-2: rate-limit by the calling admin's own uid — request.auth
+    // is already confirmed non-null above.
+    await enforceRateLimit(request.auth.uid);
 
     const { targetUid, isAdmin } = request.data as { targetUid: string; isAdmin: boolean };
 

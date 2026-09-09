@@ -6,6 +6,7 @@
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import { db } from '../utils/admin';
 import { verifyAuth } from '../middleware/auth';
+import { enforceRateLimit } from '../middleware/rateLimit';
 import { FUNCTION_OPTS, UNLIMITED_PLANS, FREE_LIMIT, TRIAL_DAILY_LIMIT, todayKey } from '../config';
 import { measure } from '../middleware/telemetry';
 import type { QuotaResponse, QuotaDoc, TrialDoc } from '../types';
@@ -16,6 +17,8 @@ export const getQuota = onCall(
     const { userId } = verifyAuth(request);
 
     return measure<QuotaResponse>('getQuota', userId, async () => {
+      await enforceRateLimit(userId);
+
       const [snap, trialSnap] = await Promise.all([
         db.collection('quotas').doc(userId).get(),
         db.collection('trials').doc(userId).get(),
