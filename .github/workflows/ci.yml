@@ -9,6 +9,15 @@ on:
   pull_request:
     branches: [main, master]
   workflow_dispatch:
+    inputs:
+      upload_debug_apk:
+        description: >-
+          Upload the debug APK as a run artifact (for manual device
+          sideloading). Off by default — see the "Upload debug APK" step's
+          own comment for why ordinary CI runs no longer do this
+          unconditionally.
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -147,22 +156,32 @@ jobs:
       # Publish the installable APK so a fresh build can be sideloaded for manual
       # device testing straight from the run — no local Android toolchain needed.
       # The bundle is embedded, so it runs standalone (debug-signed).
+      #
+      # Uploaded ONLY on an explicit manual dispatch with upload_debug_apk=true
+      # — not on every ordinary push/PR run. This ~34.6 MB APK, uploaded
+      # unconditionally on every successful run (previously bounded only by a
+      # retention-days fix, see that commit's own comment below), was
+      # confirmed the dominant contributor to a GitHub Actions artifact
+      # storage quota exhaustion that failed CI's E2E job before Maestro ever
+      # ran (docs/audit/PHASE_8A_10_ARTIFACT_QUOTA_INVESTIGATION.md,
+      # docs/audit/PHASE_8A_10_ARTIFACT_SIZING_FORENSICS.md). The APK is
+      # still built and installed on the emulator for every run — Maestro
+      # needs it either way — this only changes whether it is *retained* as
+      # a downloadable run artifact afterward. Run this workflow manually
+      # ("Run workflow" in the Actions UI, or `gh workflow run ci.yml -f
+      # upload_debug_apk=true`) with the input checked when you actually
+      # need to pull down a build for device sideloading.
       - name: Upload debug APK
-        if: always()
+        if: always() && github.event_name == 'workflow_dispatch' && inputs.upload_debug_apk == true
         uses: actions/upload-artifact@v4
         with:
           name: app-debug-apk
           path: android/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: warn
           # Bounded explicitly rather than left on the account default
-          # (commonly 90 days) — this is a debug sideload build for the run
-          # that produced it, not a release artifact anyone needs months
-          # later, and the account default let ~33MB APKs from hundreds of
-          # runs accumulate until Actions artifact storage quota was
-          # exhausted, failing CI's E2E job before Maestro ever ran (see
-          # docs/audit/PHASE_8A_10_ARTIFACT_QUOTA_INVESTIGATION.md). 7 days
-          # is enough to pull down a recent run's APK for manual device
-          # testing without re-accumulating the same problem.
+          # (commonly 90 days) — kept as belt-and-braces even though this
+          # step no longer fires on ordinary runs, so a manually-requested
+          # upload still can't silently revert to unbounded retention.
           retention-days: 7
 
       - name: Enable KVM (emulator acceleration)
