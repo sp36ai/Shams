@@ -102,6 +102,31 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      # PHASE 8A-11/8A-12: this job's runner ran out of local disk mid-run
+      # (docs/audit/PHASE_8A_11_RUNNER_DISK_INVESTIGATION.md) while installing
+      # the Android emulator system image -- the last, and one of the
+      # largest, packages this job downloads. Removed here are large
+      # pre-installed toolchains ubuntu-latest ships that this job never
+      # uses (.NET SDK, Haskell/GHC, Boost, the CodeQL bundle) plus unused
+      # Docker images -- none of these are Android SDK, Gradle, Node, or
+      # Java components this job depends on, so removing them cannot affect
+      # the build. Placed before any download so the freed space is
+      # available for everything that follows (npm ci, the Gradle build,
+      # and the Android SDK/emulator install), not just the last step.
+      - name: Free disk space (pre-build)
+        run: |
+          echo "::group::Disk usage before cleanup"
+          df -h
+          echo "::endgroup::"
+          sudo rm -rf /usr/share/dotnet || true
+          sudo rm -rf /opt/ghc /usr/local/.ghcup || true
+          sudo rm -rf /usr/local/share/boost || true
+          sudo rm -rf /opt/hostedtoolcache/CodeQL || true
+          docker image prune --all --force || true
+          echo "::group::Disk usage after cleanup"
+          df -h
+          echo "::endgroup::"
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
@@ -131,6 +156,12 @@ jobs:
             echo "Using CI mock google-services.json (no secret configured)"
           fi
 
+      # save-always: PHASE 8A-11 found that on both sampled failing runs, the
+      # cache-save (post-job) step was skipped along with the rest of the
+      # job -- so a run that fails downstream of this step never warms the
+      # cache, making the *next* run's cold-cache risk worse, not better.
+      # save-always makes the save happen regardless of later step outcome,
+      # breaking that failure -> no-cache-warm -> another cold run loop.
       - name: Cache Gradle
         uses: actions/cache@v4
         with:
@@ -139,6 +170,7 @@ jobs:
             ~/.gradle/wrapper
           key: gradle-${{ hashFiles('android/**/*.gradle*', 'android/gradle.properties') }}
           restore-keys: gradle-
+          save-always: true
 
       # debug.keystore is gitignored (not a secret, but not committed either);
       # generate it fresh with the exact alias/passwords signingConfigs.debug expects.
@@ -184,6 +216,24 @@ jobs:
           # upload still can't silently revert to unbounded retention.
           retention-days: 7
 
+      # PHASE 8A-11/8A-12: converts the investigation's inferred disk
+      # pressure into measured evidence, bracketing the exact step
+      # (Setup Android emulator's own SDK-package install) that ran out of
+      # space in PHASE_8A_11_RUNNER_DISK_INVESTIGATION.md. if: always() so
+      # this still runs -- and this run's numbers are still captured -- even
+      # if an earlier step in this job already failed.
+      - name: Disk usage before Android SDK/emulator setup
+        if: always()
+        run: |
+          echo "::group::Disk usage"
+          df -h
+          echo "::endgroup::"
+          echo "::group::Known large directories"
+          du -sh ~/.gradle 2>/dev/null || true
+          du -sh "$GITHUB_WORKSPACE/node_modules" 2>/dev/null || true
+          du -sh /usr/local/lib/android/sdk 2>/dev/null || true
+          echo "::endgroup::"
+
       - name: Enable KVM (emulator acceleration)
         run: |
           echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
@@ -215,6 +265,13 @@ jobs:
             # uploaded/published — see PHASE_2A_REPORT.md for the reasoning
             # and what could only be verified by an actual GitHub Actions run.
             "$HOME/.maestro/bin/maestro" test --format junit --output maestro-results.xml .maestro/ci/
+
+      # PHASE 8A-11/8A-12: the "after" bracket to the disk-usage step above,
+      # captured regardless of outcome -- gives a direct before/after
+      # comparison for every future run, not just ones that happen to fail.
+      - name: Disk usage after Android SDK/emulator setup
+        if: always()
+        run: df -h
 
       - name: Upload Maestro results
         if: always()
