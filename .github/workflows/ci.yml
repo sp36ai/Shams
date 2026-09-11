@@ -285,11 +285,43 @@ jobs:
             # responding"), not an app render failure -- consistent with,
             # but not yet measured evidence for, the AVD's own tight
             # hw.ramSize=1536M/hw.cpu.ncore=2 budget causing runner-side
-            # resource pressure. This samples runner memory/CPU every 10s
-            # for the whole Maestro run so that can be correlated against
-            # the ANR's own timestamp -- observability only, no RAM/core
-            # change is made here.
-            nohup bash -c 'while true; do date -u +%FT%TZ; free -h; echo "--- top by CPU ---"; ps aux --sort=-%cpu | head -8; echo "--- top by MEM ---"; ps aux --sort=-%mem | head -8; echo; sleep 10; done' > "$HOME/resource-usage.txt" 2>&1 &
+            # resource pressure.
+            #
+            # PHASE 8A-30 (timestamp-correlation diagnostic authorization,
+            # checkpoint c51fff0): PHASE_8A_29 found sustained host-side CPU
+            # contention (the qemu emulator process alone at 165-174% of a
+            # core) but explicitly could not establish whether that
+            # contention precedes/coincides with the SystemUI ANR, or
+            # confirm SystemUI's own CPU usage (the host can only see the
+            # single qemu process -- SystemUI's own CPU accounting is a
+            # guest-OS concept, invisible from the host). This tightens the
+            # host sampler from 10s to 3s intervals and adds a guest-side
+            # sampler alongside it (below), so both can be compared on a
+            # shared, host-UTC timeline. Still observability only -- no
+            # AVD/emulator config or flow change is made here.
+            nohup bash -c 'while true; do date -u +%FT%TZ; free -h; echo "--- top by CPU ---"; ps aux --sort=-%cpu | head -8; echo "--- top by MEM ---"; ps aux --sort=-%mem | head -8; echo; sleep 3; done' > "$HOME/resource-usage.txt" 2>&1 &
+            # PHASE 8A-30: guest-side per-process CPU, straight from the
+            # Android OS's own accounting (`dumpsys cpuinfo` reports a
+            # TOTAL line plus a per-process breakdown, including
+            # com.android.systemui and this app's own process by name) --
+            # this is the only way to see SystemUI's own CPU consumption at
+            # all, distinct from and complementary to the host-side qemu
+            # process figure above. Same 3s cadence, same host `date -u`
+            # timestamp source as the host sampler, so the two files share
+            # one clock and can be read side by side without a conversion
+            # step.
+            nohup bash -c 'while true; do date -u +%FT%TZ; adb shell dumpsys cpuinfo 2>&1; echo; sleep 3; done' > "$HOME/guest-cpuinfo.txt" 2>&1 &
+            # PHASE 8A-30: one-time capture of the guest's own clock against
+            # the host's `date -u` above -- correlating a guest-OS
+            # timestamp (e.g. from logcat, which uses the guest's own local
+            # clock) against the host-UTC-stamped samples above requires
+            # knowing this offset; without it, any such correlation is only
+            # approximate. Captured once, immediately, since both sampler
+            # loops above are now already running in the background.
+            {
+              echo "host (date -u):  $(date -u +%FT%T.%3NZ)"
+              echo "guest (adb shell date -u): $(adb shell date -u 2>&1)"
+            } > "$HOME/clock-offset.txt"
             # No `|| true` here: a real Maestro failure must fail this step,
             # and therefore the job. The two steps below both run
             # `if: always()`, so removing `|| true` does not stop the JUnit
@@ -319,6 +351,21 @@ jobs:
         run: |
           echo "::group::logcat -- FATAL/crash/exception lines"
           grep -iE "FATAL|AndroidRuntime|Exception|chromium" "$HOME/logcat.txt" 2>/dev/null | tail -200 || echo "no matches / logcat.txt not found"
+          echo "::endgroup::"
+          # PHASE 8A-30 (timestamp-correlation diagnostic authorization,
+          # checkpoint c51fff0): a prior review searched logcat for the
+          # literal substring "ANR" and found no matches -- which does not
+          # contradict PHASE_8A_25's SystemUI-ANR finding (that evidence
+          # came from Maestro's own hierarchy dump, not logcat), but also
+          # doesn't rule out an ANR trace being present under different,
+          # standard Android ANR log markers. Broader, targeted search for
+          # those markers -- if any hit carries a guest-clock timestamp
+          # (logcat's own threadtime format), it is the most direct
+          # evidence available for correlating the ANR's actual on-screen
+          # moment against the resource samples above (via the host/guest
+          # clock-offset capture in the emulator step).
+          echo "::group::logcat -- ANR-related markers (ActivityManager/ANR/input-dispatch-timeout/not-responding)"
+          grep -iE "ActivityManager|ANR in|Input dispatching timed out|Not responding" "$HOME/logcat.txt" 2>/dev/null || echo "no matches / logcat.txt not found"
           echo "::endgroup::"
           echo "::group::logcat -- last 150 lines (general context)"
           tail -150 "$HOME/logcat.txt" 2>/dev/null || echo "logcat.txt not found"
@@ -386,11 +433,25 @@ jobs:
       - name: Show runner resource usage and OOM check
         if: always()
         run: |
-          echo "::group::Memory/CPU samples during Maestro run (every 10s)"
+          echo "::group::Memory/CPU samples during Maestro run (every 3s, host-UTC timestamped)"
           cat "$HOME/resource-usage.txt" 2>/dev/null || echo "resource-usage.txt not found"
           echo "::endgroup::"
           echo "::group::dmesg -- OOM-killer / memory-pressure evidence"
           sudo dmesg 2>/dev/null | grep -iE "oom|out of memory|killed process|memory pressure" || echo "no OOM-related dmesg lines found (or dmesg unavailable)"
+          echo "::endgroup::"
+          # PHASE 8A-30 (timestamp-correlation diagnostic authorization,
+          # checkpoint c51fff0): guest-side per-process CPU (from the
+          # Android OS's own accounting, including com.android.systemui by
+          # name), on the same 3s/host-UTC cadence as the host sampler
+          # above -- and the one-time host/guest clock-offset capture that
+          # makes any cross-referencing against guest-clock-timestamped
+          # evidence (e.g. logcat) an informed comparison rather than a
+          # guess. Both observability only.
+          echo "::group::Guest-side (dumpsys cpuinfo) samples during Maestro run (every 3s, host-UTC timestamped)"
+          cat "$HOME/guest-cpuinfo.txt" 2>/dev/null || echo "guest-cpuinfo.txt not found"
+          echo "::endgroup::"
+          echo "::group::Host/guest clock offset (for correlating guest-clock-timestamped evidence, e.g. logcat)"
+          cat "$HOME/clock-offset.txt" 2>/dev/null || echo "clock-offset.txt not found"
           echo "::endgroup::"
 
       # PHASE 8A-20 (Finding A Diagnostic Authorization, checkpoint d54a12a):
