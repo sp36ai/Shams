@@ -306,45 +306,6 @@ jobs:
         if: always()
         run: df -h
 
-      # PHASE 8A-26 (resource-constraint diagnostic authorization,
-      # checkpoint 8ff35d4): surfaces the runner memory/CPU sampler started
-      # above, plus a kernel-level OOM check -- both aimed at testing
-      # whether host-side resource pressure correlates with the SystemUI
-      # ANR PHASE_8A_25 found obstructing the screen at assertion-failure
-      # time. Observability only.
-      - name: Show runner resource usage and OOM check
-        if: always()
-        run: |
-          echo "::group::Memory/CPU samples during Maestro run (every 10s)"
-          cat "$HOME/resource-usage.txt" 2>/dev/null || echo "resource-usage.txt not found"
-          echo "::endgroup::"
-          echo "::group::dmesg -- OOM-killer / memory-pressure evidence"
-          sudo dmesg 2>/dev/null | grep -iE "oom|out of memory|killed process|memory pressure" || echo "no OOM-related dmesg lines found (or dmesg unavailable)"
-          echo "::endgroup::"
-
-      # PHASE 8A-20 (Finding A Diagnostic Authorization, checkpoint d54a12a):
-      # captures the resolved Android SDK/emulator toolchain versions and
-      # the AVD's own configuration -- the "leading, unconfirmed" toolchain-
-      # drift hypothesis in PHASE_8A_18_FINDING_A_DEEPER_INVESTIGATION.md
-      # can only be tested with this data. Observability only: reads and
-      # prints, does not pin or change anything.
-      - name: Capture Android SDK/emulator toolchain versions
-        if: always()
-        run: |
-          SDK="${ANDROID_SDK_ROOT:-/usr/local/lib/android/sdk}"
-          echo "::group::platform-tools source.properties"
-          cat "$SDK/platform-tools/source.properties" 2>/dev/null || echo "not found"
-          echo "::endgroup::"
-          echo "::group::emulator package source.properties"
-          cat "$SDK/emulator/source.properties" 2>/dev/null || echo "not found"
-          echo "::endgroup::"
-          echo "::group::emulator -version"
-          "$SDK/emulator/emulator" -version 2>/dev/null || echo "not available"
-          echo "::endgroup::"
-          echo "::group::AVD configuration (shams_test.avd/config.ini)"
-          cat "$HOME/.android/avd/shams_test.avd/config.ini" 2>/dev/null || echo "not found"
-          echo "::endgroup::"
-
       # PHASE 8A-20 (Finding A Diagnostic Authorization, checkpoint d54a12a):
       # surfaces the logcat captured during the emulator script above, and
       # lists/inlines whatever Maestro itself already writes to
@@ -399,6 +360,64 @@ jobs:
             echo
           done
           shopt -u nullglob
+          echo "::endgroup::"
+
+      # PHASE 8A-26 (resource-constraint diagnostic authorization,
+      # checkpoint 8ff35d4): surfaces the runner memory/CPU sampler started
+      # above, plus a kernel-level OOM check -- both aimed at testing
+      # whether host-side resource pressure correlates with the SystemUI
+      # ANR PHASE_8A_25 found obstructing the screen at assertion-failure
+      # time. Observability only.
+      #
+      # PHASE 8A-28 (relocation authorization, checkpoint 2ded199): moved
+      # here, after "Show logcat and preserved Maestro debug artifacts",
+      # instead of its original position right after "Disk usage after
+      # Android SDK/emulator setup". PHASE_8A_27_CI_VERIFICATION_RUN436.md
+      # found get_job_logs silently caps its returned payload to a job's
+      # final ~4999 lines/~565KB regardless of the tail_lines value
+      # requested, and that the large inlined view-hierarchy JSON dump in
+      # "Show logcat..." was consuming that entire budget on its own --
+      # pushing this step's output (and the toolchain-capture step below)
+      # outside the retrievable window every time. Running both after that
+      # large-output step, rather than before it, means their output is now
+      # the part of the log nearest the end and so the part any tail-based
+      # log fetch keeps. Diagnostic content and behavior are unchanged --
+      # this is a reordering only.
+      - name: Show runner resource usage and OOM check
+        if: always()
+        run: |
+          echo "::group::Memory/CPU samples during Maestro run (every 10s)"
+          cat "$HOME/resource-usage.txt" 2>/dev/null || echo "resource-usage.txt not found"
+          echo "::endgroup::"
+          echo "::group::dmesg -- OOM-killer / memory-pressure evidence"
+          sudo dmesg 2>/dev/null | grep -iE "oom|out of memory|killed process|memory pressure" || echo "no OOM-related dmesg lines found (or dmesg unavailable)"
+          echo "::endgroup::"
+
+      # PHASE 8A-20 (Finding A Diagnostic Authorization, checkpoint d54a12a):
+      # captures the resolved Android SDK/emulator toolchain versions and
+      # the AVD's own configuration -- the "leading, unconfirmed" toolchain-
+      # drift hypothesis in PHASE_8A_18_FINDING_A_DEEPER_INVESTIGATION.md
+      # can only be tested with this data. Observability only: reads and
+      # prints, does not pin or change anything.
+      #
+      # PHASE 8A-28 (relocation authorization, checkpoint 2ded199): moved
+      # here for the same reason as the step immediately above -- see that
+      # step's comment.
+      - name: Capture Android SDK/emulator toolchain versions
+        if: always()
+        run: |
+          SDK="${ANDROID_SDK_ROOT:-/usr/local/lib/android/sdk}"
+          echo "::group::platform-tools source.properties"
+          cat "$SDK/platform-tools/source.properties" 2>/dev/null || echo "not found"
+          echo "::endgroup::"
+          echo "::group::emulator package source.properties"
+          cat "$SDK/emulator/source.properties" 2>/dev/null || echo "not found"
+          echo "::endgroup::"
+          echo "::group::emulator -version"
+          "$SDK/emulator/emulator" -version 2>/dev/null || echo "not available"
+          echo "::endgroup::"
+          echo "::group::AVD configuration (shams_test.avd/config.ini)"
+          cat "$HOME/.android/avd/shams_test.avd/config.ini" 2>/dev/null || echo "not found"
           echo "::endgroup::"
 
       - name: Upload Maestro results
