@@ -279,6 +279,17 @@ jobs:
             # the job losing it.
             adb logcat -c
             nohup adb logcat -v threadtime > "$HOME/logcat.txt" 2>&1 &
+            # PHASE 8A-26 (resource-constraint diagnostic authorization,
+            # checkpoint 8ff35d4): PHASE_8A_25 found the actual obstruction
+            # at assertion-failure time is a SystemUI ANR ("System UI isn't
+            # responding"), not an app render failure -- consistent with,
+            # but not yet measured evidence for, the AVD's own tight
+            # hw.ramSize=1536M/hw.cpu.ncore=2 budget causing runner-side
+            # resource pressure. This samples runner memory/CPU every 10s
+            # for the whole Maestro run so that can be correlated against
+            # the ANR's own timestamp -- observability only, no RAM/core
+            # change is made here.
+            nohup bash -c 'while true; do date -u +%FT%TZ; free -h; echo "--- top by CPU ---"; ps aux --sort=-%cpu | head -8; echo "--- top by MEM ---"; ps aux --sort=-%mem | head -8; echo; sleep 10; done' > "$HOME/resource-usage.txt" 2>&1 &
             # No `|| true` here: a real Maestro failure must fail this step,
             # and therefore the job. The two steps below both run
             # `if: always()`, so removing `|| true` does not stop the JUnit
@@ -294,6 +305,22 @@ jobs:
       - name: Disk usage after Android SDK/emulator setup
         if: always()
         run: df -h
+
+      # PHASE 8A-26 (resource-constraint diagnostic authorization,
+      # checkpoint 8ff35d4): surfaces the runner memory/CPU sampler started
+      # above, plus a kernel-level OOM check -- both aimed at testing
+      # whether host-side resource pressure correlates with the SystemUI
+      # ANR PHASE_8A_25 found obstructing the screen at assertion-failure
+      # time. Observability only.
+      - name: Show runner resource usage and OOM check
+        if: always()
+        run: |
+          echo "::group::Memory/CPU samples during Maestro run (every 10s)"
+          cat "$HOME/resource-usage.txt" 2>/dev/null || echo "resource-usage.txt not found"
+          echo "::endgroup::"
+          echo "::group::dmesg -- OOM-killer / memory-pressure evidence"
+          sudo dmesg 2>/dev/null | grep -iE "oom|out of memory|killed process|memory pressure" || echo "no OOM-related dmesg lines found (or dmesg unavailable)"
+          echo "::endgroup::"
 
       # PHASE 8A-20 (Finding A Diagnostic Authorization, checkpoint d54a12a):
       # captures the resolved Android SDK/emulator toolchain versions and
