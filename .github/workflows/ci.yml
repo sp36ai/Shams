@@ -156,21 +156,32 @@ jobs:
             echo "Using CI mock google-services.json (no secret configured)"
           fi
 
-      # save-always: PHASE 8A-11 found that on both sampled failing runs, the
-      # cache-save (post-job) step was skipped along with the rest of the
-      # job -- so a run that fails downstream of this step never warms the
-      # cache, making the *next* run's cold-cache risk worse, not better.
-      # save-always makes the save happen regardless of later step outcome,
-      # breaking that failure -> no-cache-warm -> another cold run loop.
-      - name: Cache Gradle
-        uses: actions/cache@v4
+      # PHASE 8A-11 found that on both sampled failing runs, the cache-save
+      # (post-job) step was skipped along with the rest of the job -- so a
+      # run that fails downstream of this step never warms the cache, making
+      # the *next* run's cold-cache risk worse, not better. PHASE 8A-12
+      # tried save-always: true on the combined actions/cache@v4 action to
+      # fix this; PHASE 8A-14 found, from actions/cache's own upstream
+      # source, that this could never have worked: save-always is deprecated
+      # and only ever controls whether to skip saving on an *exact cache
+      # hit* -- the combined action's post step is separately, unconditionally
+      # gated on `post-if: success()`, hardcoded in its action.yml and not
+      # parameterized by any input. Since a later step (Setup Android
+      # emulator) fails on a cold-cache run, success() is false by the time
+      # that gate is checked, so the save is skipped regardless of
+      # save-always. Fixed here per PHASE_8A_14's own documented remedy:
+      # split into the two composite actions, with an explicit save step
+      # below carrying its own if: always(), decoupled entirely from the
+      # job's overall success/failure state.
+      - name: Restore Gradle cache
+        id: gradle-cache
+        uses: actions/cache/restore@v4
         with:
           path: |
             ~/.gradle/caches
             ~/.gradle/wrapper
           key: gradle-${{ hashFiles('android/**/*.gradle*', 'android/gradle.properties') }}
           restore-keys: gradle-
-          save-always: true
 
       # debug.keystore is gitignored (not a secret, but not committed either);
       # generate it fresh with the exact alias/passwords signingConfigs.debug expects.
@@ -300,3 +311,20 @@ jobs:
           # the job green even if the `|| true` above were ever fixed.
           # Corrected so a report showing failed tests fails this step too.
           fail-on-error: true
+
+      # PHASE 8A-14: explicit save, decoupled from the job's overall
+      # success/failure via its own if: always() -- see the comment on
+      # "Restore Gradle cache" above for why the combined action's built-in
+      # post-step (post-if: success()) could never save on a run that fails
+      # downstream of the restore, regardless of save-always. Skips only on
+      # an exact cache hit (nothing new to write); saves on every miss or
+      # partial (restore-keys) match, whether or not the rest of the job
+      # passed.
+      - name: Save Gradle cache
+        if: always() && steps.gradle-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-${{ hashFiles('android/**/*.gradle*', 'android/gradle.properties') }}
