@@ -12,6 +12,11 @@
  * Plays once, on mount, per reading — a reading that's already settled
  * (returning to a thread from history, for instance) renders at rest
  * immediately, never replaying the arrival for content that already exists.
+ *
+ * Also fires the app's one reserved verdict haptic (§08) — independent of
+ * the reduced-motion branch below: a seeker who has disabled animation still
+ * feels the verdict arrive, since haptics and visual motion are separate
+ * channels or capacity, not the same accessibility concern.
  */
 import React, { useEffect } from 'react';
 import Animated, {
@@ -21,6 +26,8 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import { AccessibilityInfo } from 'react-native';
+
+import { fireVerdictHaptic } from '@utils/haptics';
 
 export interface DimensionalRevealProps {
   children: React.ReactNode;
@@ -37,6 +44,7 @@ export function DimensionalReveal({ children, animate = true }: DimensionalRevea
     if (!animate) {
       return;
     }
+    fireVerdictHaptic();
     let cancelled = false;
     AccessibilityInfo.isReduceMotionEnabled()
       .then(reduced => {

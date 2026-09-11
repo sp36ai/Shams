@@ -13,7 +13,7 @@
  * fields happen to be populated.
  */
 
-import React from 'react';
+import React, { useRef } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 import { PressDepth } from '@components/material/PressDepth';
 
@@ -73,6 +73,19 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({
   const colors = useColors();
   const typography = useTypography();
   const t = useTranslation();
+
+  /*
+   * The real "just arrived this session" signal DimensionalReveal needed —
+   * not guessed at, derived from the store's own MessageStatus lifecycle.
+   * List rendering keys each bubble by message.id, so React reuses this same
+   * component instance across the 'sending' → 'sent' transition; a message
+   * hydrated from history/cache mounts directly as 'sent' and never passes
+   * through this instance as 'sending' at all. Captured once, on first
+   * render — a later status change on the SAME instance doesn't retrigger
+   * it, so a message doesn't replay its own arrival on an unrelated re-render
+   * (e.g. the TTS status changing while this reading is on screen).
+   */
+  const wasArrivingRef = useRef(message.status === 'sending');
 
   const isUser = message.role === 'user';
 
@@ -276,15 +289,15 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({
               diagnosis-outcome headline is demoted to a supporting label;
               GuidanceCard was already the most subordinate of the three.
 
-              DimensionalReveal is currently mounted with animate={false}:
-              there is no verified "this reading just arrived this session"
-              signal threaded from readingThreadsStore yet, and animating on
-              every render (including reopening a thread from history) would
-              directly violate the spec's own rule that a settled reading
-              never replays its arrival. Wiring that signal is the next real
-              step, not silently guessed at here.
+              DimensionalReveal now uses wasArrivingRef (derived above from
+              the store's own MessageStatus, not guessed) — it animates only
+              for a reading that was still 'sending' when this bubble first
+              mounted, i.e. genuinely arriving this session. A reading
+              reopened from history/cache mounts already 'sent' and renders
+              at rest immediately, per the spec's own rule that a settled
+              reading never replays its arrival.
             */}
-            <DimensionalReveal animate={false}>
+            <DimensionalReveal animate={wasArrivingRef.current}>
               <GlassSurface
                 tint={stateColorFor(reading.verdict.state, colors)}
                 accessibilityRole="summary"

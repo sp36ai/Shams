@@ -70,6 +70,7 @@
     "react": "19.0.0",
     "react-native": "0.78.3",
     "react-native-gesture-handler": "2.32.0",
+    "react-native-haptic-feedback": "^3.0.0",
     "react-native-iap": "12.16.4",
     "react-native-mmkv": "2.12.2",
     "react-native-reanimated": "3.19.5",
