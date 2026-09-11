@@ -339,7 +339,39 @@ jobs:
           find "$HOME/.maestro/tests" -type f 2>/dev/null | sort || echo "none found"
           echo "::endgroup::"
           echo "::group::Small text/XML/JSON hierarchy dumps, inlined (<50KB each)"
-          find "$HOME/.maestro/tests" -type f \( -iname "*.xml" -o -iname "*.json" -o -iname "*.txt" \) -size -50k -print -exec cat {} \; 2>/dev/null || true
+          # commands-*.json excluded here -- PHASE_8A_21 found these are the
+          # most informative trace but routinely exceed 50KB; handled by its
+          # own segment-extraction group below instead of being silently
+          # dropped by this filter.
+          find "$HOME/.maestro/tests" -type f \( -iname "*.xml" -o -iname "*.json" -o -iname "*.txt" \) ! -iname "commands-*.json" -size -50k -print -exec cat {} \; 2>/dev/null || true
+          echo "::endgroup::"
+
+          # PHASE 8A-22 (Finding A Diagnostic Authorization -- extraction
+          # improvement only, checkpoint e747468): commands-*.json is
+          # Maestro's own per-flow command trace -- PHASE_8A_21 found it's
+          # the most likely file to show what the app's UI state actually
+          # was when the failing assertion gave up, but it routinely
+          # exceeds the <50KB filter above and so was silently excluded.
+          # Rather than dumping a potentially huge full trace, extract just
+          # the tail -- the last entries recorded are the ones nearest the
+          # failing assertion, since Maestro appends commands as it
+          # executes them. Prefers `jq` (preinstalled on GitHub-hosted
+          # runners) for a structurally valid last-10-elements slice when
+          # the file parses as a JSON array; falls back to a raw byte-tail
+          # otherwise so this still produces something readable if the
+          # file's actual shape differs from what's assumed here.
+          echo "::group::commands-*.json -- last entries per flow (diagnostic segment)"
+          shopt -s nullglob
+          for f in "$HOME"/.maestro/tests/*/commands-*.json; do
+            echo "--- $f ($(wc -c < "$f") bytes) ---"
+            if command -v jq >/dev/null 2>&1 && jq -e 'type == "array"' "$f" >/dev/null 2>&1; then
+              jq '.[-10:]' "$f" 2>/dev/null || tail -c 20000 "$f"
+            else
+              tail -c 20000 "$f"
+            fi
+            echo
+          done
+          shopt -u nullglob
           echo "::endgroup::"
 
       - name: Upload Maestro results
