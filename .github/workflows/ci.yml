@@ -268,6 +268,17 @@ jobs:
             adb install -r android/app/build/outputs/apk/debug/app-debug.apk
             adb emu geo fix 67.0011 24.8607
             curl -Ls "https://get.maestro.mobile.dev" | MAESTRO_VERSION=1.39.0 bash
+            # PHASE 8A-20 (Finding A Diagnostic Authorization, checkpoint
+            # d54a12a): capture logcat for the whole Maestro run, so a
+            # crash/exception during boot or a flow is visible in the job's
+            # own log output even when the artifact upload (Finding B,
+            # separately tracked and NOT addressed here) fails. `nohup ... &`
+            # so the background process survives this script line's own
+            # shell exiting -- each line above runs in its own separate
+            # shell (see the NOTE above), so a plain `&` alone would risk
+            # the job losing it.
+            adb logcat -c
+            nohup adb logcat -v threadtime > "$HOME/logcat.txt" 2>&1 &
             # No `|| true` here: a real Maestro failure must fail this step,
             # and therefore the job. The two steps below both run
             # `if: always()`, so removing `|| true` does not stop the JUnit
@@ -284,6 +295,53 @@ jobs:
         if: always()
         run: df -h
 
+      # PHASE 8A-20 (Finding A Diagnostic Authorization, checkpoint d54a12a):
+      # captures the resolved Android SDK/emulator toolchain versions and
+      # the AVD's own configuration -- the "leading, unconfirmed" toolchain-
+      # drift hypothesis in PHASE_8A_18_FINDING_A_DEEPER_INVESTIGATION.md
+      # can only be tested with this data. Observability only: reads and
+      # prints, does not pin or change anything.
+      - name: Capture Android SDK/emulator toolchain versions
+        if: always()
+        run: |
+          SDK="${ANDROID_SDK_ROOT:-/usr/local/lib/android/sdk}"
+          echo "::group::platform-tools source.properties"
+          cat "$SDK/platform-tools/source.properties" 2>/dev/null || echo "not found"
+          echo "::endgroup::"
+          echo "::group::emulator package source.properties"
+          cat "$SDK/emulator/source.properties" 2>/dev/null || echo "not found"
+          echo "::endgroup::"
+          echo "::group::emulator -version"
+          "$SDK/emulator/emulator" -version 2>/dev/null || echo "not available"
+          echo "::endgroup::"
+          echo "::group::AVD configuration (shams_test.avd/config.ini)"
+          cat "$HOME/.android/avd/shams_test.avd/config.ini" 2>/dev/null || echo "not found"
+          echo "::endgroup::"
+
+      # PHASE 8A-20 (Finding A Diagnostic Authorization, checkpoint d54a12a):
+      # surfaces the logcat captured during the emulator script above, and
+      # lists/inlines whatever Maestro itself already writes to
+      # ~/.maestro/tests/ on a flow failure (screenshots + view-hierarchy
+      # dumps -- Maestro's own existing behavior, not new capture logic).
+      # Printed to the job's own log output deliberately -- independent of
+      # the artifact-upload path below, which Finding B (tracked
+      # separately, NOT addressed by this authorization) can still fail.
+      - name: Show logcat and preserved Maestro debug artifacts
+        if: always()
+        run: |
+          echo "::group::logcat -- FATAL/crash/exception lines"
+          grep -iE "FATAL|AndroidRuntime|Exception|chromium" "$HOME/logcat.txt" 2>/dev/null | tail -200 || echo "no matches / logcat.txt not found"
+          echo "::endgroup::"
+          echo "::group::logcat -- last 150 lines (general context)"
+          tail -150 "$HOME/logcat.txt" 2>/dev/null || echo "logcat.txt not found"
+          echo "::endgroup::"
+          echo "::group::Maestro debug artifacts captured under ~/.maestro/tests/"
+          find "$HOME/.maestro/tests" -type f 2>/dev/null | sort || echo "none found"
+          echo "::endgroup::"
+          echo "::group::Small text/XML/JSON hierarchy dumps, inlined (<50KB each)"
+          find "$HOME/.maestro/tests" -type f \( -iname "*.xml" -o -iname "*.json" -o -iname "*.txt" \) -size -50k -print -exec cat {} \; 2>/dev/null || true
+          echo "::endgroup::"
+
       - name: Upload Maestro results
         if: always()
         uses: actions/upload-artifact@v4
@@ -292,9 +350,15 @@ jobs:
           path: |
             maestro-results.xml
             ~/.maestro/tests/
+            ~/logcat.txt
           # Same reasoning as the debug-APK upload above — bounded
           # explicitly instead of the account default, so this artifact
           # stops contributing to the same storage-quota accumulation.
+          # logcat.txt added here too (PHASE 8A-20) so the full raw log is
+          # available if/when this upload succeeds -- this is not a
+          # Finding B fix or workaround, it is one more file in the same
+          # already-existing upload step; the log-visible step above is
+          # the actual, quota-independent delivery mechanism.
           retention-days: 7
 
       - name: Publish test report
