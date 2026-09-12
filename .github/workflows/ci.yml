@@ -347,24 +347,6 @@ jobs:
       - name: Show logcat and preserved Maestro debug artifacts
         if: always()
         run: |
-          echo "::group::logcat -- FATAL/crash/exception lines"
-          grep -iE "FATAL|AndroidRuntime|Exception|chromium" "$HOME/logcat.txt" 2>/dev/null | tail -200 || echo "no matches / logcat.txt not found"
-          echo "::endgroup::"
-          # PHASE 8A-30 (timestamp-correlation diagnostic authorization,
-          # checkpoint c51fff0): a prior review searched logcat for the
-          # literal substring "ANR" and found no matches -- which does not
-          # contradict PHASE_8A_25's SystemUI-ANR finding (that evidence
-          # came from Maestro's own hierarchy dump, not logcat), but also
-          # doesn't rule out an ANR trace being present under different,
-          # standard Android ANR log markers. Broader, targeted search for
-          # those markers -- if any hit carries a guest-clock timestamp
-          # (logcat's own threadtime format), it is the most direct
-          # evidence available for correlating the ANR's actual on-screen
-          # moment against the resource samples above (via the host/guest
-          # clock-offset capture in the emulator step).
-          echo "::group::logcat -- ANR-related markers (ActivityManager/ANR/input-dispatch-timeout/not-responding)"
-          grep -iE "ActivityManager|ANR in|Input dispatching timed out|Not responding" "$HOME/logcat.txt" 2>/dev/null || echo "no matches / logcat.txt not found"
-          echo "::endgroup::"
           echo "::group::logcat -- last 150 lines (general context)"
           tail -150 "$HOME/logcat.txt" 2>/dev/null || echo "logcat.txt not found"
           echo "::endgroup::"
@@ -405,6 +387,35 @@ jobs:
             echo
           done
           shopt -u nullglob
+          echo "::endgroup::"
+
+      # PHASE 8A-20 (Finding A Diagnostic Authorization, checkpoint d54a12a)
+      # / PHASE 8A-30 (checkpoint c51fff0): the FATAL/crash grep and the
+      # broader ANR-marker grep against logcat.txt.
+      #
+      # PHASE 8A-34 (relocation authorization, checkpoint 4b21be0): moved
+      # into their own step, after "Show logcat and preserved Maestro debug
+      # artifacts" instead of as that step's first two groups.
+      # PHASE_8A_33_CI_VERIFICATION_RUN440.md found that on a run where
+      # "Show logcat..."'s own total output is large, get_job_logs's
+      # ~4999-line/~565KB retrievable-tail cap (PHASE_8A_27) can cut off
+      # that step's *own earlier groups* -- these two searches ran first,
+      # before the hierarchy-dump/commands-*.json groups that usually
+      # dominate that step's size -- even though the Phase 8A-28 relocation
+      # already moved the *steps after* "Show logcat..." past that same
+      # cap. Splitting these two searches into their own step, placed after
+      # "Show logcat..." entirely, means their output is now nearer the end
+      # of the log than the large hierarchy-dump/commands-json content that
+      # was pushing them out. Search logic and content are unchanged --
+      # this is a relocation only.
+      - name: Show logcat ANR/FATAL search results
+        if: always()
+        run: |
+          echo "::group::logcat -- FATAL/crash/exception lines"
+          grep -iE "FATAL|AndroidRuntime|Exception|chromium" "$HOME/logcat.txt" 2>/dev/null | tail -200 || echo "no matches / logcat.txt not found"
+          echo "::endgroup::"
+          echo "::group::logcat -- ANR-related markers (ActivityManager/ANR/input-dispatch-timeout/not-responding)"
+          grep -iE "ActivityManager|ANR in|Input dispatching timed out|Not responding" "$HOME/logcat.txt" 2>/dev/null || echo "no matches / logcat.txt not found"
           echo "::endgroup::"
 
       # PHASE 8A-26 (resource-constraint diagnostic authorization,
