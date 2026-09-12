@@ -318,10 +318,8 @@ jobs:
             # knowing this offset; without it, any such correlation is only
             # approximate. Captured once, immediately, since both sampler
             # loops above are now already running in the background.
-            {
-              echo "host (date -u):  $(date -u +%FT%T.%3NZ)"
-              echo "guest (adb shell date -u): $(adb shell date -u 2>&1)"
-            } > "$HOME/clock-offset.txt"
+            echo "host (date -u):  $(date -u +%FT%T.%3NZ)" > "$HOME/clock-offset.txt"
+            echo "guest (adb shell date -u): $(adb shell date -u 2>&1)" >> "$HOME/clock-offset.txt"
             # No `|| true` here: a real Maestro failure must fail this step,
             # and therefore the job. The two steps below both run
             # `if: always()`, so removing `|| true` does not stop the JUnit
