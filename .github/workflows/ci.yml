@@ -18,6 +18,21 @@ on:
           unconditionally.
         type: boolean
         default: false
+      disable_observer:
+        description: >-
+          Observer-effect control experiment (Finding A, A1): skip
+          starting the guest-side `adb shell dumpsys cpuinfo` sampler
+          (PHASE_8A_30) for this run only. PHASE_8A_35 found a direct
+          SystemUI ANR whose logged Reason names SystemUI's own
+          diagnostic dump service (SystemUIAuxiliaryDumpService) --
+          raising the question of whether this audit chain's own
+          repeated dumpsys polling is a contributing/triggering factor,
+          not merely a passive observer. Off by default (instrumented/
+          "treatment" run, the normal mode); check true for a "control"
+          run with that one sampler disabled, everything else
+          identical, to compare ANR occurrence between the two.
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -310,7 +325,19 @@ jobs:
             # timestamp source as the host sampler, so the two files share
             # one clock and can be read side by side without a conversion
             # step.
-            nohup bash -c 'while true; do date -u +%FT%TZ; adb shell dumpsys cpuinfo 2>&1; echo; sleep 3; done' > "$HOME/guest-cpuinfo.txt" 2>&1 &
+            #
+            # PHASE 8A-38 (observer-effect control experiment, checkpoint
+            # 6819ead): PHASE_8A_35 found a direct SystemUI ANR whose
+            # logged Reason names SystemUI's own diagnostic dump service
+            # (SystemUIAuxiliaryDumpService) -- raising the question of
+            # whether this repeated `adb shell dumpsys` polling is itself
+            # a contributing/triggering factor. Gated on `disable_observer`
+            # so a control run (that input set true) skips only this one
+            # sampler, everything else identical, for direct comparison
+            # against the normal ("treatment") run. Single self-contained
+            # line, deliberately not a multi-line construct -- see
+            # PHASE_8A_31 for exactly why that broke run #438.
+            [ "${{ inputs.disable_observer }}" = "true" ] || nohup bash -c 'while true; do date -u +%FT%TZ; adb shell dumpsys cpuinfo 2>&1; echo; sleep 3; done' > "$HOME/guest-cpuinfo.txt" 2>&1 &
             # PHASE 8A-30: one-time capture of the guest's own clock against
             # the host's `date -u` above -- correlating a guest-OS
             # timestamp (e.g. from logcat, which uses the guest's own local
@@ -320,6 +347,7 @@ jobs:
             # loops above are now already running in the background.
             echo "host (date -u):  $(date -u +%FT%T.%3NZ)" > "$HOME/clock-offset.txt"
             echo "guest (adb shell date -u): $(adb shell date -u 2>&1)" >> "$HOME/clock-offset.txt"
+            echo "PHASE 8A-38 observer-effect experiment mode: disable_observer=${{ inputs.disable_observer }} (guest-cpuinfo sampler $( [ "${{ inputs.disable_observer }}" = "true" ] && echo DISABLED -- control run || echo enabled -- normal/treatment run ))"
             # No `|| true` here: a real Maestro failure must fail this step,
             # and therefore the job. The two steps below both run
             # `if: always()`, so removing `|| true` does not stop the JUnit
