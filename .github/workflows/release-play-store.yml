@@ -193,7 +193,21 @@ jobs:
         with:
           name: shams-aab-${{ github.run_number }}
           path: android/app/build/outputs/bundle/release/app-release.aab
-          retention-days: 30
+          # Finding B (docs/audit/PHASE_8A_36_FINDING_B_AAB_RETENTION_FIX.md):
+          # each release run uploads a uniquely-named (never-overwriting)
+          # ~24MB AAB artifact. Independently verified: 23 successful runs
+          # in the last 30 days alone (retention-days: 30's own window)
+          # account for ~552MB of stored artifacts on their own — already
+          # exceeding a 500MB Actions storage cap before counting anything
+          # else (including the separate CI Maestro-results artifact this
+          # quota exhaustion has been blocking). Shortened to 3 days:
+          # preventive only, does not retroactively reclaim quota already
+          # consumed by existing stored artifacts (those still need
+          # explicit deletion/expiry, a separate decision). The Play Store
+          # upload immediately below is this workflow's actual deliverable
+          # — the artifact copy is a convenience for manual inspection, not
+          # the release mechanism itself.
+          retention-days: 3
 
       - name: Deploy to Play Store
         uses: r0adkll/upload-google-play@v1
