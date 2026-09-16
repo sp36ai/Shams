@@ -275,6 +275,17 @@ jobs:
           profile: pixel_6
           avd-name: shams_test
           force-avd-creation: false
+          # PHASE 8A-55 (Finding A remediation, direct authorization):
+          # PHASE_8A_25 identified the AVD's tight default budget
+          # (hw.cpu.ncore=2, RAM auto-bumped only to 2048MB) as the
+          # best-supported, though not fully proven, cause of the
+          # recurring "System UI isn't responding" ANR that fails
+          # Maestro assertions regardless of run duration. `cores`/
+          # `ram-size` raise what the emulator itself is allowed to use
+          # on the runner (documented at 4 vCPU/16GB for ubuntu-latest);
+          # this does not touch the job's own `runs-on` tier or cost.
+          cores: 3
+          ram-size: 3072M
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
           disable-animations: true
           # NOTE: the runner executes each script line in a separate shell, so
