@@ -510,14 +510,6 @@ jobs:
           echo "::group::Host/guest clock offset (for correlating guest-clock-timestamped evidence, e.g. logcat)"
           cat "$HOME/clock-offset.txt" 2>/dev/null || echo "clock-offset.txt not found"
           echo "::endgroup::"
-          # PHASE 8A-41 (A2 diagnostic authorization): adb transport-layer
-          # state (get-state, devices -l, sys.boot_completed, guest uptime),
-          # same 3s/host-UTC cadence as the samplers above -- the one
-          # signal none of the existing diagnostics captured for #434/#448's
-          # "Android driver unreachable" failures.
-          echo "::group::ADB transport-layer state during Maestro run (every 3s, host-UTC timestamped)"
-          cat "$HOME/adb-state.txt" 2>/dev/null || echo "adb-state.txt not found"
-          echo "::endgroup::"
 
       # PHASE 8A-20 (Finding A Diagnostic Authorization, checkpoint d54a12a):
       # captures the resolved Android SDK/emulator toolchain versions and
@@ -596,3 +588,24 @@ jobs:
             ~/.gradle/caches
             ~/.gradle/wrapper
           key: gradle-${{ hashFiles('android/**/*.gradle*', 'android/gradle.properties') }}
+
+      # PHASE 8A-43 (relocation authorization, checkpoint fd4755b): run #457
+      # showed a get_job_logs tail fetch landing mid-way through this exact
+      # group's own content -- it was previously the last group inside "Show
+      # runner resource usage and OOM check", but that step alone bundles
+      # four separate 3s-cadence samplers (resource-usage, guest-cpuinfo,
+      # clock-offset, adb-state) whose combined output for a ~25+ minute
+      # Setup Android emulator run can exceed the ~4999-line retrievable
+      # cap on its own, before counting anything before or after it. Moved
+      # to its own step, placed last among all job steps (after toolchain
+      # capture, artifact upload, test-report publish, and cache save, all
+      # independent and if: always()) so nothing else's output stands
+      # between this one and the true end of the log a tail fetch keeps.
+      # Sampler behavior, cadence, and content are unchanged -- reordering
+      # only.
+      - name: Show ADB transport-layer state
+        if: always()
+        run: |
+          echo "::group::ADB transport-layer state during Maestro run (every 3s, host-UTC timestamped)"
+          cat "$HOME/adb-state.txt" 2>/dev/null || echo "adb-state.txt not found"
+          echo "::endgroup::"
