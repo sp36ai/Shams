@@ -368,14 +368,31 @@ jobs:
             echo "host (date -u):  $(date -u +%FT%T.%3NZ)" > "$HOME/clock-offset.txt"
             echo "guest (adb shell date -u): $(adb shell date -u 2>&1)" >> "$HOME/clock-offset.txt"
             echo "PHASE 8A-38 observer-effect experiment mode: disable_observer=${{ inputs.disable_observer }} (guest-cpuinfo sampler $( [ "${{ inputs.disable_observer }}" = "true" ] && echo DISABLED -- control run || echo enabled -- normal/treatment run ))"
-            # No `|| true` here: a real Maestro failure must fail this step,
-            # and therefore the job. The two steps below both run
-            # `if: always()`, so removing `|| true` does not stop the JUnit
-            # report from being generated (Maestro writes maestro-results.xml
-            # on its own regardless of overall pass/fail) or from being
-            # uploaded/published — see PHASE_2A_REPORT.md for the reasoning
-            # and what could only be verified by an actual GitHub Actions run.
-            "$HOME/.maestro/bin/maestro" test --format junit --output maestro-results.xml .maestro/ci/
+            # PHASE 8A-52 (root-cause finding, docs/audit/PHASE_8A_52_*):
+            # traced A2 to a one-time adb transport-layer hiccup
+            # (`host:transport:emulator-5554` briefly "not found") that
+            # the OS-level adb daemon self-heals from in ~3s (re-enumerating
+            # under a new transport_id), but Maestro's own internal driver
+            # connection (via `dadb`) never recovers from -- so the
+            # in-flight flow, and every flow after it, cascades through
+            # Maestro's own fixed ~4min "Android driver unreachable"
+            # timeout for the rest of the suite. Restarting the adb server
+            # forces `dadb` to rebuild its connection from scratch, so on a
+            # failure this retries once, after a fresh `adb kill-server` +
+            # `start-server` + `wait-for-device` -- directly targeting the
+            # established mechanism rather than guessing at AVD/RAM/CPU
+            # changes whose necessity isn't evidenced. Bounded to a single
+            # retry so a genuine app/flow regression still fails the job,
+            # within roughly 2x the normal runtime rather than indefinitely.
+            # No `|| true`: a failure on the retry attempt must still fail
+            # this step, and therefore the job. The two steps below both run
+            # `if: always()`, so this does not stop the JUnit report from
+            # being generated (Maestro writes maestro-results.xml on its own
+            # regardless of outcome, and each attempt overwrites it with its
+            # own result) or from being uploaded/published — see
+            # PHASE_2A_REPORT.md for the reasoning and what could only be
+            # verified by an actual GitHub Actions run.
+            bash -c '"$HOME/.maestro/bin/maestro" test --format junit --output maestro-results.xml .maestro/ci/ || { echo "::warning::Maestro run failed; restarting adb and retrying once (PHASE_8A_52 mitigation)"; adb kill-server; adb start-server; adb wait-for-device; sleep 2; "$HOME/.maestro/bin/maestro" test --format junit --output maestro-results.xml .maestro/ci/; }'
 
       # PHASE 8A-11/8A-12: the "after" bracket to the disk-usage step above,
       # captured regardless of outcome -- gives a direct before/after
