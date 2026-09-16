@@ -338,6 +338,26 @@ jobs:
             # line, deliberately not a multi-line construct -- see
             # PHASE_8A_31 for exactly why that broke run #438.
             [ "${{ inputs.disable_observer }}" = "true" ] || nohup bash -c 'while true; do date -u +%FT%TZ; adb shell dumpsys cpuinfo 2>&1; echo; sleep 3; done' > "$HOME/guest-cpuinfo.txt" 2>&1 &
+            # PHASE 8A-41 (A2 diagnostic authorization): run #434 and #448
+            # both hit "Android driver unreachable" (adb transport lost to
+            # emulator-5554), but neither prior sampler above can explain
+            # it -- resource-usage.txt is host CPU/RAM, guest-cpuinfo.txt is
+            # Android's own per-process CPU, and logcat.txt only captures
+            # once adb *is* connected. None of them observe the adb
+            # transport layer itself. This sampler does: `adb get-state`
+            # (host's view of whether a device is attached at all),
+            # `adb devices -l` (the device list adb itself sees),
+            # `adb shell getprop sys.boot_completed` (did the guest OS
+            # finish booting, from adb's perspective), and `adb shell
+            # uptime` (is the guest still alive and responsive). Same 3s
+            # cadence and host-UTC clock as the samplers above, so all four
+            # files remain directly comparable on one timeline. Always on,
+            # unlike guest-cpuinfo.txt above -- A2 is unrelated to the
+            # observer-effect experiment (#436/A1), and run #448 (a control
+            # run, this sampler's guest-cpuinfo equivalent OFF) still hit
+            # A2, so gating this behind disable_observer would only lose
+            # the one data source that could explain it.
+            nohup bash -c 'while true; do date -u +%FT%TZ; echo "adb get-state: $(adb get-state 2>&1)"; echo "--- adb devices -l ---"; adb devices -l 2>&1; echo "sys.boot_completed: $(adb shell getprop sys.boot_completed 2>&1)"; echo "guest uptime: $(adb shell uptime 2>&1)"; echo; sleep 3; done' > "$HOME/adb-state.txt" 2>&1 &
             # PHASE 8A-30: one-time capture of the guest's own clock against
             # the host's `date -u` above -- correlating a guest-OS
             # timestamp (e.g. from logcat, which uses the guest's own local
@@ -489,6 +509,14 @@ jobs:
           echo "::endgroup::"
           echo "::group::Host/guest clock offset (for correlating guest-clock-timestamped evidence, e.g. logcat)"
           cat "$HOME/clock-offset.txt" 2>/dev/null || echo "clock-offset.txt not found"
+          echo "::endgroup::"
+          # PHASE 8A-41 (A2 diagnostic authorization): adb transport-layer
+          # state (get-state, devices -l, sys.boot_completed, guest uptime),
+          # same 3s/host-UTC cadence as the samplers above -- the one
+          # signal none of the existing diagnostics captured for #434/#448's
+          # "Android driver unreachable" failures.
+          echo "::group::ADB transport-layer state during Maestro run (every 3s, host-UTC timestamped)"
+          cat "$HOME/adb-state.txt" 2>/dev/null || echo "adb-state.txt not found"
           echo "::endgroup::"
 
       # PHASE 8A-20 (Finding A Diagnostic Authorization, checkpoint d54a12a):
