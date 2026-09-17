@@ -21,6 +21,16 @@ env:
 # step below (`--force`) is idempotent, so an unnecessary run redeploys
 # identical code rather than doing anything unsafe; the cost is wasted CI
 # minutes, not incorrect behavior. See docs/audit/PHASE_6D_1_REMEDIATION.md.
+#
+# PHASE 7C follow-up: `CI` (ci.yml) never runs the Firestore rules test
+# suite, and the dedicated `Firestore Rules Testing` workflow is
+# path-filtered (only fires when firestore.rules/firestore.rules.test.ts/
+# etc. change) — so gating on it via a second `workflow_run` would silently
+# skip deploys for every commit that doesn't touch those paths, since a
+# workflow that never runs never emits a `workflow_run` event. Instead the
+# `verify-rules` job below runs the same `npm run test:rules` suite
+# directly, on every deploy, so a broken security-rules regression can
+# never reach production regardless of what else changed in the commit.
 on:
   workflow_run:
     workflows: ['CI']
@@ -32,8 +42,41 @@ permissions:
   contents: read
 
 jobs:
+  verify-rules:
+    name: Verify Firestore rules
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: 20
+          cache: npm
+
+      # The Firestore emulator (spawned by `firebase emulators:exec` below)
+      # is a JVM process — it will not start without a JRE on PATH.
+      - name: Setup Java
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          # firebase-tools >= 15 refuses to start the Firestore emulator on a
+          # JDK older than 21 ("no longer supports Java version before 21").
+          java-version: 21
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run Firestore Rules test suite (emulator + jest)
+        run: npm run test:rules
+
   deploy:
     name: Deploy to asia-south1
+    needs: verify-rules
     runs-on: ubuntu-latest
     # Manual dispatch always runs; a CI-triggered run only proceeds if CI
     # actually passed — a failed or cancelled CI run must not deploy.
