@@ -102,6 +102,25 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v5
 
+      # PHASE 8A-11: the debug APK build below reinstalls its own pinned NDK
+      # and CMake via `sdkmanager` regardless of what's preinstalled (confirmed
+      # in CI logs), so the runner's preinstalled NDK is dead weight. Combined
+      # with unused preinstalled tooling (.NET, Haskell/GHC, Boost, CodeQL) and
+      # stale Docker images, this was leaving too little disk for the ~1GB
+      # Android system image `Setup Android emulator` pulls afterward —
+      # confirmed failing with "No space left on device" on every recent CI
+      # run on main. This only removes tooling this job never touches.
+      - name: Free disk space (remove unused preinstalled tooling)
+        run: |
+          echo "Disk space before cleanup:"
+          df -h /
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android/sdk/ndk \
+            /opt/ghc /usr/local/.ghcup /usr/local/share/boost \
+            "$AGENT_TOOLSDIRECTORY" /opt/hostedtoolcache/CodeQL || true
+          sudo docker image prune --all --force || true
+          echo "Disk space after cleanup:"
+          df -h /
+
       - name: Setup Node.js
         uses: actions/setup-node@v5
         with:
