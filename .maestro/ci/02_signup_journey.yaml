@@ -12,11 +12,14 @@ name: 'Journey — sign up through onboarding to the Oracle'
     permissions:
       location: allow
 
-# Land on Auth (splash + auth bootstrap), switch to sign-up
+# Land on Auth (splash + auth bootstrap), switch to sign-up. Widened for
+# the same CI-environment performance-ceiling reason as 01_auth_validation.yaml
+# (see its own comment) -- confirmed via logcat that the JS thread/auth
+# timeout fire on schedule, only the UI paint itself lags under CI load.
 - extendedWaitUntil:
     visible:
       id: 'auth-tab-signup'
-    timeout: 20000
+    timeout: 90000
 - tapOn:
     id: 'auth-tab-signup'
 

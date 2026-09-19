@@ -6,11 +6,12 @@ name: 'Settings — plan display and sign out'
 - launchApp
 
 # Splash + session restore for the account created in 02 — Settings is now
-# a gear icon in the Home header, not a tab.
+# a gear icon in the Home header, not a tab. Widened for the same
+# CI-environment performance-ceiling reason as 01_auth_validation.yaml.
 - extendedWaitUntil:
     visible:
       id: 'settings-gear-btn'
-    timeout: 20000
+    timeout: 90000
 
 - tapOn:
     id: 'settings-gear-btn'
