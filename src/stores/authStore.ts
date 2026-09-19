@@ -66,6 +66,14 @@ export interface AuthState {
 let _authUnsubscribe: (() => void) | null = null;
 
 const AUTH_TOKEN_TIMEOUT_MS = 8000;
+// bootstrap() awaits onAuthStateChanged's first emission, which (like every
+// other native Firebase Auth call in this file) carries no SDK-level timeout
+// guarantee. Unlike those calls, an unbounded wait here doesn't just freeze
+// one button -- it leaves isLoading, and therefore the Splash screen, stuck
+// forever, since nothing else ever unblocks it. Bounded so the app always
+// falls through to the Auth screen; the listener stays subscribed and still
+// updates user/isLoading later if Firebase responds after the window closes.
+const BOOTSTRAP_TIMEOUT_MS = 10_000;
 // GoogleSignin.hasPlayServices()/signIn() drive native UI (an account picker,
 // a Play Services update dialog) that legitimately waits on a human, so this
 // is generous on purpose — it exists only to guarantee isLoading (and every
@@ -122,7 +130,14 @@ export const useAuthStore = create<AuthState>(set => ({
     set({ isLoading: true });
     // Await the first emission of onAuthStateChanged so the navigator
     // never flashes the Auth screen before the cached user resolves.
-    await new Promise<void>(resolve => {
+    // Bounded (BOOTSTRAP_TIMEOUT_MS, above) -- like every native Firebase
+    // Auth call in this file, onAuthStateChanged's first emission carries
+    // no SDK-level timeout guarantee. Unlike those calls, an unbounded
+    // wait here doesn't just freeze one button: it leaves isLoading, and
+    // therefore the Splash screen, stuck forever, since nothing else ever
+    // unblocks it. The listener stays subscribed either way, and still
+    // updates user/isLoading later if Firebase responds after the window.
+    const authReady = new Promise<void>(resolve => {
       let resolved = false;
       _authUnsubscribe = auth().onAuthStateChanged(async fbUser => {
         if (fbUser) {
@@ -160,6 +175,11 @@ export const useAuthStore = create<AuthState>(set => ({
         }
       });
     });
+    await withTimeout(authReady, BOOTSTRAP_TIMEOUT_MS);
+    // withTimeout resolves `undefined` on timeout without touching state --
+    // make sure isLoading still flips false so the app doesn't stay stuck
+    // showing Splash even though the listener never fired in time.
+    set(state => (state.isLoading ? { isLoading: false } : state));
   },
 
   // signIn/signUp/signInWithGoogle only perform the Firebase call and surface
