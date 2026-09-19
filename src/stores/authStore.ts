@@ -66,14 +66,14 @@ export interface AuthState {
 let _authUnsubscribe: (() => void) | null = null;
 
 const AUTH_TOKEN_TIMEOUT_MS = 8000;
-// bootstrap() awaits onAuthStateChanged's first emission, which (like every
-// other native Firebase Auth call in this file) carries no SDK-level timeout
-// guarantee. Unlike those calls, an unbounded wait here doesn't just freeze
-// one button -- it leaves isLoading, and therefore the Splash screen, stuck
-// forever, since nothing else ever unblocks it. Bounded so the app always
-// falls through to the Auth screen; the listener stays subscribed and still
-// updates user/isLoading later if Firebase responds after the window closes.
-const BOOTSTRAP_TIMEOUT_MS = 10_000;
+// onAuthStateChanged is a native round-trip with no SDK-level guarantee that
+// it ever fires — same failure class as every other native call this file
+// already bounds with withTimeout. Confirmed hanging indefinitely in CI
+// (which runs against a placeholder google-services.json): with no bound,
+// bootstrap() below never resolves, RootNavigator's `authBootstrapped` stays
+// false forever, and the app sits on Splash permanently — no crash, no
+// error, nothing to distinguish it from any other kind of hang.
+const AUTH_BOOTSTRAP_TIMEOUT_MS = 8000;
 // GoogleSignin.hasPlayServices()/signIn() drive native UI (an account picker,
 // a Play Services update dialog) that legitimately waits on a human, so this
 // is generous on purpose — it exists only to guarantee isLoading (and every
@@ -130,56 +130,65 @@ export const useAuthStore = create<AuthState>(set => ({
     set({ isLoading: true });
     // Await the first emission of onAuthStateChanged so the navigator
     // never flashes the Auth screen before the cached user resolves.
-    // Bounded (BOOTSTRAP_TIMEOUT_MS, above) -- like every native Firebase
-    // Auth call in this file, onAuthStateChanged's first emission carries
-    // no SDK-level timeout guarantee. Unlike those calls, an unbounded
-    // wait here doesn't just freeze one button: it leaves isLoading, and
-    // therefore the Splash screen, stuck forever, since nothing else ever
-    // unblocks it. The listener stays subscribed either way, and still
-    // updates user/isLoading later if Firebase responds after the window.
-    const authReady = new Promise<void>(resolve => {
-      let resolved = false;
-      _authUnsubscribe = auth().onAuthStateChanged(async fbUser => {
-        if (fbUser) {
-          // A different uid than last session means a different account signed
-          // in on this device — per-account onboarding/location flags must not
-          // leak from whoever used the device before.
-          //
-          // We compare against AUTH_LAST_UID (not AUTH_USER_ID): the latter is
-          // the display cache and is cleared on sign-out, which would make this
-          // check see `undefined` after every explicit sign-out and therefore
-          // never fire. AUTH_LAST_UID deliberately survives sign-out so the
-          // "different account signed in" reset actually triggers.
-          const previousUid = storage.getString(KEYS.AUTH_LAST_UID);
-          if (previousUid !== undefined && previousUid !== fbUser.uid) {
-            useSettingsStore.getState().resetForNewAccount();
-          }
-          storage.set(KEYS.AUTH_LAST_UID, fbUser.uid);
-          try {
-            const tokenResult = await withTimeout(fbUser.getIdTokenResult(), AUTH_TOKEN_TIMEOUT_MS);
-            const plan = (tokenResult?.claims.plan as PlanTier | undefined) ?? 'free';
-            const expiry = tokenResult?.claims.planExpiry as string | undefined;
-            useQuotaStore.getState().setPlan(plan, expiry);
-          } catch {
+    // Bounded by AUTH_BOOTSTRAP_TIMEOUT_MS (see its own comment above) —
+    // the listener itself is left attached either way, so a late-firing
+    // emission after the timeout still updates `user`/plan/cache normally.
+    const settled = await withTimeout(
+      new Promise<void>(resolve => {
+        let resolved = false;
+        _authUnsubscribe = auth().onAuthStateChanged(async fbUser => {
+          if (fbUser) {
+            // A different uid than last session means a different account signed
+            // in on this device — per-account onboarding/location flags must not
+            // leak from whoever used the device before.
+            //
+            // We compare against AUTH_LAST_UID (not AUTH_USER_ID): the latter is
+            // the display cache and is cleared on sign-out, which would make this
+            // check see `undefined` after every explicit sign-out and therefore
+            // never fire. AUTH_LAST_UID deliberately survives sign-out so the
+            // "different account signed in" reset actually triggers.
+            const previousUid = storage.getString(KEYS.AUTH_LAST_UID);
+            if (previousUid !== undefined && previousUid !== fbUser.uid) {
+              useSettingsStore.getState().resetForNewAccount();
+            }
+            storage.set(KEYS.AUTH_LAST_UID, fbUser.uid);
+            try {
+              const tokenResult = await withTimeout(
+                fbUser.getIdTokenResult(),
+                AUTH_TOKEN_TIMEOUT_MS,
+              );
+              const plan = (tokenResult?.claims.plan as PlanTier | undefined) ?? 'free';
+              const expiry = tokenResult?.claims.planExpiry as string | undefined;
+              useQuotaStore.getState().setPlan(plan, expiry);
+            } catch {
+              useQuotaStore.getState().setPlan('free');
+            }
+            cacheUserLocally(fbUser);
+          } else {
+            cacheUserLocally(null);
             useQuotaStore.getState().setPlan('free');
           }
-          cacheUserLocally(fbUser);
-        } else {
-          cacheUserLocally(null);
-          useQuotaStore.getState().setPlan('free');
-        }
-        set({ user: fbUser, isLoading: false });
-        if (!resolved) {
-          resolved = true;
-          resolve();
-        }
-      });
-    });
-    await withTimeout(authReady, BOOTSTRAP_TIMEOUT_MS);
-    // withTimeout resolves `undefined` on timeout without touching state --
-    // make sure isLoading still flips false so the app doesn't stay stuck
-    // showing Splash even though the listener never fired in time.
-    set(state => (state.isLoading ? { isLoading: false } : state));
+          set({ user: fbUser, isLoading: false });
+          if (!resolved) {
+            resolved = true;
+            resolve();
+          }
+        });
+      }),
+      AUTH_BOOTSTRAP_TIMEOUT_MS,
+    );
+    if (settled === undefined) {
+      // onAuthStateChanged never fired within the bound — treat as signed
+      // out rather than leave `isLoading` stuck true, which would otherwise
+      // freeze AuthScreen's buttons in their disabled/loading state for the
+      // rest of the session (AuthScreen reads this same `isLoading`). The
+      // listener above is still attached, so a late emission afterward
+      // still updates state normally — this only unblocks the initial gate.
+      crashlytics().log(
+        '[Auth] bootstrap(): onAuthStateChanged did not fire within timeout — treating as signed out',
+      );
+      set({ user: null, isLoading: false });
+    }
   },
 
   // signIn/signUp/signInWithGoogle only perform the Firebase call and surface
