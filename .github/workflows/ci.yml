@@ -262,7 +262,12 @@ jobs:
           # never reaches anyone who needs it to diagnose a failure. Printing
           # the JS-bundle/app-crash-relevant lines straight to this step's own
           # console log survives that entirely -- it costs no storage quota.
-          grep -E "ReactNativeJS|AndroidRuntime|FATAL EXCEPTION|art  " logcat_full.txt | tail -300 || echo "(no matching logcat lines found)"
+          # Broadened after the first console dump showed only a boot line
+          # and the emulator-detection warn, nothing past it -- that filter
+          # was too narrow to catch a synchronous native-module throw or a
+          # Firebase/Crashlytics-side error, since the app's own JS logger
+          # suppresses info/debug in this build (see src/utils/logger.ts).
+          grep -E "ReactNativeJS|AndroidRuntime|FATAL|Crashlytics|FirebaseAuth|FirebaseApp|AppCheck|com.astrosarfaraz.shamsalasrar|DEBUG *:|Process:| E | F " logcat_full.txt | tail -500 || echo "(no matching logcat lines found)"
 
       - name: Upload full emulator logcat
         if: always()
