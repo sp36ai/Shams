@@ -84,13 +84,16 @@ function checkNotDebugging(): SecurityCheckResult {
 /*  3. Emulator detection (Android only)                                      */
 /* -------------------------------------------------------------------------- */
 
-function checkNotEmulator(): SecurityCheckResult {
+/**
+ * Raw emulator heuristic, independent of `__DEV__` — unlike checkNotEmulator()
+ * below, this doesn't short-circuit to "not an emulator" for developer builds,
+ * because callers outside the security gate (see `isEmulator()` export) need
+ * the real signal regardless of build mode.
+ */
+function detectEmulatorSignals(): boolean {
   if (Platform.OS !== 'android') {
-    return PASS;
+    return false;
   }
-  if (__DEV__) {
-    return PASS;
-  } // Developers use emulators — don't block them
 
   // React Native exposes Platform.constants on Android.
   const constants = Platform.constants as Record<string, unknown>;
@@ -116,7 +119,36 @@ function checkNotEmulator(): SecurityCheckResult {
     hardware.includes('vbox'),
   ];
 
-  if (emulatorSignals.some(Boolean)) {
+  return emulatorSignals.some(Boolean);
+}
+
+/**
+ * Public, `__DEV__`-independent emulator check.
+ *
+ * Used by App Check provider selection (src/firebase/appCheck.ts) to fall
+ * back to the debug provider on an emulator even in a release-mode JS bundle
+ * (an E2E/CI build embeds the bundle with `__DEV__` folded to `false` — see
+ * android/app/build.gradle's `debuggableVariants = []` — so `__DEV__` alone
+ * can't distinguish "CI emulator" from "real production device" there).
+ * This doesn't weaken production App Check: Play Integrity attestation of a
+ * genuine emulator is already meaningless to Google's backend, and server-side
+ * enforcement (`enforceAppCheck`) still rejects an unregistered debug token.
+ * It only stops the client from hanging forever on an attestation call that
+ * an emulator can never usefully complete.
+ */
+export function isEmulator(): boolean {
+  return detectEmulatorSignals();
+}
+
+function checkNotEmulator(): SecurityCheckResult {
+  if (Platform.OS !== 'android') {
+    return PASS;
+  }
+  if (__DEV__) {
+    return PASS;
+  } // Developers use emulators — don't block them
+
+  if (detectEmulatorSignals()) {
     return fail('Runtime integrity check failed.');
   }
   return PASS;
