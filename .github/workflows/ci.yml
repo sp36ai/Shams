@@ -254,6 +254,16 @@ jobs:
             # and what could only be verified by an actual GitHub Actions run.
             "$HOME/.maestro/bin/maestro" test --format junit --output maestro-results.xml .maestro/ci/
 
+      - name: Print app boot logcat (console, not artifact-quota-dependent)
+        if: always()
+        run: |
+          # The artifact upload below has been failing outright ("Artifact
+          # storage quota has been hit") on recent runs, so logcat_full.txt
+          # never reaches anyone who needs it to diagnose a failure. Printing
+          # the JS-bundle/app-crash-relevant lines straight to this step's own
+          # console log survives that entirely -- it costs no storage quota.
+          grep -E "ReactNativeJS|AndroidRuntime|FATAL EXCEPTION|art  " logcat_full.txt | tail -300 || echo "(no matching logcat lines found)"
+
       - name: Upload full emulator logcat
         if: always()
         uses: actions/upload-artifact@v5
