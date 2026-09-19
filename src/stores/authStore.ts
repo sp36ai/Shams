@@ -184,6 +184,16 @@ export const useAuthStore = create<AuthState>(set => ({
       // rest of the session (AuthScreen reads this same `isLoading`). The
       // listener above is still attached, so a late emission afterward
       // still updates state normally — this only unblocks the initial gate.
+      // console.warn (not just the crashlytics breadcrumb above) so this is
+      // directly visible in a logcat capture -- crashlytics().log() only
+      // buffers into the native crash reporter, invisible until a crash
+      // report is pulled. Needed to tell apart, on the intermittent CI
+      // Splash hang under investigation (PR #118), whether this branch ever
+      // runs at all during a hang from whether it runs but something after
+      // it still fails to unblock the UI.
+      console.warn(
+        '[Auth] bootstrap(): onAuthStateChanged did not fire within timeout — treating as signed out',
+      );
       crashlytics().log(
         '[Auth] bootstrap(): onAuthStateChanged did not fire within timeout — treating as signed out',
       );
