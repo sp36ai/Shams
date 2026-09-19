@@ -232,13 +232,16 @@ jobs:
           # hadn't already scrolled it out, not the app's own boot sequence.
           # Capturing continuously from before install, to a file, keeps the
           # JS bundle's actual boot log and any thrown error regardless of how
-          # long the flows run before timing out. `nohup ... & disown` detaches
-          # it from this line's own subshell so it keeps writing across the
-          # separate-shell script lines that follow.
+          # long the flows run before timing out. Each script line already runs
+          # in its own non-interactive `sh -c` (see the NOTE above), so `nohup`
+          # alone is enough to keep it writing once that line's shell exits --
+          # the background job is simply reparented, not sent SIGHUP. `disown`
+          # is a bash builtin, not available under `sh` (dash) on this runner,
+          # and unnecessary here besides: it previously failed the whole step
+          # with exit 127 before Maestro ever ran.
           script: |
             adb logcat -c
             nohup adb logcat -v threadtime > logcat_full.txt 2>&1 &
-            disown -a
             adb install -r android/app/build/outputs/apk/debug/app-debug.apk
             adb emu geo fix 67.0011 24.8607
             curl -Ls "https://get.maestro.mobile.dev" | MAESTRO_VERSION=1.39.0 bash
