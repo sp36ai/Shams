@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, StatusBar } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { runSecurityChecks, INTEGRITY_FAIL_MESSAGE } from '@utils/security';
+import { runSecurityChecks, INTEGRITY_FAIL_MESSAGE, isEmulator } from '@utils/security';
 import { ensureAppCheckReady } from './firebase/appCheck';
 import { ThemeProvider } from '@theme/ThemeProvider';
 import { I18nProvider } from '@i18n/I18nProvider';
@@ -17,6 +17,36 @@ import ErrorBoundary from './components/ErrorBoundary';
  */
 const App: React.FC = () => {
   const [securityPassed, setSecurityPassed] = useState(true);
+
+  // TEMPORARY DIAGNOSTIC (PR #118) — remove once the intermittent CI Splash
+  // hang is root-caused. Every failing E2E run so far shows the JS bundle
+  // logging up through the App Check provider fetch and then going
+  // completely silent (no further ReactNativeJS output at all) until
+  // Maestro's timeout kills the process -- on the SAME commit that passed
+  // cleanly on a prior run. That could mean either (a) the whole JS thread
+  // is stalled by a blocking native call, or (b) the JS thread is fine and
+  // something downstream (the auth bootstrap timeout, a re-render) just
+  // isn't doing what it should. A heartbeat that logs on a plain interval
+  // distinguishes the two: if it keeps ticking during a hang, the JS thread
+  // is alive and the bug is elsewhere; if it stops too, the thread itself is
+  // blocked. Scoped to isEmulator() && !__DEV__ (the same CI-detection
+  // condition already used for the App Check provider fallback) so this
+  // never runs on a real user's device -- only on an emulator running a
+  // release-mode bundle, which describes CI, not production.
+  useEffect(() => {
+    if (!isEmulator() || __DEV__) {
+      return undefined;
+    }
+    let tick = 0;
+    const interval = setInterval(() => {
+      tick += 1;
+      console.warn(`[Shams][diag] heartbeat tick ${tick} (JS thread alive)`);
+      if (tick >= 40) {
+        clearInterval(interval);
+      }
+    }, 2000);
+    return () => clearInterval(interval);
+  }, []);
 
   // 1. Immediate Integrity Check
   // This runs before the navigation tree mounts to prevent unauthorized access

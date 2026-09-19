@@ -222,7 +222,26 @@ jobs:
           disable-animations: true
           # NOTE: the runner executes each script line in a separate shell, so
           # env exports do not persist between lines — keep commands self-contained.
+          #
+          # The `adb logcat -c` + `nohup adb logcat ... &` pair replaces a prior
+          # post-hoc `adb logcat -d -t 500 ReactNativeJS:V AndroidRuntime:E *:S`
+          # snapshot taken after Maestro gave up. That snapshot came back empty
+          # on a real failing run (3/3 flows failing waiting for the Auth
+          # screen's first element) -- a fixed-size ring-buffer dump taken
+          # minutes into the job only shows whatever emulator/system chatter
+          # hadn't already scrolled it out, not the app's own boot sequence.
+          # Capturing continuously from before install, to a file, keeps the
+          # JS bundle's actual boot log and any thrown error regardless of how
+          # long the flows run before timing out. Each script line already runs
+          # in its own non-interactive `sh -c` (see the NOTE above), so `nohup`
+          # alone is enough to keep it writing once that line's shell exits --
+          # the background job is simply reparented, not sent SIGHUP. `disown`
+          # is a bash builtin, not available under `sh` (dash) on this runner,
+          # and unnecessary here besides: it previously failed the whole step
+          # with exit 127 before Maestro ever ran.
           script: |
+            adb logcat -c
+            nohup adb logcat -v threadtime > logcat_full.txt 2>&1 &
             adb install -r android/app/build/outputs/apk/debug/app-debug.apk
             adb emu geo fix 67.0011 24.8607
             curl -Ls "https://get.maestro.mobile.dev" | MAESTRO_VERSION=1.39.0 bash
@@ -233,17 +252,49 @@ jobs:
             # on its own regardless of overall pass/fail) or from being
             # uploaded/published — see PHASE_2A_REPORT.md for the reasoning
             # and what could only be verified by an actual GitHub Actions run.
-            #
-            # TEMPORARY DIAGNOSTIC (remove once the E2E hang is root-caused):
-            # dumps the last 500 lines of JS console output and fatal native
-            # crashes straight to this step's own log, so it survives the
-            # artifact-storage-quota issue that's currently blocking
-            # maestro-results.xml/screenshots from uploading. Chained on the
-            # same line (not a separate script line) and re-exits with
-            # Maestro's own status, so this can't mask a real test failure
-            # and doesn't depend on a later script line running after a
-            # failing one.
-            "$HOME/.maestro/bin/maestro" test --format junit --output maestro-results.xml .maestro/ci/; MAESTRO_EXIT=$?; adb logcat -d -t 500 ReactNativeJS:V AndroidRuntime:E *:S; exit $MAESTRO_EXIT
+            # (A leftover inline `adb logcat -d -t 500 ...` post-hoc dump used
+            # to be chained onto this same line from an earlier diagnostic
+            # attempt on a different branch -- removed: it's the same
+            # ring-buffer-snapshot approach this step's own history already
+            # found useless, superseded by the continuous `nohup` capture
+            # above and the console-print step below.)
+            "$HOME/.maestro/bin/maestro" test --format junit --output maestro-results.xml .maestro/ci/
+
+      - name: Print app boot logcat (console, not artifact-quota-dependent)
+        if: always()
+        run: |
+          # The artifact upload below has been failing outright ("Artifact
+          # storage quota has been hit") on recent runs, so logcat_full.txt
+          # never reaches anyone who needs it to diagnose a failure. Printing
+          # the JS-bundle/app-crash-relevant lines straight to this step's own
+          # console log survives that entirely -- it costs no storage quota.
+          # Broadened after the first console dump showed only a boot line
+          # and the emulator-detection warn, nothing past it -- that filter
+          # was too narrow to catch a synchronous native-module throw or a
+          # Firebase/Crashlytics-side error, since the app's own JS logger
+          # suppresses info/debug in this build (see src/utils/logger.ts).
+          #
+          # Narrowed again after the broadened version above (previous commit)
+          # came back with zero app-relevant lines: with 3 Maestro flows each
+          # continuously walking the accessibility tree, Maestro's own
+          # "Skipping invisible child: ..." dumps -- which quote the app's
+          # package name in every line -- flooded the 500-line tail long
+          # before any RNFB/ReactNativeJS line could survive in it. Anchoring
+          # on actual log tags (RNFB*, ReactNativeJS, FirebaseApp/Crashlytics,
+          # AndroidRuntime, a real crash marker) rather than a bare package-
+          # name substring excludes that noise at the source.
+          grep -E "RNFB|ReactNativeJS|FirebaseApp|FirebaseCrashlytics|FirebaseInitProvider|AndroidRuntime|FATAL EXCEPTION|DEBUG *: *pid" logcat_full.txt | tail -500 || echo "(no matching logcat lines found)"
+
+      - name: Upload full emulator logcat
+        if: always()
+        uses: actions/upload-artifact@v5
+        with:
+          name: logcat-full
+          path: logcat_full.txt
+          if-no-files-found: warn
+          # Same bounded-retention reasoning as the other artifacts in this
+          # job -- see the debug-APK upload step's comment above.
+          retention-days: 7
 
       - name: Upload Maestro results
         if: always()
@@ -253,6 +304,16 @@ jobs:
           path: |
             maestro-results.xml
             ~/.maestro/tests/
+          # ~/.maestro/tests/ already includes Maestro's own per-assertion
+          # failure screenshots -- nothing further to add here to capture
+          # them. They haven't been visible on recent failing runs because
+          # this upload has been hitting the account's Actions artifact
+          # storage quota (see "Failed to CreateArtifact: Artifact storage
+          # quota has been hit" in run logs), not because they weren't
+          # produced. That's a separate, already-tracked issue (the
+          # retention-days bound below, plus the debug-APK upload change
+          # above); GitHub recalculates quota usage every 6-12 hours.
+          #
           # Same reasoning as the debug-APK upload above — bounded
           # explicitly instead of the account default, so this artifact
           # stops contributing to the same storage-quota accumulation.
