@@ -4,11 +4,18 @@ name: 'Auth — Sign In flow'
 - launchApp:
     clearState: true
 
-# Splash clears after 2.5s + Firebase auth bootstrap
+# Splash clears after 2.5s + Firebase auth bootstrap (bounded at 8s by
+# AUTH_BOOTSTRAP_TIMEOUT_MS). 20s previously covered that with room to
+# spare, but CI logcat evidence (PR #118) showed the JS thread and auth
+# timeout firing correctly on time while the actual UI paint still took
+# well over a minute under this runner's resource pressure (one flow
+# passed at 6m8s total) -- a CI-environment performance ceiling, not an
+# app hang. Widened to give real headroom without masking a genuine hang,
+# which would still exceed this by a wide margin.
 - extendedWaitUntil:
     visible:
       id: 'auth-tab-signin'
-    timeout: 20000
+    timeout: 90000
 - assertVisible: 'SHAMS AL-ASRĀR'
 
 # Switch to sign-up and back

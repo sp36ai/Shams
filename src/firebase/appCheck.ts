@@ -1,5 +1,6 @@
 import { firebase } from '@react-native-firebase/app-check';
 import crashlytics from '@react-native-firebase/crashlytics';
+import { isEmulator } from '@utils/security';
 
 /**
  * Initializes Firebase App Check for the native application.
@@ -54,7 +55,20 @@ export const initializeAppCheckService = async (): Promise<void> => {
 
   const provider = appCheck.newReactNativeFirebaseAppCheckProvider();
 
-  if (__DEV__) {
+  // `__DEV__` alone can't gate this: an E2E/CI build embeds its JS bundle in
+  // release mode (`__DEV__` folds to `false` — see android/app/build.gradle's
+  // `debuggableVariants = []`) so Metro isn't required on the runner, but it
+  // still runs on a Play-Store-less CI emulator. Requesting the real
+  // Play Integrity provider there doesn't fail fast -- it hangs indefinitely
+  // (confirmed via logcat: RNFBAppCheck logs "fetching provider for app
+  // [DEFAULT]" and nothing else follows, ever, on that build), which froze
+  // the whole app on Splash and was previously mistaken for an Auth
+  // bootstrap issue. Falling back to the debug provider on a detected
+  // emulator doesn't weaken production enforcement: Play Integrity can't
+  // meaningfully attest a virtual device on a real user's end either, and
+  // the server-side `enforceAppCheck` gate still rejects an unregistered
+  // debug token outright.
+  if (__DEV__ || isEmulator()) {
     provider.configure({
       android: { provider: 'debug' },
       apple: { provider: 'debug' },
