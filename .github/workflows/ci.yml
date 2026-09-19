@@ -252,17 +252,13 @@ jobs:
             # on its own regardless of overall pass/fail) or from being
             # uploaded/published — see PHASE_2A_REPORT.md for the reasoning
             # and what could only be verified by an actual GitHub Actions run.
-            #
-            # TEMPORARY DIAGNOSTIC (remove once the E2E hang is root-caused):
-            # dumps the last 500 lines of JS console output and fatal native
-            # crashes straight to this step's own log, so it survives the
-            # artifact-storage-quota issue that's currently blocking
-            # maestro-results.xml/screenshots from uploading. Chained on the
-            # same line (not a separate script line) and re-exits with
-            # Maestro's own status, so this can't mask a real test failure
-            # and doesn't depend on a later script line running after a
-            # failing one.
-            "$HOME/.maestro/bin/maestro" test --format junit --output maestro-results.xml .maestro/ci/; MAESTRO_EXIT=$?; adb logcat -d -t 500 ReactNativeJS:V AndroidRuntime:E *:S; exit $MAESTRO_EXIT
+            # (A leftover inline `adb logcat -d -t 500 ...` post-hoc dump used
+            # to be chained onto this same line from an earlier diagnostic
+            # attempt on a different branch -- removed: it's the same
+            # ring-buffer-snapshot approach this step's own history already
+            # found useless, superseded by the continuous `nohup` capture
+            # above and the console-print step below.)
+            "$HOME/.maestro/bin/maestro" test --format junit --output maestro-results.xml .maestro/ci/
 
       - name: Print app boot logcat (console, not artifact-quota-dependent)
         if: always()
@@ -277,7 +273,17 @@ jobs:
           # was too narrow to catch a synchronous native-module throw or a
           # Firebase/Crashlytics-side error, since the app's own JS logger
           # suppresses info/debug in this build (see src/utils/logger.ts).
-          grep -E "ReactNativeJS|AndroidRuntime|FATAL|Crashlytics|FirebaseAuth|FirebaseApp|AppCheck|com.astrosarfaraz.shamsalasrar|DEBUG *:|Process:| E | F " logcat_full.txt | tail -500 || echo "(no matching logcat lines found)"
+          #
+          # Narrowed again after the broadened version above (previous commit)
+          # came back with zero app-relevant lines: with 3 Maestro flows each
+          # continuously walking the accessibility tree, Maestro's own
+          # "Skipping invisible child: ..." dumps -- which quote the app's
+          # package name in every line -- flooded the 500-line tail long
+          # before any RNFB/ReactNativeJS line could survive in it. Anchoring
+          # on actual log tags (RNFB*, ReactNativeJS, FirebaseApp/Crashlytics,
+          # AndroidRuntime, a real crash marker) rather than a bare package-
+          # name substring excludes that noise at the source.
+          grep -E "RNFB|ReactNativeJS|FirebaseApp|FirebaseCrashlytics|FirebaseInitProvider|AndroidRuntime|FATAL EXCEPTION|DEBUG *: *pid" logcat_full.txt | tail -500 || echo "(no matching logcat lines found)"
 
       - name: Upload full emulator logcat
         if: always()
