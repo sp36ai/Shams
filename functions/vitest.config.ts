@@ -16,10 +16,28 @@ export default defineConfig({
       reporter: ['text', 'json', 'html'],
       include: ['src/engine/**/*.ts'],
       exclude: ['src/engine/__tests__/**'],
-      lines: 95,
-      functions: 95,
-      branches: 95,
-      statements: 95,
+      // Thresholds must live under `thresholds` for Vitest 1.x -- the
+      // previous flat lines/functions/branches/statements keys directly
+      // under `coverage` are not a key this version recognizes, so they
+      // were silently never checked at all (confirmed: `vitest --coverage`
+      // exited 0 even against a file at 0% coverage). Never wired into CI
+      // either (CI ran plain `vitest --run`, not `--coverage`), so this
+      // gate has never once actually run.
+      //
+      // Set as a ratchet at today's real baseline (measured via
+      // `npm run test:coverage`, ~1-2 points of margin below the actual
+      // numbers to absorb minor non-determinism), not the originally
+      // declared 95% -- real coverage is currently ~87% statements/lines,
+      // ~86% branches, ~74% functions, with manazil.ts at 0%. Enforcing
+      // 95% today would fail every CI run until manazil.ts and a few other
+      // low-coverage files get real tests written. This blocks any future
+      // regression below today's level; raise it as coverage improves.
+      thresholds: {
+        lines: 85,
+        functions: 70,
+        branches: 84,
+        statements: 85,
+      },
     },
   },
   resolve: {
