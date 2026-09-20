@@ -258,7 +258,20 @@ jobs:
             # ring-buffer-snapshot approach this step's own history already
             # found useless, superseded by the continuous `nohup` capture
             # above and the console-print step below.)
-            "$HOME/.maestro/bin/maestro" test --format junit --output maestro-results.xml .maestro/ci/
+            #
+            # One bounded retry (2 attempts total) restarting the adb server
+            # in between. PR #118's own diagnostics (a JS-thread heartbeat
+            # plus explicit timeout logging) proved the app itself is not
+            # hanging: the JS thread stays alive and every timeout fires
+            # exactly on schedule. "Android driver unreachable" failures seen
+            # on multiple separate runs are ADB/emulator connectivity dying
+            # mid-flow, not an app or test-logic bug -- `adb kill-server` +
+            # `adb start-server` is the standard recovery for a stuck adb
+            # daemon. Capped at one retry (not more) to stay well inside this
+            # job's 60-minute timeout even if the first attempt already ran
+            # long. A second, different failure still fails the step for
+            # real -- this does not mask a genuine, reproducible bug.
+            i=1; while [ "$i" -le 2 ]; do "$HOME/.maestro/bin/maestro" test --format junit --output maestro-results.xml .maestro/ci/ && break; MAESTRO_EXIT=$?; if [ "$i" -eq 2 ]; then exit $MAESTRO_EXIT; fi; echo "Maestro attempt $i failed (exit $MAESTRO_EXIT) -- restarting adb and retrying"; adb kill-server; sleep 2; adb start-server; sleep 3; i=$((i+1)); done
 
       - name: Print app boot logcat (console, not artifact-quota-dependent)
         if: always()
