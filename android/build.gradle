@@ -18,7 +18,11 @@ buildscript {
         mavenCentral()
     }
     dependencies {
-        classpath("com.android.tools.build:gradle")
+        // RN 0.79.5's react-native-gradle-plugin resolves AGP 8.8.2 by default,
+        // but the androidx.core 1.18.0 this RN version now pulls in requires
+        // AGP 8.9.1+ (CheckAarMetadataWorkAction fails otherwise). Pinned to
+        // the minimum version that satisfies that requirement.
+        classpath("com.android.tools.build:gradle:8.9.1")
         classpath("com.facebook.react:react-native-gradle-plugin")
         classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:${kotlinVersion}")
         classpath("com.google.gms:google-services:4.4.2")
