@@ -105,6 +105,30 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v5
 
+      # PHASE 8A-11 (original comment, preserved from before PR #125's split):
+      # the debug APK build below reinstalls its own pinned NDK and CMake via
+      # `sdkmanager` regardless of what's preinstalled, so the runner's
+      # preinstalled NDK is dead weight. Combined with unused preinstalled
+      # tooling (.NET, Haskell/GHC, Boost, CodeQL) and stale Docker images,
+      # this was leaving too little disk for the build itself, not just the
+      # emulator image that used to follow it in the same job. PR #125 only
+      # kept this cleanup in e2e-test (reasoning it was for the emulator
+      # alone), dropping it from e2e-build entirely -- the next two real
+      # builds after that split then hung and died mid-build with
+      # unrecoverable logs, consistent with the runner running out of disk.
+      # Restored here since this job builds the APK regardless of whether
+      # e2e-test's emulator ever runs.
+      - name: Free disk space (remove unused preinstalled tooling)
+        run: |
+          echo "Disk space before cleanup:"
+          df -h /
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android/sdk/ndk \
+            /opt/ghc /usr/local/.ghcup /usr/local/share/boost \
+            "$AGENT_TOOLSDIRECTORY" /opt/hostedtoolcache/CodeQL || true
+          sudo docker image prune --all --force || true
+          echo "Disk space after cleanup:"
+          df -h /
+
       - name: Setup Node.js
         uses: actions/setup-node@v5
         with:
