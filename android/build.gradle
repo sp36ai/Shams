@@ -10,7 +10,8 @@ buildscript {
         // r27+ builds native code with 16 KB-page-aligned ELF segments, required
         // for Play's "16 KB memory page sizes" compatibility check.
         ndkVersion = "27.1.12297006"
-        kotlinVersion = "2.0.21"
+        // react-native-iap@16 (Nitro Modules) requires Kotlin 2.1.20+ on RN 0.79.
+        kotlinVersion = "2.1.20"
     }
     repositories {
         google()
