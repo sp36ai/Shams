@@ -240,12 +240,16 @@ jobs:
           # and unnecessary here besides: it previously failed the whole step
           # with exit 127 before Maestro ever ran.
           script: |
-            # EXPERIMENT (issue #124): background logcat capture temporarily
-            # removed to test whether it's contending with Maestro's own adb
-            # connection (both go through the same adb server) and
-            # contributing to the "Android driver unreachable" flake. Revert
-            # this once the experiment run's result is known either way.
-            touch logcat_full.txt
+            # EXPERIMENT (issue #124), round 2: the first attempt removed
+            # logcat capture entirely, which also blinded the one diagnostic
+            # that would explain a failure -- inconclusive. This round keeps
+            # capture but filters it at the adb level to just the tags the
+            # "Print app boot logcat" step already greps for (everything else
+            # silenced to Warn+), instead of streaming the full unfiltered
+            # firehose. Much lower message volume over the same adb
+            # connection Maestro uses, while keeping full diagnostic value.
+            adb logcat -c
+            nohup adb logcat -v threadtime ReactNativeJS:V AndroidRuntime:V FirebaseApp:V FirebaseCrashlytics:V FirebaseInitProvider:V *:W > logcat_full.txt 2>&1 &
             adb install -r android/app/build/outputs/apk/debug/app-debug.apk
             adb emu geo fix 67.0011 24.8607
             curl -Ls "https://get.maestro.mobile.dev" | MAESTRO_VERSION=1.39.0 bash
