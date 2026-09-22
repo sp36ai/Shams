@@ -253,6 +253,25 @@ jobs:
             adb install -r android/app/build/outputs/apk/debug/app-debug.apk
             adb emu geo fix 67.0011 24.8607
             curl -Ls "https://get.maestro.mobile.dev" | MAESTRO_VERSION=1.39.0 bash
+            # EXPERIMENT (issue #124), round 3: rounds 1-2 showed the
+            # "Android driver unreachable" flake is unrelated to logcat
+            # volume -- it recurred identically with a filtered capture.
+            # Next hypothesis: CPU/memory contention between the emulator
+            # (booted right after a ~13min Gradle build, running headless
+            # software-rendered graphics) and Maestro's own continuous
+            # accessibility-tree polling, on a standard runner. This adds a
+            # real stabilization wait plus resource snapshots immediately
+            # before Maestro starts, instead of proceeding the instant the
+            # emulator-runner action reports boot success.
+            echo "--- resource state right after emulator boot ---"
+            free -h
+            nproc
+            uptime
+            adb wait-for-device
+            sleep 30
+            echo "--- resource state after 30s stabilization wait ---"
+            free -h
+            uptime
             # No `|| true` here: a real Maestro failure must fail this step,
             # and therefore the job. The two steps below both run
             # `if: always()`, so removing `|| true` does not stop the JUnit
