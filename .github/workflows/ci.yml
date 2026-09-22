@@ -93,7 +93,13 @@ jobs:
     name: E2E Build (debug APK)
     runs-on: ubuntu-latest
     needs: app-quality
-    timeout-minutes: 30
+    # PR #125 originally set this to 30, assuming ~13-14min based on typical
+    # runs -- but this same build step had already been observed taking
+    # 32min once under the CPU contention documented in issue #124, and a
+    # real run then got cancelled by exactly this timeout mid-build. Bumped
+    # to match the original (pre-#125) combined job's 60min budget, which
+    # covers the worst case actually seen so far with real headroom.
+    timeout-minutes: 60
 
     steps:
       - name: Checkout
@@ -197,7 +203,11 @@ jobs:
     name: E2E Tests (Maestro) / ${{ matrix.id }}
     runs-on: ubuntu-latest
     needs: e2e-build
-    timeout-minutes: 30
+    # Same reasoning as e2e-build's timeout above: single-flow legs observed
+    # so far run ~6-20min, but given the same runner contention (issue #124)
+    # swings e2e-build's duration by more than 2x run to run, bumped for
+    # real headroom rather than the tightest number seen so far.
+    timeout-minutes: 40
     permissions:
       contents: read
       checks: write
