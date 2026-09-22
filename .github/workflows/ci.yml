@@ -218,7 +218,15 @@ jobs:
           profile: pixel_6
           avd-name: shams_test
           force-avd-creation: false
-          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          # EXPERIMENT (issue #124), round 4: rounds 1-3 traced the "Android
+          # driver unreachable" / fast-assertion-failure flakiness to real
+          # CPU starvation on the standard 2-vCPU runner (load average ~4.0
+          # measured right before Maestro starts, round 3). -gpu off skips
+          # swiftshader's GL-over-software-raster translation entirely
+          # (pure software framebuffer instead), which should draw
+          # meaningfully less CPU than swiftshader_indirect for a headless
+          # (-no-window) run that never actually displays anything.
+          emulator-options: -no-window -gpu off -noaudio -no-boot-anim -camera-back none
           disable-animations: true
           # NOTE: the runner executes each script line in a separate shell, so
           # env exports do not persist between lines — keep commands self-contained.
