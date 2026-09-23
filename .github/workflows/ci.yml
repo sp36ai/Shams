@@ -341,11 +341,17 @@ jobs:
             # entirely mid-flow ("device not found" / "device offline" /
             # "Android driver unreachable") with no evidence yet of *when*
             # in the flow it happens or what the box's resources looked like
-            # at the time. Polling `adb devices` every 15s to a file (same
-            # nohup-backgrounding reasoning as the logcat capture above)
-            # gives an exact timestamp for the drop; cross-referencing that
-            # against dmesg below settles whether it's an OOM kill.
-            nohup sh -c 'while true; do date -u +%Y-%m-%dT%H:%M:%SZ; adb devices; sleep 15; done' > adb_watch.txt 2>&1 &
+            # at that exact moment -- a free -m taken after the run (in the
+            # report step below) only shows memory once the load is already
+            # gone, and would miss CPU saturation or memory pressure that
+            # never actually triggered a kill. Sampling adb presence,
+            # memory, load average, and whether qemu itself is still alive
+            # together every 15s (same nohup-backgrounding reasoning as the
+            # logcat capture above) pins down which of two different causes
+            # this is: qemu dying (cross-reference the timestamp against
+            # dmesg below for an OOM kill) vs. qemu still running but
+            # starved of CPU while adb loses it anyway.
+            nohup sh -c 'while true; do date -u +%Y-%m-%dT%H:%M:%SZ; adb devices; free -m | sed -n 2p; cat /proc/loadavg; ps -o rss=,pcpu=,comm= -C qemu-system-x86_64 || echo "qemu: not running"; sleep 15; done' > adb_watch.txt 2>&1 &
             # No `|| true` here: a real Maestro failure must fail this step,
             # and therefore the job. The two steps below both run
             # `if: always()`, so removing `|| true` does not stop the JUnit
@@ -355,14 +361,12 @@ jobs:
             # and what could only be verified by an actual GitHub Actions run.
             "$HOME/.maestro/bin/maestro" test --format junit --output maestro-results.xml .maestro/ci/${{ matrix.flow }}
 
-      - name: Report resource state (issue #124 — is the emulator getting OOM-killed?)
+      - name: Report resource state (issue #124 — is the emulator getting OOM-killed or CPU-starved?)
         if: always()
         run: |
-          echo "--- adb device-presence log (15s polling) ---"
+          echo "--- adb/memory/load/qemu log, sampled every 15s during the run ---"
           cat adb_watch.txt || echo "(adb_watch.txt not found)"
-          echo "--- memory (free -m) ---"
-          free -m
-          echo "--- CPU count (nproc) ---"
+          echo "--- CPU count (nproc, for context on the load-average figures above) ---"
           nproc
           echo "--- kernel OOM/killed-process messages ---"
           sudo dmesg -T | grep -iE "killed process|out of memory|oom" | tail -20 || echo "(no OOM/killed-process lines found in dmesg)"
