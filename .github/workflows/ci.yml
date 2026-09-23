@@ -309,7 +309,15 @@ jobs:
           profile: pixel_6
           avd-name: shams_test
           force-avd-creation: false
-          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none -no-snapshot
+          # issue #124: run #532's diagnostics (PR #134) measured qemu at
+          # ~190% CPU on this 2-vCPU runner -- effectively claiming both
+          # cores for itself, leaving adb/Maestro/the host's own processes
+          # to contend for what's left. Load average hit 6-7 (3-3.5x
+          # oversubscribed). Capping qemu to a single core is the free
+          # mitigation to try before any runner-tier spend -- if load stays
+          # above ~4 or adb still drops after this, that's the evidence a
+          # bigger runner is actually needed, not a guess.
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none -no-snapshot -cores 1
           disable-animations: true
           # NOTE: the runner executes each script line in a separate shell, so
           # env exports do not persist between lines — keep commands self-contained.
