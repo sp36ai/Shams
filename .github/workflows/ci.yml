@@ -22,6 +22,17 @@ on:
 permissions:
   contents: read
 
+# issue #119: this account's Actions budget was exhausted mid-September by
+# repeated pushes during the #124 E2E investigation, each triggering a full
+# ~1hr run (APK build + 3 emulator legs). Cancelling a PR's in-progress run
+# when a new commit lands (rather than letting several stack up and all run
+# to completion) cuts that cost without changing what actually gets
+# verified -- only the latest push on a PR matters. Not applied to push
+# events on main/master: those should each run to completion undisturbed.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
   app-quality:
     name: App Quality
@@ -93,6 +104,18 @@ jobs:
     name: E2E Build (debug APK)
     runs-on: ubuntu-latest
     needs: app-quality
+    # issue #119: E2E (this job + the 3-leg matrix below) is the expensive
+    # part of CI -- roughly an hour of runner time per run (APK build +
+    # three emulator legs), which exhausted this account's Actions budget
+    # mid-month during the #124 investigation. Runs on every push to
+    # main/master (release-gating, must stay accurate), on an explicit
+    # manual dispatch, or on a PR carrying the `run-e2e` label -- not on
+    # every ordinary PR push, where App/Functions Quality (cheap, no
+    # emulator) still run unconditionally and catch most regressions.
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'push' && (github.ref_name == 'main' || github.ref_name == 'master')) ||
+      (github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'run-e2e'))
     # PR #125 originally set this to 30, assuming ~13-14min based on typical
     # runs -- but this same build step had already been observed taking
     # 32min once under the CPU contention documented in issue #124, and a
@@ -227,6 +250,13 @@ jobs:
     name: E2E Tests (Maestro) / ${{ matrix.id }}
     runs-on: ubuntu-latest
     needs: e2e-build
+    # Same gating as e2e-build above (issue #119) -- kept explicit here too
+    # rather than relying only on e2e-build skipping and this job following
+    # by default, so the condition is visible on this job directly.
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'push' && (github.ref_name == 'main' || github.ref_name == 'master')) ||
+      (github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'run-e2e'))
     # Same reasoning as e2e-build's timeout above: single-flow legs observed
     # so far run ~6-20min, but given the same runner contention (issue #124)
     # swings e2e-build's duration by more than 2x run to run, bumped for
