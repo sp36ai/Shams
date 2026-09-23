@@ -292,7 +292,15 @@ jobs:
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
 
-      - name: Setup Android emulator
+      # Named for what it actually does, not just what it starts: this step's
+      # own `script:` runs the emulator boot AND the full Maestro invocation
+      # in one shell (see the script's own comment below) -- a Maestro test
+      # failure reports as this step failing, which previously read as an
+      # "emulator setup" failure even on runs where the emulator booted and
+      # ran fine for minutes before the actual test assertion failed. issue
+      # #124's investigation lost time to that misleading label more than
+      # once.
+      - name: Boot emulator + run Maestro flow
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 31
@@ -301,7 +309,7 @@ jobs:
           profile: pixel_6
           avd-name: shams_test
           force-avd-creation: false
-          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none -no-snapshot
           disable-animations: true
           # NOTE: the runner executes each script line in a separate shell, so
           # env exports do not persist between lines — keep commands self-contained.
@@ -329,6 +337,21 @@ jobs:
             adb install -r android/app/build/outputs/apk/debug/app-debug.apk
             adb emu geo fix 67.0011 24.8607
             curl -Ls "https://get.maestro.mobile.dev" | MAESTRO_VERSION=1.39.0 bash
+            # issue #124: signup-journey has repeatedly lost its emulator
+            # entirely mid-flow ("device not found" / "device offline" /
+            # "Android driver unreachable") with no evidence yet of *when*
+            # in the flow it happens or what the box's resources looked like
+            # at that exact moment -- a free -m taken after the run (in the
+            # report step below) only shows memory once the load is already
+            # gone, and would miss CPU saturation or memory pressure that
+            # never actually triggered a kill. Sampling adb presence,
+            # memory, load average, and whether qemu itself is still alive
+            # together every 15s (same nohup-backgrounding reasoning as the
+            # logcat capture above) pins down which of two different causes
+            # this is: qemu dying (cross-reference the timestamp against
+            # dmesg below for an OOM kill) vs. qemu still running but
+            # starved of CPU while adb loses it anyway.
+            nohup sh -c 'while true; do date -u +%Y-%m-%dT%H:%M:%SZ; adb devices; free -m | sed -n 2p; cat /proc/loadavg; ps -o rss=,pcpu=,comm= -C qemu-system-x86_64 || echo "qemu: not running"; sleep 15; done' > adb_watch.txt 2>&1 &
             # No `|| true` here: a real Maestro failure must fail this step,
             # and therefore the job. The two steps below both run
             # `if: always()`, so removing `|| true` does not stop the JUnit
@@ -337,6 +360,16 @@ jobs:
             # uploaded/published — see PHASE_2A_REPORT.md for the reasoning
             # and what could only be verified by an actual GitHub Actions run.
             "$HOME/.maestro/bin/maestro" test --format junit --output maestro-results.xml .maestro/ci/${{ matrix.flow }}
+
+      - name: Report resource state (issue #124 — is the emulator getting OOM-killed or CPU-starved?)
+        if: always()
+        run: |
+          echo "--- adb/memory/load/qemu log, sampled every 15s during the run ---"
+          cat adb_watch.txt || echo "(adb_watch.txt not found)"
+          echo "--- CPU count (nproc, for context on the load-average figures above) ---"
+          nproc
+          echo "--- kernel OOM/killed-process messages ---"
+          sudo dmesg -T | grep -iE "killed process|out of memory|oom" | tail -20 || echo "(no OOM/killed-process lines found in dmesg)"
 
       - name: Print app boot logcat (console, not artifact-quota-dependent)
         if: always()
