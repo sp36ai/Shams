@@ -294,6 +294,15 @@ jobs:
 
       - name: Setup Android emulator
         uses: reactivecircus/android-emulator-runner@v2
+        env:
+          # settings-signout (issue #124 / PR #125 fix): each matrix leg now
+          # boots its own emulator, so this flow signs in with a dedicated,
+          # pre-seeded account instead of relying on 02_signup_journey's
+          # session having run first on a shared device. Maestro reads
+          # these via ${VAR} interpolation in the flow YAML; harmless to
+          # pass to the other two legs, which don't reference them.
+          E2E_TEST_ACCOUNT_EMAIL: ${{ secrets.E2E_TEST_ACCOUNT_EMAIL }}
+          E2E_TEST_ACCOUNT_PASSWORD: ${{ secrets.E2E_TEST_ACCOUNT_PASSWORD }}
         with:
           api-level: 31
           arch: x86_64

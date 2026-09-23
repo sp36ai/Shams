@@ -1,13 +1,41 @@
 appId: com.astrosarfaraz.shamsalasrar
 name: 'Settings — plan display and sign out'
 ---
-# Runs after 02_signup_journey: reuses its signed-in session state.
+# Each E2E matrix leg (issue #124 / PR #125) boots its own fresh emulator,
+# so this flow can no longer assume 02_signup_journey's session carried
+# over from a device the two flows used to share. Signs in with a
+# dedicated, pre-seeded E2E test account instead of signing up a new one:
+# the E2E build's google-services.json targets the real production
+# Firebase project (shams-app-4d0e7), so creating a fresh account here on
+# every run would create real throwaway accounts in production Auth and
+# add ~12 minutes/run, duplicating 02_signup_journey's own sign-up cost.
+#
+# Requires the E2E_TEST_ACCOUNT_EMAIL / E2E_TEST_ACCOUNT_PASSWORD secrets
+# (see ci.yml's e2e-test job) and a real Firebase Auth account already
+# provisioned in shams-app-4d0e7 matching those credentials, left on the
+# free plan with onboarding already completed, so sign-in lands directly
+# on the Oracle home dashboard the way this flow expects.
+- launchApp:
+    clearState: true
 
-- launchApp
+- extendedWaitUntil:
+    visible:
+      id: 'auth-tab-signin'
+    timeout: 90000
 
-# Splash + session restore for the account created in 02 — Settings is now
-# a gear icon in the Home header, not a tab. Widened for the same
-# CI-environment performance-ceiling reason as 01_auth_validation.yaml.
+- tapOn:
+    id: 'auth-input-email'
+- inputText: ${E2E_TEST_ACCOUNT_EMAIL}
+- tapOn:
+    id: 'auth-input-password'
+- inputText: ${E2E_TEST_ACCOUNT_PASSWORD}
+- hideKeyboard
+- tapOn:
+    id: 'auth-submit-btn'
+
+# Firebase sign-in roundtrip + splash. Settings is a gear icon in the Home
+# header, not a tab. Widened for the same CI-environment performance-
+# ceiling reason as 01_auth_validation.yaml (see its own comment).
 - extendedWaitUntil:
     visible:
       id: 'settings-gear-btn'
@@ -17,7 +45,7 @@ name: 'Settings — plan display and sign out'
     id: 'settings-gear-btn'
 - assertVisible: 'AL-DAFTAR'
 
-# Free plan shown for the fresh account
+# Free plan shown for the pre-seeded test account (never upgraded)
 - assertVisible: 'Free'
 
 # Sign out — cancel first, then confirm
