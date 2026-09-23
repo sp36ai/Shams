@@ -131,6 +131,11 @@ harness 11,923/11,923 with 0 false negatives and 0 false positives.
 
 ## Part C — Release backlog outside the audit chain
 - ❌ #43 Google Play Billing Library 8 upgrade — **31 Aug 2026 deadline has passed**; needs New Architecture migration
+  - ⚠️ Step 1: RN 0.78.3 → 0.79.7, New Arch OFF — draft PR #141 (`038db94`); local typecheck/lint/jest 306/306 + release bundle ✅; Gradle build, E2E and device test not yet verified (CI quota, #119)
+  - ❌ Step 2: `@react-native-firebase/*` 19.3.0 → v21+ (all six together), New Arch OFF
+  - ❌ Step 3: enable New Architecture, full native-module regression
+  - ❌ Step 4: `react-native-iap` → 15.x + `react-native-nitro-modules`, rewrite `src/hooks/usePurchase.ts`, verify Billing 8 in merged manifest, on-device purchase + restore
+  - ❌ 👤 Play Console "Request more time" extension (to 1 Nov 2026), if not already granted
 - ❌ #129 Razorpay entitlement binding trusts an unauthenticated payload field — blocks enabling Razorpay (not release-blocking)
 - ❌ 👤 #67 manual/infra release checklist (google-services.json, secrets, dashboards)
 - ❌ #121 raise functions/engine coverage thresholds back toward 95%
@@ -145,5 +150,6 @@ harness 11,923/11,923 with 0 false negatives and 0 false positives.
 ---
 
 ## Change log
+- 2026-09-23 — #43 step 1 (RN 0.79.7) opened as draft PR #141.
 - 2026-09-23 — R1: run #540 blocked by the Actions minutes quota again (#119); no code signal available.
 - 2026-09-23 — Tracker created from the Phase 0 → 8A-10 audit records and live Actions history.
