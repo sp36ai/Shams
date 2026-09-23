@@ -34,28 +34,25 @@ name: 'Journey — sign up through onboarding to the Oracle'
 - tapOn:
     id: 'auth-input-email'
 # issue #131: a controlled domain, not inputRandomEmail's real-looking
-# @gmail.com addresses. Date.now() + a random suffix keeps each run's
-# address unique without needing external state.
+# @gmail.com addresses.
 #
-# Confirmed on run #532 that the original two-block form
-# ("${Date.now()}${Math.floor(Math.random() * 1000000)}") broke sign-up
-# entirely -- no account was created, and the flow died at the very
-# next step waiting for the location screen. Firebase Auth has no
-# account matching this pattern from that run at all, so the field
-# never received a value this app's own email regex
-# (/^[^\s@]+@[^\s@]+\.[^\s@]+$/, AuthScreen.tsx) would accept -- that
-# regex rejects whitespace in the local part, and the un-evaluated
-# expression contains one (the " * " in "Math.random() * 1000000").
-# Whether Maestro left the ${...} blocks completely unresolved, or
-# resolved them but something about two adjacent blocks or the
-# expression's own spacing produced an invalid result, wasn't
-# distinguishable from the CI logs alone (Maestro's results artifact,
-# which would show the literal text actually entered, isn't
-# downloadable from this environment). Rewritten as a single ${...}
-# block with a self-contained numeric expression and no whitespace
-# anywhere in it, removing both the two-block-concatenation risk and
-# the space that would fail local validation either way.
-- inputText: "e2e+${Date.now()+Math.floor(Math.random()*1000000)}@e2e.shamsalasrar.test"
+# Confirmed on run #532 that a ${...} JS-interpolated expression here
+# broke sign-up entirely -- no account was created, and the flow died
+# at the very next step waiting for the location screen. A first
+# attempted fix (collapsing two ${...} blocks into one) doesn't hold
+# up on its own logic: if Maestro isn't evaluating ${...} at all, a
+# single block wouldn't be evaluated either, and every run would type
+# the identical literal string -- passing this app's email regex
+# (whitespace-free) but colliding with "email already in use" on every
+# run after the first, a different failure than what run #532 showed.
+# Avoids the question entirely by using Maestro's own built-in random-
+# data commands instead of any ${...} JS evaluation -- inputText calls
+# on the same focused field append rather than replace, so these three
+# lines concatenate into one address.
+- inputText: 'e2e-'
+- inputRandomNumber:
+    length: 10
+- inputText: '@e2e.shamsalasrar.test'
 - tapOn:
     id: 'auth-input-password'
 - inputText: 'CiTestPass!2026'
