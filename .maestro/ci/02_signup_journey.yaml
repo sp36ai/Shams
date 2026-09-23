@@ -3,7 +3,12 @@ name: 'Journey — sign up through onboarding to the Oracle'
 ---
 # Full first-run journey against the real Firebase backend:
 # sign-up → location grant → 3-question onboarding → Oracle screen.
-# Creates a throwaway account (random email) on each run.
+# Creates a throwaway account on each run. Issue #131: this used to be
+# inputRandomEmail, which generates realistic @gmail.com addresses that
+# may belong to real people -- any verification/welcome email Firebase
+# sends went straight to a stranger's inbox. Uses a domain the repo
+# owner controls instead (e2e.shamsalasrar.test), so a CI-generated
+# address can never collide with a real account.
 # Onboarding profile inference falls back to 'clarity' without an
 # Anthropic key, so this flow needs no secrets.
 
@@ -28,7 +33,10 @@ name: 'Journey — sign up through onboarding to the Oracle'
 - inputText: 'CI Test Seeker'
 - tapOn:
     id: 'auth-input-email'
-- inputRandomEmail
+# issue #131: a controlled domain, not inputRandomEmail's real-looking
+# @gmail.com addresses. Date.now() + a random suffix keeps each run's
+# address unique without needing external state.
+- inputText: "e2e+${Date.now()}${Math.floor(Math.random() * 1000000)}@e2e.shamsalasrar.test"
 - tapOn:
     id: 'auth-input-password'
 - inputText: 'CiTestPass!2026'
