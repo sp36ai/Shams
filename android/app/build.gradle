@@ -6,7 +6,7 @@ apply plugin: "com.google.firebase.crashlytics"
 
 /**
  * Shams al-Asrār — Android app module
- * RN 0.78.x, Hermes ON, New Arch OFF, minSdk 24, targetSdk 36
+ * RN 0.79.x, Hermes ON, New Arch OFF, minSdk 24, targetSdk 36
  */
 
 react {

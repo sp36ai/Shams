@@ -35,7 +35,7 @@ class MainApplication : Application(), ReactApplication {
 
     override fun onCreate() {
         super.onCreate()
-        // RN 0.78 splits several small JNI libs (react_featureflagsjni, uimanagerjni,
+        // RN 0.78+ splits several small JNI libs (react_featureflagsjni, uimanagerjni,
         // yoga, etc.) and merges them into libreactnative.so at build time ("SoMerging").
         // Without this mapping, SoLoader tries to dlopen the standalone .so files that
         // no longer exist and crashes on startup with UnsatisfiedLinkError.
