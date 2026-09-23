@@ -100,7 +100,11 @@ harness 11,923/11,923 with 0 false negatives and 0 false positives.
 - ❌ #132 signup never reaches "Grant location access" — possibly a real user-facing bug; trace before touching app code
 - ❌ #131 E2E creates real accounts in production Firebase Auth (#133/#136 moved to a controlled test domain; underlying prod-project targeting remains)
 - ❌ 👤 `E2E_TEST_ACCOUNT_EMAIL` / `E2E_TEST_ACCOUNT_PASSWORD` GitHub secrets + matching pre-onboarded free-plan account (needed by `03_settings_and_signout`, #130)
-- ❌ 👤 #119 GitHub Actions minutes / spending limit
+- ❌ 👤 #119 GitHub Actions minutes / spending limit — **current top blocker**: CI run #540
+  (`d9a463c`, 2026-09-23 10:24 UTC) failed every job in ~3s with no logs (HTTP 404), the
+  #119 signature. Earlier runs the same day (e.g. #537) did execute, so the quota was
+  restored and then used up again. Owner must check Settings → Billing → Actions
+  minutes / spending limit. Consider reducing E2E matrix cost once CI runs again.
 - ❌ Evidence: CI run on `main` with every job green
 
 ### R2 — Verified production deploy (finishes Phase 8A-10)
@@ -141,4 +145,5 @@ harness 11,923/11,923 with 0 false negatives and 0 false positives.
 ---
 
 ## Change log
+- 2026-09-23 — R1: run #540 blocked by the Actions minutes quota again (#119); no code signal available.
 - 2026-09-23 — Tracker created from the Phase 0 → 8A-10 audit records and live Actions history.
