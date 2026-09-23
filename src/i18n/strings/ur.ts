@@ -166,6 +166,10 @@ export const ur: StringTable = {
     discussionUnavailable: 'اوریکل نے اس کا جواب نہیں دیا۔ دوبارہ پوچھیں۔',
     discussionReadingGone: 'یہ جواب اب گفتگو کے لیے دستیاب نہیں۔',
     suggestedQuestionsLabel: 'آپ پوچھ سکتے ہیں',
+    dayToday: 'آج',
+    dayYesterday: 'کل',
+    copied: 'کاپی ہو گیا',
+    copyHint: 'کاپی کرنے کے لیے دبائے رکھیں',
   },
 
   reading: {

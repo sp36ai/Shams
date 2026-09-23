@@ -238,6 +238,13 @@ export interface StringTable {
     discussionReadingGone: string;
     /** Header over the suggested-follow-up-question chips. */
     suggestedQuestionsLabel: string;
+    /** Day separator for messages sent today / yesterday. */
+    dayToday: string;
+    dayYesterday: string;
+    /** Brief confirmation after long-press copies a message. */
+    copied: string;
+    /** Accessibility hint on a copyable bubble. */
+    copyHint: string;
   };
   /** One Reading — its header, its actions, its states. */
   reading: {

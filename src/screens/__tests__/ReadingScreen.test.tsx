@@ -18,7 +18,7 @@
  * recognizer to do anything real.
  */
 import React from 'react';
-import { screen, userEvent, waitFor } from '@testing-library/react-native';
+import { fireEvent, screen, userEvent, waitFor } from '@testing-library/react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { buildWatchChart } from '@astrology/rkp/watchChart';
 import { judgeWatchChart } from '@astrology/rkp/watchJudgment';
@@ -28,6 +28,9 @@ import { useReadingThreadsStore, threadById } from '@stores/readingThreadsStore'
 import { useReadingsStore } from '@stores/readingsStore';
 import { useQuotaStore } from '@stores/quotaStore';
 import ReadingScreen from '../ReadingScreen';
+import { copyText } from '@utils/clipboard';
+
+jest.mock('@utils/clipboard', () => ({ copyText: jest.fn() }));
 
 /**
  * Route params drive the whole open-vs-begin distinction, so each test states
@@ -601,6 +604,72 @@ describe('ReadingScreen', () => {
 
       await waitFor(() => expect(onlyThread()?.readingId).toBe('r1'));
       expect(useReadingThreadsStore.getState().threads).toHaveLength(1);
+    });
+  });
+
+  describe('conversation presentation', () => {
+    /** A Reading discussed across two local days: cast, then a follow-up later. */
+    function seedTwoDayReading(): void {
+      const store = useReadingThreadsStore.getState();
+      store.createThread({
+        id: 't_days',
+        question: 'Will the lease be signed?',
+        questionLang: 'en',
+      });
+      const day1 = new Date(2026, 8, 21, 10, 0).toISOString();
+      const day2 = new Date(2026, 8, 23, 9, 30).toISOString();
+      store.addMessage('t_days', {
+        id: 'u_cast',
+        role: 'user',
+        text: 'Will the lease be signed?',
+        kind: 'text',
+        createdAt: day1,
+        status: 'sent',
+      });
+      store.addMessage('t_days', {
+        id: 'o_cast',
+        role: 'oracle',
+        text: '',
+        createdAt: day1,
+        status: 'sent',
+        variant: 'reading',
+        replyToId: 'u_cast',
+      });
+      store.attachReading('t_days', successPayload() as never);
+      store.addMessage('t_days', {
+        id: 'u_follow',
+        role: 'user',
+        text: 'Should I wait for Friday?',
+        kind: 'voice',
+        createdAt: day2,
+        status: 'sent',
+      });
+      store.addMessage('t_days', {
+        id: 'o_follow',
+        role: 'oracle',
+        text: 'Friday favours the signature.',
+        createdAt: day2,
+        status: 'sent',
+        variant: 'discussion',
+        replyToId: 'u_follow',
+      });
+      setRoute({ threadId: 't_days' });
+    }
+
+    it('separates messages from different days with day chips', async () => {
+      seedTwoDayReading();
+      await renderScreen(<ReadingScreen />);
+      expect(screen.getAllByTestId('chat-day-separator')).toHaveLength(2);
+    });
+
+    it('long-pressing a message copies its text through the clipboard helper', async () => {
+      (copyText as jest.Mock).mockClear();
+      seedTwoDayReading();
+      await renderScreen(<ReadingScreen />);
+
+      fireEvent(screen.getAllByTestId('chat-bubble-discussion')[0]!, 'longPress');
+
+      expect(copyText).toHaveBeenCalledWith('Friday favours the signature.', 'Copied');
     });
   });
 });
