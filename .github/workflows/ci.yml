@@ -334,7 +334,21 @@ jobs:
           # mitigation to try before any runner-tier spend -- if load stays
           # above ~4 or adb still drops after this, that's the evidence a
           # bigger runner is actually needed, not a guess.
-          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none -no-snapshot -cores 1
+          #
+          # issue #124, follow-up: -cores 1 capped the guest vCPU, but qemu
+          # still used 150-167% host CPU (load 3.3-5.0 on nproc=2, PR #143's
+          # auth-signin run, job 107244470730). The rest is display rendering:
+          # -gpu swiftshader_indirect draws every frame in software on the
+          # HOST, outside the -cores cap, and that cost scales with pixel
+          # count. That run's JS thread and auth bootstrap were on time; the
+          # Auth screen just never got painted within 90s.
+          # -skin 720x1600 cuts the rendered pixels per frame from 2.59M
+          # (pixel_6's 1080x2400) to 1.15M (-56%). The matching density is
+          # set right after boot in `script` below (wm density 280, since
+          # 720/1080 * 420 = 280), so the app lays out at the same
+          # 411x914dp as on pixel_6 and the flows (which find elements by
+          # id/text, not coordinates) see the same screens.
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none -no-snapshot -cores 1 -skin 720x1600
           disable-animations: true
           # NOTE: the runner executes each script line in a separate shell, so
           # env exports do not persist between lines — keep commands self-contained.
@@ -357,6 +371,9 @@ jobs:
           # previously failed the whole step with exit 127 before Maestro
           # ever ran.
           script: |
+            adb shell wm density 280
+            adb shell wm size
+            adb shell wm density
             adb logcat -c
             nohup adb logcat -v threadtime > logcat_full.txt 2>&1 &
             adb install -r android/app/build/outputs/apk/debug/app-debug.apk
