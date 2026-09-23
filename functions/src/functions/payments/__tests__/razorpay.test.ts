@@ -25,6 +25,15 @@ const auditLogs: Array<Record<string, unknown>> = [];
 const quotaWrites: Array<{ userId: string; data: Record<string, unknown> }> = [];
 const claimsWrites: Array<{ userId: string; claims: Record<string, unknown> }> = [];
 const claimedEvents = new Set<string>();
+// Issue #129: this system's own order/subscription ledger — the only
+// source of uid/plan the webhook trusts. Keyed by `${collection}/${id}`.
+const ledger = new Map<string, Record<string, unknown>>();
+function bindOrder(orderId: string, data: Record<string, unknown>): void {
+  ledger.set(`razorpayOrders/${orderId}`, data);
+}
+function bindSubscription(subscriptionId: string, data: Record<string, unknown>): void {
+  ledger.set(`razorpaySubscriptions/${subscriptionId}`, data);
+}
 const existingAuthUsers = new Set<string>(['real-uid-1']);
 // Pre-existing custom claims on real-uid-1, to prove they survive a merge
 // (admin: true must never be wiped by an entitlement update).
@@ -38,6 +47,7 @@ function reset(): void {
   quotaWrites.length = 0;
   claimsWrites.length = 0;
   claimedEvents.clear();
+  ledger.clear();
 }
 
 vi.mock('../../../config', () => ({
@@ -76,6 +86,16 @@ vi.mock('../../../utils/admin', () => ({
             delete: () => {
               claimedEvents.delete(key);
               return Promise.resolve();
+            },
+          }),
+        };
+      }
+      if (name === 'razorpayOrders' || name === 'razorpaySubscriptions') {
+        return {
+          doc: (id: string) => ({
+            get: () => {
+              const data = ledger.get(`${name}/${id}`);
+              return Promise.resolve({ exists: data !== undefined, data: () => data });
             },
           }),
         };
@@ -121,7 +141,11 @@ vi.mock('firebase-functions/v2', () => ({
   logger: { warn: vi.fn(), error: vi.fn(), info: vi.fn(), debug: vi.fn() },
 }));
 
-import { extractNonEmptyString, isUnverifiableEntitlementTarget } from '../razorpay';
+import {
+  extractNonEmptyString,
+  isUnverifiableEntitlementTarget,
+  resolveLedgerBinding,
+} from '../razorpay';
 
 beforeEach(() => {
   reset();
@@ -214,13 +238,18 @@ function fakeReqRes(bodyObj: unknown) {
   return { req, res };
 }
 
-function paymentCapturedPayload(notes: unknown, description = 'plan_mureed_monthly') {
+function paymentCapturedPayload(
+  notes: unknown,
+  description = 'plan_mureed_monthly',
+  orderId: string | null = 'order_test_1', // null = omit order_id
+) {
   return {
     event: 'payment.captured',
     payload: {
       payment: {
         entity: {
           id: 'pay_test_1',
+          ...(orderId !== null ? { order_id: orderId } : {}),
           description,
           notes,
         },
@@ -257,6 +286,9 @@ describe('PHASE 6A-R1 — razorpayWebhook fail-safe boundary (end to end)', () =
     // test proves the corrected ordering: auth.getUser() runs first,
     // throws for a nonexistent uid, and NEITHER the Firestore quota
     // document NOR the Auth custom claim is ever touched.
+    // Issue #129: the uid now comes from the ledger, so the ledger is what
+    // names the nonexistent account here.
+    bindOrder('order_test_1', { uid: 'ghost-uid-does-not-exist', planId: 'plan_mureed_monthly' });
     const { razorpayWebhook } = await import('../razorpay');
     const { req, res } = fakeReqRes(paymentCapturedPayload({ userId: 'ghost-uid-does-not-exist' }));
     await razorpayWebhook(req as never, res as never);
@@ -279,6 +311,10 @@ describe('PHASE 6A-R1 — razorpayWebhook fail-safe boundary (end to end)', () =
   });
 
   it('the same nonexistent-uid guarantee holds for subscription.activated, not only payment.captured', async () => {
+    bindSubscription('sub_test_ghost', {
+      uid: 'ghost-uid-does-not-exist',
+      planId: 'plan_mureed_monthly',
+    });
     const { razorpayWebhook } = await import('../razorpay');
     const { req, res } = fakeReqRes({
       event: 'subscription.activated',
@@ -307,6 +343,7 @@ describe('PHASE 6A-R1 — razorpayWebhook fail-safe boundary (end to end)', () =
   });
 
   it('a genuine, well-formed, existing uid still receives its entitlement — no regression', async () => {
+    bindOrder('order_test_1', { uid: 'real-uid-1', planId: 'plan_mureed_monthly' });
     const { razorpayWebhook } = await import('../razorpay');
     const { req, res } = fakeReqRes(paymentCapturedPayload({ userId: 'real-uid-1' }));
     await razorpayWebhook(req as never, res as never);
@@ -321,6 +358,7 @@ describe('PHASE 6A-R1 — razorpayWebhook fail-safe boundary (end to end)', () =
   });
 
   it('existing custom claims (e.g. admin: true) survive the merge — the reorder did not change claim semantics', async () => {
+    bindOrder('order_test_1', { uid: 'real-uid-1', planId: 'plan_mureed_monthly' });
     const { razorpayWebhook } = await import('../razorpay');
     const { req, res } = fakeReqRes(paymentCapturedPayload({ userId: 'real-uid-1' }));
     await razorpayWebhook(req as never, res as never);
@@ -332,6 +370,7 @@ describe('PHASE 6A-R1 — razorpayWebhook fail-safe boundary (end to end)', () =
   });
 
   it('subscription.activated exercises the same corrected ordering for a genuine, existing uid', async () => {
+    bindSubscription('sub_test_real', { uid: 'real-uid-1', planId: 'plan_khass_annual' });
     const { razorpayWebhook } = await import('../razorpay');
     const { req, res } = fakeReqRes({
       event: 'subscription.activated',
@@ -355,6 +394,7 @@ describe('PHASE 6A-R1 — razorpayWebhook fail-safe boundary (end to end)', () =
   });
 
   it('idempotency/replay behavior is unchanged — a duplicate payment.captured event grants entitlement only once', async () => {
+    bindOrder('order_test_1', { uid: 'real-uid-1', planId: 'plan_mureed_monthly' });
     const { razorpayWebhook } = await import('../razorpay');
     const payload = paymentCapturedPayload({ userId: 'real-uid-1' });
 
@@ -379,5 +419,173 @@ describe('PHASE 6A-R1 — razorpayWebhook fail-safe boundary (end to end)', () =
 
     expect(res.statusCode).toBe(401);
     expect(quotaWrites).toHaveLength(0);
+  });
+});
+
+/* -------------------------------------------------------------------------- */
+/*  Issue #129 — entitlement bound to this system's own ledger               */
+/* -------------------------------------------------------------------------- */
+
+describe('Issue #129 — resolveLedgerBinding', () => {
+  it('resolves uid and planId from a well-formed ledger record', async () => {
+    bindOrder('order_ok', { uid: 'real-uid-1', planId: 'plan_mureed_monthly' });
+    await expect(resolveLedgerBinding('razorpayOrders', 'order_ok')).resolves.toEqual({
+      ok: true,
+      uid: 'real-uid-1',
+      planId: 'plan_mureed_monthly',
+    });
+  });
+
+  it('an absent entity id is not bound', async () => {
+    await expect(resolveLedgerBinding('razorpayOrders', undefined)).resolves.toEqual({
+      ok: false,
+      reason: 'missing_entity_id',
+    });
+  });
+
+  it('an id this system never created is not bound', async () => {
+    await expect(resolveLedgerBinding('razorpayOrders', 'order_unknown')).resolves.toEqual({
+      ok: false,
+      reason: 'not_in_ledger',
+    });
+  });
+
+  it.each([
+    [{ planId: 'plan_mureed_monthly' }],
+    [{ uid: 'real-uid-1' }],
+    [{ uid: 42, planId: 'plan_mureed_monthly' }],
+    [{ uid: '  ', planId: 'plan_mureed_monthly' }],
+  ])('a malformed ledger record %p is not bound', async record => {
+    bindOrder('order_bad', record);
+    await expect(resolveLedgerBinding('razorpayOrders', 'order_bad')).resolves.toEqual({
+      ok: false,
+      reason: 'malformed_ledger_record',
+    });
+  });
+
+  it('does not read one ledger when asked for the other', async () => {
+    bindOrder('shared_id', { uid: 'real-uid-1', planId: 'plan_mureed_monthly' });
+    await expect(resolveLedgerBinding('razorpaySubscriptions', 'shared_id')).resolves.toEqual({
+      ok: false,
+      reason: 'not_in_ledger',
+    });
+  });
+});
+
+describe('Issue #129 — razorpayWebhook grants only ledger-bound entitlements', () => {
+  it('THE FINDING: a genuinely signed payment whose notes.userId names a real account, for an order this system never created, grants nothing', async () => {
+    const { razorpayWebhook } = await import('../razorpay');
+    const { req, res } = fakeReqRes(paymentCapturedPayload({ userId: 'real-uid-1' }));
+    await razorpayWebhook(req as never, res as never);
+
+    expect(res.statusCode).toBe(200); // acknowledged, so Razorpay stops retrying
+    expect(quotaWrites).toHaveLength(0);
+    expect(claimsWrites).toHaveLength(0);
+    expect(securityEvents).toContainEqual(
+      expect.objectContaining({
+        type: 'razorpay_unbound_entitlement',
+        event: 'payment.captured',
+        reason: 'not_in_ledger',
+        entityId: 'order_test_1',
+        claimedUserId: 'real-uid-1',
+      }),
+    );
+  });
+
+  it('a payment with no order_id grants nothing', async () => {
+    const { razorpayWebhook } = await import('../razorpay');
+    const { req, res } = fakeReqRes(
+      paymentCapturedPayload({ userId: 'real-uid-1' }, 'plan_mureed_monthly', null),
+    );
+    await razorpayWebhook(req as never, res as never);
+
+    expect(res.statusCode).toBe(200);
+    expect(quotaWrites).toHaveLength(0);
+    expect(securityEvents).toContainEqual(
+      expect.objectContaining({
+        type: 'razorpay_unbound_entitlement',
+        reason: 'missing_entity_id',
+      }),
+    );
+  });
+
+  it('a malformed ledger record grants nothing', async () => {
+    bindOrder('order_test_1', { uid: 'real-uid-1' }); // no planId
+    const { razorpayWebhook } = await import('../razorpay');
+    const { req, res } = fakeReqRes(paymentCapturedPayload({ userId: 'real-uid-1' }));
+    await razorpayWebhook(req as never, res as never);
+
+    expect(quotaWrites).toHaveLength(0);
+    expect(securityEvents).toContainEqual(
+      expect.objectContaining({ reason: 'malformed_ledger_record' }),
+    );
+  });
+
+  it('the grant goes to the ledger uid, never the payload notes.userId', async () => {
+    existingAuthUsers.add('attacker-uid');
+    try {
+      bindOrder('order_test_1', { uid: 'real-uid-1', planId: 'plan_mureed_monthly' });
+      const { razorpayWebhook } = await import('../razorpay');
+      const { req, res } = fakeReqRes(paymentCapturedPayload({ userId: 'attacker-uid' }));
+      await razorpayWebhook(req as never, res as never);
+
+      expect(quotaWrites).toHaveLength(1);
+      expect(quotaWrites[0]?.userId).toBe('real-uid-1');
+      expect(claimsWrites.map(c => c.userId)).toEqual(['real-uid-1']);
+    } finally {
+      existingAuthUsers.delete('attacker-uid');
+    }
+  });
+
+  it('the plan comes from the ledger, never the payload description/notes', async () => {
+    bindOrder('order_test_1', { uid: 'real-uid-1', planId: 'plan_mureed_monthly' });
+    const { razorpayWebhook } = await import('../razorpay');
+    const { req, res } = fakeReqRes(
+      paymentCapturedPayload(
+        { userId: 'real-uid-1', planId: 'plan_khass_annual' },
+        'plan_khass_annual',
+      ),
+    );
+    await razorpayWebhook(req as never, res as never);
+
+    expect(quotaWrites).toHaveLength(1);
+    expect(quotaWrites[0]?.data.plan).toBe('mureed');
+  });
+
+  it('subscription.activated for a subscription this system never created grants nothing', async () => {
+    const { razorpayWebhook } = await import('../razorpay');
+    const { req, res } = fakeReqRes({
+      event: 'subscription.activated',
+      payload: {
+        subscription: {
+          entity: {
+            id: 'sub_forged',
+            plan_id: 'plan_khass_annual',
+            notes: { userId: 'real-uid-1' },
+          },
+        },
+      },
+    });
+    await razorpayWebhook(req as never, res as never);
+
+    expect(res.statusCode).toBe(200);
+    expect(quotaWrites).toHaveLength(0);
+    expect(claimsWrites).toHaveLength(0);
+    expect(securityEvents).toContainEqual(
+      expect.objectContaining({
+        type: 'razorpay_unbound_entitlement',
+        event: 'subscription.activated',
+        reason: 'not_in_ledger',
+        entityId: 'sub_forged',
+      }),
+    );
+  });
+
+  it('an unbound event does not consume the idempotency claim', async () => {
+    const { razorpayWebhook } = await import('../razorpay');
+    const { req, res } = fakeReqRes(paymentCapturedPayload({ userId: 'real-uid-1' }));
+    await razorpayWebhook(req as never, res as never);
+
+    expect(claimedEvents.size).toBe(0);
   });
 });
