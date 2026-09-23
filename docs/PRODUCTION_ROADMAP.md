@@ -97,7 +97,10 @@ harness 11,923/11,923 with 0 false negatives and 0 false positives.
 - ❌ #124 E2E emulator adb drops / `onAuthStateChanged` timeout
   - ✅ #125 split flows into matrix; #126/#127 timeouts & disk cleanup; #134 diagnostics; #137 cap emulator to 1 core
   - ❌ confirm on a real CI run that #137 stops the device drops
-- ❌ #132 signup never reaches "Grant location access" — possibly a real user-facing bug; trace before touching app code
+- ❌ #132 signup never reaches "Grant location access" — possibly a real user-facing bug
+  - ✅ Code traced (signUp → onAuthStateChanged → RootNavigator gate → screen label): no blocking path found, same logic at `ce536bc`
+  - ⚠️ PR #142: widen that one wait 30s → 90s (CI ~6x slowdown, run #532); test-only, not yet CI-verified
+  - ❌ 👤 Manual sign-up on a real phone, fresh install — decides whether real users are affected
 - ❌ #131 E2E creates real accounts in production Firebase Auth (#133/#136 moved to a controlled test domain; underlying prod-project targeting remains)
 - ❌ 👤 `E2E_TEST_ACCOUNT_EMAIL` / `E2E_TEST_ACCOUNT_PASSWORD` GitHub secrets + matching pre-onboarded free-plan account (needed by `03_settings_and_signout`, #130)
 - ❌ 👤 #119 GitHub Actions minutes / spending limit — **current top blocker**: CI run #540
@@ -150,6 +153,7 @@ harness 11,923/11,923 with 0 false negatives and 0 false positives.
 ---
 
 ## Change log
+- 2026-09-23 — #132 traced; test-timeout fix in PR #142. CI still blocked by billing (#119, 7 attempts, runner_id 0).
 - 2026-09-23 — #43 step 1 (RN 0.79.7) opened as draft PR #141.
 - 2026-09-23 — R1: run #540 blocked by the Actions minutes quota again (#119); no code signal available.
 - 2026-09-23 — Tracker created from the Phase 0 → 8A-10 audit records and live Actions history.
