@@ -146,8 +146,13 @@ jobs:
 
       # Use real google-services.json from secret if available,
       # otherwise fall back to the CI mock (structure-valid, placeholder creds).
-      # The mock allows Gradle to compile; Firebase calls will fail at runtime
-      # which is acceptable — E2E flows test UI logic, not live Firebase.
+      # The mock allows Gradle to compile with Firebase calls failing at
+      # runtime, acceptable for a build-only job. With GOOGLE_SERVICES_JSON
+      # set (the normal case for this repo), the E2E job runs against the
+      # REAL production Firebase project (shams-app-4d0e7) — Auth, Firestore,
+      # and Cloud Functions calls are all live, not stubbed. See issue #131:
+      # 02_signup_journey creates a real throwaway account in production
+      # Auth on every run as a result.
       - name: Write google-services.json
         run: |
           if [ -n "${{ secrets.GOOGLE_SERVICES_JSON }}" ]; then
@@ -302,6 +307,18 @@ jobs:
       # once.
       - name: Boot emulator + run Maestro flow
         uses: reactivecircus/android-emulator-runner@v2
+        env:
+          # settings-signout (issue #124 / PR #125 fix): each matrix leg now
+          # boots its own emulator, so this flow signs in with a dedicated,
+          # pre-seeded account instead of relying on 02_signup_journey's
+          # session having run first on a shared device. Maestro only
+          # auto-interpolates ${VAR} in flow YAML from host env vars whose
+          # names start with MAESTRO_ -- an unprefixed name here would
+          # silently resolve to empty in the flow instead of erroring.
+          # Harmless to pass to the other two legs, which don't reference
+          # them.
+          MAESTRO_E2E_TEST_ACCOUNT_EMAIL: ${{ secrets.E2E_TEST_ACCOUNT_EMAIL }}
+          MAESTRO_E2E_TEST_ACCOUNT_PASSWORD: ${{ secrets.E2E_TEST_ACCOUNT_PASSWORD }}
         with:
           api-level: 31
           arch: x86_64
