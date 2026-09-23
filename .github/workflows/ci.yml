@@ -324,6 +324,12 @@ jobs:
           arch: x86_64
           target: google_apis
           profile: pixel_6
+          # issue #124: this action writes hw.cpu.ncore from its own `cores`
+          # input, which defaults to 2, so the AVD config said 2 vCPUs while
+          # emulator-options said -cores 1. qemu kept using ~172-180% CPU
+          # even at 720x1600 (PR #146's first run). Set it here too so the
+          # config and the command line agree on one guest vCPU.
+          cores: 1
           avd-name: shams_test
           force-avd-creation: false
           # issue #124: run #532's diagnostics (PR #134) measured qemu at
