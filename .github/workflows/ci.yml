@@ -86,8 +86,17 @@ jobs:
       - name: Build
         run: npm run build
 
-      - name: Unit tests
-        run: npm test -- --run
+      # Runs the same suite as `npm test` plus the engine coverage gate
+      # declared in vitest.config.ts. That gate had never actually run:
+      # its thresholds were nested under the wrong config key for this
+      # Vitest version (silently ignored -- confirmed by seeing it exit 0
+      # against a file at 0% coverage) AND CI called plain `--run`, never
+      # `--coverage`. Fixed and set as a ratchet at today's real baseline
+      # (~87%/86%/74%/87%, with 1-2 points margin) rather than the
+      # originally-declared 95%, which real coverage doesn't meet yet
+      # (manazil.ts is at 0%) -- see vitest.config.ts's own comment.
+      - name: Unit tests (with engine coverage gate)
+        run: npm run test:coverage -- --run
 
   e2e-build:
     name: E2E Build (debug APK)
