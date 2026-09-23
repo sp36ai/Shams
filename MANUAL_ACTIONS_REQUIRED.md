@@ -118,6 +118,42 @@ Required secrets for CI/CD:
 
 ---
 
+## 9. Google Cloud / Firebase Console — Confirm Blaze Plan + Budget Alerts
+
+**Why this is first, not last:** Cloud Functions **do not run at all** on the
+Spark (free) plan — every other item in this file (App Check enforcement,
+Secret Manager, the Razorpay webhook, `askOracle` itself) is moot if the
+project isn't on Blaze. Check this before spending time on the rest.
+
+**Steps:**
+
+1. Go to https://console.firebase.google.com/project/shams-app-4d0e7/usage/details
+   (or Firebase Console → ⚙️ Project settings → Usage and billing) and confirm
+   the plan shown is **Blaze (Pay as you go)**, not Spark.
+2. If still on Spark: click "Modify plan" → Blaze, link a billing account.
+3. Set a budget alert so an unexpected spike (e.g. a burst of `askOracle`
+   calls hitting the Anthropic API) pages you instead of silently draining
+   the account: Google Cloud Console → Billing → Budgets & alerts → Create
+   budget, scoped to project `shams-app-4d0e7`.
+
+**Verify from the command line** (needs `gcloud` authenticated as an Owner/
+Billing Admin on the project — run locally, not from this sandbox):
+
+```bash
+gcloud config set project shams-app-4d0e7
+gcloud beta billing projects describe shams-app-4d0e7
+# billingEnabled: true  <- must be true, or Cloud Functions won't deploy/run
+# billingAccountName: billingAccounts/XXXXXX-XXXXXX-XXXXXX
+
+# List existing budget alerts on that billing account (replace with the id from above)
+gcloud billing budgets list --billing-account=XXXXXX-XXXXXX-XXXXXX
+```
+
+If `billingEnabled: false`, nothing below this line in the checklist can be
+verified live — functions simply won't deploy.
+
+---
+
 ## 8. Runbook — exact commands
 
 Project: `shams-app-4d0e7` · Package: `com.astrosarfaraz.shamsalasrar` · Region: `asia-south1`
@@ -243,4 +279,4 @@ model id that was serving canned fallback text. Confirm on a real device from th
 
 ---
 
-_Last updated: 2026-08-13_
+_Last updated: 2026-09-23_
