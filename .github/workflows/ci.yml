@@ -376,6 +376,12 @@ jobs:
           # (dash) on this runner, and unnecessary here besides: it
           # previously failed the whole step with exit 127 before Maestro
           # ever ran.
+          # The Maestro install below retries: PR #146 run 1 attempt 2 (job
+          # 107265565097) lost the download to "curl: (35) Recv failure:
+          # Connection reset by peer", got a corrupt zip, and failed with
+          # exit 127 (maestro: not found) before any flow ran. Each script
+          # line runs in its own `sh -c`, so the retry is one line; it also
+          # checks the binary exists instead of trusting the pipe's status.
           script: |
             adb shell wm density 280
             adb shell wm size
@@ -384,7 +390,7 @@ jobs:
             nohup adb logcat -v threadtime > logcat_full.txt 2>&1 &
             adb install -r android/app/build/outputs/apk/debug/app-debug.apk
             adb emu geo fix 67.0011 24.8607
-            curl -Ls "https://get.maestro.mobile.dev" | MAESTRO_VERSION=1.39.0 bash
+            for i in 1 2 3; do curl -fsSL --retry 3 --retry-all-errors "https://get.maestro.mobile.dev" | MAESTRO_VERSION=1.39.0 bash && [ -x "$HOME/.maestro/bin/maestro" ] && break; echo "Maestro install attempt $i failed; retrying in 15s"; rm -rf "$HOME/.maestro"; sleep 15; done; [ -x "$HOME/.maestro/bin/maestro" ] || { echo "Maestro install failed after 3 attempts"; exit 1; }
             # issue #124: signup-journey has repeatedly lost its emulator
             # entirely mid-flow ("device not found" / "device offline" /
             # "Android driver unreachable") with no evidence yet of *when*
