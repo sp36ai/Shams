@@ -147,6 +147,9 @@ harness 11,923/11,923 with 0 false negatives and 0 false positives.
 - ❌ #135 react-native-tts / Firebase deprecated `onCatalystInstanceDestroy`
 
 ## Part D — Product priority (not in the audit chain)
+- ✅ Gap analysis (2026-09-23): text + voice via one `sendMessage` → `askWatchOracle`/`discussReading`, server-rendered verdict cards, TTS of server-validated `speakableText`, continuation, MMKV history, loading/error/retry — already built in `ReadingScreen`/`ChatBubble`
+- ⚠️ Draft PR #144: bubble timestamps, day separators, long-press copy, narration progress bar; app jest 335/335 ✅; needs on-device check + CI (#119)
+- ❌ Possible next: hold-to-record mic (WhatsApp-style) — interaction change, needs device testing
 - ❌ Premium WhatsApp-style Oracle conversation UI: text + voice questions,
   Oracle responses, audio playback, continuation, history, loading/error/retry
   states. Voice goes through speech-to-text into the same `askWatchOracle`
@@ -155,6 +158,7 @@ harness 11,923/11,923 with 0 false negatives and 0 false positives.
 ---
 
 ## Change log
+- 2026-09-23 — Oracle conversation gap analysis; polish in draft PR #144.
 - 2026-09-23 — #129 webhook-side fix in PR #143 (fail-closed ledger binding).
 - 2026-09-23 — #132 traced; test-timeout fix in PR #142. CI still blocked by billing (#119, 7 attempts, runner_id 0).
 - 2026-09-23 — #43 step 1 (RN 0.79.7) opened as draft PR #141.
