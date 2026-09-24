@@ -56,10 +56,24 @@ name: 'Journey — sign up through onboarding to the Oracle'
 - tapOn:
     id: 'auth-input-password'
 - inputText: 'CiTestPass!2026'
+# The confirm field sits below the fold once the keyboard is up (the form
+# is a ScrollView with adjustResize); tapOn does not scroll, so bring it
+# into view first -- what a real user does. First observed on PR #146 run 2
+# (job 107267717366): "Element not found: auth-input-confirm".
+- scrollUntilVisible:
+    element:
+      id: 'auth-input-confirm'
+    direction: DOWN
+    timeout: 20000
 - tapOn:
     id: 'auth-input-confirm'
 - inputText: 'CiTestPass!2026'
 - hideKeyboard
+- scrollUntilVisible:
+    element:
+      id: 'auth-submit-btn'
+    direction: DOWN
+    timeout: 20000
 - tapOn:
     id: 'auth-submit-btn'
 
