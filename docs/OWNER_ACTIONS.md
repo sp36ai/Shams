@@ -9,45 +9,62 @@ for what's already moving.
 
 ---
 
-## 1. Register CI's debug keystore SHA-1 in Firebase Console (#132 — root-caused)
+## 1. Register CI's stable Android signing identity — in BOTH config locations (#132 — root-caused)
 
-**Why:** #132 is now root-caused, not just traced — see PR #149's diagnostic
-logging and PR #150's fix. CI's debug keystore used to be regenerated fresh
-on every run (`keytool -genkeypair`), so its SHA-1 fingerprint was different
-every time. Firebase's Android API key restrictions authorize by SHA-1, so
-a fingerprint that changes every run can **never** be registered — every
-CI signup was structurally rejected by Firebase Auth before the app's own
-signup/navigation logic ever ran. Confirmed directly from #149's logcat:
+**Why:** #132 is root-caused, not just traced — see PR #149's diagnostic
+logging and PR #150's fix. CI's debug keystore used to be regenerated
+fresh on every run (`keytool -genkeypair`), so its SHA-1 fingerprint was
+different every time. A fingerprint that changes every run can **never**
+be registered anywhere, so every CI signup was structurally rejected
+before the app's own signup/navigation logic ever ran. Confirmed
+directly from #149's logcat:
 ```
 [Auth] signUp(): createUserWithEmailAndPassword rejected
 { message: '[auth/unknown] An internal error has occurred.
   [ Requests from this Android client application
   com.astrosarfaraz.shamsalasrar are blocked. ]' }
 ```
-`RootNavigator`'s gate logic was never the problem — it never advanced past
-`Auth` because there was never an authenticated user to gate on. **This was
-never a navigation bug.**
+`RootNavigator`'s gate logic was never the problem — it never advanced
+past `Auth` because there was never an authenticated user to gate on.
+**This was never a navigation bug.**
 
 PR #150 commits a stable `android/app/debug.keystore` (Android's standard
 debug-only convention — password `android`, never used for release
 signing, never a secret) so CI now signs with the **same** identity every
-run, giving it one SHA-1 that can be registered once.
-
-**Where:** Firebase Console → Project Settings → your apps → the Android
-app (`com.astrosarfaraz.shamsalasrar`) → **Add fingerprint**.
-
-**Exact SHA-1 to add:**
+run, giving it one SHA-1 that can be registered once:
 ```
 07:0B:A6:7E:A3:A0:A7:8C:70:18:45:CE:5C:A5:B5:99:CF:08:18:2E
 ```
 
-**Verification:** once registered, the next `signup-journey` CI run
-(PR #149, still open, carries the diagnostic logging) should show
-`signUp(): createUserWithEmailAndPassword resolved` instead of `rejected`,
-and the `[Nav] RootNavigator gate` log should progress to
-`LocationPermission`. Claude will confirm this on the next CI run once
-the fingerprint is registered — report back once done and a re-run can
-be triggered.
+**This SHA-1 needs to be registered in two separate places — one is not
+a substitute for the other:**
+
+### 1a. Google Cloud API key (this is what the captured error names directly)
+`"Requests from this Android client application ... are blocked"` is the
+Google Cloud Console **API-key Android-restriction** message specifically
+— not the same surface as Firebase's own fingerprint field below.
+1. Google Cloud Console → project **`shams-app-4d0e7`**
+2. **APIs & Services → Credentials**
+3. Open the API key the app's Firebase config uses (the Android browser/API key — check `google-services.json`'s `client[].api_key[].current_key` if unsure which one)
+4. Under **Application restrictions → Android restrictions → Add package name and fingerprint**
+5. Package name: `com.astrosarfaraz.shamsalasrar`
+6. SHA-1: `07:0B:A6:7E:A3:A0:A7:8C:70:18:45:CE:5C:A5:B5:99:CF:08:18:2E`
+7. **Do not remove any existing entries** — this adds CI's identity alongside production's, it doesn't replace it.
+8. Save.
+
+### 1b. Firebase Android app fingerprint (separate config surface, keep in sync)
+1. Firebase Console → **Project Settings → General** → the Android app (`com.astrosarfaraz.shamsalasrar`)
+2. **Add fingerprint**
+3. Same SHA-1: `07:0B:A6:7E:A3:A0:A7:8C:70:18:45:CE:5C:A5:B5:99:CF:08:18:2E`
+4. Save.
+
+**Verification sequence** (do these in order, don't skip the wait):
+1. Re-open the Google Cloud Credentials page — confirm the SHA-1 is actually listed under Android restrictions (not just submitted).
+2. Re-open the Firebase Project Settings page — confirm the same SHA-1 is actually listed there too.
+3. Wait **at least 5 minutes** — both surfaces can take a few minutes to propagate.
+4. Report back "done" — Claude will trigger a clean `signup-journey` re-run (PR #150's own branch, `4ab0f89`) and classify strictly from that run's evidence, not from timing or inference.
+
+**Current status (2026-09-24):** neither location is registered yet. A combined verification run (PR #152 — #150's fix + #149's diagnostics, temporary/disposable) already confirmed the *original* `"are blocked"` rejection is capable of disappearing once the keystore is stable, but that run still hit a separate, likely-transient network error (`unexpected end of stream on com.android.okhttp.Address`) before registration — so this item is not yet closed by that alone. A clean pass after registration is still needed.
 
 **Also unblocks:** #131 (E2E creates real accounts) is unaffected by this —
 that's a separate, still-open concern about which Firebase project E2E
@@ -60,9 +77,10 @@ targets, not about whether the request is authorized at all.
 **Why:** `settings-signout`'s Maestro flow needs to sign in as an existing
 account to reach Settings. The job environment already confirms
 `MAESTRO_E2E_TEST_ACCOUNT_EMAIL` / `MAESTRO_E2E_TEST_ACCOUNT_PASSWORD` are
-empty — the secrets were never created. **Note:** this account will also
-need item 1's SHA-1 fix in place first, or its own signup/creation will
-hit the same rejection.
+empty — the secrets were never created. **Note:** this is independent of
+item 1 — relevant to #130 only, not required for #132's signup
+verification. This account will also need item 1's registration in place
+first, or its own signup/creation will hit the same rejection.
 
 **Steps:**
 1. In Firebase Console → Authentication → Users, create (or designate) one
@@ -98,7 +116,7 @@ run `firebase firestore:rules get` from an authenticated `firebase` CLI
 session (this session has neither the CLI installed nor credentials).
 
 **What to check:** copy the live ruleset and diff it against
-`firestore.rules` on `main` at `210555a`. Report whether they match.
+`firestore.rules` on `main`. Report whether they match.
 
 **If they don't match:** tell Claude what's different — Claude can then
 redeploy the source version (once given deploy credentials) or explain
@@ -140,8 +158,15 @@ This is a **separate** problem from #132 above: #124 is why
 `signup-journey`/`auth-signin` intermittently lose the emulator entirely
 (`Android driver unreachable`); #132 was why, on the runs that *don't*
 hit that, signup itself was rejected. Fixing #132 (item 1) will not fix
-#124, and vice versa — both may need to be addressed for `signup-journey`
-to pass reliably.
+#124, and vice versa.
+
+**Recommendation: defer this decision** until item 1's registration is in
+place and a clean `signup-journey` re-run is observed — the `unexpected
+end of stream` error seen on PR #152's verification run (post-keystore-fix,
+pre-registration) may turn out to be the same #124 network/resource
+pressure in a different guise, or it may resolve once the specific Auth
+rejection is gone. Re-evaluate with fresh evidence rather than deciding
+on the old baseline.
 
 **Where:** GitHub → this repo (or org) → **Settings → Actions → Runners**,
 or **Settings → Billing → Plans and usage** to check what larger runner
@@ -218,5 +243,6 @@ roadmap.
 ---
 
 ## Change log
+- 2026-09-24 — §1 split into two distinct registration steps (Google Cloud API-key Android restrictions vs. Firebase Android app fingerprint) — the captured error is the Google Cloud side specifically, and registering one does not update the other. Added a propagation-wait verification sequence. §5 updated to recommend deferring the runner decision until post-registration evidence is available.
 - 2026-09-24 — #132 root-caused (CI debug keystore SHA-1 instability blocking Firebase Auth); item 1 replaced with the SHA-1 registration it actually needs. See PR #149 (diagnostics) and PR #150 (fix).
 - 2026-09-24 — Created alongside `docs/PRODUCTION_BLOCKERS.md`.
