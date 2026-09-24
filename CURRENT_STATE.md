@@ -28,31 +28,41 @@ Previously established project evidence should not be rechecked unless the curre
 
 ---
 
+## Investigation result
+
+**Question answered: Can signup-journey be rerun independently?**
+
+**Answer: NO.**
+
+**Finding:**
+- `signup-journey` is NOT a standalone job; it is one matrix leg within the `e2e-test` job.
+- `e2e-test` depends on `e2e-build`.
+- GitHub Actions does NOT support rerunning individual matrix legs.
+
+**Evidence:**
+- Workflow structure: e2e-test job contains matrix.include[] with legs: auth-signin, signup-journey, settings-signout.
+- Run #569 structure: signup-journey appears as "E2E Tests (Maestro) / signup-journey" (job ID 107613613038), part of e2e-test matrix expansion.
+- GitHub limitation: Only full job rerun is available; matrix legs cannot be targeted independently.
+
+**Risk of rerun:**
+- Rerunning signup-journey = rerunning the entire e2e-test job = rerunning ALL matrix legs (auth-signin, signup-journey, settings-signout).
+- This reruns the full emulator/Maestro pipeline for all flows.
+- No production code change. No project state modification.
+
+**Current status:**
+- Run #569 signup-journey job is still in_progress.
+- No action required yet.
+
 ## Next action
 
-Inspect GitHub Actions run #569 and determine:
+WAIT: Let run #569 complete.
 
-1. Whether `signup-journey` is an independently rerunnable job/leg.
-2. Whether it has dependencies on other jobs that would require those jobs to run again.
-3. Whether GitHub provides a safe targeted rerun option for this specific leg.
-4. Whether rerunning it could affect production or modify project state.
+Once signup-journey finishes (pass or fail):
+- Inspect the final result.
+- If it fails: Decide whether the full E2E matrix rerun is justified.
+- If it passes: No rerun needed.
 
-Do NOT start the rerun yet.
-
-Do NOT modify code.
-
-Do NOT investigate unrelated jobs.
-
-Do NOT repeat Firebase or Android registration verification.
-
-Report only:
-
-- Finding
-- Evidence
-- Risk
-- Recommended next action
-
-Stop once the question is conclusively answered.
+Report back with result + recommendation.
 
 ## Rules
 - Do not scan the whole repository.
