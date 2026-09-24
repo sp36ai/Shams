@@ -248,8 +248,18 @@ export const useAuthStore = create<AuthState>(set => ({
 
   signUp: async (email: string, password: string, name: string): Promise<Error | null> => {
     set({ isLoading: true, error: null });
+    // console.warn (not just the crashlytics breadcrumb below), matching
+    // bootstrap()'s own diagnostic convention above — needed to tell apart,
+    // on the #132 investigation (does signup ever complete under CI's
+    // resource pressure, or does the app stall before/during the Auth
+    // call), whether createUserWithEmailAndPassword ever resolves at all
+    // from whether it resolves but something after it fails silently.
+    console.warn('[Auth] signUp(): calling createUserWithEmailAndPassword');
     try {
       const cred = await auth().createUserWithEmailAndPassword(email, password);
+      console.warn('[Auth] signUp(): createUserWithEmailAndPassword resolved', {
+        uid: cred.user.uid,
+      });
       if (name) {
         // The account already exists at this point — a displayName write
         // failing (e.g. a network blip right after signup) must not be
@@ -263,6 +273,7 @@ export const useAuthStore = create<AuthState>(set => ({
       return null;
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Sign up failed';
+      console.warn('[Auth] signUp(): createUserWithEmailAndPassword rejected', { message: msg });
       crashlytics().recordError(err instanceof Error ? err : new Error(msg));
       set({ isLoading: false, error: msg });
       return err instanceof Error ? err : new Error(msg);
