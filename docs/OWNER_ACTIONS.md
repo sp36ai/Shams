@@ -9,34 +9,49 @@ for what's already moving.
 
 ---
 
-## 1. Confirm the #132 E2E signup account (decides whether #132 is a real bug)
+## 1. Register CI's debug keystore SHA-1 in Firebase Console (#132 — root-caused)
 
-**Why:** `signup-journey`'s E2E run lost its emulator (`Android driver
-unreachable`) before ever reaching the location-permission assertion, so
-that run proves nothing about whether the app actually navigates there
-after a real signup. The one piece of evidence that narrows this down is
-whether the Firebase Auth account the test tried to create actually got
-created.
+**Why:** #132 is now root-caused, not just traced — see PR #149's diagnostic
+logging and PR #150's fix. CI's debug keystore used to be regenerated fresh
+on every run (`keytool -genkeypair`), so its SHA-1 fingerprint was different
+every time. Firebase's Android API key restrictions authorize by SHA-1, so
+a fingerprint that changes every run can **never** be registered — every
+CI signup was structurally rejected by Firebase Auth before the app's own
+signup/navigation logic ever ran. Confirmed directly from #149's logcat:
+```
+[Auth] signUp(): createUserWithEmailAndPassword rejected
+{ message: '[auth/unknown] An internal error has occurred.
+  [ Requests from this Android client application
+  com.astrosarfaraz.shamsalasrar are blocked. ]' }
+```
+`RootNavigator`'s gate logic was never the problem — it never advanced past
+`Auth` because there was never an authenticated user to gate on. **This was
+never a navigation bug.**
 
-**Where:** Firebase Console → your project → **Authentication → Users**.
+PR #150 commits a stable `android/app/debug.keystore` (Android's standard
+debug-only convention — password `android`, never used for release
+signing, never a secret) so CI now signs with the **same** identity every
+run, giving it one SHA-1 that can be registered once.
 
-**What to look for:** an account with an email matching
-`e2e-…@e2e.shamsalasrar.test`, created around **16:41 UTC on 23 Sep 2026**.
+**Where:** Firebase Console → Project Settings → your apps → the Android
+app (`com.astrosarfaraz.shamsalasrar`) → **Add fingerprint**.
 
-**What each outcome means:**
-- **Found:** signup itself completes even under CI load. If real users
-  ever get stuck on the location screen, the bug is downstream of account
-  creation (navigation/state), and Claude should instrument
-  `RootNavigator`/`LocationPermissionScreen` next.
-- **Not found:** something between "tap submit" and "account created" is
-  failing only in CI — most likely Firebase App Check rejecting the debug
-  token (logs show `debugToken: [DEFAULT]/debug/null`). That's a
-  test-environment fix (registering a real App Check debug token for CI),
-  not a production code change, and Claude can do that once told the
-  answer here.
+**Exact SHA-1 to add:**
+```
+07:0B:A6:7E:A3:A0:A7:8C:70:18:45:CE:5C:A5:B5:99:CF:08:18:2E
+```
 
-**Report back:** just "found" or "not found" is enough for Claude to
-continue.
+**Verification:** once registered, the next `signup-journey` CI run
+(PR #149, still open, carries the diagnostic logging) should show
+`signUp(): createUserWithEmailAndPassword resolved` instead of `rejected`,
+and the `[Nav] RootNavigator gate` log should progress to
+`LocationPermission`. Claude will confirm this on the next CI run once
+the fingerprint is registered — report back once done and a re-run can
+be triggered.
+
+**Also unblocks:** #131 (E2E creates real accounts) is unaffected by this —
+that's a separate, still-open concern about which Firebase project E2E
+targets, not about whether the request is authorized at all.
 
 ---
 
@@ -45,7 +60,9 @@ continue.
 **Why:** `settings-signout`'s Maestro flow needs to sign in as an existing
 account to reach Settings. The job environment already confirms
 `MAESTRO_E2E_TEST_ACCOUNT_EMAIL` / `MAESTRO_E2E_TEST_ACCOUNT_PASSWORD` are
-empty — the secrets were never created.
+empty — the secrets were never created. **Note:** this account will also
+need item 1's SHA-1 fix in place first, or its own signup/creation will
+hit the same rejection.
 
 **Steps:**
 1. In Firebase Console → Authentication → Users, create (or designate) one
@@ -119,6 +136,12 @@ restore has been tested. This feeds directly into Decision A in
 resolution/density in #146) are merged and *confirmed* not to have fixed
 the underlying 2-core runner saturation — load average stays at 3.9–4.7
 and `qemu-system-x86_64` at ~170% CPU throughout the E2E run regardless.
+This is a **separate** problem from #132 above: #124 is why
+`signup-journey`/`auth-signin` intermittently lose the emulator entirely
+(`Android driver unreachable`); #132 was why, on the runs that *don't*
+hit that, signup itself was rejected. Fixing #132 (item 1) will not fix
+#124, and vice versa — both may need to be addressed for `signup-journey`
+to pass reliably.
 
 **Where:** GitHub → this repo (or org) → **Settings → Actions → Runners**,
 or **Settings → Billing → Plans and usage** to check what larger runner
@@ -195,4 +218,5 @@ roadmap.
 ---
 
 ## Change log
+- 2026-09-24 — #132 root-caused (CI debug keystore SHA-1 instability blocking Firebase Auth); item 1 replaced with the SHA-1 registration it actually needs. See PR #149 (diagnostics) and PR #150 (fix).
 - 2026-09-24 — Created alongside `docs/PRODUCTION_BLOCKERS.md`.
