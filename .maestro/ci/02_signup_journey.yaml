@@ -56,17 +56,40 @@ name: 'Journey — sign up through onboarding to the Oracle'
 - tapOn:
     id: 'auth-input-password'
 - inputText: 'CiTestPass!2026'
+# The confirm field sits below the fold once the keyboard is up (the form
+# is a ScrollView with adjustResize); tapOn does not scroll, so bring it
+# into view first -- what a real user does. First observed on PR #146 run 2
+# (job 107267717366): "Element not found: auth-input-confirm".
+- scrollUntilVisible:
+    element:
+      id: 'auth-input-confirm'
+    direction: DOWN
+    timeout: 20000
 - tapOn:
     id: 'auth-input-confirm'
 - inputText: 'CiTestPass!2026'
 - hideKeyboard
+- scrollUntilVisible:
+    element:
+      id: 'auth-submit-btn'
+    direction: DOWN
+    timeout: 20000
 - tapOn:
     id: 'auth-submit-btn'
 
-# Firebase sign-up roundtrip → location gate
+# Firebase sign-up roundtrip → location gate. Issue #132: this is the one
+# assertion every recorded run of this flow has failed at (4/4 pre-#125
+# runs, 5-6 Sep), while each of those runs did create its Firebase Auth
+# account -- sign-up succeeds, the wait for the next screen does not.
+# No code path blocks that transition (traced in #132), so widened for the
+# same measured CI performance ceiling as the first wait above (run #532:
+# a ~3-minute flow took 18m34s). This window covers the createUser network
+# roundtrip, onAuthStateChanged's bounded token read (8s), and the screen
+# swap paint. A genuine hang would still exceed 90s and fail here. Later
+# mid-flow waits are left as-is until one of them is shown to fail.
 - extendedWaitUntil:
     visible: 'Grant location access'
-    timeout: 30000
+    timeout: 90000
 - tapOn: 'Grant location access'
 
 # Onboarding — Question 1 (location fix can take up to 8s)
