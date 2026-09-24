@@ -151,6 +151,38 @@ const RootNavigator: React.FC = () => {
   const needsLocationPermission = isAuthenticated && !onboardingLocationPrompted;
   const needsOnboardingFlow = isAuthenticated && onboardingLocationPrompted && !hasSeenOnboarding;
 
+  // #132 diagnostic: which gate screen this render lands on, and why.
+  // console.warn (not just dev-only logging) so it survives into a CI/E2E
+  // logcat capture — needed to tell apart "the app never reached
+  // LocationPermission" (a real navigation bug) from "the app is still on
+  // Splash/Auth waiting on something upstream" (an Auth/App-Check stall),
+  // the open question this investigation couldn't resolve from logs alone.
+  useEffect(() => {
+    const gate = splashStillShowing
+      ? 'Splash'
+      : !isAuthenticated
+        ? 'Auth'
+        : needsLocationPermission
+          ? 'LocationPermission'
+          : needsOnboardingFlow
+            ? 'Onboarding'
+            : 'Main';
+    console.warn('[Nav] RootNavigator gate', {
+      gate,
+      splashStillShowing,
+      isAuthenticated,
+      onboardingLocationPrompted,
+      hasSeenOnboarding,
+    });
+  }, [
+    splashStillShowing,
+    isAuthenticated,
+    needsLocationPermission,
+    needsOnboardingFlow,
+    onboardingLocationPrompted,
+    hasSeenOnboarding,
+  ]);
+
   return (
     <NavigationContainer theme={navTheme}>
       <StatusBar barStyle={theme.colors.statusBarStyle} backgroundColor={theme.colors.bg} />
