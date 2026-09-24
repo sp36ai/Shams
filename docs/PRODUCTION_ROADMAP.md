@@ -8,7 +8,7 @@ state**, citing the evidence (commit SHA, CI run number, PR/issue).
 Legend: ✅ done · ❌ to do · ⚠️ done in code, not yet live in production ·
 👤 needs the owner (a credential, console access, or a decision)
 
-Last verified: 2026-09-24 against `main` @ `210555a` (PR #146 merged) and GitHub Actions history.
+Last verified: 2026-09-24 against `main` @ `835887d` (PR #145 merged) and GitHub Actions history.
 
 > **Blocking fact:** production Cloud Functions still run `ce536bc`
 > (deploy run #50, 2026-09-06). Every `Deploy Cloud Functions` run since
@@ -96,18 +96,22 @@ harness 11,923/11,923 with 0 false negatives and 0 false positives.
 ### R1 — Get CI green on `main`
 - ✅ 👤 #119 GitHub Actions minutes / spending limit — **resolved** by the owner (billing fixed ~2026-09-23 14:57 UTC). CI runs normally since.
 - ✅ #142 merged (`cf513e9`): widened the "Grant location access" wait 30s → 90s in `02_signup_journey.yaml`.
-- ✅ #145 merged: E2E now runs only on `main`, ready (non-draft) PRs, and manual dispatch; superseded PR runs auto-cancel. Production/`main` CI unaffected.
-- ✅ #146 merged (`210555a`): emulator resolution/density lowered (1080×2400→720×1600, density 420→280) to cut per-frame host CPU. **Confirmed applied correctly** on its own CI run (`Physical size: 720x1600`, `Override density: 280` logged by both E2E jobs) but **did not resolve the runner saturation**: load average held at 3.87–4.72 and `qemu-system-x86_64` at 169–180% CPU throughout, essentially unchanged from the pre-fix baseline (load 3.3–5.0, qemu 150–167%). `signup-journey` still lost its emulator after 14m14s ("Android driver unreachable").
-- ❌ #124 E2E emulator adb drops / driver-unreachable under sustained load — **the free/software fixes are exhausted** (1-core cap #137, resolution/density cut #146). Both applied correctly but load stays above ~4.
-  - 👤 **Owner decision needed:** upgrade to a paid 4-core GitHub Actions runner for the E2E job, or accept intermittent `signup-journey`/`settings-signout` E2E failures as a known runner-capacity limit (the app-quality/build/security jobs are unaffected and pass reliably).
-- ❌ #132 signup never reaches "Grant location access" — possibly a real user-facing bug, still unresolved
-  - ✅ Code traced (signUp → onAuthStateChanged → RootNavigator gate → screen label): no blocking path found, same logic at `ce536bc`
-  - ⚠️ #142 (wait 30s→90s) is merged, but `signup-journey` in #146's own run failed on emulator/driver loss (not a wait-timeout), so this remains unconfirmed either way
-  - ❌ 👤 Manual sign-up on a real phone, fresh install — decides whether real users are affected
-  - ❌ 👤 Check Firebase Console → Authentication → Users for an `e2e-…@e2e.shamsalasrar.test` account created ~16:41 UTC 23 Sep — would confirm signup itself completes even when the E2E driver is lost
-- ❌ #131 E2E creates real accounts in production Firebase Auth (#133/#136 moved to a controlled test domain; underlying prod-project targeting remains)
-- ❌ 👤 `E2E_TEST_ACCOUNT_EMAIL` / `E2E_TEST_ACCOUNT_PASSWORD` GitHub secrets + matching pre-onboarded free-plan account (needed by `03_settings_and_signout`, #130). **Confirmed still unset**: #146's own CI run shows `MAESTRO_E2E_TEST_ACCOUNT_EMAIL`/`MAESTRO_E2E_TEST_ACCOUNT_PASSWORD` both empty in the job env, and `settings-signout` fails on `id: settings-gear-btn is visible` (never reaches Settings, consistent with no test account).
-- ❌ Evidence: CI run on `main` with every job green (still blocked on the 4-core-runner decision and the two 👤 items above)
+- ✅ #145 merged (`835887d`): E2E now runs only on non-draft PRs, plus `main`/manual dispatch; superseded PR runs auto-cancel. Production/`main` CI unaffected. **CI policy audit performed against the merged `ci.yml`** (not assumed): confirmed draft PRs skip E2E, ready PRs and `main` always run it, no `continue-on-error` anywhere, deploy gate correctly requires `conclusion == 'success'`. **One gap found**: it gates on draft status only, not file path — a ready, docs-only PR (e.g. #147/#148) still runs full E2E. Not yet fixed; open follow-up if wanted.
+- ✅ #146 merged (`210555a`): emulator resolution/density lowered (1080×2400→720×1600, density 420→280) to cut per-frame host CPU. **Confirmed applied correctly** but **did not resolve the runner saturation** (load 3.87–4.72, qemu 169–180% CPU, unchanged from baseline). Corroborated 6 more times since across #140/#143/#144/#145/#147 — `Android driver unreachable` is a well-established, reproducible pattern independent of PR content.
+- ✅ **#132 ROOT-CAUSED (2026-09-24)** — was never a navigation bug. PR #149 added stage-tagged diagnostics (`signUp()` resolve/reject, `RootNavigator` gate logging); its own CI run captured the actual cause directly:
+  ```
+  [Auth] signUp(): createUserWithEmailAndPassword rejected
+  { message: '[auth/unknown] ... Requests from this Android client
+    application com.astrosarfaraz.shamsalasrar are blocked.' }
+  ```
+  CI's debug keystore was regenerated fresh every run (`keytool -genkeypair`), giving it a different SHA-1 every time — Firebase's Android API key restrictions authorize by SHA-1, so a constantly-changing fingerprint can never be registered, and every CI signup was structurally rejected before the app's own logic ran. `RootNavigator`'s gate never advanced past `Auth` because there was never an authenticated user — confirmed by the `[Nav]` diagnostic logging. Fix in PR #150: commit a stable `android/app/debug.keystore` (Android's standard debug-only convention, never a secret) so CI has one fixed SHA-1.
+  - ❌ 👤 **Still needs:** register that SHA-1 in Firebase Console (`docs/OWNER_ACTIONS.md` §1) — the fix in #150 makes registration *possible*, doesn't complete it. `signup-journey`/`settings-signout` keep failing identically until then.
+  - This also explains the "Grant location access" assertion failures seen independently on #140/#141/#148 (three unrelated PRs — docs, RN upgrade, functions test) — all the same upstream cause, not three separate bugs.
+- ❌ #124 E2E emulator adb drops / driver-unreachable under sustained load — **separate problem from #132 above, still unresolved**. Free software fixes exhausted (1-core cap #137, resolution/density cut #146); 6 independent reproductions this session.
+  - 👤 **Owner decision needed:** paid 4-core GitHub Actions runner, or accept intermittent failures as a known limit (`docs/OWNER_ACTIONS.md` §5). Recommend deferring this decision until #132's fix (SHA-1 registration) is in and its effect on pass rate is observed — some of what looked like #124 may partly have been #132 all along on runs that didn't lose the driver.
+- ❌ #131 E2E creates real accounts in production Firebase Auth (#133/#136 moved to a controlled test domain; underlying prod-project targeting remains) — unaffected by the #132 fix, still open
+- ❌ 👤 `E2E_TEST_ACCOUNT_EMAIL` / `E2E_TEST_ACCOUNT_PASSWORD` GitHub secrets + matching pre-onboarded free-plan account (needed by `settings-signout`, #130). Confirmed still unset (empty in every job env checked this session). `docs/OWNER_ACTIONS.md` §2 — note it now also depends on §1's SHA-1 fix, since creating that account hits the same rejection otherwise.
+- ❌ Evidence: CI run on `main` with every job green (blocked on the SHA-1 registration, the 4-core-runner decision, and the E2E secrets)
 
 ### R2 — Verified production deploy (finishes Phase 8A-10)
 - ❌ `Deploy Cloud Functions` runs (not skipped) at the green `main` SHA
@@ -125,7 +129,7 @@ harness 11,923/11,923 with 0 false negatives and 0 false positives.
 - ❌ 👤 (a) accept Backup/DR as a residual risk, or complete R4
 - ❌ 👤 (b) accept Finding 3 Option C alone, or choose Option A (staging project) / B (Environment approval gate)
 - ❌ 👤 (c) accept branch-protection state as unverifiable from these sessions, or verify it manually
-- ❌ 👤 (d) new: accept intermittent E2E failures under runner CPU saturation, or fund a paid 4-core Actions runner (see R1 / #124)
+- ❌ 👤 (d) accept intermittent E2E failures under runner CPU saturation, or fund a paid 4-core Actions runner (see R1 / #124) — recommend deciding after #132's SHA-1 fix lands
 
 ### R6 — Re-issued production-readiness verdict
 - ❌ New decision document superseding 7C, based on R1–R5 evidence
@@ -134,21 +138,21 @@ harness 11,923/11,923 with 0 false negatives and 0 false positives.
 
 ## Part C — Release backlog outside the audit chain
 - ❌ #43 Google Play Billing Library 8 upgrade — **31 Aug 2026 deadline has passed**; needs New Architecture migration
-  - ⚠️ Step 1: RN 0.78.3 → 0.79.7, New Arch OFF — draft PR #141, branch updated onto `main`@`210555a`; local typecheck/lint/jest 306/306 + release bundle ✅; Gradle build, E2E and device test not yet verified
+  - ⚠️ Step 1: RN 0.78.3 → 0.79.7, New Arch OFF — draft PR #141, branch updated onto `main`; local typecheck/lint/jest 306/306 + release bundle ✅; Gradle build, E2E and device test not yet verified
   - ❌ Step 2: `@react-native-firebase/*` 19.3.0 → v21+ (all six together), New Arch OFF
   - ❌ Step 3: enable New Architecture, full native-module regression
   - ❌ Step 4: `react-native-iap` → 15.x + `react-native-nitro-modules`, rewrite `src/hooks/usePurchase.ts`, verify Billing 8 in merged manifest, on-device purchase + restore
   - ❌ 👤 Play Console "Request more time" extension (to 1 Nov 2026), if not already granted
 - ❌ #129 Razorpay entitlement binding trusts an unauthenticated payload field — blocks enabling Razorpay (not release-blocking)
-  - ⚠️ Item 3 (webhook): PR #143 grants only for orders/subscriptions in this system's own ledger, fails closed; branch updated onto `main`@`210555a`; functions lint + 558/558 tests ✅
+  - ⚠️ Item 3 (webhook): PR #143 grants only for orders/subscriptions in this system's own ledger, fails closed; branch updated onto `main`; functions lint + 558/558 tests ✅
   - ❌ 👤 Items 1-2 (Auth-gated order-creation callable writing the ledger): needs plan prices, orders-vs-subscriptions decision, and Razorpay API keys (only after account approval)
 - ❌ 👤 #67 manual/infra release checklist (google-services.json, secrets, dashboards)
-- ❌ #121 raise functions/engine coverage thresholds back toward 95%
+- ⚠️ #121 raise functions/engine coverage thresholds back toward 95% — PR #148: closed the largest single gap (`engine/manazil.ts`, 0%→100%, confirmed mirror/dead-code server-side per PHASE 5B-R sync invariant, not authoritative judgment logic); overall stmts/lines 87.08%→95.16%. Branch (86.48%) and function (74.82%) coverage still below threshold elsewhere (`angles.ts`, `houseMatrix.ts`, `nakshatras.ts`, `vimshottari.ts`, etc.) — remainder of #121, not yet started.
 - ❌ #135 react-native-tts / Firebase deprecated `onCatalystInstanceDestroy`
 
 ## Part D — Product priority (not in the audit chain)
 - ✅ Gap analysis (2026-09-23): text + voice via one `sendMessage` → `askWatchOracle`/`discussReading`, server-rendered verdict cards, TTS of server-validated `speakableText`, continuation, MMKV history, loading/error/retry — already built in `ReadingScreen`/`ChatBubble`
-- ⚠️ Draft PR #144: bubble timestamps, day separators, long-press copy, narration progress bar; app jest 335/335 ✅; branch updated onto `main`@`210555a`; needs on-device check
+- ⚠️ Draft PR #144: bubble timestamps, day separators, long-press copy, narration progress bar; app jest 335/335 ✅; branch updated onto `main`; needs on-device check
 - ❌ Possible next: hold-to-record mic (WhatsApp-style) — interaction change, needs device testing
 - ❌ Premium WhatsApp-style Oracle conversation UI: text + voice questions,
   Oracle responses, audio playback, continuation, history, loading/error/retry
@@ -158,7 +162,10 @@ harness 11,923/11,923 with 0 false negatives and 0 false positives.
 ---
 
 ## Change log
-- 2026-09-24 — #146 merged to `main` (emulator resolution/density fix): confirmed applied correctly but did not resolve E2E runner saturation (load 3.87–4.72, qemu 169–180% CPU, unchanged from baseline). `main` merged into #140/#141/#143/#144/#145 branches. Owner decision needed on a paid 4-core runner (R1/R5).
+- 2026-09-24 — **#132 root-caused**: CI's debug keystore was regenerated every run, giving it an unregistrable SHA-1, so Firebase Auth structurally rejected every CI signup — never a navigation bug. Diagnostics in PR #149, fix in PR #150. Explains the "Grant location access" failures independently seen on #140/#141/#148. Still needs owner SHA-1 registration to take effect.
+- 2026-09-24 — #121: PR #148 closed the largest functions/ coverage gap (`manazil.ts` 0%→100%), confirmed as mirror/dead-code (PHASE 5B-R sync invariant), not authoritative logic. Overall stmts/lines 87.08%→95.16%.
+- 2026-09-24 — #145 merged: CI-scoping fix live. Ran a 6-point policy audit against the merged workflow; found one real gap (no path-based E2E skip, draft-only).
+- 2026-09-24 — #146 merged to `main`: emulator resolution/density fix confirmed applied but insufficient for #124 (load/CPU unchanged). `main` merged into #140/#141/#143/#144/#145 branches. `docs/PRODUCTION_BLOCKERS.md` and `docs/OWNER_ACTIONS.md` created (PR #147).
 - 2026-09-23 — Oracle conversation gap analysis; polish in draft PR #144.
 - 2026-09-23 — #129 webhook-side fix in PR #143 (fail-closed ledger binding).
 - 2026-09-23 — #132 traced; test-timeout fix in PR #142 (merged `cf513e9`). CI billing (#119) resolved by owner ~14:57 UTC.
