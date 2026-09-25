@@ -418,3 +418,43 @@ Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
 Claude-Session: https://claude.ai/code/session_01KU9dh1P1XrP6YVhVAdCvEW`
 **Auto-logged by:** Claude Code
 **Status:** Ready for Chrome validation
+
+### 2026-09-25 08:06 UTC - dd32f4c
+**Message:** `Fix: setAdminClaim accepted a non-string targetUid — same gap razorpay.ts already fixed
+
+Bug: setAdminClaim — the callable that GRANTS ADMIN PRIVILEGES — was
+the only callable in this codebase not using the established
+parse(Schema, request.data) pattern. It did a raw `as` type assertion
+plus a bare `!targetUid` check, which only rejects falsy values
+(empty string, null, undefined). Verified by reverting the fix and
+running the new tests: a non-string truthy targetUid (an object, a
+number) didn't even error — it silently "succeeded", stringifying the
+garbage value into `setCustomUserClaims('[object Object]', {admin:
+true})` rather than being cleanly rejected.
+
+This is the exact defect class PHASE 6A-R1 already found and fixed in
+razorpay.ts (extractNonEmptyString() for notes.userId) — a cast is a
+compile-time promise, not a runtime check, and a bare truthy check
+lets a non-string value through. That fix was never applied to
+setAdminClaim, despite it being the highest-privilege callable in the
+app.
+
+Fix: added SetAdminClaimSchema to validate.ts (matching every other
+callable's Zod schema) and switched admin.ts to parse() against it,
+removing the manual check entirely. isAdmin now also requires an
+actual boolean via Zod rather than typeof-checking after a lossy cast.
+
+Added 6 tests: non-string targetUid (object, number), empty-string
+targetUid, non-boolean isAdmin, .strict() rejecting a smuggled admin
+field, and confirmation the legitimate path is unchanged. Verified two
+of them actually catch the bug: reverted the fix, watched them fail
+with the "succeeded on garbage input" behavior described above,
+restored the fix, confirmed they pass.
+
+Functions suite: 30 files, 641 tests passing. tsc --noEmit and
+eslint --max-warnings=0 clean.
+
+Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01KU9dh1P1XrP6YVhVAdCvEW`
+**Auto-logged by:** Claude Code
+**Status:** Ready for Chrome validation
