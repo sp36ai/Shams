@@ -52,8 +52,26 @@ None
    evidenced gap to fix — building UI changes without one would be exactly
    the shotgun-redesign the project's own engineering rule warns against.
 
+### ✅ Real bug found + fixed (server-side)
+5. **`functions/` had never been tested in this environment** — dependencies
+   weren't installed. Installed them, ran the real suite: 543 passing, no
+   pre-existing failures.
+6. **Found and fixed a genuine defect in `discussReading.ts`.** When
+   `composeDiscussionReply()` returns null (Claude unreachable / malformed
+   reply / failed validation), the handler refunded the spent discussion
+   turn but never released its idempotency claim — unlike the catch block
+   right above it, which does both. Effect: the client's Retry button
+   reuses the same requestId by design, so it hit claimRequest's in-flight
+   branch and was told "already being read" for up to 3 minutes even
+   though nothing was running. Fixed with one `await release()` call.
+   Added `discussReadingRetry.test.ts` (4 tests) using the repo's own
+   fake-Firestore pattern (readings.test.ts / idempotency.test.ts style).
+   Verified the test actually catches the bug by reverting the fix and
+   confirming it fails, then restoring it. Functions suite: 27 files, 547
+   tests passing. tsc + eslint clean. Commit 6fb34e5.
+
 ## Next Steps
-Stopped here deliberately: further work needs either (a) a specific bug
-report / UI complaint to chase, or (b) an explicit go-ahead to build a
-named feature (offline banner, history continuation UI, etc.) rather than
-inventing scope. Reported to user.
+Continuing to audit remaining Oracle server-side surface area (askOracle
+sibling paths, quota/rate-limit edges) for the same class of issue —
+claim/refund symmetry on every failure branch — since that's where the
+one real bug this session actually lived.
