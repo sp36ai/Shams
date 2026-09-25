@@ -20,6 +20,7 @@
 import React from 'react';
 import { screen, userEvent, waitFor } from '@testing-library/react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
+import Voice from '@react-native-voice/voice';
 import { buildWatchChart } from '@astrology/rkp/watchChart';
 import { judgeWatchChart } from '@astrology/rkp/watchJudgment';
 import { httpsCallable } from '../../firebase/functionsRegion';
@@ -28,6 +29,17 @@ import { useReadingThreadsStore, threadById } from '@stores/readingThreadsStore'
 import { useReadingsStore } from '@stores/readingsStore';
 import { useQuotaStore } from '@stores/quotaStore';
 import ReadingScreen from '../ReadingScreen';
+
+jest.mock('@utils/permissions', () => ({
+  checkMicrophonePermission: jest.fn(() => Promise.resolve('granted')),
+  requestMicrophonePermission: jest.fn(() => Promise.resolve('granted')),
+}));
+
+const mockedVoice = Voice as unknown as {
+  start: jest.Mock;
+  stop: jest.Mock;
+  onSpeechResults?: (e: { value?: string[] }) => void;
+};
 
 /**
  * Route params drive the whole open-vs-begin distinction, so each test states
@@ -228,6 +240,59 @@ describe('ReadingScreen', () => {
     );
     expect(askCallable).not.toHaveBeenCalled();
   });
+
+  /* ---------------------------------------------------------------------- */
+  /*  Voice input parity                                                     */
+  /* ---------------------------------------------------------------------- */
+
+  // A transcript arriving via the mic must not be a second entrance into the
+  // Oracle: it is handed to the exact same sendMessage() a typed question
+  // goes through, which is what keeps askWatchOracle the sole judgment
+  // authority regardless of how the question arrived (see
+  // useSpeechToText.ts's own header). This test drives the recognizer mock
+  // end to end — start, a final transcript, stop — rather than asserting on
+  // sendMessage internals, so it would fail if voice ever grew a call path
+  // that bypassed askWatchOracle.
+  it('a voice transcript reaches askWatchOracle with the same shape as typed text', async () => {
+    const askCallable = jest.fn(() => Promise.resolve({ data: successPayload() }));
+    (httpsCallable as jest.Mock).mockImplementation((name: string) => {
+      if (name === 'askWatchOracle') {
+        return askCallable;
+      }
+      return defaultImpl(name);
+    });
+
+    await renderScreen(<ReadingScreen />);
+    const user = userEvent.setup();
+
+    await user.press(screen.getByTestId('oracle-chat-mic-btn'));
+    await waitFor(() => expect(mockedVoice.start).toHaveBeenCalled());
+
+    // The real recognizer's onSpeechResults fires asynchronously AFTER
+    // stop() is called, never before (useSpeechToText.ts's own contract) —
+    // mirrored here rather than firing it first, which would race stop()'s
+    // finalize promise instead of resolving it.
+    await user.press(screen.getByTestId('oracle-chat-mic-btn'));
+    mockedVoice.onSpeechResults?.({ value: ['Will I get the job?'] });
+
+    await waitFor(() => expect(askCallable).toHaveBeenCalled());
+    const voiceCallArgs = askCallable.mock.calls[0][0];
+
+    // Same call, same shape a typed send produces — kind is stored on the
+    // message for display, never threaded into the askWatchOracle payload.
+    expect(voiceCallArgs).toMatchObject({ question: 'Will I get the job?' });
+    expect(voiceCallArgs).not.toHaveProperty('kind');
+    expect(voiceCallArgs).not.toHaveProperty('inputMethod');
+
+    // Reaches the exact same message pipeline: a user bubble tagged 'voice',
+    // resolved by the same 'sent' verdict a typed ask produces.
+    const thread = onlyThread();
+    const userMsg = thread.messages.find(m => m.role === 'user');
+    expect(userMsg?.kind).toBe('voice');
+    await waitFor(() => expect(oracleMessages()[0]?.status).toBe('sent'));
+    expect(oracleMessages()[0]?.reading?.readingId).toBe('r1');
+  });
+
   /* ---------------------------------------------------------------------- */
   /*  Follow-up discussion                                                   */
   /* ---------------------------------------------------------------------- */
