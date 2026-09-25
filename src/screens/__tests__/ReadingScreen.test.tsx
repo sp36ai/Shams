@@ -35,6 +35,14 @@ jest.mock('@utils/permissions', () => ({
   requestMicrophonePermission: jest.fn(() => Promise.resolve('granted')),
 }));
 
+// Real useQuota (needed for canAsk/consumeOne gating throughout this file),
+// with invalidateQuotaCache wrapped so its calls are observable without
+// changing its behavior.
+jest.mock('@hooks/useQuota', () => {
+  const actual = jest.requireActual('@hooks/useQuota');
+  return { ...actual, invalidateQuotaCache: jest.fn(actual.invalidateQuotaCache) };
+});
+
 const mockedVoice = Voice as unknown as {
   start: jest.Mock;
   stop: jest.Mock;
@@ -159,6 +167,34 @@ describe('ReadingScreen', () => {
 
     // Also lands in Reading History.
     expect(useReadingsStore.getState().readings.some(r => r.id === 'r1')).toBe(true);
+  });
+
+  it('invalidates the cached quota display on a successful ask — the server-confirmed quotaRemaining must not be shadowed by a stale ≤60s cache', async () => {
+    // The response's own quotaRemaining is the one number that can never
+    // drift from the Firestore ledger claimQuotaSlot() just wrote to,
+    // unlike the local optimistic consumeOne() counter (device-only, never
+    // reconciled against a second device). Without invalidating here,
+    // useQuota's next consult could serve a pre-ask cached figure for up
+    // to QUOTA_TTL_MS.
+    (httpsCallable as jest.Mock).mockImplementation((name: string) => {
+      if (name === 'askWatchOracle') {
+        return jest.fn(() => Promise.resolve({ data: successPayload() }));
+      }
+      return defaultImpl(name);
+    });
+    const { invalidateQuotaCache } = jest.requireMock('@hooks/useQuota') as {
+      invalidateQuotaCache: jest.Mock;
+    };
+    invalidateQuotaCache.mockClear();
+
+    await renderScreen(<ReadingScreen />);
+    const user = userEvent.setup();
+
+    await user.type(screen.getByTestId('oracle-chat-input'), 'Will I get the job?');
+    await user.press(screen.getByTestId('oracle-chat-send-btn'));
+
+    await waitFor(() => expect(oracleMessages()[0]?.status).toBe('sent'));
+    expect(invalidateQuotaCache).toHaveBeenCalled();
   });
 
   it('shows a failed bubble with retry on network failure, and recovers on retry', async () => {
