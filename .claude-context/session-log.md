@@ -200,3 +200,39 @@ eslint --max-warnings=0 clean.
 Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
 Claude-Session: https://claude.ai/code/session_01KU9dh1P1XrP6YVhVAdCvEW
 - **Status:** Pushed, awaiting Chrome validation
+
+### 2026-09-25 07:46 UTC
+- **Tool:** Claude Code
+- **Action:** Code commit
+- **Commit:** `8040d7d`
+- **Message:** Fix: Play Store acknowledge failures were invisible, risking silent auto-refunds
+
+Bug: httpsPostAuth() — the call that acknowledges a Play subscription
+purchase to prevent Google's auto-refund — resolved its promise on ANY
+HTTP response, never checking res.statusCode. A rejected acknowledgement
+(expired OAuth token, malformed request, a Play API outage) was
+indistinguishable from a successful one: verifyGooglePlayPurchase still
+granted the plan and logged nothing. Google auto-refunds an
+unacknowledged subscription days later, with zero trail in Cloud
+Logging pointing at why a paying seeker's subscription vanished.
+
+Fix (observability only, no behavior change to entitlement granting —
+the seeker already paid, so a failed acknowledgement still must not
+block their plan):
+  - httpsPostAuth now returns { status, body } like httpsGet already does
+  - extracted isAckFailure(status) as a small exported pure predicate,
+    matching this codebase's existing pattern (extractNonEmptyString,
+    isUnverifiableEntitlementTarget in razorpay.ts) for testability
+    without standing up a full https-mocking harness for one call site
+  - the call site now logs a warning with status + response body on
+    failure
+
+Added 4 tests for isAckFailure covering Play's documented 200/204
+success responses, 4xx/5xx, and the res.statusCode-absent (0) case.
+
+Functions suite: 28 files, 566 tests passing. tsc --noEmit and
+eslint --max-warnings=0 clean.
+
+Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01KU9dh1P1XrP6YVhVAdCvEW
+- **Status:** Pushed, awaiting Chrome validation
