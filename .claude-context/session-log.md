@@ -310,3 +310,41 @@ eslint --max-warnings=0 clean.
 Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
 Claude-Session: https://claude.ai/code/session_01KU9dh1P1XrP6YVhVAdCvEW
 - **Status:** Pushed, awaiting Chrome validation
+
+### 2026-09-25 07:55 UTC
+- **Tool:** Claude Code
+- **Action:** Code commit
+- **Commit:** `a527719`
+- **Message:** Add test coverage for validate.ts — every callable's sole input gate
+
+No bug found — read sanitizeName() and every exported schema in full.
+The narrow threat model (strip prompt-breakout/structural characters
+from seekerName/motherName, the one field reaching a Claude prompt) is
+deliberate and coherent: Unicode obfuscation (zero-width joiners, bidi
+overrides) is a separate, already-covered concern at the output
+boundary (narrationValidatorUnicodeSecurity.test.ts), not duplicated
+here by design.
+
+But validate.ts had zero test coverage despite gating every callable's
+input. Added 44 tests covering all 5 exported schemas: boundary values
+(question length, utcOffsetMinutes civil-offset range + 15-min step,
+requestId length, batch size limits), .strict() rejecting smuggled
+fields, and the seekerName/motherName sanitization pipeline (structural
+character stripping, control-character deletion, whitespace collapse,
+the 100-char cap, and the reject-rather-than-store-empty guarantee when
+a name sanitizes down to nothing).
+
+Also confirmed, via test, that SyncReadingsSchema's inner reading
+object safely handles a smuggled userId field by Zod's default STRIP
+mode (silently dropped, not merely unvalidated) — and separately, that
+readings.ts's handler never spreads the raw parsed object into its
+Firestore write regardless, reconstructing it field-by-field with its
+own verifyAuth()-derived userId. Two independent safety mechanisms,
+not one relying on the other.
+
+Functions suite: 30 files, 624 tests passing. tsc --noEmit and
+eslint --max-warnings=0 clean.
+
+Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01KU9dh1P1XrP6YVhVAdCvEW
+- **Status:** Pushed, awaiting Chrome validation
