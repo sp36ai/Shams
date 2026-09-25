@@ -146,11 +146,54 @@ after each change. Two fixes (discussReading, razorpay unknown-plan)
 had their regression tests proven to actually catch the bug via
 revert→fail→restore→pass.
 
+### ✅ More coverage gaps closed (no further bugs)
+14. readings.ts read in full — already thoroughly PHASE 6A-R1 hardened,
+    no defect. validate.ts (every callable's Zod input gate) had ZERO
+    tests — added 44 covering all 5 schemas + sanitizeName's prompt-
+    injection defense. Confirmed the codebase's Unicode-obfuscation
+    defense (zero-width/bidi chars) is deliberately handled at a
+    separate output layer (narrationValidator), not duplicated here —
+    coherent design, not a gap. Commit a527719.
+
+## E2E CI failures (user-reported: signup-journey, settings-signout)
+Pulled actual job logs from the latest main CI run (36105627106) rather
+than guessing.
+
+15. **settings-signout — fixed.** E2E_TEST_ACCOUNT_EMAIL/PASSWORD repo
+    secrets are empty (known gap, issue #130). Flow typed blank
+    credentials, Firebase rejected sign-in, flow burned 90s + emulator
+    overhead before a confusing "settings-gear-btn not visible" failure
+    ~7 min in. Added a guard step (settings-signout leg only) that fails
+    in seconds with an actionable message. Same gate, same red result —
+    doesn't change CI/deploy blocking, just makes the failure fast and
+    diagnosable. **Actually fixing this leg still needs the owner to
+    provision a pre-seeded Firebase test account and set both GitHub
+    secrets** — that's a Firebase Console + repo settings action I
+    cannot perform. Commit 8ec4c4a.
+16. **signup-journey — diagnosed, not a code fix.** Confirmed via the
+    run's own adb_watch.txt (sampled every 15s specifically to answer
+    this) that the emulator device never actually disappeared — present
+    in every sample for the full ~14min run. Maestro's own dadb client
+    (not the host's real adb) transiently lost its connection under
+    sustained CPU starvation: load 4.4-4.7 on a 2-vCPU runner, qemu at
+    ~187% CPU despite the existing -cores 1 cap. dmesg shows no OOM
+    kill. This is exactly the threshold ci.yml's OWN prior investigation
+    named as "evidence a bigger runner is needed, not a guess" — every
+    free mitigation (cores cap, 720x1600 res, disk cleanup) is already
+    in place. Reported to user rather than guessing at further tuning;
+    needs either a paid runner tier or a Maestro adb-client
+    investigation — both owner decisions.
+
+## Session grand total: 5 real bugs (client+server), 6 coverage gaps
+closed, 2 E2E CI failures investigated (1 fixed fast-fail, 1 correctly
+diagnosed as needing owner infra decision). Every code change verified
+with full suite + tsc + eslint; two fixes proven via revert→fail→
+restore→pass.
+
 ## Next Steps
-Awaiting direction. Remaining unaudited-this-session: readings.ts
-sync/delete (has PHASE 6A-R1 tests already — not re-audited), the RKP
-judgment engine itself (heavily tested — watchChart/watchJudgment/
-narration validator suites), quota.ts's read path, admin.ts. Diminishing
-returns are likely from here without a specific lead — the requestMeta
-IP-spoofing fix especially needs human verification before being
-fully trusted.
+Awaiting direction. Remaining unaudited: the RKP judgment engine itself
+(heavily tested already — watchChart/watchJudgment/narration validator
+suites), quota.ts's read path, admin.ts. Two things need the user's own
+action, not more of mine: (1) verify the requestMeta IP-spoofing fix
+against real Cloud Functions logs, (2) provision the E2E test account +
+GitHub secrets, or decide on a bigger CI runner for signup-journey.
