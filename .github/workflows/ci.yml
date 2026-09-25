@@ -193,14 +193,19 @@ jobs:
           key: gradle-${{ hashFiles('android/**/*.gradle*', 'android/gradle.properties') }}
           restore-keys: gradle-
 
-      # debug.keystore is gitignored (not a secret, but not committed either);
-      # generate it fresh with the exact alias/passwords signingConfigs.debug expects.
-      - name: Generate debug keystore
+      # android/app/debug.keystore is committed (see .gitignore's own
+      # comment on it), not generated per run. #132's root cause: a fresh
+      # `keytool -genkeypair` every run produces a different SHA-1 every
+      # time, which Firebase's Android API key restrictions can never be
+      # configured to allow -- every CI signup was rejected with
+      # "[auth/unknown] ... Requests from this Android client application
+      # ... are blocked." This step now only verifies the committed file
+      # is present and matches signingConfigs.debug's expected alias,
+      # rather than replacing it with a new, unregistered identity.
+      - name: Verify committed debug keystore
         run: |
-          keytool -genkeypair -v -keystore android/app/debug.keystore \
-            -storepass android -keypass android -alias androiddebugkey \
-            -keyalg RSA -keysize 2048 -validity 10000 \
-            -dname "CN=Android Debug,O=Android,C=US"
+          keytool -list -v -keystore android/app/debug.keystore \
+            -storepass android -alias androiddebugkey
 
       # -Pe2eBundleJs embeds the JS bundle so the app runs without Metro
       - name: Build debug APK (embedded JS bundle)
