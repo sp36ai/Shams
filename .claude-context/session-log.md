@@ -404,3 +404,48 @@ stated convention) and a YAML parse.
 Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
 Claude-Session: https://claude.ai/code/session_01KU9dh1P1XrP6YVhVAdCvEW
 - **Status:** Pushed, awaiting Chrome validation
+
+### 2026-09-25 08:04 UTC
+- **Tool:** Claude Code
+- **Action:** Code commit
+- **Commit:** `d877a80`
+- **Message:** Fix: getQuota returned a stale planExpiry alongside a self-healed plan
+
+Bug: when a paid plan had expired, getQuota correctly downgraded the
+response's `plan` field to 'free' (via effectivePlan) and correctly
+persisted { plan: 'free', planExpiry: null } to Firestore for future
+reads — but the SAME response's `planExpiry` field returned the raw,
+un-healed local variable, still holding the expired plan's now-past
+ISO date. A client got the self-contradictory
+{ plan: 'free', planExpiry: '<past date>' } — every other 'free'
+response in this function pairs plan: 'free' with planExpiry: null,
+so this was the one path that didn't.
+
+The comment directly above the self-heal write claimed "the response
+above is already correct regardless of whether this succeeds" — true
+for `plan`, not for `planExpiry`.
+
+Fix: compute effectivePlanExpiry (null when expired, same as what's
+persisted) and return that instead of the raw stale value. This
+response is now internally consistent even if the self-heal write
+itself fails — it never depended on that write succeeding to begin
+with, same as the existing comment intended for `plan`.
+
+Found while adding direct test coverage for getQuota's actual quota
+logic: the existing test file only covered rate-limiting (added by a
+prior phase) despite a comment in quota.ts describing a REAL past
+regression (trial precedence being silently dropped) with no test
+preventing its recurrence. Added 14 tests: no-existing-doc, trial
+precedence over the free limit (the documented regression), trial
+expiry fallback, day rollover, the planExpiry self-heal fix itself
+(and its Firestore persistence), unlimited-plan handling, and the
+remaining-never-negative clamp. One of them (the planExpiry
+consistency check) caught this bug directly — not a test-writing
+mistake, confirmed by reading the source before assuming otherwise.
+
+Functions suite: 30 files, 635 tests passing. tsc --noEmit and
+eslint --max-warnings=0 clean.
+
+Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01KU9dh1P1XrP6YVhVAdCvEW
+- **Status:** Pushed, awaiting Chrome validation
