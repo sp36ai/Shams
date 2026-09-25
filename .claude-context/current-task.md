@@ -97,10 +97,60 @@ installed here). One security surface verified live, not assumed
 (Firestore rules, 26/26 passing). Everything else audited came back
 clean — reported as such rather than manufacturing findings.
 
+## Round 2 — "keep auditing and fix" (deeper pass on payments + shared utils)
+
+### ✅ 4 more real findings, all fixed and tested
+10. **razorpay.ts — subscription.activated silently drops unknown plans.**
+    Unlike payment.captured's branch, `if (plan) {...}` had no `else` —
+    an unrecognized plan_id fell through with zero log line, zero audit
+    trail, 200 OK. A payer charged and never upgraded, no way to
+    diagnose from Cloud Logging. Fixed + 2 new regression tests
+    (locked in payment.captured's existing behavior too, which was also
+    untested). Commit 0a90fae.
+11. **googlePlay.ts — acknowledge failures were invisible.** `httpsPostAuth`
+    resolved on ANY HTTP response regardless of status — a failed Play
+    Store acknowledgement (prevents Google's auto-refund) was
+    indistinguishable from success. Extracted `isAckFailure()` as a
+    testable predicate, added warning log on failure (non-fatal —
+    entitlement still granted, seeker already paid). 4 new tests.
+    Commit 8040d7d.
+12. **activateTrial.ts — no bug, but its own stated core property
+    (idempotent replay preserves original trial dates) had zero test
+    coverage.** Added 3 tests. Commit 7747977.
+13. **requestMeta.ts — SECURITY: getIp() trusted the spoofable FIRST
+    X-Forwarded-For entry.** Any caller could set an arbitrary XFF
+    header to bypass razorpay.ts's 30 req/min per-IP rate limit
+    (fresh "IP" every request) and poison every securityEvents/
+    auditLogs ipHash used for abuse correlation. Fixed to trust the
+    second-to-last entry (GFE's own observed client IP — matches
+    Google's documented LB append behavior: GFE always appends
+    `<client-ip>,<GFE-ip>` to whatever arrived). Extracted
+    `trustedClientIp()`, added 11 tests. Commit a307175.
+    ⚠️ **Confidence caveat, told to user:** this environment's network
+    egress blocks every Google docs domain and several third-party ones
+    I tried to verify against — this is backed by web search + prior
+    knowledge, not a freshly-fetched primary source. Flagged for a
+    maintainer to double-check against real Cloud Functions request
+    logs before fully trusting in a security context, though any
+    interpretation beats trusting the client-supplied first entry.
+
+### Files read, found clean, no changes
+- quotaSlots.ts / rateLimit.ts (round 1)
+- activateTrial.ts's own transaction logic (correct, just untested)
+- razorpay.ts's overall structure (extensive prior PHASE 6A-R1 hardening
+  — the unknown-plan gap was the one thing that slipped through)
+
+## Session total: 5 real bugs found+fixed+tested, 4 coverage gaps closed
+Everything committed, pushed, verified with full suite + tsc + eslint
+after each change. Two fixes (discussReading, razorpay unknown-plan)
+had their regression tests proven to actually catch the bug via
+revert→fail→restore→pass.
+
 ## Next Steps
-Awaiting direction. Remaining unaudited-this-session areas if the user
-wants more: razorpay/googlePlay webhooks (already have PHASE 6A-R1
-regression suites from prior work — not re-audited), RKP judgment engine
-itself (already heavily tested — watchChart/watchJudgment/narration
-validator suites), or a return to client-side feature work (history
-continuations, offline banner) if the user wants features over audit.
+Awaiting direction. Remaining unaudited-this-session: readings.ts
+sync/delete (has PHASE 6A-R1 tests already — not re-audited), the RKP
+judgment engine itself (heavily tested — watchChart/watchJudgment/
+narration validator suites), quota.ts's read path, admin.ts. Diminishing
+returns are likely from here without a specific lead — the requestMeta
+IP-spoofing fix especially needs human verification before being
+fully trusted.
