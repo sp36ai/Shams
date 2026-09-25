@@ -102,3 +102,37 @@ Full suite: 27 suites, 308 tests passing. tsc --noEmit and eslint clean.
 Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
 Claude-Session: https://claude.ai/code/session_01KU9dh1P1XrP6YVhVAdCvEW
 - **Status:** Pushed, awaiting Chrome validation
+
+### 2026-09-25 07:26 UTC
+- **Tool:** Claude Code
+- **Action:** Code commit
+- **Commit:** `6fb34e5`
+- **Message:** Fix: discussReading leaves its idempotency claim taken after a null reply
+
+Bug: when composeDiscussionReply() returns null (Claude unreachable, a
+malformed response, or a reply that failed PHASE 5F validation),
+discussReading.ts refunded the spent discussion turn but never released
+the idempotency claim before throwing 'unavailable' — unlike the
+load/transaction-failure catch block right above it, which does both.
+
+Real-world effect: the client's Retry button on a failed follow-up
+reuses the SAME requestId by design (ReadingScreen.tsx's handleRetry —
+"under its own SAME requestId, so the turn is not spent twice"). With
+the claim still held, that retry lands on claimRequest's in-flight
+branch and is told "This question is already being read. Give it a
+moment" for up to IN_PROGRESS_TIMEOUT_MS (3 minutes) — even though
+nothing is running and the first attempt already finished failing.
+
+Fix: call release() in the null-reply branch too, mirroring the
+existing catch block.
+
+Verified the regression test actually catches the bug: reverted the
+fix locally, confirmed the "releases the claim" test fails
+(releaseRequest: 0 calls), restored the fix, confirmed it passes again.
+
+Functions suite: 27 files, 547 tests passing. tsc --noEmit and
+eslint --max-warnings=0 clean across functions/.
+
+Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01KU9dh1P1XrP6YVhVAdCvEW
+- **Status:** Pushed, awaiting Chrome validation
