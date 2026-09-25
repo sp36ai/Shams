@@ -235,3 +235,53 @@ Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
 Claude-Session: https://claude.ai/code/session_01KU9dh1P1XrP6YVhVAdCvEW`
 **Auto-logged by:** Claude Code
 **Status:** Ready for Chrome validation
+
+### 2026-09-25 07:50 UTC - a307175
+**Message:** `Fix: getIp() trusted the spoofable first X-Forwarded-For entry
+
+Bug: requestMeta.ts's getIp() returned the FIRST entry of
+X-Forwarded-For — the one position any caller can set to an arbitrary
+value, since a client's own XFF header is never stripped by proxies,
+only appended to. This value feeds:
+  - razorpay.ts's checkIpRateLimit — an attacker could send a fresh
+    X-Forwarded-For value on every webhook request to make each one
+    land in its own rate-limit bucket, bypassing the 30 req/min per-IP
+    limit meant to slow HMAC brute-forcing/probing entirely.
+  - ipHash on every securityEvents/auditLogs record across every
+    function that logs one (razorpay, googlePlay, askWatchOracle,
+    discussReading) — a spoofed IP poisons the one field ops would use
+    to correlate abuse from logs.
+
+Fix: trust the SECOND-TO-LAST entry instead, matching Google's
+documented HTTPS Load Balancer / GFE behavior (Cloud Functions v2 runs
+on Cloud Run, behind GFE): GFE appends exactly two entries to whatever
+arrived — the client IP as GFE itself observed it on the TCP
+connection, then GFE's own IP. The last entry is always GFE's own IP;
+the second-to-last is the one entry a caller cannot forge, since GFE
+appends it after whatever the client already sent.
+
+Confidence note: this environment's network egress blocks every Google
+documentation domain I tried (cloud.google.com, firebase.google.com,
+discuss.google.dev, googlecloudcommunity.com) and several third-party
+ones (stackoverflow.com, wikipedia.org), so this is backed by a web
+search summary plus my own prior knowledge of GCP's documented LB
+behavior, not a freshly-fetched primary source. Worth a maintainer
+double-check against real Cloud Functions request logs (compare a
+known real client IP against the logged X-Forwarded-For header) before
+fully trusting this in a security-sensitive context — though any
+interpretation other than "trust the client-supplied first entry" is
+strictly safer than what shipped before.
+
+Extracted trustedClientIp() as a small exported pure function so the
+position logic is directly testable. Added 11 tests: the fix itself,
+proof the old first-entry behavior differs from the new one on the
+same attacker-crafted header, whitespace/empty-entry handling, and
+requestMetaFromHttp's end-to-end wiring.
+
+Functions suite: 29 files, 580 tests passing. tsc --noEmit and
+eslint --max-warnings=0 clean.
+
+Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01KU9dh1P1XrP6YVhVAdCvEW`
+**Auto-logged by:** Claude Code
+**Status:** Ready for Chrome validation
