@@ -236,3 +236,25 @@ eslint --max-warnings=0 clean.
 Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
 Claude-Session: https://claude.ai/code/session_01KU9dh1P1XrP6YVhVAdCvEW
 - **Status:** Pushed, awaiting Chrome validation
+
+### 2026-09-25 07:47 UTC
+- **Tool:** Claude Code
+- **Action:** Code commit
+- **Commit:** `7747977`
+- **Message:** Add test coverage for activateTrial's idempotent-replay guarantee
+
+No bug found in activateTrial.ts itself — read it in full, the
+transactional get-then-set is correct. But its own header states
+"idempotent... preserves the original trial start date" and nothing
+verified that: the existing test file only covered rate-limiting.
+Added 3 tests locking in the stated property: a second call returns
+the original startedAt/expiresAt unchanged (not a fresh window),
+performs no Firestore write on replay, and two different users get
+independent trials.
+
+Functions suite: 28 files, 569 tests passing. tsc --noEmit and
+eslint --max-warnings=0 clean.
+
+Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01KU9dh1P1XrP6YVhVAdCvEW
+- **Status:** Pushed, awaiting Chrome validation
