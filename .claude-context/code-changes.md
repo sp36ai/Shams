@@ -59,3 +59,33 @@ Co-Authored-By: Claude Haiku 4.5 <noreply@anthropic.com>
 Claude-Session: https://claude.ai/code/session_01KU9dh1P1XrP6YVhVAdCvEW`
 **Auto-logged by:** Claude Code
 **Status:** Ready for Chrome validation
+
+### 2026-09-25 07:12 UTC - 77abb54
+**Message:** `Add regression test locking voice/text parity through askWatchOracle
+
+Traced the mic → sendMessage → askWatchOracle path in ReadingScreen.tsx
+to verify the project's core invariant that voice never carries its own
+astrology logic. Confirmed by reading: `kind` ('text'/'voice') is only
+stored on the message for display — it is never threaded into the
+runAsk/runDiscuss branch or the askWatchOracle/discussReading payload.
+
+That invariant had zero regression coverage: ReadingScreen.test.tsx's
+own header explicitly deferred all voice behavior to the STT/TTS hook
+tests, which only exercise the hook in isolation and can't see whether
+a future change routes voice through a different call. Added a test
+that drives the mocked recognizer end-to-end (start → transcript →
+stop) and asserts the resulting askWatchOracle call is shape-identical
+to a typed send, with no kind/inputMethod field leaking into the
+payload.
+
+Also confirmed the two files.ts. TTS/STT test act() console warnings
+flagged in Sept 25 audit are not bugs — useTextToSpeech.test.ts.ts:47-51
+documents wrapping hook calls in act() as unreliable against this
+project's pinned react/test-renderer combination. Left untouched.
+
+Full suite: 27 suites, 308 tests passing. tsc --noEmit and eslint clean.
+
+Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01KU9dh1P1XrP6YVhVAdCvEW`
+**Auto-logged by:** Claude Code
+**Status:** Ready for Chrome validation
