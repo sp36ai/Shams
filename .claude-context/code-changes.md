@@ -150,3 +150,34 @@ Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
 Claude-Session: https://claude.ai/code/session_01KU9dh1P1XrP6YVhVAdCvEW`
 **Auto-logged by:** Claude Code
 **Status:** Ready for Chrome validation
+
+### 2026-09-25 07:43 UTC - 0a90fae
+**Message:** `Fix: subscription.activated silently drops an unrecognized plan_id
+
+Bug: unlike payment.captured's own unknown-plan branch (which logs a
+warning and returns 200), subscription.activated's `if (plan) { ... }`
+had no else — an unrecognized razorPlan (e.g. a new pricing plan added
+in the Razorpay dashboard before RAZORPAY_PLAN_MAP is updated here)
+fell through silently. Zero log line, zero audit trail, 200 OK sent to
+Razorpay. A payer would be charged and never upgraded, with nothing in
+Cloud Logging to explain why — the only way to notice was a support
+ticket.
+
+Fix: invert to `if (!plan)`, log the same shape of warning
+payment.captured already uses for this exact situation, then return.
+No behavior change for the mapped-plan path — just restructured to add
+the missing branch.
+
+Added two regression tests: one locks in payment.captured's existing
+(already-correct) unknown-plan warning, which had no test either; the
+other catches the subscription.activated gap. Verified the second test
+actually catches the bug: reverted the fix, confirmed it fails, restored
+it, confirmed it passes.
+
+Functions suite: 28 files, 562 tests passing. tsc --noEmit and
+eslint --max-warnings=0 clean.
+
+Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01KU9dh1P1XrP6YVhVAdCvEW`
+**Auto-logged by:** Claude Code
+**Status:** Ready for Chrome validation
