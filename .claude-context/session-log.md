@@ -547,3 +547,42 @@ eslint --max-warnings=0 clean.
 Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
 Claude-Session: https://claude.ai/code/session_01KU9dh1P1XrP6YVhVAdCvEW
 - **Status:** Pushed, awaiting Chrome validation
+
+### 2026-09-25 08:16 UTC
+- **Tool:** Claude Code
+- **Action:** Code commit
+- **Commit:** `90ed1f8`
+- **Message:** Fix: askWatchOracle's server-confirmed quotaRemaining was discarded
+
+Same class of finding as the plan/planExpiry desync (commit 3fb25a0):
+watchOracle.ts's client wrapper already correctly extracts and returns
+quotaRemaining from askWatchOracle's response, but nothing in
+ReadingScreen.tsx (or anywhere else — confirmed by grep) ever read it.
+The only quota tracking after a successful ask was the LOCAL, optimistic
+consumeOne() counter, device-only and never reconciled against the
+Firestore ledger claimQuotaSlot() actually wrote to that same request.
+
+Lower severity than the plan bug — consumeOne() already keeps the
+common single-device case accurate — but the server's own post-charge
+number is authoritative and was sitting right there, unused, as a
+free correction against drift (a second device, a prior failed
+attempt whose refund path diverged from the happy path's charge path).
+
+Fix: call the existing invalidateQuotaCache() (already exported from
+useQuota.ts, already used once by authStore.ts on sign-out — same
+established convention, no new plumbing) right after a successful
+ask, so the next screen that consults useQuota fetches fresh instead
+of serving a stale pre-ask figure for up to QUOTA_TTL_MS (60s).
+
+Added a regression test wrapping the real invalidateQuotaCache export
+in a jest.fn (preserving its actual behavior — canAsk/consumeOne
+throughout this test file still exercise the real hook) to assert it
+fires after a successful ask. Verified by reverting the fix and
+confirming the test fails as expected, then restoring it.
+
+Client suite: 29 files, 317 tests passing. tsc --noEmit and
+eslint --max-warnings=0 clean.
+
+Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01KU9dh1P1XrP6YVhVAdCvEW
+- **Status:** Pushed, awaiting Chrome validation
