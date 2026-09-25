@@ -256,12 +256,51 @@ CI issues investigated (1 fixed fast-fail, 1 correctly diagnosed as an
 infra-tier decision). Every fix verified with full suite + tsc + eslint;
 7 of 10 fixes proven via explicit revert→fail→restore→pass.
 
+## Round 4 — User reviewed session report, directed: consolidate, don't expand scope
+
+User's own read of the report: preserve current scope, close the two
+outstanding production-verification items, then do a final release audit.
+No RKP engine work. Confirmed correct call — matches this session's own
+evidence (every bug found was in supporting infrastructure).
+
+### ✅ PR opened: https://github.com/sp36ai/Shams/pull/154
+All 38 commits, 34 files, 10 fixes + tests. Branch was never merged/PR'd
+before this — confirmed via list_pull_requests (empty) before asking.
+PR body explicitly flags the mixed scope (dev tooling from earlier in
+session — .claude-context/, context-server.js, public/index.html,
+PHONE_SYNC_SETUP.md — alongside the production fixes) and offers to
+split it out if wanted.
+
+### ⚠️ Honest capability boundary established, not worked around
+No gcloud/firebase CLI, no credentials, no GCP Cloud Logging connector
+available in this sandboxed session — checked directly, confirmed via
+connectors.add docs. Cannot pull live Cloud Functions logs myself, ever,
+from here — not a permissions toggle, a structural absence. Said this
+plainly rather than fabricating "verification." User confirmed: they'll
+run the log verification themselves.
+
+### ✅ Two runbooks delivered (sent as files)
+1. **PRIORITY_1_requestMeta_verification.md** — safe, side-effect-free
+   live test using razorpayWebhook's own invalid-signature rejection
+   path (401, zero payment processing) to compare ipHash across two
+   requests with different spoofed X-Forwarded-For first-entries.
+   Same-hash = fix confirmed. Includes an optional rate-limit-bypass
+   check too (35 spoofed-IP requests should hit 429 around #31 if
+   fixed).
+2. **PRIORITY_2_e2e_account_and_runner.md** — Part A: exact steps to
+   create the Firebase test account + set the 2 GitHub secrets (Part A
+   alone fully fixes settings-signout, no code change needed). Part B:
+   the signup-journey runner-tier decision, with the full evidence
+   table from the CI log analysis (load 4.4-4.7 sustained, qemu 187%
+   CPU despite -cores 1) and two concrete options (runner upgrade vs.
+   investigating Maestro's dadb client) with a stated recommendation
+   and reasoning, not just a shrug.
+
 ## Next Steps
-Diminishing returns from further unguided auditing — the remaining
-untouched surface (RKP judgment engine core logic, already extensively
-ground-truth-tested) is the lowest-probability area left, per this
-session's own pattern (every bug found was in supporting
-infrastructure, none in the heavily-tested core engine). Two things
-need the user's own action: (1) verify the requestMeta IP-spoofing fix
-against real Cloud Functions logs, (2) provision the E2E test account +
-GitHub secrets, or decide on a bigger CI runner for signup-journey.
+Awaiting: (1) user runs Priority 1 runbook post-merge, optionally pastes
+log output back for interpretation; (2) user's decision on Priority 2
+Part A (account) + Part B (runner tier); (3) user's call on PR review —
+should offer to watch PR #154 for CI/review activity per standing
+instructions (only if user asks — must ask first, not assume).
+Final release-audit phase (user's own proposed next step) waits on both
+resolving.
