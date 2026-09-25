@@ -190,10 +190,78 @@ diagnosed as needing owner infra decision). Every code change verified
 with full suite + tsc + eslint; two fixes proven via revert→fail→
 restore→pass.
 
+## Round 3 — "keep fixing, complete your task" (client/server quota desync)
+
+### ✅ Bug #6: getQuota's stale planExpiry (server)
+Response returned `plan: 'free'` (self-healed) alongside the RAW,
+un-healed `planExpiry` (still the expired date) — client got a
+self-contradictory pair. Fixed: `effectivePlanExpiry` computed
+alongside `effectivePlan`. Found via a new test, not assumed — the
+existing comment claiming "the response is already correct" was true
+for `plan`, not `planExpiry`. 14 new tests. Commit d877a80.
+
+### ✅ Bug #7: setAdminClaim accepted non-string targetUid (server, security)
+The ONE callable that grants admin privileges was the ONLY callable not
+using the established `parse(Schema, ...)` pattern — raw cast + bare
+`!targetUid` check. Verified by reverting: a non-string targetUid
+(object/number) didn't error, it silently "succeeded" with
+`setCustomUserClaims('[object Object]', {admin:true})`. Same defect
+class razorpay.ts already fixed (PHASE 6A-R1), never applied here.
+Added SetAdminClaimSchema, 6 new tests. Commit dd32f4c.
+
+### ✅ Bugs #8+#9: client never learns a paid plan expired (client, UX/revenue-adjacent)
+Traced end-to-end: (a) Firebase Auth custom claims are only ever
+GRANTED (razorpay.ts/googlePlay.ts), never revoked anywhere when a
+plan expires — confirmed by grepping every setCustomUserClaims call
+site. (b) authStore.ts reads that claim once at sign-in with no local
+expiry check. (c) useQuota.ts DOES call the one endpoint that correctly
+re-derives the true plan (getQuota) but only read `remaining`,
+discarding `plan`/`planExpiry` entirely. Net effect: a lapsed
+subscriber saw "unlimited" indefinitely — confirmed via usePurchase.ts
+read-through that this would also have PERMANENTLY BLOCKED re-purchase
+of the same tier (`tier === currentPlan` guard never clears). Not a
+revenue hole (server's claimQuotaSlot() re-derives independently and
+correctly blocks/charges regardless of client belief) but a real,
+confusing UX bug with no visible "plan expired" signal.
+Fixed: (1) quotaStore.setPlan() now always fully replaces planExpiry
+instead of only ever writing a truthy value — every setPlan('free')
+call site was silently leaving a stale expiry behind. (2) useQuota.ts's
+refresh() now syncs plan/planExpiry from every getQuota response, so a
+lapsed plan self-corrects within ~60s instead of requiring sign-out.
+9 new tests, both fixes independently verified via revert→fail→
+restore→pass. Commit 3fb25a0.
+
+### ✅ Bug #10 (lower severity): askWatchOracle's quotaRemaining discarded (client)
+Same pattern, smaller blast radius: the response's server-confirmed
+post-charge quotaRemaining was extracted by watchOracle.ts but never
+consumed anywhere (grepped — zero references). Local consumeOne()
+already keeps the common single-device case accurate, so this is a
+drift-correction backstop, not an active bug. Fixed by calling the
+already-established invalidateQuotaCache() (same convention
+authStore.ts uses on sign-out) after a successful ask. 1 new test,
+verified via revert. Commit 90ed1f8.
+
+### Read, found clean, no changes
+responseComposer.ts (603 lines — exceptionally already-hardened, 5+
+dedicated phase-review cycles), watchChart.ts (hand-traced house-math
+and offset edge cases), localTime.ts (hand-traced negative-offset and
+day-rollover cases), usePurchase.ts, oracleDiscussion.ts (no quota
+involvement, nothing to sync). quotaStore.startTrial() confirmed still
+genuinely dormant/unwired (pre-existing, documented PHASE 6D-4 finding
+— an owner decision on whether to launch the trial feature, not a bug).
+
+## SESSION GRAND TOTAL: 10 real bugs found+fixed+tested, ~10 coverage
+gaps closed across client+server, Firestore rules verified live, 2 E2E
+CI issues investigated (1 fixed fast-fail, 1 correctly diagnosed as an
+infra-tier decision). Every fix verified with full suite + tsc + eslint;
+7 of 10 fixes proven via explicit revert→fail→restore→pass.
+
 ## Next Steps
-Awaiting direction. Remaining unaudited: the RKP judgment engine itself
-(heavily tested already — watchChart/watchJudgment/narration validator
-suites), quota.ts's read path, admin.ts. Two things need the user's own
-action, not more of mine: (1) verify the requestMeta IP-spoofing fix
+Diminishing returns from further unguided auditing — the remaining
+untouched surface (RKP judgment engine core logic, already extensively
+ground-truth-tested) is the lowest-probability area left, per this
+session's own pattern (every bug found was in supporting
+infrastructure, none in the heavily-tested core engine). Two things
+need the user's own action: (1) verify the requestMeta IP-spoofing fix
 against real Cloud Functions logs, (2) provision the E2E test account +
 GitHub secrets, or decide on a bigger CI runner for signup-journey.
