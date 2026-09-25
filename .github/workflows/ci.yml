@@ -285,6 +285,26 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v5
 
+      # settings-signout signs in with a pre-seeded Firebase Auth test
+      # account (.maestro/ci/03_settings_and_signout.yaml's own header) via
+      # the E2E_TEST_ACCOUNT_EMAIL/PASSWORD secrets. Unset, Maestro's
+      # ${VAR} interpolation resolves to an empty string, the flow types a
+      # blank email/password, Firebase Auth sign-in fails, the app never
+      # leaves the Auth screen, and the flow burns its full 90s
+      # extendedWaitUntil on 'settings-gear-btn' — plus emulator boot, APK
+      # install, and Maestro's own polling overhead — before failing ~7
+      # minutes in with "Assertion is false: id: settings-gear-btn is
+      # visible", a message that does not point at the actual cause. This
+      # fails the SAME way (still red, same gate) but in seconds, with a
+      # message that does.
+      - name: Verify E2E test account secrets are configured (settings-signout only)
+        if: matrix.id == 'settings-signout'
+        run: |
+          if [ -z "${{ secrets.E2E_TEST_ACCOUNT_EMAIL }}" ] || [ -z "${{ secrets.E2E_TEST_ACCOUNT_PASSWORD }}" ]; then
+            echo "::error::E2E_TEST_ACCOUNT_EMAIL and/or E2E_TEST_ACCOUNT_PASSWORD repository secrets are not set. settings-signout needs them to sign in with a pre-seeded Firebase Auth account already provisioned in shams-app-4d0e7 (see .maestro/ci/03_settings_and_signout.yaml's header for the account's required state: free plan, onboarding complete). Set both under Settings -> Secrets and variables -> Actions to fix this leg — this is a repository configuration gap, not an app or test bug."
+            exit 1
+          fi
+
       # PHASE 8A-11: the debug APK build reinstalls its own pinned NDK and
       # CMake via `sdkmanager` regardless of what's preinstalled (confirmed
       # in CI logs), so the runner's preinstalled NDK is dead weight. Combined
