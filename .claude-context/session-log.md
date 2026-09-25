@@ -491,3 +491,59 @@ eslint --max-warnings=0 clean.
 Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
 Claude-Session: https://claude.ai/code/session_01KU9dh1P1XrP6YVhVAdCvEW
 - **Status:** Pushed, awaiting Chrome validation
+
+### 2026-09-25 08:13 UTC
+- **Tool:** Claude Code
+- **Action:** Code commit
+- **Commit:** `3fb25a0`
+- **Message:** Fix: client never learns a paid plan expired — showed "unlimited" forever
+
+Traced the client-side counterpart of the getQuota planExpiry bug fixed
+earlier this session (functions/src/functions/quota.ts, commit d877a80).
+
+Chain of the bug:
+1. Firebase Auth custom claims (plan, planExpiry) are only ever GRANTED
+   server-side (razorpay.ts, googlePlay.ts) — confirmed by grepping every
+   setCustomUserClaims call site in functions/: none of the three ever
+   downgrades/clears a claim. The Firestore self-heal in quotaSlots.ts and
+   quota.ts corrects /quotas/{userId}, but never touches the Auth claim.
+2. authStore.ts reads plan/planExpiry straight from that claim once, at
+   sign-in, via getIdTokenResult() — with no client-side expiry check of
+   its own — and calls quotaStore.setPlan(plan, expiry).
+3. useQuota.ts's refresh() DOES call the one endpoint that correctly
+   re-derives the true plan every time (getQuota, self-healing
+   server-side) — but only read `remaining` off the response and threw
+   `plan`/`planExpiry` away.
+
+Net effect: a subscriber whose plan expired kept seeing "unlimited" in
+the UI (OracleScreen, ReadingScreen both consume useQuota) indefinitely,
+until an unrelated sign-out/sign-in cycle. Not a revenue hole — the
+server's own claimQuotaSlot() re-derives the real plan independently on
+every askWatchOracle call and correctly blocks/charges regardless of what
+the client believes — but a confusing UX with no visible "your plan
+expired" signal.
+
+Two fixes:
+1. quotaStore.setPlan(plan, expiry) now always fully replaces planExpiry
+   (string -> store it; omitted/null -> clear it) instead of only ever
+   writing a truthy value. The old `if (expiry)` guard meant every
+   existing setPlan('free') call site (sign-out, auth failure) silently
+   left a stale expiry sitting next to plan: 'free'.
+2. useQuota.ts's refresh() now reads plan/planExpiry off the getQuota
+   response and calls setPlan() with them on every successful refresh —
+   which happens on every OracleScreen/ReadingScreen mount, at most once
+   per 60s TTL. A lapsed plan now self-corrects within that window
+   instead of requiring a sign-out.
+
+9 new tests across both files. Verified both independently: reverted
+each fix in turn, confirmed the relevant tests fail (3/4 useQuota tests
+reproduce the exact "stale unlimited" scenario; 2/5 quotaStore tests
+reproduce the stale-expiry-survives-downgrade scenario), restored,
+confirmed green.
+
+Client suite: 29 files, 316 tests passing. tsc --noEmit and
+eslint --max-warnings=0 clean.
+
+Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01KU9dh1P1XrP6YVhVAdCvEW
+- **Status:** Pushed, awaiting Chrome validation
