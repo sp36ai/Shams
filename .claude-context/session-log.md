@@ -348,3 +348,59 @@ eslint --max-warnings=0 clean.
 Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
 Claude-Session: https://claude.ai/code/session_01KU9dh1P1XrP6YVhVAdCvEW
 - **Status:** Pushed, awaiting Chrome validation
+
+### 2026-09-25 08:00 UTC
+- **Tool:** Claude Code
+- **Action:** Code commit
+- **Commit:** `8ec4c4a`
+- **Message:** ci(e2e): fail settings-signout fast when test-account secrets are unset
+
+Pulled the actual job logs for the two currently-failing E2E legs
+(signup-journey, settings-signout) from the latest main run
+(36105627106) to diagnose rather than guess.
+
+settings-signout: MAESTRO_E2E_TEST_ACCOUNT_EMAIL/PASSWORD are empty
+(E2E_TEST_ACCOUNT_EMAIL/PASSWORD repo secrets are unset — the known
+gap from issue #130). 03_settings_and_signout.yaml types the empty
+strings into the sign-in form regardless, Firebase Auth rejects it,
+the app never leaves the Auth screen, and the flow burns its full 90s
+extendedWaitUntil on 'settings-gear-btn' plus emulator boot/install
+overhead before failing ~7 minutes in with "Assertion is false: id:
+settings-gear-btn is visible" — a message that doesn't point at the
+actual cause.
+
+Added a guard step, scoped to the settings-signout matrix leg only,
+that checks both secrets are non-empty before any emulator work
+starts and fails immediately with an actionable message naming the
+missing secrets and where to set them. Same gate, same red result —
+this does not change whether the leg blocks CI or deploys, only how
+fast and how clearly it fails. Actually fixing the leg still requires
+the repo owner to provision a pre-seeded Firebase Auth test account in
+shams-app-4d0e7 and set both secrets; that's a repo/Firebase Console
+action, not something fixable in code.
+
+signup-journey: NOT the same class of problem — its own header
+confirms it needs no secrets (creates its own account via sign-up).
+Pulled and parsed this run's adb_watch.txt diagnostic (sampled every
+15s specifically to answer this exact question, per issue #124's own
+instrumentation): the emulator device is present in every single
+sample across the full ~14min run, right up to the point Maestro's
+own dadb client reported "device not found" — the underlying emulator
+never crashed or was OOM-killed (dmesg clean). Load average sustained
+4.4-4.7 near the end on this 2-vCPU runner, with qemu still at ~187%
+CPU despite the existing -cores 1 cap (the software-rendering cost
+issue #124 already identified). This is exactly the threshold ci.yml's
+own prior investigation named as "evidence a bigger runner is needed,
+not a guess" (see the emulator-options comment). Every free mitigation
+already tried (cores cap, 720x1600 resolution, disk cleanup) is
+already in place; I have no new free-tier lever to pull that isn't
+speculation. Left as-is rather than guessing at further tuning —
+this needs either a paid runner tier (cost decision) or a Maestro-side
+adb-client investigation, both owner decisions, not code fixes.
+
+Validated with actionlint v1.7.7 (clean, matching this repo's own
+stated convention) and a YAML parse.
+
+Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01KU9dh1P1XrP6YVhVAdCvEW
+- **Status:** Pushed, awaiting Chrome validation
