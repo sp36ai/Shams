@@ -70,8 +70,37 @@ None
    confirming it fails, then restoring it. Functions suite: 27 files, 547
    tests passing. tsc + eslint clean. Commit 6fb34e5.
 
+### ✅ Claim/refund symmetry audit — closed out
+7. Swept every `claimQuotaSlot`/`refundQuotaSlot`/`claimRequest`/
+   `releaseRequest` call site in `functions/`: only 2 real callables use
+   it (askWatchOracle — clean; discussReading — fixed in #6). Read
+   `quotaSlots.ts` and `rateLimit.ts` in full: both correct. Added 13
+   direct tests for `quotaSlots.ts` (free/trial/paid/expired-plan claim
+   paths, all 3 refund no-op guards) since neither it nor
+   `askWatchOracle.ts` had any prior direct test. Commit 7844d46.
+8. **Verified the retired KP path is genuinely gone**, not just
+   documented as gone: no `askOracle.ts` file exists, `index.ts` exports
+   only `askWatchOracle`. Matches the project's core principle exactly.
+9. **Firestore security rules — actually run, not just read.**
+   `firestore.rules.test.ts` is excluded from the default `npm test`
+   script and needs a real emulator (Java + firebase-tools), so it was
+   unverified in this environment. Installed/ran it against the real
+   emulator: all 26 tests passed — deny-by-default, no cross-user reads,
+   no privileged-field writes (plan/admin/used/etc.), admin-only
+   collections, catch-all deny. No defect found; genuinely confirmed.
+
+## Session summary
+One real, fixed, tested bug (discussReading idempotency leak). Two new
+test suites closing real coverage gaps (voice/text parity,
+quotaSlots.ts). One environment gap closed (functions/ deps were never
+installed here). One security surface verified live, not assumed
+(Firestore rules, 26/26 passing). Everything else audited came back
+clean — reported as such rather than manufacturing findings.
+
 ## Next Steps
-Continuing to audit remaining Oracle server-side surface area (askOracle
-sibling paths, quota/rate-limit edges) for the same class of issue —
-claim/refund symmetry on every failure branch — since that's where the
-one real bug this session actually lived.
+Awaiting direction. Remaining unaudited-this-session areas if the user
+wants more: razorpay/googlePlay webhooks (already have PHASE 6A-R1
+regression suites from prior work — not re-audited), RKP judgment engine
+itself (already heavily tested — watchChart/watchJudgment/narration
+validator suites), or a return to client-side feature work (history
+continuations, offline banner) if the user wants features over audit.
