@@ -121,3 +121,32 @@ Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
 Claude-Session: https://claude.ai/code/session_01KU9dh1P1XrP6YVhVAdCvEW`
 **Auto-logged by:** Claude Code
 **Status:** Ready for Chrome validation
+
+### 2026-09-25 07:38 UTC - 7844d46
+**Message:** `Add direct test coverage for quotaSlots.ts — the app's quota gate
+
+Audited every claim/refund call site in functions/ for the same
+release-symmetry bug class as the discussReading fix (commit 6fb34e5):
+askWatchOracle.ts (clean, single catch-all handles both refund+release)
+and quotaSlots.ts itself, which had zero direct tests despite being the
+sole quota gate askWatchOracle depends on to charge a seeker for a
+reading — askWatchOracle.ts has no test file of its own, and quota.ts's
+tests only exercise the read path (getQuota), never
+claimQuotaSlot/refundQuotaSlot.
+
+13 tests covering: free-plan claim/exhaustion/day-rollover, trial
+active/expired precedence over the free limit, unlimited (paid) plans
+never decrementing `used`, an expired paid plan correctly reverting to
+free, and refundQuotaSlot's three no-op guards (no doc, stale day,
+already-zero) plus its normal decrement.
+
+Also verified quotaSlots.ts and rateLimit.ts on direct read — both
+correct, no claim left unreleased on any failure path.
+
+Functions suite: 28 files, 560 tests passing. tsc --noEmit and
+eslint --max-warnings=0 clean.
+
+Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01KU9dh1P1XrP6YVhVAdCvEW`
+**Auto-logged by:** Claude Code
+**Status:** Ready for Chrome validation
