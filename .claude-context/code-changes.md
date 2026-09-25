@@ -549,3 +549,25 @@ Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
 Claude-Session: https://claude.ai/code/session_01KU9dh1P1XrP6YVhVAdCvEW`
 **Auto-logged by:** Claude Code
 **Status:** Ready for Chrome validation
+
+### 2026-09-25 08:54 UTC - f8f1d6e
+**Message:** `chore: add Claude Code/Chrome/phone context-sync dashboard
+
+Split out of #154 to keep that PR focused on the 10 production fixes.
+Dev-only tooling, no production code paths touched:
+
+- .claude-context/: markdown files Claude Code/Chrome read and write to
+  coordinate on the same task across sessions/tools
+- context-server.js + public/index.html: a small Express server + phone
+  dashboard for viewing current task/code-changes/session-log and
+  submitting feedback from a phone on the same network
+- PHONE_SYNC_SETUP.md: setup instructions
+- package.json/package-lock.json: adds express + cors as devDependencies
+
+Never imported by the React Native app or any Cloud Function — purely a
+local workflow aid for this project's owner and their tools.
+
+Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01KU9dh1P1XrP6YVhVAdCvEW`
+**Auto-logged by:** Claude Code
+**Status:** Ready for Chrome validation
