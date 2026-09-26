@@ -101,15 +101,26 @@ Phone                    Server               Claude Code / Chrome
 
 ## 6. Network Security Note
 
-⚠️ **The server runs on `0.0.0.0` (all interfaces)**, so it's accessible from:
+⚠️ **The server runs on `0.0.0.0` (all interfaces) with no authentication and
+no CORS origin restriction.** It's accessible from:
 - Same WiFi: ✅ Yes
 - Local machine: ✅ Yes
 - Outside networks: ❌ No (unless port-forwarded)
 
-**If you're concerned:**
-- Only run when testing
+Anyone on the same network as a running instance can read every file under
+`.claude-context/` and hit `POST /api/context/session-log/append`, which runs
+`git commit` with your local process's credentials. **Only run this on a
+trusted, private network you control (e.g. your home WiFi) — never on a
+public or shared network** (coffee shop, conference, open office WiFi,
+hotel/airport WiFi).
+
+**Further hardening (do before running on any network you don't fully trust,
+or before wider use):**
+- Only run when actively testing; stop it otherwise
 - Use a firewall to block port 3333 externally
 - Change `PORT` in `context-server.js` to a random number
+- Consider adding a shared-secret header check before treating this as safe
+  for anything beyond a solo developer's own home network
 
 ---
 
