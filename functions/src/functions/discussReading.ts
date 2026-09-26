@@ -342,6 +342,14 @@ export const discussReading = onCall(
             userId,
           });
         });
+        // The claim must not outlive this attempt, same as the load-failure
+        // catch above: without this, a seeker who retries under the SAME
+        // requestId — exactly what the client's retry button does, and
+        // exactly what this error message invites — hits claimRequest's
+        // in-flight branch instead of a genuine retry, and is told "already
+        // being read" for up to IN_PROGRESS_TIMEOUT_MS even though nothing
+        // is running.
+        await release();
         throw new HttpsError('unavailable', 'The oracle did not answer. Try again.');
       }
 

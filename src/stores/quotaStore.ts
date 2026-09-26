@@ -120,8 +120,13 @@ export interface QuotaState {
    * here, even once the server itself started refunding its own copy.
    */
   refundOne: () => void;
-  /** Upgrade plan (called after successful purchase). Optional expiry is the ISO string from server. */
-  setPlan: (plan: PlanTier, expiry?: string) => void;
+  /**
+   * Set the plan (after a purchase, on sign-in/sign-out, or to reconcile
+   * against a server-authoritative getQuota response). `expiry` is the ISO
+   * string from the server — omitted or `null` clears any previously
+   * stored expiry, it never leaves a stale one in place.
+   */
+  setPlan: (plan: PlanTier, expiry?: string | null) => void;
   /** Start the 7-day trial (no-op if already started). */
   startTrial: () => void;
   /**
@@ -188,12 +193,21 @@ export const useQuotaStore = create<QuotaState>((set, get) => ({
     set({ questionsToday: next });
   },
 
-  setPlan(plan: PlanTier, expiry?: string): void {
+  setPlan(plan: PlanTier, expiry?: string | null): void {
     storage.set(KEYS.QUOTA_PLAN, plan);
+    // Always fully replaces the stored expiry rather than conditionally
+    // updating it — a downgrade call (setPlan('free') on sign-out, auth
+    // failure, or a server-confirmed lapsed subscription) must clear a
+    // PRIOR paid plan's expiry, not leave it sitting in storage/state
+    // alongside plan: 'free'. The old `if (expiry)` guard only ever wrote
+    // a truthy expiry and never cleared one, so every existing
+    // setPlan('free') call site silently left a stale expiry behind.
     if (expiry) {
       storage.set(KEYS.QUOTA_PLAN_EXPIRY, expiry);
+    } else {
+      storage.delete(KEYS.QUOTA_PLAN_EXPIRY);
     }
-    set({ plan, ...(expiry ? { planExpiry: expiry } : {}) });
+    set({ plan, planExpiry: expiry ?? null });
   },
 
   startTrial(): void {

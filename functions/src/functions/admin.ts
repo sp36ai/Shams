@@ -5,6 +5,7 @@
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import { auth } from '../utils/admin';
 import { enforceRateLimit } from '../middleware/rateLimit';
+import { parse, SetAdminClaimSchema } from '../middleware/validate';
 import { FUNCTION_OPTS } from '../config';
 import { logger } from '../utils/logger';
 
@@ -37,14 +38,7 @@ export const setAdminClaim = onCall(
     // is already confirmed non-null above.
     await enforceRateLimit(request.auth.uid);
 
-    const { targetUid, isAdmin } = request.data as { targetUid: string; isAdmin: boolean };
-
-    if (!targetUid || typeof isAdmin !== 'boolean') {
-      throw new HttpsError(
-        'invalid-argument',
-        'Required fields missing: targetUid (string) and isAdmin (boolean).',
-      );
-    }
+    const { targetUid, isAdmin } = parse(SetAdminClaimSchema, request.data);
 
     try {
       // Get existing claims to avoid overwriting subscription plan info
