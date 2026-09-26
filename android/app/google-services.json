@@ -1,0 +1,56 @@
+{
+  "project_info": {
+    "project_number": "347578830449",
+    "firebase_url": "https://shams-app-4d0e7-default-rtdb.asia-southeast1.firebasedatabase.app",
+    "project_id": "shams-app-4d0e7",
+    "storage_bucket": "shams-app-4d0e7.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:347578830449:android:8f47007a2e5e4e0a1c95d0",
+        "android_client_info": {
+          "package_name": "com.astrosarfaraz.shamsalasrar"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "347578830449-7d7q60tv9m88pfhp1umbj8ojjk2oigb9.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.astrosarfaraz.shamsalasrar",
+            "certificate_hash": "ecce1c0c2b3d57b6025e0d4f5fc9523c7bc330db"
+          }
+        },
+        {
+          "client_id": "347578830449-sjoe2pht3q1fl77gtsdqa9fqc912ujke.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.astrosarfaraz.shamsalasrar",
+            "certificate_hash": "070ba67ea3a0a78c701845ce5ca5b599cf08182e"
+          }
+        },
+        {
+          "client_id": "347578830449-1uogokloffhn2c9nh060003rsvm1vu6n.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD8-sFEFBn9ultH0hu2WzE0wjR36zOhs00"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "347578830449-1uogokloffhn2c9nh060003rsvm1vu6n.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
