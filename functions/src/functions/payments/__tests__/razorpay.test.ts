@@ -380,4 +380,59 @@ describe('PHASE 6A-R1 — razorpayWebhook fail-safe boundary (end to end)', () =
     expect(res.statusCode).toBe(401);
     expect(quotaWrites).toHaveLength(0);
   });
+
+  /* ------------------------------------------------------------------------ */
+  /*  Unknown/unmapped plan — regression for the silent-drop finding          */
+  /* ------------------------------------------------------------------------ */
+
+  it('payment.captured with an unrecognized plan grants no entitlement and logs a warning', async () => {
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    const { razorpayWebhook } = await import('../razorpay');
+    const { req, res } = fakeReqRes(
+      paymentCapturedPayload({ userId: 'real-uid-1' }, 'plan_does_not_exist'),
+    );
+    await razorpayWebhook(req as never, res as never);
+
+    expect(res.statusCode).toBe(200);
+    expect(quotaWrites).toHaveLength(0);
+    expect(claimsWrites).toHaveLength(0);
+    expect(
+      warnSpy.mock.calls.some(([line]) => String(line).includes('razorpay: unknown plan')),
+    ).toBe(true);
+    warnSpy.mockRestore();
+  });
+
+  it('subscription.activated with an unrecognized plan_id grants no entitlement and logs a warning', async () => {
+    // Regression: this branch used to fall through the `if (plan)` guard
+    // with no `else` at all — silently dropping the event (200 OK, zero
+    // logging, zero audit trail) instead of warning like payment.captured's
+    // own unknown-plan branch already did. A payer would be charged by
+    // Razorpay and never upgraded, with nothing in Cloud Logging to explain
+    // why — see razorpay.ts's fix for the full account.
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    const { razorpayWebhook } = await import('../razorpay');
+    const { req, res } = fakeReqRes({
+      event: 'subscription.activated',
+      payload: {
+        subscription: {
+          entity: {
+            id: 'sub_test_unknown_plan',
+            plan_id: 'plan_does_not_exist',
+            notes: { userId: 'real-uid-1' },
+          },
+        },
+      },
+    });
+    await razorpayWebhook(req as never, res as never);
+
+    expect(res.statusCode).toBe(200);
+    expect(quotaWrites).toHaveLength(0);
+    expect(claimsWrites).toHaveLength(0);
+    expect(
+      warnSpy.mock.calls.some(([line]) =>
+        String(line).includes('razorpay subscription.activated: unknown plan'),
+      ),
+    ).toBe(true);
+    warnSpy.mockRestore();
+  });
 });

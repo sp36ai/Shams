@@ -107,3 +107,44 @@ describe('PHASE 6C-2 — activateTrial is rate-limited', () => {
     expect(trials.has('alice')).toBe(false);
   });
 });
+
+describe('activateTrial — idempotent replay (the file’s own stated core property)', () => {
+  it('a second call returns the ORIGINAL startedAt/expiresAt unchanged, not a fresh 7-day window', async () => {
+    const first = (await invokeActivateTrial('alice')) as {
+      startedAt: string;
+      expiresAt: string;
+      alreadyActive: boolean;
+    };
+    expect(first).toMatchObject({ alreadyActive: false });
+
+    const second = await invokeActivateTrial('alice');
+
+    expect(second).toMatchObject({ alreadyActive: true });
+    expect(second).toEqual({
+      startedAt: first.startedAt,
+      expiresAt: first.expiresAt,
+      alreadyActive: true,
+    });
+  });
+
+  it('a second call performs no Firestore write — the stored document is untouched', async () => {
+    await invokeActivateTrial('alice');
+    const storedAfterFirst = trials.get('alice');
+
+    await invokeActivateTrial('alice');
+
+    // Same object reference: `tx.set` was never called a second time, not
+    // merely "wrote the same values back".
+    expect(trials.get('alice')).toBe(storedAfterFirst);
+  });
+
+  it('two different users each get their own independent trial', async () => {
+    const alice = await invokeActivateTrial('alice');
+    const bob = await invokeActivateTrial('bob');
+
+    expect(alice).toMatchObject({ alreadyActive: false });
+    expect(bob).toMatchObject({ alreadyActive: false });
+    expect(trials.has('alice')).toBe(true);
+    expect(trials.has('bob')).toBe(true);
+  });
+});

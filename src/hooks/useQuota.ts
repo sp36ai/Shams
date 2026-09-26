@@ -67,11 +67,25 @@ export function useQuota(): QuotaState {
       // degrade to "unknown remaining" instead of taking the screen down.
       try {
         regionalFunctions()
-          .httpsCallable<object, { remaining: number }>('getQuota')({})
+          .httpsCallable<object, { plan: PlanTier; planExpiry: string | null; remaining: number }>(
+            'getQuota',
+          )({})
           .then(r => {
             _cachedRemaining = r.data.remaining;
             _lastFetchAt = Date.now();
             setServerRemaining(r.data.remaining);
+            // The server is authoritative for plan state — it self-heals an
+            // expired paid plan to 'free' on every call (functions/getQuota.ts)
+            // — but nothing revokes the Firebase Auth custom claim a lapsed
+            // subscription was originally granted through, so authStore's own
+            // plan sync (read once, at sign-in, from that claim) never sees
+            // the correction on its own. Without this, isPremium/canAsk below
+            // would keep reporting "unlimited" indefinitely after a real
+            // subscription expired, until the seeker happened to sign out and
+            // back in. Reconciling here means every refresh (any OracleScreen/
+            // ReadingScreen mount, at most once per QUOTA_TTL_MS) self-corrects
+            // instead.
+            useQuotaStore.getState().setPlan(r.data.plan, r.data.planExpiry);
           })
           .catch(() => setServerRemaining(null))
           .finally(() => setLoading(false));

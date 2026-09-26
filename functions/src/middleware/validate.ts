@@ -166,6 +166,23 @@ export const VerifyGooglePlaySchema = z
 
 export type VerifyGooglePlayInput = z.infer<typeof VerifyGooglePlaySchema>;
 
+/**
+ * setAdminClaim input — grants or revokes admin privileges, so a malformed
+ * targetUid deserves the same "reject a non-string truthy value outright"
+ * discipline PHASE 6A-R1 added to razorpay.ts's notes.userId, not a bare
+ * `!targetUid` truthy check that only catches empty/falsy values and lets
+ * a non-string object/array/number reach auth.getUser() as an uncontrolled
+ * type error.
+ */
+export const SetAdminClaimSchema = z
+  .object({
+    targetUid: z.string().min(1).max(128),
+    isAdmin: z.boolean(),
+  })
+  .strict();
+
+export type SetAdminClaimInput = z.infer<typeof SetAdminClaimSchema>;
+
 // ── Parser helper ────────────────────────────────────────────────────────────
 
 export function parse<T>(schema: z.ZodSchema<T>, data: unknown): T {
