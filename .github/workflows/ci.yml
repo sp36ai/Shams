@@ -64,6 +64,13 @@ jobs:
       - name: Dead code guard (orphans)
         run: npm run check:orphans
 
+      # network_security_config.xml's <pin-set expiration="..."> is a silent
+      # failure mode: Android stops enforcing pinning on that date with no
+      # crash, no error, nothing in a report -- only a check that runs on
+      # every build and fails ahead of time catches it before launch.
+      - name: Certificate pin expiry check
+        run: npm run check:cert-pin-expiry
+
   functions-quality:
     name: Functions Quality
     runs-on: ubuntu-latest
