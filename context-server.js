@@ -1,3 +1,11 @@
+// LOCAL DEV TOOL ONLY — never deployed, never bundled into the app, never run
+// in CI (see docs/OWNER_LAUNCH_CHECKLIST.md / PHONE_SYNC_SETUP.md). It binds
+// to 0.0.0.0 with no authentication and no origin restriction on CORS, and
+// its session-log endpoint runs `git commit` with the local process's
+// ambient credentials. Anyone on the same network as a running instance can
+// read repo task notes and trigger a local commit. Only run this on a
+// trusted network (e.g. a private home WiFi you control), never on a public
+// or shared network (coffee shop, conference, open office WiFi).
 const express = require('express');
 const fs = require('fs');
 const path = require('path');
@@ -122,6 +130,10 @@ app.get('/api/device-info', (req, res) => {
 
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`\n🚀 Context Server Running\n`);
+  console.log(
+    `⚠️  No authentication — anyone on this network can read repo notes and trigger a git commit.`,
+  );
+  console.log(`⚠️  Only run this on a trusted, private network (e.g. your home WiFi).\n`);
   console.log(`📱 Phone Access: http://[your-computer-ip]:${PORT}`);
   console.log(`🖥️  Local: http://localhost:${PORT}`);
   console.log(`\n⚡ APIs:`);
