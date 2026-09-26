@@ -389,6 +389,24 @@ jobs:
           # HOST, outside the -cores cap, and that cost scales with pixel
           # count. That run's JS thread and auth bootstrap were on time; the
           # Auth screen just never got painted within 90s.
+          #
+          # 2026-09-25 (job 36115578825, PR #154): the "bigger runner needed"
+          # evidence this comment asked for came in — signup-journey failed
+          # on the final "Grant location access" wait after a full ~10min run
+          # with load average sustained at 3.2-4.9 (never once dropping below
+          # nproc=2) and qemu itself pinned at 170-183% host CPU the entire
+          # time. No OOM (dmesg clean) and no app-side crash — this run was
+          # simply CPU-starved end to end, same signature as run #532 above,
+          # just landing on the last wait instead of an earlier one this time.
+          # Owner decision: accept this as a known, non-blocking flake rather
+          # than pay for GitHub's hosted Larger Runners (a per-minute billed
+          # upgrade) — the explicit constraint is keeping Actions billing at
+          # $0. A self-hosted runner on owner-provided hardware would be the
+          # only remaining zero-Actions-cost path to more headroom; nothing
+          # else in this repo increases the vCPUs available to qemu. Until
+          # that's stood up, expect signup-journey (the longest of the three
+          # flows) to occasionally fail this way — re-running the job is the
+          # correct response, not re-investigating this root cause.
           # -skin 720x1600 cuts the rendered pixels per frame from 2.59M
           # (pixel_6's 1080x2400) to 1.15M (-56%). The matching density is
           # set right after boot in `script` below (wm density 280, since
