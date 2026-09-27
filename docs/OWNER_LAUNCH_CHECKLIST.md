@@ -1,6 +1,6 @@
 # Owner Launch Checklist — Nov 1 Play Store Deadline
 
-Four items block launch that no commit can complete — each needs your
+Five items block launch that no commit can complete — each needs your
 credentials or console access. This is the exact, turnkey sequence for each.
 None of these steps are run from this environment; do them from your own
 machine/network.
@@ -158,6 +158,35 @@ that proxy's certificate, not Google's.
    just note the verification date somewhere (e.g. a comment in the file).
 4. Re-run `npm run check:cert-pin-expiry` locally to confirm the check
    still passes after any change.
+
+---
+
+## 5. E2E test account secrets (Priority 5)
+
+**Why it blocks a clean CI run:** `.github/workflows/ci.yml`'s
+`settings-signout` E2E leg needs a pre-seeded Firebase Auth account to sign
+in with, via the `E2E_TEST_ACCOUNT_EMAIL`/`E2E_TEST_ACCOUNT_PASSWORD`
+repository secrets. As of this writing neither is set — CI's own guard step
+("Verify E2E test account secrets are configured") fails with an explicit
+error rather than letting the leg fail confusingly later. This was
+previously misdiagnosed (in this project's own history) as a local-
+onboarding-flags bug; the simpler, more likely primary cause is just these
+two secrets never having been configured.
+
+**Steps:**
+1. In [Firebase Console](https://console.firebase.google.com) →
+   `shams-app-4d0e7` → Authentication → Users, either designate an existing
+   test account or create a new one via **Add user** (email + password).
+2. That account must be on the **free plan** and have **completed
+   onboarding** in the app itself (sign in once via the real app, grant
+   location, answer the three onboarding questions) — `03_settings_and_signout.yaml`
+   assumes this state going in.
+3. GitHub → this repo → **Settings → Secrets and variables → Actions** →
+   **New repository secret**, add both:
+   - `E2E_TEST_ACCOUNT_EMAIL`
+   - `E2E_TEST_ACCOUNT_PASSWORD`
+4. Re-run the `settings-signout` CI leg (or push any commit) to confirm the
+   guard step now passes and the flow gets further than the Auth screen.
 
 ---
 
