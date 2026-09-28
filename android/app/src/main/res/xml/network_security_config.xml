@@ -12,8 +12,8 @@
         <pin-set expiration="2027-09-28">
             <!-- Pins for Google/Firebase Endpoints captured 2026-09-28.
                  The May 2026 pins had rotated out entirely (leaf and
-                 intermediate both changed) before their own expiration date
-                 -- Android enforces an unexpired pin-set even when neither
+                 intermediate both changed) before their own expiration date;
+                 Android enforces an unexpired pin-set even when neither
                  pin matches the live chain, so that gap silently broke
                  every pinned connection. Two leaf pins (firestore's own;
                  firebase+identitytoolkit share one) plus one intermediate
