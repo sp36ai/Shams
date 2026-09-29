@@ -190,6 +190,33 @@ two secrets never having been configured.
 
 ---
 
+## 6. Razorpay live test-mode purchase (before enabling Razorpay in production)
+
+**Why this can't be skipped:** PR #143 made `razorpayWebhook` fail closed —
+it only grants a plan when the paying order/subscription is in this
+system's own ledger (`razorpayOrders`/`razorpaySubscriptions`), written by
+an order-creation callable that does not exist yet (#129 items 1–2, still
+open). 558 passing unit tests prove the webhook's logic is internally
+consistent; they do **not** prove the real order-creation → checkout →
+webhook round trip actually works end to end once that callable exists —
+Razorpay isn't live yet (no keys, no webhook registered), so this path has
+never run against Razorpay's real servers, even in test mode.
+
+**Before flipping Razorpay to live for real users:**
+1. Build and deploy the order-creation callable (#129 items 1–2).
+2. Using Razorpay's **test mode** keys (not live), make one real test
+   purchase through the actual app: create an order, complete checkout
+   with Razorpay's test card/UPI credentials, and confirm the webhook
+   fires and grants the plan.
+3. Confirm in Firestore that exactly one `razorpayOrders` (or
+   `razorpaySubscriptions`) document exists for it, the user's `/quotas`
+   doc updated, and their custom claims reflect the new plan.
+4. Only then switch to live keys.
+
+Passing CI is not this step — it does not substitute for it.
+
+---
+
 ## What NOT to do
 
 - Never commit `google-services.json` (real one), the `.p12`/`.jks`
