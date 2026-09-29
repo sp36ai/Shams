@@ -555,30 +555,45 @@ export const razorpayWebhook = onRequest(
         const userId = binding.uid;
 
         const plan = RAZORPAY_PLAN_MAP[binding.planId];
-        if (plan) {
-          // Same atomic claim as payment.captured — this event type previously
-          // had no dedup at all, so a Razorpay redelivery would silently
-          // re-run upgradePlan (harmless here since it recomputes the same
-          // expiry rather than stacking it, but inconsistent and unobserved).
-          const claimKey = `subscription.activated:${subscriptionId}`;
-          const claimed = await claimWebhookEvent(claimKey);
-          if (!claimed) {
-            logger.info('razorpay: duplicate subscription.activated event, skipping', {
-              subscriptionId,
-              ipHash: requestMeta.ipHash,
-            });
-            res.status(200).send('OK');
-            return;
+        if (!plan) {
+          // Mirrors payment.captured's own unknown-plan branch above — an
+          // unrecognized plan_id (e.g. a new pricing plan added in the
+          // Razorpay dashboard before RAZORPAY_PLAN_MAP is updated) used to
+          // fall through this `if` silently: no log line, no audit trail,
+          // acknowledged 200 with the payer charged and never upgraded. The
+          // only way to notice was a support ticket, with nothing in Cloud
+          // Logging to point at why.
+          logger.warn('razorpay subscription.activated: unknown plan', {
+            razorPlan: binding.planId,
+            ipHash: requestMeta.ipHash,
+            durationMs: Date.now() - startedAt,
+          });
+          res.status(200).send('OK');
+          return;
+        }
+
+        // Same atomic claim as payment.captured — this event type previously
+        // had no dedup at all, so a Razorpay redelivery would silently
+        // re-run upgradePlan (harmless here since it recomputes the same
+        // expiry rather than stacking it, but inconsistent and unobserved).
+        const claimKey = `subscription.activated:${subscriptionId}`;
+        const claimed = await claimWebhookEvent(claimKey);
+        if (!claimed) {
+          logger.info('razorpay: duplicate subscription.activated event, skipping', {
+            subscriptionId,
+            ipHash: requestMeta.ipHash,
+          });
+          res.status(200).send('OK');
+          return;
+        }
+        try {
+          await upgradePlan(userId, plan, requestMeta);
+        } catch (err) {
+          await releaseWebhookEvent(claimKey);
+          if (isUnverifiableEntitlementTarget(err)) {
+            await recordUnverifiableEntitlementTarget(userId, requestMeta);
           }
-          try {
-            await upgradePlan(userId, plan, requestMeta);
-          } catch (err) {
-            await releaseWebhookEvent(claimKey);
-            if (isUnverifiableEntitlementTarget(err)) {
-              await recordUnverifiableEntitlementTarget(userId, requestMeta);
-            }
-            throw err;
-          }
+          throw err;
         }
       }
       // All other event types: acknowledge silently

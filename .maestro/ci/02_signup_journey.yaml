@@ -108,11 +108,17 @@ name: 'Journey — sign up through onboarding to the Oracle'
     timeout: 5000
 - tapOn: 'Before important choices'
 
-# Profile inference (falls back fast without API key)
+# Profile inference (falls back fast without API key). Widened from 20s to
+# 60s (PR #150 CI run 35972560552, job 107635982330): this step failed here
+# after the flow had already gotten through sign-up, location, and all three
+# onboarding questions -- the narrowest timeout in this file next to steps
+# that survived under the same CI load. Matches the same CI-performance-
+# ceiling reasoning already applied to the sign-up round-trip wait above
+# (issue #132), not a functional regression.
 - extendedWaitUntil:
     visible:
       id: 'onboarding-enter-btn'
-    timeout: 20000
+    timeout: 60000
 - tapOn:
     id: 'onboarding-enter-btn'
 

@@ -20,6 +20,7 @@
 import React from 'react';
 import { screen, userEvent, waitFor } from '@testing-library/react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
+import Voice from '@react-native-voice/voice';
 import { buildWatchChart } from '@astrology/rkp/watchChart';
 import { judgeWatchChart } from '@astrology/rkp/watchJudgment';
 import { httpsCallable } from '../../firebase/functionsRegion';
@@ -28,6 +29,25 @@ import { useReadingThreadsStore, threadById } from '@stores/readingThreadsStore'
 import { useReadingsStore } from '@stores/readingsStore';
 import { useQuotaStore } from '@stores/quotaStore';
 import ReadingScreen from '../ReadingScreen';
+
+jest.mock('@utils/permissions', () => ({
+  checkMicrophonePermission: jest.fn(() => Promise.resolve('granted')),
+  requestMicrophonePermission: jest.fn(() => Promise.resolve('granted')),
+}));
+
+// Real useQuota (needed for canAsk/consumeOne gating throughout this file),
+// with invalidateQuotaCache wrapped so its calls are observable without
+// changing its behavior.
+jest.mock('@hooks/useQuota', () => {
+  const actual = jest.requireActual('@hooks/useQuota');
+  return { ...actual, invalidateQuotaCache: jest.fn(actual.invalidateQuotaCache) };
+});
+
+const mockedVoice = Voice as unknown as {
+  start: jest.Mock;
+  stop: jest.Mock;
+  onSpeechResults?: (e: { value?: string[] }) => void;
+};
 
 /**
  * Route params drive the whole open-vs-begin distinction, so each test states
@@ -149,6 +169,34 @@ describe('ReadingScreen', () => {
     expect(useReadingsStore.getState().readings.some(r => r.id === 'r1')).toBe(true);
   });
 
+  it('invalidates the cached quota display on a successful ask — the server-confirmed quotaRemaining must not be shadowed by a stale ≤60s cache', async () => {
+    // The response's own quotaRemaining is the one number that can never
+    // drift from the Firestore ledger claimQuotaSlot() just wrote to,
+    // unlike the local optimistic consumeOne() counter (device-only, never
+    // reconciled against a second device). Without invalidating here,
+    // useQuota's next consult could serve a pre-ask cached figure for up
+    // to QUOTA_TTL_MS.
+    (httpsCallable as jest.Mock).mockImplementation((name: string) => {
+      if (name === 'askWatchOracle') {
+        return jest.fn(() => Promise.resolve({ data: successPayload() }));
+      }
+      return defaultImpl(name);
+    });
+    const { invalidateQuotaCache } = jest.requireMock('@hooks/useQuota') as {
+      invalidateQuotaCache: jest.Mock;
+    };
+    invalidateQuotaCache.mockClear();
+
+    await renderScreen(<ReadingScreen />);
+    const user = userEvent.setup();
+
+    await user.type(screen.getByTestId('oracle-chat-input'), 'Will I get the job?');
+    await user.press(screen.getByTestId('oracle-chat-send-btn'));
+
+    await waitFor(() => expect(oracleMessages()[0]?.status).toBe('sent'));
+    expect(invalidateQuotaCache).toHaveBeenCalled();
+  });
+
   it('shows a failed bubble with retry on network failure, and recovers on retry', async () => {
     // The callable's own `.code` reaches the seeker: askWatchOracle now races
     // against withDeadline(), which rejects with the original error, so an
@@ -228,6 +276,59 @@ describe('ReadingScreen', () => {
     );
     expect(askCallable).not.toHaveBeenCalled();
   });
+
+  /* ---------------------------------------------------------------------- */
+  /*  Voice input parity                                                     */
+  /* ---------------------------------------------------------------------- */
+
+  // A transcript arriving via the mic must not be a second entrance into the
+  // Oracle: it is handed to the exact same sendMessage() a typed question
+  // goes through, which is what keeps askWatchOracle the sole judgment
+  // authority regardless of how the question arrived (see
+  // useSpeechToText.ts's own header). This test drives the recognizer mock
+  // end to end — start, a final transcript, stop — rather than asserting on
+  // sendMessage internals, so it would fail if voice ever grew a call path
+  // that bypassed askWatchOracle.
+  it('a voice transcript reaches askWatchOracle with the same shape as typed text', async () => {
+    const askCallable = jest.fn(() => Promise.resolve({ data: successPayload() }));
+    (httpsCallable as jest.Mock).mockImplementation((name: string) => {
+      if (name === 'askWatchOracle') {
+        return askCallable;
+      }
+      return defaultImpl(name);
+    });
+
+    await renderScreen(<ReadingScreen />);
+    const user = userEvent.setup();
+
+    await user.press(screen.getByTestId('oracle-chat-mic-btn'));
+    await waitFor(() => expect(mockedVoice.start).toHaveBeenCalled());
+
+    // The real recognizer's onSpeechResults fires asynchronously AFTER
+    // stop() is called, never before (useSpeechToText.ts's own contract) —
+    // mirrored here rather than firing it first, which would race stop()'s
+    // finalize promise instead of resolving it.
+    await user.press(screen.getByTestId('oracle-chat-mic-btn'));
+    mockedVoice.onSpeechResults?.({ value: ['Will I get the job?'] });
+
+    await waitFor(() => expect(askCallable).toHaveBeenCalled());
+    const voiceCallArgs = askCallable.mock.calls[0][0];
+
+    // Same call, same shape a typed send produces — kind is stored on the
+    // message for display, never threaded into the askWatchOracle payload.
+    expect(voiceCallArgs).toMatchObject({ question: 'Will I get the job?' });
+    expect(voiceCallArgs).not.toHaveProperty('kind');
+    expect(voiceCallArgs).not.toHaveProperty('inputMethod');
+
+    // Reaches the exact same message pipeline: a user bubble tagged 'voice',
+    // resolved by the same 'sent' verdict a typed ask produces.
+    const thread = onlyThread();
+    const userMsg = thread.messages.find(m => m.role === 'user');
+    expect(userMsg?.kind).toBe('voice');
+    await waitFor(() => expect(oracleMessages()[0]?.status).toBe('sent'));
+    expect(oracleMessages()[0]?.reading?.readingId).toBe('r1');
+  });
+
   /* ---------------------------------------------------------------------- */
   /*  Follow-up discussion                                                   */
   /* ---------------------------------------------------------------------- */

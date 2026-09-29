@@ -61,12 +61,20 @@ export const getQuota = onCall(
         plan !== 'free' && planExpiry !== null && Date.now() > new Date(planExpiry).getTime();
       const effectivePlan = expired ? 'free' : plan;
 
+      // Reported alongside effectivePlan below — a 'free' response must
+      // never carry a stale (now-meaningless, already-past) expiry date,
+      // the same way the no-existing-doc branch above always pairs
+      // plan: 'free' with planExpiry: null. Computed regardless of
+      // whether the self-heal write below succeeds, so THIS response is
+      // internally consistent even on a write failure — only future
+      // reads depend on that write landing.
+      const effectivePlanExpiry = expired ? null : planExpiry;
+
       if (expired) {
         // Self-heal the stale doc, matching askOracle's claimQuotaSlot — otherwise
         // this correction only ever lives in this response, never persisted, and
         // every getQuota call before the next askOracle call keeps re-deriving it
-        // from scratch instead of the doc reflecting reality. Best-effort: the
-        // response above is already correct regardless of whether this succeeds.
+        // from scratch instead of the doc reflecting reality.
         db.collection('quotas')
           .doc(userId)
           .set({ plan: 'free', planExpiry: null }, { merge: true })
@@ -77,7 +85,14 @@ export const getQuota = onCall(
       const limit = unlimited ? null : dailyLimit;
       const remaining = unlimited ? null : Math.max(0, dailyLimit - used);
 
-      return { plan: effectivePlan, used, limit, remaining, dayKey: currentDay, planExpiry };
+      return {
+        plan: effectivePlan,
+        used,
+        limit,
+        remaining,
+        dayKey: currentDay,
+        planExpiry: effectivePlanExpiry,
+      };
     }).catch(err => {
       if (err instanceof HttpsError) {
         throw err;
