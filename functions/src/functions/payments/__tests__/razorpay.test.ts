@@ -426,6 +426,9 @@ describe('PHASE 6A-R1 — razorpayWebhook fail-safe boundary (end to end)', () =
   /* ------------------------------------------------------------------------ */
 
   it('payment.captured with an unrecognized plan grants no entitlement and logs a warning', async () => {
+    // Issue #129: the ledger, not the payload, is now the source of planId
+    // — bind an order whose ledger record itself names an unrecognized plan.
+    bindOrder('order_test_1', { uid: 'real-uid-1', planId: 'plan_does_not_exist' });
     const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
     const { razorpayWebhook } = await import('../razorpay');
     const { req, res } = fakeReqRes(
@@ -449,6 +452,13 @@ describe('PHASE 6A-R1 — razorpayWebhook fail-safe boundary (end to end)', () =
     // own unknown-plan branch already did. A payer would be charged by
     // Razorpay and never upgraded, with nothing in Cloud Logging to explain
     // why — see razorpay.ts's fix for the full account.
+    // Issue #129: the ledger, not the payload, is now the source of planId
+    // — bind a subscription whose ledger record itself names an
+    // unrecognized plan.
+    bindSubscription('sub_test_unknown_plan', {
+      uid: 'real-uid-1',
+      planId: 'plan_does_not_exist',
+    });
     const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
     const { razorpayWebhook } = await import('../razorpay');
     const { req, res } = fakeReqRes({
