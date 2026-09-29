@@ -9,47 +9,37 @@
  *
  * Flow on successful payment:
  *   1. Verify HMAC signature
- *   2. Extract user ID from payment notes (set by client at order creation)
- *   3. Map Razorpay plan ID → PlanTier
+ *   2. Resolve the entitlement binding from this system's own ledger
+ *      (razorpayOrders/{orderId} or razorpaySubscriptions/{subscriptionId})
+ *   3. Map the ledger's Razorpay plan ID → PlanTier
  *   4. Update /quotas/{userId}.plan in Firestore
  *   5. Set Firebase Auth custom claims ({ plan, planExpiry })
  *   6. Write audit log
  *
- * PHASE 6A-R1 — trust model, stated precisely (see
- * docs/audit/PHASE_6A_R1_OWNERSHIP_ENTITLEMENT_HARDENING.md §B for the
- * full finding and remediation record):
+ * Trust model (issue #129; history in PHASE_6A_F1 §5 / PHASE_6A_R1 §B):
  *
- * The HMAC signature above proves ONE thing: this payload was produced
- * by Razorpay's own servers, using the shared webhook secret. It does
- * NOT prove that `notes.userId` — the value that actually receives the
- * plan upgrade — names the account that made the payment, or any
- * account at all. `notes.userId` is set wherever the Razorpay order was
- * originally created, and this repository contains NO order-creation
- * code (`docs/audit/PHASE_6A_F1_OWNERSHIP_INVESTIGATION.md` §5
- * confirmed this by exhaustive search). A genuine payer→order→uid
- * binding, verified server-side at order-creation time the way
- * `verifyGooglePlayPurchase` binds a purchase token to its redeeming
- * account (`payments/googlePlay.ts`), would require that missing
- * integration piece — inventing one here, without the code that would
- * make it true, would misrepresent what this endpoint actually
- * verifies. This function therefore does NOT claim payer identity is
- * cryptographically bound to `notes.userId`; it only guarantees the
- * three things achievable entirely within the code that exists today:
- *   1. the event genuinely came from Razorpay (HMAC, unchanged);
- *   2. `notes.userId` and the plan-identifying field are well-formed,
- *      non-empty strings, not merely truthy values of unknown shape
- *      (`extractNonEmptyString()` below — previously a bare `!userId`
- *      check let a non-string JSON value reach `auth.getUser()`/
- *      Firestore as an uncontrolled type error, caught only by the
- *      outer catch-all rather than rejected deliberately);
- *   3. an entitlement grant aimed at a `notes.userId` with no matching
- *      Firebase Auth account is recorded as a distinct, higher-signal
- *      `securityEvents` entry (`razorpay_entitlement_target_unverifiable`),
- *      not folded into the same generic `payment_razorpay_fail` bucket
- *      every transient failure already used.
- * If/when a real order-creation integration exists, binding entitlement
- * to a verified payer is the next authorized phase's work — not
- * something this phase invents without it.
+ * The HMAC signature proves only that Razorpay's servers produced the
+ * payload. It does NOT prove that the payload's `notes.userId` names the
+ * account that paid: notes are set wherever the order was created, which
+ * is outside anything this endpoint can verify. So this endpoint no longer
+ * reads identity or plan from the payload at all.
+ *
+ * Entitlement is granted only for an order/subscription that THIS system
+ * created and recorded in its ledger, keyed by Razorpay's own id:
+ *   razorpayOrders/{order_id}               { uid, planId, ... }
+ *   razorpaySubscriptions/{subscription_id} { uid, planId, ... }
+ * The ledger's `uid` must be bound to `request.auth.uid` by the
+ * server-side creation callable that writes it (Admin SDK only; clients
+ * cannot read or write these collections — Firestore's catch-all deny).
+ * That callable does not exist yet; until it does, the ledger is empty
+ * and this endpoint grants nothing — it fails closed. Any event whose id
+ * is missing, not in the ledger, or bound to a malformed ledger record is
+ * acknowledged (200, so Razorpay does not retry forever), granted nothing,
+ * and recorded as a `razorpay_unbound_entitlement` security event.
+ *
+ * Kept from Phase 6A-R1: a ledger uid with no Firebase Auth account still
+ * produces zero entitlement mutation and its own
+ * `razorpay_entitlement_target_unverifiable` security event.
  */
 
 import * as crypto from 'crypto';
@@ -245,6 +235,68 @@ async function recordUnverifiableEntitlementTarget(
   });
 }
 
+/**
+ * The entitlement binding this system recorded when it created a Razorpay
+ * order or subscription — the only source of uid and plan the webhook
+ * trusts (see this file's header).
+ */
+export type LedgerBinding =
+  | { ok: true; uid: string; planId: string }
+  | { ok: false; reason: 'missing_entity_id' | 'not_in_ledger' | 'malformed_ledger_record' };
+
+export const RAZORPAY_ORDER_LEDGER = 'razorpayOrders';
+export const RAZORPAY_SUBSCRIPTION_LEDGER = 'razorpaySubscriptions';
+
+/**
+ * Look up `entityId` in `ledger`. Never falls back to anything in the
+ * webhook payload: an absent id, an unknown id, or a record without a
+ * well-formed uid/planId all resolve to "not bound". A Firestore read
+ * error propagates (a transient failure, handled by the caller's
+ * generic catch) rather than being mistaken for "not bound".
+ *
+ * Exported for direct testing.
+ */
+export async function resolveLedgerBinding(
+  ledger: string,
+  entityId: string | undefined,
+): Promise<LedgerBinding> {
+  if (!entityId) {
+    return { ok: false, reason: 'missing_entity_id' };
+  }
+  const snap = await db.collection(ledger).doc(entityId).get();
+  if (!snap.exists) {
+    return { ok: false, reason: 'not_in_ledger' };
+  }
+  const data = snap.data() as Record<string, unknown> | undefined;
+  const uid = extractNonEmptyString(data?.uid);
+  const planId = extractNonEmptyString(data?.planId);
+  if (!uid || !planId) {
+    return { ok: false, reason: 'malformed_ledger_record' };
+  }
+  return { ok: true, uid, planId };
+}
+
+async function recordUnboundEntitlement(
+  eventType: string,
+  reason: string,
+  entityId: string | undefined,
+  claimedUserId: string | undefined,
+  requestMeta: RequestAuditMeta,
+): Promise<void> {
+  await db.collection('securityEvents').add({
+    type: 'razorpay_unbound_entitlement',
+    event: eventType,
+    reason,
+    ...(entityId ? { entityId } : {}),
+    // The payload's own claim, kept for forensics only — never trusted.
+    ...(claimedUserId ? { claimedUserId } : {}),
+    source: requestMeta.source,
+    ipHash: requestMeta.ipHash,
+    userAgent: requestMeta.userAgent,
+    ts: FieldValue.serverTimestamp(),
+  });
+}
+
 async function upgradePlan(
   userId: string,
   plan: PlanTier,
@@ -413,24 +465,33 @@ export const razorpayWebhook = onRequest(
         const entity = payment?.entity as Record<string, unknown> | undefined;
         const notes = entity?.notes as Record<string, string> | undefined;
 
-        const userId = extractNonEmptyString(notes?.userId);
-        const razorPlan =
-          extractNonEmptyString(notes?.planId) ?? extractNonEmptyString(entity?.description);
         const paymentId = extractNonEmptyString(entity?.id);
+        const orderId = extractNonEmptyString(entity?.order_id);
 
-        if (!userId || !razorPlan) {
-          logger.warn('razorpay payment.captured: missing userId or planId in notes', {
+        const binding = await resolveLedgerBinding(RAZORPAY_ORDER_LEDGER, orderId);
+        if (!binding.ok) {
+          logger.warn('razorpay payment.captured: no ledger binding, granting nothing', {
+            reason: binding.reason,
+            orderId,
             ipHash: requestMeta.ipHash,
             durationMs: Date.now() - startedAt,
           });
+          await recordUnboundEntitlement(
+            'payment.captured',
+            binding.reason,
+            orderId,
+            extractNonEmptyString(notes?.userId),
+            requestMeta,
+          );
           res.status(200).send('OK');
           return;
         }
+        const userId = binding.uid;
 
-        const plan = RAZORPAY_PLAN_MAP[razorPlan];
+        const plan = RAZORPAY_PLAN_MAP[binding.planId];
         if (!plan) {
           logger.warn('razorpay: unknown plan', {
-            razorPlan,
+            razorPlan: binding.planId,
             ipHash: requestMeta.ipHash,
             durationMs: Date.now() - startedAt,
           });
@@ -471,20 +532,29 @@ export const razorpayWebhook = onRequest(
         const entity = sub?.entity as Record<string, unknown> | undefined;
         const notes = entity?.notes as Record<string, string> | undefined;
 
-        const userId = extractNonEmptyString(notes?.userId);
-        const razorPlan = extractNonEmptyString(entity?.plan_id);
         const subscriptionId = extractNonEmptyString(entity?.id);
 
-        if (!userId || !razorPlan || !subscriptionId) {
-          logger.warn('razorpay subscription.activated: missing userId, plan_id, or entity id', {
+        const binding = await resolveLedgerBinding(RAZORPAY_SUBSCRIPTION_LEDGER, subscriptionId);
+        if (!binding.ok) {
+          logger.warn('razorpay subscription.activated: no ledger binding, granting nothing', {
+            reason: binding.reason,
+            subscriptionId,
             ipHash: requestMeta.ipHash,
             durationMs: Date.now() - startedAt,
           });
+          await recordUnboundEntitlement(
+            'subscription.activated',
+            binding.reason,
+            subscriptionId,
+            extractNonEmptyString(notes?.userId),
+            requestMeta,
+          );
           res.status(200).send('OK');
           return;
         }
+        const userId = binding.uid;
 
-        const plan = RAZORPAY_PLAN_MAP[razorPlan];
+        const plan = RAZORPAY_PLAN_MAP[binding.planId];
         if (!plan) {
           // Mirrors payment.captured's own unknown-plan branch above — an
           // unrecognized plan_id (e.g. a new pricing plan added in the
@@ -494,7 +564,7 @@ export const razorpayWebhook = onRequest(
           // only way to notice was a support ticket, with nothing in Cloud
           // Logging to point at why.
           logger.warn('razorpay subscription.activated: unknown plan', {
-            razorPlan,
+            razorPlan: binding.planId,
             ipHash: requestMeta.ipHash,
             durationMs: Date.now() - startedAt,
           });
