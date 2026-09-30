@@ -59,7 +59,7 @@ import { useColors, useTheme } from '@theme/ThemeProvider';
 import { useTypography } from '@theme/useTypography';
 import { useTranslation, useI18n } from '@i18n/I18nProvider';
 import { useSettingsStore } from '@stores/settingsStore';
-import { useQuota } from '@hooks/useQuota';
+import { useQuota, invalidateQuotaCache } from '@hooks/useQuota';
 import { useQuotaStore } from '@stores/quotaStore';
 import { useSpeechToText } from '@hooks/useSpeechToText';
 import { useTextToSpeech } from '@hooks/useTextToSpeech';
@@ -277,6 +277,17 @@ const ReadingScreen: React.FC = () => {
           status: 'sent',
           reading: result.reading,
         });
+        // The response already carries the server's own post-charge
+        // quotaRemaining — the one number that can never drift from the
+        // Firestore ledger claimQuotaSlot() just wrote, unlike the local
+        // optimistic counter consumeOne() above updated (device-only,
+        // never reconciled against a second device or a prior failed
+        // attempt whose refund path took a different route). Invalidating
+        // here, rather than trusting useQuota's own ≤60s cache, means the
+        // next screen that consults it (same convention authStore.ts
+        // already uses on sign-out) fetches fresh instead of serving a
+        // stale pre-ask figure.
+        invalidateQuotaCache();
         // Binds the server's reading id and freezes this Reading's moment.
         attachReading(targetThreadId, result.reading);
 

@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Shams Context — Phone Sync</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+      background: #0f1419;
+      color: #e0e0e0;
+      padding: 12px;
+      min-height: 100vh;
+    }
+
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      padding: 20px;
+      border-radius: 12px;
+      margin-bottom: 20px;
+      box-shadow: 0 4px 20px rgba(102, 126, 234, 0.3);
+    }
+
+    h1 {
+      font-size: 24px;
+      margin-bottom: 6px;
+    }
+
+    .status {
+      font-size: 12px;
+      opacity: 0.9;
+    }
+
+    .status.live { color: #4ade80; }
+    .status.sync { color: #fbbf24; }
+
+    .section {
+      background: #1a1f2e;
+      border: 1px solid #2d3748;
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 16px;
+    }
+
+    .section h2 {
+      font-size: 14px;
+      font-weight: 600;
+      color: #a0aec0;
+      margin-bottom: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .section-content {
+      background: #0f1419;
+      border-radius: 6px;
+      padding: 12px;
+      font-size: 13px;
+      line-height: 1.5;
+      max-height: 300px;
+      overflow-y: auto;
+    }
+
+    .section-content code {
+      background: #2d3748;
+      padding: 2px 4px;
+      border-radius: 3px;
+      font-family: 'Monaco', 'Courier New', monospace;
+    }
+
+    .task-item {
+      background: #2d3748;
+      border-left: 3px solid #667eea;
+      padding: 10px 12px;
+      margin-bottom: 8px;
+      border-radius: 4px;
+    }
+
+    .task-item strong { color: #fbbf24; }
+
+    .button-group {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    button {
+      background: #667eea;
+      color: white;
+      border: none;
+      padding: 10px 16px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    button:hover {
+      background: #5568d3;
+      transform: translateY(-1px);
+    }
+
+    button.secondary {
+      background: #2d3748;
+      color: #a0aec0;
+    }
+
+    button.secondary:hover {
+      background: #3d4758;
+    }
+
+    .input-group {
+      margin-top: 12px;
+    }
+
+    input[type="text"],
+    textarea {
+      width: 100%;
+      padding: 8px 10px;
+      background: #0f1419;
+      border: 1px solid #2d3748;
+      border-radius: 4px;
+      color: #e0e0e0;
+      font-size: 12px;
+      font-family: inherit;
+      margin-bottom: 8px;
+    }
+
+    textarea {
+      min-height: 60px;
+      resize: vertical;
+    }
+
+    .loading {
+      opacity: 0.5;
+      pointer-events: none;
+    }
+
+    .error {
+      background: #7f1d1d;
+      color: #fecaca;
+      padding: 8px 10px;
+      border-radius: 4px;
+      margin-bottom: 12px;
+      font-size: 12px;
+    }
+
+    .success {
+      background: #065f46;
+      color: #86efac;
+      padding: 8px 10px;
+      border-radius: 4px;
+      margin-bottom: 12px;
+      font-size: 12px;
+    }
+
+    .tabs {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+      gap: 4px;
+      margin-bottom: 16px;
+    }
+
+    .tab-btn {
+      padding: 8px 10px;
+      font-size: 11px;
+      background: #2d3748;
+      color: #a0aec0;
+    }
+
+    .tab-btn.active {
+      background: #667eea;
+      color: white;
+    }
+
+    .git-info {
+      font-size: 11px;
+      color: #718096;
+      margin-top: 8px;
+      padding-top: 8px;
+      border-top: 1px solid #2d3748;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>⚡ Shams Context Dashboard</h1>
+      <div class="status live">🟢 Connected to Claude Code + Chrome</div>
+      <div class="status">📱 Phone Sync Active</div>
+    </header>
+
+    <div id="message"></div>
+
+    <!-- Tabs -->
+    <div class="tabs">
+      <button class="tab-btn active" onclick="showTab('task')">📋 Task</button>
+      <button class="tab-btn" onclick="showTab('changes')">💾 Changes</button>
+      <button class="tab-btn" onclick="showTab('oracle')">🔮 Oracle</button>
+      <button class="tab-btn" onclick="showTab('log')">📝 Log</button>
+      <button class="tab-btn" onclick="showTab('feedback')">💬 Feedback</button>
+    </div>
+
+    <!-- Current Task -->
+    <div id="task" class="tab-content">
+      <div class="section">
+        <h2>Current Task</h2>
+        <div class="section-content" id="task-content">Loading...</div>
+        <div class="button-group">
+          <button onclick="refreshTab('task')">🔄 Refresh</button>
+          <button class="secondary" onclick="openFile('current-task.md')">📄 Edit</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Code Changes -->
+    <div id="changes" class="tab-content" style="display:none;">
+      <div class="section">
+        <h2>Code Changes</h2>
+        <div class="section-content" id="changes-content">Loading...</div>
+        <div class="button-group">
+          <button onclick="refreshTab('changes')">🔄 Refresh</button>
+          <button class="secondary" onclick="openFile('code-changes.md')">📄 View</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Oracle Decisions -->
+    <div id="oracle" class="tab-content" style="display:none;">
+      <div class="section">
+        <h2>RKP Oracle Decisions</h2>
+        <div class="section-content" id="oracle-content">Loading...</div>
+        <div class="button-group">
+          <button onclick="refreshTab('oracle')">🔄 Refresh</button>
+          <button class="secondary" onclick="openFile('oracle-decisions.md')">📄 View</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Session Log -->
+    <div id="log" class="tab-content" style="display:none;">
+      <div class="section">
+        <h2>Session Log</h2>
+        <div class="section-content" id="log-content">Loading...</div>
+        <div class="button-group">
+          <button onclick="refreshTab('log')">🔄 Refresh</button>
+          <button class="secondary" onclick="openFile('session-log.md')">📄 View</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Phone Feedback -->
+    <div id="feedback" class="tab-content" style="display:none;">
+      <div class="section">
+        <h2>Log Feedback (Phone)</h2>
+        <div id="feedback-message"></div>
+        <div class="input-group">
+          <label style="font-size: 11px; color: #a0aec0; display: block; margin-bottom: 4px;">Action</label>
+          <input id="feedback-action" type="text" placeholder="e.g., Testing, Code Review, Oracle Validation">
+
+          <label style="font-size: 11px; color: #a0aec0; display: block; margin-bottom: 4px; margin-top: 8px;">Details</label>
+          <textarea id="feedback-details" placeholder="What did you find? What's the status?"></textarea>
+        </div>
+        <div class="button-group">
+          <button onclick="submitFeedback()">✅ Submit & Sync</button>
+          <button class="secondary" onclick="clearFeedback()">🗑️ Clear</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Git Status -->
+    <div class="section">
+      <h2>Git Status</h2>
+      <div id="git-info" class="git-info">Loading...</div>
+    </div>
+  </div>
+
+  <script>
+    const API_BASE = '/api';
+
+    async function loadContext() {
+      try {
+        const res = await fetch(`${API_BASE}/context`);
+        const json = await res.json();
+
+        if (json.success) {
+          renderContext(json.data);
+        }
+      } catch (err) {
+        console.error('Failed to load context:', err);
+      }
+    }
+
+    function renderContext(data) {
+      const render = (key, id) => {
+        const el = document.getElementById(id);
+        if (el && data[key + '.md']) {
+          el.innerHTML = `<pre>${escapeHtml(data[key + '.md'])}</pre>`;
+        }
+      };
+
+      render('current-task', 'task-content');
+      render('code-changes', 'changes-content');
+      render('oracle-decisions', 'oracle-content');
+      render('session-log', 'log-content');
+
+      loadGitStatus();
+    }
+
+    async function loadGitStatus() {
+      try {
+        const res = await fetch(`${API_BASE}/git/status`);
+        const json = await res.json();
+
+        if (json.success) {
+          const statusText = json.status || '✅ All synced';
+          const lastCommit = json.lastCommit || 'N/A';
+          document.getElementById('git-info').innerHTML =
+            `Status: ${statusText}<br>Latest: <code>${lastCommit}</code>`;
+        }
+      } catch (err) {
+        console.error('Failed to load git status:', err);
+      }
+    }
+
+    async function submitFeedback() {
+      const action = document.getElementById('feedback-action').value.trim();
+      const details = document.getElementById('feedback-details').value.trim();
+
+      if (!action || !details) {
+        showMessage('⚠️ Please fill in both action and details', 'error');
+        return;
+      }
+
+      try {
+        const btn = event.target;
+        btn.disabled = true;
+        btn.classList.add('loading');
+
+        const res = await fetch(`${API_BASE}/context/session-log/append`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action, details })
+        });
+
+        const json = await res.json();
+
+        if (json.success) {
+          showMessage('✅ Feedback logged and synced to Git!', 'success');
+          clearFeedback();
+          setTimeout(() => {
+            loadContext();
+            showTab('log');
+          }, 1000);
+        } else {
+          showMessage(`❌ Error: ${json.error}`, 'error');
+        }
+      } catch (err) {
+        showMessage(`❌ Failed: ${err.message}`, 'error');
+      } finally {
+        if (btn) {
+          btn.disabled = false;
+          btn.classList.remove('loading');
+        }
+      }
+    }
+
+    function clearFeedback() {
+      document.getElementById('feedback-action').value = '';
+      document.getElementById('feedback-details').value = '';
+      document.getElementById('feedback-message').innerHTML = '';
+    }
+
+    function showMessage(msg, type) {
+      const msgEl = document.getElementById('feedback-message');
+      msgEl.innerHTML = `<div class="${type}">${msg}</div>`;
+    }
+
+    function showTab(tabName) {
+      // Hide all
+      document.querySelectorAll('.tab-content').forEach(el => el.style.display = 'none');
+      document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+
+      // Show selected
+      document.getElementById(tabName).style.display = 'block';
+      event.target.classList.add('active');
+
+      // Load data
+      loadContext();
+    }
+
+    function refreshTab(tabName) {
+      loadContext();
+    }
+
+    function openFile(filename) {
+      alert(`📝 To edit: open .claude-context/${filename} in your editor`);
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    // Load on start
+    loadContext();
+    setInterval(loadContext, 30000); // Auto-refresh every 30s
+  </script>
+</body>
+</html>
