@@ -12,6 +12,7 @@
  */
 
 import type { StringTable } from '@i18n/types';
+import { en } from './en';
 
 export const hi: StringTable = {
   app: {
@@ -166,6 +167,12 @@ export const hi: StringTable = {
     discussionUnavailable: 'ओरेकल ने इसका उत्तर नहीं दिया। पुनः पूछें।',
     discussionReadingGone: 'यह उत्तर अब चर्चा के लिए उपलब्ध नहीं है।',
     suggestedQuestionsLabel: 'आप पूछ सकते हैं',
+    // Frozen language (see i18n/types.ts): new keys are not translated —
+    // they carry the English text, the same result as the runtime fallback.
+    dayToday: en.oracleChat.dayToday,
+    dayYesterday: en.oracleChat.dayYesterday,
+    copied: en.oracleChat.copied,
+    copyHint: en.oracleChat.copyHint,
   },
 
   reading: {

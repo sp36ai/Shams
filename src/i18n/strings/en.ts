@@ -158,6 +158,10 @@ export const en: StringTable = {
     discussionUnavailable: 'The oracle did not answer that. Try asking again.',
     discussionReadingGone: 'That reading is no longer available to discuss.',
     suggestedQuestionsLabel: 'You may ask',
+    dayToday: 'Today',
+    dayYesterday: 'Yesterday',
+    copied: 'Copied',
+    copyHint: 'Long press to copy',
   },
 
   reading: {

@@ -26,6 +26,7 @@ import type { WatchReading } from '../../firebase/watchOracle';
 import RkpWatchCard, { STATE_HEADLINE } from './RkpWatchCard';
 import RemedyProtocolCard from './RemedyProtocolCard';
 import SuggestedQuestionsRow from './SuggestedQuestionsRow';
+import { bubbleTimeLabel } from '@utils/chatTime';
 import { directionalFocusFor } from '../../data/watchRemedyContext';
 import type { SpeakingStatus } from '@hooks/useTextToSpeech';
 
@@ -70,7 +71,55 @@ interface ChatBubbleProps {
   onToggleSpeech: (messageId: string, text: string, lang: 'en' | 'ur' | 'hi') => void;
   /** Fills the seeker's message box with the tapped suggestion. Never sends. */
   onSelectSuggestedQuestion: (question: string) => void;
+  /**
+   * Long-press copy of a text bubble (the seeker's words, or a follow-up
+   * reply). Absent → bubbles are not copyable. Verdict cards are not copied
+   * here; the Reading's own Share action covers those.
+   */
+  onCopyText?: (text: string) => void;
+  /** Narration progress (0–1) of the ACTIVE message; null when nothing plays. */
+  ttsProgress?: number | null;
 }
+
+/** The time in a bubble's corner. Renders nothing for an unparseable time. */
+const BubbleTime: React.FC<{ iso: string; lang: 'en' | 'ur' | 'hi'; color: string }> = ({
+  iso,
+  lang,
+  color,
+}) => {
+  const typography = useTypography();
+  const label = bubbleTimeLabel(iso, lang);
+  if (label === null) {
+    return null;
+  }
+  return (
+    <Text
+      style={[typography('caption'), styles.time, { color }]}
+      testID="chat-bubble-time"
+      accessibilityLabel={label}
+    >
+      {label}
+    </Text>
+  );
+};
+
+/** A thin bar under the play control, filled to how far narration has got. */
+const NarrationProgress: React.FC<{ progress: number }> = ({ progress }) => {
+  const colors = useColors();
+  const percent = Math.round(progress * 100);
+  return (
+    <View
+      style={[styles.progressTrack, { backgroundColor: colors.border }]}
+      testID="narration-progress"
+      accessibilityRole="progressbar"
+      accessibilityValue={{ min: 0, max: 100, now: percent }}
+    >
+      <View
+        style={[styles.progressFill, { width: `${percent}%`, backgroundColor: colors.goldBright }]}
+      />
+    </View>
+  );
+};
 
 const ChatBubble: React.FC<ChatBubbleProps> = ({
   message,
@@ -81,6 +130,8 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({
   ttsActiveMessageId,
   onToggleSpeech,
   onSelectSuggestedQuestion,
+  onCopyText,
+  ttsProgress = null,
 }) => {
   const colors = useColors();
   const typography = useTypography();
@@ -91,14 +142,25 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({
   if (isUser) {
     return (
       <View style={[styles.row, styles.rowUser]}>
-        <View style={[styles.bubble, styles.userBubble, { backgroundColor: colors.accent }]}>
+        <Pressable
+          onLongPress={onCopyText !== undefined ? () => onCopyText(message.text) : undefined}
+          disabled={onCopyText === undefined}
+          accessibilityHint={onCopyText !== undefined ? t('oracleChat.copyHint') : undefined}
+          style={[styles.bubble, styles.userBubble, { backgroundColor: colors.accent }]}
+          testID="chat-bubble-user"
+        >
           {message.kind === 'voice' && (
             <Text style={[typography('caption'), { color: colors.textOnPrimary, opacity: 0.75 }]}>
               {'🎙 ' + t('oracleChat.voiceInputTag')}
             </Text>
           )}
           <Text style={[typography('body'), { color: colors.textOnPrimary }]}>{message.text}</Text>
-        </View>
+          <BubbleTime
+            iso={message.createdAt}
+            lang={questionLang}
+            color={colors.textOnPrimary + 'B3'}
+          />
+        </Pressable>
       </View>
     );
   }
@@ -173,6 +235,7 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({
               </Text>
             </Pressable>
           )}
+          <BubbleTime iso={message.createdAt} lang={questionLang} color={colors.textFaint} />
         </View>
       </View>
     );
@@ -182,11 +245,17 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({
   const reading = message.reading;
   const isSpeaking = ttsActiveMessageId === message.id && ttsStatus === 'speaking';
   const isPaused = ttsActiveMessageId === message.id && ttsStatus === 'paused';
+  const narrationProgress =
+    ttsActiveMessageId === message.id && ttsProgress !== null ? ttsProgress : null;
 
   if (message.variant === 'discussion') {
     return (
       <View style={[styles.row, styles.rowOracle]}>
-        <View
+        <Pressable
+          onLongPress={onCopyText !== undefined ? () => onCopyText(message.text) : undefined}
+          disabled={onCopyText === undefined}
+          accessibilityHint={onCopyText !== undefined ? t('oracleChat.copyHint') : undefined}
+          testID="chat-bubble-discussion"
           style={[
             styles.bubble,
             styles.oracleBubble,
@@ -240,7 +309,9 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({
                   : '▶ ' + t('oracleChat.listenToVerdict')}
             </Text>
           </Pressable>
-        </View>
+          {narrationProgress !== null && <NarrationProgress progress={narrationProgress} />}
+          <BubbleTime iso={message.createdAt} lang={questionLang} color={colors.textFaint} />
+        </Pressable>
       </View>
     );
   }
@@ -273,7 +344,10 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({
                     ? t('oracleChat.paused')
                     : t('oracleChat.listenToVerdict')}
               </Text>
+              <View style={styles.flexSpacer} />
+              <BubbleTime iso={message.createdAt} lang={questionLang} color={colors.textFaint} />
             </View>
+            {narrationProgress !== null && <NarrationProgress progress={narrationProgress} />}
             <RkpWatchCard
               window={reading.window}
               lagnaSignName={reading.lagnaSignName}
@@ -374,6 +448,24 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 4,
     marginLeft: 4,
+  },
+  time: {
+    alignSelf: 'flex-end',
+    marginTop: 4,
+    fontSize: 11,
+  },
+  flexSpacer: {
+    flex: 1,
+  },
+  progressTrack: {
+    height: 2,
+    borderRadius: 1,
+    marginTop: 6,
+    marginBottom: 2,
+    overflow: 'hidden',
+  },
+  progressFill: {
+    height: 2,
   },
   speechBtn: {
     width: 28,

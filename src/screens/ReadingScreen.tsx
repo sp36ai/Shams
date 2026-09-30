@@ -81,6 +81,8 @@ import StarfieldBackground from '@components/StarfieldBackground';
 import ChatBubble from '@components/oracle/ChatBubble';
 import ChatComposer from '@components/oracle/ChatComposer';
 import ReadingHeader from '@components/oracle/ReadingHeader';
+import { dayLabelFor, withDaySeparators, type ChatRow } from '@utils/chatTime';
+import { copyText } from '@utils/clipboard';
 
 /**
  * Maps a send failure to a message the seeker can act on. Firebase callable
@@ -117,6 +119,41 @@ export function errorMessageFor(err: unknown, t: ReturnType<typeof useTranslatio
   }
   return t('oracleChat.failedGeneric');
 }
+
+/**
+ * A day chip between messages from different days — "Today", "Yesterday",
+ * or the date. A Reading can be discussed over several days; this keeps a
+ * reply from three days later from reading as if it came a minute after the
+ * verdict.
+ */
+const DaySeparator: React.FC<{ iso: string; lang: 'en' | 'ur' | 'hi' }> = ({ iso, lang }) => {
+  const colors = useColors();
+  const typography = useTypography();
+  const t = useTranslation();
+  const label = dayLabelFor(iso, new Date(), lang);
+  if (label === null) {
+    return null;
+  }
+  const text =
+    label.kind === 'today'
+      ? t('oracleChat.dayToday')
+      : label.kind === 'yesterday'
+        ? t('oracleChat.dayYesterday')
+        : label.text;
+  return (
+    <View style={styles.daySeparatorRow} testID="chat-day-separator">
+      <Text
+        style={[
+          typography('caption'),
+          styles.daySeparatorChip,
+          { color: colors.textMuted, backgroundColor: colors.surface, borderColor: colors.border },
+        ]}
+      >
+        {text}
+      </Text>
+    </View>
+  );
+};
 
 /** Shown before the first question of a new Reading. */
 const EmptyState: React.FC = () => {
@@ -224,6 +261,9 @@ const ReadingScreen: React.FC = () => {
       ? thread.messages
       : thread.messages.filter(m => m.id !== openingId);
   }, [thread]);
+
+  /** The conversation with day separators interleaved, as the list renders it. */
+  const rows = useMemo(() => withDaySeparators(messages), [messages]);
 
   // ── The two send paths ────────────────────────────────────────────────────
   //
@@ -597,19 +637,26 @@ const ReadingScreen: React.FC = () => {
     }
   }, [messages.length]);
 
-  const renderMessage = useCallback(
-    ({ item }: { item: ReadingMessage }) => (
-      <ChatBubble
-        message={item}
-        questionLang={lang}
-        onRetry={handleRetry}
-        onAskAsNewQuestion={handleAskAsNewReading}
-        ttsStatus={tts.status}
-        ttsActiveMessageId={tts.activeMessageId}
-        onToggleSpeech={tts.toggle}
-        onSelectSuggestedQuestion={setInputText}
-      />
-    ),
+  const handleCopyText = useCallback((text: string) => copyText(text, t('oracleChat.copied')), [t]);
+
+  const renderRow = useCallback(
+    ({ item }: { item: ChatRow<ReadingMessage> }) =>
+      item.type === 'separator' ? (
+        <DaySeparator iso={item.iso} lang={lang} />
+      ) : (
+        <ChatBubble
+          message={item.message}
+          questionLang={lang}
+          onRetry={handleRetry}
+          onAskAsNewQuestion={handleAskAsNewReading}
+          ttsStatus={tts.status}
+          ttsActiveMessageId={tts.activeMessageId}
+          onToggleSpeech={tts.toggle}
+          onSelectSuggestedQuestion={setInputText}
+          onCopyText={handleCopyText}
+          ttsProgress={tts.progress}
+        />
+      ),
     [
       lang,
       handleRetry,
@@ -617,7 +664,9 @@ const ReadingScreen: React.FC = () => {
       tts.status,
       tts.activeMessageId,
       tts.toggle,
+      tts.progress,
       setInputText,
+      handleCopyText,
     ],
   );
 
@@ -694,9 +743,9 @@ const ReadingScreen: React.FC = () => {
         ) : (
           <FlatList
             ref={listRef}
-            data={messages}
-            keyExtractor={m => m.id}
-            renderItem={renderMessage}
+            data={rows}
+            keyExtractor={row => row.key}
+            renderItem={renderRow}
             ListHeaderComponent={<ReadingHeader thread={headerThread} />}
             contentContainerStyle={styles.listContent}
             onContentSizeChange={() => listRef.current?.scrollToEnd({ animated: true })}
@@ -770,6 +819,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 32,
+  },
+  daySeparatorRow: {
+    alignItems: 'center',
+    marginVertical: 8,
+  },
+  daySeparatorChip: {
+    paddingHorizontal: 10,
+    paddingVertical: 3,
+    borderRadius: 10,
+    borderWidth: StyleSheet.hairlineWidth,
+    overflow: 'hidden',
   },
   micErrorBanner: {
     paddingHorizontal: 16,

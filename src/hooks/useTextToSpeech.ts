@@ -57,6 +57,30 @@ export interface TextToSpeechState {
   stop: () => void;
   /** speak / pause / resume, whichever this messageId's button should do. */
   toggle: (messageId: string, text: string, lang: Lang) => void;
+  /**
+   * How far through the active message's narration the engine has spoken,
+   * 0–1, in PROGRESS_STEP increments. Null when idle. Stays at 0 on engines
+   * that never emit tts-progress (see this file's header), so a caller shows
+   * no movement there rather than a guess.
+   */
+  progress: number | null;
+}
+
+/** Progress is published in 5% steps: enough to move a bar smoothly, few
+ *  enough re-renders that a long narration does not repaint the list per word. */
+export const PROGRESS_STEP = 0.05;
+
+/**
+ * Fraction of `total` characters spoken, rounded down to PROGRESS_STEP and
+ * clamped to [0, 1]. Exported for direct testing.
+ */
+export function quantizedProgress(spoken: number, total: number): number {
+  if (!(total > 0) || !Number.isFinite(spoken)) {
+    return 0;
+  }
+  const fraction = Math.min(1, Math.max(0, spoken / total));
+  const steps = Math.floor(fraction / PROGRESS_STEP + 1e-9);
+  return Math.min(1, Number((steps * PROGRESS_STEP).toFixed(2)));
 }
 
 /* -------------------------------------------------------------------------- */
@@ -183,6 +207,7 @@ interface Playback {
 export function useTextToSpeech(): TextToSpeechState {
   const [activeMessageId, setActiveMessageId] = useState<string | null>(null);
   const [status, setStatus] = useState<SpeakingStatus>('idle');
+  const [progress, setProgress] = useState<number | null>(null);
 
   const playbackRef = useRef<Playback | null>(null);
   /**
@@ -206,6 +231,7 @@ export function useTextToSpeech(): TextToSpeechState {
     playbackRef.current = null;
     setActiveMessageId(null);
     setStatus('idle');
+    setProgress(null);
   }, []);
 
   useEffect(() => {
@@ -213,6 +239,7 @@ export function useTextToSpeech(): TextToSpeechState {
       playbackRef.current = null;
       setActiveMessageId(null);
       setStatus('idle');
+      setProgress(null);
     };
 
     const onCancel = (): void => {
@@ -231,8 +258,13 @@ export function useTextToSpeech(): TextToSpeechState {
 
     const onProgress = (e: unknown): void => {
       const offset = progressOffset(e);
-      if (offset !== null && playbackRef.current !== null) {
-        playbackRef.current.segmentOffset = offset;
+      const playback = playbackRef.current;
+      if (offset !== null && playback !== null) {
+        playback.segmentOffset = offset;
+        const next = quantizedProgress(playback.base + offset, playback.text.length);
+        // Functional update with an equality bail-out: most events land in the
+        // same 5% step and must not re-render anything.
+        setProgress(prev => (prev === next ? prev : next));
       }
     };
 
@@ -312,6 +344,7 @@ export function useTextToSpeech(): TextToSpeechState {
       playbackRef.current = { messageId, text, lang, base: 0, segmentOffset: 0 };
       setActiveMessageId(messageId);
       setStatus('speaking');
+      setProgress(0);
 
       selfCancelsRef.current = 0;
       if (replacing) {
@@ -376,5 +409,5 @@ export function useTextToSpeech(): TextToSpeechState {
     [speak, pause, resume, status],
   );
 
-  return { activeMessageId, status, speak, pause, resume, stop, toggle };
+  return { activeMessageId, status, speak, pause, resume, stop, toggle, progress };
 }
