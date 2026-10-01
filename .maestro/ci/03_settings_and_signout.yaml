@@ -13,11 +13,16 @@ name: 'Settings — plan display and sign out'
 # Requires the E2E_TEST_ACCOUNT_EMAIL / E2E_TEST_ACCOUNT_PASSWORD GitHub
 # secrets (exposed to Maestro as MAESTRO_-prefixed env vars — see ci.yml's
 # e2e-test job) and a real Firebase Auth account already provisioned in
-# shams-app-4d0e7 matching those credentials, left on the free plan with
-# onboarding already completed, so sign-in lands directly on the Oracle
-# home dashboard the way this flow expects.
+# shams-app-4d0e7 matching those credentials, left on the free plan.
+#
+# The location and onboarding gates are device-local (settingsStore's
+# MMKV flags, not the account), so clearState: true always shows them
+# again after sign-in, whatever the account has done before. The flow
+# walks through them with the same steps as 02_signup_journey.yaml.
 - launchApp:
     clearState: true
+    permissions:
+      location: allow
 
 - extendedWaitUntil:
     visible:
@@ -34,13 +39,42 @@ name: 'Settings — plan display and sign out'
 - tapOn:
     id: 'auth-submit-btn'
 
-# Firebase sign-in roundtrip + splash. Settings is a gear icon in the Home
-# header, not a tab. Widened for the same CI-environment performance-
-# ceiling reason as 01_auth_validation.yaml (see its own comment).
+# Firebase sign-in roundtrip → location gate. Widened for the same
+# CI-environment performance-ceiling reason as 01_auth_validation.yaml
+# (see its own comment).
+- extendedWaitUntil:
+    visible: 'Grant location access'
+    timeout: 90000
+- tapOn: 'Grant location access'
+
+# Onboarding — same answers and timeouts as 02_signup_journey.yaml
+- extendedWaitUntil:
+    visible: 'QUESTION ONE — INTENT'
+    timeout: 20000
+- tapOn: 'I face a decision and need clarity'
+
+- extendedWaitUntil:
+    visible: 'QUESTION TWO — REGISTER'
+    timeout: 5000
+- tapOn: 'Directly — I want clear answers'
+
+- extendedWaitUntil:
+    visible: 'QUESTION THREE — TIMING'
+    timeout: 5000
+- tapOn: 'Before important choices'
+
+- extendedWaitUntil:
+    visible:
+      id: 'onboarding-enter-btn'
+    timeout: 60000
+- tapOn:
+    id: 'onboarding-enter-btn'
+
+# Settings is a gear icon in the Home header, not a tab.
 - extendedWaitUntil:
     visible:
       id: 'settings-gear-btn'
-    timeout: 90000
+    timeout: 30000
 
 - tapOn:
     id: 'settings-gear-btn'
