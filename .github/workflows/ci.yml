@@ -227,10 +227,13 @@ jobs:
         run: nproc && free -m
 
       # -Pe2eBundleJs embeds the JS bundle so the app runs without Metro.
+      # -PreactNativeArchitectures=x86_64: the E2E emulator is x86_64, so skip
+      # the arm64-v8a native compile -- halves the C++ build, which is where a
+      # cold build exhausted memory + swap on this 7.75 GB runner (#123).
       # --console=plain (not -q) prints one line per Gradle task, so a stall
       # shows which task it is in instead of going silent.
       - name: Build debug APK (embedded JS bundle)
-        run: cd android && chmod +x gradlew && ./gradlew assembleDebug -Pe2eBundleJs=true --no-daemon --console=plain
+        run: cd android && chmod +x gradlew && ./gradlew assembleDebug -Pe2eBundleJs=true -PreactNativeArchitectures=x86_64 --no-daemon --console=plain
 
       # Handoff artifact for the e2e-test matrix below — each matrix leg
       # downloads this instead of rebuilding, so the ~13min Gradle build

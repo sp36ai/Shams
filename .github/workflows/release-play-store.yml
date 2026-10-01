@@ -36,6 +36,11 @@ on:
           - alpha
           - beta
           - production
+      dry_run:
+        description: 'Dry run: build + sign the AAB and keep it as an artifact, but do NOT upload to Play'
+        required: false
+        default: false
+        type: boolean
 
 permissions:
   contents: read
@@ -45,6 +50,13 @@ jobs:
     name: Build AAB and deploy to Play Store
     runs-on: ubuntu-latest
     if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    env:
+      # Single source of truth for "is this a dry run": only a manual run with
+      # dry_run ticked. Accepts the typed boolean (inputs.dry_run) or its
+      # string form (github.event.inputs.dry_run) so a type surprise can't
+      # turn a ticked dry run into a real upload. Always the string 'true' or
+      # 'false'; the automatic workflow_run release is always 'false'.
+      IS_DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && (inputs.dry_run == true || github.event.inputs.dry_run == 'true') }}
     steps:
       - name: Checkout
         uses: actions/checkout@v5
@@ -176,8 +188,17 @@ jobs:
           key: gradle-${{ hashFiles('android/**/*.gradle*', 'android/gradle.properties') }}
           restore-keys: gradle-
 
+      # On a dry run, also sample memory/swap once a minute: the release build
+      # (both ABIs + R8) on this 7.75 GB free runner hasn't been measured since
+      # PR #123's memory fix was sized from the debug E2E build.
       - name: Build release AAB
         run: |
+          if [ "${IS_DRY_RUN}" = "true" ]; then
+            nproc && free -m
+            (while true; do date -u +%T; free -m | sed -n '2,3p'; sleep 60; done) &
+            MEM_MONITOR_PID=$!
+            trap 'kill $MEM_MONITOR_PID 2>/dev/null || true' EXIT
+          fi
           cd android && chmod +x gradlew && ./gradlew bundleRelease --no-daemon --no-build-cache --no-configuration-cache \
             -PSHAMS_UPLOAD_STORE_FILE=shams-upload-key.jks \
             -PSHAMS_UPLOAD_STORE_PASSWORD="${{ secrets.SHAMS_UPLOAD_STORE_PASSWORD }}" \
@@ -229,7 +250,13 @@ jobs:
           # the release mechanism itself.
           retention-days: 3
 
+      # Skipped ONLY when IS_DRY_RUN is exactly 'true' (a manual run with
+      # dry_run ticked). Every other path -- the automatic workflow_run release
+      # after CI on main, and a manual run with dry_run left at its default
+      # false -- uploads exactly as before; anything other than 'true' falls
+      # back to uploading, never to silently skipping a real release.
       - name: Deploy to Play Store
+        if: env.IS_DRY_RUN != 'true'
         uses: r0adkll/upload-google-play@v1
         with:
           serviceAccountJsonPlainText: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON }}
@@ -241,3 +268,8 @@ jobs:
           status: ${{ github.event.inputs.track == 'production' && 'inProgress' || 'completed' }}
           userFraction: ${{ github.event.inputs.track == 'production' && '0.1' || '' }}
           whatsNewDirectory: android/fastlane/metadata/android/en-US/changelogs
+
+      - name: Dry run summary
+        if: env.IS_DRY_RUN == 'true'
+        run: |
+          echo "::notice::DRY RUN - the AAB was built and signed but NOT uploaded to Play. Download artifact shams-aab-${{ github.run_number }} (kept 3 days) to inspect it or upload it by hand."
