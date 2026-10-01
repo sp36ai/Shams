@@ -214,9 +214,17 @@ jobs:
           keytool -list -v -keystore android/app/debug.keystore \
             -storepass android -alias androiddebugkey
 
-      # -Pe2eBundleJs embeds the JS bundle so the app runs without Metro
+      # Record runner size up front: if the build below stalls until the job
+      # timeout, this is still in the log (PR #123's stalled build had no
+      # runner size or task names to diagnose from).
+      - name: Runner resources
+        run: nproc && free -m
+
+      # -Pe2eBundleJs embeds the JS bundle so the app runs without Metro.
+      # --console=plain (not -q) prints one line per Gradle task, so a stall
+      # shows which task it is in instead of going silent.
       - name: Build debug APK (embedded JS bundle)
-        run: cd android && chmod +x gradlew && ./gradlew assembleDebug -Pe2eBundleJs=true --no-daemon -q
+        run: cd android && chmod +x gradlew && ./gradlew assembleDebug -Pe2eBundleJs=true --no-daemon --console=plain
 
       # Handoff artifact for the e2e-test matrix below — each matrix leg
       # downloads this instead of rebuilding, so the ~13min Gradle build
