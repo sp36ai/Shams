@@ -230,7 +230,7 @@ jobs:
             | grep -iE 'uses-sdk|targetSdk|minSdk|versionCode|versionName|package' || true
 
       - name: Upload AAB artifact
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: shams-aab-${{ github.run_number }}
           path: android/app/build/outputs/bundle/release/app-release.aab
