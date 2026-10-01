@@ -240,7 +240,7 @@ jobs:
       # happens once per run, not once per flow. Internal/short-lived:
       # not the same artifact as the public "app-debug-apk" download below.
       - name: Upload debug APK (internal, for e2e-test matrix)
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: e2e-debug-apk-internal
           path: android/app/build/outputs/apk/debug/app-debug.apk
@@ -267,7 +267,7 @@ jobs:
       # need to pull down a build for device sideloading.
       - name: Upload debug APK
         if: always() && github.event_name == 'workflow_dispatch' && inputs.upload_debug_apk == true
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: app-debug-apk
           path: android/app/build/outputs/apk/debug/app-debug.apk
@@ -359,7 +359,7 @@ jobs:
           df -h /
 
       - name: Download debug APK (from e2e-build)
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v7
         with:
           name: e2e-debug-apk-internal
           path: android/app/build/outputs/apk/debug/
@@ -535,7 +535,7 @@ jobs:
 
       - name: Upload full emulator logcat
         if: always()
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: logcat-full-${{ matrix.id }}
           path: logcat_full.txt
@@ -546,7 +546,7 @@ jobs:
 
       - name: Upload Maestro results
         if: always()
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: maestro-results-${{ matrix.id }}
           path: |
@@ -560,7 +560,7 @@ jobs:
 
       - name: Publish test report
         if: always()
-        uses: dorny/test-reporter@v1
+        uses: dorny/test-reporter@v3
         with:
           name: Maestro E2E Results (${{ matrix.id }})
           path: maestro-results.xml
