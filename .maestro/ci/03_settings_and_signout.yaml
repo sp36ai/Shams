@@ -42,9 +42,18 @@ name: 'Settings — plan display and sign out'
 # Firebase sign-in roundtrip → location gate. Widened for the same
 # CI-environment performance-ceiling reason as 01_auth_validation.yaml
 # (see its own comment).
+#
+# Waits for whichever comes first (visible text is matched as a regex):
+# the location gate, or one of the AuthScreen errors. The assertions after
+# it then name the cause of a failed sign-in: a local validation error
+# means the typed credentials were wrong (e.g. ${...} not interpolated),
+# the gate message means Firebase rejected them.
 - extendedWaitUntil:
-    visible: 'Grant location access'
+    visible: 'Grant location access|The gate did not open.*|Enter a valid email address|Password must be at least 8 characters'
     timeout: 90000
+- assertNotVisible: 'Enter a valid email address'
+- assertNotVisible: 'Password must be at least 8 characters'
+- assertNotVisible: 'The gate did not open.*'
 - tapOn: 'Grant location access'
 
 # Onboarding — same answers and timeouts as 02_signup_journey.yaml
