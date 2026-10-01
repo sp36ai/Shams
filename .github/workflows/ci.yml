@@ -336,6 +336,17 @@ jobs:
             echo "::error::E2E_TEST_ACCOUNT_EMAIL and/or E2E_TEST_ACCOUNT_PASSWORD repository secrets are not set. settings-signout needs them to sign in with a pre-seeded Firebase Auth account already provisioned in shams-app-4d0e7 (see .maestro/ci/03_settings_and_signout.yaml's header for the account's required state: free plan, onboarding complete). Set both under Settings -> Secrets and variables -> Actions to fix this leg — this is a repository configuration gap, not an app or test bug."
             exit 1
           fi
+          # Shape check without printing the value: run 623 showed the app
+          # rejecting the typed email as malformed. Same rule as
+          # AuthScreen's isValidEmail (trimmed, then local@domain.tld).
+          email="$(printf '%s' "$E2E_EMAIL" | sed 's/^[[:space:]]*//; s/[[:space:]]*$//')"
+          if ! printf '%s' "$email" | grep -Eq '^[^[:space:]@]+@[^[:space:]@]+\.[^[:space:]@]+$'; then
+            echo "::error::E2E_TEST_ACCOUNT_EMAIL is set but is not a well-formed email address (length ${#E2E_EMAIL}). Re-save it as the bare address, e.g. name@example.com."
+            exit 1
+          fi
+          echo "E2E_TEST_ACCOUNT_EMAIL looks like an email address (length ${#E2E_EMAIL})."
+        env:
+          E2E_EMAIL: ${{ secrets.E2E_TEST_ACCOUNT_EMAIL }}
 
       # PHASE 8A-11: the debug APK build reinstalls its own pinned NDK and
       # CMake via `sdkmanager` regardless of what's preinstalled (confirmed
@@ -504,7 +515,7 @@ jobs:
             # on its own regardless of overall pass/fail) or from being
             # uploaded/published — see PHASE_2A_REPORT.md for the reasoning
             # and what could only be verified by an actual GitHub Actions run.
-            "$HOME/.maestro/bin/maestro" test --format junit --output maestro-results.xml .maestro/ci/${{ matrix.flow }}
+            "$HOME/.maestro/bin/maestro" test -e MAESTRO_E2E_TEST_ACCOUNT_EMAIL="$MAESTRO_E2E_TEST_ACCOUNT_EMAIL" -e MAESTRO_E2E_TEST_ACCOUNT_PASSWORD="$MAESTRO_E2E_TEST_ACCOUNT_PASSWORD" --format junit --output maestro-results.xml .maestro/ci/${{ matrix.flow }}
 
       - name: Report resource state (issue #124 — is the emulator getting OOM-killed or CPU-starved?)
         if: always()
