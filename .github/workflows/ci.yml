@@ -22,6 +22,12 @@ on:
           unconditionally.
         type: boolean
         default: false
+      run_signup_journey:
+        description: >-
+          Also run the signup-journey Maestro flow. Off by default — it is
+          on-demand only (see the e2e-test matrix comment).
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -214,12 +220,20 @@ jobs:
           keytool -list -v -keystore android/app/debug.keystore \
             -storepass android -alias androiddebugkey
 
+      # Record runner size up front: if the build below stalls until the job
+      # timeout, this is still in the log (PR #123's stalled build had no
+      # runner size or task names to diagnose from).
+      - name: Runner resources
+        run: nproc && free -m
+
       # -Pe2eBundleJs embeds the JS bundle so the app runs without Metro.
       # -PreactNativeArchitectures=x86_64: the E2E emulator is x86_64, so skip
       # the arm64-v8a native compile -- halves the C++ build, which is where a
       # cold build exhausted memory + swap on this 7.75 GB runner (#123).
+      # --console=plain (not -q) prints one line per Gradle task, so a stall
+      # shows which task it is in instead of going silent.
       - name: Build debug APK (embedded JS bundle)
-        run: cd android && chmod +x gradlew && ./gradlew assembleDebug -Pe2eBundleJs=true -PreactNativeArchitectures=x86_64 --no-daemon -q
+        run: cd android && chmod +x gradlew && ./gradlew assembleDebug -Pe2eBundleJs=true -PreactNativeArchitectures=x86_64 --no-daemon --console=plain
 
       # Handoff artifact for the e2e-test matrix below — each matrix leg
       # downloads this instead of rebuilding, so the ~13min Gradle build
@@ -287,14 +301,17 @@ jobs:
       # hiccup's blast radius to the one flow it hit, and each leg's own
       # shorter session is less likely to hit the failure window at all.
       fail-fast: false
+      # signup-journey runs ON DEMAND ONLY: a manual "Run workflow" with
+      # run_signup_journey ticked. On this free 2-vCPU runner it failed 4/4
+      # times (PRs #123 and #165, 30 Sep - 1 Oct) the same way -- "Android
+      # driver unreachable" ~10-11 min in, right after the sign-up network
+      # round-trip, load 4.9-5.5, no app crash -- including on a PR that
+      # changed no app code. As a per-push check it gave no signal and cost
+      # ~25 runner-minutes per run; the on-device test covers the same
+      # journey on real hardware. Built with fromJSON because a matrix
+      # `exclude` cannot remove an entry that `include` added.
       matrix:
-        include:
-          - id: auth-signin
-            flow: 01_auth_validation.yaml
-          - id: signup-journey
-            flow: 02_signup_journey.yaml
-          - id: settings-signout
-            flow: 03_settings_and_signout.yaml
+        include: ${{ fromJSON(format('[{0}{1}]', '{"id":"auth-signin","flow":"01_auth_validation.yaml"},{"id":"settings-signout","flow":"03_settings_and_signout.yaml"}', (github.event_name == 'workflow_dispatch' && inputs.run_signup_journey) && ',{"id":"signup-journey","flow":"02_signup_journey.yaml"}' || '')) }}
 
     steps:
       - name: Checkout
