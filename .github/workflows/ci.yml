@@ -346,12 +346,17 @@ jobs:
             at_count="$(printf '%s' "$email" | tr -cd '@' | wc -c)"
             has_space=no; printf '%s' "$email" | grep -q '[[:space:]]' && has_space=yes
             dot_after_at=no; printf '%s' "$email" | grep -q '@[^@]*\.[^@]' && dot_after_at=yes
-            echo "::error::E2E_TEST_ACCOUNT_EMAIL is set but is not a well-formed email address (length ${#E2E_EMAIL}; '@' count ${at_count}; inner whitespace ${has_space}; dot after '@' ${dot_after_at}). Re-save it as the bare address, e.g. name@example.com."
+            # Swap check: yes/no only. Lengths are never printed — this repo's
+            # Actions logs are public, and a swapped secret would mean the
+            # "email" value is the password.
+            password_has_at=no; printf '%s' "$E2E_PASSWORD" | grep -q '@' && password_has_at=yes
+            echo "::error::E2E_TEST_ACCOUNT_EMAIL is set but is not a well-formed email address ('@' count ${at_count}; inner whitespace ${has_space}; dot after '@' ${dot_after_at}; E2E_TEST_ACCOUNT_PASSWORD contains '@' ${password_has_at}). Re-save it as the bare address, e.g. name@example.com."
             exit 1
           fi
-          echo "E2E_TEST_ACCOUNT_EMAIL looks like an email address (length ${#E2E_EMAIL})."
+          echo "E2E_TEST_ACCOUNT_EMAIL looks like an email address."
         env:
           E2E_EMAIL: ${{ secrets.E2E_TEST_ACCOUNT_EMAIL }}
+          E2E_PASSWORD: ${{ secrets.E2E_TEST_ACCOUNT_PASSWORD }}
 
       # PHASE 8A-11: the debug APK build reinstalls its own pinned NDK and
       # CMake via `sdkmanager` regardless of what's preinstalled (confirmed
