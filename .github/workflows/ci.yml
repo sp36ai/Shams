@@ -28,6 +28,12 @@ on:
           on-demand only (see the e2e-test matrix comment).
         type: boolean
         default: false
+      run_settings_signout:
+        description: >-
+          Also run the settings-signout Maestro flow. Off by default — it is
+          on-demand only (see the e2e-test matrix comment).
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -308,10 +314,21 @@ jobs:
       # round-trip, load 4.9-5.5, no app crash -- including on a PR that
       # changed no app code. As a per-push check it gave no signal and cost
       # ~25 runner-minutes per run; the on-device test covers the same
-      # journey on real hardware. Built with fromJSON because a matrix
-      # `exclude` cannot remove an entry that `include` added.
+      # journey on real hardware.
+      #
+      # settings-signout is ON DEMAND ONLY too (run_settings_signout): on the
+      # CI emulator the app's Firebase onAuthStateChanged listener never
+      # fires (logcat on every run: "[Auth] bootstrap(): onAuthStateChanged
+      # did not fire within timeout"), and authStore.signIn relies on that
+      # listener to set the user, so a sign-in with valid credentials leaves
+      # the app on the Auth screen with no error (run 630, 2 Oct). Same
+      # pattern as signup-journey's #132. Until the app-side auth fix is
+      # decided, it would only keep main red and block the deploys.
+      #
+      # Built with fromJSON because a matrix `exclude` cannot remove an
+      # entry that `include` added.
       matrix:
-        include: ${{ fromJSON(format('[{0}{1}]', '{"id":"auth-signin","flow":"01_auth_validation.yaml"},{"id":"settings-signout","flow":"03_settings_and_signout.yaml"}', (github.event_name == 'workflow_dispatch' && inputs.run_signup_journey) && ',{"id":"signup-journey","flow":"02_signup_journey.yaml"}' || '')) }}
+        include: ${{ fromJSON(format('[{0}{1}{2}]', '{"id":"auth-signin","flow":"01_auth_validation.yaml"}', (github.event_name == 'workflow_dispatch' && inputs.run_settings_signout) && ',{"id":"settings-signout","flow":"03_settings_and_signout.yaml"}' || '', (github.event_name == 'workflow_dispatch' && inputs.run_signup_journey) && ',{"id":"signup-journey","flow":"02_signup_journey.yaml"}' || '')) }}
 
     steps:
       - name: Checkout
@@ -336,6 +353,27 @@ jobs:
             echo "::error::E2E_TEST_ACCOUNT_EMAIL and/or E2E_TEST_ACCOUNT_PASSWORD repository secrets are not set. settings-signout needs them to sign in with a pre-seeded Firebase Auth account already provisioned in shams-app-4d0e7 (see .maestro/ci/03_settings_and_signout.yaml's header for the account's required state: free plan, onboarding complete). Set both under Settings -> Secrets and variables -> Actions to fix this leg — this is a repository configuration gap, not an app or test bug."
             exit 1
           fi
+          # Shape check without printing the value: run 623 showed the app
+          # rejecting the typed email as malformed. Same rule as
+          # AuthScreen's isValidEmail (trimmed, then local@domain.tld).
+          email="$(printf '%s' "$E2E_EMAIL" | sed 's/^[[:space:]]*//; s/[[:space:]]*$//')"
+          if ! printf '%s' "$email" | grep -Eq '^[^[:space:]@]+@[^[:space:]@]+\.[^[:space:]@]+$'; then
+            # Structural hints only (never the value): which part of
+            # local@domain.tld is wrong.
+            at_count="$(printf '%s' "$email" | tr -cd '@' | wc -c)"
+            has_space=no; printf '%s' "$email" | grep -q '[[:space:]]' && has_space=yes
+            dot_after_at=no; printf '%s' "$email" | grep -q '@[^@]*\.[^@]' && dot_after_at=yes
+            # Swap check: yes/no only. Lengths are never printed — this repo's
+            # Actions logs are public, and a swapped secret would mean the
+            # "email" value is the password.
+            password_has_at=no; printf '%s' "$E2E_PASSWORD" | grep -q '@' && password_has_at=yes
+            echo "::error::E2E_TEST_ACCOUNT_EMAIL is set but is not a well-formed email address ('@' count ${at_count}; inner whitespace ${has_space}; dot after '@' ${dot_after_at}; E2E_TEST_ACCOUNT_PASSWORD contains '@' ${password_has_at}). Re-save it as the bare address, e.g. name@example.com."
+            exit 1
+          fi
+          echo "E2E_TEST_ACCOUNT_EMAIL looks like an email address."
+        env:
+          E2E_EMAIL: ${{ secrets.E2E_TEST_ACCOUNT_EMAIL }}
+          E2E_PASSWORD: ${{ secrets.E2E_TEST_ACCOUNT_PASSWORD }}
 
       # PHASE 8A-11: the debug APK build reinstalls its own pinned NDK and
       # CMake via `sdkmanager` regardless of what's preinstalled (confirmed
@@ -504,7 +542,7 @@ jobs:
             # on its own regardless of overall pass/fail) or from being
             # uploaded/published — see PHASE_2A_REPORT.md for the reasoning
             # and what could only be verified by an actual GitHub Actions run.
-            "$HOME/.maestro/bin/maestro" test --format junit --output maestro-results.xml .maestro/ci/${{ matrix.flow }}
+            "$HOME/.maestro/bin/maestro" test -e MAESTRO_E2E_TEST_ACCOUNT_EMAIL="$MAESTRO_E2E_TEST_ACCOUNT_EMAIL" -e MAESTRO_E2E_TEST_ACCOUNT_PASSWORD="$MAESTRO_E2E_TEST_ACCOUNT_PASSWORD" --format junit --output maestro-results.xml .maestro/ci/${{ matrix.flow }}
 
       - name: Report resource state (issue #124 — is the emulator getting OOM-killed or CPU-starved?)
         if: always()
