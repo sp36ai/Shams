@@ -341,7 +341,12 @@ jobs:
           # AuthScreen's isValidEmail (trimmed, then local@domain.tld).
           email="$(printf '%s' "$E2E_EMAIL" | sed 's/^[[:space:]]*//; s/[[:space:]]*$//')"
           if ! printf '%s' "$email" | grep -Eq '^[^[:space:]@]+@[^[:space:]@]+\.[^[:space:]@]+$'; then
-            echo "::error::E2E_TEST_ACCOUNT_EMAIL is set but is not a well-formed email address (length ${#E2E_EMAIL}). Re-save it as the bare address, e.g. name@example.com."
+            # Structural hints only (never the value): which part of
+            # local@domain.tld is wrong.
+            at_count="$(printf '%s' "$email" | tr -cd '@' | wc -c)"
+            has_space=no; printf '%s' "$email" | grep -q '[[:space:]]' && has_space=yes
+            dot_after_at=no; printf '%s' "$email" | grep -q '@[^@]*\.[^@]' && dot_after_at=yes
+            echo "::error::E2E_TEST_ACCOUNT_EMAIL is set but is not a well-formed email address (length ${#E2E_EMAIL}; '@' count ${at_count}; inner whitespace ${has_space}; dot after '@' ${dot_after_at}). Re-save it as the bare address, e.g. name@example.com."
             exit 1
           fi
           echo "E2E_TEST_ACCOUNT_EMAIL looks like an email address (length ${#E2E_EMAIL})."
