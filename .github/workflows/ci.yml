@@ -50,7 +50,7 @@ concurrency:
 jobs:
   app-quality:
     name: App Quality
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - name: Checkout
         uses: actions/checkout@v5
@@ -85,7 +85,7 @@ jobs:
 
   functions-quality:
     name: Functions Quality
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     defaults:
       run:
         working-directory: functions
@@ -123,7 +123,7 @@ jobs:
 
   e2e-build:
     name: E2E Build (debug APK)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: app-quality
     # E2E (this build plus the 3 emulator legs, the bulk of CI's billed
     # minutes, issue #119) runs on every push to main, on manual runs, and on
@@ -286,7 +286,7 @@ jobs:
 
   e2e-test:
     name: E2E Tests (Maestro) / ${{ matrix.id }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: e2e-build
     # Same reasoning as e2e-build's timeout above: single-flow legs observed
     # so far run ~6-20min, but given the same runner contention (issue #124)

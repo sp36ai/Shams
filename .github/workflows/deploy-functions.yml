@@ -44,7 +44,7 @@ permissions:
 jobs:
   verify-rules:
     name: Verify Firestore rules
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
     steps:
       - name: Checkout
@@ -77,7 +77,7 @@ jobs:
   deploy:
     name: Deploy to asia-south1
     needs: verify-rules
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     # Manual dispatch always runs; a CI-triggered run only proceeds if CI
     # actually passed — a failed or cancelled CI run must not deploy.
     if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
