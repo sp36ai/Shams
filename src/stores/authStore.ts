@@ -115,6 +115,86 @@ function cacheUserLocally(user: FirebaseAuthTypes.User | null): void {
 }
 
 /* -------------------------------------------------------------------------- */
+/*  Auth user sync — the single place user/plan/cache are applied             */
+/* -------------------------------------------------------------------------- */
+
+type AuthSet = (partial: Partial<AuthState>) => void;
+
+// Bumped on every new sync and on sign-out; a sync whose generation is no
+// longer current when its token fetch returns discards its result, so a slow
+// getIdTokenResult() can never overwrite a newer user (or a sign-out).
+let _syncGeneration = 0;
+// The sync currently running, so the onAuthStateChanged listener and the
+// signIn/signUp/signInWithGoogle success paths share one sync per uid instead
+// of racing two getIdTokenResult() calls against each other.
+let _inFlightSync: { uid: string; promise: Promise<void> } | null = null;
+
+function invalidateAuthSync(): void {
+  _syncGeneration += 1;
+  _inFlightSync = null;
+}
+
+/**
+ * Applies a Firebase user to the store: per-account reset, custom-claim plan,
+ * local cache, then `user`. Called both by the onAuthStateChanged listener
+ * and directly by each sign-in path once Firebase confirms success — the
+ * listener alone is not enough, because it is not guaranteed to fire (see
+ * AUTH_BOOTSTRAP_TIMEOUT_MS), and a sign-in that depends solely on it leaves
+ * the user stranded on the Auth screen with no error.
+ */
+function applyAuthUser(fbUser: FirebaseAuthTypes.User | null, set: AuthSet): Promise<void> {
+  if (fbUser === null) {
+    invalidateAuthSync();
+    cacheUserLocally(null);
+    useQuotaStore.getState().setPlan('free');
+    set({ user: null, isLoading: false });
+    return Promise.resolve();
+  }
+  if (_inFlightSync !== null && _inFlightSync.uid === fbUser.uid) {
+    return _inFlightSync.promise;
+  }
+  invalidateAuthSync();
+  const generation = _syncGeneration;
+  // A different uid than last session means a different account signed
+  // in on this device — per-account onboarding/location flags must not
+  // leak from whoever used the device before.
+  //
+  // We compare against AUTH_LAST_UID (not AUTH_USER_ID): the latter is
+  // the display cache and is cleared on sign-out, which would make this
+  // check see `undefined` after every explicit sign-out and therefore
+  // never fire. AUTH_LAST_UID deliberately survives sign-out so the
+  // "different account signed in" reset actually triggers.
+  const previousUid = storage.getString(KEYS.AUTH_LAST_UID);
+  if (previousUid !== undefined && previousUid !== fbUser.uid) {
+    useSettingsStore.getState().resetForNewAccount();
+  }
+  storage.set(KEYS.AUTH_LAST_UID, fbUser.uid);
+  const promise = (async (): Promise<void> => {
+    let plan: PlanTier = 'free';
+    let expiry: string | undefined;
+    try {
+      const tokenResult = await withTimeout(fbUser.getIdTokenResult(), AUTH_TOKEN_TIMEOUT_MS);
+      plan = (tokenResult?.claims.plan as PlanTier | undefined) ?? 'free';
+      expiry = tokenResult?.claims.planExpiry as string | undefined;
+    } catch {
+      /* plan stays 'free' */
+    }
+    if (generation !== _syncGeneration) {
+      return;
+    }
+    useQuotaStore.getState().setPlan(plan, expiry);
+    cacheUserLocally(fbUser);
+    set({ user: fbUser, isLoading: false });
+  })().finally(() => {
+    if (_inFlightSync?.promise === promise) {
+      _inFlightSync = null;
+    }
+  });
+  _inFlightSync = { uid: fbUser.uid, promise };
+  return promise;
+}
+
+/* -------------------------------------------------------------------------- */
 /*  Store factory                                                             */
 /* -------------------------------------------------------------------------- */
 
@@ -133,45 +213,25 @@ export const useAuthStore = create<AuthState>(set => ({
     // Bounded by AUTH_BOOTSTRAP_TIMEOUT_MS (see its own comment above) —
     // the listener itself is left attached either way, so a late-firing
     // emission after the timeout still updates `user`/plan/cache normally.
+    // Resolves `true`, not void: withTimeout() returns `undefined` on timeout,
+    // so a Promise<void> made every launch look like a timeout — the branch
+    // below then reset `user` to null right after the listener had restored
+    // the cached session.
     const settled = await withTimeout(
-      new Promise<void>(resolve => {
+      new Promise<true>(resolve => {
         let resolved = false;
         _authUnsubscribe = auth().onAuthStateChanged(async fbUser => {
-          if (fbUser) {
-            // A different uid than last session means a different account signed
-            // in on this device — per-account onboarding/location flags must not
-            // leak from whoever used the device before.
-            //
-            // We compare against AUTH_LAST_UID (not AUTH_USER_ID): the latter is
-            // the display cache and is cleared on sign-out, which would make this
-            // check see `undefined` after every explicit sign-out and therefore
-            // never fire. AUTH_LAST_UID deliberately survives sign-out so the
-            // "different account signed in" reset actually triggers.
-            const previousUid = storage.getString(KEYS.AUTH_LAST_UID);
-            if (previousUid !== undefined && previousUid !== fbUser.uid) {
-              useSettingsStore.getState().resetForNewAccount();
-            }
-            storage.set(KEYS.AUTH_LAST_UID, fbUser.uid);
-            try {
-              const tokenResult = await withTimeout(
-                fbUser.getIdTokenResult(),
-                AUTH_TOKEN_TIMEOUT_MS,
-              );
-              const plan = (tokenResult?.claims.plan as PlanTier | undefined) ?? 'free';
-              const expiry = tokenResult?.claims.planExpiry as string | undefined;
-              useQuotaStore.getState().setPlan(plan, expiry);
-            } catch {
-              useQuotaStore.getState().setPlan('free');
-            }
-            cacheUserLocally(fbUser);
-          } else {
-            cacheUserLocally(null);
-            useQuotaStore.getState().setPlan('free');
+          // A sign-out emission that arrives late — after signIn() has already
+          // applied a newer user directly (see applyAuthUser) — is stale:
+          // Firebase's own currentUser is the source of truth for "is anyone
+          // signed in right now". A real sign-out clears currentUser before
+          // this emission, so it still goes through.
+          if (fbUser !== null || auth().currentUser === null) {
+            await applyAuthUser(fbUser, set);
           }
-          set({ user: fbUser, isLoading: false });
           if (!resolved) {
             resolved = true;
-            resolve();
+            resolve(true);
           }
         });
       }),
@@ -201,12 +261,13 @@ export const useAuthStore = create<AuthState>(set => ({
     }
   },
 
-  // signIn/signUp/signInWithGoogle only perform the Firebase call and surface
-  // errors. They deliberately do NOT set `user`/plan/cache themselves —
-  // onAuthStateChanged above fires for every one of these and is the single
-  // place that syncs user, custom-claim plan, and local cache. Duplicating
-  // that here raced two independent getIdTokenResult() calls against each
-  // other and could leave isLoading/user set from whichever finished last.
+  // signIn/signUp/signInWithGoogle apply the signed-in user themselves via
+  // applyAuthUser() once Firebase confirms success, rather than relying only
+  // on onAuthStateChanged — which is not guaranteed to fire, and a sign-in
+  // that waits on it alone can sit on the Auth screen with no error.
+  // applyAuthUser() is the same function the listener calls, and it shares a
+  // single in-flight sync per uid, so the two paths no longer race their own
+  // getIdTokenResult() calls (the reason this used to be listener-only).
   signIn: async (email: string, password: string): Promise<Error | null> => {
     // Refuse immediately while locally locked out — don't even hit the network.
     const activeLockout = readLockoutUntil();
@@ -217,11 +278,12 @@ export const useAuthStore = create<AuthState>(set => ({
 
     set({ isLoading: true, error: null });
     try {
-      await auth().signInWithEmailAndPassword(email, password);
+      const cred = await auth().signInWithEmailAndPassword(email, password);
       // Success clears the failure counter and any lockout.
       storage.delete(KEYS.AUTH_FAILED_ATTEMPTS);
       storage.delete(KEYS.AUTH_LOCKOUT_UNTIL);
       set({ lockoutUntil: null });
+      await applyAuthUser(cred.user, set);
       return null;
     } catch (err) {
       const attempts = (storage.getNumber(KEYS.AUTH_FAILED_ATTEMPTS) ?? 0) + 1;
@@ -260,6 +322,8 @@ export const useAuthStore = create<AuthState>(set => ({
           /* non-fatal — displayName can be set later from Settings */
         }
       }
+      // currentUser carries the displayName just written; cred.user may not.
+      await applyAuthUser(auth().currentUser ?? cred.user, set);
       return null;
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Sign up failed';
@@ -305,6 +369,7 @@ export const useAuthStore = create<AuthState>(set => ({
       if (signInOutcome === undefined) {
         throw new Error('Google credential sign-in timed out');
       }
+      await applyAuthUser(signInOutcome.user, set);
       return null;
     } catch (err) {
       // User dismissing the account picker is not a failure — don't surface
@@ -328,6 +393,7 @@ export const useAuthStore = create<AuthState>(set => ({
     // update Firebase Auth successfully but nothing would ever flip `user`/
     // `isLoading` back, leaving the app stuck on Splash/loading forever.
     set({ isLoading: true });
+    invalidateAuthSync();
     invalidateQuotaCache();
     // auth().signOut() is a native round-trip with no SDK-level timeout
     // guarantee — same failure class as the App Check/ID-token probes this
