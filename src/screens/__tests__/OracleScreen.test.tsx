@@ -12,10 +12,16 @@
  * disconnected during a refactor fails here immediately.
  */
 import React from 'react';
-import { screen, userEvent } from '@testing-library/react-native';
+import { screen, userEvent, waitFor } from '@testing-library/react-native';
 import { useNavigation } from '@react-navigation/native';
+import Voice from '@react-native-voice/voice';
 import { renderScreen } from '../../test-utils/renderScreen';
 import OracleScreen from '../OracleScreen';
+
+jest.mock('@utils/permissions', () => ({
+  checkMicrophonePermission: jest.fn(() => Promise.resolve('granted')),
+  requestMicrophonePermission: jest.fn(() => Promise.resolve('granted')),
+}));
 
 describe('OracleScreen navigation wiring', () => {
   /**
@@ -74,6 +80,34 @@ describe('OracleScreen navigation wiring', () => {
     // created on the other side, when the question is actually submitted.
     expect(push).toHaveBeenCalledWith('Reading', {
       initialQuestion: 'Should I accept this business opportunity?',
+      initialQuestionKind: 'text',
     });
+  });
+
+  // A spoken question takes the same route as a typed one: Home hands it to a
+  // new Reading, which asks askWatchOracle. Nothing voice-specific beyond the
+  // kind tag travels with it.
+  it('opens a Reading with a spoken question when the recognizer stops on its own', async () => {
+    const { push } = mockNavigation();
+    await renderScreen(<OracleScreen />);
+
+    const user = userEvent.setup();
+    await user.press(screen.getByTestId('home-ask-mic-btn'));
+    await waitFor(() => expect(Voice.start).toHaveBeenCalled());
+
+    const voice = Voice as unknown as {
+      onSpeechEnd?: () => void;
+      onSpeechResults?: (e: { value?: string[] }) => void;
+    };
+    voice.onSpeechEnd?.();
+    voice.onSpeechResults?.({ value: ['Will I get the job?'] });
+
+    await waitFor(() =>
+      expect(push).toHaveBeenCalledWith('Reading', {
+        initialQuestion: 'Will I get the job?',
+        initialQuestionKind: 'voice',
+      }),
+    );
+    expect(push).toHaveBeenCalledTimes(1);
   });
 });

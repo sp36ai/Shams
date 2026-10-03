@@ -58,7 +58,13 @@ export type RootStackParamList = {
    * `initialQuestion`; ignored when opening an existing thread.
    */
   Reading:
-    | { threadId?: string; initialQuestion?: string; relatedReadingIds?: readonly string[] }
+    | {
+        threadId?: string;
+        initialQuestion?: string;
+        /** How initialQuestion was captured. Display only; defaults to 'text'. */
+        initialQuestionKind?: 'text' | 'voice';
+        relatedReadingIds?: readonly string[];
+      }
     | undefined;
 };
 

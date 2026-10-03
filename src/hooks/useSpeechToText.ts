@@ -138,6 +138,15 @@ export function useSpeechToText(
   const onFinalTranscriptRef = useRef(onFinalTranscript);
   onFinalTranscriptRef.current = onFinalTranscript;
 
+  // Points the recognizer's events at THIS hook instance. Called on mount and
+  // again by every start(): the native module is a singleton, and more than
+  // one screen can hold this hook at once (Home stays mounted under a
+  // Reading). @react-native-voice/voice binds its native listeners to the
+  // handlers present at the first start() and only rebinds after destroy(),
+  // so without re-claiming here, a session started on one screen would
+  // deliver its transcript to whichever screen happened to start first.
+  const attachListenersRef = useRef<() => void>(() => undefined);
+
   useEffect(() => {
     mountedRef.current = true;
 
@@ -147,7 +156,7 @@ export function useSpeechToText(
       };
     }
 
-    try {
+    attachListenersRef.current = (): void => {
       Voice.onSpeechPartialResults = (e: SpeechResultsEvent) => {
         const text = e.value?.[0] ?? '';
         latestTranscriptRef.current = text;
@@ -196,6 +205,10 @@ export function useSpeechToText(
         finalizeResolveRef.current?.(latestTranscriptRef.current);
         finalizeResolveRef.current = null;
       };
+    };
+
+    try {
+      attachListenersRef.current();
     } catch (err) {
       // A recognizer that rejects its own listener setup is a recognizer this
       // session cannot use. Logged, not thrown: the composer still types.
@@ -238,6 +251,13 @@ export function useSpeechToText(
     }
 
     try {
+      // Release whatever native listeners an earlier session (possibly
+      // another screen's) left bound, then claim the events for this one —
+      // see attachListenersRef. destroy() is a no-op when nothing is bound.
+      await Voice.destroy().catch((e: unknown) => {
+        log.warn('Voice.destroy before start failed', { error: String(e) });
+      });
+      attachListenersRef.current();
       await Voice.start(LOCALE_BY_LANG[lang]);
       if (mountedRef.current) {
         setIsListening(true);
