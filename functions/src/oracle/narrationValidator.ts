@@ -361,6 +361,23 @@ export function checkVerdictConsistency(
   return null;
 }
 
+/**
+ * The first explicit outcome assertion in `text`, of EITHER polarity, or
+ * null. Same two phrase lists and the same matching as
+ * `checkVerdictConsistency` above, but with no reading to compare against:
+ * for text that must not state any verdict at all — a follow-up reply the
+ * oracle itself flagged as a new horary question, which no reading in the
+ * brief was cast for. See discussionComposer.ts's `checkNewQuestionReply`.
+ */
+export function findOutcomeAssertion(text: string): string | null {
+  const lower = text.toLowerCase();
+  return (
+    POSITIVE_ASSERTIONS.find(p => lower.includes(p)) ??
+    NEGATIVE_ASSERTIONS.find(p => lower.includes(p)) ??
+    null
+  );
+}
+
 /* -------------------------------------------------------------------------- */
 /*  B. Timing consistency                                                     */
 /* -------------------------------------------------------------------------- */

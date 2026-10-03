@@ -72,7 +72,7 @@ import { logger } from '../utils/logger';
 import { ORACLE_DISCUSSION_PROMPT } from '../prompts/oracleDiscussionPrompt';
 import { sanitizeQuestion } from './responseComposer';
 import type { WatchOracleComposition, NarrationFields } from './responseComposer';
-import { validateNarration } from './narrationValidator';
+import { findOutcomeAssertion, validateNarration } from './narrationValidator';
 import type { ReadingContract } from './readingContract';
 import type { LangCode } from '../types';
 
@@ -535,6 +535,24 @@ export function validateDiscussionReplyAgainstGroundings(
  * against `input.contract`. See this file's header for why this reuses
  * that exact precedent instead of inventing a deterministic fallback reply.
  */
+/**
+ * A reply the model itself flagged as a NEW horary question must not state a
+ * verdict at all: no reading in the brief was cast for that matter. The
+ * contract validation above cannot catch this when the reply happens to
+ * share the anchor reading's polarity — "yes, you will marry" under a YES
+ * reading about a job contradicts nothing in that reading's contract — so
+ * the prompt's "do not give, hint at, or guess a verdict on the new matter"
+ * was enforced by the prompt alone. This makes the explicit-assertion part
+ * of it deterministic. Rephrased verdicts outside the phrase lists still
+ * rest on the prompt, exactly as they do for the contract check.
+ *
+ * Returns the offending phrase, or null when the reply may be shown.
+ * Exported for direct testing.
+ */
+export function checkNewQuestionReply(answer: string, isNewQuestion: boolean): string | null {
+  return isNewQuestion ? findOutcomeAssertion(answer) : null;
+}
+
 export async function composeDiscussionReply(
   input: DiscussionInput,
 ): Promise<DiscussionReply | null> {
@@ -616,9 +634,20 @@ export async function composeDiscussionReply(
       return null;
     }
 
+    const isNewQuestion = parsed.is_new_question === true;
+    const verdictOnNewMatter = checkNewQuestionReply(answer, isNewQuestion);
+    if (verdictOnNewMatter !== null) {
+      // Same handling as a contract-validation failure: no reply, so the
+      // caller refunds the turn and the seeker can retry.
+      logger.warn('oracle discussion reply gave a verdict on a new question — no reply returned', {
+        phrase: verdictOnNewMatter,
+      });
+      return null;
+    }
+
     return {
       answer,
-      isNewQuestion: parsed.is_new_question === true,
+      isNewQuestion,
     };
   } catch (err) {
     logger.warn('oracle discussion failed', { err: String(err) });
