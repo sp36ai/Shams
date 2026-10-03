@@ -15,6 +15,7 @@ import {
   discussionTurnsFor,
   contextFrom,
   migrateLegacyTranscript,
+  recoverInterruptedMessages,
   type ReadingMessage,
   type ReadingThread,
 } from '../readingThreadsStore';
@@ -491,5 +492,29 @@ describe('migration from the pre-thread transcript', () => {
     const migrated = migrateLegacyTranscript();
     expect(migrated).toHaveLength(1);
     expect(migrated[0]?.messages.map(m => m.id)).toEqual(['u0', 'o0']);
+  });
+});
+
+describe('recovering after the app closed mid-call', () => {
+  it("turns a turn still 'sending' on disk into a retryable 'failed' one", () => {
+    const thread: ReadingThread = {
+      ...openThread(),
+      messages: [
+        message({ id: 'u0' }),
+        message({ id: 'o0', role: 'oracle', text: '', status: 'sending', replyToId: 'u0' }),
+      ],
+    };
+
+    const [recovered] = recoverInterruptedMessages([thread]);
+
+    expect(recovered?.messages.map(m => m.status)).toEqual(['sent', 'failed']);
+    // Kept: the retry needs to know which question this turn answered.
+    expect(recovered?.messages[1]?.replyToId).toBe('u0');
+  });
+
+  it('leaves threads with nothing in flight untouched', () => {
+    const thread: ReadingThread = { ...openThread(), messages: [message({ id: 'u0' })] };
+
+    expect(recoverInterruptedMessages([thread])[0]).toBe(thread);
   });
 });

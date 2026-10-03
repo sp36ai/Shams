@@ -12,6 +12,8 @@ import auth from '@react-native-firebase/auth';
 
 import { useAuthStore } from '../authStore';
 import { useQuotaStore } from '../quotaStore';
+import { useReadingThreadsStore } from '../readingThreadsStore';
+import { useReadingsStore } from '../readingsStore';
 import { storage, KEYS } from '@storage/mmkv';
 
 type Listener = (user: unknown) => void | Promise<void>;
@@ -193,5 +195,43 @@ describe('listener and sign-in share one sync', () => {
     await listener?.(null);
 
     expect(useAuthStore.getState().user).toBeNull();
+  });
+});
+
+describe("another account's Readings", () => {
+  function seedReadings(): void {
+    useReadingThreadsStore.getState().createThread({
+      id: 't_prev',
+      requestId: 'req_prev',
+      question: 'Will the sale complete?',
+      questionLang: 'en',
+    });
+    useReadingsStore.setState({
+      readings: [{ id: 'r_prev' }] as unknown as ReturnType<
+        typeof useReadingsStore.getState
+      >['readings'],
+    });
+  }
+
+  it('are cleared from the device when a different account signs in', async () => {
+    storage.set(KEYS.AUTH_LAST_UID, 'previous-user');
+    seedReadings();
+    authInstance.signInWithEmailAndPassword.mockResolvedValueOnce({ user: makeUser('new-user') });
+
+    await useAuthStore.getState().signIn('a@b.co', 'password1');
+
+    expect(useReadingThreadsStore.getState().threads).toEqual([]);
+    expect(useReadingsStore.getState().readings).toEqual([]);
+  });
+
+  it('are kept when the same account signs back in', async () => {
+    storage.set(KEYS.AUTH_LAST_UID, 'same-user');
+    seedReadings();
+    authInstance.signInWithEmailAndPassword.mockResolvedValueOnce({ user: makeUser('same-user') });
+
+    await useAuthStore.getState().signIn('a@b.co', 'password1');
+
+    expect(useReadingThreadsStore.getState().threads).toHaveLength(1);
+    expect(useReadingsStore.getState().readings).toHaveLength(1);
   });
 });

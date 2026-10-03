@@ -236,6 +236,7 @@ export interface StringTable {
     separateQuestionNote: string;
     discussionUnavailable: string;
     discussionReadingGone: string;
+    discussionLimitReached: string;
     /** Header over the suggested-follow-up-question chips. */
     suggestedQuestionsLabel: string;
   };

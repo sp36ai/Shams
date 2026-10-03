@@ -188,7 +188,34 @@ function isThread(value: unknown): value is ReadingThread {
   );
 }
 
+/**
+ * Turns every oracle message still marked 'sending' into 'failed'.
+ *
+ * Applied only to what was read from disk at startup, when no call can be in
+ * flight: a 'sending' message there was cut off by the app closing mid-call.
+ * Left as is, it rendered as a spinner forever, with no retry, because only a
+ * 'failed' turn offers one. A retry reuses the original requestId, so if the
+ * server did finish the call, it replays that answer instead of charging again.
+ * Exported for testing.
+ */
+export function recoverInterruptedMessages(threads: ReadingThread[]): ReadingThread[] {
+  return threads.map(thread =>
+    thread.messages.some(m => m.status === 'sending')
+      ? {
+          ...thread,
+          messages: thread.messages.map(m =>
+            m.status === 'sending' ? { ...m, status: 'failed' as const } : m,
+          ),
+        }
+      : thread,
+  );
+}
+
 function readCache(): ReadingThread[] {
+  return recoverInterruptedMessages(readStoredThreads());
+}
+
+function readStoredThreads(): ReadingThread[] {
   const raw = storage.getString(KEYS.READING_THREADS);
   if (raw === undefined) {
     // No threads cache: either a fresh install or a seeker upgrading from the

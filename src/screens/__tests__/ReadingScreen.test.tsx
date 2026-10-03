@@ -28,7 +28,7 @@ import { renderScreen } from '../../test-utils/renderScreen';
 import { useReadingThreadsStore, threadById } from '@stores/readingThreadsStore';
 import { useReadingsStore } from '@stores/readingsStore';
 import { useQuotaStore } from '@stores/quotaStore';
-import ReadingScreen from '../ReadingScreen';
+import ReadingScreen, { errorMessageFor } from '../ReadingScreen';
 
 jest.mock('@utils/permissions', () => ({
   checkMicrophonePermission: jest.fn(() => Promise.resolve('granted')),
@@ -703,5 +703,18 @@ describe('ReadingScreen', () => {
       await waitFor(() => expect(onlyThread()?.readingId).toBe('r1'));
       expect(useReadingThreadsStore.getState().threads).toHaveLength(1);
     });
+  });
+});
+
+describe('errorMessageFor', () => {
+  const t = ((key: string) => key) as unknown as Parameters<typeof errorMessageFor>[1];
+  const exhausted = { code: 'resource-exhausted' };
+
+  it('reports the daily quota when a cast is refused', () => {
+    expect(errorMessageFor(exhausted, t)).toBe('oracleChat.quotaExhausted');
+  });
+
+  it("reports the Reading's follow-up limit, not the daily quota, when a follow-up is refused", () => {
+    expect(errorMessageFor(exhausted, t, 'discuss')).toBe('oracleChat.discussionLimitReached');
   });
 });
