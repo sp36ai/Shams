@@ -21,6 +21,7 @@ import React from 'react';
 import { screen, userEvent, waitFor } from '@testing-library/react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import Voice from '@react-native-voice/voice';
+import Tts from 'react-native-tts';
 import { buildWatchChart } from '@astrology/rkp/watchChart';
 import { judgeWatchChart } from '@astrology/rkp/watchJudgment';
 import { httpsCallable } from '../../firebase/functionsRegion';
@@ -329,6 +330,33 @@ describe('ReadingScreen', () => {
     expect(oracleMessages()[0]?.reading?.readingId).toBe('r1');
   });
 
+  // Android ends listening by itself as soon as the speaker pauses — the
+  // usual way a voice question ends. Its transcript is sent like any other
+  // voice question, through the same askWatchOracle path, without a tap.
+  it('sends the transcript when the recognizer stops listening on its own', async () => {
+    const askCallable = jest.fn(() => Promise.resolve({ data: successPayload() }));
+    (httpsCallable as jest.Mock).mockImplementation((name: string) => {
+      if (name === 'askWatchOracle') {
+        return askCallable;
+      }
+      return defaultImpl(name);
+    });
+
+    await renderScreen(<ReadingScreen />);
+    const user = userEvent.setup();
+
+    await user.press(screen.getByTestId('oracle-chat-mic-btn'));
+    await waitFor(() => expect(mockedVoice.start).toHaveBeenCalled());
+
+    // No second tap: the recognizer ends and delivers its result by itself.
+    mockedVoice.onSpeechEnd?.();
+    mockedVoice.onSpeechResults?.({ value: ['Will I get the job?'] });
+
+    await waitFor(() => expect(askCallable).toHaveBeenCalledTimes(1));
+    expect(askCallable.mock.calls[0][0]).toMatchObject({ question: 'Will I get the job?' });
+    expect(onlyThread().messages.find(m => m.role === 'user')?.kind).toBe('voice');
+  });
+
   /* ---------------------------------------------------------------------- */
   /*  Follow-up discussion                                                   */
   /* ---------------------------------------------------------------------- */
@@ -614,6 +642,37 @@ describe('ReadingScreen', () => {
       expect(
         threadById(useReadingThreadsStore.getState().threads, 't_old')?.context?.localMoment,
       ).toBe('2026-08-08T11:13:00+05:30');
+    });
+
+    it("speaks a Reading in the language it was cast in, not the app's current one", async () => {
+      // Cast in Urdu; the app is now showing English (renderScreen's default).
+      const store = useReadingThreadsStore.getState();
+      store.createThread({ id: 't_ur', question: 'کیا مجھے نوکری ملے گی؟', questionLang: 'ur' });
+      store.addMessage('t_ur', {
+        id: 'u_ur',
+        role: 'user',
+        text: 'کیا مجھے نوکری ملے گی؟',
+        createdAt: '2026-08-08T05:43:00.000Z',
+        status: 'sent',
+      });
+      store.addMessage('t_ur', {
+        id: 'o_ur',
+        role: 'oracle',
+        text: '',
+        createdAt: '2026-08-08T05:43:00.000Z',
+        status: 'sent',
+        replyToId: 'u_ur',
+        variant: 'reading',
+        reading: successPayload() as never,
+      });
+      store.attachReading('t_ur', successPayload() as never);
+      setRoute({ threadId: 't_ur' });
+
+      await renderScreen(<ReadingScreen />);
+      const user = userEvent.setup();
+      await user.press(screen.getByLabelText('Play narration'));
+
+      await waitFor(() => expect(Tts.setDefaultLanguage).toHaveBeenCalledWith('ur-PK'));
     });
 
     it('retries a failed cast under the SAME requestId, so the server can replay it', async () => {

@@ -108,7 +108,16 @@ function mapRecognizerErrorCode(code: string | undefined): SpeechToTextError {
   return 'recognizer-error';
 }
 
-export function useSpeechToText(lang: 'en' | 'ur' | 'hi'): SpeechToTextState {
+/**
+ * @param onFinalTranscript Called with the final transcript when the
+ *   recognizer ends listening ON ITS OWN — Android does this as soon as the
+ *   speaker pauses, which is how most voice questions end. Not called after
+ *   stop() or cancel(): stop() already hands its caller the transcript.
+ */
+export function useSpeechToText(
+  lang: 'en' | 'ur' | 'hi',
+  onFinalTranscript?: (text: string) => void,
+): SpeechToTextState {
   const [isListening, setIsListening] = useState(false);
   const [partialText, setPartialText] = useState('');
   const [error, setError] = useState<SpeechToTextError | null>(null);
@@ -120,6 +129,14 @@ export function useSpeechToText(lang: 'en' | 'ur' | 'hi'): SpeechToTextState {
   const latestTranscriptRef = useRef('');
   const finalizeResolveRef = useRef<((text: string) => void) | null>(null);
   const mountedRef = useRef(true);
+  // True once stop()/cancel() has been called for the current session. A
+  // results callback arriving after that — even one so late that stop()'s
+  // own finalize wait has already timed out and returned — belongs to the
+  // caller of stop(), never to onFinalTranscript, or the same words would be
+  // delivered twice.
+  const stopRequestedRef = useRef(false);
+  const onFinalTranscriptRef = useRef(onFinalTranscript);
+  onFinalTranscriptRef.current = onFinalTranscript;
 
   useEffect(() => {
     mountedRef.current = true;
@@ -146,8 +163,16 @@ export function useSpeechToText(lang: 'en' | 'ur' | 'hi'): SpeechToTextState {
           setPartialText(text);
           setIsListening(false);
         }
-        finalizeResolveRef.current?.(text);
-        finalizeResolveRef.current = null;
+        if (finalizeResolveRef.current !== null) {
+          finalizeResolveRef.current(text);
+          finalizeResolveRef.current = null;
+        } else if (!stopRequestedRef.current && mountedRef.current) {
+          // The recognizer ended by itself. Without this, the final words
+          // reached neither the composer (it mirrors partials only while
+          // listening) nor a send — the seeker had to notice and press Send.
+          stopRequestedRef.current = true;
+          onFinalTranscriptRef.current?.(text);
+        }
       };
 
       Voice.onSpeechEnd = () => {
@@ -201,6 +226,7 @@ export function useSpeechToText(lang: 'en' | 'ur' | 'hi'): SpeechToTextState {
     setError(null);
     setPartialText('');
     latestTranscriptRef.current = '';
+    stopRequestedRef.current = false;
 
     let permission = await checkMicrophonePermission();
     if (permission !== 'granted') {
@@ -225,6 +251,7 @@ export function useSpeechToText(lang: 'en' | 'ur' | 'hi'): SpeechToTextState {
   }, [lang]);
 
   const stop = useCallback(async (): Promise<string> => {
+    stopRequestedRef.current = true;
     const finalize = new Promise<string>(resolve => {
       finalizeResolveRef.current = resolve;
     });
@@ -249,6 +276,7 @@ export function useSpeechToText(lang: 'en' | 'ur' | 'hi'): SpeechToTextState {
   }, []);
 
   const cancel = useCallback(async (): Promise<void> => {
+    stopRequestedRef.current = true;
     finalizeResolveRef.current = null;
     latestTranscriptRef.current = '';
     if (mountedRef.current) {
