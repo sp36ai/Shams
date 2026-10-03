@@ -30,6 +30,7 @@ import { LANG_META, languagePickerCodes, type LangCode } from '@i18n/types';
 import { useSettingsStore } from '@stores/settingsStore';
 import { useAuthStore, selectUserName, selectUserEmail } from '@stores/authStore';
 import { useReadingsStore, type VerdictKind } from '@stores/readingsStore';
+import { useReadingThreadsStore } from '@stores/readingThreadsStore';
 import { useQuotaStore, FREE_DAILY_LIMIT, type PlanTier } from '@stores/quotaStore';
 import { deleteAccount } from '../firebase/account';
 
@@ -115,6 +116,10 @@ const SettingsScreen: React.FC = () => {
               // cache. Order matters: reset local state before signOut()
               // clears `user`, so nothing here reads a stale uid.
               resetForNewAccount();
+              // signOut() clears the readings archive but not the Reading
+              // threads, which hold the same questions and verdicts. A
+              // deleted account must leave none of its content behind.
+              useReadingThreadsStore.getState().clearAll();
               await signOut();
             } catch (err) {
               crashlytics().recordError(err instanceof Error ? err : new Error(String(err)));

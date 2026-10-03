@@ -88,11 +88,22 @@ import ReadingHeader from '@components/oracle/ReadingHeader';
  * never in `.message` — see watchOracle.ts's own docs on why `.message`
  * alone is not a reliable branch. Exported for direct unit testing.
  */
-export function errorMessageFor(err: unknown, t: ReturnType<typeof useTranslation>): string {
+export function errorMessageFor(
+  err: unknown,
+  t: ReturnType<typeof useTranslation>,
+  call: 'ask' | 'discuss' = 'ask',
+): string {
   const code =
     typeof err === 'object' && err !== null && 'code' in err
       ? String((err as { code: unknown }).code)
       : '';
+
+  if (call === 'discuss' && code === 'resource-exhausted') {
+    // discussReading's limit is per Reading (DISCUSSION_TURN_LIMIT), not the
+    // daily quota: telling the seeker to come back tomorrow or upgrade would
+    // be wrong on both counts. Only a new Reading continues from here.
+    return t('oracleChat.discussionLimitReached');
+  }
 
   if (code === 'deadline-exceeded') {
     return t('oracleChat.errorTimeout');
@@ -363,7 +374,7 @@ const ReadingScreen: React.FC = () => {
       } catch (err) {
         updateMessage(targetThreadId, oracleMessageId, {
           status: 'failed',
-          errorMessage: errorMessageFor(err, t),
+          errorMessage: errorMessageFor(err, t, 'discuss'),
         });
       }
     },

@@ -28,6 +28,7 @@ import {
 import { storage, KEYS } from '@storage/mmkv';
 import { useQuotaStore, type PlanTier } from './quotaStore';
 import { useReadingsStore } from './readingsStore';
+import { useReadingThreadsStore } from './readingThreadsStore';
 import { useSettingsStore } from './settingsStore';
 import { invalidateQuotaCache } from '@hooks/useQuota';
 import { withTimeout } from '@utils/withTimeout';
@@ -167,6 +168,12 @@ function applyAuthUser(fbUser: FirebaseAuthTypes.User | null, set: AuthSet): Pro
   const previousUid = storage.getString(KEYS.AUTH_LAST_UID);
   if (previousUid !== undefined && previousUid !== fbUser.uid) {
     useSettingsStore.getState().resetForNewAccount();
+    // The previous account's Readings — questions, verdicts, follow-ups —
+    // live only on this device and must not be shown to a different account.
+    // signOut() already clears the archive, but not every way out of an
+    // account goes through it (an expired session never does).
+    useReadingThreadsStore.getState().clearAll();
+    useReadingsStore.getState().clearAll();
   }
   storage.set(KEYS.AUTH_LAST_UID, fbUser.uid);
   const promise = (async (): Promise<void> => {

@@ -165,6 +165,8 @@ export const hi: StringTable = {
     separateQuestionNote: 'यह अलग प्रश्न हो सकता है — इसे अपना क्षण चाहिए।',
     discussionUnavailable: 'ओरेकल ने इसका उत्तर नहीं दिया। पुनः पूछें।',
     discussionReadingGone: 'यह उत्तर अब चर्चा के लिए उपलब्ध नहीं है।',
+    discussionLimitReached:
+      'इस रीडिंग पर जितनी चर्चा हो सकती थी, हो चुकी। अपना प्रश्न नई रीडिंग के रूप में पूछें।',
     suggestedQuestionsLabel: 'आप पूछ सकते हैं',
   },
 
