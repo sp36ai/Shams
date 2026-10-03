@@ -89,6 +89,48 @@ describe('useSpeechToText', () => {
     await waitFor(() => expect(result.current.isListening).toBe(false));
   });
 
+  it('hands the final transcript to onFinalTranscript when listening ends on its own', async () => {
+    const onFinal = jest.fn();
+    const { result } = await renderHook(() => useSpeechToText('en', onFinal));
+    await act(async () => {
+      await result.current.start();
+    });
+
+    await act(async () => {
+      mockedVoice.onSpeechEnd?.();
+      mockedVoice.onSpeechResults?.({ value: ['will i get the job'] });
+    });
+
+    expect(onFinal).toHaveBeenCalledTimes(1);
+    expect(onFinal).toHaveBeenCalledWith('will i get the job');
+  });
+
+  it('does not call onFinalTranscript after stop(), even for results that arrive too late', async () => {
+    jest.useFakeTimers();
+    try {
+      const onFinal = jest.fn();
+      const { result } = await renderHook(() => useSpeechToText('en', onFinal));
+      await act(async () => {
+        await result.current.start();
+      });
+
+      // stop() gives up waiting and returns; the recognizer answers afterwards.
+      let stopped: Promise<string> = Promise.resolve('');
+      await act(async () => {
+        stopped = result.current.stop();
+        await jest.advanceTimersByTimeAsync(5000);
+      });
+      await stopped;
+      await act(async () => {
+        mockedVoice.onSpeechResults?.({ value: ['late words'] });
+      });
+
+      expect(onFinal).not.toHaveBeenCalled();
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
   it('stop() falls back to the last partial when onSpeechEnd fires with no results', async () => {
     const { result } = await renderHook(() => useSpeechToText('en'));
     await act(async () => {

@@ -58,6 +58,12 @@ export function speakableTextFor(reading: WatchReading): string {
 interface ChatBubbleProps {
   message: ReadingMessage;
   questionLang: 'en' | 'ur' | 'hi';
+  /**
+   * The language the Reading was cast in — what its verdict text is written
+   * in, so what its narration must be spoken in, whatever language the app is
+   * showing now. Defaults to questionLang.
+   */
+  readingLang?: 'en' | 'ur' | 'hi';
   onRetry: (userMessageId: string) => void;
   /**
    * Open a follow-up the oracle declined to answer as its OWN Reading, cast
@@ -75,6 +81,7 @@ interface ChatBubbleProps {
 const ChatBubble: React.FC<ChatBubbleProps> = ({
   message,
   questionLang,
+  readingLang,
   onRetry,
   onAskAsNewQuestion,
   ttsStatus,
@@ -252,7 +259,9 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({
           <>
             <View style={styles.speechRow}>
               <Pressable
-                onPress={() => onToggleSpeech(message.id, speakableTextFor(reading), questionLang)}
+                onPress={() =>
+                  onToggleSpeech(message.id, speakableTextFor(reading), readingLang ?? questionLang)
+                }
                 style={({ pressed }) => [
                   styles.speechBtn,
                   { borderColor: colors.borderAccent, opacity: pressed ? 0.7 : 1 },

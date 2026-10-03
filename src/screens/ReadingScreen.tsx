@@ -178,7 +178,12 @@ const ReadingScreen: React.FC = () => {
   const restateQuestion = useReadingThreadsStore(s => s.restateQuestion);
   const setThreadStatus = useReadingThreadsStore(s => s.setThreadStatus);
 
-  const stt = useSpeechToText(lang);
+  // The recognizer can end listening by itself (Android does as soon as the
+  // speaker pauses). That transcript is sent like any other voice question —
+  // see handleVoiceTranscript below. Routed through a ref because the hook is
+  // called before sendMessage exists.
+  const voiceTranscriptRef = useRef<(text: string) => void>(() => undefined);
+  const stt = useSpeechToText(lang, text => voiceTranscriptRef.current(text));
   const tts = useTextToSpeech();
 
   /**
@@ -583,6 +588,21 @@ const ReadingScreen: React.FC = () => {
     void stt.start();
   }, [stt, sendMessage]);
 
+  // The recognizer ended by itself: send what it heard, through the same
+  // sendMessage path as a typed question. The text goes into the composer
+  // first, so if a send is already in flight (sendMessage then ignores this
+  // one) the seeker's words are still there to send by hand.
+  useEffect(() => {
+    voiceTranscriptRef.current = (text: string): void => {
+      // Nothing heard: leave whatever partial text is in the composer.
+      if (text.trim().length === 0) {
+        return;
+      }
+      setInputText(text);
+      sendMessage(text, 'voice');
+    };
+  }, [sendMessage]);
+
   // Mirror the live partial transcript into the composer while listening, so
   // the seeker sees their words land in real time (still editable once
   // listening stops, before Send is pressed).
@@ -613,6 +633,7 @@ const ReadingScreen: React.FC = () => {
       <ChatBubble
         message={item}
         questionLang={lang}
+        readingLang={thread?.questionLang ?? lang}
         onRetry={handleRetry}
         onAskAsNewQuestion={handleAskAsNewReading}
         ttsStatus={tts.status}
@@ -623,6 +644,7 @@ const ReadingScreen: React.FC = () => {
     ),
     [
       lang,
+      thread?.questionLang,
       handleRetry,
       handleAskAsNewReading,
       tts.status,
