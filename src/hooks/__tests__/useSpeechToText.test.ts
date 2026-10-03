@@ -12,6 +12,7 @@ const mockedVoice = Voice as unknown as {
   start: jest.Mock;
   stop: jest.Mock;
   cancel: jest.Mock;
+  destroy: jest.Mock;
   onSpeechPartialResults?: (e: { value?: string[] }) => void;
   onSpeechResults?: (e: { value?: string[] }) => void;
   onSpeechEnd?: () => void;
@@ -129,6 +130,27 @@ describe('useSpeechToText', () => {
     } finally {
       jest.useRealTimers();
     }
+  });
+
+  // Home stays mounted under a Reading, so two instances can exist at once.
+  // The recognizer is a single native module: whichever instance starts a
+  // session must be the one that receives it.
+  it('delivers a session to the instance that started it, not the first one mounted', async () => {
+    const onHome = jest.fn();
+    const onReading = jest.fn();
+    await renderHook(() => useSpeechToText('en', onHome));
+    const reading = await renderHook(() => useSpeechToText('en', onReading));
+
+    await act(async () => {
+      await reading.result.current.start();
+    });
+    await act(async () => {
+      mockedVoice.onSpeechResults?.({ value: ['will i get the job'] });
+    });
+
+    expect(mockedVoice.destroy).toHaveBeenCalled();
+    expect(onReading).toHaveBeenCalledWith('will i get the job');
+    expect(onHome).not.toHaveBeenCalled();
   });
 
   it('stop() falls back to the last partial when onSpeechEnd fires with no results', async () => {

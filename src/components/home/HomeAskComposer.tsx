@@ -9,18 +9,25 @@
  * it (sky state, hora countdown and the manzil emblem all live on Home and
  * are expensive to redraw). Submitting hands the question up; no Reading is
  * created here, and nothing is persisted until the seeker actually asks.
+ *
+ * Voice: the mic fills the same field and hands the transcript up through
+ * the same onSubmit, so a spoken question opens a Reading exactly as a typed
+ * one does and reaches askWatchOracle by the same single path. The
+ * transcript is sent when the recognizer stops on its own (the seeker
+ * paused) or when the mic is tapped again.
  */
 
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { useColors } from '@theme/ThemeProvider';
 import { useTypography } from '@theme/useTypography';
-import { useTranslation } from '@i18n/I18nProvider';
+import { useI18n, useTranslation } from '@i18n/I18nProvider';
+import { useSpeechToText } from '@hooks/useSpeechToText';
 
 interface HomeAskComposerProps {
   /** Called with the trimmed question. Never called with an empty string. */
-  onSubmit: (question: string) => void;
+  onSubmit: (question: string, kind: 'text' | 'voice') => void;
   /** Opens an empty Reading — the same destination, without a question yet. */
   onOpenBlank: () => void;
 }
@@ -30,19 +37,58 @@ const HomeAskComposer: React.FC<HomeAskComposerProps> = ({ onSubmit, onOpenBlank
   const typography = useTypography();
   const t = useTranslation();
 
+  const { lang } = useI18n();
+
   const [text, setText] = useState('');
   const canSend = text.trim().length > 0;
 
-  const handleSubmit = useCallback(() => {
-    const trimmed = text.trim();
-    if (trimmed.length === 0) {
+  const submit = useCallback(
+    (question: string, kind: 'text' | 'voice') => {
+      const trimmed = question.trim();
+      if (trimmed.length === 0) {
+        return;
+      }
+      // Cleared immediately: the question now belongs to the Reading it opened,
+      // and coming back to Home should not offer to ask it a second time.
+      setText('');
+      onSubmit(trimmed, kind);
+    },
+    [onSubmit],
+  );
+
+  const handleSubmit = useCallback(() => submit(text, 'text'), [submit, text]);
+
+  // The recognizer ended by itself: send what it heard. Routed through a ref
+  // because the hook is created before `submit` is in scope for it.
+  const voiceTranscriptRef = useRef<(heard: string) => void>(() => undefined);
+  const stt = useSpeechToText(lang, heard => voiceTranscriptRef.current(heard));
+  useEffect(() => {
+    voiceTranscriptRef.current = (heard: string): void => submit(heard, 'voice');
+  }, [submit]);
+
+  // Live words land in the field while listening.
+  useEffect(() => {
+    if (stt.isListening) {
+      setText(stt.partialText);
+    }
+  }, [stt.isListening, stt.partialText]);
+
+  const handleMicPress = useCallback(() => {
+    if (stt.isListening) {
+      void stt.stop().then(heard => submit(heard, 'voice'));
       return;
     }
-    // Cleared immediately: the question now belongs to the Reading it opened,
-    // and coming back to Home should not offer to ask it a second time.
-    setText('');
-    onSubmit(trimmed);
-  }, [text, onSubmit]);
+    void stt.start();
+  }, [stt, submit]);
+
+  const micErrorText =
+    stt.error === 'unavailable'
+      ? t('oracleChat.voiceUnavailable')
+      : stt.error === 'permission-denied'
+        ? t('oracleChat.micPermissionDenied')
+        : stt.error === 'no-speech'
+          ? t('oracleChat.noSpeechDetected')
+          : null;
 
   return (
     <View style={styles.wrap}>
@@ -79,7 +125,7 @@ const HomeAskComposer: React.FC<HomeAskComposerProps> = ({ onSubmit, onOpenBlank
           style={[typography('body'), styles.input, { color: colors.text }]}
           value={text}
           onChangeText={setText}
-          placeholder={t('oracle.askPlaceholder')}
+          placeholder={stt.isListening ? t('oracleChat.listening') : t('oracle.askPlaceholder')}
           placeholderTextColor={colors.textFaint}
           multiline
           maxLength={500}
@@ -88,6 +134,34 @@ const HomeAskComposer: React.FC<HomeAskComposerProps> = ({ onSubmit, onOpenBlank
           onSubmitEditing={handleSubmit}
           testID="home-ask-input"
         />
+        {/* No recognizer in this build or on this device: no mic at all. */}
+        {stt.isAvailable && (
+          <Pressable
+            onPress={handleMicPress}
+            style={({ pressed }) => [
+              styles.sendBtn,
+              {
+                backgroundColor: stt.isListening ? colors.negative : colors.surfaceElevated,
+                borderColor: stt.isListening ? colors.negative : colors.border,
+                opacity: pressed ? 0.8 : 1,
+              },
+            ]}
+            accessibilityRole="button"
+            accessibilityLabel={
+              stt.isListening ? t('oracleChat.stopRecording') : t('oracleChat.startRecording')
+            }
+            testID="home-ask-mic-btn"
+          >
+            <Text
+              style={{
+                fontSize: 16,
+                color: stt.isListening ? colors.textOnPrimary : colors.textMuted,
+              }}
+            >
+              {'🎙'}
+            </Text>
+          </Pressable>
+        )}
         <Pressable
           onPress={canSend ? handleSubmit : onOpenBlank}
           style={({ pressed }) => [
@@ -123,6 +197,12 @@ const HomeAskComposer: React.FC<HomeAskComposerProps> = ({ onSubmit, onOpenBlank
           </Text>
         </Pressable>
       </View>
+
+      {micErrorText !== null && (
+        <Text style={[typography('caption'), { color: colors.negative, marginTop: 6 }]}>
+          {micErrorText}
+        </Text>
+      )}
     </View>
   );
 };

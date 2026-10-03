@@ -58,7 +58,11 @@ const mockedVoice = Voice as unknown as {
  */
 const mockPush = jest.fn();
 
-function setRoute(params?: { threadId?: string; initialQuestion?: string }): void {
+function setRoute(params?: {
+  threadId?: string;
+  initialQuestion?: string;
+  initialQuestionKind?: 'text' | 'voice';
+}): void {
   (useRoute as jest.Mock).mockReturnValue({ key: 'test', name: 'Reading', params });
 }
 
@@ -596,6 +600,20 @@ describe('ReadingScreen', () => {
 
       resolveAsk({ data: successPayload() });
       await waitFor(() => expect(onlyThread()?.readingId).toBe('r1'));
+    });
+
+    it('records a question spoken on Home as a voice question', async () => {
+      const askCallable = jest.fn(() => Promise.resolve({ data: successPayload() }));
+      (httpsCallable as jest.Mock).mockImplementation((name: string) =>
+        name === 'askWatchOracle' ? askCallable : defaultImpl(name),
+      );
+      setRoute({ initialQuestion: 'Will I get the job?', initialQuestionKind: 'voice' });
+
+      await renderScreen(<ReadingScreen />);
+
+      await waitFor(() => expect(askCallable).toHaveBeenCalledTimes(1));
+      expect(askCallable.mock.calls[0][0]).toMatchObject({ question: 'Will I get the job?' });
+      expect(onlyThread()?.messages.find(m => m.role === 'user')?.kind).toBe('voice');
     });
 
     it('submits a question handed over from Home, once', async () => {

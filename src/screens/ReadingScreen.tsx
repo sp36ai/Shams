@@ -487,14 +487,15 @@ const ReadingScreen: React.FC = () => {
    * "New Reading" that their words then appear in.
    */
   const initialQuestion = route.params?.initialQuestion;
+  const initialQuestionKind = route.params?.initialQuestionKind ?? 'text';
   const initialSentRef = useRef(false);
   useEffect(() => {
     if (initialSentRef.current || initialQuestion === undefined) {
       return;
     }
     initialSentRef.current = true;
-    sendMessage(initialQuestion, 'text');
-  }, [initialQuestion, sendMessage]);
+    sendMessage(initialQuestion, initialQuestionKind);
+  }, [initialQuestion, initialQuestionKind, sendMessage]);
 
   const handleRetry = useCallback(
     (userMessageId: string) => {

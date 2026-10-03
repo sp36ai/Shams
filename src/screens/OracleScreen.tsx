@@ -409,7 +409,9 @@ const OracleScreen: React.FC = () => {
         <HomeAskComposer
           // push, not navigate — see ReadingsScreen for why: a Reading is
           // always its own screen, never a params update to one already open.
-          onSubmit={question => navigation.push('Reading', { initialQuestion: question })}
+          onSubmit={(question, kind) =>
+            navigation.push('Reading', { initialQuestion: question, initialQuestionKind: kind })
+          }
           onOpenBlank={() => navigation.push('Reading', {})}
         />
 
