@@ -1,0 +1,31 @@
+diff --git a/node_modules/react-native-tts/android/src/main/java/net/no_mad/tts/TextToSpeechModule.java b/node_modules/react-native-tts/android/src/main/java/net/no_mad/tts/TextToSpeechModule.java
+index 8c1bbc5..ae3d1cf 100644
+--- a/node_modules/react-native-tts/android/src/main/java/net/no_mad/tts/TextToSpeechModule.java
++++ b/node_modules/react-native-tts/android/src/main/java/net/no_mad/tts/TextToSpeechModule.java
+@@ -352,7 +352,7 @@ public class TextToSpeechModule extends ReactContextBaseJavaModule {
+ 
+         if(isPackageInstalled(engineName)) {
+             ready = null;
+-            onCatalystInstanceDestroy();
++            shutdownEngine();
+             tts = new TextToSpeech(getReactApplicationContext(), new TextToSpeech.OnInitListener() {
+                 @Override
+                 public void onInit(int status) {
+@@ -437,9 +437,15 @@ public class TextToSpeechModule extends ReactContextBaseJavaModule {
+      * called on React Native Reloading JavaScript
+      * https://stackoverflow.com/questions/15563361/tts-leaked-serviceconnection
+      */
++    // React Native >= 0.74 never calls onCatalystInstanceDestroy(); invalidate()
++    // is the teardown hook, so the engine is released here.
+     @Override
+-    public void onCatalystInstanceDestroy() {
+-        super.onCatalystInstanceDestroy();
++    public void invalidate() {
++        shutdownEngine();
++        super.invalidate();
++    }
++
++    private void shutdownEngine() {
+         if(tts != null) {
+             tts.stop();
+             tts.shutdown();
