@@ -176,6 +176,10 @@ const OracleScreen: React.FC = () => {
   });
 
   const favoredChip = favoredChipForPlanet(horaLord, lang);
+  // Inline emphasis names the bundled semibold face rather than setting
+  // fontWeight: Android cannot bold a single-weight custom family and falls
+  // back to the system font, so the bold words rendered in Roboto.
+  const emphasis = { fontFamily: typography('label').fontFamily };
   const dhikr = PLANET_DHIKR[dayLord];
   const islamicNote = todaysIslamicNote(new Date());
 
@@ -455,14 +459,14 @@ const OracleScreen: React.FC = () => {
           </Text>
           <Text style={[typography('body'), { color: colors.text, marginTop: 8, lineHeight: 22 }]}>
             {dailySky.greeting} {lang === 'ur' ? 'کے تحت' : lang === 'hi' ? 'में' : 'is under'}{' '}
-            <Text style={{ fontWeight: '700', color: colors.accent }}>{dailySky.dayLord}</Text> (
+            <Text style={[emphasis, { color: colors.accent }]}>{dailySky.dayLord}</Text> (
             {dailySky.dayTheme}).
           </Text>
           <Text
             style={[typography('body'), { color: colors.textMuted, marginTop: 4, lineHeight: 22 }]}
           >
             {lang === 'ur' ? 'اس گھڑی پر' : lang === 'hi' ? 'इस समय' : 'This hour carries'}{' '}
-            <Text style={{ fontWeight: '700', color: colors.accent }}>{dailySky.horaLord}</Text> (
+            <Text style={[emphasis, { color: colors.accent }]}>{dailySky.horaLord}</Text> (
             {dailySky.horaTheme}).
           </Text>
           {dailySky.guidance !== null && (
@@ -489,7 +493,7 @@ const OracleScreen: React.FC = () => {
           </Text>
           <Text style={[typography('body'), { color: colors.text, marginTop: 8, lineHeight: 22 }]}>
             {t('oracle.favoredNowBody')}{' '}
-            <Text style={{ fontWeight: '700', color: colors.accent }}>{favoredChip}</Text>
+            <Text style={[emphasis, { color: colors.accent }]}>{favoredChip}</Text>
           </Text>
         </View>
 
@@ -551,9 +555,7 @@ const OracleScreen: React.FC = () => {
             {t('oracle.blessingTitle').toUpperCase()}
           </Text>
           <Text style={[typography('body'), { color: colors.text, marginTop: 8, lineHeight: 22 }]}>
-            <Text style={{ fontWeight: '700', color: colors.accent }}>
-              {islamicNote.name[lang]}
-            </Text>
+            <Text style={[emphasis, { color: colors.accent }]}>{islamicNote.name[lang]}</Text>
             {' — '}
             {islamicNote.note[lang]}
           </Text>

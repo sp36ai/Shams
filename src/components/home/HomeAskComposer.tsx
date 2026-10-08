@@ -20,6 +20,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
+import { SPACING } from '@theme/themes';
 import { useColors } from '@theme/ThemeProvider';
 import { useTypography } from '@theme/useTypography';
 import { useI18n, useTranslation } from '@i18n/I18nProvider';
@@ -209,6 +210,9 @@ const HomeAskComposer: React.FC<HomeAskComposerProps> = ({ onSubmit, onOpenBlank
 
 const styles = StyleSheet.create({
   wrap: {
+    // Same gutter as every Home card — without it the prompt and field ran
+    // flush to the screen edges.
+    marginHorizontal: SPACING.xl,
     marginTop: 8,
   },
   field: {
