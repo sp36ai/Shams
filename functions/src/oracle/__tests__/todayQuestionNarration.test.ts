@@ -7,6 +7,8 @@ import { toBoundaryPlanetName } from '../../utils/planetBoundaryName';
 import { buildReadingContract, type ReadingContract } from '../readingContract';
 import { validateNarration } from '../narrationValidator';
 import { buildDeterministicFallbackNarration } from '../narrationFallback';
+import { validateDiscussionReply } from '../discussionComposer';
+import { ORACLE_DISCUSSION_PROMPT } from '../../prompts/oracleDiscussionPrompt';
 
 function contractFor(moment: string, question: string): ReadingContract {
   const chart = buildWatchChart(moment);
@@ -65,5 +67,35 @@ describe('the deterministic fallback for that reading', () => {
   it('states the patterns in plain words, and still passes validation', () => {
     expect(fallback.interpretation).toContain('The pattern the chart shows is');
     expect(validateNarration(contract, fallback).valid).toBe(true);
+  });
+});
+
+describe('a follow-up reply on that reading', () => {
+  const contract = contractFor('2026-10-08T13:00:00+05:30', 'Will bilal give my laptop today');
+
+  it('is rejected when it answers "not today" — and a rejected follow-up returns no reply', () => {
+    const result = validateDiscussionReply(
+      contract,
+      'Not today. The chart gives this matter a window of 45 to 90 days.',
+    );
+    expect(result.valid).toBe(false);
+  });
+
+  it('would be rejected for telling a seeker in crisis to get help "today"', () => {
+    // Why the discussion prompt's crisis line must not say "today": on a
+    // WAIT reading the timing check would swallow the safety message.
+    expect(
+      validateDiscussionReply(contract, 'Please reach someone who can help you today.').valid,
+    ).toBe(false);
+    expect(
+      validateDiscussionReply(contract, 'Please reach someone who can help you now.').valid,
+    ).toBe(true);
+  });
+});
+
+describe('the discussion prompt', () => {
+  it('never itself asks for a word the timing check rejects on a waiting reading', () => {
+    const crisisLine = ORACLE_DISCUSSION_PROMPT.split('\n').find(l => l.includes('crisis')) ?? '';
+    expect(crisisLine).not.toMatch(/\btoday\b|\btomorrow\b|right now|right away|without delay/i);
   });
 });
