@@ -97,10 +97,14 @@ export const QUESTION_KEYWORDS: Readonly<Record<QuestionType, readonly string[]>
     'owed',
     'repay',
     'repaid',
+    // Romanised Urdu/Hindi for credit (owner decision 2026-10-08: finance).
+    // Not 'udhar', which is also "there" (اُدھر / उधर).
+    'udhaar',
     // UR
     'پیسہ',
     'پیسے',
     'قرض',
+    'ادھار',
     'دولت',
     'سرمایہ',
     'منافع',
@@ -108,6 +112,7 @@ export const QUESTION_KEYWORDS: Readonly<Record<QuestionType, readonly string[]>
     'पैसा',
     'धन',
     'कर्ज',
+    'उधार',
     'निवेश',
     'लाभ',
     'हानि',

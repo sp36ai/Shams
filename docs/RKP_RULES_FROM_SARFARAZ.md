@@ -76,7 +76,8 @@ house table was added.
 
 Keywords: `src/astrology/kp/rules/questionKeywords.ts` (lostitem: lend, lent, borrow, borrowed,
 give back, gave back, give me back, give my, return my, returned my, واپس دے / واپس کرے / واپس کریں,
-वापस देगा / देगी / करेगा / करेगी; finance adds owe, owes, owed, repay, repaid).
+वापस देगा / देगी / करेगा / करेगी; finance adds owe, owes, owed, repay, repaid, and credit —
+ادھار / उधार / udhaar — but not "udhar", which also means "there").
 
 ---
 
