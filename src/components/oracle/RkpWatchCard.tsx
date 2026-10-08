@@ -83,6 +83,20 @@ export function timingLabel(verdict: DisplayWatchVerdict): string {
   return `${Math.round(minDays / 30)}–${Math.round(maxDays / 30)} months`;
 }
 
+/**
+ * The "Ruled by" row. When the matter's Ghar is the querent's own (every
+ * 1st-Ghar question), the two rulers are the same planet and "X, which your
+ * ruler X counts friend" is a planet judging itself — say what it is instead.
+ */
+export function rulerRowValue(verdict: DisplayWatchVerdict, lagnaRulerName: string): string {
+  if (verdict.targetRuler === verdict.lagnaRuler) {
+    return `${verdict.targetRulerName} — your own ruler`;
+  }
+  const relation =
+    typeof verdict.rulerRelation === 'string' ? verdict.rulerRelation.toLowerCase() : 'unrecorded';
+  return `${verdict.targetRulerName}, which your ruler ${lagnaRulerName} counts ${relation}`;
+}
+
 function pad2(n: number): string {
   return String(n).padStart(2, '0');
 }
@@ -143,8 +157,6 @@ const RkpWatchCard: React.FC<RkpWatchCardProps> = ({
       ? verdict.confidence.replace('_', ' ').toLowerCase()
       : 'unrecorded';
   const houseMeta = HOUSE_META[verdict.targetHouse];
-  const rulerRelation =
-    typeof verdict.rulerRelation === 'string' ? verdict.rulerRelation.toLowerCase() : 'unrecorded';
   const factors = Array.isArray(verdict.factors) ? verdict.factors : [];
   const headline = STATE_HEADLINE[verdict.state] ?? 'This reading could not be described';
 
@@ -208,7 +220,7 @@ const RkpWatchCard: React.FC<RkpWatchCardProps> = ({
       )}
       <Row
         label="Ruled by"
-        value={`${verdict.targetRulerName}, which your ruler ${lagnaRulerName} counts ${rulerRelation}`}
+        value={rulerRowValue(verdict, lagnaRulerName)}
         colors={colors}
         typography={typography}
       />

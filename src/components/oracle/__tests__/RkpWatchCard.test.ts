@@ -1,7 +1,7 @@
 import { buildWatchChart } from '@astrology/rkp/watchChart';
 import { judgeWatchChart, type WatchVerdict } from '@astrology/rkp/watchJudgment';
 
-import { obstructionLabel, STATE_HEADLINE, timingLabel } from '../RkpWatchCard';
+import { obstructionLabel, rulerRowValue, STATE_HEADLINE, timingLabel } from '../RkpWatchCard';
 
 const MOMENT = '2026-08-08T11:13:00+05:30';
 
@@ -66,5 +66,27 @@ describe('obstruction label', () => {
       const label = obstructionLabel(verdictWith({ obstruction }));
       expect(label).not.toMatch(/\b(Shani|Mangal|Rahu|Ketu|Guru|Shukra|Budh)\b/);
     }
+  });
+});
+
+describe('ruler row', () => {
+  it("does not have a planet judge itself when the matter is the querent's own Ghar", () => {
+    const v = verdictWith({
+      targetRuler: 'Mars',
+      lagnaRuler: 'Mars',
+      targetRulerName: 'Mirrikh',
+      rulerRelation: 'Friend',
+    });
+    expect(rulerRowValue(v, 'Mirrikh')).toBe('Mirrikh — your own ruler');
+  });
+
+  it('names the relation when the two rulers differ', () => {
+    const v = verdictWith({
+      targetRuler: 'Venus',
+      lagnaRuler: 'Mars',
+      targetRulerName: 'Zuhrah',
+      rulerRelation: 'Neutral',
+    });
+    expect(rulerRowValue(v, 'Mirrikh')).toBe('Zuhrah, which your ruler Mirrikh counts neutral');
   });
 });
