@@ -115,6 +115,11 @@ export interface RkpWatchCardProps {
   verdict: DisplayWatchVerdict;
   /** Optional physical correspondence, from data/watchRemedyContext.ts. */
   directionalFocus?: DirectionalFocus | null;
+  /**
+   * False when a VerdictSeal above already states the verdict: the card then
+   * opens on what was judged, without restating the answer.
+   */
+  showVerdict?: boolean;
 }
 
 const RkpWatchCard: React.FC<RkpWatchCardProps> = ({
@@ -123,6 +128,7 @@ const RkpWatchCard: React.FC<RkpWatchCardProps> = ({
   lagnaRulerName,
   verdict,
   directionalFocus,
+  showVerdict = true,
 }) => {
   const colors = useColors();
   const typography = useTypography();
@@ -199,14 +205,17 @@ const RkpWatchCard: React.FC<RkpWatchCardProps> = ({
         )}  ·  ${lagnaSignName}`}
       </Text>
 
-      {/* ── The answer ───────────────────────────────────────────────────── */}
-      <Text style={[typography('heading'), styles.headline, { color: stateColor }]}>
-        {headline}
-      </Text>
-      <Text style={[typography('caption'), { color: colors.textMuted }]}>
-        {`${verdict.state} · confidence ${confidenceLabel}`}
-      </Text>
-
+      {/* ── The answer, unless a VerdictSeal above already gives it ────── */}
+      {showVerdict && (
+        <>
+          <Text style={[typography('heading'), styles.headline, { color: stateColor }]}>
+            {headline}
+          </Text>
+          <Text style={[typography('caption'), { color: colors.textMuted }]}>
+            {`${verdict.state} · confidence ${confidenceLabel}`}
+          </Text>
+        </>
+      )}
       <View style={[styles.rule, { backgroundColor: colors.border }]} />
 
       {/* ── What was judged ──────────────────────────────────────────────── */}

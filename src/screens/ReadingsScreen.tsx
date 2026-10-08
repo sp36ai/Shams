@@ -52,6 +52,7 @@ import {
 import { readingTitleFor } from '../data/readingTitle';
 import { formatReadingMoment } from '@components/oracle/ReadingHeader';
 import StarfieldBackground from '@components/StarfieldBackground';
+import VerdictSeal from '@components/oracle/VerdictSeal';
 import RkpWatchCard, { STATE_TONE } from '@components/oracle/RkpWatchCard';
 import RemedyProtocolCard from '@components/oracle/RemedyProtocolCard';
 
@@ -686,13 +687,21 @@ const ReadingDetailModal: React.FC<{
               already absent on watch readings, which carry no moonSubLord. */}
           {reading.watch_oracle !== undefined && (
             <>
+              <VerdictSeal
+                verdict={reading.watch_oracle.verdict}
+                diagnosis={reading.watch_oracle.composition?.diagnosis}
+              />
               <RkpWatchCard
+                showVerdict={false}
                 window={reading.watch_oracle.window}
                 lagnaSignName={reading.watch_oracle.lagnaSignName}
                 lagnaRulerName={reading.watch_oracle.lagnaRulerName}
                 verdict={reading.watch_oracle.verdict}
               />
-              <RemedyProtocolCard composition={reading.watch_oracle.composition} />
+              <RemedyProtocolCard
+                composition={reading.watch_oracle.composition}
+                showFinding={false}
+              />
             </>
           )}
 

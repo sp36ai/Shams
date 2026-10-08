@@ -26,6 +26,7 @@ import type { WatchReading } from '../../firebase/watchOracle';
 import RkpWatchCard, { STATE_HEADLINE } from './RkpWatchCard';
 import RemedyProtocolCard from './RemedyProtocolCard';
 import SuggestedQuestionsRow from './SuggestedQuestionsRow';
+import VerdictSeal from './VerdictSeal';
 import { directionalFocusFor } from '../../data/watchRemedyContext';
 import type { SpeakingStatus } from '@hooks/useTextToSpeech';
 
@@ -312,14 +313,18 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({
         </View>
         {reading !== undefined && (
           <>
+            <VerdictSeal verdict={reading.verdict} diagnosis={reading.oracle?.diagnosis} />
             <RkpWatchCard
+              showVerdict={false}
               window={reading.window}
               lagnaSignName={reading.lagnaSignName}
               lagnaRulerName={reading.lagnaRulerName}
               verdict={reading.verdict}
               directionalFocus={directionalFocusFor(reading.verdict)}
             />
-            {reading.oracle !== undefined && <RemedyProtocolCard composition={reading.oracle} />}
+            {reading.oracle !== undefined && (
+              <RemedyProtocolCard composition={reading.oracle} showFinding={false} />
+            )}
             {/* PHASE 2B/2B-F: this used to also render a GuidanceCard, fed by
                 a second, LLM-driven remedy path — disconnected in 2B,
                 its now-unreachable component deleted in 2B-F. See
