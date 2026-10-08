@@ -111,3 +111,22 @@ describe('OracleScreen navigation wiring', () => {
     expect(push).toHaveBeenCalledTimes(1);
   });
 });
+
+describe('OracleScreen layout', () => {
+  it('follows the Observatory Hall order: hora, sky, ask, manzil, tier', async () => {
+    await renderScreen(<OracleScreen />);
+    // Each section's own heading, in the order the design system lists them.
+    const headings = [
+      'CURRENT HORA',
+      "TODAY'S SKY FOR YOU",
+      'What would you like to ask?',
+      'MOON MANZIL',
+      'YOUR TIER',
+    ];
+    // Rendered order is document order in the serialised tree.
+    const tree = JSON.stringify(screen.toJSON());
+    const positions = headings.map(h => tree.indexOf(JSON.stringify(h)));
+    expect(positions.every(p => p >= 0)).toBe(true);
+    expect([...positions].sort((a, b) => a - b)).toEqual(positions);
+  });
+});

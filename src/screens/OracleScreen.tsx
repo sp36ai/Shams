@@ -320,41 +320,77 @@ const OracleScreen: React.FC = () => {
           </View>
         </Pressable>
 
-        {/* Quota + Tier pills */}
-        <View style={styles.pillRow}>
-          <View
-            style={[
-              styles.infoPill,
-              { backgroundColor: colors.surface, borderColor: colors.border },
-            ]}
+        {/* Today's Sky — daily personalized readout, based on saved profile */}
+        <View
+          style={[
+            styles.card,
+            { backgroundColor: colors.surface, borderColor: colors.borderAccent + '44' },
+          ]}
+        >
+          <Text style={[typography('caption'), { color: colors.goldBright, letterSpacing: 1.2 }]}>
+            {t('oracle.dailySkyTitle').toUpperCase()}
+          </Text>
+          <Text style={[typography('body'), { color: colors.text, marginTop: 8, lineHeight: 22 }]}>
+            {dailySky.greeting} {lang === 'ur' ? 'کے تحت' : lang === 'hi' ? 'में' : 'is under'}{' '}
+            <Text style={[emphasis, { color: colors.accent }]}>{dailySky.dayLord}</Text> (
+            {dailySky.dayTheme}).
+          </Text>
+          <Text
+            style={[typography('body'), { color: colors.textMuted, marginTop: 4, lineHeight: 22 }]}
           >
-            <Text style={[typography('caption'), { color: colors.textFaint, fontSize: 10 }]}>
-              {t('oracle.todaysQuotaLabel').toUpperCase()}
+            {lang === 'ur' ? 'اس گھڑی پر' : lang === 'hi' ? 'इस समय' : 'This hour carries'}{' '}
+            <Text style={[emphasis, { color: colors.accent }]}>{dailySky.horaLord}</Text> (
+            {dailySky.horaTheme}).
+          </Text>
+          {dailySky.guidance !== null && (
+            <Text
+              style={[
+                typography('bodyItalic'),
+                { color: colors.goldBright, marginTop: 10, lineHeight: 20, opacity: 0.9 },
+              ]}
+            >
+              {dailySky.guidance}
             </Text>
-            <Text style={[typography('label'), { color: colors.goldBright, marginTop: 4 }]}>
-              {questionsLeft === Infinity
-                ? '∞'
-                : `${questionsLeft} / ${trialActive ? TRIAL_DAILY_LIMIT : FREE_DAILY_LIMIT}`}
-            </Text>
-          </View>
-          <View
-            style={[
-              styles.infoPill,
-              styles.tierPill,
-              { backgroundColor: colors.surface, borderColor: colors.border },
-            ]}
-          >
-            <View style={styles.tierTextCol}>
-              <Text style={[typography('caption'), { color: colors.textFaint, fontSize: 10 }]}>
-                {t('oracle.yourTierLabel').toUpperCase()}
-              </Text>
-              <Text style={[typography('label'), { color: colors.goldBright, marginTop: 4 }]}>
-                {tierLabel.toUpperCase()}
-              </Text>
-            </View>
-            <Image source={SEAL_IMAGE} style={styles.tierSealImage} resizeMode="contain" />
-          </View>
+          )}
         </View>
+
+        {/* Ask Shams — the primary action: a question becomes a Reading */}
+        <HomeAskComposer
+          // push, not navigate — see ReadingsScreen for why: a Reading is
+          // always its own screen, never a params update to one already open.
+          onSubmit={(question, kind) =>
+            navigation.push('Reading', { initialQuestion: question, initialQuestionKind: kind })
+          }
+          onOpenBlank={() => navigation.push('Reading', {})}
+        />
+
+        {/* Reading History */}
+        <Pressable
+          onPress={() => navigation.navigate('Readings')}
+          style={({ pressed }) => [
+            styles.actionBtnSecondary,
+            {
+              backgroundColor: colors.surface,
+              borderColor: colors.border,
+              opacity: pressed ? 0.85 : 1,
+            },
+          ]}
+          accessibilityRole="button"
+          accessibilityLabel={t('oracle.readingHistoryCta')}
+        >
+          <View style={[styles.actionIconWrap, { borderColor: colors.border }]}>
+            <Text style={{ fontSize: 18 }}>{'📜'}</Text>
+          </View>
+          <View style={styles.actionTextCol}>
+            <Text style={[typography('button'), { color: colors.text, fontSize: 15 }]}>
+              {t('oracle.readingHistoryCta')}
+            </Text>
+            <Text style={[typography('caption'), { color: colors.textMuted, marginTop: 2 }]}>
+              {t('oracle.viewPastReadingsSubtitle')}
+            </Text>
+          </View>
+          <Text style={[typography('label'), { color: colors.textMuted }]}>›</Text>
+        </Pressable>
 
         {/* Moon Manzil — the current lunar mansion (Manazil al-Qamar) */}
         <View
@@ -409,76 +445,40 @@ const OracleScreen: React.FC = () => {
           )}
         </View>
 
-        {/* Ask Shams — the primary action: a question becomes a Reading */}
-        <HomeAskComposer
-          // push, not navigate — see ReadingsScreen for why: a Reading is
-          // always its own screen, never a params update to one already open.
-          onSubmit={(question, kind) =>
-            navigation.push('Reading', { initialQuestion: question, initialQuestionKind: kind })
-          }
-          onOpenBlank={() => navigation.push('Reading', {})}
-        />
-
-        {/* Reading History */}
-        <Pressable
-          onPress={() => navigation.navigate('Readings')}
-          style={({ pressed }) => [
-            styles.actionBtnSecondary,
-            {
-              backgroundColor: colors.surface,
-              borderColor: colors.border,
-              opacity: pressed ? 0.85 : 1,
-            },
-          ]}
-          accessibilityRole="button"
-          accessibilityLabel={t('oracle.readingHistoryCta')}
-        >
-          <View style={[styles.actionIconWrap, { borderColor: colors.border }]}>
-            <Text style={{ fontSize: 18 }}>{'📜'}</Text>
-          </View>
-          <View style={styles.actionTextCol}>
-            <Text style={[typography('button'), { color: colors.text, fontSize: 15 }]}>
-              {t('oracle.readingHistoryCta')}
-            </Text>
-            <Text style={[typography('caption'), { color: colors.textMuted, marginTop: 2 }]}>
-              {t('oracle.viewPastReadingsSubtitle')}
-            </Text>
-          </View>
-          <Text style={[typography('label'), { color: colors.textMuted }]}>›</Text>
-        </Pressable>
-
-        {/* Today's Sky — daily personalized readout, based on saved profile */}
-        <View
-          style={[
-            styles.card,
-            { backgroundColor: colors.surface, borderColor: colors.borderAccent + '44' },
-          ]}
-        >
-          <Text style={[typography('caption'), { color: colors.goldBright, letterSpacing: 1.2 }]}>
-            {t('oracle.dailySkyTitle').toUpperCase()}
-          </Text>
-          <Text style={[typography('body'), { color: colors.text, marginTop: 8, lineHeight: 22 }]}>
-            {dailySky.greeting} {lang === 'ur' ? 'کے تحت' : lang === 'hi' ? 'में' : 'is under'}{' '}
-            <Text style={[emphasis, { color: colors.accent }]}>{dailySky.dayLord}</Text> (
-            {dailySky.dayTheme}).
-          </Text>
-          <Text
-            style={[typography('body'), { color: colors.textMuted, marginTop: 4, lineHeight: 22 }]}
+        {/* Quota + Tier pills */}
+        <View style={styles.pillRow}>
+          <View
+            style={[
+              styles.infoPill,
+              { backgroundColor: colors.surface, borderColor: colors.border },
+            ]}
           >
-            {lang === 'ur' ? 'اس گھڑی پر' : lang === 'hi' ? 'इस समय' : 'This hour carries'}{' '}
-            <Text style={[emphasis, { color: colors.accent }]}>{dailySky.horaLord}</Text> (
-            {dailySky.horaTheme}).
-          </Text>
-          {dailySky.guidance !== null && (
-            <Text
-              style={[
-                typography('bodyItalic'),
-                { color: colors.goldBright, marginTop: 10, lineHeight: 20, opacity: 0.9 },
-              ]}
-            >
-              {dailySky.guidance}
+            <Text style={[typography('caption'), { color: colors.textFaint, fontSize: 10 }]}>
+              {t('oracle.todaysQuotaLabel').toUpperCase()}
             </Text>
-          )}
+            <Text style={[typography('label'), { color: colors.goldBright, marginTop: 4 }]}>
+              {questionsLeft === Infinity
+                ? '∞'
+                : `${questionsLeft} / ${trialActive ? TRIAL_DAILY_LIMIT : FREE_DAILY_LIMIT}`}
+            </Text>
+          </View>
+          <View
+            style={[
+              styles.infoPill,
+              styles.tierPill,
+              { backgroundColor: colors.surface, borderColor: colors.border },
+            ]}
+          >
+            <View style={styles.tierTextCol}>
+              <Text style={[typography('caption'), { color: colors.textFaint, fontSize: 10 }]}>
+                {t('oracle.yourTierLabel').toUpperCase()}
+              </Text>
+              <Text style={[typography('label'), { color: colors.goldBright, marginTop: 4 }]}>
+                {tierLabel.toUpperCase()}
+              </Text>
+            </View>
+            <Image source={SEAL_IMAGE} style={styles.tierSealImage} resizeMode="contain" />
+          </View>
         </View>
 
         {/* Favored Now — which chip category the current hora lord favors */}
