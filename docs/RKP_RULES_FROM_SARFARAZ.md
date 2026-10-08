@@ -56,6 +56,20 @@ App-retained extension categories that are not part of the owner's exact pasted 
 
 Code: `src/astrology/kp/rules/houseMatrix.ts`
 
+### Lending and returning questions
+
+Owner decision, 2026-10-08. Questions about something lent, borrowed or held by someone else
+("Will Bilal give my laptop back?", "Will he repay me?") use the existing categories; no new
+house table was added.
+
+- **An object** is judged as `lostitem` (primary 2nd Ghar).
+- **Money** is judged as `finance` (primary 2nd Ghar). Money words are matched first, so "the
+  money I lent" is finance, not lostitem.
+
+Keywords: `src/astrology/kp/rules/questionKeywords.ts` (lostitem: lend, lent, borrow, borrowed,
+give back, gave back, give me back, give my, return my, returned my, واپس دے / واپس کرے / واپس کریں,
+वापस देगा / देगी / करेगा / करेगी; finance adds owe, owes, owed, repay, repaid).
+
 ---
 
 ## 3. Sidereal and Nakshatra rules

@@ -3,6 +3,7 @@ import { buildWatchChart } from '../../engine/rkp/watchChart';
 import { judgeWatchChart, type DisplayWatchVerdict } from '../../engine/rkp/watchJudgment';
 import { diagnose } from '../../engine/rkp/diagnosis';
 import { classifyQuestion } from '../../engine/kp/rules/questionKeywords';
+import type { QuestionType } from '../../engine/kp/rules/houseMatrix';
 import { selectRemedyProtocol } from '../remedySelection';
 import { toBoundaryPlanetName } from '../../utils/planetBoundaryName';
 import { buildReadingContract, type ReadingContract } from '../readingContract';
@@ -11,9 +12,18 @@ import { buildDeterministicFallbackNarration } from '../narrationFallback';
 import { validateDiscussionReply } from '../discussionComposer';
 import { ORACLE_DISCUSSION_PROMPT } from '../../prompts/oracleDiscussionPrompt';
 
-function contractFor(moment: string, question: string): ReadingContract {
+/**
+ * The screenshot's Reading was cast as 'general', before lending questions
+ * were classified as lostitem (2026-10-08). The type is pinned so these tests
+ * keep rebuilding the reading that was actually shown.
+ */
+function contractFor(
+  moment: string,
+  question: string,
+  qType: QuestionType = classifyQuestion(question),
+): ReadingContract {
   const chart = buildWatchChart(moment);
-  const rawVerdict = judgeWatchChart(chart, classifyQuestion(question));
+  const rawVerdict = judgeWatchChart(chart, qType);
   const verdict: DisplayWatchVerdict = {
     ...rawVerdict,
     obstruction: toBoundaryPlanetName(rawVerdict.obstruction),
@@ -32,7 +42,11 @@ function contractFor(moment: string, question: string): ReadingContract {
 }
 
 describe('a question asked about "today" on a reading that says wait', () => {
-  const contract = contractFor('2026-10-08T13:00:00+05:30', 'Will bilal give my laptop today');
+  const contract = contractFor(
+    '2026-10-08T13:00:00+05:30',
+    'Will bilal give my laptop today',
+    'general',
+  );
 
   it('is the reading from the device screenshot: blocked by Dhanab, wait 45–90 days', () => {
     expect(contract.diagnosis.outcome).toBe('UNFAVOURABLE');
@@ -56,7 +70,11 @@ describe('a question asked about "today" on a reading that says wait', () => {
 });
 
 describe('the deterministic fallback for that reading', () => {
-  const contract = contractFor('2026-10-08T13:00:00+05:30', 'Will bilal give my laptop today');
+  const contract = contractFor(
+    '2026-10-08T13:00:00+05:30',
+    'Will bilal give my laptop today',
+    'general',
+  );
   const fallback = buildDeterministicFallbackNarration(contract);
 
   it('shows the seeker no engine tokens', () => {
@@ -72,7 +90,11 @@ describe('the deterministic fallback for that reading', () => {
 });
 
 describe('a follow-up reply on that reading', () => {
-  const contract = contractFor('2026-10-08T13:00:00+05:30', 'Will bilal give my laptop today');
+  const contract = contractFor(
+    '2026-10-08T13:00:00+05:30',
+    'Will bilal give my laptop today',
+    'general',
+  );
 
   it('is rejected when it answers "not today" — and a rejected follow-up returns no reply', () => {
     const result = validateDiscussionReply(

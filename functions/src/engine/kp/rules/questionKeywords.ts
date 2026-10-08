@@ -90,6 +90,13 @@ export const QUESTION_KEYWORDS: Readonly<Record<QuestionType, readonly string[]>
     'wealth',
     'pay',
     'cash',
+    // Money lent or owed (owner decision 2026-10-08: lending questions about
+    // money are finance; about an object, lostitem — both judge the 2nd Ghar).
+    'owe',
+    'owes',
+    'owed',
+    'repay',
+    'repaid',
     // UR
     'پیسہ',
     'پیسے',
@@ -290,17 +297,37 @@ export const QUESTION_KEYWORDS: Readonly<Record<QuestionType, readonly string[]>
     'search',
     'stolen',
     'misplaced',
+    // An object lent, borrowed or held by someone else (owner decision
+    // 2026-10-08, see finance above). Money words are matched by finance
+    // first, so "the money I lent" never reaches these.
+    'lend',
+    'lent',
+    'borrow',
+    'borrowed',
+    'give back',
+    'gave back',
+    'give me back',
+    'give my',
+    'return my',
+    'returned my',
     // UR
     'گم',
     'کھو',
     'چوری',
     'گمشدہ',
+    'واپس دے',
+    'واپس کرے',
+    'واپس کریں',
     // HI
     'खोया',
     'गुम',
     'चोरी',
     'गायब',
     'खोई',
+    'वापस देगा',
+    'वापस देगी',
+    'वापस करेगा',
+    'वापस करेगी',
   ],
   enemies: [
     // EN
