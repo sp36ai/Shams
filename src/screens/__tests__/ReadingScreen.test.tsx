@@ -141,8 +141,8 @@ describe('ReadingScreen', () => {
     await user.type(screen.getByTestId('oracle-chat-input'), 'Will I get the job?');
     await user.press(screen.getByTestId('oracle-chat-send-btn'));
 
-    // The question is the READING's question — stated once, in the header,
-    // never also as a bubble.
+    // The question opens the thread as the seeker's own bubble — stated once,
+    // not repeated in the header above it.
     expect(screen.getAllByText('Will I get the job?')).toHaveLength(1);
     expect(screen.getByText('Reading the chart…')).toBeTruthy();
 

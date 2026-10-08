@@ -83,6 +83,20 @@ export function timingLabel(verdict: DisplayWatchVerdict): string {
   return `${Math.round(minDays / 30)}–${Math.round(maxDays / 30)} months`;
 }
 
+/**
+ * The "Ruled by" row. When the matter's Ghar is the querent's own (every
+ * 1st-Ghar question), the two rulers are the same planet and "X, which your
+ * ruler X counts friend" is a planet judging itself — say what it is instead.
+ */
+export function rulerRowValue(verdict: DisplayWatchVerdict, lagnaRulerName: string): string {
+  if (verdict.targetRuler === verdict.lagnaRuler) {
+    return `${verdict.targetRulerName} — your own ruler`;
+  }
+  const relation =
+    typeof verdict.rulerRelation === 'string' ? verdict.rulerRelation.toLowerCase() : 'unrecorded';
+  return `${verdict.targetRulerName}, which your ruler ${lagnaRulerName} counts ${relation}`;
+}
+
 function pad2(n: number): string {
   return String(n).padStart(2, '0');
 }
@@ -101,6 +115,11 @@ export interface RkpWatchCardProps {
   verdict: DisplayWatchVerdict;
   /** Optional physical correspondence, from data/watchRemedyContext.ts. */
   directionalFocus?: DirectionalFocus | null;
+  /**
+   * False when a VerdictSeal above already states the verdict: the card then
+   * opens on what was judged, without restating the answer.
+   */
+  showVerdict?: boolean;
 }
 
 const RkpWatchCard: React.FC<RkpWatchCardProps> = ({
@@ -109,6 +128,7 @@ const RkpWatchCard: React.FC<RkpWatchCardProps> = ({
   lagnaRulerName,
   verdict,
   directionalFocus,
+  showVerdict = true,
 }) => {
   const colors = useColors();
   const typography = useTypography();
@@ -143,8 +163,6 @@ const RkpWatchCard: React.FC<RkpWatchCardProps> = ({
       ? verdict.confidence.replace('_', ' ').toLowerCase()
       : 'unrecorded';
   const houseMeta = HOUSE_META[verdict.targetHouse];
-  const rulerRelation =
-    typeof verdict.rulerRelation === 'string' ? verdict.rulerRelation.toLowerCase() : 'unrecorded';
   const factors = Array.isArray(verdict.factors) ? verdict.factors : [];
   const headline = STATE_HEADLINE[verdict.state] ?? 'This reading could not be described';
 
@@ -187,14 +205,17 @@ const RkpWatchCard: React.FC<RkpWatchCardProps> = ({
         )}  ·  ${lagnaSignName}`}
       </Text>
 
-      {/* ── The answer ───────────────────────────────────────────────────── */}
-      <Text style={[typography('heading'), styles.headline, { color: stateColor }]}>
-        {headline}
-      </Text>
-      <Text style={[typography('caption'), { color: colors.textMuted }]}>
-        {`${verdict.state} · confidence ${confidenceLabel}`}
-      </Text>
-
+      {/* ── The answer, unless a VerdictSeal above already gives it ────── */}
+      {showVerdict && (
+        <>
+          <Text style={[typography('heading'), styles.headline, { color: stateColor }]}>
+            {headline}
+          </Text>
+          <Text style={[typography('caption'), { color: colors.textMuted }]}>
+            {`${verdict.state} · confidence ${confidenceLabel}`}
+          </Text>
+        </>
+      )}
       <View style={[styles.rule, { backgroundColor: colors.border }]} />
 
       {/* ── What was judged ──────────────────────────────────────────────── */}
@@ -208,7 +229,7 @@ const RkpWatchCard: React.FC<RkpWatchCardProps> = ({
       )}
       <Row
         label="Ruled by"
-        value={`${verdict.targetRulerName}, which your ruler ${lagnaRulerName} counts ${rulerRelation}`}
+        value={rulerRowValue(verdict, lagnaRulerName)}
         colors={colors}
         typography={typography}
       />

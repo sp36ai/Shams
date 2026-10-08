@@ -27,6 +27,55 @@ const OUTCOME_LABEL: Readonly<Record<ReadingContract['diagnosis']['outcome'], st
     DECLINING: 'The opportunity in this matter is weakening.',
   });
 
+/**
+ * The diagnosis's imbalance patterns, as the seeker reads them. The engine's
+ * own `rationale` names these as tokens ("indicates UNCERTAINTY +
+ * INSTABILITY") — it is an audit record, not prose — so the fallback states
+ * the patterns from this table instead of repeating it.
+ */
+const PATTERN_LABEL: Readonly<Record<ReadingContract['diagnosis']['primaryPattern'], string>> =
+  Object.freeze({
+    OBSTRUCTION: 'obstruction',
+    UNCERTAINTY: 'uncertainty',
+    CONFLICT: 'conflict between the parties',
+    INSTABILITY: 'instability',
+    ATTACHMENT: 'attachment that is hard to release',
+    HASTE: 'haste',
+    POOR_TIMING: 'timing that does not yet fit',
+    EXTERNAL_OPPOSITION: 'opposition from another party',
+    NEEDS_PATIENCE: 'a need for patience',
+    NEEDS_DECISIVE_ACTION: 'a need for decisive action',
+    FAVOURABLE_FLOW: 'a favourable flow',
+  });
+
+/** An engine token anywhere in a sentence: BLOCKED, UNFAVOURABLE, POOR_TIMING. */
+const ENGINE_TOKEN = /\b[A-Z]{2,}(?:_[A-Z]+)*\b/;
+
+function joinLabels(labels: readonly string[]): string {
+  return labels.length <= 1
+    ? (labels[0] ?? '')
+    : `${labels.slice(0, -1).join(', ')} and ${labels[labels.length - 1]}`;
+}
+
+/**
+ * The interpretation: the patterns in plain words, then whichever lines of
+ * the engine's rationale are already plain prose. Lines carrying an engine
+ * token are left out — what they say is either the outcome (rkp_finding
+ * already states it) or the patterns (stated here from PATTERN_LABEL).
+ */
+function interpretationFor(diagnosis: ReadingContract['diagnosis']): string {
+  const patterns = [diagnosis.primaryPattern, ...diagnosis.secondaryPatterns]
+    .filter((p, i, all) => all.indexOf(p) === i)
+    .map(p => PATTERN_LABEL[p])
+    .filter((label): label is string => label !== undefined);
+  const sentences: string[] = [];
+  if (patterns.length > 0) {
+    sentences.push(`The pattern the chart shows is ${joinLabels(patterns)}.`);
+  }
+  sentences.push(...diagnosis.rationale.filter(line => !ENGINE_TOKEN.test(line)));
+  return sentences.length > 0 ? sentences.join(' ') : `This reading concerns ${diagnosis.qType}.`;
+}
+
 const TIMING_POSTURE_LABEL: Readonly<
   Record<ReadingContract['diagnosis']['timingPosture'], string>
 > = Object.freeze({
@@ -58,10 +107,7 @@ export function buildDeterministicFallbackNarration(contract: ReadingContract): 
 
   const rkp_finding = `${OUTCOME_LABEL[diagnosis.outcome]}${diagnosis.obstructingAgent ? ` ${diagnosis.obstructingAgent} is the obstructing influence.` : ''}`;
 
-  const interpretation =
-    diagnosis.rationale.length > 0
-      ? diagnosis.rationale.join(' ')
-      : `This reading concerns ${diagnosis.qType}.`;
+  const interpretation = interpretationFor(diagnosis);
 
   const recommended_approach = `${TIMING_POSTURE_LABEL[diagnosis.timingPosture]}${timingWindowSentence(diagnosis.timing)}`;
 
