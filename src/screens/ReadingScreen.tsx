@@ -220,25 +220,29 @@ const ReadingScreen: React.FC = () => {
   const thread = useMemo(() => threadById(threads, threadId ?? undefined), [threads, threadId]);
 
   /**
-   * The conversation below the header.
-   *
-   * The question that opened the Reading is deliberately not a bubble: it is
-   * the Reading's own question and the header states it. Rendering it again
-   * would show the seeker their words twice and make the screen read as a
-   * chat that happens to begin with a verdict.
+   * The conversation, as a chat thread: the question that opened the Reading
+   * is the seeker's first bubble, the verdict the Oracle's reply to it, and
+   * every follow-up after that in order.
    */
-  const messages = useMemo(() => {
+  const messages = useMemo((): ReadingMessage[] => {
     if (thread === null) {
       return [];
     }
-    // The LAST cast turn, not the first: a Reading whose chart failed and was
-    // then re-asked in different words carries more than one, and the header
-    // states the question of the one that stands now.
-    const casts = thread.messages.filter(m => m.role === 'oracle' && m.variant !== 'discussion');
-    const openingId = casts[casts.length - 1]?.replyToId;
-    return openingId === undefined
-      ? thread.messages
-      : thread.messages.filter(m => m.id !== openingId);
+    // A Reading filed without its opening turn (one carried over from the
+    // older readings archive) still opens on the seeker's question.
+    if (thread.messages[0]?.role === 'user') {
+      return thread.messages;
+    }
+    return [
+      {
+        id: `${thread.id}-question`,
+        role: 'user',
+        text: thread.question,
+        createdAt: thread.createdAt,
+        status: 'sent',
+      },
+      ...thread.messages,
+    ];
   }, [thread]);
 
   // ── The two send paths ────────────────────────────────────────────────────
@@ -679,6 +683,21 @@ const ReadingScreen: React.FC = () => {
         }
       : null;
   const headerThread = thread ?? provisionalThread;
+  // Until the handed-over question is filed, it is shown as the seeker's
+  // bubble straight away — the thread's own copy replaces it once it exists.
+  const listData: ReadingMessage[] =
+    thread === null && initialQuestion !== undefined
+      ? [
+          {
+            id: 'provisional-question',
+            role: 'user',
+            text: initialQuestion,
+            kind: initialQuestionKind,
+            createdAt: provisionalThread?.createdAt ?? new Date().toISOString(),
+            status: 'sent',
+          },
+        ]
+      : messages;
   // Once a reading stands, every send in this Reading is a follow-up.
   const isDiscussMode = thread !== null && thread.readingId !== null;
 
@@ -728,7 +747,7 @@ const ReadingScreen: React.FC = () => {
         ) : (
           <FlatList
             ref={listRef}
-            data={messages}
+            data={listData}
             keyExtractor={m => m.id}
             renderItem={renderMessage}
             ListHeaderComponent={<ReadingHeader thread={headerThread} />}

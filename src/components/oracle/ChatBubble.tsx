@@ -55,6 +55,14 @@ export function speakableTextFor(reading: WatchReading): string {
   return STATE_HEADLINE[reading.verdict.state];
 }
 
+/** "1:02 PM" — the bubble timestamp, in the device's own locale. */
+export function bubbleTime(iso: string): string {
+  const at = new Date(iso);
+  return Number.isNaN(at.getTime())
+    ? ''
+    : at.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
+}
+
 interface ChatBubbleProps {
   message: ReadingMessage;
   questionLang: 'en' | 'ur' | 'hi';
@@ -105,6 +113,15 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({
             </Text>
           )}
           <Text style={[typography('body'), { color: colors.textOnPrimary }]}>{message.text}</Text>
+          <Text
+            style={[
+              typography('caption'),
+              styles.time,
+              { color: colors.textOnPrimary, opacity: 0.7 },
+            ]}
+          >
+            {bubbleTime(message.createdAt)}
+          </Text>
         </View>
       </View>
     );
@@ -247,6 +264,9 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({
                   : '▶ ' + t('oracleChat.listenToVerdict')}
             </Text>
           </Pressable>
+          <Text style={[typography('caption'), styles.time, { color: colors.textFaint }]}>
+            {bubbleTime(message.createdAt)}
+          </Text>
         </View>
       </View>
     );
@@ -254,35 +274,44 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({
 
   return (
     <View style={[styles.row, styles.rowOracle]}>
-      <View style={styles.oracleColumn}>
+      <View
+        style={[
+          styles.bubble,
+          styles.oracleBubble,
+          styles.readingBubble,
+          { backgroundColor: colors.chatShamsBg, borderColor: colors.borderAccent + '55' },
+        ]}
+      >
+        <View style={styles.senderRow}>
+          <Text style={[typography('label'), { color: colors.goldBright }]}>
+            {'☉ ' + t('app.name')}
+          </Text>
+          {reading !== undefined && (
+            <Pressable
+              onPress={() =>
+                onToggleSpeech(message.id, speakableTextFor(reading), readingLang ?? questionLang)
+              }
+              style={({ pressed }) => [
+                styles.speechPill,
+                { borderColor: colors.borderAccent, opacity: pressed ? 0.7 : 1 },
+              ]}
+              accessibilityRole="button"
+              accessibilityLabel={
+                isSpeaking ? t('oracleChat.pauseNarration') : t('oracleChat.playNarration')
+              }
+            >
+              <Text style={[typography('caption'), { color: colors.goldBright }]}>
+                {isSpeaking
+                  ? '⏸ ' + t('oracleChat.speaking')
+                  : isPaused
+                    ? '▶ ' + t('oracleChat.paused')
+                    : '▶ ' + t('oracleChat.listenToVerdict')}
+              </Text>
+            </Pressable>
+          )}
+        </View>
         {reading !== undefined && (
           <>
-            <View style={styles.speechRow}>
-              <Pressable
-                onPress={() =>
-                  onToggleSpeech(message.id, speakableTextFor(reading), readingLang ?? questionLang)
-                }
-                style={({ pressed }) => [
-                  styles.speechBtn,
-                  { borderColor: colors.borderAccent, opacity: pressed ? 0.7 : 1 },
-                ]}
-                accessibilityRole="button"
-                accessibilityLabel={
-                  isSpeaking ? t('oracleChat.pauseNarration') : t('oracleChat.playNarration')
-                }
-              >
-                <Text style={[typography('label'), { color: colors.goldBright }]}>
-                  {isSpeaking ? '⏸' : '▶'}
-                </Text>
-              </Pressable>
-              <Text style={[typography('caption'), { color: colors.textFaint, marginLeft: 6 }]}>
-                {isSpeaking
-                  ? t('oracleChat.speaking')
-                  : isPaused
-                    ? t('oracleChat.paused')
-                    : t('oracleChat.listenToVerdict')}
-              </Text>
-            </View>
             <RkpWatchCard
               window={reading.window}
               lagnaSignName={reading.lagnaSignName}
@@ -297,15 +326,22 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({
                 docs/audit/PHASE_2B_ENGINE_MIGRATION.md.
                 RemedyProtocolCard above is the reading's sole remedy
                 presentation. */}
-            {reading.oracle?.suggestedQuestions !== undefined && (
-              <SuggestedQuestionsRow
-                questions={reading.oracle.suggestedQuestions}
-                onSelect={onSelectSuggestedQuestion}
-              />
-            )}
           </>
         )}
+        <Text style={[typography('caption'), styles.time, { color: colors.textFaint }]}>
+          {bubbleTime(message.createdAt)}
+        </Text>
       </View>
+      {/* Suggestions sit under the bubble, like quick replies — they are
+          offers to the seeker, not part of the Oracle's answer. */}
+      {reading?.oracle?.suggestedQuestions !== undefined && (
+        <View style={styles.quickReplies}>
+          <SuggestedQuestionsRow
+            questions={reading.oracle.suggestedQuestions}
+            onSelect={onSelectSuggestedQuestion}
+          />
+        </View>
+      )}
     </View>
   );
 };
@@ -375,22 +411,34 @@ const styles = StyleSheet.create({
     marginTop: 8,
     alignSelf: 'flex-start',
   },
-  oracleColumn: {
-    width: '100%',
+  readingBubble: {
+    // The verdict cards need the width; the bubble still leaves a gutter on
+    // the right so it reads as the Oracle's side of the thread.
+    maxWidth: '94%',
+    width: '94%',
+    paddingHorizontal: 8,
+    paddingTop: 8,
   },
-  speechRow: {
+  senderRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 4,
-    marginLeft: 4,
+    justifyContent: 'space-between',
+    gap: 8,
+    paddingHorizontal: 6,
   },
-  speechBtn: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
+  speechPill: {
     borderWidth: StyleSheet.hairlineWidth,
-    alignItems: 'center',
-    justifyContent: 'center',
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 3,
+  },
+  time: {
+    alignSelf: 'flex-end',
+    fontSize: 11,
+    marginTop: 4,
+  },
+  quickReplies: {
+    width: '94%',
   },
 });
 
