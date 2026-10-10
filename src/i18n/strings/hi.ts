@@ -128,6 +128,13 @@ export const hi: StringTable = {
     moonManzilTitle: 'मंज़िल-ए-क़मर',
     rulingPlanetsNowLabel: 'वर्तमान शासक ग्रह',
     currentHoraLordLabel: 'वर्तमान होरा स्वामी',
+    horaName: '{{planet}} होरा',
+    dayIsUnder: 'में',
+    hourCarries: 'इस समय',
+    openAlFalakA11y: 'अल-फ़लक खोलें — आकाशीय समय',
+    trialEndsSoon: 'आपके खुले द्वार 2 दिन में बंद हो जाएँगे।',
+    trialEndsTonight: 'आपके खुले द्वार आज रात बंद हो जाएँगे — अपना मार्ग चुनें',
+    choosePathA11y: 'अपना मार्ग चुनें — सदस्यता योजनाएँ खोलें',
   },
 
   oracleChat: {

@@ -196,6 +196,13 @@ export interface StringTable {
     moonManzilTitle: string;
     rulingPlanetsNowLabel: string;
     currentHoraLordLabel: string;
+    horaName: string;
+    dayIsUnder: string;
+    hourCarries: string;
+    openAlFalakA11y: string;
+    trialEndsSoon: string;
+    trialEndsTonight: string;
+    choosePathA11y: string;
   };
   oracleChat: {
     headerTitle: string;

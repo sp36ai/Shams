@@ -1,5 +1,6 @@
 /**
- * TabIcon — minimal stroke-only SVG icons for the bottom-tab bar.
+ * TabIcon — minimal stroke-only SVG icons for the bottom-tab bar and the
+ * few inline controls (mic, send, location, chevron) that share its line.
  * --------------------------------------------------------------------------
  * Why SVG:
  *   - Stroke color follows theme.colors.accent live without re-mounting fonts.
@@ -22,7 +23,15 @@
 import React from 'react';
 import Svg, { Path, Circle } from 'react-native-svg';
 
-export type IconName = 'oracle' | 'skyclock' | 'history' | 'settings';
+export type IconName =
+  | 'oracle'
+  | 'skyclock'
+  | 'history'
+  | 'settings'
+  | 'mic'
+  | 'arrowUp'
+  | 'pin'
+  | 'chevronRight';
 
 export interface TabIconProps {
   name: IconName;
@@ -92,6 +101,32 @@ const PATHS: Record<IconName, IconShape> = {
       'M14.8 9.2 L 17.7 6.3',
     ],
     circles: [{ cx: 12, cy: 12, r: 4 }],
+  },
+
+  // Mic: capsule on a stand — voice input
+  mic: {
+    paths: [
+      'M12 3 A3 3 0 0 0 9 6 L 9 11 A3 3 0 0 0 15 11 L 15 6 A3 3 0 0 0 12 3 Z',
+      'M5.5 11 A6.5 6.5 0 0 0 18.5 11',
+      'M12 17.5 L 12 21',
+      'M9 21 L 15 21',
+    ],
+  },
+
+  // Arrow up: send / ask
+  arrowUp: {
+    paths: ['M12 19 L 12 5', 'M6 11 L 12 5 L 18 11'],
+  },
+
+  // Pin: location marker
+  pin: {
+    paths: ['M12 21 C 8 16, 5 12.5, 5 9.5 A7 7 0 0 1 19 9.5 C 19 12.5, 16 16, 12 21 Z'],
+    circles: [{ cx: 12, cy: 9.5, r: 2.5 }],
+  },
+
+  // Chevron: "opens elsewhere" affordance on rows and cards
+  chevronRight: {
+    paths: ['M9 6 L 15 12 L 9 18'],
   },
 };
 

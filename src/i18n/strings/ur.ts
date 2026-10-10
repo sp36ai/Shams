@@ -129,6 +129,13 @@ export const ur: StringTable = {
     moonManzilTitle: 'منزلِ قمر',
     rulingPlanetsNowLabel: 'موجودہ حاکم سیارے',
     currentHoraLordLabel: 'موجودہ ہورا کا حاکم',
+    horaName: '{{planet}} ہورا',
+    dayIsUnder: 'کے تحت',
+    hourCarries: 'اس گھڑی پر',
+    openAlFalakA11y: 'الفلک کھولیں — آسمانی اوقات',
+    trialEndsSoon: 'آپ کے کھلے دروازے دو دن میں بند ہو جائیں گے۔',
+    trialEndsTonight: 'آپ کے کھلے دروازے آج رات بند ہو جائیں گے — اپنا راستہ چنیں',
+    choosePathA11y: 'اپنا راستہ چنیں — رکنیت کے منصوبے کھولیں',
   },
 
   oracleChat: {

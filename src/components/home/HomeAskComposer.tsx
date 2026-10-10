@@ -25,6 +25,7 @@ import { useColors } from '@theme/ThemeProvider';
 import { useTypography } from '@theme/useTypography';
 import { useI18n, useTranslation } from '@i18n/I18nProvider';
 import { useSpeechToText } from '@hooks/useSpeechToText';
+import TabIcon from '@components/TabIcon';
 
 interface HomeAskComposerProps {
   /** Called with the trimmed question. Never called with an empty string. */
@@ -93,7 +94,7 @@ const HomeAskComposer: React.FC<HomeAskComposerProps> = ({ onSubmit, onOpenBlank
 
   return (
     <View style={styles.wrap}>
-      <Text style={[typography('body'), { color: colors.textMuted, marginBottom: 10 }]}>
+      <Text style={[typography('subheading'), { color: colors.text, marginBottom: 10 }]}>
         {t('oracle.askPrompt')}
       </Text>
 
@@ -153,14 +154,11 @@ const HomeAskComposer: React.FC<HomeAskComposerProps> = ({ onSubmit, onOpenBlank
             }
             testID="home-ask-mic-btn"
           >
-            <Text
-              style={{
-                fontSize: 16,
-                color: stt.isListening ? colors.textOnPrimary : colors.textMuted,
-              }}
-            >
-              {'🎙'}
-            </Text>
+            <TabIcon
+              name="mic"
+              size={18}
+              color={stt.isListening ? colors.textOnPrimary : colors.textMuted}
+            />
           </Pressable>
         )}
         <Pressable
@@ -188,14 +186,11 @@ const HomeAskComposer: React.FC<HomeAskComposerProps> = ({ onSubmit, onOpenBlank
           accessibilityLabel={t('oracle.askNewQuestionCta')}
           testID="ask-shams-btn"
         >
-          <Text
-            style={[
-              typography('label'),
-              { color: canSend ? colors.textOnPrimary : colors.goldBright, fontSize: 16 },
-            ]}
-          >
-            {'↑'}
-          </Text>
+          <TabIcon
+            name="arrowUp"
+            size={18}
+            color={canSend ? colors.textOnPrimary : colors.goldBright}
+          />
         </Pressable>
       </View>
 
@@ -246,9 +241,9 @@ const styles = StyleSheet.create({
     maxHeight: 110,
   },
   sendBtn: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     borderWidth: StyleSheet.hairlineWidth,
     alignItems: 'center',
     justifyContent: 'center',

@@ -2,7 +2,7 @@
  * OracleScreen — home dashboard ("The Observatory Hall").
  * --------------------------------------------------------------------------
  * The first screen the seeker lands on after onboarding (Oracle is the
- * initial tab in MainTabs). Passive status surface only — no chat, no
+ * initial tab in MainTabs). Passive status surface apart from the ask
  * composer. Hierarchy follows DĀR AL-SHAMS design system §Home Screen:
  * hora status → celestial state → ask entry → moon mansion → user tier.
  * The one thing it is not passive about is the ask composer: a question
@@ -11,7 +11,16 @@
  */
 
 import React, { useCallback, useEffect, useState } from 'react';
-import { AppState, Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import {
+  AppState,
+  I18nManager,
+  Image,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { acquireLocation } from '@utils/acquireLocation';
 import crashlytics from '@react-native-firebase/crashlytics';
@@ -49,6 +58,9 @@ const SEAL_IMAGE = require('@assets/images/sky-clock-disk.png');
 // this only covers the brief window before the first GPS fix lands).
 const FALLBACK_LAT = 31.634;
 const FALLBACK_LON = 74.3587;
+
+// Locale for the header date, per app language (not the device locale).
+const DATE_LOCALE = { en: 'en-GB', ur: 'ur-PK', hi: 'hi-IN' } as const;
 
 function formatClockTime(ms: number): string {
   return new Date(ms).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
@@ -89,8 +101,6 @@ const OracleScreen: React.FC = () => {
   // ── Trial day banners — Day 6 passive strip, Day 7 once-per-day soft prompt ─
   const [trialBannerKind, setTrialBannerKind] = useState<'day6' | 'day7' | null>(null);
 
-  // Measured once via onLayout so the "Ask New Question" glow wash clips
-  // exactly to the button's real rendered size (its width isn't known statically).
   const evaluateTrialBanner = useCallback(() => {
     const { plan: currentPlan, checkTrial } = useQuotaStore.getState();
     if (currentPlan !== 'free') {
@@ -162,10 +172,20 @@ const OracleScreen: React.FC = () => {
     }
   }, []); // run once on mount only
 
+  // Coordinates read as a deliberate readout ("31.63°N 74.36°E") rather than
+  // a raw pair; no reverse geocoder is installed, so there is no place name.
   const locationLabel =
     lastLocation === null
       ? t('errors.locationRequired')
-      : `${lastLocation.lat.toFixed(2)}, ${lastLocation.lon.toFixed(2)}`;
+      : `${Math.abs(lastLocation.lat).toFixed(2)}°${lastLocation.lat >= 0 ? 'N' : 'S'} ${Math.abs(
+          lastLocation.lon,
+        ).toFixed(2)}°${lastLocation.lon >= 0 ? 'E' : 'W'}`;
+
+  const todayLabel = new Date().toLocaleDateString(DATE_LOCALE[lang], {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+  });
 
   const dailySky = buildDailySkyMessage({
     dayLord,
@@ -192,36 +212,74 @@ const OracleScreen: React.FC = () => {
         ? t('premium.tierPremium')
         : t('oracle.tierWanderer');
 
+  // One eyebrow style for every section on Home, so the cards read as one set.
+  const sectionLabel = (label: string, extra?: object): React.JSX.Element => (
+    <Text style={[typography('label'), { color: colors.goldBright }, extra]}>
+      {label.toUpperCase()}
+    </Text>
+  );
+  const cardStyle = [
+    styles.card,
+    { backgroundColor: colors.surface, borderColor: colors.borderAccent + '44' },
+  ];
+  // Chevrons point "forward" — mirrored in RTL so Urdu reads them correctly.
+  const chevron = (color: string): React.JSX.Element => (
+    <View style={I18nManager.isRTL ? styles.flipX : undefined}>
+      <TabIcon name="chevronRight" color={color} size={16} />
+    </View>
+  );
+
   return (
     <SafeAreaView style={[styles.root, { backgroundColor: theme.colors.bg }]} edges={['top']}>
       <StarfieldBackground starColor={colors.starfield} />
 
-      {/* Header */}
+      {/* Header — today's date over the wordmark; location and Settings */}
       <View
         style={[styles.header, { borderColor: colors.border, backgroundColor: colors.surface }]}
       >
-        <View>
-          <Text style={[typography('caption'), { color: colors.goldBright, letterSpacing: 1.5 }]}>
-            ORACLE
+        <View style={styles.headerBrand}>
+          <Text style={[typography('caption'), { color: colors.textMuted }]} numberOfLines={1}>
+            {todayLabel}
           </Text>
-          <Text style={[typography('subheading'), { color: colors.text, marginTop: 2 }]}>
-            SHAMS AL-ASRĀR
+          <Text
+            style={[typography('heading'), { color: colors.goldBright, marginTop: 2 }]}
+            numberOfLines={1}
+          >
+            {t('app.name')}
           </Text>
         </View>
         <View style={styles.headerRight}>
-          <View style={[styles.locationChip, { borderColor: colors.borderAccent }]}>
-            <Text style={[typography('caption'), { color: colors.textMuted }]} numberOfLines={1}>
+          <View style={[styles.locationChip, { borderColor: colors.borderAccent + '66' }]}>
+            <TabIcon
+              name="pin"
+              color={lastLocation === null ? colors.negative : colors.goldBright}
+              size={13}
+            />
+            <Text
+              style={[
+                typography('caption'),
+                {
+                  color: lastLocation === null ? colors.negative : colors.textMuted,
+                  fontSize: 12,
+                },
+              ]}
+              numberOfLines={1}
+            >
               {locationLabel}
             </Text>
           </View>
           <Pressable
             testID="settings-gear-btn"
             onPress={() => navigation.navigate('Settings')}
-            style={styles.settingsBtn}
+            style={({ pressed }) => [
+              styles.settingsBtn,
+              { borderColor: colors.border, opacity: pressed ? 0.7 : 1 },
+            ]}
+            hitSlop={6}
             accessibilityRole="button"
             accessibilityLabel={t('settings.headerTitle')}
           >
-            <TabIcon name="settings" color={colors.textMuted} size={20} />
+            <TabIcon name="settings" color={colors.textMuted} size={18} />
           </Pressable>
         </View>
       </View>
@@ -242,7 +300,7 @@ const OracleScreen: React.FC = () => {
             <Text
               style={[
                 typography('caption'),
-                { color: colors.goldBright, textAlign: 'center', lineHeight: 16 },
+                { color: colors.goldBright, textAlign: 'center', lineHeight: 18 },
               ]}
             >
               {'☾ '}
@@ -259,7 +317,7 @@ const OracleScreen: React.FC = () => {
             hero. No blur library is installed, so "glass" is approximated
             with a translucent gold wash (colors.horaGradient[0] — an
             existing, previously-unused token named for exactly this card),
-            a soft top highlight line, and a warm glow shadow, rather than a
+            a soft top highlight, and a warm glow shadow, rather than a
             new native dependency. */}
         <Pressable
           onPress={() => navigation.navigate('AlFalak')}
@@ -272,7 +330,7 @@ const OracleScreen: React.FC = () => {
             },
           ]}
           accessibilityRole="button"
-          accessibilityLabel="Open Al-Falak — Sky State timing panel"
+          accessibilityLabel={t('oracle.openAlFalakA11y')}
         >
           <View
             pointerEvents="none"
@@ -284,18 +342,9 @@ const OracleScreen: React.FC = () => {
           />
           <View style={styles.heroTopRow}>
             <View style={styles.heroTextCol}>
-              <Text
-                style={[typography('caption'), { color: colors.textMuted, letterSpacing: 1.6 }]}
-              >
-                {t('oracle.currentHoraLabel').toUpperCase()}
-              </Text>
-              <Text
-                style={[
-                  typography('subheading'),
-                  { color: colors.goldBright, marginTop: 3, letterSpacing: 0.4 },
-                ]}
-              >
-                {horaLord} Hora
+              {sectionLabel(t('oracle.currentHoraLabel'), { color: colors.textMuted })}
+              <Text style={[typography('heading'), { color: colors.goldBright, marginTop: 6 }]}>
+                {t('oracle.horaName', { planet: horaLord })}
               </Text>
               <Text style={[typography('caption'), { color: colors.accent, marginTop: 4 }]}>
                 {horaCountdown} {t('oracle.remainingLabel')}
@@ -305,40 +354,31 @@ const OracleScreen: React.FC = () => {
               <HoraBadge glyph={PLANET_GLYPHS[horaLord]} size={84} />
             </View>
           </View>
-          <View style={styles.heroFooterRow}>
-            <Text style={[typography('caption'), { color: colors.textFaint, fontSize: 10 }]}>
+          <View style={[styles.heroFooterRow, { borderTopColor: colors.border }]}>
+            <Text style={[typography('caption'), { color: colors.textMuted }]}>
               {PLANET_GLYPHS[dayLord]} {dayLord}
             </Text>
-            <Text
-              style={[
-                typography('caption'),
-                { color: colors.goldBright, fontSize: 10, letterSpacing: 0.8 },
-              ]}
-            >
-              Al-Falak ›
-            </Text>
+            <View style={styles.inlineRow}>
+              <Text style={[typography('label'), { color: colors.goldBright }]}>
+                {t('nav.alFalakTab')}
+              </Text>
+              {chevron(colors.goldBright)}
+            </View>
           </View>
         </Pressable>
 
         {/* Today's Sky — daily personalized readout, based on saved profile */}
-        <View
-          style={[
-            styles.card,
-            { backgroundColor: colors.surface, borderColor: colors.borderAccent + '44' },
-          ]}
-        >
-          <Text style={[typography('caption'), { color: colors.goldBright, letterSpacing: 1.2 }]}>
-            {t('oracle.dailySkyTitle').toUpperCase()}
-          </Text>
-          <Text style={[typography('body'), { color: colors.text, marginTop: 8, lineHeight: 22 }]}>
-            {dailySky.greeting} {lang === 'ur' ? 'کے تحت' : lang === 'hi' ? 'में' : 'is under'}{' '}
+        <View style={cardStyle}>
+          {sectionLabel(t('oracle.dailySkyTitle'))}
+          <Text style={[typography('body'), { color: colors.text, marginTop: 10, lineHeight: 24 }]}>
+            {dailySky.greeting} {t('oracle.dayIsUnder')}{' '}
             <Text style={[emphasis, { color: colors.accent }]}>{dailySky.dayLord}</Text> (
             {dailySky.dayTheme}).
           </Text>
           <Text
-            style={[typography('body'), { color: colors.textMuted, marginTop: 4, lineHeight: 22 }]}
+            style={[typography('body'), { color: colors.textMuted, marginTop: 4, lineHeight: 24 }]}
           >
-            {lang === 'ur' ? 'اس گھڑی پر' : lang === 'hi' ? 'इस समय' : 'This hour carries'}{' '}
+            {t('oracle.hourCarries')}{' '}
             <Text style={[emphasis, { color: colors.accent }]}>{dailySky.horaLord}</Text> (
             {dailySky.horaTheme}).
           </Text>
@@ -346,7 +386,7 @@ const OracleScreen: React.FC = () => {
             <Text
               style={[
                 typography('bodyItalic'),
-                { color: colors.goldBright, marginTop: 10, lineHeight: 20, opacity: 0.9 },
+                { color: colors.goldBright, marginTop: 10, lineHeight: 22, opacity: 0.9 },
               ]}
             >
               {dailySky.guidance}
@@ -378,8 +418,13 @@ const OracleScreen: React.FC = () => {
           accessibilityRole="button"
           accessibilityLabel={t('oracle.readingHistoryCta')}
         >
-          <View style={[styles.actionIconWrap, { borderColor: colors.border }]}>
-            <Text style={{ fontSize: 18 }}>{'📜'}</Text>
+          <View
+            style={[
+              styles.actionIconWrap,
+              { borderColor: colors.borderAccent + '55', backgroundColor: colors.surfaceElevated },
+            ]}
+          >
+            <TabIcon name="history" color={colors.goldBright} size={20} />
           </View>
           <View style={styles.actionTextCol}>
             <Text style={[typography('button'), { color: colors.text, fontSize: 15 }]}>
@@ -389,28 +434,20 @@ const OracleScreen: React.FC = () => {
               {t('oracle.viewPastReadingsSubtitle')}
             </Text>
           </View>
-          <Text style={[typography('label'), { color: colors.textMuted }]}>›</Text>
+          {chevron(colors.textMuted)}
         </Pressable>
 
         {/* Moon Manzil — the current lunar mansion (Manazil al-Qamar) */}
-        <View
-          style={[
-            styles.card,
-            styles.manzilCard,
-            { backgroundColor: colors.surface, borderColor: colors.borderAccent + '44' },
-          ]}
-        >
+        <View style={[cardStyle, styles.manzilCard]}>
           <CornerBrackets />
-          <Text style={[typography('caption'), { color: colors.goldBright, letterSpacing: 1.2 }]}>
-            {t('oracle.moonManzilTitle').toUpperCase()}
-          </Text>
+          {sectionLabel(t('oracle.moonManzilTitle'))}
           <View style={styles.manzilRow}>
             <ManzilEmblem size={80} />
             <View style={styles.manzilTextCol}>
               <Text
                 style={{
                   fontFamily: 'Amiri-Regular',
-                  fontSize: 20,
+                  fontSize: 22,
                   color: colors.goldBright,
                 }}
               >
@@ -422,7 +459,7 @@ const OracleScreen: React.FC = () => {
               <Text
                 style={[
                   typography('bodyItalic'),
-                  { color: colors.textMuted, marginTop: 4, lineHeight: 20 },
+                  { color: colors.textMuted, marginTop: 4, lineHeight: 22 },
                 ]}
               >
                 {manzil.descriptor}
@@ -430,18 +467,16 @@ const OracleScreen: React.FC = () => {
             </View>
           </View>
           {skyExtras.sunTimes !== null && (
-            <Text
-              style={[
-                typography('caption'),
-                { color: colors.textFaint, marginTop: 10, lineHeight: 18 },
-              ]}
-            >
-              {skyExtras.moonPhaseFull}
-              {'   ·   '}
-              {t('oracle.sunriseLabel')} {formatClockTime(skyExtras.sunTimes.sunriseMs)}
-              {'   ·   '}
-              {t('oracle.sunsetLabel')} {formatClockTime(skyExtras.sunTimes.sunsetMs)}
-            </Text>
+            <View style={[styles.manzilFooter, { borderTopColor: colors.border }]}>
+              <Text style={[typography('caption'), { color: colors.textMuted }]}>
+                {skyExtras.moonPhaseFull}
+              </Text>
+              <Text style={[typography('caption'), { color: colors.textMuted }]}>
+                {t('oracle.sunriseLabel')} {formatClockTime(skyExtras.sunTimes.sunriseMs)}
+                {'  ·  '}
+                {t('oracle.sunsetLabel')} {formatClockTime(skyExtras.sunTimes.sunsetMs)}
+              </Text>
+            </View>
           )}
         </View>
 
@@ -453,10 +488,8 @@ const OracleScreen: React.FC = () => {
               { backgroundColor: colors.surface, borderColor: colors.border },
             ]}
           >
-            <Text style={[typography('caption'), { color: colors.textFaint, fontSize: 10 }]}>
-              {t('oracle.todaysQuotaLabel').toUpperCase()}
-            </Text>
-            <Text style={[typography('label'), { color: colors.goldBright, marginTop: 4 }]}>
+            {sectionLabel(t('oracle.todaysQuotaLabel'), { color: colors.textMuted })}
+            <Text style={[typography('subheading'), { color: colors.goldBright, marginTop: 4 }]}>
               {questionsLeft === Infinity
                 ? '∞'
                 : `${questionsLeft} / ${trialActive ? TRIAL_DAILY_LIMIT : FREE_DAILY_LIMIT}`}
@@ -470,96 +503,87 @@ const OracleScreen: React.FC = () => {
             ]}
           >
             <View style={styles.tierTextCol}>
-              <Text style={[typography('caption'), { color: colors.textFaint, fontSize: 10 }]}>
-                {t('oracle.yourTierLabel').toUpperCase()}
-              </Text>
-              <Text style={[typography('label'), { color: colors.goldBright, marginTop: 4 }]}>
-                {tierLabel.toUpperCase()}
+              {sectionLabel(t('oracle.yourTierLabel'), { color: colors.textMuted })}
+              <Text style={[typography('subheading'), { color: colors.goldBright, marginTop: 4 }]}>
+                {tierLabel}
               </Text>
             </View>
             <Image source={SEAL_IMAGE} style={styles.tierSealImage} resizeMode="contain" />
           </View>
         </View>
 
-        {/* Favored Now — which chip category the current hora lord favors */}
-        <View
-          style={[
-            styles.card,
-            { backgroundColor: colors.surface, borderColor: colors.borderAccent + '44' },
-          ]}
-        >
-          <Text style={[typography('caption'), { color: colors.goldBright, letterSpacing: 1.2 }]}>
-            {t('oracle.favoredNowTitle').toUpperCase()}
-          </Text>
-          <Text style={[typography('body'), { color: colors.text, marginTop: 8, lineHeight: 22 }]}>
+        {/* Today's guidance — Favored Now, Daily Dhikr and Today's Blessing as
+            one card with three ruled sections, rather than three more cards. */}
+        <View style={cardStyle}>
+          {/* Favored Now — which chip category the current hora lord favors */}
+          {sectionLabel(t('oracle.favoredNowTitle'))}
+          <Text style={[typography('body'), { color: colors.text, marginTop: 8, lineHeight: 24 }]}>
             {t('oracle.favoredNowBody')}{' '}
             <Text style={[emphasis, { color: colors.accent }]}>{favoredChip}</Text>
           </Text>
-        </View>
 
-        {/* Daily Dhikr — a Name of Allah tied to today's day lord */}
-        {dhikr !== undefined && (
-          <View
-            style={[
-              styles.card,
-              { backgroundColor: colors.surface, borderColor: colors.borderAccent + '44' },
-            ]}
-          >
-            <Text style={[typography('caption'), { color: colors.goldBright, letterSpacing: 1.2 }]}>
-              {t('oracle.dailyDhikrTitle').toUpperCase()}
-            </Text>
-            <Text
-              style={{
-                fontFamily: 'Amiri-Regular',
-                fontSize: 20,
-                color: colors.goldBright,
-                textAlign: 'center',
-                marginTop: 10,
-                marginBottom: 2,
-              }}
-            >
-              {dhikr.arabic}
-            </Text>
-            <Text
-              style={[
-                typography('body'),
-                { color: colors.text, textAlign: 'center', lineHeight: 22 },
-              ]}
-            >
-              {t('oracle.dailyDhikrRecite')} {dhikr.name} ({dhikr.meaning[lang]})
-            </Text>
-            <Text
-              style={[
-                typography('bodyItalic'),
-                {
-                  color: colors.textMuted,
+          {/* Daily Dhikr — a Name of Allah tied to today's day lord */}
+          {dhikr !== undefined && (
+            <View style={[styles.guidanceSection, { borderTopColor: colors.border }]}>
+              {sectionLabel(t('oracle.dailyDhikrTitle'))}
+              <Text
+                style={{
+                  fontFamily: 'Amiri-Regular',
+                  fontSize: 24,
+                  color: colors.goldBright,
                   textAlign: 'center',
-                  marginTop: 4,
-                  lineHeight: 20,
-                },
-              ]}
+                  marginTop: 10,
+                  marginBottom: 2,
+                }}
+              >
+                {dhikr.arabic}
+              </Text>
+              <Text
+                style={[
+                  typography('body'),
+                  { color: colors.text, textAlign: 'center', lineHeight: 24 },
+                ]}
+              >
+                {t('oracle.dailyDhikrRecite')} {dhikr.name} ({dhikr.meaning[lang]})
+              </Text>
+              <Text
+                style={[
+                  typography('bodyItalic'),
+                  {
+                    color: colors.textMuted,
+                    textAlign: 'center',
+                    marginTop: 4,
+                    lineHeight: 22,
+                  },
+                ]}
+              >
+                {dhikr.intention[lang]}
+              </Text>
+            </View>
+          )}
+
+          {/* Today's Blessing — Islamic day-of-week note */}
+          <View style={[styles.guidanceSection, { borderTopColor: colors.border }]}>
+            {sectionLabel(t('oracle.blessingTitle'))}
+            <Text
+              style={[typography('body'), { color: colors.text, marginTop: 8, lineHeight: 24 }]}
             >
-              {dhikr.intention[lang]}
+              <Text style={[emphasis, { color: colors.accent }]}>{islamicNote.name[lang]}</Text>
+              {' — '}
+              {islamicNote.note[lang]}
             </Text>
           </View>
-        )}
+        </View>
 
-        {/* Today's Blessing — Islamic day-of-week note */}
-        <View
+        {/* Brand signature */}
+        <Text
           style={[
-            styles.card,
-            { backgroundColor: colors.surface, borderColor: colors.borderAccent + '44' },
+            typography('caption'),
+            { color: colors.textFaint, textAlign: 'center', marginTop: 4, fontSize: 12 },
           ]}
         >
-          <Text style={[typography('caption'), { color: colors.goldBright, letterSpacing: 1.2 }]}>
-            {t('oracle.blessingTitle').toUpperCase()}
-          </Text>
-          <Text style={[typography('body'), { color: colors.text, marginTop: 8, lineHeight: 22 }]}>
-            <Text style={[emphasis, { color: colors.accent }]}>{islamicNote.name[lang]}</Text>
-            {' — '}
-            {islamicNote.note[lang]}
-          </Text>
-        </View>
+          {t('app.poweredBy')}
+        </Text>
       </ScrollView>
 
       {/* Trial day banners — thin gold strip, max 44px, above tab bar */}
@@ -571,18 +595,9 @@ const OracleScreen: React.FC = () => {
           ]}
         >
           <Text
-            style={[
-              typography('caption'),
-              {
-                color: colors.goldBright,
-                opacity: 0.6,
-                textAlign: 'center',
-                letterSpacing: 0.6,
-                fontSize: 12,
-              },
-            ]}
+            style={[typography('caption'), styles.trialBannerText, { color: colors.goldBright }]}
           >
-            {'Your open doors close in 2 days.'}
+            {t('oracle.trialEndsSoon')}
           </Text>
         </View>
       )}
@@ -595,22 +610,16 @@ const OracleScreen: React.FC = () => {
             { backgroundColor: colors.surface, borderTopColor: colors.borderAccent },
           ]}
           accessibilityRole="button"
-          accessibilityLabel="Choose your path — navigate to subscription"
+          accessibilityLabel={t('oracle.choosePathA11y')}
         >
-          <Text
-            style={[
-              typography('caption'),
-              {
-                color: colors.goldBright,
-                opacity: 0.6,
-                textAlign: 'center',
-                letterSpacing: 0.6,
-                fontSize: 12,
-              },
-            ]}
-          >
-            {'Your open doors close tonight — Choose Your Path ›'}
-          </Text>
+          <View style={styles.inlineRow}>
+            <Text
+              style={[typography('caption'), styles.trialBannerText, { color: colors.goldBright }]}
+            >
+              {t('oracle.trialEndsTonight')}
+            </Text>
+            {chevron(colors.goldBright)}
+          </View>
         </Pressable>
       )}
     </SafeAreaView>
@@ -635,40 +644,51 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 4 },
     elevation: 2,
   },
+  headerBrand: {
+    flex: 1,
+  },
   headerRight: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
   },
   locationChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
     borderWidth: StyleSheet.hairlineWidth,
-    borderRadius: 999,
-    paddingHorizontal: 12,
+    borderRadius: RADIUS.pill,
+    paddingHorizontal: 10,
     paddingVertical: 5,
-    maxWidth: '55%',
+    maxWidth: 170,
     backgroundColor: '#FFFFFF08',
   },
   settingsBtn: {
-    padding: 4,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    borderWidth: StyleSheet.hairlineWidth,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   scroll: { flex: 1 },
   scrollBody: {
-    paddingBottom: 24,
+    paddingBottom: SPACING.xl,
   },
   vocBanner: {
     marginHorizontal: SPACING.xl,
-    marginTop: 10,
+    marginTop: 12,
     paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 14,
+    paddingVertical: 10,
+    borderRadius: RADIUS.md,
     borderWidth: StyleSheet.hairlineWidth,
   },
   heroCard: {
     marginHorizontal: SPACING.xl,
-    marginTop: 14,
-    marginBottom: 12,
-    paddingVertical: 14,
-    paddingHorizontal: 16,
+    marginTop: 16,
+    marginBottom: 14,
+    paddingVertical: 16,
+    paddingHorizontal: 18,
     borderRadius: RADIUS.xl,
     borderWidth: StyleSheet.hairlineWidth,
     overflow: 'hidden', // clips the glass overlay/highlight to the rounded corners
@@ -706,22 +726,30 @@ const styles = StyleSheet.create({
   },
   heroFooterRow: {
     flexDirection: 'row',
+    alignItems: 'center',
     justifyContent: 'space-between',
-    marginTop: 10,
-    paddingTop: 10,
+    marginTop: 12,
+    paddingTop: 12,
     borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: '#FFFFFF14',
+  },
+  inlineRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 2,
+  },
+  flipX: {
+    transform: [{ scaleX: -1 }],
   },
   pillRow: {
     flexDirection: 'row',
-    gap: 10,
+    gap: 12,
     marginHorizontal: SPACING.xl,
-    marginBottom: 12,
+    marginBottom: 14,
   },
   infoPill: {
     flex: 1,
     alignItems: 'center',
-    paddingVertical: 12,
+    paddingVertical: 14,
     borderRadius: RADIUS.lg,
     borderWidth: StyleSheet.hairlineWidth,
   },
@@ -743,7 +771,7 @@ const styles = StyleSheet.create({
   card: {
     marginHorizontal: SPACING.xl,
     marginBottom: 14,
-    padding: 16,
+    padding: 18,
     borderRadius: RADIUS.xl,
     borderWidth: StyleSheet.hairlineWidth,
   },
@@ -754,36 +782,31 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 14,
-    marginTop: 10,
+    marginTop: 12,
   },
   manzilTextCol: {
     flex: 1,
   },
-  actionBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginHorizontal: SPACING.xl,
-    marginBottom: 10,
-    paddingVertical: 16,
-    paddingHorizontal: 18,
-    borderRadius: RADIUS.xl,
-    borderWidth: StyleSheet.hairlineWidth,
-    overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOpacity: 0.14,
-    shadowRadius: 14,
-    shadowOffset: { width: 0, height: 6 },
-    elevation: 3,
+  manzilFooter: {
+    marginTop: 14,
+    paddingTop: 12,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    gap: 2,
+  },
+  guidanceSection: {
+    marginTop: 16,
+    paddingTop: 16,
+    borderTopWidth: StyleSheet.hairlineWidth,
   },
   actionBtnSecondary: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     marginHorizontal: SPACING.xl,
+    marginTop: 14,
     marginBottom: 14,
     paddingVertical: 14,
-    paddingHorizontal: 18,
+    paddingHorizontal: 16,
     borderRadius: RADIUS.xl,
     borderWidth: StyleSheet.hairlineWidth,
   },
@@ -794,7 +817,6 @@ const styles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#00000022',
   },
   actionTextCol: {
     flex: 1,
@@ -806,6 +828,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 16,
     borderTopWidth: StyleSheet.hairlineWidth,
+  },
+  trialBannerText: {
+    opacity: 0.8,
+    textAlign: 'center',
+    letterSpacing: 0.6,
+    fontSize: 12,
   },
 });
 
