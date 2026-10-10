@@ -21,6 +21,7 @@ import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-nati
 import { useColors } from '@theme/ThemeProvider';
 import { useTypography } from '@theme/useTypography';
 import { useTranslation } from '@i18n/I18nProvider';
+import TabIcon from '@components/TabIcon';
 import type { ReadingMessage } from '@stores/readingThreadsStore';
 import type { WatchReading } from '../../firebase/watchOracle';
 import RkpWatchCard, { STATE_HEADLINE } from './RkpWatchCard';
@@ -109,9 +110,12 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({
       <View style={[styles.row, styles.rowUser]}>
         <View style={[styles.bubble, styles.userBubble, { backgroundColor: colors.accent }]}>
           {message.kind === 'voice' && (
-            <Text style={[typography('caption'), { color: colors.textOnPrimary, opacity: 0.75 }]}>
-              {'🎙 ' + t('oracleChat.voiceInputTag')}
-            </Text>
+            <View style={styles.voiceTag}>
+              <TabIcon name="mic" size={12} color={colors.textOnPrimary} />
+              <Text style={[typography('caption'), { color: colors.textOnPrimary }]}>
+                {t('oracleChat.voiceInputTag')}
+              </Text>
+            </View>
           )}
           <Text style={[typography('body'), { color: colors.textOnPrimary }]}>{message.text}</Text>
           <Text
@@ -352,6 +356,12 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({
 };
 
 const styles = StyleSheet.create({
+  voiceTag: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    opacity: 0.75,
+  },
   row: {
     marginVertical: 6,
     paddingHorizontal: 12,
