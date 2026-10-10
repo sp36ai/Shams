@@ -323,6 +323,47 @@ const NEGATIVE_ASSERTIONS: readonly string[] = Object.freeze([
 ]);
 
 /**
+ * Whether `lower` asserts `phrase` anywhere, rather than only denying it.
+ *
+ * An occurrence counts as denied when its own clause (back to the nearest
+ * . , ; : ! ? — or bracket) has "not", "never" or a contraction such as
+ * "isn't" within the six words before it — "this is not a matter that is
+ * denied". Every occurrence is checked, so a denied mention cannot excuse a
+ * plain one elsewhere. "no" is
+ * deliberately not a negator: "there is no doubt the matter is fulfilled"
+ * asserts the phrase. "not only" does not negate either.
+ *
+ * Known residual, accepted by the owner: a negator that governs some other
+ * word in the same short clause ("it is not surprising that the matter is
+ * blocked") also exempts the phrase. A keyword check cannot tell these apart;
+ * the reply prompt already forbids stating an outcome either way.
+ */
+const CLAUSE_BREAK = /[.,;:!?()\u2014\u2013]/g;
+// Contractions are listed whole, apostrophe optional: canonicalization
+// (textSecurity.ts) may strip it, and every matching tier must agree.
+const NEGATOR_BEFORE =
+  /(?:\bnot\b(?!\s+only\b)|\bnever\b|\b(?:is|are|was|were|do|does|did|has|have|had|wo|ca|could|would|should|must)n['\u2019]?t\b)(?:\s+\S+){0,6}\s*$/;
+
+function assertsPhrase(lower: string, phrase: string): boolean {
+  let from = 0;
+  for (;;) {
+    const at = lower.indexOf(phrase, from);
+    if (at === -1) {
+      return false;
+    }
+    const before = lower.slice(0, at);
+    let clauseStart = 0;
+    for (const m of before.matchAll(CLAUSE_BREAK)) {
+      clauseStart = (m.index ?? 0) + 1;
+    }
+    if (!NEGATOR_BEFORE.test(before.slice(clauseStart))) {
+      return true;
+    }
+    from = at + phrase.length;
+  }
+}
+
+/**
  * Checks narration text against the settled outcome's polarity. Does NOT
  * attempt to confirm the narration correctly states the outcome — only
  * that it does not assert the OPPOSITE polarity outright. A neutral/
@@ -339,7 +380,7 @@ export function checkVerdictConsistency(
   const lower = text.toLowerCase();
 
   if (polarity !== 'positive') {
-    const hit = POSITIVE_ASSERTIONS.find(p => lower.includes(p));
+    const hit = POSITIVE_ASSERTIONS.find(p => assertsPhrase(lower, p));
     if (hit) {
       return {
         code: 'VERDICT_CONTRADICTION',
@@ -349,7 +390,7 @@ export function checkVerdictConsistency(
     }
   }
   if (polarity !== 'negative') {
-    const hit = NEGATIVE_ASSERTIONS.find(p => lower.includes(p));
+    const hit = NEGATIVE_ASSERTIONS.find(p => assertsPhrase(lower, p));
     if (hit) {
       return {
         code: 'VERDICT_CONTRADICTION',
@@ -448,9 +489,14 @@ const WEEKDAY_NAMES = [
  * build. Recorded as a known, pre-existing, out-of-scope residual in
  * `docs/audit/PHASE_5E_R_HARDENING.md`, not silently expanded past the
  * one demonstrated collision.
+ *
+ * An ordinal followed by "day" ("after the 14th day") is excluded too: it
+ * counts days from the reading, not a date on the calendar. It is not left
+ * unchecked — extractDayCounts() reads it, so it must still fall inside the
+ * engine's own timing window like any "N days".
  */
 const DATE_LIKE_PATTERN =
-  /\b\d{1,4}[/-]\d{1,2}([/-]\d{1,4})?\b|\bthe\s+\d{1,2}(st|nd|rd|th)\b(?!\s+(?:house|ghar)\b)/i;
+  /\b\d{1,4}[/-]\d{1,2}([/-]\d{1,4})?\b|\bthe\s+\d{1,2}(st|nd|rd|th)\b(?!\s+(?:house|ghar|day)\b)/i;
 
 /**
  * PHASE 4A: split into two tiers, per the review gate's demonstrated
@@ -493,10 +539,10 @@ const HEDGE_QUALIFIERS: readonly string[] = Object.freeze([
   'perhaps',
 ]);
 
-/** Extracts every "N day(s)"-shaped number mentioned in the text. */
+/** Extracts every "N day(s)" or "Nth day"-shaped number mentioned in the text. */
 function extractDayCounts(text: string): number[] {
   const out: number[] = [];
-  const re = /(\d+)\s*day/gi;
+  const re = /(\d+)(?:st|nd|rd|th)?\s*day/gi;
   let m: RegExpExecArray | null;
   while ((m = re.exec(text)) !== null) {
     out.push(Number(m[1]));
