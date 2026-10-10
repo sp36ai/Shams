@@ -121,6 +121,13 @@ export const en: StringTable = {
     moonManzilTitle: 'Moon Manzil',
     rulingPlanetsNowLabel: 'Ruling Planets Now',
     currentHoraLordLabel: 'Current Hora Lord',
+    horaName: '{{planet}} Hora',
+    dayIsUnder: 'is under',
+    hourCarries: 'This hour carries',
+    openAlFalakA11y: 'Open Al-Falak sky timing',
+    trialEndsSoon: 'Your open doors close in 2 days.',
+    trialEndsTonight: 'Your open doors close tonight — Choose Your Path',
+    choosePathA11y: 'Choose your path — open subscription plans',
   },
 
   oracleChat: {
