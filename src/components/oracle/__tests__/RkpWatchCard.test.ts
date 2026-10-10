@@ -1,7 +1,14 @@
 import { buildWatchChart } from '@astrology/rkp/watchChart';
 import { judgeWatchChart, type WatchVerdict } from '@astrology/rkp/watchJudgment';
 
-import { obstructionLabel, rulerRowValue, STATE_HEADLINE, timingLabel } from '../RkpWatchCard';
+import {
+  factorLabel,
+  focusHeading,
+  obstructionLabel,
+  rulerRowValue,
+  STATE_HEADLINE,
+  timingLabel,
+} from '../RkpWatchCard';
 
 const MOMENT = '2026-08-08T11:13:00+05:30';
 
@@ -88,5 +95,53 @@ describe('ruler row', () => {
       rulerRelation: 'Neutral',
     });
     expect(rulerRowValue(v, 'Mirrikh')).toBe('Zuhrah, which your ruler Mirrikh counts neutral');
+  });
+});
+
+describe('factor label', () => {
+  it("says a ruler's dignity in words rather than as its type token", () => {
+    expect(
+      factorLabel(
+        'Zuhrah rules the 1st Ghar and is OwnSign in Meezan — it holds real control of the matter.',
+      ),
+    ).toBe(
+      'Zuhrah rules the 1st Ghar and is in its own sign, Meezan — it holds real control of the matter.',
+    );
+    expect(
+      factorLabel(
+        'Mirrikh rules the 7th Ghar but is Debilitated in Sartan — it cannot deliver unaided.',
+      ),
+    ).toBe('Mirrikh rules the 7th Ghar but is debilitated in Sartan — it cannot deliver unaided.');
+    expect(factorLabel('Shams rules the 10th Ghar and is Exalted in Hamal — x.')).toBe(
+      'Shams rules the 10th Ghar and is exalted in Hamal — x.',
+    );
+    expect(factorLabel('Zuhal rules the 4th Ghar but is EnemySign in Asad — x.')).toBe(
+      "Zuhal rules the 4th Ghar but is in Asad, an enemy's sign — x.",
+    );
+  });
+
+  it('leaves every real factor line free of dignity tokens', () => {
+    for (const factor of verdictWith({}).factors) {
+      expect(factorLabel(factor)).not.toMatch(
+        /\b(OwnSign|FriendlySign|NeutralSign|EnemySign|Exalted|Debilitated)\b/,
+      );
+    }
+  });
+
+  it('passes a line without a dignity claim through unchanged', () => {
+    const line = 'Zuhal casts its gaze on the 1st Ghar — friction on the matter.';
+    expect(factorLabel(line)).toBe(line);
+  });
+});
+
+describe('focus heading', () => {
+  const focus = { direction: 'North' as const, focus: 'Stalled and accumulated things.' };
+
+  it('says the direction is where the obstruction sits', () => {
+    expect(focusHeading(focus, 'Zuhal')).toBe('Attend to the north, where Zuhal sits');
+  });
+
+  it('still reads when no obstruction is named', () => {
+    expect(focusHeading(focus, null)).toBe('Attend to the north, where the obstruction sits');
   });
 });

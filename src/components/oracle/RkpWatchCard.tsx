@@ -97,6 +97,43 @@ export function rulerRowValue(verdict: DisplayWatchVerdict, lagnaRulerName: stri
   return `${verdict.targetRulerName}, which your ruler ${lagnaRulerName} counts ${relation}`;
 }
 
+/**
+ * The engine's factor lines name a ruler's dignity by its type token
+ * ("is OwnSign in Meezan"). Say it in words. Applied at display so readings
+ * already stored in history read the same; the factor text itself is
+ * unchanged.
+ */
+const DIGNITY_PHRASE: Readonly<Record<string, (sign: string) => string>> = Object.freeze({
+  Exalted: (sign: string) => `is exalted in ${sign}`,
+  OwnSign: (sign: string) => `is in its own sign, ${sign}`,
+  FriendlySign: (sign: string) => `is in ${sign}, a friendly sign`,
+  NeutralSign: (sign: string) => `is in ${sign}, a neutral sign`,
+  EnemySign: (sign: string) => `is in ${sign}, an enemy's sign`,
+  Debilitated: (sign: string) => `is debilitated in ${sign}`,
+});
+
+const DIGNITY_CLAIM =
+  /\bis (Exalted|OwnSign|FriendlySign|NeutralSign|EnemySign|Debilitated) in ([A-Z][\w'-]*)/g;
+
+export function factorLabel(factor: string): string {
+  return factor.replace(
+    DIGNITY_CLAIM,
+    (match, dignity: string, sign: string) => DIGNITY_PHRASE[dignity]?.(sign) ?? match,
+  );
+}
+
+/**
+ * Heading for the physical-correspondence box. Its direction is where the
+ * obstruction sits, not the matter's own Direction row above it, so it says
+ * whose it is rather than reading as a second, conflicting direction.
+ */
+export function focusHeading(focus: DirectionalFocus, obstruction: string | null): string {
+  const where = focus.direction.toLowerCase();
+  return obstruction === null
+    ? `Attend to the ${where}, where the obstruction sits`
+    : `Attend to the ${where}, where ${obstruction} sits`;
+}
+
 function pad2(n: number): string {
   return String(n).padStart(2, '0');
 }
@@ -251,7 +288,7 @@ const RkpWatchCard: React.FC<RkpWatchCardProps> = ({
       {directionalFocus !== null && directionalFocus !== undefined && (
         <View style={[styles.focus, { borderColor: colors.border }]}>
           <Text style={[typography('label'), { color: colors.goldBright }]}>
-            {`Attend to the ${directionalFocus.direction.toLowerCase()}`}
+            {focusHeading(directionalFocus, obstruction)}
           </Text>
           <Text style={[typography('caption'), { color: colors.textMuted, marginTop: 2 }]}>
             {directionalFocus.focus}
@@ -268,7 +305,7 @@ const RkpWatchCard: React.FC<RkpWatchCardProps> = ({
         <View key={`${i}-${factor.slice(0, 12)}`} style={styles.factorRow}>
           <Text style={[typography('caption'), { color: colors.goldBright }]}>{'✦'}</Text>
           <Text style={[typography('caption'), styles.factorText, { color: colors.textMuted }]}>
-            {factor}
+            {factorLabel(factor)}
           </Text>
         </View>
       ))}

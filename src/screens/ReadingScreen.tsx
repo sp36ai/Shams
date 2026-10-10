@@ -770,12 +770,6 @@ const ReadingScreen: React.FC = () => {
          * changes, so the seeker sees "you can keep talking" without
          * having to notice the placeholder swap first.
          */}
-        {isDiscussMode && (
-          <Text style={[typography('caption'), styles.discussHint, { color: colors.textFaint }]}>
-            {t('oracleChat.modeDiscuss')}
-          </Text>
-        )}
-
         <ChatComposer
           value={inputText}
           onChangeText={setInputText}
@@ -787,6 +781,7 @@ const ReadingScreen: React.FC = () => {
           micAvailable={stt.isAvailable}
           // Once a reading stands, every send in this Reading is a follow-up.
           mode={isDiscussMode ? 'discuss' : 'ask'}
+          hint={isDiscussMode ? t('oracleChat.modeDiscuss') : undefined}
         />
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -827,11 +822,6 @@ const styles = StyleSheet.create({
   micErrorBanner: {
     paddingHorizontal: 16,
     paddingVertical: 8,
-  },
-  discussHint: {
-    textAlign: 'center',
-    paddingTop: 6,
-    paddingHorizontal: 16,
   },
 });
 
