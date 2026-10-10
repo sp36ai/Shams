@@ -735,9 +735,9 @@ export async function composeDiscussionReply(
     return { answer: first.answer, isNewQuestion: first.isNewQuestion };
   }
 
-  // A rejected draft is usually a correct answer phrased in wording a
-  // deterministic check refuses — a negated phrase ("not denied"), a day
-  // number read as a date. Validation is not loosened for it: the model is
+  // A rejected draft is often a correct answer phrased in wording a
+  // deterministic check refuses — a phrase check cannot read every turn of
+  // sentence. Validation is not loosened for it: the model is
   // told what was refused and asked once to say it again, and the rewrite
   // faces exactly the same checks.
   const remaining = deadline - Date.now();

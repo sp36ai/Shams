@@ -7,7 +7,7 @@ import { classifyQuestion } from '../../engine/kp/rules/questionKeywords';
 import { selectRemedyProtocol } from '../remedySelection';
 import { toBoundaryPlanetName } from '../../utils/planetBoundaryName';
 import { buildReadingContract, type ReadingContract } from '../readingContract';
-import { validateNarration } from '../narrationValidator';
+import { findOutcomeAssertion, validateNarration } from '../narrationValidator';
 import { buildDeterministicFallbackNarration } from '../narrationFallback';
 import type { NarrationFields } from '../responseComposer';
 
@@ -553,5 +553,65 @@ describe('buildDeterministicFallbackNarration', () => {
     };
     const fallback = buildDeterministicFallbackNarration(noIntervention);
     expect(fallback.why_this_remedy).toBe(noIntervention.remedy.guidance);
+  });
+});
+
+// A production Reading (10 Oct 2026, 16:28 IST): DELAYED, so phrases from
+// both polarity lists are refused; timing window 7–14 days.
+describe('validateNarration — denied phrases and day ordinals', () => {
+  const contract = contractFor(
+    '2026-10-10T16:28:00+05:30',
+    'When will this app will be launched successfully',
+  );
+  const check = (text: string) =>
+    validateNarration(contract, baseNarration({ interpretation: text }));
+  const codes = (text: string) => {
+    const result = check(text);
+    return result.valid ? [] : result.failures.map(f => f.code);
+  };
+
+  it('fixes the reading the tests rely on', () => {
+    expect(contract.diagnosis.outcome).toBe('DELAYED');
+    expect(contract.diagnosis.timing).toEqual({ minDays: 7, maxDays: 14 });
+  });
+
+  it('accepts a refused phrase denied in its own clause', () => {
+    for (const text of [
+      'This is not a matter that is denied; it is held.',
+      "It isn't so that the matter is blocked — it is waiting.",
+      'It isnt so that the matter is blocked.',
+      'It was never true that the answer is no.',
+    ]) {
+      expect(check(text).valid).toBe(true);
+    }
+  });
+
+  it('still rejects the phrase asserted plainly', () => {
+    for (const text of [
+      'This is denied.',
+      'There is no doubt the answer is yes.',
+      'Not only is the path clear but the matter is fulfilled.',
+      'It is not delayed for long, so the answer is no.',
+      'This is not a matter that is denied. Still, the matter is blocked.',
+      'Nothing here is not plain: it is denied.',
+    ]) {
+      expect(codes(text)).toContain('VERDICT_CONTRADICTION');
+    }
+  });
+
+  it('checks every occurrence, so a denied mention cannot excuse a plain one', () => {
+    expect(codes('Not a door that is denied; yet it is denied all the same.')).toContain(
+      'VERDICT_CONTRADICTION',
+    );
+  });
+
+  it('keeps the new-question check strict about denied phrases', () => {
+    expect(findOutcomeAssertion('This is not a matter that is denied.')).toBe('is denied');
+  });
+
+  it('reads "the Nth day" as a day count inside the window, not a date', () => {
+    expect(check('Look again after the 14th day.').valid).toBe(true);
+    expect(codes('Look again after the 30th day.')).toContain('TIMING_ALTERATION');
+    expect(codes('Look again on the 14th.')).toContain('TIMING_FABRICATION');
   });
 });

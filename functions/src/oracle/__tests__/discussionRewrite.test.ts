@@ -3,7 +3,7 @@
  * refused wording named in a system block, before the seeker is told the
  * oracle did not answer. Built on a production Reading (10 Oct 2026, 16:28
  * IST, "When will this app will be launched successfully"): DELAYED, so
- * phrases from both polarity lists are refused, including negated ones.
+ * phrases from both polarity lists are refused.
  */
 
 import { describe, it, expect, vi, afterEach } from 'vitest';
@@ -71,7 +71,7 @@ function groundings(): [ReadingGrounding, ...ReadingGrounding[]] {
   ];
 }
 
-const REFUSED = 'Watch the unfinished work Zuhal is holding. This is not a matter that is denied.';
+const REFUSED = 'Watch the unfinished work Zuhal is holding. For now, the answer is no.';
 const ACCEPTED = 'Watch the unfinished work Zuhal is holding; it is held for now, not closed.';
 
 function answerResponse(answer: string): Response {
@@ -119,7 +119,7 @@ describe('composeDiscussionReply — one rewrite after a rejected draft', () => 
     expect(reply?.answer).toBe(ACCEPTED);
     expect(fetchMock).toHaveBeenCalledTimes(2);
     // The refused wording reaches the model through the system prompt.
-    expect(systemOf(fetchMock.mock.calls[1])).toContain('"is denied"');
+    expect(systemOf(fetchMock.mock.calls[1])).toContain('"the answer is no"');
     expect(systemOf(fetchMock.mock.calls[0])).not.toContain('NOT SHOWN TO THE SEEKER');
   });
 
