@@ -320,6 +320,34 @@ describe('validateNarration — celestial entity consistency', () => {
     );
     expect(result.valid).toBe(true);
   });
+
+  // A production Reading (10 Oct 2026, 14:06 IST): REVERSING, Zuhrah ruling,
+  // Zuhal obstructing — the Sun is not among its entities.
+  const sunlessContract = (): ReadingContract =>
+    contractFor('2026-10-10T14:06:00+05:30', 'Will this app will be successful');
+
+  it("does not read the app's own name as a claim about the Sun", () => {
+    const contract = sunlessContract();
+    expect(contract.celestialEntities).not.toContain('Sun');
+    for (const name of ['Shams al-Asrār', 'Shams al-Asrar', 'Shams-al-Asrār', 'shams al asrar']) {
+      const result = validateNarration(
+        contract,
+        baseNarration({ rkp_finding: `As ${name} reads it, Zuhal holds the gate.` }),
+      );
+      expect(result.valid).toBe(true);
+    }
+  });
+
+  it('still rejects the Sun named on its own where the reading does not name it', () => {
+    const contract = sunlessContract();
+    for (const text of ['Shams weighs on this matter.', 'Like a cloud across the sun.']) {
+      const result = validateNarration(contract, baseNarration({ rkp_finding: text }));
+      expect(result.valid).toBe(false);
+      if (!result.valid) {
+        expect(result.failures.some(f => f.code === 'UNAUTHORIZED_CELESTIAL_ENTITY')).toBe(true);
+      }
+    }
+  });
 });
 
 describe('validateNarration — diagnosis consistency', () => {
