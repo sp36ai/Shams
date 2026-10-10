@@ -688,11 +688,23 @@ export function checkRemedyConsistency(
  * construction) — it recognizes that a remedy's own already-authoritative,
  * deterministic name is not narration invention when repeated verbatim.
  */
+/**
+ * The app's own name, "Shams al-Asrār", begins with the Sun's classical name.
+ * The Oracle speaks as Shams al-Asrār (see oracleDiscussionPrompt.ts), so a
+ * reply naming itself is not a claim about the Sun, yet on every reading
+ * without the Sun in its allow-list it was rejected as one. Removed before
+ * the scan below, in every form the three matching tiers produce
+ * ("Shams al-Asrār", "Shams al-Asrar", "Shams alAsrar", "ShamsalAsrar").
+ * A bare "Shams" is still checked.
+ */
+const APP_NAME_PATTERN = /\bshams[\s\-_]*al[\s\-_]*asr(?:a\u0304?|\u0101)r\b/gi;
+
 export function checkCelestialEntities(
   contract: ReadingContract,
   field: keyof NarrationFields,
-  text: string,
+  rawText: string,
 ): ValidationFailure | null {
+  const text = rawText.replace(APP_NAME_PATTERN, ' ');
   const allowed = new Set(expandAllowedEntityNames(contract.celestialEntities));
   for (const step of contract.remedy.steps) {
     for (const planet of ALL_PLANETS) {
