@@ -83,6 +83,17 @@ import type { LangCode } from '../types';
  */
 const DISCUSSION_TIMEOUT_MS = 25_000;
 
+/**
+ * Both attempts together — the first reply and, when that reply is rejected
+ * by validation, one rewrite — finish inside this budget. Kept under the
+ * client's own 35s wait (src/firebase/oracleDiscussion.ts), so a rewrite
+ * never turns into a client-side timeout on an app already installed.
+ */
+const DISCUSSION_BUDGET_MS = 30_000;
+
+/** A rewrite is only attempted when at least this much of the budget is left. */
+const RETRY_MIN_MS = 8_000;
+
 /** Per-turn cap when folding the transcript into the API message list. */
 const TURN_MAX_CHARS = 1200;
 
@@ -553,24 +564,92 @@ export function checkNewQuestionReply(answer: string, isNewQuestion: boolean): s
   return isNewQuestion ? findOutcomeAssertion(answer) : null;
 }
 
-export async function composeDiscussionReply(
-  input: DiscussionInput,
-): Promise<DiscussionReply | null> {
-  const apiKey = ANTHROPIC_API_KEY.value();
-  if (!apiKey) {
-    logger.warn('oracle discussion skipped: ANTHROPIC_API_KEY not bound');
-    return null;
-  }
+/** One parsed model reply, before any validation. */
+interface DraftReply {
+  readonly answer: string;
+  readonly isNewQuestion: boolean;
+}
 
-  const messages = toApiMessages(input.turns, input.message);
-  if (messages.length === 0) {
-    return null;
-  }
+/** Why a draft may not be shown: log fields, plus the wording to avoid on a rewrite. */
+interface Rejection {
+  readonly log: Record<string, unknown>;
+  readonly phrases: readonly string[];
+}
 
+/**
+ * The wording a rejection objected to, as the model should be told it: the
+ * quoted part of each failure detail (the offending phrase, term or name),
+ * de-duplicated. Failure codes and contract field names are deliberately
+ * left out — they are internal, and the model only needs to know what to
+ * stop saying.
+ *
+ * Exported for direct testing.
+ */
+export function rejectedPhrases(failures: readonly string[]): string[] {
+  const out = new Set<string>();
+  for (const failure of failures) {
+    const quoted = /"([^"]{1,80})"/.exec(failure)?.[1];
+    if (quoted !== undefined) {
+      out.add(quoted);
+    }
+  }
+  return Array.from(out).slice(0, 5);
+}
+
+/**
+ * The system block a rewrite carries. It goes in the system prompt, never as
+ * a conversation turn: the prompt treats every message as the seeker's
+ * subject matter, never as an instruction (see ORACLE_DISCUSSION_PROMPT).
+ *
+ * Exported for direct testing.
+ */
+export function rewriteNote(phrases: readonly string[]): string {
+  const wording =
+    phrases.length > 0
+      ? `It used wording this reply may not contain: ${phrases.map(p => `"${p}"`).join(', ')}.`
+      : 'It made a claim the reading under discussion does not support.';
+  return `A DRAFT OF THIS REPLY WAS NOT SHOWN TO THE SEEKER
+${wording}
+Answer the same message again, saying what the brief supports, without that wording and without negating it (writing "not" before a refused phrase still uses it). Same rules, same JSON format.`;
+}
+
+/** Check a draft against every reading in the brief, and against the new-question rule. */
+function rejectionOf(input: DiscussionInput, draft: DraftReply): Rejection | null {
+  // PHASE 5F / 5F-R2: deterministic validation, independent of Claude —
+  // see this file's header. Attributes the reply to the grounding(s) it
+  // actually names (segmentReplyByGrounding) and checks each attributed
+  // piece against ITS OWN persisted contract, anchor and comparison
+  // readings alike; a grounding with no persisted contract skips
+  // validation for its own segment rather than failing it.
+  const validation = validateDiscussionReplyAgainstGroundings(input.groundings, draft.answer);
+  if (!validation.valid) {
+    return {
+      log: { failures: validation.failures },
+      phrases: rejectedPhrases(validation.failures),
+    };
+  }
+  const verdictOnNewMatter = checkNewQuestionReply(draft.answer, draft.isNewQuestion);
+  if (verdictOnNewMatter !== null) {
+    return { log: { phrase: verdictOnNewMatter }, phrases: [verdictOnNewMatter] };
+  }
+  return null;
+}
+
+/**
+ * One call to the model. Null — never a throw — for every transport or
+ * parsing failure, each logged by its own message so Cloud Logging names the
+ * stage that failed.
+ */
+async function requestDraft(
+  apiKey: string,
+  system: ReadonlyArray<{ type: 'text'; text: string }>,
+  messages: ReturnType<typeof toApiMessages>,
+  timeoutMs: number,
+): Promise<DraftReply | null> {
   const controller = new AbortController();
   const timer = setTimeout(() => {
     controller.abort();
-  }, DISCUSSION_TIMEOUT_MS);
+  }, timeoutMs);
 
   try {
     const res = await fetch('https://api.anthropic.com/v1/messages', {
@@ -586,12 +665,7 @@ export async function composeDiscussionReply(
         // together — a short reply still needs room ahead of it.
         max_tokens: 2048,
         output_config: { effort: 'low' },
-        system: [
-          { type: 'text', text: ORACLE_DISCUSSION_PROMPT },
-          // The settled reading travels as a system block, never inside a
-          // message — see this file's header for why that separation matters.
-          { type: 'text', text: buildDiscussionBrief(input.groundings, input.replyLang) },
-        ],
+        system,
         messages,
       }),
       signal: controller.signal,
@@ -618,36 +692,9 @@ export async function composeDiscussionReply(
       return null;
     }
 
-    const answer = parsed.answer.trim();
-
-    // PHASE 5F / 5F-R2: deterministic validation, independent of Claude —
-    // see this file's header. Attributes the reply to the grounding(s) it
-    // actually names (segmentReplyByGrounding) and checks each attributed
-    // piece against ITS OWN persisted contract, anchor and comparison
-    // readings alike; a grounding with no persisted contract skips
-    // validation for its own segment rather than failing it.
-    const validation = validateDiscussionReplyAgainstGroundings(input.groundings, answer);
-    if (!validation.valid) {
-      logger.warn('oracle discussion reply failed validation — no reply returned', {
-        failures: validation.failures,
-      });
-      return null;
-    }
-
-    const isNewQuestion = parsed.is_new_question === true;
-    const verdictOnNewMatter = checkNewQuestionReply(answer, isNewQuestion);
-    if (verdictOnNewMatter !== null) {
-      // Same handling as a contract-validation failure: no reply, so the
-      // caller refunds the turn and the seeker can retry.
-      logger.warn('oracle discussion reply gave a verdict on a new question — no reply returned', {
-        phrase: verdictOnNewMatter,
-      });
-      return null;
-    }
-
     return {
-      answer,
-      isNewQuestion,
+      answer: parsed.answer.trim(),
+      isNewQuestion: parsed.is_new_question === true,
     };
   } catch (err) {
     logger.warn('oracle discussion failed', { err: String(err) });
@@ -655,4 +702,76 @@ export async function composeDiscussionReply(
   } finally {
     clearTimeout(timer);
   }
+}
+
+export async function composeDiscussionReply(
+  input: DiscussionInput,
+): Promise<DiscussionReply | null> {
+  const apiKey = ANTHROPIC_API_KEY.value();
+  if (!apiKey) {
+    logger.warn('oracle discussion skipped: ANTHROPIC_API_KEY not bound');
+    return null;
+  }
+
+  const messages = toApiMessages(input.turns, input.message);
+  if (messages.length === 0) {
+    return null;
+  }
+
+  const deadline = Date.now() + DISCUSSION_BUDGET_MS;
+  const system = [
+    { type: 'text' as const, text: ORACLE_DISCUSSION_PROMPT },
+    // The settled reading travels as a system block, never inside a
+    // message — see this file's header for why that separation matters.
+    { type: 'text' as const, text: buildDiscussionBrief(input.groundings, input.replyLang) },
+  ];
+
+  const first = await requestDraft(apiKey, system, messages, DISCUSSION_TIMEOUT_MS);
+  if (first === null) {
+    return null;
+  }
+  const firstRejection = rejectionOf(input, first);
+  if (firstRejection === null) {
+    return { answer: first.answer, isNewQuestion: first.isNewQuestion };
+  }
+
+  // A rejected draft is usually a correct answer phrased in wording a
+  // deterministic check refuses — a negated phrase ("not denied"), a day
+  // number read as a date. Validation is not loosened for it: the model is
+  // told what was refused and asked once to say it again, and the rewrite
+  // faces exactly the same checks.
+  const remaining = deadline - Date.now();
+  if (remaining < RETRY_MIN_MS) {
+    logger.warn('oracle discussion reply failed validation — no reply returned', {
+      ...firstRejection.log,
+      attempt: 1,
+      retried: false,
+    });
+    return null;
+  }
+  logger.info('oracle discussion reply failed validation — rewriting once', {
+    ...firstRejection.log,
+    attempt: 1,
+  });
+
+  const second = await requestDraft(
+    apiKey,
+    [...system, { type: 'text', text: rewriteNote(firstRejection.phrases) }],
+    messages,
+    Math.min(DISCUSSION_TIMEOUT_MS, remaining),
+  );
+  if (second === null) {
+    return null;
+  }
+  const secondRejection = rejectionOf(input, second);
+  if (secondRejection !== null) {
+    logger.warn('oracle discussion reply failed validation — no reply returned', {
+      ...secondRejection.log,
+      attempt: 2,
+      retried: true,
+    });
+    return null;
+  }
+  logger.info('oracle discussion rewrite passed validation');
+  return { answer: second.answer, isNewQuestion: second.isNewQuestion };
 }
