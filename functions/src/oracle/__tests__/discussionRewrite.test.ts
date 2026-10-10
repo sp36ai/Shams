@@ -11,7 +11,6 @@ import { describe, it, expect, vi, afterEach } from 'vitest';
 import { buildWatchChart } from '../../engine/rkp/watchChart';
 import { judgeWatchChart, type DisplayWatchVerdict } from '../../engine/rkp/watchJudgment';
 import { diagnose } from '../../engine/rkp/diagnosis';
-import { classifyQuestion } from '../../engine/kp/rules/questionKeywords';
 import { selectRemedyProtocol } from '../remedySelection';
 import { toBoundaryPlanetName } from '../../utils/planetBoundaryName';
 import { buildReadingContract, type ReadingContract } from '../readingContract';
@@ -35,10 +34,9 @@ vi.mock('firebase-functions/v2', () => ({
 const QUESTION = 'When will this app will be launched successfully';
 
 function launchContract(): ReadingContract {
-  const raw = judgeWatchChart(
-    buildWatchChart('2026-10-10T16:28:00+05:30'),
-    classifyQuestion(QUESTION),
-  );
+  // Replayed as cast: "general". The question would classify as business
+  // since "app" became a business keyword (owner decision 2026-10-10).
+  const raw = judgeWatchChart(buildWatchChart('2026-10-10T16:28:00+05:30'), 'general');
   const verdict: DisplayWatchVerdict = {
     ...raw,
     obstruction: toBoundaryPlanetName(raw.obstruction),

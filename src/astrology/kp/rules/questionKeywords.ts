@@ -256,17 +256,21 @@ export const QUESTION_KEYWORDS: Readonly<Record<QuestionType, readonly string[]>
     'partnership',
     'trade',
     'enterprise',
+    'app',
+    'apps',
     // UR
     'کاروبار',
     'تجارت',
     'کمپنی',
     'شراکت',
+    'ایپ',
     // HI
     'व्यापार',
     'कारोबार',
     'कंपनी',
     'साझेदारी',
     'उद्यम',
+    'ऐप',
   ],
   children: [
     // EN
