@@ -31,3 +31,23 @@ describe('lending and returning questions (owner decision 2026-10-08)', () => {
     expect(classifyQuestion('क्या मेरी अंगूठी उधर है?')).toBe('general');
   });
 });
+
+describe('apps are business (owner decision 2026-10-10)', () => {
+  it('judges a question about an app as business', () => {
+    expect(classifyQuestion('Will this app will be successful')).toBe('business');
+    expect(classifyQuestion('When will this app will be launched successfully')).toBe('business');
+    expect(classifyQuestion('Will my apps do well?')).toBe('business');
+    expect(classifyQuestion('کیا میری ایپ کامیاب ہوگی؟')).toBe('business');
+    expect(classifyQuestion('क्या मेरा ऐप सफल होगा?')).toBe('business');
+  });
+
+  it('matches the whole word only', () => {
+    expect(classifyQuestion('Will my application be accepted?')).not.toBe('business');
+    expect(classifyQuestion('Will he apply the remedy?')).not.toBe('business');
+  });
+
+  it('leaves an earlier type in charge when the question names one', () => {
+    expect(classifyQuestion('Will I get a job through this app?')).toBe('career');
+    expect(classifyQuestion('Will my app make money?')).toBe('finance');
+  });
+});

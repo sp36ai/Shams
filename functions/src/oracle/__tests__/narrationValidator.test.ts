@@ -4,6 +4,7 @@ import { buildWatchChart } from '../../engine/rkp/watchChart';
 import { judgeWatchChart, type DisplayWatchVerdict } from '../../engine/rkp/watchJudgment';
 import { diagnose } from '../../engine/rkp/diagnosis';
 import { classifyQuestion } from '../../engine/kp/rules/questionKeywords';
+import type { QuestionType } from '../../engine/kp/rules/houseMatrix';
 import { selectRemedyProtocol } from '../remedySelection';
 import { toBoundaryPlanetName } from '../../utils/planetBoundaryName';
 import { buildReadingContract, type ReadingContract } from '../readingContract';
@@ -11,9 +12,15 @@ import { findOutcomeAssertion, validateNarration } from '../narrationValidator';
 import { buildDeterministicFallbackNarration } from '../narrationFallback';
 import type { NarrationFields } from '../responseComposer';
 
-function contractFor(moment: string, question: string): ReadingContract {
+function contractFor(
+  moment: string,
+  question: string,
+  // A production reading is replayed as it was cast: classifyQuestion's
+  // keywords can change after the fact (owner decision 2026-10-10 added
+  // "app" to business), so those tests pin the category it had then.
+  qType: QuestionType = classifyQuestion(question),
+): ReadingContract {
   const chart = buildWatchChart(moment);
-  const qType = classifyQuestion(question);
   const rawVerdict = judgeWatchChart(chart, qType);
   const verdict: DisplayWatchVerdict = {
     ...rawVerdict,
@@ -324,7 +331,7 @@ describe('validateNarration — celestial entity consistency', () => {
   // A production Reading (10 Oct 2026, 14:06 IST): REVERSING, Zuhrah ruling,
   // Zuhal obstructing — the Sun is not among its entities.
   const sunlessContract = (): ReadingContract =>
-    contractFor('2026-10-10T14:06:00+05:30', 'Will this app will be successful');
+    contractFor('2026-10-10T14:06:00+05:30', 'Will this app will be successful', 'general');
 
   it("does not read the app's own name as a claim about the Sun", () => {
     const contract = sunlessContract();
@@ -562,6 +569,7 @@ describe('validateNarration — denied phrases and day ordinals', () => {
   const contract = contractFor(
     '2026-10-10T16:28:00+05:30',
     'When will this app will be launched successfully',
+    'general',
   );
   const check = (text: string) =>
     validateNarration(contract, baseNarration({ interpretation: text }));
