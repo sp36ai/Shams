@@ -175,3 +175,29 @@ describe('rejectedPhrases / rewriteNote', () => {
     expect(rewriteNote([])).toContain('does not support');
   });
 });
+
+describe('composeDiscussionReply — conversation_complete', () => {
+  function mockRaw(body: Record<string, unknown>) {
+    globalThis.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve({ content: [{ type: 'text', text: JSON.stringify(body) }] }),
+    }) as unknown as typeof fetch;
+  }
+
+  it('carries the close through', async () => {
+    mockRaw({ answer: ACCEPTED, is_new_question: false, conversation_complete: true });
+    expect((await ask())?.conversationComplete).toBe(true);
+  });
+
+  it('defaults to open when the key is missing', async () => {
+    mockRaw({ answer: ACCEPTED, is_new_question: false });
+    expect((await ask())?.conversationComplete).toBe(false);
+  });
+
+  it('never closes a reply that points to a new question', async () => {
+    mockRaw({ answer: ACCEPTED, is_new_question: true, conversation_complete: true });
+    const reply = await ask();
+    expect(reply?.isNewQuestion).toBe(true);
+    expect(reply?.conversationComplete).toBe(false);
+  });
+});

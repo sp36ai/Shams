@@ -75,6 +75,11 @@ export interface DiscussReadingResult {
   isNewQuestion: boolean;
   /** Follow-ups left on this reading. */
   turnsRemaining: number;
+  /**
+   * True when the oracle closed the conversation with this reply. The server
+   * declines later follow-ups on this reading.
+   */
+  conversationComplete: boolean;
 }
 
 /** Turns the server accepts in one call — matches DiscussReadingSchema. */
@@ -107,11 +112,14 @@ export async function discussReading(args: DiscussReadingInput): Promise<Discuss
     answer: string;
     isNewQuestion: boolean;
     turnsRemaining: number;
+    conversationComplete?: boolean;
   };
 
   return {
     answer: data.answer,
     isNewQuestion: data.isNewQuestion === true,
     turnsRemaining: data.turnsRemaining,
+    // Absent from a server deployed before the field existed.
+    conversationComplete: data.conversationComplete === true,
   };
 }

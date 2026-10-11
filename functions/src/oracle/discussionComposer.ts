@@ -163,6 +163,12 @@ export interface DiscussionReply {
    * casts a fresh chart and costs a quota slot like any other reading.
    */
   readonly isNewQuestion: boolean;
+  /**
+   * True when the model judged the conversation has done its work and made
+   * this reply a graceful close (see ORACLE_DISCUSSION_PROMPT). Never true
+   * together with `isNewQuestion` — that reply already points elsewhere.
+   */
+  readonly conversationComplete: boolean;
 }
 
 const LANG_NAME: Readonly<Record<LangCode, string>> = Object.freeze({
@@ -568,6 +574,7 @@ export function checkNewQuestionReply(answer: string, isNewQuestion: boolean): s
 interface DraftReply {
   readonly answer: string;
   readonly isNewQuestion: boolean;
+  readonly conversationComplete: boolean;
 }
 
 /** Why a draft may not be shown: log fields, plus the wording to avoid on a rewrite. */
@@ -685,6 +692,7 @@ async function requestDraft(
     const parsed = JSON.parse(stripJsonFence(raw)) as {
       answer?: unknown;
       is_new_question?: unknown;
+      conversation_complete?: unknown;
     };
 
     if (typeof parsed.answer !== 'string' || parsed.answer.trim().length === 0) {
@@ -695,6 +703,8 @@ async function requestDraft(
     return {
       answer: parsed.answer.trim(),
       isNewQuestion: parsed.is_new_question === true,
+      conversationComplete:
+        parsed.conversation_complete === true && parsed.is_new_question !== true,
     };
   } catch (err) {
     logger.warn('oracle discussion failed', { err: String(err) });
@@ -732,7 +742,7 @@ export async function composeDiscussionReply(
   }
   const firstRejection = rejectionOf(input, first);
   if (firstRejection === null) {
-    return { answer: first.answer, isNewQuestion: first.isNewQuestion };
+    return first;
   }
 
   // A rejected draft is often a correct answer phrased in wording a
@@ -773,5 +783,5 @@ export async function composeDiscussionReply(
     return null;
   }
   logger.info('oracle discussion rewrite passed validation');
-  return { answer: second.answer, isNewQuestion: second.isNewQuestion };
+  return second;
 }

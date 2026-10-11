@@ -25,15 +25,17 @@ export function todayKey(now = Date.now()): string {
 }
 
 /**
- * How many follow-up turns one reading may carry.
+ * Cost ceiling on follow-up turns for one reading — a backstop, not the
+ * conversational limit.
  *
- * Discussion is free — the unit sold is the reading, not the conversation
- * about it (see discussReading.ts) — so this bound, not the quota, is what
- * keeps a single reading from becoming an unbounded chat session. Generous
- * enough that no ordinary seeker meets it, low enough to cap the cost of one
- * reading; a seeker who exhausts it has a new question, not a follow-up.
+ * Owner decision 2026-10-11: there is no fixed number of follow-ups. The
+ * oracle closes the conversation when it has done its work
+ * (`conversationComplete`, see discussReading.ts). Discussion is free — the
+ * unit sold is the reading — so this bound still keeps one reading from
+ * becoming an unbounded run of model calls; it is set far above where a
+ * conversation ends on its own.
  */
-export const DISCUSSION_TURN_LIMIT = 12;
+export const DISCUSSION_TURN_LIMIT = 40;
 
 export const REGION = 'asia-south1'; // Mumbai — closest to primary user base
 

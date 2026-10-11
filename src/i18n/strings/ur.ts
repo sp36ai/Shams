@@ -173,7 +173,8 @@ export const ur: StringTable = {
     discussionUnavailable: 'اوریکل نے اس کا جواب نہیں دیا۔ دوبارہ پوچھیں۔',
     discussionReadingGone: 'یہ جواب اب گفتگو کے لیے دستیاب نہیں۔',
     discussionLimitReached:
-      'اس زائچے پر جتنی گفتگو ہو سکتی تھی ہو چکی۔ اپنا سوال نئے زائچے کے طور پر پوچھیں۔',
+      'یہ زائچہ جو کہہ سکتا تھا کہہ چکا۔ اپنا اگلا سوال نئے زائچے کے طور پر پوچھیں۔',
+    discussionClosedHint: '✦ یہ زائچہ جو کہہ سکتا تھا کہہ چکا — اپنا اگلا سوال پوچھیں',
     suggestedQuestionsLabel: 'آپ پوچھ سکتے ہیں',
   },
 

@@ -187,6 +187,7 @@ describe('discussReading — idempotency claim release on a null reply', () => {
     composeDiscussionReplyMock.mockResolvedValueOnce({
       answer: 'It is delay, not denial.',
       isNewQuestion: false,
+      conversationComplete: false,
     });
 
     const result = await invoke({}, 'request-3');
@@ -194,5 +195,56 @@ describe('discussReading — idempotency claim release on a null reply', () => {
     expect(result).toMatchObject({ answer: 'It is delay, not denial.' });
     expect(releaseRequestMock).not.toHaveBeenCalled();
     expect(completeRequestMock).toHaveBeenCalledWith('alice', 'request-3', expect.anything());
+  });
+});
+
+describe('discussReading — the oracle closes the conversation (owner decision 2026-10-11)', () => {
+  it('returns the closing reply and marks the reading closed', async () => {
+    seedReading('r1', { discussionTurns: 3 });
+    composeDiscussionReplyMock.mockResolvedValueOnce({
+      answer: 'You hold what this reading can give. A new question deserves its own moment.',
+      isNewQuestion: false,
+      conversationComplete: true,
+    });
+
+    const result = await invoke({}, 'request-close');
+
+    expect(result).toMatchObject({ conversationComplete: true });
+    expect(readings.get('r1')?.discussionClosed).toBe(true);
+  });
+
+  it('keeps an ordinary reply open', async () => {
+    seedReading('r1', { discussionTurns: 3 });
+    composeDiscussionReplyMock.mockResolvedValueOnce({
+      answer: 'Zuhal holds the gate.',
+      isNewQuestion: false,
+      conversationComplete: false,
+    });
+
+    const result = await invoke({}, 'request-open');
+
+    expect(result).toMatchObject({ conversationComplete: false });
+    expect(readings.get('r1')?.discussionClosed).toBeUndefined();
+  });
+
+  it('declines a follow-up on a closed reading without calling the model', async () => {
+    seedReading('r1', { discussionTurns: 3, discussionClosed: true });
+
+    await expect(invoke({}, 'request-after')).rejects.toMatchObject({
+      code: 'resource-exhausted',
+    });
+    expect(composeDiscussionReplyMock).not.toHaveBeenCalled();
+    expect(releaseRequestMock).toHaveBeenCalledWith('alice', 'request-after');
+  });
+
+  it('no longer stops at 12 follow-ups', async () => {
+    seedReading('r1', { discussionTurns: 12 });
+    composeDiscussionReplyMock.mockResolvedValueOnce({
+      answer: 'Still here.',
+      isNewQuestion: false,
+      conversationComplete: false,
+    });
+
+    await expect(invoke({}, 'request-13')).resolves.toMatchObject({ answer: 'Still here.' });
   });
 });
