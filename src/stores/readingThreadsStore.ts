@@ -154,6 +154,15 @@ export interface ReadingThread {
    * with no such lineage, which is the common case.
    */
   relatedReadingIds?: readonly string[];
+  /**
+   * The Reading asked just before this one in the same conversation, when a
+   * new question was asked from inside a Reading's chat (owner decision
+   * 2026-10-11). Each question is still its own Reading — its own moment,
+   * verdict, requestId and history entry; this link only lets the Reading
+   * screen show the conversation as one thread, earlier Readings above.
+   * Written once, at creation.
+   */
+  previousThreadId?: string;
 }
 
 /** A Reading as the list needs it — no messages, so rows stay cheap. */
@@ -451,6 +460,8 @@ export interface ReadingThreadsState {
     questionLang: 'en' | 'ur' | 'hi';
     /** Lineage this thread was opened from — see ReadingThread.relatedReadingIds. */
     relatedReadingIds?: readonly string[];
+    /** The Reading this one continues — see ReadingThread.previousThreadId. */
+    previousThreadId?: string;
   }) => ReadingThread;
 
   addMessage: (threadId: string, message: ReadingMessage) => void;
@@ -482,7 +493,14 @@ function touch(thread: ReadingThread, at: string): ReadingThread {
 export const useReadingThreadsStore = create<ReadingThreadsState>((set, get) => ({
   threads: readCache(),
 
-  createThread: ({ id, requestId, question, questionLang, relatedReadingIds }): ReadingThread => {
+  createThread: ({
+    id,
+    requestId,
+    question,
+    questionLang,
+    relatedReadingIds,
+    previousThreadId,
+  }): ReadingThread => {
     const now = new Date().toISOString();
     const thread: ReadingThread = {
       id,
@@ -499,6 +517,7 @@ export const useReadingThreadsStore = create<ReadingThreadsState>((set, get) => 
       ...(relatedReadingIds !== undefined && relatedReadingIds.length > 0
         ? { relatedReadingIds: relatedReadingIds.slice(0, 4) }
         : {}),
+      ...(previousThreadId !== undefined ? { previousThreadId } : {}),
     };
     const next = [thread, ...get().threads];
     writeCache(next);
@@ -708,6 +727,45 @@ export function groupByRecency<T extends { updatedAt: string }>(
  * everything from `beforeMessageId` onward is excluded because that message
  * travels as the request's own `message`.
  */
+/** Longest conversation the Reading screen will draw — a guard, not a rule. */
+const CONVERSATION_LIMIT = 30;
+
+/**
+ * Every Reading of the conversation `thread` belongs to, oldest first: its
+ * predecessors (via previousThreadId), itself, and the Readings asked after
+ * it. Readings no longer on the device simply end the chain there. Cycles and
+ * runaway chains are cut at CONVERSATION_LIMIT.
+ */
+export function conversationOf(
+  threads: readonly ReadingThread[],
+  thread: ReadingThread,
+): ReadingThread[] {
+  const before: ReadingThread[] = [];
+  const seen = new Set<string>([thread.id]);
+  let cursor = thread.previousThreadId;
+  while (cursor !== undefined && !seen.has(cursor) && before.length < CONVERSATION_LIMIT) {
+    const prev = threadById(threads, cursor);
+    if (prev === null) {
+      break;
+    }
+    seen.add(prev.id);
+    before.unshift(prev);
+    cursor = prev.previousThreadId;
+  }
+  const after: ReadingThread[] = [];
+  let tail = thread;
+  while (before.length + after.length < CONVERSATION_LIMIT) {
+    const next = threads.find(t => t.previousThreadId === tail.id && !seen.has(t.id));
+    if (next === undefined) {
+      break;
+    }
+    seen.add(next.id);
+    after.push(next);
+    tail = next;
+  }
+  return [...before, thread, ...after];
+}
+
 /**
  * Whether the oracle has closed this Reading's conversation. Once it has, the
  * next send is a new question, not a follow-up.
