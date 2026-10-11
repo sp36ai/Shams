@@ -115,7 +115,8 @@ describe('PHASE 5F — validateDiscussionReply: positive/negative controls', () 
   it('4. unauthorized celestial entity → rejected', () => {
     const result = validateDiscussionReply(
       primary,
-      'Jupiter also weighs heavily on this matter, in ways not yet discussed.',
+      // Not Jupiter: Mushtari is in this reading's own factor lines.
+      'Venus also weighs heavily on this matter, in ways not yet discussed.',
     );
     expect(result.valid).toBe(false);
   });
