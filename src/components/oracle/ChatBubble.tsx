@@ -75,6 +75,11 @@ interface ChatBubbleProps {
   readingLang?: 'en' | 'ur' | 'hi';
   onRetry: (userMessageId: string) => void;
   /**
+   * Shown on a failed turn so a screenshot can be matched to the server's
+   * failure log for that request (see utils/requestRef). Not shown otherwise.
+   */
+  failureRef?: string;
+  /**
    * Open a follow-up the oracle declined to answer as its OWN Reading, cast
    * for its own moment. A new chart and a quota slot — so it is always an
    * explicit tap, never something this bubble does on the seeker's behalf.
@@ -92,6 +97,7 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({
   questionLang,
   readingLang,
   onRetry,
+  failureRef,
   onAskAsNewQuestion,
   ttsStatus,
   ttsActiveMessageId,
@@ -186,6 +192,14 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({
           <Text style={[typography('body'), { color: colors.textMuted }]}>
             {message.errorMessage ?? t('oracleChat.failedGeneric')}
           </Text>
+          {failureRef !== undefined && (
+            <Text
+              selectable
+              style={[typography('caption'), styles.failureRef, { color: colors.textMuted }]}
+            >
+              {t('oracleChat.failureRef', { ref: failureRef })}
+            </Text>
+          )}
           {message.replyToId !== undefined && (
             <Pressable
               onPress={() => onRetry(message.replyToId!)}
@@ -395,6 +409,10 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     height: 1,
+  },
+  failureRef: {
+    marginTop: 6,
+    opacity: 0.8,
   },
   retryBtn: {
     marginTop: 8,

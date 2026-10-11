@@ -91,6 +91,7 @@ import StarfieldBackground from '@components/StarfieldBackground';
 import ChatBubble from '@components/oracle/ChatBubble';
 import ChatComposer from '@components/oracle/ChatComposer';
 import ReadingHeader from '@components/oracle/ReadingHeader';
+import { requestRef } from '@utils/requestRef';
 
 /**
  * Maps a send failure to a message the seeker can act on. Firebase callable
@@ -727,6 +728,7 @@ const ReadingScreen: React.FC = () => {
           questionLang={lang}
           readingLang={item.thread.questionLang}
           onRetry={handleRetry}
+          failureRef={requestRef(item.message.requestId ?? item.thread.requestId)}
           onAskAsNewQuestion={handleAskAsNewReading}
           ttsStatus={tts.status}
           ttsActiveMessageId={tts.activeMessageId}

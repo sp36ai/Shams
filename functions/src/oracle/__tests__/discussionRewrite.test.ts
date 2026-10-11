@@ -20,6 +20,7 @@ import {
   rewriteNote,
   type ReadingGrounding,
 } from '../discussionComposer';
+import { logger } from '../../utils/logger';
 
 vi.mock('../../config', () => ({
   ANTHROPIC_API_KEY: { value: () => 'test-key' },
@@ -199,5 +200,46 @@ describe('composeDiscussionReply — conversation_complete', () => {
     const reply = await ask();
     expect(reply?.isNewQuestion).toBe(true);
     expect(reply?.conversationComplete).toBe(false);
+  });
+});
+
+describe('composeDiscussionReply — failure logs carry the reference', () => {
+  const logContext = { ref: '3k9x2m1a', readingId: 'r-launch' };
+  const askWithRef = () =>
+    composeDiscussionReply({
+      groundings: groundings(),
+      turns: [],
+      message: 'What should I watch for next?',
+      replyLang: 'en',
+      logContext,
+    });
+
+  it('stamps both validation logs of a refused follow-up', async () => {
+    vi.spyOn(logger, 'info').mockImplementation(() => undefined);
+    vi.spyOn(logger, 'warn').mockImplementation(() => undefined);
+    mockAnswers(REFUSED, REFUSED);
+    expect(await askWithRef()).toBeNull();
+    expect(logger.info).toHaveBeenCalledWith(
+      'oracle discussion reply failed validation — rewriting once',
+      expect.objectContaining({ ...logContext, attempt: 1 }),
+    );
+    expect(logger.warn).toHaveBeenCalledWith(
+      'oracle discussion reply failed validation — no reply returned',
+      expect.objectContaining({ ...logContext, attempt: 2 }),
+    );
+  });
+
+  it('stamps a transport failure', async () => {
+    vi.spyOn(logger, 'warn').mockImplementation(() => undefined);
+    globalThis.fetch = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 529,
+      text: () => Promise.resolve('overloaded'),
+    }) as unknown as typeof fetch;
+    expect(await askWithRef()).toBeNull();
+    expect(logger.warn).toHaveBeenCalledWith(
+      'oracle discussion HTTP error',
+      expect.objectContaining({ ...logContext, status: 529 }),
+    );
   });
 });

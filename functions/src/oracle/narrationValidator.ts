@@ -494,9 +494,14 @@ const WEEKDAY_NAMES = [
  * counts days from the reading, not a date on the calendar. It is not left
  * unchecked — extractDayCounts() reads it, so it must still fall inside the
  * engine's own timing window like any "N days".
+ *
+ * A list of ordinals ending in a house ("the 7th, 10th and 11th Ghar",
+ * "the 10th and the 11th houses") is the same house reference, not a run
+ * of dates. A bare "the 10th" with no house after it is still read as a
+ * date, since that is exactly how a date is written.
  */
 const DATE_LIKE_PATTERN =
-  /\b\d{1,4}[/-]\d{1,2}([/-]\d{1,4})?\b|\bthe\s+\d{1,2}(st|nd|rd|th)\b(?!\s+(?:house|ghar|day)\b)/i;
+  /\b\d{1,4}[/-]\d{1,2}([/-]\d{1,4})?\b|\bthe\s+\d{1,2}(st|nd|rd|th)\b(?!\s+day\b)(?!(?:(?:\s*,\s*|\s+(?:and|or|&)\s+)(?:the\s+)?\d{1,2}(?:st|nd|rd|th)\b)*\s+(?:houses?|ghars?)\b)/i;
 
 /**
  * PHASE 4A: split into two tiers, per the review gate's demonstrated
@@ -756,6 +761,22 @@ export function checkCelestialEntities(
     for (const planet of ALL_PLANETS) {
       if (
         PLANET_ALIASES[planet].some(alias => step.name.toLowerCase().includes(alias.toLowerCase()))
+      ) {
+        for (const alias of PLANET_ALIASES[planet]) {
+          allowed.add(alias.toLowerCase());
+        }
+      }
+    }
+  }
+  // The same holds for this reading's own factor lines, which the seeker
+  // sees on the reading card ("Ras al-Tinnin weighs on the 11th Ghar"):
+  // repeating a planet the engine itself named is not invention.
+  for (const factor of contract.judgment?.factors ?? []) {
+    for (const planet of ALL_PLANETS) {
+      if (
+        PLANET_ALIASES[planet].some(alias =>
+          new RegExp(`\\b${escapeRegExp(alias)}\\b`, 'i').test(factor),
+        )
       ) {
         for (const alias of PLANET_ALIASES[planet]) {
           allowed.add(alias.toLowerCase());

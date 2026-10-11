@@ -623,3 +623,47 @@ describe('validateNarration — denied phrases and day ordinals', () => {
     expect(codes('Look again on the 14th.')).toContain('TIMING_FABRICATION');
   });
 });
+
+// A production Reading (11 Oct 2026, 22:01 IST): business, BLOCKED by
+// Mirrikh, with Ras al-Tinnin and Dhanab al-Tinnin in its own factor lines.
+// The follow-up "Is my business connected to this?" failed on the two
+// false positives below.
+describe('validateNarration — planets in the factor lines and house lists', () => {
+  const contract = contractFor('2026-10-11T22:01:00+05:30', 'When should I launch this app');
+  const check = (text: string) =>
+    validateNarration(contract, baseNarration({ interpretation: text }));
+  const codes = (text: string) => {
+    const result = check(text);
+    return result.valid ? [] : result.failures.map(f => f.code);
+  };
+
+  it('fixes the reading the tests rely on', () => {
+    expect(contract.question.questionType).toBe('business');
+    expect(contract.celestialEntities).not.toContain('Rahu');
+    expect(contract.judgment.factors.join(' ')).toContain('Ras al-Tinnin');
+    expect(contract.judgment.factors.join(' ')).toContain('Dhanab al-Tinnin');
+  });
+
+  it('accepts every factor line of the reading repeated verbatim', () => {
+    for (const factor of contract.judgment.factors) {
+      expect(check(`The reading shows: ${factor}`).valid).toBe(true);
+    }
+  });
+
+  it('still rejects a planet the reading never names', () => {
+    expect(codes('Zuhal presses on the 7th Ghar.')).toContain('UNAUTHORIZED_CELESTIAL_ENTITY');
+  });
+
+  it('reads a list of ordinals ending in a house as houses, not dates', () => {
+    expect(check('Read through the 7th, 10th and 11th Ghar.').valid).toBe(true);
+    expect(check('The 10th and the 11th houses support it.').valid).toBe(true);
+  });
+
+  it('still reads a bare ordinal, or a list of them, as a date', () => {
+    expect(codes('The 7th Ghar leads, with the 10th and 11th supporting.')).toContain(
+      'TIMING_FABRICATION',
+    );
+    expect(codes('Launch on the 10th or the 12th.')).toContain('TIMING_FABRICATION');
+    expect(codes('Look again on the 10th and 11th days.')).toContain('TIMING_FABRICATION');
+  });
+});

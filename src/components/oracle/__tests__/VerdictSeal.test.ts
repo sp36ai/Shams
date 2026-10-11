@@ -23,7 +23,7 @@ describe('verdict subline', () => {
   it('says what to do, when, and how sure — once', () => {
     const v = verdictWith({ timing: { minDays: 45, maxDays: 90 }, confidence: 'HIGH' });
     expect(verdictSubline(v, diagnosis)).toBe(
-      'Wait before committing  ·  2–3 months  ·  high confidence',
+      'Wait before committing  ·  45–90 days  ·  high confidence',
     );
   });
 

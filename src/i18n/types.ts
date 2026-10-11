@@ -215,6 +215,7 @@ export interface StringTable {
     readingChart: string;
     retry: string;
     failedGeneric: string;
+    failureRef: string;
     quotaExhausted: string;
     micPermissionDenied: string;
     noSpeechDetected: string;

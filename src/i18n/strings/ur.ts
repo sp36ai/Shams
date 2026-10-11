@@ -149,6 +149,7 @@ export const ur: StringTable = {
     readingChart: 'چارٹ پڑھا جا رہا ہے…',
     retry: 'دوبارہ کوشش کریں',
     failedGeneric: 'اس لمحے کی مہر نہیں کھلی۔ دوبارہ کوشش کریں۔',
+    failureRef: 'حوالہ {{ref}}',
     quotaExhausted: 'آج کے سوالات ختم ہو چکے۔ کل واپس آئیں، یا لامحدود کے لیے اپ گریڈ کریں۔',
     micPermissionDenied: 'آواز سے سوال کے لیے مائیکروفون کی اجازت درکار ہے۔ سیٹنگز میں فعال کریں۔',
     noSpeechDetected: 'کچھ سنائی نہیں دیا — دوبارہ کوشش کریں۔',
