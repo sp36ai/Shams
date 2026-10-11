@@ -14,6 +14,7 @@ import {
   groupByRecency,
   discussionTurnsFor,
   isDiscussionClosed,
+  conversationOf,
   contextFrom,
   migrateLegacyTranscript,
   recoverInterruptedMessages,
@@ -204,6 +205,45 @@ describe('messages belong to their Reading', () => {
     const msg = threadById(useReadingThreadsStore.getState().threads, 't1')?.messages[0];
     expect(msg?.status).toBe('sent');
     expect(msg?.text).toBe('Delay.');
+  });
+});
+
+describe('conversationOf', () => {
+  const at = '2026-10-11T05:00:00.000Z';
+  function t(id: string, previousThreadId?: string): ReadingThread {
+    return {
+      id,
+      requestId: `req_${id}`,
+      readingId: `r_${id}`,
+      title: id,
+      question: id,
+      questionLang: 'en',
+      createdAt: at,
+      updatedAt: at,
+      status: 'complete',
+      context: null,
+      messages: [],
+      ...(previousThreadId !== undefined ? { previousThreadId } : {}),
+    };
+  }
+
+  it('orders the Readings of a conversation oldest first, from any of them', () => {
+    const threads = [t('c', 'b'), t('x'), t('b', 'a'), t('a')];
+    for (const from of ['a', 'b', 'c']) {
+      const start = threads.find(r => r.id === from)!;
+      expect(conversationOf(threads, start).map(r => r.id)).toEqual(['a', 'b', 'c']);
+    }
+    expect(conversationOf(threads, threads[1]!).map(r => r.id)).toEqual(['x']);
+  });
+
+  it('ends at a Reading no longer on the device', () => {
+    const threads = [t('c', 'b'), t('b', 'gone')];
+    expect(conversationOf(threads, threads[0]!).map(r => r.id)).toEqual(['b', 'c']);
+  });
+
+  it('survives a loop', () => {
+    const threads = [t('a', 'b'), t('b', 'a')];
+    expect(conversationOf(threads, threads[0]!).map(r => r.id)).toEqual(['b', 'a']);
   });
 });
 
