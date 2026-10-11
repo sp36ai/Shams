@@ -751,6 +751,9 @@ export async function composeDiscussionReply(
   }
   const firstRejection = rejectionOf(input, first);
   if (firstRejection === null) {
+    // The rewrite and rejection paths below each log; this completes the
+    // count, so the follow-up fallback rate has a denominator.
+    logger.info('oracle discussion reply passed validation', { ...ctx, attempt: 1 });
     return first;
   }
 
