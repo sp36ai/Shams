@@ -494,6 +494,14 @@ export async function composeWatchOracleResponse(
   // never has been). `null` only when synthesis produced nothing to speak.
   const speakableText = narration !== null ? buildSpeakableText(narration) : null;
 
+  // One line per reading, so the fallback rate has a denominator: the
+  // warnings above only ever count the failures.
+  logger.info('watch oracle narration outcome', {
+    readingId: contract.provenance.readingId,
+    outcome: diagnosis.outcome,
+    narrationSource: drafted === null ? 'none' : narration === drafted ? 'model' : 'fallback',
+  });
+
   const composition: WatchOracleComposition = Object.freeze({
     narration,
     speakableText,
