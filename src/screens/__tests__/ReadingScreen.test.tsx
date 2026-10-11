@@ -494,6 +494,86 @@ describe('ReadingScreen', () => {
       expect(useReadingThreadsStore.getState().threads).toHaveLength(1);
     });
 
+    it('turns the composer to a new question once the oracle closes the conversation', async () => {
+      const askCallable = jest.fn(() => Promise.resolve({ data: successPayload() }));
+      const discussCallable = jest.fn(() =>
+        Promise.resolve({
+          data: {
+            answer: 'You hold what this reading can give.',
+            isNewQuestion: false,
+            turnsRemaining: 30,
+            conversationComplete: true,
+          },
+        }),
+      );
+      (httpsCallable as jest.Mock).mockImplementation((name: string) => {
+        if (name === 'askWatchOracle') {
+          return askCallable;
+        }
+        if (name === 'discussReading') {
+          return discussCallable;
+        }
+        return defaultImpl(name);
+      });
+
+      await renderScreen(<ReadingScreen />);
+      const user = userEvent.setup();
+      await askOnce(user);
+
+      await user.type(screen.getByTestId('oracle-chat-input'), 'Thank you, that helps.');
+      await user.press(screen.getByTestId('oracle-chat-send-btn'));
+      await waitFor(() =>
+        expect(screen.getByText('You hold what this reading can give.')).toBeTruthy(),
+      );
+      expect(
+        screen.getByText('✦ This Reading has said what it can — ask your next question'),
+      ).toBeTruthy();
+
+      // The next send is a new question: its own Reading, this one as lineage.
+      await user.type(screen.getByTestId('oracle-chat-input'), 'Will my visa come through?');
+      await user.press(screen.getByTestId('oracle-chat-send-btn'));
+
+      expect(mockPush).toHaveBeenCalledWith('Reading', {
+        initialQuestion: 'Will my visa come through?',
+        relatedReadingIds: ['r1'],
+      });
+      expect(discussCallable).toHaveBeenCalledTimes(1);
+      expect(askCallable).toHaveBeenCalledTimes(1);
+    });
+
+    it('shows an already-closed conversation as a close, not a failure to retry', async () => {
+      (httpsCallable as jest.Mock).mockImplementation((name: string) => {
+        if (name === 'askWatchOracle') {
+          return jest.fn(() => Promise.resolve({ data: successPayload() }));
+        }
+        if (name === 'discussReading') {
+          return jest.fn(() =>
+            Promise.reject(Object.assign(new Error('closed'), { code: 'resource-exhausted' })),
+          );
+        }
+        return defaultImpl(name);
+      });
+
+      await renderScreen(<ReadingScreen />);
+      const user = userEvent.setup();
+      await askOnce(user);
+
+      await user.type(screen.getByTestId('oracle-chat-input'), 'One more thing?');
+      await user.press(screen.getByTestId('oracle-chat-send-btn'));
+
+      await waitFor(() =>
+        expect(
+          screen.getByText(
+            'This Reading has said what it can. Ask your next question as a new Reading.',
+          ),
+        ).toBeTruthy(),
+      );
+      expect(oracleMessages().at(-1)?.status).toBe('sent');
+      expect(
+        screen.getByText('✦ This Reading has said what it can — ask your next question'),
+      ).toBeTruthy();
+    });
+
     it('retries a follow-up under its own SAME requestId, so the turn is not spent twice', async () => {
       const discussCallable = jest.fn(() =>
         Promise.reject(Object.assign(new Error('down'), { code: 'unavailable' })),

@@ -13,6 +13,7 @@ import {
   searchThreads,
   groupByRecency,
   discussionTurnsFor,
+  isDiscussionClosed,
   contextFrom,
   migrateLegacyTranscript,
   recoverInterruptedMessages,
@@ -203,6 +204,44 @@ describe('messages belong to their Reading', () => {
     const msg = threadById(useReadingThreadsStore.getState().threads, 't1')?.messages[0];
     expect(msg?.status).toBe('sent');
     expect(msg?.text).toBe('Delay.');
+  });
+});
+
+describe('isDiscussionClosed', () => {
+  const base: ReadingThread = {
+    id: 't1',
+    requestId: 'req_t1',
+    readingId: 'r1',
+    title: 'Business opportunity',
+    question: 'Should I accept?',
+    questionLang: 'en',
+    createdAt: '2026-08-08T05:43:00.000Z',
+    updatedAt: '2026-08-08T05:50:00.000Z',
+    status: 'complete',
+    context: contextFrom(reading()),
+    messages: [
+      message({ id: 'u0', text: 'Should I accept?' }),
+      message({ id: 'o0', role: 'oracle', text: '', variant: 'reading', reading: reading() }),
+      message({ id: 'u1', text: 'Thank you.' }),
+    ],
+  };
+
+  it('is open until the oracle closes the conversation', () => {
+    expect(isDiscussionClosed(base)).toBe(false);
+    const closed: ReadingThread = {
+      ...base,
+      messages: [
+        ...base.messages,
+        message({
+          id: 'o1',
+          role: 'oracle',
+          text: 'You hold what this reading can give.',
+          variant: 'discussion',
+          closesDiscussion: true,
+        }),
+      ],
+    };
+    expect(isDiscussionClosed(closed)).toBe(true);
   });
 });
 

@@ -244,6 +244,8 @@ export interface StringTable {
     discussionUnavailable: string;
     discussionReadingGone: string;
     discussionLimitReached: string;
+    /** Composer hint once the oracle has closed a Reading's conversation. */
+    discussionClosedHint: string;
     /** Header over the suggested-follow-up-question chips. */
     suggestedQuestionsLabel: string;
   };

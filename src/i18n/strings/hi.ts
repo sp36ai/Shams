@@ -173,7 +173,8 @@ export const hi: StringTable = {
     discussionUnavailable: 'ओरेकल ने इसका उत्तर नहीं दिया। पुनः पूछें।',
     discussionReadingGone: 'यह उत्तर अब चर्चा के लिए उपलब्ध नहीं है।',
     discussionLimitReached:
-      'इस रीडिंग पर जितनी चर्चा हो सकती थी, हो चुकी। अपना प्रश्न नई रीडिंग के रूप में पूछें।',
+      'यह रीडिंग जो कह सकती थी, कह चुकी। अपना अगला प्रश्न नई रीडिंग के रूप में पूछें।',
+    discussionClosedHint: '✦ यह रीडिंग जो कह सकती थी, कह चुकी — अपना अगला प्रश्न पूछें',
     suggestedQuestionsLabel: 'आप पूछ सकते हैं',
   },
 

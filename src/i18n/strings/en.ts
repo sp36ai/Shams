@@ -165,7 +165,8 @@ export const en: StringTable = {
     discussionUnavailable: 'The oracle did not answer that. Try asking again.',
     discussionReadingGone: 'That reading is no longer available to discuss.',
     discussionLimitReached:
-      'This Reading has been discussed as far as it goes. Ask your question as a new Reading.',
+      'This Reading has said what it can. Ask your next question as a new Reading.',
+    discussionClosedHint: '✦ This Reading has said what it can — ask your next question',
     suggestedQuestionsLabel: 'You may ask',
   },
 

@@ -67,6 +67,7 @@ import {
   useReadingThreadsStore,
   threadById,
   discussionTurnsFor,
+  isDiscussionClosed,
   type MessageInputKind,
   type ReadingMessage,
   type ReadingThread,
@@ -379,8 +380,23 @@ const ReadingScreen: React.FC = () => {
           status: 'sent',
           text: result.answer,
           suggestsNewQuestion: result.isNewQuestion,
+          closesDiscussion: result.conversationComplete,
         });
       } catch (err) {
+        const code =
+          typeof err === 'object' && err !== null && 'code' in err
+            ? String((err as { code: unknown }).code)
+            : '';
+        if (code === 'resource-exhausted') {
+          // The conversation was already closed (or reached its cost
+          // ceiling) — say so as a close, not as a failure to retry.
+          updateMessage(targetThreadId, oracleMessageId, {
+            status: 'sent',
+            text: t('oracleChat.discussionLimitReached'),
+            closesDiscussion: true,
+          });
+          return;
+        }
         updateMessage(targetThreadId, oracleMessageId, {
           status: 'failed',
           errorMessage: errorMessageFor(err, t, 'discuss'),
@@ -388,6 +404,28 @@ const ReadingScreen: React.FC = () => {
       }
     },
     [lang, updateMessage, t],
+  );
+
+  /**
+   * Open a question as its own Reading, cast for its own moment. This Reading
+   * goes with it as lineage, so the new one can be compared against it (and
+   * whatever it was itself descended from) in discussion — see
+   * ReadingThread.relatedReadingIds.
+   */
+  const openNewReading = useCallback(
+    (question: string) => {
+      const lineage = [
+        ...(thread?.readingId !== null && thread?.readingId !== undefined
+          ? [thread.readingId]
+          : []),
+        ...(thread?.relatedReadingIds ?? []),
+      ].slice(0, 4);
+      navigation.push('Reading', {
+        initialQuestion: question,
+        ...(lineage.length > 0 ? { relatedReadingIds: lineage } : {}),
+      });
+    },
+    [thread, navigation],
   );
 
   // ── The ONE path every send funnels into ─────────────────────────────────
@@ -398,6 +436,16 @@ const ReadingScreen: React.FC = () => {
       if (trimmed.length === 0 || sendingRef.current) {
         return;
       }
+
+      // The oracle has closed this Reading's conversation: what the seeker
+      // types now is their next question, and it gets a Reading of its own.
+      const open = threadById(useReadingThreadsStore.getState().threads, threadId ?? undefined);
+      if (open !== null && open.readingId !== null && isDiscussionClosed(open)) {
+        setInputText('');
+        openNewReading(trimmed);
+        return;
+      }
+
       sendingRef.current = true;
       setSending(true);
 
@@ -473,7 +521,17 @@ const ReadingScreen: React.FC = () => {
         setSending(false);
       });
     },
-    [threadId, lang, createThread, restateQuestion, addMessage, runAsk, runDiscuss, route],
+    [
+      threadId,
+      lang,
+      createThread,
+      restateQuestion,
+      addMessage,
+      runAsk,
+      runDiscuss,
+      route,
+      openNewReading,
+    ],
   );
 
   const handleSend = useCallback(() => {
@@ -550,24 +608,11 @@ const ReadingScreen: React.FC = () => {
   const handleAskAsNewReading = useCallback(
     (userMessageId: string) => {
       const userMsg = thread?.messages.find(m => m.id === userMessageId);
-      if (userMsg === undefined) {
-        return;
+      if (userMsg !== undefined) {
+        openNewReading(userMsg.text);
       }
-      // Carry this Reading forward as lineage: the new one can then be
-      // compared against it (and whatever it was itself descended from) in
-      // discussion — see ReadingThread.relatedReadingIds.
-      const lineage = [
-        ...(thread?.readingId !== null && thread?.readingId !== undefined
-          ? [thread.readingId]
-          : []),
-        ...(thread?.relatedReadingIds ?? []),
-      ].slice(0, 4);
-      navigation.push('Reading', {
-        initialQuestion: userMsg.text,
-        ...(lineage.length > 0 ? { relatedReadingIds: lineage } : {}),
-      });
     },
-    [thread, navigation],
+    [thread, openNewReading],
   );
 
   const handleShare = useCallback(() => {
@@ -700,6 +745,8 @@ const ReadingScreen: React.FC = () => {
       : messages;
   // Once a reading stands, every send in this Reading is a follow-up.
   const isDiscussMode = thread !== null && thread.readingId !== null;
+  // Closed by the oracle: the composer asks the next question instead.
+  const isDiscussionDone = isDiscussMode && isDiscussionClosed(thread);
 
   return (
     <SafeAreaView style={[styles.root, { backgroundColor: theme.colors.bg }]} edges={['top']}>
@@ -780,8 +827,14 @@ const ReadingScreen: React.FC = () => {
           micDisabled={sending}
           micAvailable={stt.isAvailable}
           // Once a reading stands, every send in this Reading is a follow-up.
-          mode={isDiscussMode ? 'discuss' : 'ask'}
-          hint={isDiscussMode ? t('oracleChat.modeDiscuss') : undefined}
+          mode={isDiscussMode && !isDiscussionDone ? 'discuss' : 'ask'}
+          hint={
+            isDiscussionDone
+              ? t('oracleChat.discussionClosedHint')
+              : isDiscussMode
+                ? t('oracleChat.modeDiscuss')
+                : undefined
+          }
         />
       </KeyboardAvoidingView>
     </SafeAreaView>

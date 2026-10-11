@@ -71,6 +71,9 @@ export interface ReadingMessage {
   /** On a 'discussion' message: the oracle judged this follow-up to be its own
    *  horary question and declined to answer it from the standing reading. */
   suggestsNewQuestion?: boolean;
+  /** On a 'discussion' message: the oracle closed this Reading's
+   *  conversation with it (owner decision 2026-10-11). */
+  closesDiscussion?: boolean;
   /** Present on a 'failed' message — shown next to the retry control. */
   errorMessage?: string;
   /** On an oracle message: the user message id this is answering. */
@@ -705,6 +708,14 @@ export function groupByRecency<T extends { updatedAt: string }>(
  * everything from `beforeMessageId` onward is excluded because that message
  * travels as the request's own `message`.
  */
+/**
+ * Whether the oracle has closed this Reading's conversation. Once it has, the
+ * next send is a new question, not a follow-up.
+ */
+export function isDiscussionClosed(thread: ReadingThread): boolean {
+  return thread.messages.some(m => m.closesDiscussion === true);
+}
+
 export function discussionTurnsFor(
   thread: ReadingThread,
   beforeMessageId?: string,

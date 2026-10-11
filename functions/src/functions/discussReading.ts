@@ -23,9 +23,12 @@
  *   again to ask "what does that mean?" would price the seeker out of
  *   understanding the answer they already paid for, and would push them to
  *   re-ask the same question as a fresh reading, which is both worse for them
- *   and more expensive for us. Discussion is therefore free, and bounded
- *   instead: DISCUSSION_TURN_LIMIT turns per reading, enforced server-side on
- *   the reading document, on top of the ordinary per-minute rate limit.
+ *   and more expensive for us. Discussion is therefore free. It ends when the
+ *   oracle judges the conversation has done its work (`conversationComplete`,
+ *   owner decision 2026-10-11): that reply is a graceful close, and the
+ *   reading's `discussionClosed` is set so later follow-ups are declined.
+ *   DISCUSSION_TURN_LIMIT stays only as a cost ceiling, on top of the ordinary
+ *   per-minute rate limit — enforced server-side on the reading document.
  *
  * WHY THE GROUNDING IS LOADED, NOT ACCEPTED
  *   The client sends a readingId and the recent transcript — never the verdict.
@@ -179,6 +182,11 @@ export interface DiscussReadingResponse {
   isNewQuestion: boolean;
   /** Follow-ups left on this reading, after this one. */
   turnsRemaining: number;
+  /**
+   * True when this reply closed the conversation. Later follow-ups on this
+   * reading are declined with the same error as an exhausted budget.
+   */
+  conversationComplete: boolean;
 }
 
 export const discussReading = onCall(
@@ -254,10 +262,10 @@ export const discussReading = onCall(
           }
 
           const used = data.discussionTurns ?? 0;
-          if (used >= DISCUSSION_TURN_LIMIT) {
+          if (data.discussionClosed === true || used >= DISCUSSION_TURN_LIMIT) {
             throw new HttpsError(
               'resource-exhausted',
-              'This reading has been discussed as far as it goes. Ask a new question.',
+              'This reading has said what it can. Ask your next question as a new Reading.',
             );
           }
 
@@ -353,6 +361,17 @@ export const discussReading = onCall(
         throw new HttpsError('unavailable', 'The oracle did not answer. Try again.');
       }
 
+      if (reply.conversationComplete) {
+        // The closing reply is still returned if this write fails; the next
+        // follow-up is then simply answered (or closed) again — no harm done.
+        await readingRef.update({ discussionClosed: true }).catch(closeErr => {
+          logger.warn('discussReading: marking discussion closed failed', {
+            err: String(closeErr),
+            userId,
+          });
+        });
+      }
+
       const audit: Omit<AuditLogDoc, 'ts'> = {
         userId,
         action: 'discussion_turn',
@@ -370,6 +389,7 @@ export const discussReading = onCall(
         answer: reply.answer,
         isNewQuestion: reply.isNewQuestion,
         turnsRemaining,
+        conversationComplete: reply.conversationComplete,
       };
 
       // Stored, so a retry replays THIS answer rather than spending another

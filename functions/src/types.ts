@@ -188,6 +188,12 @@ export interface ReadingDoc {
    */
   discussionTurns?: number;
   /**
+   * Set when the oracle closed the conversation about this reading
+   * (DiscussReadingResponse.conversationComplete). discussReading declines
+   * further follow-ups once it is true.
+   */
+  discussionClosed?: boolean;
+  /**
    * PHASE 2B: which build of the chart/judgment engine produced this
    * reading — see ENGINE_VERSION (engine/primitives/chartBuilder.ts).
    * Previously recorded only on the audit log entry (AuditLogDoc.engineVersion
