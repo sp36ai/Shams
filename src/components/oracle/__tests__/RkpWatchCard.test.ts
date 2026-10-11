@@ -8,6 +8,7 @@ import {
   rulerRowValue,
   STATE_HEADLINE,
   timingLabel,
+  groupFactors,
 } from '../RkpWatchCard';
 
 const MOMENT = '2026-08-08T11:13:00+05:30';
@@ -146,5 +147,51 @@ describe('focus heading', () => {
 
   it('still reads when no obstruction is named', () => {
     expect(focusHeading(focus, null)).toBe('Attend to the north, where the obstruction sits');
+  });
+});
+
+// The 11 Oct 2026 22:01 Reading's own factor lines, as the engine wrote them.
+describe('grouped factor lines', () => {
+  const factors = [
+    'Zuhrah rules the 7th Ghar and is OwnSign in Meezan — it holds real control of the matter.',
+    'Zuhrah sits in the 7th Ghar — protection and expansion.',
+    'Mirrikh casts its gaze on the 7th Ghar — friction on the matter.',
+    'Ras al-Tinnin casts its gaze on the 7th Ghar — friction on the matter.',
+    'Ras al-Tinnin weighs on the 11th Ghar — fulfilment itself is obstructed.',
+    'Mirrikh weighs on the 11th Ghar — fulfilment itself is obstructed.',
+    'Dhanab al-Tinnin weighs on the 11th Ghar — fulfilment itself is obstructed.',
+    'Zuhrah has landed in the 7th Ghar, a supporting house for this question.',
+    'Zuhrah is retrograde — decisions already taken on this matter are liable to be reopened.',
+    'Benefic and malefic witnesses both fall on the matter — the reading carries genuine conflict.',
+  ];
+
+  it('joins planets acting on the same Ghar in the same way, in place', () => {
+    expect(groupFactors(factors)).toEqual([
+      factors[0],
+      factors[1],
+      'Mirrikh and Ras al-Tinnin cast their gaze on the 7th Ghar — friction on the matter.',
+      'Ras al-Tinnin, Mirrikh and Dhanab al-Tinnin weigh on the 11th Ghar — fulfilment itself is obstructed.',
+      factors[7],
+      factors[8],
+      factors[9],
+    ]);
+  });
+
+  it('keeps apart lines that differ in Ghar or effect, and leaves the input as it was', () => {
+    const lines = [
+      'Mushtari casts its gaze on the 10th Ghar — protection and expansion.',
+      'Mirrikh casts its gaze on the 10th Ghar — friction on the matter.',
+      'Mirrikh weighs on the 11th Ghar — fulfilment itself is obstructed.',
+    ];
+    const copy = [...lines];
+    expect(groupFactors(lines)).toEqual(lines);
+    expect(lines).toEqual(copy);
+  });
+
+  it('shows a line in any other form as it is', () => {
+    expect(groupFactors(['Something new.', 'Something new.'])).toEqual([
+      'Something new.',
+      'Something new.',
+    ]);
   });
 });

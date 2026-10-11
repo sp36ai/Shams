@@ -123,6 +123,64 @@ export function factorLabel(factor: string): string {
 }
 
 /**
+ * Planets acting on the same Ghar in the same way are one line on the card:
+ * "Ras al-Tinnin, Mirrikh and Dhanab al-Tinnin weigh on the 11th Ghar —
+ * fulfilment itself is obstructed." rather than that sentence three times.
+ * Display only: the engine's factors are unchanged, and a line in any other
+ * form is shown as it is. A group keeps the place of its first line.
+ */
+const PLURAL_VERB: Readonly<Record<string, string>> = Object.freeze({
+  'weighs on': 'weigh on',
+  supports: 'support',
+  'sits in': 'sit in',
+  'casts its gaze on': 'cast their gaze on',
+});
+
+const PLANET_NAMES = Object.values(PLANET_NAME)
+  .slice()
+  .sort((a, b) => b.length - a.length);
+
+const SHARED_FACTOR = new RegExp(
+  `^(${PLANET_NAMES.map(n => n.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|')}) (${Object.keys(
+    PLURAL_VERB,
+  ).join('|')}) (.+)$`,
+);
+
+function joinNames(names: readonly string[]): string {
+  const last = names[names.length - 1] ?? '';
+  return names.length <= 1 ? last : `${names.slice(0, -1).join(', ')} and ${last}`;
+}
+
+export function groupFactors(factors: readonly string[]): string[] {
+  const groups: {
+    key: string | null;
+    verb: string;
+    rest: string;
+    names: string[];
+    text: string;
+  }[] = [];
+  for (const factor of factors) {
+    const [, name, verb, rest] = SHARED_FACTOR.exec(factor) ?? [];
+    if (name === undefined || verb === undefined || rest === undefined) {
+      groups.push({ key: null, verb: '', rest: '', names: [], text: factor });
+      continue;
+    }
+    const key = `${verb} ${rest}`;
+    const group = groups.find(g => g.key === key);
+    if (group === undefined) {
+      groups.push({ key, verb, rest, names: [name], text: factor });
+    } else if (!group.names.includes(name)) {
+      group.names.push(name);
+    }
+  }
+  return groups.map(g =>
+    g.key === null || g.names.length === 1
+      ? g.text
+      : `${joinNames(g.names)} ${PLURAL_VERB[g.verb]} ${g.rest}`,
+  );
+}
+
+/**
  * Heading for the physical-correspondence box. Its direction is where the
  * obstruction sits, not the matter's own Direction row above it, so it says
  * whose it is rather than reading as a second, conflicting direction.
@@ -301,7 +359,7 @@ const RkpWatchCard: React.FC<RkpWatchCardProps> = ({
       <Text style={[typography('label'), { color: colors.text, marginBottom: 6 }]}>
         {'How the chart reads'}
       </Text>
-      {factors.map((factor, i) => (
+      {groupFactors(factors).map((factor, i) => (
         <View key={`${i}-${factor.slice(0, 12)}`} style={styles.factorRow}>
           <Text style={[typography('caption'), { color: colors.goldBright }]}>{'✦'}</Text>
           <Text style={[typography('caption'), styles.factorText, { color: colors.textMuted }]}>
