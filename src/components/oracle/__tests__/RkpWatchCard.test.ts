@@ -40,10 +40,13 @@ describe('state headlines', () => {
 });
 
 describe('timing label', () => {
-  it('scales the unit to the size of the window', () => {
+  it('gives the engine window in days, exactly', () => {
     expect(timingLabel(verdictWith({ timing: { minDays: 3, maxDays: 7 } }))).toBe('3–7 days');
-    expect(timingLabel(verdictWith({ timing: { minDays: 30, maxDays: 60 } }))).toBe('4–9 weeks');
-    expect(timingLabel(verdictWith({ timing: { minDays: 90, maxDays: 150 } }))).toBe('3–5 months');
+    expect(timingLabel(verdictWith({ timing: { minDays: 30, maxDays: 60 } }))).toBe('30–60 days');
+    expect(timingLabel(verdictWith({ timing: { minDays: 90, maxDays: 150 } }))).toBe('90–150 days');
+    // The 11 Oct 22:01 Reading: shown as the engine gives it, not "2–5 weeks".
+    expect(timingLabel(verdictWith({ timing: { minDays: 15, maxDays: 32 } }))).toBe('15–32 days');
+    expect(timingLabel(verdictWith({ timing: { minDays: 7, maxDays: 7 } }))).toBe('7 days');
   });
 
   it('says so plainly when the chart gives no timing', () => {

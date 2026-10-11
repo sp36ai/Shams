@@ -73,14 +73,14 @@ export function timingLabel(verdict: DisplayWatchVerdict): string {
   if (verdict.timing === null) {
     return 'Unclear';
   }
+  // The engine's own window, exactly. Rounding to weeks or months widened
+  // it (15–32 days read "2–5 weeks", i.e. 14–35) and disagreed with the
+  // interpretation, which gives the days (owner decision 2026-10-11).
   const { minDays, maxDays } = verdict.timing;
-  if (maxDays <= 14) {
-    return `${minDays}–${maxDays} days`;
+  if (minDays === maxDays) {
+    return `${maxDays} ${maxDays === 1 ? 'day' : 'days'}`;
   }
-  if (maxDays <= 60) {
-    return `${Math.round(minDays / 7)}–${Math.round(maxDays / 7)} weeks`;
-  }
-  return `${Math.round(minDays / 30)}–${Math.round(maxDays / 30)} months`;
+  return `${minDays}–${maxDays} days`;
 }
 
 /**
