@@ -77,6 +77,7 @@ import type { WatchOracleComposition } from '../oracle/responseComposer';
 import type { ReadingContract } from '../oracle/readingContract';
 
 import type { WatchState, WatchVerdict } from '../engine/rkp/watchJudgment';
+import { requestRef } from '../utils/requestRef';
 
 /**
  * The six watch states expressed in the app's existing verdict vocabulary, so
@@ -278,6 +279,7 @@ export const askWatchOracle = onCall(
           readingContract = result.contract;
         } catch (err) {
           logger.warn('askWatchOracle: oracle composition failed', {
+            ...(requestRef(requestId) !== undefined ? { ref: requestRef(requestId) } : {}),
             err: String(err),
             userId,
           });
@@ -341,6 +343,7 @@ export const askWatchOracle = onCall(
         // re-deriving it from the stack trace.
         logger.error('askWatchOracle: engine failure', {
           stage,
+          ...(requestRef(requestId) !== undefined ? { ref: requestRef(requestId) } : {}),
           err: String(err),
           stack: err instanceof Error ? err.stack : undefined,
           userId,

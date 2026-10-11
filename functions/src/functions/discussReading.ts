@@ -55,6 +55,7 @@ import {
   type DiscussionTurn,
   type ReadingGrounding,
 } from '../oracle/discussionComposer';
+import { requestRef } from '../utils/requestRef';
 
 /**
  * A short, server-derived tag for a reading — "the finance reading", never
@@ -217,6 +218,14 @@ export const discussReading = onCall(
         }
       }
 
+      // On every failure log of this request, so the reference the app shows
+      // on a failed turn finds the stage that failed.
+      const failureRef = requestRef(requestId);
+      const logContext = {
+        readingId: input.readingId,
+        ...(failureRef !== undefined ? { ref: failureRef } : {}),
+      };
+
       const release = async (): Promise<void> => {
         if (requestId !== undefined) {
           await releaseRequest(userId, requestId);
@@ -292,7 +301,11 @@ export const discussReading = onCall(
         if (err instanceof HttpsError) {
           throw err;
         }
-        logger.error('discussReading: reading load failed', { err: String(err), userId });
+        logger.error('discussReading: reading load failed', {
+          ...logContext,
+          err: String(err),
+          userId,
+        });
         throw new HttpsError('internal', 'Could not open that reading.');
       }
 
@@ -334,6 +347,7 @@ export const discussReading = onCall(
         turns,
         message: input.message,
         replyLang: input.lang,
+        logContext,
       });
 
       if (reply === null) {
@@ -344,8 +358,10 @@ export const discussReading = onCall(
         // rather than inventing a new one). Give the turn back and let the
         // client offer a retry rather than serving invented or ungrounded
         // prose.
+        logger.warn('discussReading: no reply', { ...logContext, userId });
         await readingRef.update({ discussionTurns: FieldValue.increment(-1) }).catch(refundErr => {
           logger.warn('discussReading: turn refund failed', {
+            ...logContext,
             err: String(refundErr),
             userId,
           });

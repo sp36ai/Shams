@@ -229,6 +229,8 @@ describe('ReadingScreen', () => {
         screen.getByText('The scrolls of this moment have not opened their seal. Try again.'),
       ).toBeTruthy(),
     );
+    // A failed cast shows the reference of the cast's own requestId.
+    expect(screen.getByText(`Ref ${onlyThread()!.requestId.slice(0, 8)}`)).toBeTruthy();
 
     // Now let a retry succeed.
     (httpsCallable as jest.Mock).mockImplementation((name: string) => {
@@ -675,6 +677,32 @@ describe('ReadingScreen', () => {
       // And it is persisted, so the id survives the app being killed.
       const pending = oracleMessages().find(m => m.variant === 'discussion');
       expect(pending?.requestId).toBe(first.requestId);
+    });
+
+    it('shows the reference the server logs a failed follow-up under', async () => {
+      const discussCallable = jest.fn(() =>
+        Promise.reject(Object.assign(new Error('down'), { code: 'unavailable' })),
+      );
+      (httpsCallable as jest.Mock).mockImplementation((name: string) => {
+        if (name === 'askWatchOracle') {
+          return jest.fn(() => Promise.resolve({ data: successPayload() }));
+        }
+        if (name === 'discussReading') {
+          return discussCallable;
+        }
+        return defaultImpl(name);
+      });
+
+      await renderScreen(<ReadingScreen />);
+      const user = userEvent.setup();
+      await askOnce(user);
+
+      await user.type(screen.getByTestId('oracle-chat-input'), 'Is my business connected to this?');
+      await user.press(screen.getByTestId('oracle-chat-send-btn'));
+      await waitFor(() => expect(screen.getByText('↻ Retry')).toBeTruthy());
+
+      const sent = discussCallable.mock.calls[0]?.[0] as { requestId: string };
+      expect(screen.getByText(`Ref ${sent.requestId.slice(0, 8)}`)).toBeTruthy();
     });
 
     it('retries a failed follow-up as a follow-up, never as a new reading', async () => {

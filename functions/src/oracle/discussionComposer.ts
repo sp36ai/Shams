@@ -153,6 +153,12 @@ export interface DiscussionInput {
   /** The new follow-up. */
   readonly message: string;
   readonly replyLang: LangCode;
+  /**
+   * Added to every log line this reply writes — the caller's `ref` and
+   * readingId — so the stage that failed can be found from the reference
+   * the seeker sees on a failed turn.
+   */
+  readonly logContext?: Readonly<Record<string, string>>;
 }
 
 export interface DiscussionReply {
@@ -652,6 +658,7 @@ async function requestDraft(
   system: ReadonlyArray<{ type: 'text'; text: string }>,
   messages: ReturnType<typeof toApiMessages>,
   timeoutMs: number,
+  ctx: Readonly<Record<string, string>>,
 ): Promise<DraftReply | null> {
   const controller = new AbortController();
   const timer = setTimeout(() => {
@@ -681,6 +688,7 @@ async function requestDraft(
     if (!res.ok) {
       const body = await res.text().catch(() => '');
       logger.warn('oracle discussion HTTP error', {
+        ...ctx,
         status: res.status,
         body: body.slice(0, 300),
       });
@@ -696,7 +704,7 @@ async function requestDraft(
     };
 
     if (typeof parsed.answer !== 'string' || parsed.answer.trim().length === 0) {
-      logger.warn('oracle discussion reply missing answer');
+      logger.warn('oracle discussion reply missing answer', ctx);
       return null;
     }
 
@@ -707,7 +715,7 @@ async function requestDraft(
         parsed.conversation_complete === true && parsed.is_new_question !== true,
     };
   } catch (err) {
-    logger.warn('oracle discussion failed', { err: String(err) });
+    logger.warn('oracle discussion failed', { ...ctx, err: String(err) });
     return null;
   } finally {
     clearTimeout(timer);
@@ -717,9 +725,10 @@ async function requestDraft(
 export async function composeDiscussionReply(
   input: DiscussionInput,
 ): Promise<DiscussionReply | null> {
+  const ctx = input.logContext ?? {};
   const apiKey = ANTHROPIC_API_KEY.value();
   if (!apiKey) {
-    logger.warn('oracle discussion skipped: ANTHROPIC_API_KEY not bound');
+    logger.warn('oracle discussion skipped: ANTHROPIC_API_KEY not bound', ctx);
     return null;
   }
 
@@ -736,7 +745,7 @@ export async function composeDiscussionReply(
     { type: 'text' as const, text: buildDiscussionBrief(input.groundings, input.replyLang) },
   ];
 
-  const first = await requestDraft(apiKey, system, messages, DISCUSSION_TIMEOUT_MS);
+  const first = await requestDraft(apiKey, system, messages, DISCUSSION_TIMEOUT_MS, ctx);
   if (first === null) {
     return null;
   }
@@ -753,6 +762,7 @@ export async function composeDiscussionReply(
   const remaining = deadline - Date.now();
   if (remaining < RETRY_MIN_MS) {
     logger.warn('oracle discussion reply failed validation — no reply returned', {
+      ...ctx,
       ...firstRejection.log,
       attempt: 1,
       retried: false,
@@ -760,6 +770,7 @@ export async function composeDiscussionReply(
     return null;
   }
   logger.info('oracle discussion reply failed validation — rewriting once', {
+    ...ctx,
     ...firstRejection.log,
     attempt: 1,
   });
@@ -769,6 +780,7 @@ export async function composeDiscussionReply(
     [...system, { type: 'text', text: rewriteNote(firstRejection.phrases) }],
     messages,
     Math.min(DISCUSSION_TIMEOUT_MS, remaining),
+    ctx,
   );
   if (second === null) {
     return null;
@@ -776,12 +788,13 @@ export async function composeDiscussionReply(
   const secondRejection = rejectionOf(input, second);
   if (secondRejection !== null) {
     logger.warn('oracle discussion reply failed validation — no reply returned', {
+      ...ctx,
       ...secondRejection.log,
       attempt: 2,
       retried: true,
     });
     return null;
   }
-  logger.info('oracle discussion rewrite passed validation');
+  logger.info('oracle discussion rewrite passed validation', ctx);
   return second;
 }

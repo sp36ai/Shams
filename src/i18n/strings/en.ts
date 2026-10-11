@@ -141,6 +141,7 @@ export const en: StringTable = {
     readingChart: 'Reading the chart…',
     retry: 'Retry',
     failedGeneric: 'The scrolls of this moment have not opened their seal. Try again.',
+    failureRef: 'Ref {{ref}}',
     quotaExhausted: "Today's questions are used. Come back tomorrow, or upgrade for unlimited.",
     micPermissionDenied: 'Microphone access is needed for voice questions. Enable it in Settings.',
     noSpeechDetected: "Didn't catch that — try again.",
