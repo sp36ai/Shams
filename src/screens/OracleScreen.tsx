@@ -317,16 +317,23 @@ const OracleScreen: React.FC = () => {
             countdown, sunrise, sunset); every action is an existing route. */}
         <HomeHero
           metrics={[
-            { key: 'hora', label: t('oracle.currentHoraLabel'), value: horaCountdown },
+            {
+              key: 'hora',
+              label: t('oracle.currentHoraLabel'),
+              glyph: 'hora',
+              value: horaCountdown,
+            },
             {
               key: 'sunrise',
               label: t('oracle.sunriseLabel'),
+              glyph: 'sunrise',
               value:
                 skyExtras.sunTimes === null ? null : formatClockTime(skyExtras.sunTimes.sunriseMs),
             },
             {
               key: 'sunset',
               label: t('oracle.sunsetLabel'),
+              glyph: 'sunset',
               value:
                 skyExtras.sunTimes === null ? null : formatClockTime(skyExtras.sunTimes.sunsetMs),
             },

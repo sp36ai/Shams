@@ -1,25 +1,32 @@
 /**
- * HomeHero — the top of the Home screen: the gold mandala, a row of three
- * metric capsules and a row of three round action buttons.
+ * HomeHero — the top of the Home screen: the gold mandala on a midnight
+ * panel, a row of three metric capsules and a row of three round actions.
  *
  * Presentation only. Every value and every action comes in through props from
  * OracleScreen, which already owns the live sky hooks and navigation — this
  * component computes nothing and decides nothing.
+ *
+ * The hero always uses the fixed Midnight Celestial palette (see
+ * celestialPalette.ts), in every theme; the rest of Home keeps the user's
+ * chosen theme.
  */
 
 import React from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View, useWindowDimensions } from 'react-native';
+import Svg, { Circle, Defs, RadialGradient, Stop } from 'react-native-svg';
 
-import { useColors } from '@theme/ThemeProvider';
-import { useTypography } from '@theme/useTypography';
 import { RADIUS, SPACING } from '@theme/themes';
-import TabIcon, { type IconName } from '@components/TabIcon';
+import type { IconName } from '@components/TabIcon';
 import MandalaEmblem from './MandalaEmblem';
+import AstroMetricCapsule, { type MetricGlyph } from './AstroMetricCapsule';
+import CelestialActionButton from './CelestialActionButton';
+import { CELESTIAL } from './celestialPalette';
 
 export interface HeroMetric {
   /** Stable id, also used for the testID. */
   key: string;
   label: string;
+  glyph: MetricGlyph;
   /** The value to show; null renders an em dash (data not available yet). */
   value: string | null;
 }
@@ -36,76 +43,61 @@ interface HomeHeroProps {
   actions: HeroAction[];
 }
 
-const MANDALA_SIZE = 196;
+const PANEL_PADDING = 16;
+const MANDALA_MAX = 300;
 
 const HomeHero: React.FC<HomeHeroProps> = ({ metrics, actions }) => {
-  const colors = useColors();
-  const typography = useTypography();
+  const { width } = useWindowDimensions();
+  // Scale the emblem with the screen, leaving the panel's gutters clear.
+  const inner = width - SPACING.xl * 2 - PANEL_PADDING * 2;
+  const mandalaSize = Math.max(160, Math.min(MANDALA_MAX, Math.round(inner * 0.86)));
+  const panelWidth = width - SPACING.xl * 2;
 
   return (
-    <View style={styles.root} testID="home-hero">
+    <View style={styles.panel} testID="home-hero">
+      {/* Ambient illumination behind the emblem */}
+      <View pointerEvents="none" style={StyleSheet.absoluteFill}>
+        <Svg width={panelWidth} height={mandalaSize + 80}>
+          <Defs>
+            <RadialGradient id="heroAmbient" cx="50%" cy="50%" rx="50%" ry="50%">
+              <Stop offset="0%" stopColor={CELESTIAL.deepTeal} stopOpacity={1} />
+              <Stop offset="100%" stopColor={CELESTIAL.midnight} stopOpacity={0} />
+            </RadialGradient>
+          </Defs>
+          <Circle
+            cx={panelWidth / 2}
+            cy={PANEL_PADDING + mandalaSize / 2}
+            r={mandalaSize * 0.75}
+            fill="url(#heroAmbient)"
+          />
+        </Svg>
+      </View>
+
       <View style={styles.mandalaWrap}>
-        <MandalaEmblem size={MANDALA_SIZE} />
+        <MandalaEmblem size={mandalaSize} />
       </View>
 
       <View style={styles.metricRow}>
         {metrics.map(m => (
-          <View
+          <AstroMetricCapsule
             key={m.key}
             testID={`home-hero-metric-${m.key}`}
-            accessible
-            accessibilityLabel={`${m.label}: ${m.value ?? '—'}`}
-            style={[
-              styles.capsule,
-              { backgroundColor: colors.surfaceElevated, borderColor: colors.borderAccent + '55' },
-            ]}
-          >
-            <Text
-              style={[typography('caption'), styles.capsuleLabel, { color: colors.textMuted }]}
-              numberOfLines={1}
-            >
-              {m.label}
-            </Text>
-            <Text
-              style={[typography('subheading'), styles.capsuleValue, { color: colors.goldBright }]}
-              numberOfLines={1}
-              adjustsFontSizeToFit
-            >
-              {m.value ?? '—'}
-            </Text>
-          </View>
+            label={m.label}
+            value={m.value}
+            glyph={m.glyph}
+          />
         ))}
       </View>
 
       <View style={styles.actionRow}>
         {actions.map(a => (
-          <View key={a.key} style={styles.actionCol}>
-            <Pressable
-              testID={`home-hero-action-${a.key}`}
-              onPress={a.onPress}
-              hitSlop={6}
-              accessibilityRole="button"
-              accessibilityLabel={a.label}
-              style={({ pressed }) => [
-                styles.actionBtn,
-                {
-                  backgroundColor: colors.surface,
-                  borderColor: colors.borderAccent + '88',
-                  shadowColor: colors.sacredGlow,
-                  opacity: pressed ? 0.8 : 1,
-                },
-              ]}
-            >
-              <TabIcon name={a.icon} color={colors.goldBright} size={22} />
-            </Pressable>
-            <Text
-              style={[typography('caption'), styles.actionLabel, { color: colors.text }]}
-              numberOfLines={1}
-              importantForAccessibility="no"
-            >
-              {a.label}
-            </Text>
-          </View>
+          <CelestialActionButton
+            key={a.key}
+            testID={`home-hero-action-${a.key}`}
+            label={a.label}
+            icon={a.icon}
+            onPress={a.onPress}
+          />
         ))}
       </View>
     </View>
@@ -113,58 +105,31 @@ const HomeHero: React.FC<HomeHeroProps> = ({ metrics, actions }) => {
 };
 
 const styles = StyleSheet.create({
-  root: {
+  panel: {
     marginHorizontal: SPACING.xl,
     marginTop: 12,
+    paddingHorizontal: PANEL_PADDING,
+    paddingTop: PANEL_PADDING,
+    paddingBottom: 18,
+    borderRadius: RADIUS.xl,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: CELESTIAL.bronze,
+    backgroundColor: CELESTIAL.midnight,
+    overflow: 'hidden',
     alignItems: 'center',
   },
   mandalaWrap: {
-    marginBottom: 14,
+    marginBottom: 16,
   },
   metricRow: {
     flexDirection: 'row',
     alignSelf: 'stretch',
     gap: 10,
   },
-  capsule: {
-    flex: 1,
-    alignItems: 'center',
-    paddingVertical: 10,
-    paddingHorizontal: 8,
-    borderRadius: RADIUS.pill,
-    borderWidth: StyleSheet.hairlineWidth,
-  },
-  capsuleLabel: {
-    fontSize: 11,
-  },
-  capsuleValue: {
-    marginTop: 2,
-    fontSize: 16,
-  },
   actionRow: {
     flexDirection: 'row',
     alignSelf: 'stretch',
-    justifyContent: 'space-around',
     marginTop: 18,
-  },
-  actionCol: {
-    flex: 1,
-    alignItems: 'center',
-  },
-  actionBtn: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    borderWidth: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowOpacity: 0.35,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 4,
-  },
-  actionLabel: {
-    marginTop: 6,
   },
 });
 
