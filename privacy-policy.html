@@ -121,8 +121,8 @@
         </div>
         <p class="by-line">by Astro Sarfaraz</p>
         <p class="meta">
-          Privacy Policy &nbsp;·&nbsp; Effective Date: 1 June 2026 &nbsp;·&nbsp; Last Updated: 11
-          June 2026
+          Privacy Policy &nbsp;·&nbsp; Effective Date: 1 June 2026 &nbsp;·&nbsp; Last Updated: 12
+          October 2026
         </p>
       </header>
 
@@ -152,13 +152,29 @@
           sign-up via Firebase Authentication (Google Sign-In or email/password).
         </li>
         <li>
-          <strong>Location data</strong> — GPS coordinates at the time you ask a question. Location
-          is used solely to calculate the astronomical chart for that moment (latitude, longitude,
-          and local time). It is not stored permanently or used for tracking.
+          <strong>Location data</strong> — if you grant location permission, the app reads your
+          device's location and keeps it on your device only, to show local sky details on the home
+          screen (such as the planetary hour). It is not sent to our servers or to OpenAI, it is not
+          used to calculate your readings, and it is not used for tracking. Without permission, the
+          home screen uses a default location instead.
         </li>
         <li>
           <strong>Question content</strong> — the text of questions you submit to the oracle, stored
           in your personal reading history in Firestore.
+        </li>
+        <li>
+          <strong>Names (optional)</strong> — your name and your mother's name, only if you choose
+          to enter them, so the oracle can address you personally. They are stored on your device
+          and sent with each question; we do not store them on our servers.
+        </li>
+        <li>
+          <strong>Onboarding answers</strong> — your answers to three short questions when you first
+          open the app, used once to choose the tone of your readings. They are not stored on our
+          servers.
+        </li>
+        <li>
+          <strong>Follow-up messages</strong> — messages you write about a reading. They are kept in
+          the reading's history on your device and are not stored on our servers.
         </li>
         <li>
           <strong>Usage data</strong> — question count, daily quota consumption, and subscription
@@ -183,6 +199,7 @@
       <h2>3. How We Use Your Information</h2>
       <ul>
         <li>To generate your personalised oracle reading using the astronomical engine.</li>
+        <li>To write your reading and replies in words, using OpenAI (see Section 4).</li>
         <li>To maintain your reading history within the app.</li>
         <li>To verify subscription purchases and enforce plan quotas.</li>
         <li>To authenticate your account securely.</li>
@@ -222,11 +239,29 @@
           >
         </li>
         <li>
-          <strong>Anthropic (Claude API)</strong> — The oracle response text is generated using
-          Anthropic's Claude model. Your question text and chart data are sent to Anthropic's API
-          for this purpose.
-          <a href="https://www.anthropic.com/privacy" target="_blank" rel="noopener"
-            >Anthropic Privacy Policy</a
+          <strong>OpenAI (OpenAI API)</strong> — Your reading itself (the verdict, its timing and
+          any recommended practice) is calculated by our own astrology engine, not by OpenAI. We use
+          OpenAI's language models only to put that result into words: the text of your reading, the
+          oracle's replies to your follow-up messages, a check that your question is one the oracle
+          can answer, and the choice of tone for your readings from your onboarding answers. For
+          this purpose we send OpenAI: the text of your question; the follow-up messages you write
+          about a reading; the result our engine calculated for that reading, including the date
+          and time (UTC) it was cast; when you compare readings, the questions and results of the
+          readings being compared; your name and your mother's name, only if you have entered them
+          in the app; and your answers to the three onboarding questions.
+          <br /><br />
+          We do not send OpenAI your email address, phone number, account ID, payment details,
+          device identifiers, GPS coordinates, precise device location or time zone.
+          <br /><br />
+          OpenAI does not use API inputs and outputs to train its models by default, unless the API
+          account explicitly opts in to data sharing. We configure requests not to store Responses
+          API response state. However, OpenAI may retain API content in abuse-monitoring logs for up
+          to 30 days, or longer where required by law or reasonably necessary to protect its
+          services or others from harm. These retention practices are governed by OpenAI's
+          applicable API data policies. OpenAI may process this data outside India, including in
+          the United States.
+          <a href="https://openai.com/policies/privacy-policy" target="_blank" rel="noopener"
+            >OpenAI Privacy Policy</a
           >
         </li>
       </ul>
@@ -266,7 +301,8 @@
         <li><strong>Portability</strong> — request your reading history in a structured format.</li>
         <li>
           <strong>Withdrawal of consent</strong> — you may revoke location permission at any time
-          via your device settings; this will disable chart generation.
+          via your device settings; the home screen's sky details will then use a default location.
+          You may also remove your optional names at any time in the app's Settings.
         </li>
       </ul>
       <p>

@@ -40,8 +40,9 @@ Revisit this file before every production release.
 > deployed).** The model calls moved from Anthropic to the OpenAI Responses
 > API. Until that branch is approved and deployed, production still reads
 > `ANTHROPIC_API_KEY` — do not remove it before then. Before deploying the
-> migration: provision `OPENAI_API_KEY` (below), update the privacy policy's
-> processor disclosure (it still names Anthropic), and only after the new
+> migration: provision `OPENAI_API_KEY` (below), publish the revised privacy
+> policy (prepared on that branch; set its "Last Updated" to the go-live date)
+> together with the in-app notice its Section 9 requires, and only after the new
 > deploy is verified, retire `ANTHROPIC_API_KEY` (disable its versions in
 > Secret Manager; delete later, once nothing references it).
 

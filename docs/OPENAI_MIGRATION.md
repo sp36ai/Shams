@@ -84,7 +84,13 @@ Details are in `docs/audit/transcript-harness/README.md`.
 
 ## Outstanding before any merge or deploy (owner)
 
-1. **Privacy policy.** `privacy-policy.html`, `hosting/privacy-policy.html` and `docs/privacy-policy.html` still name Anthropic as the processor that receives question text and chart data. This is a legal disclosure, so the text is for the owner to approve. It must be accurate before this branch is deployed.
+1. **Privacy policy.** Revised on this branch, with all three copies now identical. The changes:
+   - names OpenAI and exactly what is sent to it;
+   - discloses names, onboarding answers and follow-up messages;
+   - corrects the location description;
+   - reconciles the deletion and retention text.
+
+   It still needs legal review. It must not be published before this migration deploys, because production still uses Anthropic. Publishing it then, together with the in-app notice that the policy's Section 9 requires for significant changes, is a release requirement. Set "Last Updated" to the go-live date when it is published.
 2. **`OPENAI_API_KEY`.** Provision it in Secret Manager for `shams-app-4d0e7`, with a usage limit (`MANUAL_ACTIONS_REQUIRED.md` §3 and §8b).
 3. **Live verification.** Run one real call per call site, then the transcript baseline (`--mode=live`), scan and human review. This is blocked here: there is no key, and the environment's network policy denies `*.openai.com`.
 4. **Narration quality.** The validator thresholds and prompts were tuned against the previous model. A new model can be rejected more or less often, so check the fallback rate in the live baseline before deciding.
