@@ -121,8 +121,8 @@
         </div>
         <p class="by-line">by Astro Sarfaraz</p>
         <p class="meta">
-          Privacy Policy &nbsp;·&nbsp; Effective Date: 1 June 2026 &nbsp;·&nbsp; Last Updated: 11
-          June 2026
+          Privacy Policy &nbsp;·&nbsp; Effective Date: 1 June 2026 &nbsp;·&nbsp; Last Updated: 12
+          October 2026
         </p>
       </header>
 
@@ -152,13 +152,29 @@
           sign-up via Firebase Authentication (Google Sign-In or email/password).
         </li>
         <li>
-          <strong>Location data</strong> — GPS coordinates at the time you ask a question. Location
-          is used solely to calculate the astronomical chart for that moment (latitude, longitude,
-          and local time). It is not stored permanently or used for tracking.
+          <strong>Location data</strong> — if you grant location permission, the app reads your
+          device's location and keeps it on your device only, to show local sky details on the home
+          screen (such as the planetary hour). It is not sent to our servers or to Anthropic, it is not
+          used to calculate your readings, and it is not used for tracking. Without permission, the
+          home screen uses a default location instead.
         </li>
         <li>
           <strong>Question content</strong> — the text of questions you submit to the oracle, stored
           in your personal reading history in Firestore.
+        </li>
+        <li>
+          <strong>Names (optional)</strong> — your name and your mother's name, only if you choose
+          to enter them, so the oracle can address you personally. They are stored on your device
+          and sent with each question; we do not store them on our servers.
+        </li>
+        <li>
+          <strong>Onboarding answers</strong> — your answers to three short questions when you first
+          open the app, used once to choose the tone of your readings. They are not stored on our
+          servers.
+        </li>
+        <li>
+          <strong>Follow-up messages</strong> — messages you write about a reading. They are kept in
+          the reading's history on your device and are not stored on our servers.
         </li>
         <li>
           <strong>Usage data</strong> — question count, daily quota consumption, and subscription
@@ -183,6 +199,7 @@
       <h2>3. How We Use Your Information</h2>
       <ul>
         <li>To generate your personalised oracle reading using the astronomical engine.</li>
+        <li>To write your reading and replies in words, using Anthropic's Claude (see Section 4).</li>
         <li>To maintain your reading history within the app.</li>
         <li>To verify subscription purchases and enforce plan quotas.</li>
         <li>To authenticate your account securely.</li>
@@ -222,9 +239,30 @@
           >
         </li>
         <li>
-          <strong>Anthropic (Claude API)</strong> — The oracle response text is generated using
-          Anthropic's Claude model. Your question text and chart data are sent to Anthropic's API
-          for this purpose.
+          <strong>Anthropic (Claude API)</strong> — Your reading itself (the verdict, its timing and
+          any recommended practice) is calculated by our own astrology engine, not by Anthropic. We
+          use Anthropic's Claude models only to put that result into words: the text of your
+          reading, the oracle's replies to your follow-up messages, a check that your question is
+          one the oracle can answer, and the choice of tone for your readings from your onboarding
+          answers. For this purpose we send Anthropic: the text of your question; the follow-up
+          messages you write about a reading; the result our engine calculated for that reading
+          (with your follow-up messages, this also includes the date and time, in UTC, the reading
+          was cast); when you compare readings, the questions and results of the readings being
+          compared; your name and your mother's name, only if you have entered them in the app; and
+          your answers to the three onboarding questions.
+          <br /><br />
+          We do not send Anthropic your email address, phone number, account ID, payment details,
+          device identifiers, GPS coordinates, precise device location or time zone.
+          <br /><br />
+          Anthropic does not use data sent through its API to train its models without the API
+          account's express permission. Anthropic automatically deletes API inputs and outputs
+          within 30 days of receipt or generation. The exceptions are: where longer retention is
+          required by law; where needed to enforce Anthropic's Usage Policy; and where Anthropic's
+          automated trust and safety systems flag content as violating that policy, in which case
+          the inputs and outputs may be kept for up to two years and the related safety
+          classification scores for up to seven years. These practices are governed by Anthropic's
+          commercial terms and privacy policies. Anthropic may process this data outside India,
+          including in the United States.
           <a href="https://www.anthropic.com/privacy" target="_blank" rel="noopener"
             >Anthropic Privacy Policy</a
           >
@@ -266,7 +304,8 @@
         <li><strong>Portability</strong> — request your reading history in a structured format.</li>
         <li>
           <strong>Withdrawal of consent</strong> — you may revoke location permission at any time
-          via your device settings; this will disable chart generation.
+          via your device settings; the home screen's sky details will then use a default location.
+          You may also remove your optional names at any time in the app's Settings.
         </li>
       </ul>
       <p>

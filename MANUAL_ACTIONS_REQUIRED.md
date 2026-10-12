@@ -244,3 +244,29 @@ model id that was serving canned fallback text. Confirm on a real device from th
 ---
 
 _Last updated: 2026-08-13_
+
+---
+
+## Interim privacy policy (branch `claude/interim-privacy-policy`) — before publishing
+
+The policy previously published did not disclose data production already sends to
+Anthropic: the optional seeker and mother names, the three onboarding answers, and
+follow-up messages. It also described location inaccurately, and the `hosting/` and
+`docs/` copies described account deletion differently from the root copy. The interim
+revision corrects all of this while keeping Anthropic as the provider, which matches
+current production.
+
+Before publishing it (hosting deploy, owner-authorised):
+
+1. **Legal review.** Check in particular the Anthropic retention sentence against
+   Anthropic's current commercial terms and Data Processing Addendum. The wording follows
+   Anthropic's Privacy Center article "How long do you store my organization's data?",
+   dated 1 July 2026: 30-day deletion, plus exceptions for law, Usage Policy
+   enforcement, and flagged content kept up to 2 years with classification scores up to 7
+   years. Also check the sentence about processing outside India.
+2. **In-app notice.** This is a release requirement under the policy's own Section 9
+   ("significant changes"), unless legal review concludes otherwise.
+3. Set **Last Updated** to the publish date.
+4. When the OpenAI migration (`claude/openai-api-migration`) is deployed and verified,
+   replace this interim policy with that branch's OpenAI version. Do not leave the
+   Anthropic disclosure in place.
