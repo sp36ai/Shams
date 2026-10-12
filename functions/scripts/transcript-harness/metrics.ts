@@ -167,9 +167,18 @@ const SCANS: ReadonlyArray<{ check: string; re: RegExp; negatable: boolean }> = 
     re: /\bguarantee[sd]?\b|\bpromise[sd]?\b|\bcertainly will\b|\bdefinitely\b|\bwithout (?:a|any) doubt\b|\b100\s?%/gi,
     negatable: true,
   },
+  // Practice and scripture terms: case-insensitive, so "Qur'an", "Surah" and
+  // "Dua" at the start of a sentence count like their lowercase forms.
   {
     check: 'scripture-or-practice',
-    re: /\bqur'?an\b|\bsurah?\b|\bayah?t?\b|\bverses?\b|\bdu'?a\b|\bwazifa\b|\bdhikr\b|\bzikr\b|\brecit(?:e|ation)\b|\btasbih\b|\b\d+\s+times\b|\b[Yy][aā]\s+[A-Z][a-z]+\b/g,
+    re: /\bqur'?an\b|\bsurah?\b|\bayah?t?\b|\bverses?\b|\bdu'?a\b|\bwazifa\b|\bdhikr\b|\bzikr\b|\brecit(?:e|ation)\b|\btasbih\b|\b\d+\s+times\b/gi,
+    negatable: true,
+  },
+  // A Divine Name invoked as "Ya <Name>". Case-sensitive on purpose: the
+  // capital letter is what marks the Name.
+  {
+    check: 'scripture-or-practice',
+    re: /\b[Yy]a\s+[A-Z][a-z]+\b/g,
     negatable: true,
   },
   {
@@ -190,15 +199,41 @@ const SCANS: ReadonlyArray<{ check: string; re: RegExp; negatable: boolean }> = 
  * intervention text (names + explanations) — a practice term that appears
  * there was given by the remedy engine, so naming it is not invention.
  */
+/**
+ * Fold scholarly transliteration to plain ASCII for the scripture/practice
+ * check: "duʿāʾ" → "du'a'", "Qurʾān" → "Qur'an", "sūrah" → "surah",
+ * "Yā Laṭīf" → "Ya Latif". Strips only Latin combining marks
+ * (U+0300–U+036F) after decomposition, and maps ʿ ʾ ʼ ‘ ’ ` ´ to an ASCII
+ * apostrophe. Devanagari vowel signs and Arabic-script marks lie outside that
+ * range, so Urdu and Hindi text is not altered by the stripping.
+ *
+ * Applied to the text and to the reading's own practice text alike, so a
+ * practice the reading carries is still recognised however it is spelled.
+ */
+export function foldTransliteration(text: string): string {
+  return text
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[\u02BF\u02BE\u02BC\u2018\u2019`\u00B4]/g, "'");
+}
+
+/** Spelling-insensitive key: folded, lower-case, apostrophes removed ("duʿāʾ" ≡ "du'a" ≡ "dua"). */
+function practiceKey(text: string): string {
+  return foldTransliteration(text).toLowerCase().replace(/'/g, '');
+}
+
 export function scan(text: string, allowedPractice = ''): Flag[] {
   const flags: Flag[] = [];
-  const allowed = allowedPractice.toLowerCase();
+  const allowedKey = practiceKey(allowedPractice);
   for (const { check, re, negatable } of SCANS) {
-    for (const m of text.matchAll(re)) {
-      if (check === 'scripture-or-practice' && allowed.includes(m[0].toLowerCase())) {
+    // The practice check reads folded text, so diacritic spellings match the
+    // same patterns as plain ones; every other check reads the text as is.
+    const subject = check === 'scripture-or-practice' ? foldTransliteration(text) : text;
+    for (const m of subject.matchAll(re)) {
+      if (check === 'scripture-or-practice' && allowedKey.includes(practiceKey(m[0]))) {
         continue;
       }
-      const negated = negatable && NEGATION_BEFORE.test(text.slice(0, m.index));
+      const negated = negatable && NEGATION_BEFORE.test(subject.slice(0, m.index));
       flags.push({ check, match: m[0], negated });
     }
   }

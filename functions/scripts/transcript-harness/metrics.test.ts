@@ -1,6 +1,13 @@
 import { describe, expect, it } from 'vitest';
 
-import { answerFirst, dominantScript, restatementRatio, scan, sentences } from './metrics';
+import {
+  answerFirst,
+  dominantScript,
+  foldTransliteration,
+  restatementRatio,
+  scan,
+  sentences,
+} from './metrics';
 
 const checks = (text: string, allowed = '') =>
   scan(text, allowed)
@@ -91,5 +98,49 @@ describe('restatementRatio', () => {
     const reading = 'the door is not locked it is heavy and it opens slowly';
     expect(restatementRatio(reading, reading)).toBe(1);
     expect(restatementRatio('patience will serve you while the answer forms', reading)).toBe(0);
+  });
+});
+
+describe('scripture/practice check — transliteration variants', () => {
+  it.each([
+    ['Make your duʿāʾ tonight.', "du'a"],
+    ['Make your du’a tonight.', "du'a"],
+    ['Recite from the Qurʾān.', "Qur'an"],
+    ['Read Sūrah Yā Sīn.', 'Surah'],
+    ['Call upon Yā Laṭīf.', 'Ya Latif'],
+  ])('flags %j as the plain spelling would be', (text, match) => {
+    const flags = scan(text).filter(f => f.check === 'scripture-or-practice');
+    expect(flags.map(f => f.match)).toContain(match);
+  });
+
+  it.each(['Quran is not mentioned here.', 'Dua at night.', 'Surah reading.'])(
+    'flags a capitalised plain spelling: %j',
+    text => {
+      expect(scan(text).some(f => f.check === 'scripture-or-practice')).toBe(true);
+    },
+  );
+
+  it('still allows a practice the reading carries, whichever spelling either side uses', () => {
+    const carried = (t: string, allowed: string) =>
+      scan(t, allowed)
+        .filter(f => f.check === 'scripture-or-practice' && !f.negated)
+        .map(f => f.match);
+    expect(carried('Keep your duʿāʾ steady.', 'Morning dua for steadiness')).toEqual([]);
+    expect(carried('Keep your dua steady.', 'Morning duʿāʾ for steadiness')).toEqual([]);
+    expect(carried('Keep your duʿāʾ steady.', 'Evening dhikr')).toEqual(["du'a"]);
+  });
+
+  it('still treats a negated mention as negated', () => {
+    const f = scan('I will not give you a duʿāʾ for this.').find(
+      x => x.check === 'scripture-or-practice',
+    );
+    expect(f).toMatchObject({ match: "du'a", negated: true });
+  });
+
+  it('leaves Urdu, Hindi and the other checks untouched', () => {
+    expect(foldTransliteration('इसमें समय लगेगा')).toBe('इसमें समय लगेगा'.normalize('NFD'));
+    expect(foldTransliteration('اس میں وقت لگے گا')).toBe('اس میں وقت لگے گا'.normalize('NFD'));
+    expect(checks('क्या यह सोमवार तक')).toContain('weekday');
+    expect(checks('sabr and tawakkul')).toEqual([]);
   });
 });

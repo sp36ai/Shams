@@ -75,7 +75,7 @@ During a run, the harness also reports `remedyMismatches` if the engine prescrib
 Each measurement is either exact or heuristic, and is labelled that way in every report.
 
 - **Exact:** validator acceptance versus fallback; follow-up outcomes (answered, rewritten, no reply); words spoken before the verdict field; dominant script against the seeker's language; reply length; phrases copied from the first reading; repeated openings and closing lines; the model's `is_new_question` and `conversation_complete` flags against each probe.
-- **Heuristic flags for a person to review:** verdict cue words, weekdays and months, calendar numbers (house numbers like "10th Ghar" are excluded), certainty language (counted only when not negated), scripture or practice terms missing from the reading's own remedy text, removed-methodology terms, spoken formatting, and generic-assistant phrasing.
+- **Heuristic flags for a person to review:** verdict cue words, weekdays and months, calendar numbers (house numbers like "10th Ghar" are excluded), certainty language (counted only when not negated), scripture or practice terms missing from the reading's own remedy text (matched case-insensitively and with transliteration folded, so "duʿāʾ", "du’a" and "Dua" all count as "dua", and "Qurʾān" as "Quran"), removed-methodology terms, spoken formatting, and generic-assistant phrasing.
 - **Not measured automatically:** naturalness and whether the voice is recognisably Shams al-Asrār. These go on `review-sheet.md` and are scored by a person.
 
 No numeric score is produced automatically.
