@@ -166,3 +166,6 @@ firestore-debug.log
 
 # Transcript-harness runs awaiting secret scan + human review (see docs/audit/transcript-harness/README.md)
 docs/audit/transcript-harness/_unreviewed/
+
+# Voice-audition runs awaiting secret scan + listening review (see docs/audit/voice-audition/README.md)
+docs/audit/voice-audition/_unreviewed/

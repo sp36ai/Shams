@@ -6,6 +6,6 @@ import { defineConfig } from 'vitest/config';
 export default defineConfig({
   test: {
     environment: 'node',
-    include: ['scripts/transcript-harness/**/*.test.ts'],
+    include: ['scripts/transcript-harness/**/*.test.ts', 'scripts/voice-audition/**/*.test.ts'],
   },
 });

@@ -65,6 +65,8 @@ export function scanText(
   return out;
 }
 
+const TEXT_EXTENSIONS = /\.(md|json|txt|csv|html)$/i;
+
 export function scanDirectory(dir: string): ScanFinding[] {
   // The literal key in this process's environment, if any, is the strongest
   // check of all: it catches the key however it was formatted.
@@ -76,6 +78,10 @@ export function scanDirectory(dir: string): ScanFinding[] {
     const path = join(dir, name);
     if (statSync(path).isDirectory()) {
       findings.push(...scanDirectory(path));
+    } else if (!TEXT_EXTENSIONS.test(name)) {
+      // Binary output (e.g. voice-audition WAV takes) is not scanned as text;
+      // what was spoken is the validated source text, scanned in manifest.json.
+      continue;
     } else {
       findings.push(...scanText(path, readFileSync(path, 'utf8'), extra));
     }
