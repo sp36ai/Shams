@@ -18,6 +18,7 @@ import {
   composeDiscussionReply,
   rejectedPhrases,
   rewriteNote,
+  failureCodesOf,
   type ReadingGrounding,
 } from '../discussionComposer';
 import { logger } from '../../utils/logger';
@@ -299,5 +300,65 @@ describe('composeDiscussionReply — model-written text never reaches operationa
     expect(await ask()).toBeNull();
     expect(logs()).toContain('oracle discussion failed');
     expect(logs()).not.toContain('Lahore7f3a');
+  });
+});
+
+describe('composeDiscussionReply — validator rejections are logged by code, never by quoted wording', () => {
+  const DATED_REFUSAL = 'Watch what Zuhal holds. For now, the answer is no — not before March 14.';
+
+  it('logs codes and counts only, while the rewrite note still names the refused wording to the model', async () => {
+    const calls: unknown[][] = [];
+    for (const level of ['info', 'warn', 'error', 'debug'] as const) {
+      vi.spyOn(logger, level).mockImplementation((...args: unknown[]) => {
+        calls.push(args);
+      });
+    }
+    const fetchMock = mockAnswers(DATED_REFUSAL, DATED_REFUSAL);
+    expect(await ask()).toBeNull();
+
+    const logs = JSON.stringify(calls);
+    expect(logs).toContain('failed validation');
+    expect(logs).toContain('"failureCodes"');
+    expect(logs).toContain('"failureCount"');
+    expect(logs).not.toContain('the answer is no');
+    expect(logs).not.toContain('March 14');
+
+    // Validation and the rewrite are not weakened: the model is still told
+    // exactly which wording was refused.
+    expect(systemOf(fetchMock.mock.calls[1])).toContain('"the answer is no"');
+  });
+
+  it('a rejected new-question reply is logged by code, not by its phrase', async () => {
+    const calls: unknown[][] = [];
+    for (const level of ['info', 'warn', 'error', 'debug'] as const) {
+      vi.spyOn(logger, level).mockImplementation((...args: unknown[]) => {
+        calls.push(args);
+      });
+    }
+    const verdictOnNewMatter = JSON.stringify({
+      answer: 'That is a separate matter — and that marriage will not happen.',
+      is_new_question: true,
+      conversation_complete: false,
+    });
+    globalThis.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve(responsesBody(verdictOnNewMatter)),
+    }) as unknown as typeof fetch;
+    expect(await ask()).toBeNull();
+    const logs = JSON.stringify(calls);
+    expect(logs).toContain('"failureCodes"');
+    expect(logs).not.toContain('will not happen');
+  });
+});
+
+describe('failureCodesOf', () => {
+  it('keeps the validator code and drops everything after it', () => {
+    expect(
+      failureCodesOf([
+        '[the reading] VERDICT_CONTRADICTION: asserted "the answer is no" but diagnosis.outcome is DELAYED',
+        'TIMING_FABRICATION: narration names a specific calendar date/day ("March 14")',
+        'no code here "secret"',
+      ]),
+    ).toEqual(['VERDICT_CONTRADICTION', 'TIMING_FABRICATION', 'UNKNOWN']);
   });
 });

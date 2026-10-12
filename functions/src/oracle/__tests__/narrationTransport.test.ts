@@ -17,6 +17,7 @@ vi.mock('firebase-functions/v2', () => ({
 
 import { OPENAI_MODELS } from '../../config';
 import { composeWatchOracleResponse } from '../responseComposer';
+import { validateNarration } from '../narrationValidator';
 import { WATCH_ORACLE_SYNTHESIS_PROMPT } from '../../prompts/watchOracleSynthesisPrompt';
 import type { DisplayWatchVerdict } from '../../engine/rkp/watchJudgment';
 import { okJson, requestBodyOf, responsesBody } from '../../llm/__tests__/responsesFixtures';
@@ -180,5 +181,58 @@ describe('model-written text never reaches operational logs', () => {
     expect(composition.narration).toBeNull();
     expect(logs()).toContain('watch oracle narration');
     expect(logs()).not.toContain('Lahore7f3a');
+  });
+});
+
+describe('validator rejections are logged by code, never by quoted wording', () => {
+  // A rejected draft quoting a date the seeker might have given ("March 14"),
+  // a verdict the engine did not reach, and an immediacy the timing forbids.
+  const REJECTED = {
+    rkp_finding: 'Zuhal sits at the threshold.',
+    interpretation: 'YES, the answer is yes — it completes on March 14, this Tuesday.',
+    recommended_approach: 'Act right away.',
+    why_this_remedy: null,
+    signature: 'The door opens.',
+  };
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it('falls back, logs failure codes and count, and none of the draft’s quoted wording', async () => {
+    const calls: unknown[][] = [];
+    for (const level of ['info', 'warn', 'error', 'debug'] as const) {
+      vi.spyOn(logger, level).mockImplementation((...args: unknown[]) => {
+        calls.push(args);
+      });
+    }
+    for (const level of ['log', 'info', 'warn', 'error'] as const) {
+      vi.spyOn(console, level).mockImplementation((...args: unknown[]) => {
+        calls.push(args);
+      });
+    }
+    respond(responsesBody(JSON.stringify(REJECTED)));
+    const { composition, contract } = await composeWatchOracleResponse({
+      verdict: VERDICT,
+      question: 'Will I get the job?',
+    });
+
+    // The draft really was rejected, by the real validator, with quoted excerpts.
+    const result = validateNarration(contract, REJECTED);
+    expect(result.valid).toBe(false);
+    const failures = result.valid ? [] : result.failures;
+    const excerpts = failures.flatMap(f => [...f.detail.matchAll(/"([^"]+)"/g)].map(m => m[1]!));
+    expect(excerpts).toContain('March 14');
+    expect(composition.narration).not.toEqual(REJECTED);
+
+    const logs = JSON.stringify(calls);
+    expect(logs).toContain('failed validation');
+    for (const f of failures) {
+      expect(logs).toContain(f.code);
+    }
+    expect(logs).toContain('"failureCount"');
+    for (const excerpt of excerpts) {
+      expect(logs).not.toContain(excerpt);
+    }
   });
 });

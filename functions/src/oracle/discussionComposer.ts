@@ -586,10 +586,27 @@ interface DraftReply {
   readonly conversationComplete: boolean;
 }
 
-/** Why a draft may not be shown: log fields, plus the wording to avoid on a rewrite. */
+/**
+ * Why a draft may not be shown: log fields, plus the wording to avoid on a
+ * rewrite. The two travel separately on purpose. `phrases` quotes the
+ * draft's own wording and goes only to the model, in the rewrite note;
+ * `log` carries stable codes and counts only, because that wording can
+ * restate the seeker's words and must not reach operational logs.
+ */
 interface Rejection {
-  readonly log: Record<string, unknown>;
+  readonly log: { readonly failureCodes: readonly string[]; readonly failureCount: number };
   readonly phrases: readonly string[];
+}
+
+/** Code reported when a new-question reply asserts a verdict (checkNewQuestionReply). */
+const NEW_QUESTION_VERDICT_CODE = 'NEW_QUESTION_VERDICT';
+
+/**
+ * The validator code of each `[label] CODE: detail` failure string, nothing
+ * after it. Exported for direct testing.
+ */
+export function failureCodesOf(failures: readonly string[]): string[] {
+  return failures.map(f => /\b([A-Z][A-Z0-9_]+):/.exec(f)?.[1] ?? 'UNKNOWN');
 }
 
 /**
@@ -640,13 +657,19 @@ function rejectionOf(input: DiscussionInput, draft: DraftReply): Rejection | nul
   const validation = validateDiscussionReplyAgainstGroundings(input.groundings, draft.answer);
   if (!validation.valid) {
     return {
-      log: { failures: validation.failures },
+      log: {
+        failureCodes: failureCodesOf(validation.failures),
+        failureCount: validation.failures.length,
+      },
       phrases: rejectedPhrases(validation.failures),
     };
   }
   const verdictOnNewMatter = checkNewQuestionReply(draft.answer, draft.isNewQuestion);
   if (verdictOnNewMatter !== null) {
-    return { log: { phrase: verdictOnNewMatter }, phrases: [verdictOnNewMatter] };
+    return {
+      log: { failureCodes: [NEW_QUESTION_VERDICT_CODE], failureCount: 1 },
+      phrases: [verdictOnNewMatter],
+    };
   }
   return null;
 }

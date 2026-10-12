@@ -480,7 +480,11 @@ export async function composeWatchOracleResponse(
         engineVersion: contract.provenance.engineVersion,
         contractVersion: contract.provenance.contractVersion,
         contractFingerprint: computeContractFingerprint(contract),
-        failures: failures.map(f => ({ code: f.code, field: f.field, detail: f.detail })),
+        // Codes and fields only. A failure's `detail` quotes the draft's own
+        // wording, which can restate the seeker's question; it never enters
+        // a log line.
+        failures: failures.map(f => ({ code: f.code, field: f.field })),
+        failureCount: failures.length,
         speakableTextFailed: !speakableResult.valid,
         fallbackUsed: true,
       });
