@@ -32,6 +32,34 @@ function starPath(cx: number, cy: number, outer: number, inner: number, tips: nu
   return closedPath(pts);
 }
 
+/**
+ * A crescent opening to the upper right, as one filled path: the outer disc's
+ * long arc, then back along a smaller offset disc. Drawn as a single shape
+ * rather than a disc with a bg-coloured disc over it, so nothing paints over
+ * the glow behind it.
+ */
+function crescentPath(cx: number, cy: number, r: number): string {
+  // Inner (cut) circle, offset up-right of the outer one.
+  const ix = cx + r * 0.42;
+  const iy = cy - r * 0.12;
+  const ir = r * 0.86;
+  // Intersection of the two circles.
+  const dx = ix - cx;
+  const dy = iy - cy;
+  const d = Math.hypot(dx, dy);
+  const a = (r * r - ir * ir + d * d) / (2 * d);
+  const h = Math.sqrt(r * r - a * a);
+  const mx = cx + (a * dx) / d;
+  const my = cy + (a * dy) / d;
+  const p1 = { x: mx + (h * dy) / d, y: my - (h * dx) / d };
+  const p2 = { x: mx - (h * dy) / d, y: my + (h * dx) / d };
+  const f = (n: number): string => n.toFixed(2);
+  return (
+    `M${f(p1.x)},${f(p1.y)} A${f(r)},${f(r)} 0 1 0 ${f(p2.x)},${f(p2.y)} ` +
+    `A${f(ir)},${f(ir)} 0 1 1 ${f(p1.x)},${f(p1.y)} Z`
+  );
+}
+
 /** Path of a square inscribed in radius r, rotated by rotDeg. */
 function squarePath(c: number, r: number, rotDeg: number): string {
   return closedPath([0, 90, 180, 270].map(d => polar(r, d + rotDeg, c)));
@@ -70,7 +98,6 @@ const MandalaEmblem: React.FC<MandalaEmblemProps> = ({ size = 200 }) => {
     return <Circle key={`b${i}`} cx={p.x} cy={p.y} r={size * 0.006} fill={colors.goldBright} />;
   });
 
-  // Crescent: a bright disc with an offset bg-coloured disc cut out of it.
   const moonR = R * 0.2;
   const moonCx = c - R * 0.03;
 
@@ -113,13 +140,7 @@ const MandalaEmblem: React.FC<MandalaEmblemProps> = ({ size = 200 }) => {
         <Circle cx={c} cy={c} r={R * 0.38} stroke={colors.gold} strokeWidth={0.8} fill="none" />
 
         {/* Crescent and star */}
-        <Circle cx={moonCx} cy={c} r={moonR} fill={colors.goldBright} />
-        <Circle
-          cx={moonCx + moonR * 0.42}
-          cy={c - moonR * 0.12}
-          r={moonR * 0.86}
-          fill={colors.bg}
-        />
+        <Path d={crescentPath(moonCx, c, moonR)} fill={colors.goldBright} />
         <Path
           d={starPath(c + R * 0.12, c - R * 0.04, R * 0.075, R * 0.03, 5)}
           fill={colors.goldBright}
