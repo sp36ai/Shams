@@ -35,7 +35,7 @@ import type { WatchOracleComposition } from '../types/watchOracle';
 const APP_CHECK_GATE_TIMEOUT_MS = 8000;
 
 /**
- * The server itself allows up to 120s (Anthropic synthesis ~25s + cold-start
+ * The server itself allows up to 120s (model synthesis up to 40s + cold-start
  * headroom) — see ORACLE_FUNCTION_OPTS in functions/src/config.ts. This is
  * deliberately looser than that ceiling: it exists only to recover from a
  * native callable invocation that hangs instead of ever resolving/rejecting

@@ -18,11 +18,11 @@ No transcript in this repository is evidence of how the Oracle actually sounds u
 - **Opening question:** the same engine call order as `askWatchOracle.ts`, then the unmodified `composeWatchOracleResponse()`. That covers diagnosis, remedy selection, contract, synthesis prompt, validator and deterministic fallback.
 - **Follow-ups (3–5 per scenario):** the unmodified `composeDiscussionReply()`. Grounding is built as in `discussReading.ts`, and the turn window as in the client's `discussionTurnsFor()`. Validator rejections and the single rewrite retry run as in production.
 
-The harness touches the pipeline in one place: it wraps `fetch` for the Anthropic Messages endpoint so it can record, replay or stub responses. It never supplies or overrides a verdict. Firestore, auth, App Check, quota and rate limiting are not exercised, because none of them produce prose.
+The harness touches the pipeline in one place: it wraps `fetch` for the OpenAI Responses endpoint (`https://api.openai.com/v1/responses`) so it can record, replay or stub responses. It never supplies or overrides a verdict. Firestore, auth, App Check, quota and rate limiting are not exercised, because none of them produce prose.
 
 | Mode | Purpose |
 |---|---|
-| `live` | Calls the real model with `ANTHROPIC_API_KEY` and records `cassette.json`. Headers, including the key, are never written. |
+| `live` | Calls the real model with `OPENAI_API_KEY` and records `cassette.json`. Headers, including the key, are never written. |
 | `replay` | Re-scores a recorded cassette with no model calls. If a request differs from the recording, the run errors. It never falls back to a live call. |
 | `stub` | Wiring check only. Placeholder output; every report it writes carries a banner saying so. |
 
@@ -89,7 +89,7 @@ No numeric score is produced automatically.
 | Rejection path: a "YES … on Monday" draft for a BLOCKED reading, plus a "certainly … next Tuesday" follow-up | PASS: the production validator rejected both. The reading showed the deterministic fallback; the follow-up was rejected twice and ended as "no reply". The harness reported both correctly. |
 | Harness tests: metrics 9, pinned no-remedy moment 4, output scanner 4 | PASS: 17/17 |
 | Existing functions suite | PASS: 34 files, 704 tests. No production file changed. |
-| Live baseline | **NOT TESTED**: no `ANTHROPIC_API_KEY` in the build environment |
+| Live baseline | **NOT TESTED**: no model API key in the build environment (Anthropic at the time; OpenAI since the migration) |
 
 ## Static findings: code evidence, not transcript evidence
 
@@ -107,16 +107,26 @@ These four findings come from reading the code. The live baseline will show whet
    3. Note whether the English reading is intelligible in the ur-PK and hi-IN voices, and whether either locale is missing on the device (a silent fallback).
 4. **Closing variety.** The synthesis prompt says "do not use the same closing twice in a row", but no earlier closing line is ever included in the synthesis brief.
 
+## Provider migration (2026-10-12, branch `claude/openai-api-migration`)
+
+The pipeline's model calls moved from the Anthropic Messages API to the OpenAI Responses API. The harness moved with them.
+
+- **Endpoint:** live, stub and replay intercept `https://api.openai.com/v1/responses`. Stub responses are Responses-shaped. Recorded text is extracted with production's own `extractResponseText()`.
+- **Recording format:** cassettes are now `formatVersion: 2`, `provider: "openai"`, and every exchange is stamped with its provider and model.
+- **Older recordings:** a cassette without `formatVersion` is a v1 Anthropic recording. Replay refuses it with an explicit error and never reinterprets it as OpenAI output. No v1 cassette was ever committed, because the Anthropic baseline was never recorded, so no historical evidence is affected.
+- **Scanner:** it now also flags OpenAI-shaped keys (`sk-…`, `sk-proj-…`) and `authorization` fields, and checks the literal value of `OPENAI_API_KEY` as well as `ANTHROPIC_API_KEY`.
+- **Live verification:** BLOCKED. There is no `OPENAI_API_KEY`, and this build environment's network policy denies `*.openai.com`.
+
 ## How to record the baseline
 
 From `functions/`:
 
 ```sh
 npx vitest run --config scripts/transcript-harness/vitest.config.ts   # 17 tests, incl. the pinned no-remedy moment
-ANTHROPIC_API_KEY=… npx vite-node scripts/transcript-harness/run.ts -- --mode=live --label=baseline-2026-10-12
+OPENAI_API_KEY=… npx vite-node scripts/transcript-harness/run.ts -- --mode=live --label=baseline-2026-10-12
 ```
 
-The live run uses the production model id (`claude-opus-5`). It makes 58 or more model calls: one per opening reading, at least one per follow-up, and a second attempt whenever the validator forces a rewrite. Check cost and usage limits before starting.
+The live run uses the production model ids from `functions/src/config.ts` (`OPENAI_MODELS`: `gpt-5.4-mini` for narration and follow-ups). It makes 58 or more model calls: one per opening reading, at least one per follow-up, and a second attempt whenever the validator forces a rewrite. Check cost and usage limits before starting.
 
 ### Before anything is committed
 
@@ -127,7 +137,7 @@ Every run is written to `docs/audit/transcript-harness/_unreviewed/<label>/`. Th
    ```sh
    npx vite-node scripts/transcript-harness/scanOutput.ts -- ../docs/audit/transcript-harness/_unreviewed/baseline-2026-10-12
    ```
-   Exit 1 means do not commit. The scanner looks for Anthropic, Google and Razorpay keys, bearer tokens, private keys, the literal environment key, email addresses and phone numbers. Matches are printed masked. The seeker names in the scenarios are fictional fixtures.
+   Exit 1 means do not commit. The scanner looks for OpenAI, Anthropic, Google and Razorpay keys, `authorization` header fields, bearer tokens, private keys, the literal environment key, email addresses and phone numbers. Matches are printed masked. The seeker names in the scenarios are fictional fixtures.
 3. **A person has read it.** Read all of `transcripts.md`, including the rejected drafts, for anything the scan cannot recognise. Then fill in `review-sheet.md`. Heuristic flags point the reviewer at text; they are never turned into scores.
 4. **Then move it into place.** Move the folder to `docs/audit/transcript-harness/baseline-2026-10-12/` and commit it, including `cassette.json`, so Phase 3 can re-score it with `--mode=replay` and compare against identical model responses.
 

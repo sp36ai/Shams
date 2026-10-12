@@ -16,6 +16,17 @@ describe('outputScan', () => {
     expect(findings.every(f => !f.masked.includes(fakeKey))).toBe(true);
   });
 
+  it('flags OpenAI-shaped keys and an authorization header field', () => {
+    const openaiKey = ['sk', 'proj', 'Q'.repeat(40)].join('-');
+    expect(kinds(`key ${openaiKey}`)).toContain('openai-key');
+    expect(kinds('{"authorization": "x"}')).toContain('api-key-header');
+    expect(scanText('f', openaiKey).every(f => !f.masked.includes(openaiKey))).toBe(true);
+  });
+
+  it("does not flag the adapter's own redaction marker", () => {
+    expect(kinds('detail: Incorrect API key provided: sk-[redacted]')).toEqual([]);
+  });
+
   it('flags the literal environment key however it is embedded', () => {
     expect(kinds('prefix-abcdefgh1234-suffix', ['abcdefgh1234'])).toContain(
       'environment-secret-value',

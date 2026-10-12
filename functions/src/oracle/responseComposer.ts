@@ -7,7 +7,7 @@
  * The division of labour is the point of the whole architecture:
  *   - RKP decides the astrological diagnosis.
  *   - The remedy engine decides the intervention, from a controlled library.
- *   - Claude explains the result in natural language, and nothing more.
+ *   - The language model explains the result in natural language, and nothing more.
  *
  * Enforced structurally rather than by instruction: the model is never asked
  * to name a remedy. Remedy names, instructions and evidence labels are copied
@@ -35,12 +35,14 @@
  * DEPLOYMENT NOTE:
  * The mystical Shams al-Asrār narration voice is loaded from
  * watchOracleSynthesisPrompt.ts (WATCH_ORACLE_SYNTHESIS_PROMPT constant).
- * This orchestrates the response composition with Claude Opus 5 using the
+ * This orchestrates the response composition with the OpenAI narration
+ * model (config.ts OPENAI_MODELS.narration, via src/llm/openaiResponses.ts) using the
  * mystical manuscript register, proper confidence calibration, and full
  * remedy protocol integration. Verify Cloud Functions redeploy.
  */
 
-import { ANTHROPIC_API_KEY } from '../config';
+import { OPENAI_API_KEY, OPENAI_MODELS } from '../config';
+import { createResponse } from '../llm/openaiResponses';
 import { logger } from '../utils/logger';
 import { WATCH_ORACLE_SYNTHESIS_PROMPT } from '../prompts/watchOracleSynthesisPrompt';
 import { diagnose } from '../engine/rkp/diagnosis';
@@ -57,8 +59,8 @@ import { toNarrationContext, type NarrationContext } from './narrationContext';
 import { validateNarration } from './narrationValidator';
 import { buildDeterministicFallbackNarration } from './narrationFallback';
 
-// Raised from 25s — Claude Opus 5 thinks by default, so synthesis is slower
-// than it was on the non-thinking Opus 4.1. askWatchOracle runs under
+// Raised from 25s when synthesis moved to a reasoning model; kept at 40s.
+// askWatchOracle runs under
 // ORACLE_FUNCTION_OPTS (120s), so this stays well inside the function budget.
 const SYNTHESIS_TIMEOUT_MS = 40_000;
 
@@ -506,61 +508,61 @@ export async function composeWatchOracleResponse(
   return { composition, contract };
 }
 
+/**
+ * The five prose fields, as a strict structured-output schema. The prompt
+ * already demands exactly this JSON; the schema makes the provider enforce
+ * the shape too. It is a shape guarantee only — every value is still checked
+ * below and then by validateNarration() one call up.
+ */
+const NARRATION_SCHEMA = Object.freeze({
+  type: 'object',
+  properties: {
+    rkp_finding: { type: 'string' },
+    interpretation: { type: 'string' },
+    recommended_approach: { type: 'string' },
+    why_this_remedy: { type: ['string', 'null'] },
+    signature: { type: 'string' },
+  },
+  required: [
+    'rkp_finding',
+    'interpretation',
+    'recommended_approach',
+    'why_this_remedy',
+    'signature',
+  ],
+  additionalProperties: false,
+});
+
 async function narrate(ctx: NarrationContext): Promise<NarrationFields | null> {
-  const apiKey = ANTHROPIC_API_KEY.value();
+  const apiKey = OPENAI_API_KEY.value();
   if (!apiKey) {
-    logger.warn('watch oracle narration skipped: ANTHROPIC_API_KEY not bound');
+    logger.warn('watch oracle narration skipped: OPENAI_API_KEY not bound');
     return null;
   }
 
-  const controller = new AbortController();
-  const timer = setTimeout(() => {
-    controller.abort();
-  }, SYNTHESIS_TIMEOUT_MS);
+  const result = await createResponse(apiKey, {
+    model: OPENAI_MODELS.narration,
+    instructions: WATCH_ORACLE_SYNTHESIS_PROMPT,
+    input: [{ role: 'user', content: buildUserPrompt(ctx) }],
+    // Bounds reasoning + answer together. The longest reading the prompt
+    // allows is ~900 words across five fields.
+    maxOutputTokens: 4096,
+    reasoningEffort: 'low',
+    jsonSchema: { name: 'oracle_narration', schema: NARRATION_SCHEMA },
+    timeoutMs: SYNTHESIS_TIMEOUT_MS,
+  });
+
+  if (!result.ok) {
+    logger.warn('watch oracle narration failed', {
+      kind: result.kind,
+      status: result.status,
+      detail: result.detail,
+    });
+    return null;
+  }
 
   try {
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'anthropic-version': '2023-06-01',
-        'content-type': 'application/json',
-        'x-api-key': apiKey,
-      },
-      body: JSON.stringify({
-        // Must be a CURRENT Anthropic model id — 'claude-opus-4-1-20250805'
-        // reached its retirement date on 2026-08-05 and 404s, which silently
-        // dropped narration from every watch reading (narrate() returns null
-        // on a non-OK response).
-        model: 'claude-opus-5',
-        // Opus 5 thinks by default and max_tokens bounds thinking + response
-        // together; 1500 was sized for a non-thinking model and would truncate
-        // the JSON before the required fields were emitted.
-        max_tokens: 4096,
-        output_config: { effort: 'low' },
-        system: WATCH_ORACLE_SYNTHESIS_PROMPT,
-        messages: [
-          {
-            role: 'user',
-            content: buildUserPrompt(ctx),
-          },
-        ],
-      }),
-      signal: controller.signal,
-    });
-
-    if (!res.ok) {
-      const body = await res.text().catch(() => '');
-      logger.warn('watch oracle narration HTTP error', {
-        status: res.status,
-        body: body.slice(0, 300),
-      });
-      return null;
-    }
-
-    const json = (await res.json()) as { content?: Array<{ type: string; text?: string }> };
-    const raw = json.content?.find(b => b.type === 'text')?.text ?? '';
-
-    const parsed = JSON.parse(stripJsonFence(raw)) as Partial<NarrationFields>;
+    const parsed = JSON.parse(stripJsonFence(result.text)) as Partial<NarrationFields>;
 
     if (
       !parsed.rkp_finding ||
@@ -586,18 +588,10 @@ async function narrate(ctx: NarrationContext): Promise<NarrationFields | null> {
     // line of defense; independent, deterministic post-generation
     // validation runs one call up, in composeWatchOracleResponse() (PHASE
     // 4, see narrationValidator.ts), against every field this function
-    // returns. This comment previously (and, on `main`, still does) read
-    // "additional post-generation validation was removed when the KP
-    // engine was deleted (PR #92)" — accurate when written, but stale on
-    // this branch since Phase 4 restored the control here; left uncorrected
-    // it invites exactly the misreading that produced the error corrected
-    // in docs/audit/PHASE_7B_REVIEW.md's dated addendum. See
-    // docs/audit/PHASE_8A_3_REMEDIATION.md.
+    // returns. See docs/audit/PHASE_8A_3_REMEDIATION.md.
     return drafted;
   } catch (err) {
-    logger.warn('watch oracle narration failed', { err: String(err) });
+    logger.warn('watch oracle narration unparseable', { err: String(err) });
     return null;
-  } finally {
-    clearTimeout(timer);
   }
 }

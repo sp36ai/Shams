@@ -13,7 +13,7 @@ const requiredSecrets = [
   'RAZORPAY_WEBHOOK_SECRET',
   'GOOGLE_PLAY_CLIENT_EMAIL',
   'GOOGLE_PLAY_PRIVATE_KEY',
-  'ANTHROPIC_API_KEY',
+  'OPENAI_API_KEY',
 ];
 
 async function verify() {

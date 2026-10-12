@@ -20,6 +20,8 @@ export interface RunHeader {
   readonly synthesisPromptSha: string;
   readonly discussionPromptSha: string;
   readonly modelCalls: number;
+  readonly provider: string;
+  readonly models: string;
 }
 
 const STUB_BANNER =
@@ -35,6 +37,7 @@ function headerBlock(h: RunHeader): string {
     `- Commit: \`${h.gitCommit}\``,
     `- Synthesis prompt sha256: \`${h.synthesisPromptSha.slice(0, 16)}\``,
     `- Discussion prompt sha256: \`${h.discussionPromptSha.slice(0, 16)}\``,
+    `- Provider: ${h.provider} (${h.models})`,
     `- Model calls: ${h.modelCalls}`,
   ].join('\n');
 }

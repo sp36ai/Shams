@@ -21,9 +21,11 @@ import {
   type ReadingGrounding,
 } from '../discussionComposer';
 import { logger } from '../../utils/logger';
+import { responsesBody } from '../../llm/__tests__/responsesFixtures';
 
-vi.mock('../../config', () => ({
-  ANTHROPIC_API_KEY: { value: () => 'test-key' },
+vi.mock('../../config', async () => ({
+  ...(await vi.importActual<typeof import('../../config')>('../../config')),
+  OPENAI_API_KEY: { value: () => 'test-key' },
   FUNCTION_OPTS: {},
   ORACLE_FUNCTION_OPTS: {},
 }));
@@ -76,10 +78,7 @@ const ACCEPTED = 'Watch the unfinished work Zuhal is holding; it is held for now
 function answerResponse(answer: string): Response {
   return {
     ok: true,
-    json: () =>
-      Promise.resolve({
-        content: [{ type: 'text', text: JSON.stringify({ answer, is_new_question: false }) }],
-      }),
+    json: () => Promise.resolve(responsesBody(JSON.stringify({ answer, is_new_question: false }))),
   } as unknown as Response;
 }
 
@@ -92,11 +91,12 @@ function mockAnswers(...answers: string[]) {
   return fetchMock;
 }
 
+/** The system-level text of a request — the Responses API `instructions`. */
 function systemOf(call: unknown): string {
   const body = JSON.parse(((call as unknown[])[1] as { body: string }).body) as {
-    system: Array<{ text: string }>;
+    instructions: string;
   };
-  return body.system.map(b => b.text).join('\n');
+  return body.instructions;
 }
 
 const ask = () =>
@@ -145,6 +145,20 @@ describe('composeDiscussionReply — one rewrite after a rejected draft', () => 
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
+  it('does not retry a provider refusal — no reply, one call', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: () =>
+        Promise.resolve({
+          status: 'completed',
+          output: [{ type: 'message', content: [{ type: 'refusal', refusal: 'cannot help' }] }],
+        }),
+    });
+    globalThis.fetch = fetchMock as unknown as typeof fetch;
+    expect(await ask()).toBeNull();
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
   it('skips the rewrite when the first draft used up the budget', async () => {
     const start = 1_000_000;
     const now = vi.spyOn(Date, 'now').mockReturnValue(start);
@@ -181,7 +195,7 @@ describe('composeDiscussionReply — conversation_complete', () => {
   function mockRaw(body: Record<string, unknown>) {
     globalThis.fetch = vi.fn().mockResolvedValue({
       ok: true,
-      json: () => Promise.resolve({ content: [{ type: 'text', text: JSON.stringify(body) }] }),
+      json: () => Promise.resolve(responsesBody(JSON.stringify(body))),
     }) as unknown as typeof fetch;
   }
 

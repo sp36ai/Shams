@@ -6,7 +6,7 @@
  *
  * Sibling of responseComposer.ts, and the same division of labour applies:
  * RKP decided the diagnosis, the remedy engine decided the intervention, and
- * Claude only talks about the result. The difference is tense. The composer
+ * The model only talks about the result. The difference is tense. The composer
  * narrates a reading at the moment it is computed; this file answers the
  * seeker's questions about a reading that already stands, hours or days later.
  *
@@ -67,7 +67,8 @@
  * documented residual limitation of label-based attribution.
  */
 
-import { ANTHROPIC_API_KEY } from '../config';
+import { OPENAI_API_KEY, OPENAI_MODELS } from '../config';
+import { createResponse } from '../llm/openaiResponses';
 import { logger } from '../utils/logger';
 import { ORACLE_DISCUSSION_PROMPT } from '../prompts/oracleDiscussionPrompt';
 import { sanitizeQuestion } from './responseComposer';
@@ -308,10 +309,12 @@ REPLY LANGUAGE: ${LANG_NAME[replyLang]}
 }
 
 /**
- * Fold the transcript into a valid Anthropic message list: seeker → user,
+ * Fold the transcript into the model's message list: seeker → user,
  * oracle → assistant, consecutive same-role turns joined, and any leading
- * assistant turn dropped (the API requires the conversation to open on the
- * user side, and a transcript window can easily start mid-exchange).
+ * assistant turn dropped. The previous provider's API required the
+ * conversation to open on the user side; the rule is kept because a reply
+ * to a window that starts mid-exchange still reads best opening on the
+ * seeker's own words.
  *
  * Exported for direct testing.
  */
@@ -347,7 +350,7 @@ export function toApiMessages(
  * surface reuses the exact same deterministic check pipeline the primary
  * narration surface uses — not a second validator. The reply is not
  * naturally shaped like five distinct fields (`rkp_finding`,
- * `interpretation`, ... — those exist because Claude drafts a fresh
+ * `interpretation`, ... — those exist because the model drafts a fresh
  * reading's prose as five separate sections), so the same text is placed
  * in all five: every check operates on whatever `text` it receives
  * regardless of which field name it is nominally paired with (confirmed by
@@ -628,7 +631,7 @@ Answer the same message again, saying what the brief supports, without that word
 
 /** Check a draft against every reading in the brief, and against the new-question rule. */
 function rejectionOf(input: DiscussionInput, draft: DraftReply): Rejection | null {
-  // PHASE 5F / 5F-R2: deterministic validation, independent of Claude —
+  // PHASE 5F / 5F-R2: deterministic validation, independent of the model —
   // see this file's header. Attributes the reply to the grounding(s) it
   // actually names (segmentReplyByGrounding) and checks each attributed
   // piece against ITS OWN persisted contract, anchor and comparison
@@ -653,6 +656,32 @@ function rejectionOf(input: DiscussionInput, draft: DraftReply): Rejection | nul
  * parsing failure, each logged by its own message so Cloud Logging names the
  * stage that failed.
  */
+/** The discussion reply's three keys, as a strict structured-output schema. */
+const DISCUSSION_SCHEMA = Object.freeze({
+  type: 'object',
+  properties: {
+    answer: { type: 'string' },
+    is_new_question: { type: 'boolean' },
+    conversation_complete: { type: 'boolean' },
+  },
+  required: ['answer', 'is_new_question', 'conversation_complete'],
+  additionalProperties: false,
+});
+
+/**
+ * The system blocks, joined into the request's `instructions`. They stay
+ * system-level — the settled reading and any rewrite note never become a
+ * conversation turn (see this file's header).
+ */
+export function instructionsOf(system: ReadonlyArray<{ type: 'text'; text: string }>): string {
+  return system.map(b => b.text).join('\n\n');
+}
+
+/**
+ * One call to the model. Null — never a throw — for every transport or
+ * parsing failure, each logged by its own message so Cloud Logging names the
+ * stage that failed.
+ */
 async function requestDraft(
   apiKey: string,
   system: ReadonlyArray<{ type: 'text'; text: string }>,
@@ -660,44 +689,27 @@ async function requestDraft(
   timeoutMs: number,
   ctx: Readonly<Record<string, string>>,
 ): Promise<DraftReply | null> {
-  const controller = new AbortController();
-  const timer = setTimeout(() => {
-    controller.abort();
-  }, timeoutMs);
+  const result = await createResponse(apiKey, {
+    model: OPENAI_MODELS.discussion,
+    instructions: instructionsOf(system),
+    input: messages,
+    // Bounds reasoning + reply together — a short reply still needs room.
+    maxOutputTokens: 2048,
+    reasoningEffort: 'low',
+    jsonSchema: { name: 'oracle_discussion_reply', schema: DISCUSSION_SCHEMA },
+    timeoutMs,
+  });
+
+  if (!result.ok) {
+    logger.warn(
+      result.kind === 'http' ? 'oracle discussion HTTP error' : 'oracle discussion failed',
+      { ...ctx, kind: result.kind, status: result.status, detail: result.detail },
+    );
+    return null;
+  }
 
   try {
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'anthropic-version': '2023-06-01',
-        'content-type': 'application/json',
-        'x-api-key': apiKey,
-      },
-      body: JSON.stringify({
-        model: 'claude-opus-5',
-        // Opus 5 thinks by default and max_tokens bounds thinking + reply
-        // together — a short reply still needs room ahead of it.
-        max_tokens: 2048,
-        output_config: { effort: 'low' },
-        system,
-        messages,
-      }),
-      signal: controller.signal,
-    });
-
-    if (!res.ok) {
-      const body = await res.text().catch(() => '');
-      logger.warn('oracle discussion HTTP error', {
-        ...ctx,
-        status: res.status,
-        body: body.slice(0, 300),
-      });
-      return null;
-    }
-
-    const json = (await res.json()) as { content?: Array<{ type: string; text?: string }> };
-    const raw = json.content?.find(b => b.type === 'text')?.text ?? '';
-    const parsed = JSON.parse(stripJsonFence(raw)) as {
+    const parsed = JSON.parse(stripJsonFence(result.text)) as {
       answer?: unknown;
       is_new_question?: unknown;
       conversation_complete?: unknown;
@@ -717,8 +729,6 @@ async function requestDraft(
   } catch (err) {
     logger.warn('oracle discussion failed', { ...ctx, err: String(err) });
     return null;
-  } finally {
-    clearTimeout(timer);
   }
 }
 
@@ -726,9 +736,9 @@ export async function composeDiscussionReply(
   input: DiscussionInput,
 ): Promise<DiscussionReply | null> {
   const ctx = input.logContext ?? {};
-  const apiKey = ANTHROPIC_API_KEY.value();
+  const apiKey = OPENAI_API_KEY.value();
   if (!apiKey) {
-    logger.warn('oracle discussion skipped: ANTHROPIC_API_KEY not bound', ctx);
+    logger.warn('oracle discussion skipped: OPENAI_API_KEY not bound', ctx);
     return null;
   }
 

@@ -43,8 +43,9 @@
 
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-vi.mock('../../config', () => ({
-  ANTHROPIC_API_KEY: { value: () => 'test-key' },
+vi.mock('../../config', async () => ({
+  ...(await vi.importActual<typeof import('../../config')>('../../config')),
+  OPENAI_API_KEY: { value: () => 'test-key' },
   FUNCTION_OPTS: {},
   ORACLE_FUNCTION_OPTS: {},
 }));
@@ -67,6 +68,7 @@ import {
   composeWatchOracleResponse,
   type NarrationFields,
 } from '../responseComposer';
+import { responsesBody } from '../../llm/__tests__/responsesFixtures';
 
 function contractFor(moment: string, question: string, readingId: string): ReadingContract {
   const chart = buildWatchChart(moment);
@@ -242,7 +244,7 @@ function mockDraft(fields: NarrationFields): void {
   globalThis.fetch = vi.fn(() =>
     Promise.resolve({
       ok: true,
-      json: () => Promise.resolve({ content: [{ type: 'text', text: JSON.stringify(fields) }] }),
+      json: () => Promise.resolve(responsesBody(JSON.stringify(fields))),
     }),
   ) as unknown as typeof fetch;
 }

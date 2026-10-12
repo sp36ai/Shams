@@ -10,7 +10,7 @@ name: 'Journey — sign up through onboarding to the Oracle'
 # owner controls instead (e2e.shamsalasrar.test), so a CI-generated
 # address can never collide with a real account.
 # Onboarding profile inference falls back to 'clarity' without an
-# Anthropic key, so this flow needs no secrets.
+# OpenAI key, so this flow needs no secrets.
 
 - launchApp:
     clearState: true

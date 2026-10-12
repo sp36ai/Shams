@@ -45,7 +45,7 @@ import { enforceRateLimit } from '../middleware/rateLimit';
 import { parse, DiscussReadingSchema } from '../middleware/validate';
 import { measure } from '../middleware/telemetry';
 import { logger, hashText } from '../utils/logger';
-import { ORACLE_FUNCTION_OPTS, ANTHROPIC_API_KEY, DISCUSSION_TURN_LIMIT } from '../config';
+import { ORACLE_FUNCTION_OPTS, OPENAI_API_KEY, DISCUSSION_TURN_LIMIT } from '../config';
 import { claimRequest, completeRequest, releaseRequest } from '../utils/idempotency';
 import type { AuditLogDoc, ReadingDoc } from '../types';
 import type { WatchOracleComposition } from '../oracle/responseComposer';
@@ -193,7 +193,7 @@ export interface DiscussReadingResponse {
 export const discussReading = onCall(
   {
     ...ORACLE_FUNCTION_OPTS,
-    secrets: [ANTHROPIC_API_KEY],
+    secrets: [OPENAI_API_KEY],
     enforceAppCheck: process.env.FUNCTIONS_EMULATOR !== 'true',
   },
   async (request): Promise<DiscussReadingResponse> => {

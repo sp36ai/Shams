@@ -4,7 +4,7 @@
 #>
 
 $projectId = "shams-app-4d0e7"
-$secrets = @("RAZORPAY_WEBHOOK_SECRET", "GOOGLE_PLAY_CLIENT_EMAIL", "GOOGLE_PLAY_PRIVATE_KEY", "ANTHROPIC_API_KEY")
+$secrets = @("RAZORPAY_WEBHOOK_SECRET", "GOOGLE_PLAY_CLIENT_EMAIL", "GOOGLE_PLAY_PRIVATE_KEY", "OPENAI_API_KEY")
 
 Write-Host "Configuring Secret Manager for project: $projectId" -ForegroundColor Cyan
 
@@ -32,4 +32,4 @@ Write-Host "Action Required: Set values via Firebase CLI:" -ForegroundColor Yell
 Write-Host "firebase functions:secrets:set RAZORPAY_WEBHOOK_SECRET"
 Write-Host "firebase functions:secrets:set GOOGLE_PLAY_CLIENT_EMAIL"
 Write-Host "firebase functions:secrets:set GOOGLE_PLAY_PRIVATE_KEY"
-Write-Host "firebase functions:secrets:set ANTHROPIC_API_KEY"
+Write-Host "firebase functions:secrets:set OPENAI_API_KEY"

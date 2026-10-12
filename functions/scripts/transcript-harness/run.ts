@@ -8,7 +8,7 @@
  * Run from functions/:
  *
  *   # baseline against the real model (needs the API key the functions use)
- *   ANTHROPIC_API_KEY=… npx vite-node scripts/transcript-harness/run.ts -- \
+ *   OPENAI_API_KEY=… npx vite-node scripts/transcript-harness/run.ts -- \
  *     --mode=live --label=baseline-2026-10-12
  *
  *   # re-score a recorded run without calling the model
@@ -42,7 +42,13 @@ import { WATCH_ORACLE_SYNTHESIS_PROMPT } from '../../src/prompts/watchOracleSynt
 import { ORACLE_DISCUSSION_PROMPT } from '../../src/prompts/oracleDiscussionPrompt';
 
 import { SCENARIOS } from './scenarios';
-import { installTransport, type TransportMode } from './modelTransport';
+import {
+  CASSETTE_FORMAT_VERSION,
+  CASSETTE_PROVIDER,
+  installTransport,
+  type TransportMode,
+} from './modelTransport';
+import { OPENAI_MODELS } from '../../src/config';
 import { runScenario, type ScenarioRecord } from './pipeline';
 import { measureRun, measureScenario } from './metrics';
 import { scanDirectory } from './outputScan';
@@ -116,6 +122,8 @@ async function main(): Promise<void> {
     synthesisPromptSha: sha(WATCH_ORACLE_SYNTHESIS_PROMPT),
     discussionPromptSha: sha(ORACLE_DISCUSSION_PROMPT),
     modelCalls: transport.exchanges.length,
+    provider: CASSETTE_PROVIDER,
+    models: `narration ${OPENAI_MODELS.narration}, discussion ${OPENAI_MODELS.discussion}`,
   };
 
   mkdirSync(outDir, { recursive: true });
@@ -129,7 +137,17 @@ async function main(): Promise<void> {
   writeFileSync(resolve(outDir, 'records.json'), JSON.stringify(records, null, 2));
   writeFileSync(
     resolve(outDir, 'cassette.json'),
-    JSON.stringify({ recordedAt: startedAt, mode, exchanges: transport.exchanges }, null, 2),
+    JSON.stringify(
+      {
+        formatVersion: CASSETTE_FORMAT_VERSION,
+        provider: CASSETTE_PROVIDER,
+        recordedAt: startedAt,
+        mode,
+        exchanges: transport.exchanges,
+      },
+      null,
+      2,
+    ),
   );
 
   console.warn(`[harness] wrote ${outDir}`);

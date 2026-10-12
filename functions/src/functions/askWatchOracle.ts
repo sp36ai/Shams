@@ -55,7 +55,7 @@ import { measure } from '../middleware/telemetry';
 import { logger, hashText } from '../utils/logger';
 import { localIsoFromOffset } from '../utils/localTime';
 import { toBoundaryPlanetName } from '../utils/planetBoundaryName';
-import { ORACLE_FUNCTION_OPTS, ANTHROPIC_API_KEY } from '../config';
+import { ORACLE_FUNCTION_OPTS, OPENAI_API_KEY } from '../config';
 import { claimQuotaSlot, refundQuotaSlot } from '../utils/quotaSlots';
 import { claimRequest, completeRequest, releaseRequest } from '../utils/idempotency';
 import type { AuditLogDoc, ReadingDoc } from '../types';
@@ -150,9 +150,9 @@ export const askWatchOracle = onCall(
   {
     ...ORACLE_FUNCTION_OPTS,
     // The judgment itself is pure computation, but the oracle voice is
-    // synthesised by Anthropic (up to 25s) — so this needs the same headroom
+    // synthesised by the narration model (up to 40s) — so this needs the same headroom
     // and the same secret binding as askOracle.
-    secrets: [ANTHROPIC_API_KEY],
+    secrets: [OPENAI_API_KEY],
     enforceAppCheck: process.env.FUNCTIONS_EMULATOR !== 'true',
   },
   async (request): Promise<WatchOracleResponse> => {

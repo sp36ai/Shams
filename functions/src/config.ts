@@ -46,7 +46,7 @@ export const FUNCTION_OPTS = {
   // enforceAppCheck is set per-function — see individual function files.
 } as const;
 
-// askOracle calls Anthropic (up to 25s) + safety validation (up to 24s) + cold start overhead.
+// askOracle calls the narration model (up to 40s) + safety validation + cold start overhead.
 // 120s prevents timeout on cold starts.
 export const ORACLE_FUNCTION_OPTS = {
   ...FUNCTION_OPTS,
@@ -60,7 +60,29 @@ export const ORACLE_FUNCTION_OPTS = {
 export const RAZORPAY_WEBHOOK_SECRET = defineSecret('RAZORPAY_WEBHOOK_SECRET');
 export const GOOGLE_PLAY_CLIENT_EMAIL = defineSecret('GOOGLE_PLAY_CLIENT_EMAIL');
 export const GOOGLE_PLAY_PRIVATE_KEY = defineSecret('GOOGLE_PLAY_PRIVATE_KEY');
-export const ANTHROPIC_API_KEY = defineSecret('ANTHROPIC_API_KEY');
+export const OPENAI_API_KEY = defineSecret('OPENAI_API_KEY');
+
+/**
+ * OpenAI model ids — the only place they are named. Each was checked against
+ * OpenAI's model pages and deprecations list on 2026-10-12:
+ *
+ *   gpt-5.4-mini — narration and follow-up discussion (owner's choice).
+ *     Responses API; not on the deprecations list. $0.75 / $4.50 per 1M
+ *     input / output tokens. Pinnable snapshot: gpt-5.4-mini-2026-03-17.
+ *   gpt-6-luna   — the question gate and onboarding profile inference.
+ *     Responses API; $0.10 / $0.50 per 1M tokens. OpenAI's named replacement
+ *     for gpt-5.4-nano, which was deprecated 2026-10-01 (shutdown 2027-04-01)
+ *     and so is not used here.
+ *
+ * functions/src/__tests__/modelIds.test.ts fails the build if any other id
+ * appears in a request, or a known-retired one does.
+ */
+export const OPENAI_MODELS = Object.freeze({
+  narration: 'gpt-5.4-mini',
+  discussion: 'gpt-5.4-mini',
+  classification: 'gpt-6-luna',
+  profileInference: 'gpt-6-luna',
+} as const);
 
 /**
  * Configurable callable rate limit (requests per user per minute).

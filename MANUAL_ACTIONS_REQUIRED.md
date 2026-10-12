@@ -34,16 +34,25 @@ Revisit this file before every production release.
 
 ---
 
-## 3. Firebase Console — Provision ANTHROPIC_API_KEY Secret
+## 3. Firebase Console — Provision OPENAI_API_KEY Secret
+
+> **Provider change (branch `claude/openai-api-migration`, not yet merged or
+> deployed).** The model calls moved from Anthropic to the OpenAI Responses
+> API. Until that branch is approved and deployed, production still reads
+> `ANTHROPIC_API_KEY` — do not remove it before then. Before deploying the
+> migration: provision `OPENAI_API_KEY` (below), update the privacy policy's
+> processor disclosure (it still names Anthropic), and only after the new
+> deploy is verified, retire `ANTHROPIC_API_KEY` (disable its versions in
+> Secret Manager; delete later, once nothing references it).
 
 **Steps:**
 
 1. Go to Google Cloud Console → Secret Manager → Create secret
-2. Name: `ANTHROPIC_API_KEY`, Value: (your Anthropic key)
+2. Name: `OPENAI_API_KEY`, Value: (an OpenAI API key for this project, with a usage limit set in the OpenAI dashboard)
 3. Grant `roles/secretmanager.secretAccessor` to the Functions service account
 4. Redeploy functions: `firebase deploy --only functions`
 
-**Why:** The Cloud Functions (`askOracle`, `classifyQuestion`, etc.) need this secret at runtime.
+**Why:** The Cloud Functions that call the model — `askWatchOracle`, `discussReading`, `classifyQuestion`, `inferProfile` — need this secret at runtime. Model ids are set in `functions/src/config.ts` (`OPENAI_MODELS`).
 
 ---
 
@@ -106,10 +115,10 @@ Required secrets for CI/CD:
 - [ ] `SHAMS_UPLOAD_KEY_PASSWORD`
 - [ ] `GOOGLE_PLAY_SERVICE_ACCOUNT_JSON`
 - [ ] `RAZORPAY_WEBHOOK_SECRET`
-- [ ] `ANTHROPIC_API_KEY` (for E2E tests in ci.yml)
+- [ ] `OPENAI_API_KEY` — only if an E2E job is ever given model access; `ci.yml` does not read it today (the E2E onboarding flow falls back to `clarity` without a key)
 
 > **Secret Manager is separate from GitHub Secrets.** The runtime keys the
-> deployed Cloud Functions read (`ANTHROPIC_API_KEY`, `GOOGLE_PLAY_CLIENT_EMAIL`,
+> deployed Cloud Functions read (`OPENAI_API_KEY`, `GOOGLE_PLAY_CLIENT_EMAIL`,
 > `GOOGLE_PLAY_PRIVATE_KEY`, `RAZORPAY_WEBHOOK_SECRET`) are bound via
 > `defineSecret` in `functions/src/config.ts` and must exist in **GCP Secret
 > Manager** (steps 3 and 5 above). Setting them only as GitHub Secrets leaves
@@ -191,7 +200,7 @@ will corrupt an API key.
 ```bash
 gcloud config set project shams-app-4d0e7
 
-printf '%s' 'sk-ant-...'                  | gcloud secrets create ANTHROPIC_API_KEY        --data-file=-
+printf '%s' 'sk-...'                      | gcloud secrets create OPENAI_API_KEY           --data-file=-
 printf '%s' 'play-sa@...gserviceaccount.com' | gcloud secrets create GOOGLE_PLAY_CLIENT_EMAIL --data-file=-
 printf '%s' 'rzp-webhook-secret'          | gcloud secrets create RAZORPAY_WEBHOOK_SECRET   --data-file=-
 
@@ -203,7 +212,7 @@ jq -r .private_key play-service-account.json | gcloud secrets create GOOGLE_PLAY
 Rotating later is `versions add`, not `create`:
 
 ```bash
-printf '%s' 'sk-ant-NEW' | gcloud secrets versions add ANTHROPIC_API_KEY --data-file=-
+printf '%s' 'sk-NEW' | gcloud secrets versions add OPENAI_API_KEY --data-file=-
 ```
 
 Deploy — the Firebase CLI grants `secretAccessor` to the runtime service account:
@@ -215,7 +224,7 @@ firebase deploy --only functions,firestore
 Verify each one resolves (prints a prefix only):
 
 ```bash
-for s in ANTHROPIC_API_KEY GOOGLE_PLAY_CLIENT_EMAIL GOOGLE_PLAY_PRIVATE_KEY RAZORPAY_WEBHOOK_SECRET; do
+for s in OPENAI_API_KEY GOOGLE_PLAY_CLIENT_EMAIL GOOGLE_PLAY_PRIVATE_KEY RAZORPAY_WEBHOOK_SECRET; do
   printf '%s: ' "$s"
   gcloud secrets versions access latest --secret="$s" | head -c 8; echo '…'
 done
@@ -229,15 +238,18 @@ model id that was serving canned fallback text. Confirm on a real device from th
 `internal` track:
 
 1. Ask one question and read the result. If it opens *"The scrolls of this moment
-   have not opened their seal…"* the synthesis call failed — `ANTHROPIC_API_KEY` is
+   have not opened their seal…"* the synthesis call failed — `OPENAI_API_KEY` is
    missing from Secret Manager, or the model id is wrong again. A real reading is
    unique prose referencing the chart.
 2. Watch the function logs while you do it:
    ```bash
    firebase functions:log --only askOracle
    ```
-   `oracle synthesis HTTP error` with `status: 404` means the model id; `401` means
-   the key. An App Check rejection fails the whole call before it reaches synthesis.
+   `watch oracle narration failed` carries `kind` and `status`: `kind: 'http'`
+   with `status: 404` (or a "model" error in `detail`) means the model id; `401`
+   means the key; `429` means rate or usage limits. `kind: 'refusal'` or
+   `'incomplete'` means the model answered but not usably — the reading is
+   still served on its verdict. An App Check rejection fails the whole call before it reaches synthesis.
 3. Confirm a reading appears in History (Firestore write path) and that a
    subscription purchase in a Play test track flips the plan.
 

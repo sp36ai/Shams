@@ -36,6 +36,7 @@ import {
   composeDiscussionReply,
   type ReadingGrounding,
 } from '../discussionComposer';
+import { responsesBody } from '../../llm/__tests__/responsesFixtures';
 
 function contractFor(moment: string, question: string, readingId: string): ReadingContract {
   const chart = buildWatchChart(moment);
@@ -409,8 +410,9 @@ describe('PHASE 5F-R2 — no regression against the existing anchor-only ground-
 /*  Integration: composeDiscussionReply() enforces this end to end           */
 /* -------------------------------------------------------------------------- */
 
-vi.mock('../../config', () => ({
-  ANTHROPIC_API_KEY: { value: () => 'test-key' },
+vi.mock('../../config', async () => ({
+  ...(await vi.importActual<typeof import('../../config')>('../../config')),
+  OPENAI_API_KEY: { value: () => 'test-key' },
   FUNCTION_OPTS: {},
   ORACLE_FUNCTION_OPTS: {},
 }));
@@ -424,9 +426,7 @@ function mockFetchAnswer(answer: string): void {
     Promise.resolve({
       ok: true,
       json: () =>
-        Promise.resolve({
-          content: [{ type: 'text', text: JSON.stringify({ answer, is_new_question: false }) }],
-        }),
+        Promise.resolve(responsesBody(JSON.stringify({ answer, is_new_question: false }))),
     }),
   ) as unknown as typeof fetch;
 }

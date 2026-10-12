@@ -26,8 +26,11 @@ export interface ScanFinding {
 }
 
 const PATTERNS: ReadonlyArray<{ kind: string; re: RegExp }> = [
+  // OpenAI keys (sk-proj-…, sk-svcacct-…, sk-…) and the previous provider's
+  // (sk-ant-…) — legacy recordings may still be scanned.
+  { kind: 'openai-key', re: /sk-(?!ant-)[A-Za-z0-9_-]{20,}/g },
   { kind: 'anthropic-key', re: /sk-ant-[A-Za-z0-9_-]{8,}/g },
-  { kind: 'api-key-header', re: /x-api-key/gi },
+  { kind: 'api-key-header', re: /x-api-key|"authorization"\s*:/gi },
   { kind: 'bearer-token', re: /Bearer\s+[A-Za-z0-9._~+/-]{20,}/g },
   { kind: 'google-api-key', re: /AIza[0-9A-Za-z_-]{30,}/g },
   { kind: 'razorpay-key', re: /rzp_(?:live|test)_[A-Za-z0-9]{8,}/g },
@@ -65,7 +68,7 @@ export function scanText(
 export function scanDirectory(dir: string): ScanFinding[] {
   // The literal key in this process's environment, if any, is the strongest
   // check of all: it catches the key however it was formatted.
-  const extra = [process.env.ANTHROPIC_API_KEY ?? ''].filter(
+  const extra = [process.env.OPENAI_API_KEY ?? '', process.env.ANTHROPIC_API_KEY ?? ''].filter(
     s => s.length >= 8 && s !== 'harness-offline-placeholder',
   );
   const findings: ScanFinding[] = [];
