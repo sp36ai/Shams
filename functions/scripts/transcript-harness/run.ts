@@ -21,9 +21,12 @@
  *
  * Options: --only=<scenario-id>[,<id>…]   --out-root=<dir>
  *
- * Output: docs/audit/transcript-harness/<label>/ — summary.md, transcripts.md,
- * review-sheet.md, metrics.json, records.json, cassette.json. An existing
- * label directory is never overwritten.
+ * Output: docs/audit/transcript-harness/_unreviewed/<label>/ — summary.md,
+ * transcripts.md, review-sheet.md, metrics.json, records.json, cassette.json.
+ * `_unreviewed/` is git-ignored: a run is moved up to
+ * docs/audit/transcript-harness/<label>/ only after scanOutput.ts is clean
+ * and a person has read it. A label that exists in either place is never
+ * overwritten.
  *
  * Production prompts, composers and validators are imported, not copied, and
  * are not modified by this script.
@@ -42,6 +45,7 @@ import { SCENARIOS } from './scenarios';
 import { installTransport, type TransportMode } from './modelTransport';
 import { runScenario, type ScenarioRecord } from './pipeline';
 import { measureRun, measureScenario } from './metrics';
+import { scanDirectory } from './outputScan';
 import {
   reviewSheetMarkdown,
   summaryMarkdown,
@@ -68,12 +72,10 @@ async function main(): Promise<void> {
   if (!label || !/^[\w.-]+$/.test(label)) {
     throw new Error('--label=<name> is required (letters, digits, . _ -)');
   }
-  const outRoot = resolve(
-    process.cwd(),
-    arg('out-root') ?? resolve(__dirname, '../../../docs/audit/transcript-harness'),
-  );
+  const reviewedRoot = resolve(__dirname, '../../../docs/audit/transcript-harness');
+  const outRoot = resolve(process.cwd(), arg('out-root') ?? resolve(reviewedRoot, '_unreviewed'));
   const outDir = resolve(outRoot, label);
-  if (existsSync(outDir)) {
+  if (existsSync(outDir) || existsSync(resolve(reviewedRoot, label))) {
     throw new Error(
       `${outDir} already exists — choose a new --label; recorded runs are never overwritten`,
     );
@@ -131,6 +133,12 @@ async function main(): Promise<void> {
   );
 
   console.warn(`[harness] wrote ${outDir}`);
+  const findings = scanDirectory(outDir);
+  console.warn(
+    findings.length === 0
+      ? '[scan] no credentials or contact details found — still read it before moving it out of _unreviewed/'
+      : `[scan] ${findings.length} finding(s) — run scanOutput.ts on ${outDir} for details; do not commit`,
+  );
   console.warn(JSON.stringify(run, null, 2));
 }
 

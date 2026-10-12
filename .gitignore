@@ -163,3 +163,6 @@ firestore-debug.log
 # Firebase Auth as a result). A single committed keystore has one stable
 # SHA-1 the project owner registers once in Firebase Console.
 !android/app/debug.keystore
+
+# Transcript-harness runs awaiting secret scan + human review (see docs/audit/transcript-harness/README.md)
+docs/audit/transcript-harness/_unreviewed/

@@ -4,9 +4,9 @@
 |---|---|
 | Harness implementation | PASS (accepted provisionally by the owner) |
 | Regression protection | PASS |
-| Live Oracle baseline (`baseline-2026-10-12`) | **BLOCKED**: needs a live run with an owner-controlled API key, then human review |
-| No-remedy scenario | Added from a real chart moment; verified offline |
-| TTS language mismatch | Confirmed in code; **NOT TESTED** on a device |
+| Live Oracle baseline (`baseline-2026-10-12`) | **BLOCKED**: needs a live run with an owner-controlled API key, a clean output scan, then human review |
+| No-remedy scenario | Added from a real chart moment; pinned by `noRemedyMoment.test.ts` |
+| TTS language mismatch | Confirmed in code; **NOT TESTED** on a device ([checklist](device-tts-checklist.md)) |
 | Phase 2 prompt changes | On hold |
 
 No transcript in this repository is evidence of how the Oracle actually sounds until a `--mode=live` run is recorded here. Stub runs use fixed placeholder text and are never committed.
@@ -62,7 +62,13 @@ Such moments are rare:
 
 `yes-clear-noremedy-en` uses one of those 12: "Should I accept the teaching post I was offered?" at 2026-12-06T03:02Z (+05:30). The engine classifies the question as `general`.
 
-The contract is not edited by hand and no remedy is invented. The harness recomputes the moment live and reports `remedyMismatches` if the engine ever prescribes something there. The stub run confirmed that both the synthesis brief and the discussion brief carry `INTERVENTION REQUIRED: no`.
+The contract is not edited by hand and no remedy is invented.
+
+`noRemedyMoment.test.ts` pins that fixed instant, not the question, because the chart depends on time and the same question at the corpus moments does get a remedy. It asserts each stage separately, so a failure names the stage that changed: the judgment (FULFILLED, no obstruction, no reversal, HIGH or VERY_HIGH confidence), `diagnose()` (FAVOURABLE, no intervention needed) and `selectRemedyProtocol()` (no steps, no escalation).
+
+Raising the confidence threshold in `diagnose()` from 0.8 to 0.96 made the diagnosis and protocol assertions fail; restoring it made them pass. If an intentional engine change breaks this test, pick a new moment. Do not relax the assertions.
+
+During a run, the harness also reports `remedyMismatches` if the engine prescribes a remedy for this moment. The stub run confirmed that both the synthesis brief and the discussion brief carry `INTERVENTION REQUIRED: no`.
 
 ## What is measured
 
@@ -81,7 +87,7 @@ No numeric score is produced automatically.
 | Stub run: all 13 scenarios, 58 model calls (54 before the no-remedy scenario) | PASS: completed end to end |
 | Replay of the stub cassette | PASS: metrics identical to the recording |
 | Rejection path: a "YES … on Monday" draft for a BLOCKED reading, plus a "certainly … next Tuesday" follow-up | PASS: the production validator rejected both. The reading showed the deterministic fallback; the follow-up was rejected twice and ended as "no reply". The harness reported both correctly. |
-| Metric unit tests (`metrics.test.ts`) | PASS: 9/9 |
+| Harness tests: metrics 9, pinned no-remedy moment 4, output scanner 4 | PASS: 17/17 |
 | Existing functions suite | PASS: 34 files, 704 tests. No production file changed. |
 | Live baseline | **NOT TESTED**: no `ANTHROPIC_API_KEY` in the build environment |
 
@@ -106,18 +112,25 @@ These four findings come from reading the code. The live baseline will show whet
 From `functions/`:
 
 ```sh
-ANTHROPIC_API_KEY=… npx vite-node scripts/transcript-harness/run.ts -- --mode=live --label=baseline-YYYY-MM-DD
-npx vitest run --config scripts/transcript-harness/vitest.config.ts
+npx vitest run --config scripts/transcript-harness/vitest.config.ts   # 17 tests, incl. the pinned no-remedy moment
+ANTHROPIC_API_KEY=… npx vite-node scripts/transcript-harness/run.ts -- --mode=live --label=baseline-2026-10-12
 ```
 
-The output goes to `docs/audit/transcript-harness/<label>/`. An existing label is never overwritten.
+The live run uses the production model id (`claude-opus-5`). It makes 58 or more model calls: one per opening reading, at least one per follow-up, and a second attempt whenever the validator forces a rewrite. Check cost and usage limits before starting.
 
-After the run:
+### Before anything is committed
 
-1. Read `transcripts.md`.
-2. Fill in `review-sheet.md`.
-3. Commit the whole directory, including `cassette.json`, so the baseline can be re-scored with `--mode=replay` and compared in Phase 3.
+Every run is written to `docs/audit/transcript-harness/_unreviewed/<label>/`. That folder is git-ignored, so a raw recording cannot be committed by accident. A run leaves it only after all of these:
 
-The live run uses the production model id (`claude-opus-5`). It makes 58 or more model calls: one per opening reading, at least one per follow-up, and a second attempt whenever the validator forces a rewrite. Check usage limits before starting.
+1. **The key is never recorded.** The key is read from the environment only, and the transport records request bodies and response text, never headers.
+2. **The scan is clean.** The run scans its own output automatically. Re-run the scan in the same shell, with the key still set, because it also searches for the key's literal value:
+   ```sh
+   npx vite-node scripts/transcript-harness/scanOutput.ts -- ../docs/audit/transcript-harness/_unreviewed/baseline-2026-10-12
+   ```
+   Exit 1 means do not commit. The scanner looks for Anthropic, Google and Razorpay keys, bearer tokens, private keys, the literal environment key, email addresses and phone numbers. Matches are printed masked. The seeker names in the scenarios are fictional fixtures.
+3. **A person has read it.** Read all of `transcripts.md`, including the rejected drafts, for anything the scan cannot recognise. Then fill in `review-sheet.md`. Heuristic flags point the reviewer at text; they are never turned into scores.
+4. **Then move it into place.** Move the folder to `docs/audit/transcript-harness/baseline-2026-10-12/` and commit it, including `cassette.json`, so Phase 3 can re-score it with `--mode=replay` and compare against identical model responses.
 
-The key is read only from the environment. It is never written to the cassette, records or reports; the transport records request bodies and response text, not headers. Before committing a live run, still confirm this with `grep -r "sk-ant" docs/audit/transcript-harness/<label>/`, which should print nothing.
+## On-device speech test
+
+The device check is recorded separately, in [device-tts-checklist.md](device-tts-checklist.md). It records three independent results: text language, voice intelligibility and follow-up continuity.
