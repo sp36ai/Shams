@@ -40,6 +40,46 @@ A realtime model is a conversational model, not a text reader, and OpenAI docume
 
 The transcript is the provider's own account of its audio, so a listener still confirms fidelity during review. If the replacement cannot read verbatim reliably, it cannot be the Oracle's voice under the one-text rule. That is the first thing the live run will show.
 
+## How a take is judged
+
+The decision runs in this order.
+
+| Status | Meaning | Usable? |
+|---|---|---|
+| `failed` | No usable response: a service error, timeout, closed socket, an incomplete or failed `response.done`, or no audio at all | No. Disqualified (technical). |
+| `incomplete` | The response completed, but the documented `response.output_audio.done` event never arrived, so the audio may be cut short. The audio is kept so a listener can hear it. | No. Disqualified (technical). |
+| `not-verbatim` | The words spoken differ from the validated text: any added, missing, changed or reordered word | No. Disqualified (fidelity). |
+| `ok` | Complete and verbatim | Only after the listening review |
+
+**Review flags are separate from status.** A flag never disqualifies a take on its own; it tells the listener what to check.
+
+- **`speaking-rate`.** Words per minute is the source text's word count divided by the measured audio duration. The flag is raised outside a documented, configurable range: `DEFAULT_RATE_BOUNDS` is 80 to 200 wpm (`--min-wpm`, `--max-wpm`). The range is wide on purpose: deliberate narration runs at roughly 110 to 160 wpm, and Urdu and Hindi word counts differ from English.
+  - Too fast can mean cut-off audio.
+  - Too slow can mean padding or extra speech.
+
+  A flag alone proves neither.
+
+## Mandatory listening fields
+
+The spoken scorecard has two fields the kit marks `required`:
+
+| Field | Required for |
+|---|---|
+| Pauses & phrasing at punctuation | every take with audio |
+| Urdu/Hindi pronunciation & intelligibility | Urdu and Hindi takes (`n/a` for English) |
+
+A listener replaces each `required` with a score from 1 to 10. `checkScorecard.ts` exits 1 in any of these cases:
+
+- a required cell is unfilled or was cleared;
+- a value is not a whole number from 1 to 10;
+- the sheet has no takes with audio at all, as in a stub run. Such a sheet has nothing to approve.
+
+```sh
+npx vite-node scripts/voice-audition/checkScorecard.ts -- <run dir>/scorecard.md
+```
+
+No voice is approved with a disqualified take counted as a pass, or with the scorecard check failing.
+
 ## The ten cases
 
 | Case | Scenario | Text | Covers |
@@ -77,23 +117,24 @@ Output goes to `docs/audit/voice-audition/_unreviewed/<label>/`, which is git-ig
 | File | Contents |
 |---|---|
 | `audio/<case>__<voice>.wav` | PCM16 mono, 24 kHz. Live mode only. |
-| `manifest.json` | Model, API, voices, audio format, the source run, and the full instructions for every state with their sha256. For every take: status, fidelity, transcript, first-audio time, total time, response status, the server event types seen, and any error. Never the key. |
-| `summary.md` | Per-voice counts (verbatim, not verbatim, failed, median first audio) and every divergence. |
-| `scorecard.md` | **A. Written Oracle**, scored per case from the text alone, and **B. Spoken Oracle**, scored per case and voice. Verbatim status, first-audio time and duration are filled in automatically. |
+| `manifest.json` | Model, API, voices, audio format, the speaking-rate range, what each status means, the source run, and the full instructions for every state with their sha256. For every take: status, disqualification type, review flags, fidelity, transcript, whether the audio-finished event arrived, words per minute, first-audio time, total time, response status, the server event types seen, and any error. Never the key. |
+| `summary.md` | Per-voice counts (usable, not verbatim, incomplete, failed, rate flags, median first audio), with three separate lists: technical disqualifications, fidelity disqualifications, and flags needing listening attention. |
+| `scorecard.md` | **A. Written Oracle**, scored per case from the text alone, and **B. Spoken Oracle**, scored per case and voice. Status, verbatim, first-audio time, duration and speaking rate are filled in automatically. The two mandatory listening fields are marked `required`. |
 
 Stub mode makes no network calls and generates no audio. Every page it writes says so.
 
 ### Before anything is committed
 
 1. Run `scanOutput.ts` on the run folder. It now scans text output only (`.md`, `.json`, `.txt`, `.csv`, `.html`); the WAV files hold only the validated source text, which `manifest.json` carries and the scan covers.
-2. Listen to every take. Confirm fidelity by ear, then fill in the scorecard.
+2. Listen to every take. Confirm fidelity by ear: additions, omissions, reordered words, pauses at punctuation, and Urdu/Hindi pronunciation. Check that the end of each take isn't cut off. Then fill in the scorecard and run `checkScorecard.ts`.
 3. Move the folder out of `_unreviewed/` and commit it.
 
 ## Verification done here (offline)
 
 | Check | Result |
 |---|---|
-| Audition tests: performance 4, fidelity 4, Realtime adapter 7, end to end 7 | PASS, 22/22 |
+| Audition tests: performance 4, fidelity 4, Realtime adapter 8, end to end 15 | PASS, 31/31 |
+| The completion and fidelity gates are each pinned by a test that fails if the gate is disabled | PASS |
 | Transcript-harness tests (same config) | PASS, 23/23 |
 | Real Node `WebSocket` against a local scripted Realtime server | PASS. The upgrade carried `Authorization` and `?model=gpt-realtime-2.1-mini`; the client sent `session.update`, `conversation.item.create` and `response.create`; audio and transcript were collected; status `completed`. |
 | CLI: stub source refused by default; stub audition writes no audio and carries both banners; live mode without a key refused; output git-ignored | PASS |

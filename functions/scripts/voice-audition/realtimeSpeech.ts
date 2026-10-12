@@ -17,6 +17,7 @@
  *             conversation.item.create  the validated text, as input_text
  *             response.create
  *   receive   response.output_audio.delta             base64 PCM16 chunks
+ *             response.output_audio.done              the audio stream is complete
  *             response.output_audio_transcript.*      what the model said
  *             response.done / error
  *
@@ -73,6 +74,12 @@ export interface SpeechResult {
   readonly eventTypes: Readonly<Record<string, number>>;
   /** response.done status when one arrived ('completed', 'incomplete', ...). */
   readonly responseStatus: string | null;
+  /**
+   * Whether the documented `response.output_audio.done` event arrived. A
+   * response that completes without it may have lost the end of its audio;
+   * the audition marks such a take incomplete and disqualifies it.
+   */
+  readonly audioDoneReceived: boolean;
   /** Safe for reports — key-shaped text removed. */
   readonly error: string | null;
 }
@@ -117,6 +124,7 @@ export function synthesize(
     let transcriptDeltas = '';
     let transcriptDone: string | null = null;
     let responseStatus: string | null = null;
+    let audioDoneReceived = false;
     const eventTypes: Record<string, number> = {};
     let settled = false;
     let socket: SocketLike | null = null;
@@ -140,6 +148,7 @@ export function synthesize(
         totalMs: Date.now() - started,
         eventTypes,
         responseStatus,
+        audioDoneReceived,
         error: error === null ? null : redact(error),
       });
     };
@@ -194,6 +203,9 @@ export function synthesize(
             }
             chunks.push(Buffer.from(msg.delta, 'base64'));
           }
+          break;
+        case 'response.output_audio.done':
+          audioDoneReceived = true;
           break;
         case 'response.output_audio_transcript.delta':
           if (typeof msg.delta === 'string') {

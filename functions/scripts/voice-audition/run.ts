@@ -16,6 +16,10 @@
  *     --allow-stub-source --label=voice-stub-check
  *
  * Options: --voices=cedar,marin   --model=gpt-realtime-2.1-mini   --timeout-ms=60000
+ *          --min-wpm=80 --max-wpm=200   (speaking-rate review range; see audition.ts)
+ *
+ * After listening, check the scorecard's mandatory fields are filled:
+ *   npx vite-node scripts/voice-audition/checkScorecard.ts -- <run dir>/scorecard.md
  *
  * Output: docs/audit/voice-audition/_unreviewed/<label>/ (git-ignored):
  * summary.md, scorecard.md, manifest.json and, in live mode, audio/*.wav.
@@ -29,13 +33,29 @@
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { DEFAULT_MODEL, DEFAULT_VOICES, runAudition, type AuditionMode } from './audition';
+import {
+  DEFAULT_MODEL,
+  DEFAULT_RATE_BOUNDS,
+  DEFAULT_VOICES,
+  runAudition,
+  type AuditionMode,
+  type RateBounds,
+} from './audition';
 import { scanDirectory } from '../transcript-harness/outputScan';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 function arg(name: string): string | undefined {
   return process.argv.find(a => a.startsWith(`--${name}=`))?.slice(name.length + 3);
+}
+
+function rateBoundsFromArgs(): RateBounds {
+  const minWpm = Number(arg('min-wpm') ?? DEFAULT_RATE_BOUNDS.minWpm);
+  const maxWpm = Number(arg('max-wpm') ?? DEFAULT_RATE_BOUNDS.maxWpm);
+  if (!(minWpm > 0 && maxWpm > minWpm)) {
+    throw new Error(`invalid speaking-rate range ${minWpm}–${maxWpm}`);
+  }
+  return { minWpm, maxWpm };
 }
 
 async function main(): Promise<void> {
@@ -64,6 +84,7 @@ async function main(): Promise<void> {
     model: arg('model') ?? DEFAULT_MODEL,
     voices: (arg('voices') ?? DEFAULT_VOICES.join(',')).split(',').map(v => v.trim()),
     timeoutMs: Number(arg('timeout-ms') ?? 60_000),
+    rateBounds: rateBoundsFromArgs(),
     apiKey: process.env.OPENAI_API_KEY ?? null,
   });
   console.warn(`[audition] wrote ${outDir}`);

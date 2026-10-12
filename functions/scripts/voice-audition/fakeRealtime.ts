@@ -57,15 +57,21 @@ export function fakeRealtime(
   return { factory, calls };
 }
 
-/** The events of a completed take that spoke `transcript` with the given PCM bytes. */
+/**
+ * The events of a completed take that spoke `transcript` with the given PCM
+ * bytes. `omitAudioDone` drops the audio-finished event, as a truncated
+ * stream would.
+ */
 export function completedTake(
   transcript: string,
   pcmChunks: Buffer[] = [Buffer.alloc(4800)],
+  opts: { omitAudioDone?: boolean } = {},
 ): Array<Record<string, unknown>> {
   return [
     { type: 'session.updated' },
     { type: 'response.created' },
     ...pcmChunks.map(b => ({ type: 'response.output_audio.delta', delta: b.toString('base64') })),
+    ...(opts.omitAudioDone ? [] : [{ type: 'response.output_audio.done' }]),
     { type: 'response.output_audio_transcript.delta', delta: transcript.slice(0, 5) },
     { type: 'response.output_audio_transcript.delta', delta: transcript.slice(5) },
     { type: 'response.output_audio_transcript.done', transcript },

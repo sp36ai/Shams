@@ -56,11 +56,22 @@ describe('synthesize', () => {
     expect(calls[0]!.url).toBe(`${REALTIME_URL}?model=gpt-realtime-2.1-mini`);
     expect(calls[0]!.headers.authorization).toBe(`Bearer ${KEY}`);
     expect(JSON.stringify(calls[0]!.sent)).not.toContain(KEY);
+    expect(r.audioDoneReceived).toBe(true);
     expect(calls[0]!.sent.map(e => e.type)).toEqual([
       'session.update',
       'conversation.item.create',
       'response.create',
     ]);
+  });
+
+  it('records a missing audio-finished event without hiding the audio', async () => {
+    const { factory } = fakeRealtime(() =>
+      completedTake(REQ.text, [Buffer.alloc(100)], { omitAudioDone: true }),
+    );
+    const r = await synthesize(KEY, REQ, factory);
+    expect(r.ok).toBe(true);
+    expect(r.audioDoneReceived).toBe(false);
+    expect(r.pcm.length).toBe(100);
   });
 
   it('fails on a service error event, without leaking a key in the message', async () => {
