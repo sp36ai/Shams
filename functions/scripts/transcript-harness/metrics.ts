@@ -297,6 +297,8 @@ export interface ScenarioMetrics {
   readonly ownerVerdict: string;
   readonly state: string;
   readonly stateMatchesExpected: boolean;
+  readonly interventionRequired: boolean;
+  readonly remedyMatchesExpected: boolean;
   readonly reading: ReadingMetrics;
   readonly turns: readonly TurnMetrics[];
   readonly repeatedOpeningsInConversation: number;
@@ -365,6 +367,8 @@ export function measureScenario(rec: ScenarioRecord): ScenarioMetrics {
     ownerVerdict: scenario.ownerVerdict,
     state: reading.state,
     stateMatchesExpected: reading.stateMatchesExpected,
+    interventionRequired: reading.interventionRequired,
+    remedyMatchesExpected: reading.remedyMatchesExpected,
     reading: readingMetrics,
     turns: turnMetrics,
     repeatedOpeningsInConversation,
@@ -392,6 +396,8 @@ export interface RunMetrics {
     readonly byLang: Readonly<Record<string, number>>;
     readonly voice: number;
     readonly stateMismatches: readonly string[];
+    readonly noRemedyReadings: number;
+    readonly remedyMismatches: readonly string[];
   };
   readonly answerFirst: {
     readonly medianWordsBeforeVerdictField: number | null;
@@ -485,6 +491,8 @@ export function measureRun(all: readonly ScenarioMetrics[]): RunMetrics {
       byOwnerVerdict: tally(all.map(s => s.ownerVerdict)),
       byLang: tally(all.map(s => s.lang)),
       voice: all.filter(s => s.voice).length,
+      noRemedyReadings: all.filter(s => !s.interventionRequired).length,
+      remedyMismatches: all.filter(s => !s.remedyMatchesExpected).map(s => s.id),
       stateMismatches: all
         .filter(s => !s.stateMatchesExpected)
         .map(s => `${s.id} (got ${s.state})`),

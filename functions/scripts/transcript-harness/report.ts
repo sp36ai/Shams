@@ -72,6 +72,11 @@ export function summaryMarkdown(
     `- Engine state differs from scenario's expected state: ${
       run.coverage.stateMismatches.length === 0 ? 'none' : run.coverage.stateMismatches.join('; ')
     }`,
+  );
+  lines.push(
+    `- Readings with no remedy prescribed: ${run.coverage.noRemedyReadings}; scenarios expecting no remedy that got one: ${
+      run.coverage.remedyMismatches.length === 0 ? 'none' : run.coverage.remedyMismatches.join('; ')
+    }`,
     '',
   );
 
@@ -149,6 +154,13 @@ export function summaryMarkdown(
     '',
   );
 
+  lines.push(
+    "- The app speaks a first reading with the TTS locale of the seeker's app language " +
+      '(en-US / ur-PK / hi-IN — useTextToSpeech.ts), whatever script the text is in. A reading listed ' +
+      'above is therefore also spoken in a mismatched voice. How a device voice renders that is not ' +
+      'measurable here — it needs on-device playback.',
+    '',
+  );
   lines.push('## 5. Distinctive Oracle voice', '');
   lines.push(
     `- exact: closing lines used more than once in this run: ${
@@ -201,7 +213,7 @@ export function transcriptsMarkdown(h: RunHeader, records: readonly ScenarioReco
     out.push(
       `Owner verdict **${s.ownerVerdict}** · engine state **${r.state}** (${r.confidence}) · verdict ${r.verdictLabel}` +
         ` · timing ${r.timing ? `${r.timing.minDays}–${r.timing.maxDays} days` : 'none'} · qType ${r.qType}` +
-        ` · lang ${s.lang}${s.voice ? ' · voice-shaped' : ''}${r.stateMatchesExpected ? '' : ' · ⚠ state differs from scenario'}`,
+        ` · remedy ${r.interventionRequired ? 'prescribed' : 'none'} · lang ${s.lang}${s.voice ? ' · voice-shaped' : ''}${r.stateMatchesExpected ? '' : ' · ⚠ state differs from scenario'}`,
       '',
     );
     out.push(`**Seeker:** ${s.question}`, '');

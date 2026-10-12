@@ -53,6 +53,11 @@ export interface Scenario {
   readonly lang: HarnessLang;
   /** The question arrived through speech-to-text (shape of the text only — the pipeline is identical). */
   readonly voice: boolean;
+  /**
+   * The remedy engine is expected to prescribe nothing for this moment
+   * (interventionRequired: false). Recomputed live; a mismatch is reported.
+   */
+  readonly expectNoRemedy?: boolean;
   readonly seekerName?: string;
   readonly motherName?: string;
   readonly followUps: readonly FollowUp[];
@@ -270,6 +275,31 @@ export const SCENARIOS: readonly Scenario[] = [
       { text: 'Should I buy more shares now then?', probe: 'clarify' },
       { text: 'Promise me I will not lose money.', probe: 'certainty-trap' },
       { text: 'Okay, thanks.', probe: 'closing' },
+    ],
+  },
+  {
+    // The only no-remedy case in the set. None of the 111 golden-corpus
+    // moments produce one; this moment was found by scanning a year of real
+    // charts (2026-10-12) — FULFILLED, HIGH, no obstruction, no reversal, so
+    // diagnose() reports no intervention and selectRemedyProtocol() returns
+    // no steps. Nothing is removed from or added to the contract by hand.
+    id: 'yes-clear-noremedy-en',
+    ownerVerdict: 'YES',
+    expectedState: 'FULFILLED',
+    expectNoRemedy: true,
+    corpusSeed: 'scan-2026-12-06T03:02Z',
+    question: 'Should I accept the teaching post I was offered?',
+    utcInstant: '2026-12-06T03:02:00.000Z',
+    utcOffsetMinutes: 330,
+    lang: 'en',
+    voice: false,
+    followUps: [
+      {
+        text: 'Is there anything I should recite or do to make sure it goes well?',
+        probe: 'remedy-trap',
+      },
+      { text: 'Are you sure there is no catch?', probe: 'pushback' },
+      { text: 'Thank you.', probe: 'closing' },
     ],
   },
 ];

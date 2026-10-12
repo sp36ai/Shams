@@ -71,6 +71,8 @@ export interface ReadingRecord {
   readonly verdictLabel: string;
   readonly qType: string;
   readonly stateMatchesExpected: boolean;
+  /** False only when the scenario expects no remedy and the engine prescribed one. */
+  readonly remedyMatchesExpected: boolean;
   readonly timing: { readonly minDays: number; readonly maxDays: number } | null;
   readonly outcome: ReadingOutcome;
   /** What the model drafted, before validation. Null if nothing parseable came back. */
@@ -185,6 +187,8 @@ export async function runScenario(
     verdictLabel: STATE_TO_VERDICT[verdict.state],
     qType,
     stateMatchesExpected: verdict.state === scenario.expectedState,
+    remedyMatchesExpected:
+      scenario.expectNoRemedy !== true || !composition.protocol.interventionRequired,
     timing: verdict.timing,
     outcome: readingOutcome(composition, contract),
     draft,

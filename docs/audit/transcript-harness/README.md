@@ -1,6 +1,13 @@
 # Oracle transcript harness — Phase 1 status
 
-**Status (2026-10-12): harness built and verified offline. Baseline NOT TESTED: no live run yet.**
+| Item | Status (2026-10-12) |
+|---|---|
+| Harness implementation | PASS (accepted provisionally by the owner) |
+| Regression protection | PASS |
+| Live Oracle baseline (`baseline-2026-10-12`) | **BLOCKED**: needs a live run with an owner-controlled API key, then human review |
+| No-remedy scenario | Added from a real chart moment; verified offline |
+| TTS language mismatch | Confirmed in code; **NOT TESTED** on a device |
+| Phase 2 prompt changes | On hold |
 
 No transcript in this repository is evidence of how the Oracle actually sounds until a `--mode=live` run is recorded here. Stub runs use fixed placeholder text and are never committed.
 
@@ -28,14 +35,34 @@ The harness touches the pipeline in one place: it wraps `fetch` for the Anthropi
 | NO | BLOCKED | `no-property-en`, `no-job-pushback-en`, `no-job-en-question-ur-ui` |
 | WAIT | DELAYED | `wait-scholarship-en`, `wait-job-voice-en`, `wait-job-ur`, `wait-job-voice-hi` |
 | UNCLEAR | UNFORMED | `unclear-ambiguous-en` |
+| YES, no remedy | FULFILLED, no intervention | `yes-clear-noremedy-en` |
 
-- **Languages:** 9 English, 2 Urdu (one typed in Urdu, one typed in English from an Urdu UI) and 1 Hindi.
+- **Languages:** 10 English, 2 Urdu (one typed in Urdu, one typed in English from an Urdu UI) and 1 Hindi.
 - **Voice:** 2 scenarios use voice-shaped transcripts (no punctuation, filler words).
 - **Follow-up probes:** clarification, pushback, date/weekday traps, remedy/verse traps, guarantee traps, a new-question boundary and a closing.
 
 Moments come from the golden corpus and were re-judged against the current engine. The runner recomputes each verdict live and reports any scenario whose state has drifted. In the 2026-10-12 offline check, none had drifted.
 
-**Gap:** no scenario has `interventionRequired: false`. None of the 111 corpus moments produce it naturally.
+### The no-remedy scenario
+
+The production pipeline does support a reading with no remedy. `diagnose()` reports no intervention when all of these hold:
+
+- the outcome is FAVOURABLE;
+- nothing obstructs;
+- confidence is at least 0.8;
+- there is no reversal.
+
+`selectRemedyProtocol()` then returns no steps. The exception is a safety referral (for example, health), which is still prescribed.
+
+Such moments are rare:
+
+- None of the 111 corpus moments produce one.
+- A two-week scan (6,204 moment/question pairs) found none. All 129 FULFILLED results in it carried an obstruction, which turns them CONDITIONAL.
+- A one-year scan (34,810 pairs, stopped at 12 matches) found 12, clustered on 5–6 Dec 2026.
+
+`yes-clear-noremedy-en` uses one of those 12: "Should I accept the teaching post I was offered?" at 2026-12-06T03:02Z (+05:30). The engine classifies the question as `general`.
+
+The contract is not edited by hand and no remedy is invented. The harness recomputes the moment live and reports `remedyMismatches` if the engine ever prescribes something there. The stub run confirmed that both the synthesis brief and the discussion brief carry `INTERVENTION REQUIRED: no`.
 
 ## What is measured
 
@@ -51,7 +78,7 @@ No numeric score is produced automatically.
 
 | Check | Result |
 |---|---|
-| Stub run: all 12 scenarios, 54 model calls | PASS: completed end to end |
+| Stub run: all 13 scenarios, 58 model calls (54 before the no-remedy scenario) | PASS: completed end to end |
 | Replay of the stub cassette | PASS: metrics identical to the recording |
 | Rejection path: a "YES … on Monday" draft for a BLOCKED reading, plus a "certainly … next Tuesday" follow-up | PASS: the production validator rejected both. The reading showed the deterministic fallback; the follow-up was rejected twice and ended as "no reply". The harness reported both correctly. |
 | Metric unit tests (`metrics.test.ts`) | PASS: 9/9 |
@@ -64,7 +91,14 @@ These four findings come from reading the code. The live baseline will show whet
 
 1. **Spoken order.** The spoken text is `rkp_finding` + `interpretation` + `recommended_approach` (`responseComposer.ts`, `buildSpeakableText`). The synthesis prompt puts the verdict in the first sentence of `interpretation`, after 2–4 sentences of `rkp_finding`.
 2. **First-reading language.** `askWatchOracle` receives `questionLang` but does not pass it to `composeWatchOracleResponse`, and the synthesis prompt has no language instruction. Follow-ups do get `REPLY LANGUAGE`.
-3. **Spoken language.** `ChatBubble` speaks the reading with the thread's `questionLang` voice (`ReadingScreen.tsx:729` → `ChatBubble.tsx:307`). An Urdu or Hindi seeker may therefore hear English text read by an Urdu or Hindi voice. This has not been verified on a device.
+3. **Spoken language.** `ChatBubble` speaks the reading with the thread's `questionLang` (`ReadingScreen.tsx:729` → `ChatBubble.tsx:307`). `useTextToSpeech.ts:281` sets the engine to `ur-PK` or `hi-IN`, or falls back silently when that locale is not installed, and then speaks the English reading text. Follow-up replies are spoken in the same locale but are written in that language, so the mismatch affects the first reading only.
+
+   **Owner decision pending:** on-device playback in en, ur and hi decides where the fix belongs: the prompt, the response composer, or language selection in the pipeline.
+
+   Device test to run:
+   1. Ask the same question with the app set to English, Urdu and Hindi.
+   2. Tap play on the reading and on one follow-up in each.
+   3. Note whether the English reading is intelligible in the ur-PK and hi-IN voices, and whether either locale is missing on the device (a silent fallback).
 4. **Closing variety.** The synthesis prompt says "do not use the same closing twice in a row", but no earlier closing line is ever included in the synthesis brief.
 
 ## How to record the baseline
@@ -84,4 +118,6 @@ After the run:
 2. Fill in `review-sheet.md`.
 3. Commit the whole directory, including `cassette.json`, so the baseline can be re-scored with `--mode=replay` and compared in Phase 3.
 
-The live run uses the production model id (`claude-opus-5`). Its cost is about 54 or more model calls.
+The live run uses the production model id (`claude-opus-5`). It makes 58 or more model calls: one per opening reading, at least one per follow-up, and a second attempt whenever the validator forces a rewrite. Check usage limits before starting.
+
+The key is read only from the environment. It is never written to the cassette, records or reports; the transport records request bodies and response text, not headers. Before committing a live run, still confirm this with `grep -r "sk-ant" docs/audit/transcript-harness/<label>/`, which should print nothing.
