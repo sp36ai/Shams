@@ -20,6 +20,7 @@ import { composeWatchOracleResponse } from '../responseComposer';
 import { WATCH_ORACLE_SYNTHESIS_PROMPT } from '../../prompts/watchOracleSynthesisPrompt';
 import type { DisplayWatchVerdict } from '../../engine/rkp/watchJudgment';
 import { okJson, requestBodyOf, responsesBody } from '../../llm/__tests__/responsesFixtures';
+import { logger } from '../../utils/logger';
 
 const VERDICT = {
   qType: 'career',
@@ -132,5 +133,52 @@ describe('provider failures leave the judgment intact and drop only the prose', 
     });
     expect(composition.narration).toBeNull();
     expect(composition.diagnosis).toEqual(baseline.composition.diagnosis);
+  });
+});
+
+describe('model-written text never reaches operational logs', () => {
+  // Node's JSON.parse error quotes the first 10 characters of the bad text,
+  // so the marker is exactly that long and leads every malformed output.
+  const PLANTED = 'Lahore7f3a my brother';
+
+  function captureLogs(): () => string {
+    const calls: unknown[][] = [];
+    for (const level of ['info', 'warn', 'error', 'debug'] as const) {
+      vi.spyOn(logger, level).mockImplementation((...args: unknown[]) => {
+        calls.push(args);
+      });
+    }
+    for (const level of ['log', 'info', 'warn', 'error'] as const) {
+      vi.spyOn(console, level).mockImplementation((...args: unknown[]) => {
+        calls.push(args);
+      });
+    }
+    return () => JSON.stringify(calls);
+  }
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it.each([
+    [
+      'a refusal quoting the seeker',
+      {
+        status: 'completed',
+        output: [{ type: 'message', content: [{ type: 'refusal', refusal: `No: ${PLANTED}` }] }],
+      },
+    ],
+    ['malformed output quoting the seeker', responsesBody(`${PLANTED} — not JSON at all`)],
+    ['truncated JSON quoting the seeker', responsesBody(`{"rkp_finding":"${PLANTED}`)],
+  ])('%s → logged by category only', async (_label, body) => {
+    const logs = captureLogs();
+    respond(body);
+    const { composition } = await composeWatchOracleResponse({
+      verdict: VERDICT,
+      question: 'Will I get the job?',
+    });
+    expect(composition.narration).toBeNull();
+    expect(logs()).toContain('watch oracle narration');
+    expect(logs()).not.toContain('Lahore7f3a');
   });
 });

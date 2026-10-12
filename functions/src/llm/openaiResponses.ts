@@ -207,13 +207,15 @@ export function extractResponseText(json: unknown): ResponsesResult {
   }
 
   // A refusal anywhere means the model did not answer the task. Partial
-  // text alongside a refusal is not trusted.
+  // text alongside a refusal is not trusted. The refusal's own wording is
+  // never carried into `detail`: it is model-written and can restate the
+  // seeker's question, and `detail` goes to operational logs.
   if (refusals.length > 0) {
     return {
       ok: false,
       kind: 'refusal',
       status: null,
-      detail: redactSecrets(`refusal: ${refusals.join(' ')}`),
+      detail: `model refused (${refusals.length} refusal part${refusals.length === 1 ? '' : 's'})`,
     };
   }
   const text = texts.join('').trim();

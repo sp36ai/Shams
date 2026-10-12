@@ -23,6 +23,7 @@ There are four call sites. All of them now go through one adapter, `functions/sr
 - **Text extraction.** Text is joined from every `output_text` part of every `message` item, rather than assuming `output[0]`. A refusal anywhere means the reply is not used.
 - **No provider storage.** Requests are sent with `store: false`.
 - **Key handling.** The key goes in the `Authorization` header only. Error details are redacted of key-shaped text and capped at 300 characters before logging.
+- **No model-written text in logs.** Refusals are logged as a category and count, never their wording. Unparseable output is logged as `invalid-json` with its length, never an excerpt. Either could restate the seeker's question. Regression tests plant a marker in both and check every log channel.
 - **Every reply is still validated.** Each caller runs its existing deterministic validation. Schemas guarantee shape only. The gate and profile parsers accept exactly one known key with a known value.
 
 ### Prompt changes

@@ -88,6 +88,21 @@ describe('extractResponseText', () => {
     expect(r).toMatchObject({ ok: false, kind: 'refusal' });
   });
 
+  it('never carries the refusal wording into detail', () => {
+    const planted = 'Lahore7f3a my brother';
+    const r = extractResponseText({
+      status: 'completed',
+      output: [
+        {
+          type: 'message',
+          content: [{ type: 'refusal', refusal: `I cannot help with ${planted}` }],
+        },
+      ],
+    });
+    expect(r).toMatchObject({ ok: false, kind: 'refusal' });
+    expect(JSON.stringify(r)).not.toContain('Lahore7f3a');
+  });
+
   it('reports truncation with its reason', () => {
     const r = extractResponseText({
       status: 'incomplete',

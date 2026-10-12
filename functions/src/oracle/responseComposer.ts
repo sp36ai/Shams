@@ -591,7 +591,13 @@ async function narrate(ctx: NarrationContext): Promise<NarrationFields | null> {
     // returns. See docs/audit/PHASE_8A_3_REMEDIATION.md.
     return drafted;
   } catch (err) {
-    logger.warn('watch oracle narration unparseable', { err: String(err) });
+    // The parser's message quotes the start of the model's text, which can
+    // restate the seeker's question — log the category and size only.
+    logger.warn('watch oracle narration unparseable', {
+      kind: 'invalid-json',
+      errorName: err instanceof Error ? err.name : 'unknown',
+      outputChars: result.text.length,
+    });
     return null;
   }
 }

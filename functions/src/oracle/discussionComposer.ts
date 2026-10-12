@@ -727,7 +727,14 @@ async function requestDraft(
         parsed.conversation_complete === true && parsed.is_new_question !== true,
     };
   } catch (err) {
-    logger.warn('oracle discussion failed', { ...ctx, err: String(err) });
+    // The parser's message quotes the start of the model's text, which can
+    // restate the seeker's words — log the category and size only.
+    logger.warn('oracle discussion failed', {
+      ...ctx,
+      kind: 'invalid-json',
+      errorName: err instanceof Error ? err.name : 'unknown',
+      outputChars: result.text.length,
+    });
     return null;
   }
 }

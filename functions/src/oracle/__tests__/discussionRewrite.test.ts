@@ -257,3 +257,47 @@ describe('composeDiscussionReply — failure logs carry the reference', () => {
     );
   });
 });
+
+describe('composeDiscussionReply — model-written text never reaches operational logs', () => {
+  // Node's JSON.parse error quotes the first 10 characters of the bad text,
+  // so the marker is exactly that long and leads every malformed output.
+  const PLANTED = 'Lahore7f3a my brother';
+
+  function captureLogs(): () => string {
+    const calls: unknown[][] = [];
+    for (const level of ['info', 'warn', 'error', 'debug'] as const) {
+      vi.spyOn(logger, level).mockImplementation((...args: unknown[]) => {
+        calls.push(args);
+      });
+    }
+    return () => JSON.stringify(calls);
+  }
+
+  it.each([
+    [
+      'a refusal quoting the seeker',
+      {
+        status: 'completed',
+        output: [{ type: 'message', content: [{ type: 'refusal', refusal: `No: ${PLANTED}` }] }],
+      },
+    ],
+    [
+      'malformed output quoting the seeker',
+      {
+        status: 'completed',
+        output: [
+          { type: 'message', content: [{ type: 'output_text', text: `${PLANTED} — not JSON` }] },
+        ],
+      },
+    ],
+  ])('%s → no reply, logged by category only', async (_label, body) => {
+    const logs = captureLogs();
+    globalThis.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve(body),
+    }) as unknown as typeof fetch;
+    expect(await ask()).toBeNull();
+    expect(logs()).toContain('oracle discussion failed');
+    expect(logs()).not.toContain('Lahore7f3a');
+  });
+});
