@@ -31,9 +31,14 @@ import {
 } from 'react-native';
 import Svg, { Circle, Defs, RadialGradient, Stop } from 'react-native-svg';
 
-import { CELESTIAL } from './celestialPalette';
+import { useHomeStyle } from './homeStyle';
 
-const MANDALA_IMAGE = require('@assets/images/home-mandala.png');
+/** Emblem artwork per Home style (see scripts/generate-home-mandala.py). */
+const EMBLEM_IMAGES = {
+  gold: require('@assets/images/home-mandala.png'),
+  silver: require('@assets/images/home-mandala-silver.png'),
+  emerald: require('@assets/images/home-mandala-emerald.png'),
+} as const;
 
 /** One idle revolution, in ms — slow enough to read as stillness that breathes. */
 const IDLE_REVOLUTION_MS = 120000;
@@ -55,6 +60,7 @@ const MandalaEmblem: React.FC<MandalaEmblemProps> = ({
   onPress,
   accessibilityLabel,
 }) => {
+  const { palette: P, emblem: emblemArt } = useHomeStyle();
   const appear = useRef(new Animated.Value(0)).current;
   const glow = useRef(new Animated.Value(0.55)).current;
   const idle = useRef(new Animated.Value(0)).current;
@@ -171,9 +177,9 @@ const MandalaEmblem: React.FC<MandalaEmblemProps> = ({
         <Svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
           <Defs>
             <RadialGradient id="mandalaAura" cx="50%" cy="50%" rx="50%" ry="50%">
-              <Stop offset="0%" stopColor={CELESTIAL.amber} stopOpacity={0.32} />
-              <Stop offset="55%" stopColor={CELESTIAL.antiqueGold} stopOpacity={0.08} />
-              <Stop offset="100%" stopColor={CELESTIAL.antiqueGold} stopOpacity={0} />
+              <Stop offset="0%" stopColor={P.amber} stopOpacity={0.32} />
+              <Stop offset="55%" stopColor={P.antiqueGold} stopOpacity={0.08} />
+              <Stop offset="100%" stopColor={P.antiqueGold} stopOpacity={0} />
             </RadialGradient>
           </Defs>
           <Circle cx={c} cy={c} r={c} fill="url(#mandalaAura)" />
@@ -182,7 +188,7 @@ const MandalaEmblem: React.FC<MandalaEmblemProps> = ({
 
       <Animated.View style={{ opacity, transform: [{ scale }, { rotate }] }}>
         <Image
-          source={MANDALA_IMAGE}
+          source={EMBLEM_IMAGES[emblemArt]}
           style={{ width: size, height: size }}
           resizeMode="contain"
           fadeDuration={0}

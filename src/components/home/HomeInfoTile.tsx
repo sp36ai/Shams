@@ -1,16 +1,22 @@
 /**
- * HomeInfoTile — one small gold-rimmed tile in the Home hero's grid: a short
- * eyebrow label over a one- or two-line headline. Pressing it opens the full
- * text (OracleScreen owns the detail sheet and every value shown here).
+ * HomeInfoTile — one tile in the Home panel: a short eyebrow label over a
+ * one- or two-line headline. Pressing it opens the full text (OracleScreen
+ * owns the detail sheet and every value shown here).
  *
- * Uses the fixed Midnight Celestial palette, like the rest of the hero.
+ * Colours, shape and alignment come from the theme's Home style:
+ *   rounded  soft cards (the default)
+ *   arch     mihrab arches — round top, nearly square foot
+ *   facet    cut corners with a fine inner rim
+ * In the 'grid' layout tiles are centred, three to a row; in the 'list'
+ * layout they are start-aligned, two to a row.
  */
 
-import React from 'react';
-import { Pressable, StyleSheet, Text } from 'react-native';
+import React, { useMemo } from 'react';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { useTypography } from '@theme/useTypography';
-import { CELESTIAL } from './celestialPalette';
+import type { HomePalette, HomeStyle } from '@theme/themes';
+import { useHomeStyle } from './homeStyle';
 
 interface HomeInfoTileProps {
   testID?: string;
@@ -21,6 +27,8 @@ interface HomeInfoTileProps {
 
 const HomeInfoTile: React.FC<HomeInfoTileProps> = ({ testID, label, headline, onPress }) => {
   const typography = useTypography();
+  const { palette: P, tileShape, tileLayout } = useHomeStyle();
+  const styles = useMemo(() => makeStyles(P, tileShape, tileLayout), [P, tileShape, tileLayout]);
   return (
     <Pressable
       testID={testID}
@@ -29,6 +37,7 @@ const HomeInfoTile: React.FC<HomeInfoTileProps> = ({ testID, label, headline, on
       accessibilityRole="button"
       accessibilityLabel={`${label}: ${headline}`}
     >
+      {tileShape === 'facet' && <View pointerEvents="none" style={styles.innerRim} />}
       <Text
         style={[typography('label'), styles.label]}
         numberOfLines={1}
@@ -49,38 +58,64 @@ const HomeInfoTile: React.FC<HomeInfoTileProps> = ({ testID, label, headline, on
   );
 };
 
-const styles = StyleSheet.create({
-  tile: {
-    flexBasis: '31%',
-    flexGrow: 1,
-    minHeight: 54,
-    paddingHorizontal: 8,
-    paddingVertical: 6,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: CELESTIAL.antiqueGold + '80',
-    backgroundColor: CELESTIAL.deepTeal,
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOpacity: 0.4,
-    shadowRadius: 6,
-    shadowOffset: { width: 0, height: 3 },
-    elevation: 3,
+const SHAPES: Record<HomeStyle['tileShape'], object> = {
+  rounded: { borderRadius: 12 },
+  arch: {
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    borderBottomLeftRadius: 5,
+    borderBottomRightRadius: 5,
+    paddingTop: 10,
   },
-  label: {
-    color: CELESTIAL.antiqueGold,
-    fontSize: 9,
-    letterSpacing: 0.6,
-    textAlign: 'center',
-  },
-  headline: {
-    color: CELESTIAL.ivory,
-    fontSize: 13,
-    lineHeight: 17,
-    marginTop: 4,
-    textAlign: 'center',
-  },
-});
+  facet: { borderRadius: 3 },
+};
+
+const makeStyles = (
+  P: HomePalette,
+  shape: HomeStyle['tileShape'],
+  layout: HomeStyle['tileLayout'],
+) => {
+  const centred = layout === 'grid';
+  return StyleSheet.create({
+    tile: {
+      flexBasis: centred ? '31%' : '47%',
+      flexGrow: 1,
+      minHeight: 54,
+      paddingHorizontal: centred ? 8 : 12,
+      paddingVertical: 6,
+      borderWidth: 1,
+      borderColor: P.antiqueGold + '80',
+      backgroundColor: P.deepTeal,
+      alignItems: centred ? 'center' : 'flex-start',
+      justifyContent: 'center',
+      shadowColor: '#000',
+      shadowOpacity: 0.4,
+      shadowRadius: 6,
+      shadowOffset: { width: 0, height: 3 },
+      elevation: 3,
+      ...SHAPES[shape],
+    },
+    innerRim: {
+      ...StyleSheet.absoluteFillObject,
+      margin: 3,
+      borderRadius: 2,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: P.antiqueGold + '59',
+    },
+    label: {
+      color: P.antiqueGold,
+      fontSize: 9,
+      letterSpacing: 0.6,
+      textAlign: centred ? 'center' : 'auto',
+    },
+    headline: {
+      color: P.ivory,
+      fontSize: 13,
+      lineHeight: 17,
+      marginTop: 4,
+      textAlign: centred ? 'center' : 'auto',
+    },
+  });
+};
 
 export default HomeInfoTile;

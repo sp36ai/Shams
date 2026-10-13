@@ -11,7 +11,7 @@
  * verdict and the conversation about it.
  */
 
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   AppState,
   I18nManager,
@@ -31,7 +31,7 @@ import type { AppNavigation } from '@navigation/types';
 
 import { useColors } from '@theme/ThemeProvider';
 import { useTypography } from '@theme/useTypography';
-import { RADIUS, SPACING } from '@theme/themes';
+import { RADIUS, SPACING, type HomePalette } from '@theme/themes';
 import { useTranslation, useI18n } from '@i18n/I18nProvider';
 import { useSettingsStore } from '@stores/settingsStore';
 import { useQuotaStore, FREE_DAILY_LIMIT, TRIAL_DAILY_LIMIT } from '@stores/quotaStore';
@@ -50,7 +50,7 @@ import HomeInfoTile from '@components/home/HomeInfoTile';
 import HomeDetailSheet from '@components/home/HomeDetailSheet';
 import HomeMenu, { HomeMenuButton } from '@components/home/HomeMenu';
 import GenieGuide, { GenieButton } from '@components/home/GenieGuide';
-import { CELESTIAL } from '@components/home/celestialPalette';
+import { useHomeStyle } from '@components/home/homeStyle';
 import OrnamentDivider from '@components/ui/OrnamentDivider';
 import { buildDailySkyMessage } from '@utils/dailySkyMessage';
 import { favoredChipForPlanet } from '../data/favoredQuestion';
@@ -81,6 +81,8 @@ const OracleScreen: React.FC = () => {
   // One typed handle for both destinations: sibling tabs (AlFalak/History)
   // and root-level pushes (Settings/Premium/Reading). See AppNavigation.
   const navigation = useNavigation<AppNavigation>();
+  const { palette: P } = useHomeStyle();
+  const styles = useMemo(() => makeStyles(P), [P]);
 
   const [menuOpen, setMenuOpen] = useState(false);
   const [genieOpen, setGenieOpen] = useState(false);
@@ -94,7 +96,7 @@ const OracleScreen: React.FC = () => {
       if (entry === null) {
         entry = StatusBar.pushStackEntry({
           barStyle: 'light-content',
-          backgroundColor: CELESTIAL.midnight,
+          backgroundColor: P.midnight,
           animated: true,
         });
       }
@@ -113,7 +115,7 @@ const OracleScreen: React.FC = () => {
       unsubBlur();
       pop();
     };
-  }, [navigation]);
+  }, [navigation, P.midnight]);
 
   const lastLocation = useSettingsStore(
     (s: ReturnType<typeof useSettingsStore.getState>) => s.lastLocation,
@@ -413,10 +415,7 @@ const OracleScreen: React.FC = () => {
   };
 
   return (
-    <SafeAreaView
-      style={[styles.root, { backgroundColor: CELESTIAL.midnight }]}
-      edges={['top', 'bottom']}
-    >
+    <SafeAreaView style={[styles.root, { backgroundColor: P.midnight }]} edges={['top', 'bottom']}>
       <StarfieldBackground starColor={colors.starfield} />
 
       {/* Header — menu, today's date over the wordmark, and location */}
@@ -441,7 +440,7 @@ const OracleScreen: React.FC = () => {
         <View style={styles.locationChip}>
           <TabIcon
             name="pin"
-            color={lastLocation === null ? colors.negative : CELESTIAL.champagne}
+            color={lastLocation === null ? colors.negative : P.champagne}
             size={13}
           />
           <Text
@@ -614,162 +613,163 @@ const OracleScreen: React.FC = () => {
 
 // ── Styles ────────────────────────────────────────────────────────────────────
 
-const styles = StyleSheet.create({
-  root: { flex: 1 },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: SPACING.xl,
-    paddingTop: 12,
-    paddingBottom: 10,
-    gap: 12,
-  },
-  headerDivider: {
-    marginHorizontal: SPACING.xl,
-  },
-  wordmark: {
-    marginTop: 2,
-    letterSpacing: 0.6,
-    color: CELESTIAL.champagne,
-    textShadowColor: CELESTIAL.antiqueGold + '66',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 8,
-  },
-  headerDate: {
-    color: CELESTIAL.antiqueGold,
-  },
-  headerBrand: {
-    flex: 1,
-  },
-  locationChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
-    borderWidth: 1,
-    borderColor: CELESTIAL.antiqueGold + '80',
-    backgroundColor: CELESTIAL.deepTeal,
-    borderRadius: RADIUS.pill,
-    paddingHorizontal: 11,
-    paddingVertical: 6,
-    maxWidth: 140,
-  },
-  locationText: {
-    color: CELESTIAL.champagne,
-    fontSize: 12,
-  },
-  scroll: { flex: 1 },
-  tileGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    alignSelf: 'stretch',
-    gap: 6,
-    marginTop: 12,
-  },
-  tierLine: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    alignItems: 'baseline',
-    justifyContent: 'center',
-    gap: 6,
-    marginTop: 10,
-  },
-  tierLabel: {
-    color: CELESTIAL.antiqueGold,
-    fontSize: 9,
-    letterSpacing: 0.6,
-  },
-  tierValue: {
-    color: CELESTIAL.champagne,
-    fontSize: 13,
-  },
-  tierDot: {
-    color: CELESTIAL.bronze,
-    fontSize: 13,
-  },
-  detailRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 14,
-  },
-  detailTextCol: {
-    flex: 1,
-  },
-  detailLink: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'flex-end',
-    gap: 4,
-    marginTop: 14,
-    paddingTop: 12,
-    borderTopWidth: StyleSheet.hairlineWidth,
-  },
-  arabic: {
-    fontFamily: 'Amiri-Regular',
-    fontSize: 24,
-  },
-  arabicCentered: {
-    textAlign: 'center',
-    marginBottom: 4,
-  },
-  scrollBody: {
-    flexGrow: 1,
-    paddingBottom: 4,
-  },
-  vocBanner: {
-    marginHorizontal: SPACING.xl,
-    marginTop: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: RADIUS.md,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: CELESTIAL.antiqueGold + '80',
-    backgroundColor: CELESTIAL.deepTeal,
-  },
-  vocText: {
-    color: CELESTIAL.champagne,
-    textAlign: 'center',
-    fontSize: 12,
-    lineHeight: 16,
-  },
-  signature: {
-    color: CELESTIAL.antiqueGold,
-    textAlign: 'center',
-    fontSize: 11,
-  },
-  footerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: SPACING.xl,
-    paddingTop: 4,
-  },
-  footerSide: {
-    flex: 1,
-  },
-  footerSideEnd: {
-    alignItems: 'flex-end',
-  },
-  inlineRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 2,
-  },
-  flipX: {
-    transform: [{ scaleX: -1 }],
-  },
-  trialBanner: {
-    height: 44,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    borderTopWidth: StyleSheet.hairlineWidth,
-  },
-  trialBannerText: {
-    opacity: 0.8,
-    textAlign: 'center',
-    letterSpacing: 0.6,
-    fontSize: 12,
-  },
-});
+const makeStyles = (P: HomePalette) =>
+  StyleSheet.create({
+    root: { flex: 1 },
+    header: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingHorizontal: SPACING.xl,
+      paddingTop: 12,
+      paddingBottom: 10,
+      gap: 12,
+    },
+    headerDivider: {
+      marginHorizontal: SPACING.xl,
+    },
+    wordmark: {
+      marginTop: 2,
+      letterSpacing: 0.6,
+      color: P.champagne,
+      textShadowColor: P.antiqueGold + '66',
+      textShadowOffset: { width: 0, height: 1 },
+      textShadowRadius: 8,
+    },
+    headerDate: {
+      color: P.antiqueGold,
+    },
+    headerBrand: {
+      flex: 1,
+    },
+    locationChip: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 5,
+      borderWidth: 1,
+      borderColor: P.antiqueGold + '80',
+      backgroundColor: P.deepTeal,
+      borderRadius: RADIUS.pill,
+      paddingHorizontal: 11,
+      paddingVertical: 6,
+      maxWidth: 140,
+    },
+    locationText: {
+      color: P.champagne,
+      fontSize: 12,
+    },
+    scroll: { flex: 1 },
+    tileGrid: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      alignSelf: 'stretch',
+      gap: 6,
+      marginTop: 12,
+    },
+    tierLine: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      alignItems: 'baseline',
+      justifyContent: 'center',
+      gap: 6,
+      marginTop: 10,
+    },
+    tierLabel: {
+      color: P.antiqueGold,
+      fontSize: 9,
+      letterSpacing: 0.6,
+    },
+    tierValue: {
+      color: P.champagne,
+      fontSize: 13,
+    },
+    tierDot: {
+      color: P.bronze,
+      fontSize: 13,
+    },
+    detailRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 14,
+    },
+    detailTextCol: {
+      flex: 1,
+    },
+    detailLink: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'flex-end',
+      gap: 4,
+      marginTop: 14,
+      paddingTop: 12,
+      borderTopWidth: StyleSheet.hairlineWidth,
+    },
+    arabic: {
+      fontFamily: 'Amiri-Regular',
+      fontSize: 24,
+    },
+    arabicCentered: {
+      textAlign: 'center',
+      marginBottom: 4,
+    },
+    scrollBody: {
+      flexGrow: 1,
+      paddingBottom: 4,
+    },
+    vocBanner: {
+      marginHorizontal: SPACING.xl,
+      marginTop: 8,
+      paddingHorizontal: 12,
+      paddingVertical: 6,
+      borderRadius: RADIUS.md,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: P.antiqueGold + '80',
+      backgroundColor: P.deepTeal,
+    },
+    vocText: {
+      color: P.champagne,
+      textAlign: 'center',
+      fontSize: 12,
+      lineHeight: 16,
+    },
+    signature: {
+      color: P.antiqueGold,
+      textAlign: 'center',
+      fontSize: 11,
+    },
+    footerRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingHorizontal: SPACING.xl,
+      paddingTop: 4,
+    },
+    footerSide: {
+      flex: 1,
+    },
+    footerSideEnd: {
+      alignItems: 'flex-end',
+    },
+    inlineRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 2,
+    },
+    flipX: {
+      transform: [{ scaleX: -1 }],
+    },
+    trialBanner: {
+      height: 44,
+      justifyContent: 'center',
+      alignItems: 'center',
+      paddingHorizontal: 16,
+      borderTopWidth: StyleSheet.hairlineWidth,
+    },
+    trialBannerText: {
+      opacity: 0.8,
+      textAlign: 'center',
+      letterSpacing: 0.6,
+      fontSize: 12,
+    },
+  });
 
 export default OracleScreen;

@@ -17,9 +17,8 @@
  * OracleScreen, which already owns the live sky hooks and navigation — this
  * component computes nothing and decides nothing.
  *
- * The hero always uses the fixed Midnight Celestial palette (see
- * celestialPalette.ts), in every theme; the rest of Home keeps the user's
- * chosen theme.
+ * Colours, capsule and tile shapes and the emblem artwork follow the theme's
+ * Home style (useHomeStyle).
  */
 
 import React, { useState } from 'react';
@@ -29,7 +28,7 @@ import Svg, { Circle, Defs, RadialGradient, Stop } from 'react-native-svg';
 import { SPACING } from '@theme/themes';
 import MandalaEmblem from './MandalaEmblem';
 import AstroMetricCapsule, { type MetricGlyph } from './AstroMetricCapsule';
-import { CELESTIAL } from './celestialPalette';
+import { useHomeStyle } from './homeStyle';
 
 export interface HeroMetric {
   /** Stable id, also used for the testID. */
@@ -55,6 +54,7 @@ const MANDALA_MAX = 320;
 const MANDALA_MIN = 110;
 
 const HomeHero: React.FC<HomeHeroProps> = ({ metrics, onAsk, askLabel, children }) => {
+  const { palette: P } = useHomeStyle();
   const { width } = useWindowDimensions();
   // The emblem never exceeds the panel's inner width…
   const inner = width - SPACING.xl * 2;
@@ -69,7 +69,7 @@ const HomeHero: React.FC<HomeHeroProps> = ({ metrics, onAsk, askLabel, children 
     slotHeight === null ? null : Math.max(MANDALA_MIN, Math.min(widthLimit, slotHeight));
 
   return (
-    <View style={styles.panel} testID="home-hero">
+    <View style={[styles.panel, { backgroundColor: P.midnight }]} testID="home-hero">
       <View style={styles.metricRow}>
         {metrics.map(m => (
           <AstroMetricCapsule
@@ -90,8 +90,8 @@ const HomeHero: React.FC<HomeHeroProps> = ({ metrics, onAsk, askLabel, children 
               <Svg width={mandalaSize * 1.5} height={mandalaSize * 1.5}>
                 <Defs>
                   <RadialGradient id="heroAmbient" cx="50%" cy="50%" rx="50%" ry="50%">
-                    <Stop offset="0%" stopColor={CELESTIAL.deepTeal} stopOpacity={0.7} />
-                    <Stop offset="100%" stopColor={CELESTIAL.midnight} stopOpacity={0} />
+                    <Stop offset="0%" stopColor={P.deepTeal} stopOpacity={0.7} />
+                    <Stop offset="100%" stopColor={P.midnight} stopOpacity={0} />
                   </RadialGradient>
                 </Defs>
                 <Circle
@@ -123,7 +123,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: SPACING.xl,
     paddingTop: PANEL_PADDING,
     paddingBottom: PANEL_PADDING,
-    backgroundColor: CELESTIAL.midnight,
     overflow: 'hidden',
     alignItems: 'center',
   },

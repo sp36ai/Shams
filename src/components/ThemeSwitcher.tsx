@@ -42,6 +42,8 @@ const THEME_DOT_COLORS: Record<ThemeId, [string, string]> = {
   sirrAlBanafsaj: ['#A78BFA', '#0B0A14'],
   qutbAlAnwar: ['#F2F4F8', '#0A0C10'],
   kanzAlAsrar: ['#F0BE8A', '#08110D'],
+  qamarAlFidda: ['#F1F5FB', '#0B0F1A'],
+  zumurrudAlMalakut: ['#F3DC9A', '#0E3326'],
 };
 
 const TIER_LABEL: Record<PlanTier, string> = {
