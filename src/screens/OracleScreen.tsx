@@ -12,14 +12,24 @@
  */
 
 import React, { useCallback, useEffect, useState } from 'react';
-import { AppState, I18nManager, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import {
+  AppState,
+  I18nManager,
+  Pressable,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  View,
+  type StatusBarProps,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { acquireLocation } from '@utils/acquireLocation';
 import crashlytics from '@react-native-firebase/crashlytics';
 import { useNavigation } from '@react-navigation/native';
 import type { AppNavigation } from '@navigation/types';
 
-import { useColors, useTheme } from '@theme/ThemeProvider';
+import { useColors } from '@theme/ThemeProvider';
 import { useTypography } from '@theme/useTypography';
 import { RADIUS, SPACING } from '@theme/themes';
 import { useTranslation, useI18n } from '@i18n/I18nProvider';
@@ -38,6 +48,7 @@ import ManzilEmblem from '@components/home/ManzilEmblem';
 import HomeHero from '@components/home/HomeHero';
 import HomeInfoTile from '@components/home/HomeInfoTile';
 import HomeDetailSheet from '@components/home/HomeDetailSheet';
+import HomeMenu, { HomeMenuButton } from '@components/home/HomeMenu';
 import { CELESTIAL } from '@components/home/celestialPalette';
 import OrnamentDivider from '@components/ui/OrnamentDivider';
 import { buildDailySkyMessage } from '@utils/dailySkyMessage';
@@ -62,7 +73,6 @@ function formatClockTime(ms: number): string {
 // ── OracleScreen (home dashboard) ───────────────────────────────────────────
 
 const OracleScreen: React.FC = () => {
-  const { theme } = useTheme();
   const colors = useColors();
   const typography = useTypography();
   const t = useTranslation();
@@ -70,6 +80,38 @@ const OracleScreen: React.FC = () => {
   // One typed handle for both destinations: sibling tabs (AlFalak/History)
   // and root-level pushes (Settings/Premium/Reading). See AppNavigation.
   const navigation = useNavigation<AppNavigation>();
+
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  // Home's panel runs from the top edge to the bottom edge, so while Home is
+  // focused the status bar takes the panel's midnight (in every theme); the
+  // root StatusBar (theme colours) returns when Home loses focus.
+  useEffect(() => {
+    let entry: StatusBarProps | null = null;
+    const push = (): void => {
+      if (entry === null) {
+        entry = StatusBar.pushStackEntry({
+          barStyle: 'light-content',
+          backgroundColor: CELESTIAL.midnight,
+          animated: true,
+        });
+      }
+    };
+    const pop = (): void => {
+      if (entry !== null) {
+        StatusBar.popStackEntry(entry);
+        entry = null;
+      }
+    };
+    push();
+    const unsubFocus = navigation.addListener('focus', push);
+    const unsubBlur = navigation.addListener('blur', pop);
+    return () => {
+      unsubFocus();
+      unsubBlur();
+      pop();
+    };
+  }, [navigation]);
 
   const lastLocation = useSettingsStore(
     (s: ReturnType<typeof useSettingsStore.getState>) => s.lastLocation,
@@ -369,21 +411,24 @@ const OracleScreen: React.FC = () => {
   };
 
   return (
-    <SafeAreaView style={[styles.root, { backgroundColor: theme.colors.bg }]} edges={['top']}>
+    <SafeAreaView
+      style={[styles.root, { backgroundColor: CELESTIAL.midnight }]}
+      edges={['top', 'bottom']}
+    >
       <StarfieldBackground starColor={colors.starfield} />
 
-      {/* Header — today's date over the wordmark; location and Settings */}
+      {/* Header — menu, today's date over the wordmark, and location */}
       <View style={styles.header}>
+        <HomeMenuButton
+          onPress={() => setMenuOpen(true)}
+          accessibilityLabel={t('oracle.menuA11y')}
+        />
         <View style={styles.headerBrand}>
-          <Text style={[typography('caption'), { color: colors.textMuted }]} numberOfLines={1}>
+          <Text style={[typography('caption'), styles.headerDate]} numberOfLines={1}>
             {todayLabel}
           </Text>
           <Text
-            style={[
-              typography('heading'),
-              styles.wordmark,
-              { color: colors.goldBright, textShadowColor: colors.gold + '66' },
-            ]}
+            style={[typography('heading'), styles.wordmark]}
             numberOfLines={1}
             adjustsFontSizeToFit
             minimumFontScale={0.8}
@@ -391,54 +436,28 @@ const OracleScreen: React.FC = () => {
             {t('app.name')}
           </Text>
         </View>
-        <View style={styles.headerRight}>
-          <View
+        <View style={styles.locationChip}>
+          <TabIcon
+            name="pin"
+            color={lastLocation === null ? colors.negative : CELESTIAL.champagne}
+            size={13}
+          />
+          <Text
             style={[
-              styles.locationChip,
-              { borderColor: colors.borderAccent + '80', backgroundColor: colors.surfaceElevated },
+              typography('caption'),
+              styles.locationText,
+              lastLocation === null && { color: colors.negative },
             ]}
+            numberOfLines={1}
           >
-            <TabIcon
-              name="pin"
-              color={lastLocation === null ? colors.negative : colors.goldBright}
-              size={13}
-            />
-            <Text
-              style={[
-                typography('caption'),
-                {
-                  color: lastLocation === null ? colors.negative : colors.textMuted,
-                  fontSize: 12,
-                },
-              ]}
-              numberOfLines={1}
-            >
-              {locationLabel}
-            </Text>
-          </View>
-          <Pressable
-            testID="settings-gear-btn"
-            onPress={() => navigation.navigate('Settings')}
-            style={({ pressed }) => [
-              styles.settingsBtn,
-              {
-                borderColor: colors.borderAccent,
-                backgroundColor: colors.surfaceElevated,
-                opacity: pressed ? 0.7 : 1,
-              },
-            ]}
-            hitSlop={6}
-            accessibilityRole="button"
-            accessibilityLabel={t('settings.headerTitle')}
-          >
-            <TabIcon name="settings" color={colors.goldBright} size={18} />
-          </Pressable>
+            {locationLabel}
+          </Text>
         </View>
       </View>
       <OrnamentDivider style={styles.headerDivider} />
 
       <ScrollView
-        style={[styles.scroll, { backgroundColor: CELESTIAL.midnight }]}
+        style={styles.scroll}
         contentContainerStyle={styles.scrollBody}
         showsVerticalScrollIndicator={false}
       >
@@ -551,6 +570,31 @@ const OracleScreen: React.FC = () => {
         </Pressable>
       )}
 
+      <HomeMenu
+        visible={menuOpen}
+        onClose={() => setMenuOpen(false)}
+        items={[
+          {
+            key: 'alfalak',
+            label: t('nav.alFalakTab'),
+            icon: 'skyclock',
+            onPress: () => navigation.navigate('AlFalak'),
+          },
+          {
+            key: 'readings',
+            label: t('nav.readingsTab'),
+            icon: 'history',
+            onPress: () => navigation.navigate('Readings'),
+          },
+          {
+            key: 'settings',
+            label: t('settings.headerTitle'),
+            icon: 'settings',
+            onPress: () => navigation.navigate('Settings'),
+          },
+        ]}
+      />
+
       <HomeDetailSheet title={openTileLabel} onClose={() => setOpenTile(null)}>
         {renderTileDetail(openTile)}
       </HomeDetailSheet>
@@ -577,44 +621,32 @@ const styles = StyleSheet.create({
   wordmark: {
     marginTop: 2,
     letterSpacing: 0.6,
+    color: CELESTIAL.champagne,
+    textShadowColor: CELESTIAL.antiqueGold + '66',
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 8,
   },
+  headerDate: {
+    color: CELESTIAL.antiqueGold,
+  },
   headerBrand: {
     flex: 1,
-  },
-  headerRight: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
   },
   locationChip: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 5,
     borderWidth: 1,
+    borderColor: CELESTIAL.antiqueGold + '80',
+    backgroundColor: CELESTIAL.deepTeal,
     borderRadius: RADIUS.pill,
     paddingHorizontal: 11,
     paddingVertical: 6,
-    maxWidth: 150,
-    shadowColor: '#000',
-    shadowOpacity: 0.4,
-    shadowRadius: 6,
-    shadowOffset: { width: 0, height: 3 },
-    elevation: 3,
+    maxWidth: 140,
   },
-  settingsBtn: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    borderWidth: 1.5,
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOpacity: 0.45,
-    shadowRadius: 6,
-    shadowOffset: { width: 0, height: 3 },
-    elevation: 4,
+  locationText: {
+    color: CELESTIAL.champagne,
+    fontSize: 12,
   },
   scroll: { flex: 1 },
   tileGrid: {

@@ -132,6 +132,8 @@ export const hi: StringTable = {
     dayIsUnder: 'में',
     hourCarries: 'इस समय',
     openAlFalakA11y: 'अल-फ़लक खोलें — आकाशीय समय',
+    // TODO(owner): translation needed — English placeholder.
+    menuA11y: 'Menu',
     trialEndsSoon: 'आपके खुले द्वार 2 दिन में बंद हो जाएँगे।',
     trialEndsTonight: 'आपके खुले द्वार आज रात बंद हो जाएँगे — अपना मार्ग चुनें',
     choosePathA11y: 'अपना मार्ग चुनें — सदस्यता योजनाएँ खोलें',

@@ -125,6 +125,7 @@ export const en: StringTable = {
     dayIsUnder: 'is under',
     hourCarries: 'This hour carries',
     openAlFalakA11y: 'Open Al-Falak sky timing',
+    menuA11y: 'Menu',
     trialEndsSoon: 'Your open doors close in 2 days.',
     trialEndsTonight: 'Your open doors close tonight — Choose Your Path',
     choosePathA11y: 'Choose your path — open subscription plans',

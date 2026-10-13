@@ -133,6 +133,8 @@ export const ur: StringTable = {
     dayIsUnder: 'کے تحت',
     hourCarries: 'اس گھڑی پر',
     openAlFalakA11y: 'الفلک کھولیں — آسمانی اوقات',
+    // TODO(owner): translation needed — English placeholder.
+    menuA11y: 'Menu',
     trialEndsSoon: 'آپ کے کھلے دروازے دو دن میں بند ہو جائیں گے۔',
     trialEndsTonight: 'آپ کے کھلے دروازے آج رات بند ہو جائیں گے — اپنا راستہ چنیں',
     choosePathA11y: 'اپنا راستہ چنیں — رکنیت کے منصوبے کھولیں',

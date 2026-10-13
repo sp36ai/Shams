@@ -177,7 +177,14 @@ const MainTabs: React.FC = () => {
         ),
       })}
     >
-      <Tab.Screen name="Home" component={HomeRoute} options={{ tabBarLabel: labels.Home }} />
+      {/* Home is one full-screen panel with its own ≡ menu (Al-Falak, Readings,
+          Settings), so the tab bar is hidden there; the other tabs keep it,
+          and its Home tab is the way back. */}
+      <Tab.Screen
+        name="Home"
+        component={HomeRoute}
+        options={{ tabBarLabel: labels.Home, tabBarStyle: { display: 'none' } }}
+      />
       <Tab.Screen
         name="AlFalak"
         component={AlFalakRoute}

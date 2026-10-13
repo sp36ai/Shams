@@ -200,6 +200,7 @@ export interface StringTable {
     dayIsUnder: string;
     hourCarries: string;
     openAlFalakA11y: string;
+    menuA11y: string;
     trialEndsSoon: string;
     trialEndsTonight: string;
     choosePathA11y: string;

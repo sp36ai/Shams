@@ -37,14 +37,42 @@ describe('OracleScreen navigation wiring', () => {
     return handle;
   }
 
-  it('navigates to Settings when the header gear is pressed', async () => {
+  it('has no settings gear any more; Settings is in the menu', async () => {
+    mockNavigation();
+    await renderScreen(<OracleScreen />);
+    expect(screen.queryByTestId('settings-gear-btn')).toBeNull();
+    expect(screen.getByTestId('home-menu-btn').props.accessibilityLabel).toBe('Menu');
+  });
+
+  it('opens the menu with Al-Falak, Readings and Settings, in that order', async () => {
+    mockNavigation();
+    await renderScreen(<OracleScreen />);
+    expect(screen.queryByTestId('home-menu')).toBeNull();
+
+    await userEvent.setup().press(screen.getByTestId('home-menu-btn'));
+
+    const tree = JSON.stringify(screen.toJSON());
+    const ids = ['"home-menu-alfalak"', '"home-menu-readings"', '"home-menu-settings"'];
+    const positions = ids.map(id => tree.indexOf(id));
+    expect(positions.every(p => p >= 0)).toBe(true);
+    expect([...positions].sort((a, b) => a - b)).toEqual(positions);
+  });
+
+  it.each([
+    ['alfalak', 'AlFalak'],
+    ['readings', 'Readings'],
+    ['settings', 'Settings'],
+  ])('menu item %s navigates to %s and closes the menu', async (key, route) => {
     const { navigate } = mockNavigation();
     await renderScreen(<OracleScreen />);
-
     const user = userEvent.setup();
-    await user.press(screen.getByTestId('settings-gear-btn'));
 
-    expect(navigate).toHaveBeenCalledWith('Settings');
+    await user.press(screen.getByTestId('home-menu-btn'));
+    await user.press(screen.getByTestId(`home-menu-${key}`));
+
+    expect(navigate).toHaveBeenCalledWith(route);
+    expect(navigate).toHaveBeenCalledTimes(1);
+    expect(screen.queryByTestId('home-menu')).toBeNull();
   });
 });
 
