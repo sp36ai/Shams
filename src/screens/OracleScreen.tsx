@@ -2,25 +2,17 @@
  * OracleScreen — home dashboard ("The Observatory Hall").
  * --------------------------------------------------------------------------
  * The first screen the seeker lands on after onboarding (Oracle is the
- * initial tab in MainTabs). Passive status surface apart from the ask
- * composer. Hierarchy follows DĀR AL-SHAMS design system §Home Screen:
- * hora status → celestial state → ask entry → moon mansion → user tier.
- * The one thing it is not passive about is the ask composer: a question
- * typed here opens a Reading (ReadingScreen), which owns the verdict and the
- * conversation about it.
+ * initial tab in MainTabs). A passive status surface that fits on one screen:
+ * the hero panel holds the mandala, the live sky capsules, the three primary
+ * actions (Ask Shams, Al-Falak, Readings), a grid of one-line tiles (Current
+ * Hora, Today's Sky, Moon Manzil, Favored Now, Daily Dhikr, Today's Blessing)
+ * and the tier/quota line. Each tile opens its full text in a detail sheet.
+ * Asking happens in a Reading (ReadingScreen), which owns the composer, the
+ * verdict and the conversation about it.
  */
 
 import React, { useCallback, useEffect, useState } from 'react';
-import {
-  AppState,
-  I18nManager,
-  Image,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { AppState, I18nManager, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { acquireLocation } from '@utils/acquireLocation';
 import crashlytics from '@react-native-firebase/crashlytics';
@@ -43,18 +35,16 @@ import StarfieldBackground from '@components/StarfieldBackground';
 import TabIcon from '@components/TabIcon';
 import HoraBadge from '@components/home/HoraBadge';
 import ManzilEmblem from '@components/home/ManzilEmblem';
-import CornerBrackets from '@components/home/CornerBrackets';
-import HomeAskComposer from '@components/home/HomeAskComposer';
 import HomeHero from '@components/home/HomeHero';
-import PremiumSurface from '@components/ui/PremiumSurface';
+import HomeInfoTile from '@components/home/HomeInfoTile';
+import HomeDetailSheet from '@components/home/HomeDetailSheet';
+import { CELESTIAL } from '@components/home/celestialPalette';
 import OrnamentDivider from '@components/ui/OrnamentDivider';
 import { buildDailySkyMessage } from '@utils/dailySkyMessage';
 import { favoredChipForPlanet } from '../data/favoredQuestion';
 import { PLANET_DHIKR } from '../data/dailyDhikr';
 import { todaysIslamicNote } from '../data/islamicDayOfWeek';
 import { getManzilaDisplay } from '@astrology/manazil';
-
-const SEAL_IMAGE = require('@assets/images/sky-clock-disk.png');
 
 // Fallback coordinates when no fix is stored yet (mirrors the pairing used
 // by SkyClockScreen's lon-only fallback — location is mandatory in practice,
@@ -215,18 +205,168 @@ const OracleScreen: React.FC = () => {
         ? t('premium.tierPremium')
         : t('oracle.tierWanderer');
 
-  // One eyebrow style for every section on Home, so the cards read as one set.
-  const sectionLabel = (label: string, extra?: object): React.JSX.Element => (
-    <Text style={[typography('label'), { color: colors.goldBright }, extra]}>
-      {label.toUpperCase()}
-    </Text>
-  );
   // Chevrons point "forward" — mirrored in RTL so Urdu reads them correctly.
   const chevron = (color: string): React.JSX.Element => (
     <View style={I18nManager.isRTL ? styles.flipX : undefined}>
       <TabIcon name="chevronRight" color={color} size={16} />
     </View>
   );
+
+  const quotaLabel =
+    questionsLeft === Infinity
+      ? '∞'
+      : `${questionsLeft} / ${trialActive ? TRIAL_DAILY_LIMIT : FREE_DAILY_LIMIT}`;
+
+  // Home tiles: one headline each; the full text opens in the detail sheet.
+  type TileKey = 'hora' | 'sky' | 'manzil' | 'favored' | 'dhikr' | 'blessing';
+  const [openTile, setOpenTile] = useState<TileKey | null>(null);
+  const tiles: { key: TileKey; label: string; headline: string }[] = [
+    {
+      key: 'hora',
+      label: t('oracle.currentHoraLabel'),
+      headline: t('oracle.horaName', { planet: horaLord }),
+    },
+    {
+      key: 'sky',
+      label: t('oracle.dailySkyTitle'),
+      headline: `${PLANET_GLYPHS[dayLord]} ${dailySky.dayLord}`,
+    },
+    { key: 'manzil', label: t('oracle.moonManzilTitle'), headline: manzil.name },
+    { key: 'favored', label: t('oracle.favoredNowTitle'), headline: favoredChip },
+    ...(dhikr !== undefined
+      ? [{ key: 'dhikr' as const, label: t('oracle.dailyDhikrTitle'), headline: dhikr.name }]
+      : []),
+    { key: 'blessing', label: t('oracle.blessingTitle'), headline: islamicNote.name[lang] },
+  ];
+  const openTileLabel = tiles.find(tile => tile.key === openTile)?.label ?? null;
+
+  const bodyText = [typography('body'), { color: colors.text, lineHeight: 24 }];
+  const renderTileDetail = (key: TileKey | null): React.JSX.Element | null => {
+    switch (key) {
+      case 'hora':
+        return (
+          <View>
+            <View style={styles.detailRow}>
+              <View style={styles.detailTextCol}>
+                <Text style={[typography('heading'), { color: colors.goldBright }]}>
+                  {t('oracle.horaName', { planet: horaLord })}
+                </Text>
+                <Text style={[typography('caption'), { color: colors.accent, marginTop: 4 }]}>
+                  {horaCountdown} {t('oracle.remainingLabel')}
+                </Text>
+                <Text style={[typography('caption'), { color: colors.textMuted, marginTop: 4 }]}>
+                  {PLANET_GLYPHS[dayLord]} {dayLord}
+                </Text>
+              </View>
+              <HoraBadge glyph={PLANET_GLYPHS[horaLord]} size={72} />
+            </View>
+            <Pressable
+              testID="home-detail-open-alfalak"
+              onPress={() => {
+                setOpenTile(null);
+                navigation.navigate('AlFalak');
+              }}
+              style={[styles.detailLink, { borderTopColor: colors.border }]}
+              accessibilityRole="button"
+              accessibilityLabel={t('oracle.openAlFalakA11y')}
+            >
+              <Text style={[typography('label'), { color: colors.goldBright }]}>
+                {t('nav.alFalakTab')}
+              </Text>
+              {chevron(colors.goldBright)}
+            </Pressable>
+          </View>
+        );
+      case 'sky':
+        return (
+          <View>
+            <Text style={bodyText}>
+              {dailySky.greeting} {t('oracle.dayIsUnder')}{' '}
+              <Text style={[emphasis, { color: colors.accent }]}>{dailySky.dayLord}</Text> (
+              {dailySky.dayTheme}).
+            </Text>
+            <Text style={[...bodyText, { color: colors.textMuted, marginTop: 4 }]}>
+              {t('oracle.hourCarries')}{' '}
+              <Text style={[emphasis, { color: colors.accent }]}>{dailySky.horaLord}</Text> (
+              {dailySky.horaTheme}).
+            </Text>
+            {dailySky.guidance !== null && (
+              <Text
+                style={[
+                  typography('bodyItalic'),
+                  { color: colors.goldBright, marginTop: 10, lineHeight: 22, opacity: 0.9 },
+                ]}
+              >
+                {dailySky.guidance}
+              </Text>
+            )}
+          </View>
+        );
+      case 'manzil':
+        return (
+          <View>
+            <View style={styles.detailRow}>
+              <ManzilEmblem size={72} />
+              <View style={styles.detailTextCol}>
+                <Text style={[styles.arabic, { color: colors.goldBright }]}>{manzil.arabic}</Text>
+                <Text style={[typography('subheading'), { color: colors.text, marginTop: 2 }]}>
+                  {manzil.name}
+                </Text>
+              </View>
+            </View>
+            <Text
+              style={[
+                typography('bodyItalic'),
+                { color: colors.textMuted, marginTop: 10, lineHeight: 22 },
+              ]}
+            >
+              {manzil.descriptor}
+            </Text>
+            {skyExtras.sunTimes !== null && (
+              <Text style={[typography('caption'), { color: colors.textMuted, marginTop: 10 }]}>
+                {skyExtras.moonPhaseFull}
+              </Text>
+            )}
+          </View>
+        );
+      case 'favored':
+        return (
+          <Text style={bodyText}>
+            {t('oracle.favoredNowBody')}{' '}
+            <Text style={[emphasis, { color: colors.accent }]}>{favoredChip}</Text>
+          </Text>
+        );
+      case 'dhikr':
+        return dhikr === undefined ? null : (
+          <View>
+            <Text style={[styles.arabic, styles.arabicCentered, { color: colors.goldBright }]}>
+              {dhikr.arabic}
+            </Text>
+            <Text style={[...bodyText, { textAlign: 'center' }]}>
+              {t('oracle.dailyDhikrRecite')} {dhikr.name} ({dhikr.meaning[lang]})
+            </Text>
+            <Text
+              style={[
+                typography('bodyItalic'),
+                { color: colors.textMuted, textAlign: 'center', marginTop: 4, lineHeight: 22 },
+              ]}
+            >
+              {dhikr.intention[lang]}
+            </Text>
+          </View>
+        );
+      case 'blessing':
+        return (
+          <Text style={bodyText}>
+            <Text style={[emphasis, { color: colors.accent }]}>{islamicNote.name[lang]}</Text>
+            {' — '}
+            {islamicNote.note[lang]}
+          </Text>
+        );
+      default:
+        return null;
+    }
+  };
 
   return (
     <SafeAreaView style={[styles.root, { backgroundColor: theme.colors.bg }]} edges={['top']}>
@@ -370,277 +510,40 @@ const OracleScreen: React.FC = () => {
               onPress: () => navigation.navigate('Readings'),
             },
           ]}
-        />
-
-        {/* Current Hora — compact readout, seal as a small badge (not the hero).
-            Premium glass+3D treatment lives ONLY here and on the Ask composer
-            below — the two zones the design spec calls out as the Oracle
-            hero. No blur library is installed, so "glass" is approximated
-            with a translucent gold wash (colors.horaGradient[0] — an
-            existing, previously-unused token named for exactly this card),
-            a soft top highlight, and a warm glow shadow, rather than a
-            new native dependency. */}
-        <Pressable
-          onPress={() => navigation.navigate('AlFalak')}
-          style={[
-            styles.heroCard,
-            {
-              backgroundColor: colors.surface,
-              borderColor: colors.borderAccent + '55',
-              shadowColor: colors.sacredGlow,
-            },
-          ]}
-          accessibilityRole="button"
-          accessibilityLabel={t('oracle.openAlFalakA11y')}
         >
-          <View
-            pointerEvents="none"
-            style={[styles.heroGlassOverlay, { backgroundColor: colors.horaGradient[0] }]}
-          />
-          <View
-            pointerEvents="none"
-            style={[styles.heroTopHighlight, { backgroundColor: colors.text + '1A' }]}
-          />
-          <View style={styles.heroTopRow}>
-            <View style={styles.heroTextCol}>
-              {sectionLabel(t('oracle.currentHoraLabel'), { color: colors.textMuted })}
-              <Text style={[typography('heading'), { color: colors.goldBright, marginTop: 6 }]}>
-                {t('oracle.horaName', { planet: horaLord })}
-              </Text>
-              <Text style={[typography('caption'), { color: colors.accent, marginTop: 4 }]}>
-                {horaCountdown} {t('oracle.remainingLabel')}
-              </Text>
-            </View>
-            <View style={styles.heroSealBadge}>
-              <HoraBadge glyph={PLANET_GLYPHS[horaLord]} size={84} />
-            </View>
+          {/* Everything else on Home as one-line tiles; each opens its full
+              text in the detail sheet below, so Home fits on one screen. */}
+          <View style={styles.tileGrid}>
+            {tiles.map(tile => (
+              <HomeInfoTile
+                key={tile.key}
+                testID={`home-tile-${tile.key}`}
+                label={tile.label}
+                headline={tile.headline}
+                onPress={() => setOpenTile(tile.key)}
+              />
+            ))}
           </View>
-          <View style={[styles.heroFooterRow, { borderTopColor: colors.border }]}>
-            <Text style={[typography('caption'), { color: colors.textMuted }]}>
-              {PLANET_GLYPHS[dayLord]} {dayLord}
+
+          {/* Tier and today's quota */}
+          <View style={styles.tierLine} testID="home-tier-line">
+            <Text style={[typography('label'), styles.tierLabel]}>
+              {t('oracle.yourTierLabel').toUpperCase()}
             </Text>
-            <View style={styles.inlineRow}>
-              <Text style={[typography('label'), { color: colors.goldBright }]}>
-                {t('nav.alFalakTab')}
-              </Text>
-              {chevron(colors.goldBright)}
-            </View>
-          </View>
-        </Pressable>
-
-        {/* Today's Sky — daily personalized readout, based on saved profile */}
-        <PremiumSurface style={styles.card}>
-          {sectionLabel(t('oracle.dailySkyTitle'))}
-          <Text style={[typography('body'), { color: colors.text, marginTop: 10, lineHeight: 24 }]}>
-            {dailySky.greeting} {t('oracle.dayIsUnder')}{' '}
-            <Text style={[emphasis, { color: colors.accent }]}>{dailySky.dayLord}</Text> (
-            {dailySky.dayTheme}).
-          </Text>
-          <Text
-            style={[typography('body'), { color: colors.textMuted, marginTop: 4, lineHeight: 24 }]}
-          >
-            {t('oracle.hourCarries')}{' '}
-            <Text style={[emphasis, { color: colors.accent }]}>{dailySky.horaLord}</Text> (
-            {dailySky.horaTheme}).
-          </Text>
-          {dailySky.guidance !== null && (
-            <Text
-              style={[
-                typography('bodyItalic'),
-                { color: colors.goldBright, marginTop: 10, lineHeight: 22, opacity: 0.9 },
-              ]}
-            >
-              {dailySky.guidance}
+            <Text style={[typography('caption'), styles.tierValue]}>{tierLabel}</Text>
+            <Text style={[typography('caption'), styles.tierDot]}>·</Text>
+            <Text style={[typography('label'), styles.tierLabel]}>
+              {t('oracle.todaysQuotaLabel').toUpperCase()}
             </Text>
-          )}
-        </PremiumSurface>
-
-        {/* Ask Shams — the primary action: a question becomes a Reading */}
-        <HomeAskComposer
-          // push, not navigate — see ReadingsScreen for why: a Reading is
-          // always its own screen, never a params update to one already open.
-          onSubmit={(question, kind) =>
-            navigation.push('Reading', { initialQuestion: question, initialQuestionKind: kind })
-          }
-          onOpenBlank={() => navigation.push('Reading', {})}
-        />
-
-        {/* Reading History */}
-        <Pressable
-          onPress={() => navigation.navigate('Readings')}
-          style={({ pressed }) => [
-            styles.actionBtnSecondary,
-            {
-              backgroundColor: colors.surface,
-              borderColor: colors.border,
-              opacity: pressed ? 0.85 : 1,
-            },
-          ]}
-          accessibilityRole="button"
-          accessibilityLabel={t('oracle.readingHistoryCta')}
-        >
-          <View
-            style={[
-              styles.actionIconWrap,
-              { borderColor: colors.borderAccent + '55', backgroundColor: colors.surfaceElevated },
-            ]}
-          >
-            <TabIcon name="history" color={colors.goldBright} size={20} />
+            <Text style={[typography('caption'), styles.tierValue]}>{quotaLabel}</Text>
           </View>
-          <View style={styles.actionTextCol}>
-            <Text style={[typography('button'), { color: colors.text, fontSize: 15 }]}>
-              {t('oracle.readingHistoryCta')}
-            </Text>
-            <Text style={[typography('caption'), { color: colors.textMuted, marginTop: 2 }]}>
-              {t('oracle.viewPastReadingsSubtitle')}
-            </Text>
-          </View>
-          {chevron(colors.textMuted)}
-        </Pressable>
-
-        {/* Moon Manzil — the current lunar mansion (Manazil al-Qamar) */}
-        <PremiumSurface style={[styles.card, styles.manzilCard]}>
-          <CornerBrackets />
-          {sectionLabel(t('oracle.moonManzilTitle'))}
-          <View style={styles.manzilRow}>
-            <ManzilEmblem size={80} />
-            <View style={styles.manzilTextCol}>
-              <Text
-                style={{
-                  fontFamily: 'Amiri-Regular',
-                  fontSize: 22,
-                  color: colors.goldBright,
-                }}
-              >
-                {manzil.arabic}
-              </Text>
-              <Text style={[typography('subheading'), { color: colors.text, marginTop: 2 }]}>
-                {manzil.name}
-              </Text>
-              <Text
-                style={[
-                  typography('bodyItalic'),
-                  { color: colors.textMuted, marginTop: 4, lineHeight: 22 },
-                ]}
-              >
-                {manzil.descriptor}
-              </Text>
-            </View>
-          </View>
-          {skyExtras.sunTimes !== null && (
-            <View style={[styles.manzilFooter, { borderTopColor: colors.border }]}>
-              <Text style={[typography('caption'), { color: colors.textMuted }]}>
-                {skyExtras.moonPhaseFull}
-              </Text>
-              <Text style={[typography('caption'), { color: colors.textMuted }]}>
-                {t('oracle.sunriseLabel')} {formatClockTime(skyExtras.sunTimes.sunriseMs)}
-                {'  ·  '}
-                {t('oracle.sunsetLabel')} {formatClockTime(skyExtras.sunTimes.sunsetMs)}
-              </Text>
-            </View>
-          )}
-        </PremiumSurface>
-
-        {/* Quota + Tier pills */}
-        <View style={styles.pillRow}>
-          <View
-            style={[
-              styles.infoPill,
-              { backgroundColor: colors.surface, borderColor: colors.border },
-            ]}
-          >
-            {sectionLabel(t('oracle.todaysQuotaLabel'), { color: colors.textMuted })}
-            <Text style={[typography('subheading'), { color: colors.goldBright, marginTop: 4 }]}>
-              {questionsLeft === Infinity
-                ? '∞'
-                : `${questionsLeft} / ${trialActive ? TRIAL_DAILY_LIMIT : FREE_DAILY_LIMIT}`}
-            </Text>
-          </View>
-          <View
-            style={[
-              styles.infoPill,
-              styles.tierPill,
-              { backgroundColor: colors.surface, borderColor: colors.border },
-            ]}
-          >
-            <View style={styles.tierTextCol}>
-              {sectionLabel(t('oracle.yourTierLabel'), { color: colors.textMuted })}
-              <Text style={[typography('subheading'), { color: colors.goldBright, marginTop: 4 }]}>
-                {tierLabel}
-              </Text>
-            </View>
-            <Image source={SEAL_IMAGE} style={styles.tierSealImage} resizeMode="contain" />
-          </View>
-        </View>
-
-        {/* Today's guidance — Favored Now, Daily Dhikr and Today's Blessing as
-            one card with three ruled sections, rather than three more cards. */}
-        <PremiumSurface style={styles.card}>
-          {/* Favored Now — which chip category the current hora lord favors */}
-          {sectionLabel(t('oracle.favoredNowTitle'))}
-          <Text style={[typography('body'), { color: colors.text, marginTop: 8, lineHeight: 24 }]}>
-            {t('oracle.favoredNowBody')}{' '}
-            <Text style={[emphasis, { color: colors.accent }]}>{favoredChip}</Text>
-          </Text>
-
-          {/* Daily Dhikr — a Name of Allah tied to today's day lord */}
-          {dhikr !== undefined && (
-            <View style={[styles.guidanceSection, { borderTopColor: colors.border }]}>
-              {sectionLabel(t('oracle.dailyDhikrTitle'))}
-              <Text
-                style={{
-                  fontFamily: 'Amiri-Regular',
-                  fontSize: 24,
-                  color: colors.goldBright,
-                  textAlign: 'center',
-                  marginTop: 10,
-                  marginBottom: 2,
-                }}
-              >
-                {dhikr.arabic}
-              </Text>
-              <Text
-                style={[
-                  typography('body'),
-                  { color: colors.text, textAlign: 'center', lineHeight: 24 },
-                ]}
-              >
-                {t('oracle.dailyDhikrRecite')} {dhikr.name} ({dhikr.meaning[lang]})
-              </Text>
-              <Text
-                style={[
-                  typography('bodyItalic'),
-                  {
-                    color: colors.textMuted,
-                    textAlign: 'center',
-                    marginTop: 4,
-                    lineHeight: 22,
-                  },
-                ]}
-              >
-                {dhikr.intention[lang]}
-              </Text>
-            </View>
-          )}
-
-          {/* Today's Blessing — Islamic day-of-week note */}
-          <View style={[styles.guidanceSection, { borderTopColor: colors.border }]}>
-            {sectionLabel(t('oracle.blessingTitle'))}
-            <Text
-              style={[typography('body'), { color: colors.text, marginTop: 8, lineHeight: 24 }]}
-            >
-              <Text style={[emphasis, { color: colors.accent }]}>{islamicNote.name[lang]}</Text>
-              {' — '}
-              {islamicNote.note[lang]}
-            </Text>
-          </View>
-        </PremiumSurface>
+        </HomeHero>
 
         {/* Brand signature */}
         <Text
           style={[
             typography('caption'),
-            { color: colors.textFaint, textAlign: 'center', marginTop: 4, fontSize: 12 },
+            { color: colors.textFaint, textAlign: 'center', marginTop: 6, fontSize: 11 },
           ]}
         >
           {t('app.poweredBy')}
@@ -683,6 +586,10 @@ const OracleScreen: React.FC = () => {
           </View>
         </Pressable>
       )}
+
+      <HomeDetailSheet title={openTileLabel} onClose={() => setOpenTile(null)}>
+        {renderTileDetail(openTile)}
+      </HomeDetailSheet>
     </SafeAreaView>
   );
 };
@@ -746,8 +653,62 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
   scroll: { flex: 1 },
+  tileGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignSelf: 'stretch',
+    gap: 8,
+    marginTop: 14,
+  },
+  tierLine: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'baseline',
+    justifyContent: 'center',
+    gap: 6,
+    marginTop: 12,
+  },
+  tierLabel: {
+    color: CELESTIAL.antiqueGold,
+    fontSize: 9,
+    letterSpacing: 0.6,
+  },
+  tierValue: {
+    color: CELESTIAL.champagne,
+    fontSize: 13,
+  },
+  tierDot: {
+    color: CELESTIAL.bronze,
+    fontSize: 13,
+  },
+  detailRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 14,
+  },
+  detailTextCol: {
+    flex: 1,
+  },
+  detailLink: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    gap: 4,
+    marginTop: 14,
+    paddingTop: 12,
+    borderTopWidth: StyleSheet.hairlineWidth,
+  },
+  arabic: {
+    fontFamily: 'Amiri-Regular',
+    fontSize: 24,
+  },
+  arabicCentered: {
+    textAlign: 'center',
+    marginBottom: 4,
+  },
   scrollBody: {
-    paddingBottom: SPACING.xl,
+    flexGrow: 1,
+    paddingBottom: 8,
   },
   vocBanner: {
     marginHorizontal: SPACING.xl,
@@ -757,55 +718,6 @@ const styles = StyleSheet.create({
     borderRadius: RADIUS.md,
     borderWidth: StyleSheet.hairlineWidth,
   },
-  heroCard: {
-    marginHorizontal: SPACING.xl,
-    marginTop: 16,
-    marginBottom: 14,
-    paddingVertical: 16,
-    paddingHorizontal: 18,
-    borderRadius: RADIUS.xl,
-    borderWidth: StyleSheet.hairlineWidth,
-    overflow: 'hidden', // clips the glass overlay/highlight to the rounded corners
-    // Warmer, deeper glow than the previous flat black shadow — shadowColor
-    // is set per-theme (colors.sacredGlow) in the JSX above.
-    shadowOpacity: 0.3,
-    shadowRadius: 22,
-    shadowOffset: { width: 0, height: 10 },
-    elevation: 6,
-  },
-  // Translucent gold wash standing in for backdrop blur (see comment at the
-  // call site) — absolutely filled behind the card's real content.
-  heroGlassOverlay: {
-    ...StyleSheet.absoluteFillObject,
-  },
-  // A 1px lighter line along the top edge — the "soft inner highlight" a
-  // glass panel catches from above. Cheap enough to keep even without blur.
-  heroTopHighlight: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    height: 1,
-  },
-  heroTopRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  heroTextCol: {
-    flex: 1,
-  },
-  heroSealBadge: {
-    marginLeft: 12,
-  },
-  heroFooterRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginTop: 12,
-    paddingTop: 12,
-    borderTopWidth: StyleSheet.hairlineWidth,
-  },
   inlineRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -813,86 +725,6 @@ const styles = StyleSheet.create({
   },
   flipX: {
     transform: [{ scaleX: -1 }],
-  },
-  pillRow: {
-    flexDirection: 'row',
-    gap: 12,
-    marginHorizontal: SPACING.xl,
-    marginBottom: 14,
-  },
-  infoPill: {
-    flex: 1,
-    alignItems: 'center',
-    paddingVertical: 14,
-    borderRadius: RADIUS.lg,
-    borderWidth: StyleSheet.hairlineWidth,
-  },
-  tierPill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 14,
-  },
-  tierTextCol: {
-    alignItems: 'flex-start',
-  },
-  tierSealImage: {
-    width: 32,
-    height: 32,
-    marginLeft: 8,
-    opacity: 0.9,
-  },
-  card: {
-    marginHorizontal: SPACING.xl,
-    marginBottom: 14,
-    padding: 18,
-  },
-  manzilCard: {
-    position: 'relative',
-  },
-  manzilRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 14,
-    marginTop: 12,
-  },
-  manzilTextCol: {
-    flex: 1,
-  },
-  manzilFooter: {
-    marginTop: 14,
-    paddingTop: 12,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    gap: 2,
-  },
-  guidanceSection: {
-    marginTop: 16,
-    paddingTop: 16,
-    borderTopWidth: StyleSheet.hairlineWidth,
-  },
-  actionBtnSecondary: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginHorizontal: SPACING.xl,
-    marginTop: 14,
-    marginBottom: 14,
-    paddingVertical: 14,
-    paddingHorizontal: 16,
-    borderRadius: RADIUS.xl,
-    borderWidth: StyleSheet.hairlineWidth,
-  },
-  actionIconWrap: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    borderWidth: StyleSheet.hairlineWidth,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  actionTextCol: {
-    flex: 1,
-    marginLeft: 12,
   },
   trialBanner: {
     height: 44,
