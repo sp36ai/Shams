@@ -279,6 +279,7 @@ export const ur: StringTable = {
   },
 
   theme: {
+    midnightCelestial: 'Midnight Celestial',
     darAlShams: 'دارُ الشمس',
     laylAlBahr: 'لیلُ البحر',
     narAlHadid: 'نارُ الحدید',

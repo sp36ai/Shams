@@ -33,6 +33,7 @@ import { useQuotaStore, type PlanTier } from '@stores/quotaStore';
 
 // Dot preview colors per theme (the "sphere" swatch)
 const THEME_DOT_COLORS: Record<ThemeId, [string, string]> = {
+  midnightCelestial: ['#F2D9A0', '#061722'],
   darAlShams: ['#F0C84A', '#3A2808'],
   laylAlBahr: ['#90C8E0', '#060810'],
   narAlHadid: ['#F09060', '#0C0806'],

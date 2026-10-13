@@ -345,6 +345,7 @@ export interface StringTable {
     deleteAccountError: string;
   };
   theme: {
+    midnightCelestial: string;
     darAlShams: string;
     laylAlBahr: string;
     narAlHadid: string;

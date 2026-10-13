@@ -2,10 +2,12 @@
  * Shams al-Asrār — DĀR AL-SHAMS Master Theme System
  * "The House of the Hidden Sun"
  * --------------------------------------------------------------------------
- * Eight canonical themes. Single theme per session, MMKV-persisted.
+ * Nine canonical themes. Single theme per session, MMKV-persisted.
  *
  * VISUAL PHILOSOPHY:
- * - Obsidian manuscript black / illuminated gold (darAlShams — free default)
+ * - Midnight navy / antique embossed gold (midnightCelestial — free default
+ *   for new installs; matches the Home hero's Midnight Celestial palette)
+ * - Obsidian manuscript black / illuminated gold (darAlShams — free)
  * - Midnight lapis lazuli / sapphire (laylAlBahr — Mureed)
  * - Iron-black / crimson (narAlHadid — Mureed)
  * - Dawn parchment / antique gold (subhAlWahy — light, Mureed)
@@ -20,7 +22,7 @@
  * verdict card and was removed with it.
  *
  * TIER GATING — every theme requires a minimum PlanTier (see THEME_TIER
- * below). darAlShams is the one free-tier default; the other five original
+ * below). midnightCelestial (the default) and darAlShams are free; the other five original
  * colour variants require Mureed; the two newest (qutbAlAnwar, kanzAlAsrar)
  * require Khāṣṣ. Gating is enforced in two places: ThemeSwitcher.tsx (which
  * themes are selectable) and ThemeProvider.tsx (falls back to
@@ -31,6 +33,7 @@
 import type { PlanTier } from '@stores/quotaStore';
 
 export type ThemeId =
+  | 'midnightCelestial'
   | 'darAlShams'
   | 'laylAlBahr'
   | 'narAlHadid'
@@ -167,6 +170,77 @@ export interface Theme {
   isDark: boolean;
   colors: ThemeColors;
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 0. MIDNIGHT CELESTIAL — Midnight Navy · Antique Gold  (dark, default)
+// ─────────────────────────────────────────────────────────────────────────────
+// Built from the Home hero's Midnight Celestial palette (celestialPalette.ts)
+// so the whole app matches the hero by default. Text colours checked against
+// bg #061722: text 15.5:1, textMuted 8.1:1, textFaint 6.2:1, and textFaint
+// stays above 4.5:1 on surfaceElevated too (5.1:1) (WCAG AA).
+const midnightCelestial: Theme = {
+  id: 'midnightCelestial',
+  labelKey: 'theme.midnightCelestial',
+  name: 'Midnight Celestial',
+  subtitle: 'Midnight Navy · Antique Gold',
+  isDark: true,
+  colors: {
+    bg: '#061722',
+    surface: '#0A1F2C',
+    surfaceElevated: '#0F2A3B',
+    border: '#1D3547',
+    borderAccent: '#C5A36A',
+
+    gold: '#C5A36A',
+    goldBright: '#F2D9A0',
+    brass: '#80603D',
+
+    maqbool: '#D9B26A',
+    maqboolGlow: 'rgba(217, 178, 106, 0.25)',
+    mardood: '#6B7F92',
+    mardoodGlow: 'rgba(107, 127, 146, 0.15)',
+    caution: '#D9B26A',
+
+    text: '#F6EBDD',
+    textMuted: '#B8AC94',
+    textFaint: '#9C9787',
+    textOnGold: '#1A1308',
+
+    celestialDust: '#F2D9A0',
+    vellumOverlay: 'rgba(246, 235, 221, 0.03)',
+    manuscriptFog: 'rgba(197, 163, 106, 0.08)',
+    sacredGlow: '#C5A36A',
+    lunarReflection: '#8FA8BE',
+    candlelight: '#F2D9A0',
+
+    accent: '#C5A36A',
+    amber: '#F2D9A0',
+    primary: '#C5A36A',
+    textOnPrimary: '#1A1308',
+    positive: '#D9B26A',
+    negative: '#6B7F92',
+
+    starfield: '#F2D9A0',
+    nebula1: 'rgba(197, 163, 106, 0.08)',
+    nebula2: 'rgba(30, 70, 95, 0.10)',
+    nebula3: 'rgba(242, 217, 160, 0.03)',
+
+    chatUserBg: '#0F2A3B',
+    chatUserBorder: '#1D3547',
+    chatShamsBg: 'rgba(197, 163, 106, 0.07)',
+    chatShamsBorder: '#C5A36A',
+
+    statusBar: '#061722',
+    statusBarStyle: 'light-content',
+
+    atmTop: 'rgba(30, 70, 95, 0.22)',
+    atmBot: 'rgba(6, 23, 34, 0.0)',
+    jaliStroke: '#C5A36A',
+    jaliOpacity: 0.05,
+    sealGradient: ['#C5A36A', '#F2D9A0'],
+    horaGradient: ['rgba(197, 163, 106, 0.12)', 'rgba(197, 163, 106, 0.04)'],
+  },
+};
 
 // ─────────────────────────────────────────────────────────────────────────────
 // 1. DĀR AL-SHAMS — Obsidian · Illuminated Gold  (dark)
@@ -727,6 +801,7 @@ const kanzAlAsrar: Theme = {
 // Registry
 // ─────────────────────────────────────────────────────────────────────────────
 export const THEMES: Readonly<Record<ThemeId, Theme>> = Object.freeze({
+  midnightCelestial,
   darAlShams,
   laylAlBahr,
   narAlHadid,
@@ -738,6 +813,7 @@ export const THEMES: Readonly<Record<ThemeId, Theme>> = Object.freeze({
 });
 
 export const THEME_IDS: readonly ThemeId[] = [
+  'midnightCelestial',
   'darAlShams',
   'laylAlBahr',
   'narAlHadid',
@@ -748,17 +824,20 @@ export const THEME_IDS: readonly ThemeId[] = [
   'kanzAlAsrar',
 ];
 
-export const DEFAULT_THEME_ID: ThemeId = 'darAlShams';
+// New installs start in Midnight Celestial. Existing users keep whatever theme
+// is already persisted (ThemeProvider writes the active id on first launch).
+export const DEFAULT_THEME_ID: ThemeId = 'midnightCelestial';
 
 /**
- * The minimum plan tier that unlocks each theme. darAlShams is the one
- * free-tier default; the original five colour variants require Mureed;
+ * The minimum plan tier that unlocks each theme. midnightCelestial (the
+ * default) and darAlShams are free; the original five colour variants require Mureed;
  * the two newest require Khāṣṣ.
  *
  * Kept here (not in quotaStore) because it's a property of the theme, not
  * of the plan — quotaStore has no reason to know which themes exist.
  */
 export const THEME_TIER: Readonly<Record<ThemeId, PlanTier>> = Object.freeze({
+  midnightCelestial: 'free',
   darAlShams: 'free',
   laylAlBahr: 'mureed',
   narAlHadid: 'mureed',
@@ -782,7 +861,7 @@ export function tierMeetsRequirement(userTier: PlanTier, requiredTier: PlanTier)
 
 /**
  * TEMPORARY — internal testing only. When true, every theme is selectable
- * regardless of plan, so testers can see all 8 (including the two Khāṣṣ
+ * regardless of plan, so testers can see all 9 (including the two Khāṣṣ
  * exclusives) without needing a live subscription on the test account.
  *
  * THEME_TIER and tierMeetsRequirement() are untouched and fully tested

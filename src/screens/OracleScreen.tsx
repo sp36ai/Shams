@@ -46,6 +46,8 @@ import ManzilEmblem from '@components/home/ManzilEmblem';
 import CornerBrackets from '@components/home/CornerBrackets';
 import HomeAskComposer from '@components/home/HomeAskComposer';
 import HomeHero from '@components/home/HomeHero';
+import PremiumSurface from '@components/ui/PremiumSurface';
+import OrnamentDivider from '@components/ui/OrnamentDivider';
 import { buildDailySkyMessage } from '@utils/dailySkyMessage';
 import { favoredChipForPlanet } from '../data/favoredQuestion';
 import { PLANET_DHIKR } from '../data/dailyDhikr';
@@ -219,10 +221,6 @@ const OracleScreen: React.FC = () => {
       {label.toUpperCase()}
     </Text>
   );
-  const cardStyle = [
-    styles.card,
-    { backgroundColor: colors.surface, borderColor: colors.borderAccent + '44' },
-  ];
   // Chevrons point "forward" — mirrored in RTL so Urdu reads them correctly.
   const chevron = (color: string): React.JSX.Element => (
     <View style={I18nManager.isRTL ? styles.flipX : undefined}>
@@ -235,22 +233,29 @@ const OracleScreen: React.FC = () => {
       <StarfieldBackground starColor={colors.starfield} />
 
       {/* Header — today's date over the wordmark; location and Settings */}
-      <View
-        style={[styles.header, { borderColor: colors.border, backgroundColor: colors.surface }]}
-      >
+      <View style={styles.header}>
         <View style={styles.headerBrand}>
           <Text style={[typography('caption'), { color: colors.textMuted }]} numberOfLines={1}>
             {todayLabel}
           </Text>
           <Text
-            style={[typography('heading'), { color: colors.goldBright, marginTop: 2 }]}
+            style={[
+              typography('heading'),
+              styles.wordmark,
+              { color: colors.goldBright, textShadowColor: colors.gold + '66' },
+            ]}
             numberOfLines={1}
           >
             {t('app.name')}
           </Text>
         </View>
         <View style={styles.headerRight}>
-          <View style={[styles.locationChip, { borderColor: colors.borderAccent + '66' }]}>
+          <View
+            style={[
+              styles.locationChip,
+              { borderColor: colors.borderAccent + '80', backgroundColor: colors.surfaceElevated },
+            ]}
+          >
             <TabIcon
               name="pin"
               color={lastLocation === null ? colors.negative : colors.goldBright}
@@ -274,16 +279,21 @@ const OracleScreen: React.FC = () => {
             onPress={() => navigation.navigate('Settings')}
             style={({ pressed }) => [
               styles.settingsBtn,
-              { borderColor: colors.border, opacity: pressed ? 0.7 : 1 },
+              {
+                borderColor: colors.borderAccent,
+                backgroundColor: colors.surfaceElevated,
+                opacity: pressed ? 0.7 : 1,
+              },
             ]}
             hitSlop={6}
             accessibilityRole="button"
             accessibilityLabel={t('settings.headerTitle')}
           >
-            <TabIcon name="settings" color={colors.textMuted} size={18} />
+            <TabIcon name="settings" color={colors.goldBright} size={18} />
           </Pressable>
         </View>
       </View>
+      <OrnamentDivider style={styles.headerDivider} />
 
       <ScrollView
         style={styles.scroll}
@@ -417,7 +427,7 @@ const OracleScreen: React.FC = () => {
         </Pressable>
 
         {/* Today's Sky — daily personalized readout, based on saved profile */}
-        <View style={cardStyle}>
+        <PremiumSurface style={styles.card}>
           {sectionLabel(t('oracle.dailySkyTitle'))}
           <Text style={[typography('body'), { color: colors.text, marginTop: 10, lineHeight: 24 }]}>
             {dailySky.greeting} {t('oracle.dayIsUnder')}{' '}
@@ -441,7 +451,7 @@ const OracleScreen: React.FC = () => {
               {dailySky.guidance}
             </Text>
           )}
-        </View>
+        </PremiumSurface>
 
         {/* Ask Shams — the primary action: a question becomes a Reading */}
         <HomeAskComposer
@@ -487,7 +497,7 @@ const OracleScreen: React.FC = () => {
         </Pressable>
 
         {/* Moon Manzil — the current lunar mansion (Manazil al-Qamar) */}
-        <View style={[cardStyle, styles.manzilCard]}>
+        <PremiumSurface style={[styles.card, styles.manzilCard]}>
           <CornerBrackets />
           {sectionLabel(t('oracle.moonManzilTitle'))}
           <View style={styles.manzilRow}>
@@ -527,7 +537,7 @@ const OracleScreen: React.FC = () => {
               </Text>
             </View>
           )}
-        </View>
+        </PremiumSurface>
 
         {/* Quota + Tier pills */}
         <View style={styles.pillRow}>
@@ -563,7 +573,7 @@ const OracleScreen: React.FC = () => {
 
         {/* Today's guidance — Favored Now, Daily Dhikr and Today's Blessing as
             one card with three ruled sections, rather than three more cards. */}
-        <View style={cardStyle}>
+        <PremiumSurface style={styles.card}>
           {/* Favored Now — which chip category the current hora lord favors */}
           {sectionLabel(t('oracle.favoredNowTitle'))}
           <Text style={[typography('body'), { color: colors.text, marginTop: 8, lineHeight: 24 }]}>
@@ -622,7 +632,7 @@ const OracleScreen: React.FC = () => {
               {islamicNote.note[lang]}
             </Text>
           </View>
-        </View>
+        </PremiumSurface>
 
         {/* Brand signature */}
         <Text
@@ -684,14 +694,18 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: SPACING.xl,
-    paddingVertical: 12,
-    borderBottomWidth: StyleSheet.hairlineWidth,
+    paddingTop: 12,
+    paddingBottom: 10,
     gap: 12,
-    shadowColor: '#000',
-    shadowOpacity: 0.08,
-    shadowRadius: 16,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 2,
+  },
+  headerDivider: {
+    marginHorizontal: SPACING.xl,
+  },
+  wordmark: {
+    marginTop: 2,
+    letterSpacing: 1.6,
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 8,
   },
   headerBrand: {
     flex: 1,
@@ -705,20 +719,29 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 5,
-    borderWidth: StyleSheet.hairlineWidth,
+    borderWidth: 1,
     borderRadius: RADIUS.pill,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
+    paddingHorizontal: 11,
+    paddingVertical: 6,
     maxWidth: 170,
-    backgroundColor: '#FFFFFF08',
+    shadowColor: '#000',
+    shadowOpacity: 0.4,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 3 },
+    elevation: 3,
   },
   settingsBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    borderWidth: StyleSheet.hairlineWidth,
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    borderWidth: 1.5,
     alignItems: 'center',
     justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOpacity: 0.45,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 3 },
+    elevation: 4,
   },
   scroll: { flex: 1 },
   scrollBody: {
@@ -821,8 +844,6 @@ const styles = StyleSheet.create({
     marginHorizontal: SPACING.xl,
     marginBottom: 14,
     padding: 18,
-    borderRadius: RADIUS.xl,
-    borderWidth: StyleSheet.hairlineWidth,
   },
   manzilCard: {
     position: 'relative',

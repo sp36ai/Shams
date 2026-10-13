@@ -279,6 +279,7 @@ export const hi: StringTable = {
   },
 
   theme: {
+    midnightCelestial: 'Midnight Celestial',
     darAlShams: 'दारुल शम्स',
     laylAlBahr: 'लैलुल बह्र',
     narAlHadid: 'नारुल हदीद',

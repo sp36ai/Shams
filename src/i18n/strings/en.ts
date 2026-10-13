@@ -272,6 +272,7 @@ export const en: StringTable = {
   },
 
   theme: {
+    midnightCelestial: 'Midnight Celestial',
     darAlShams: 'Dār al-Shams',
     laylAlBahr: 'Layl al-Baḥr',
     narAlHadid: 'Nār al-Ḥadīd',

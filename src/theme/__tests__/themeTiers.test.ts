@@ -2,12 +2,13 @@
  * Tier-gating regression tests.
  * --------------------------------------------------------------------------
  * Covers THEME_TIER / tierMeetsRequirement / isThemeUnlocked in themes.ts —
- * the logic that decides which of the 8 themes a user on a given plan may
+ * the logic that decides which of the 9 themes a user on a given plan may
  * select. See src/theme/ThemeProvider.tsx and src/components/ThemeSwitcher.tsx
  * for where this is enforced.
  */
 
 import {
+  DEFAULT_THEME_ID,
   THEME_IDS,
   THEME_TIER,
   isThemeUnlocked,
@@ -23,9 +24,13 @@ describe('THEME_TIER', () => {
     }
   });
 
-  it('darAlShams is the one free-tier theme', () => {
+  it('midnightCelestial (the default) and darAlShams are the free-tier themes', () => {
     const freeThemes = THEME_IDS.filter(id => THEME_TIER[id] === 'free');
-    expect(freeThemes).toEqual(['darAlShams']);
+    expect(freeThemes).toEqual(['midnightCelestial', 'darAlShams']);
+  });
+
+  it('the default theme is free, so no plan can lock a user out of it', () => {
+    expect(THEME_TIER[DEFAULT_THEME_ID]).toBe('free');
   });
 
   it('the five original colour variants require Mureed', () => {
@@ -71,7 +76,7 @@ function realGatingDecision(id: ThemeId, userTier: PlanTier): boolean {
 describe('the real per-tier gating decision (bypassing testing mode)', () => {
   const casesByPlan: Record<PlanTier, { unlocked: ThemeId[]; locked: ThemeId[] }> = {
     free: {
-      unlocked: ['darAlShams'],
+      unlocked: ['midnightCelestial', 'darAlShams'],
       locked: [
         'laylAlBahr',
         'narAlHadid',
@@ -84,6 +89,7 @@ describe('the real per-tier gating decision (bypassing testing mode)', () => {
     },
     mureed: {
       unlocked: [
+        'midnightCelestial',
         'darAlShams',
         'laylAlBahr',
         'narAlHadid',
