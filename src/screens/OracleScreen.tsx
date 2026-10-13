@@ -45,6 +45,7 @@ import HoraBadge from '@components/home/HoraBadge';
 import ManzilEmblem from '@components/home/ManzilEmblem';
 import CornerBrackets from '@components/home/CornerBrackets';
 import HomeAskComposer from '@components/home/HomeAskComposer';
+import HomeHero from '@components/home/HomeHero';
 import { buildDailySkyMessage } from '@utils/dailySkyMessage';
 import { favoredChipForPlanet } from '../data/favoredQuestion';
 import { PLANET_DHIKR } from '../data/dailyDhikr';
@@ -310,6 +311,54 @@ const OracleScreen: React.FC = () => {
             </Text>
           </View>
         )}
+
+        {/* Hero — mandala, live sky capsules and the three primary actions.
+            Every value is one this screen already shows further down (hora
+            countdown, sunrise, sunset); every action is an existing route. */}
+        <HomeHero
+          metrics={[
+            {
+              key: 'hora',
+              label: t('oracle.currentHoraLabel'),
+              glyph: 'hora',
+              value: horaCountdown,
+            },
+            {
+              key: 'sunrise',
+              label: t('oracle.sunriseLabel'),
+              glyph: 'sunrise',
+              value:
+                skyExtras.sunTimes === null ? null : formatClockTime(skyExtras.sunTimes.sunriseMs),
+            },
+            {
+              key: 'sunset',
+              label: t('oracle.sunsetLabel'),
+              glyph: 'sunset',
+              value:
+                skyExtras.sunTimes === null ? null : formatClockTime(skyExtras.sunTimes.sunsetMs),
+            },
+          ]}
+          actions={[
+            {
+              key: 'ask',
+              label: t('oracle.askShamsCta'),
+              icon: 'oracle',
+              onPress: () => navigation.push('Reading', {}),
+            },
+            {
+              key: 'alfalak',
+              label: t('nav.alFalakTab'),
+              icon: 'skyclock',
+              onPress: () => navigation.navigate('AlFalak'),
+            },
+            {
+              key: 'readings',
+              label: t('nav.readingsTab'),
+              icon: 'history',
+              onPress: () => navigation.navigate('Readings'),
+            },
+          ]}
+        />
 
         {/* Current Hora — compact readout, seal as a small badge (not the hero).
             Premium glass+3D treatment lives ONLY here and on the Ask composer

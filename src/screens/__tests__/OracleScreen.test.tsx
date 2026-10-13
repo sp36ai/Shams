@@ -112,6 +112,68 @@ describe('OracleScreen navigation wiring', () => {
   });
 });
 
+describe('OracleScreen hero', () => {
+  function mockNavigation() {
+    const handle = {
+      navigate: jest.fn(),
+      goBack: jest.fn(),
+      canGoBack: jest.fn(() => false),
+      replace: jest.fn(),
+      push: jest.fn(),
+      setOptions: jest.fn(),
+      addListener: jest.fn(() => jest.fn()),
+    };
+    (useNavigation as jest.Mock).mockReturnValue(handle);
+    return handle;
+  }
+
+  it('opens an empty Reading from the hero Ask button', async () => {
+    const { push, navigate } = mockNavigation();
+    await renderScreen(<OracleScreen />);
+
+    await userEvent.setup().press(screen.getByTestId('home-hero-action-ask'));
+
+    expect(push).toHaveBeenCalledWith('Reading', {});
+    expect(navigate).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ['alfalak', 'AlFalak'],
+    ['readings', 'Readings'],
+  ])('hero %s button navigates to the %s tab', async (key, route) => {
+    const { navigate, push } = mockNavigation();
+    await renderScreen(<OracleScreen />);
+
+    await userEvent.setup().press(screen.getByTestId(`home-hero-action-${key}`));
+
+    expect(navigate).toHaveBeenCalledWith(route);
+    expect(push).not.toHaveBeenCalled();
+  });
+
+  it('labels each metric capsule with its real value, never a placeholder number', async () => {
+    mockNavigation();
+    await renderScreen(<OracleScreen />);
+
+    for (const key of ['hora', 'sunrise', 'sunset']) {
+      const capsule = screen.getByTestId(`home-hero-metric-${key}`);
+      // label: value — the value is either live data or the em dash for
+      // "not available yet"; it must never be empty.
+      expect(capsule.props.accessibilityLabel).toMatch(/^.+: .+$/);
+    }
+    expect(screen.getByTestId('home-hero-metric-hora').props.accessibilityLabel).toMatch(
+      /^Current Hora: /,
+    );
+  });
+
+  it('puts the hero above the Current Hora card', async () => {
+    mockNavigation();
+    await renderScreen(<OracleScreen />);
+    const tree = JSON.stringify(screen.toJSON());
+    expect(tree.indexOf('"home-hero"')).toBeGreaterThanOrEqual(0);
+    expect(tree.indexOf('"home-hero"')).toBeLessThan(tree.indexOf('"CURRENT HORA"'));
+  });
+});
+
 describe('OracleScreen layout', () => {
   it('follows the Observatory Hall order: hora, sky, ask, manzil, tier', async () => {
     await renderScreen(<OracleScreen />);

@@ -85,6 +85,20 @@ name: 'Settings — plan display and sign out'
       id: 'settings-gear-btn'
     timeout: 30000
 
+# Home screen capture — visual evidence only, no assertion. Taken on Home
+# itself, before navigating away; uploaded by the CI step "Upload Home
+# screen screenshot". Waits for the hero's Ask button so the hero has
+# rendered, then for animations to settle. The wait is optional so this
+# capture can never fail the sign-out journey it rides along with.
+- extendedWaitUntil:
+    visible:
+      id: 'home-hero-action-ask'
+    timeout: 15000
+    optional: true
+- waitForAnimationToEnd:
+    timeout: 5000
+- takeScreenshot: shams-home-screen
+
 - tapOn:
     id: 'settings-gear-btn'
 - assertVisible: 'AL-DAFTAR'
