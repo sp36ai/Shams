@@ -245,6 +245,8 @@ const OracleScreen: React.FC = () => {
               { color: colors.goldBright, textShadowColor: colors.gold + '66' },
             ]}
             numberOfLines={1}
+            adjustsFontSizeToFit
+            minimumFontScale={0.8}
           >
             {t('app.name')}
           </Text>
@@ -703,7 +705,7 @@ const styles = StyleSheet.create({
   },
   wordmark: {
     marginTop: 2,
-    letterSpacing: 1.6,
+    letterSpacing: 0.6,
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 8,
   },
@@ -723,7 +725,7 @@ const styles = StyleSheet.create({
     borderRadius: RADIUS.pill,
     paddingHorizontal: 11,
     paddingVertical: 6,
-    maxWidth: 170,
+    maxWidth: 150,
     shadowColor: '#000',
     shadowOpacity: 0.4,
     shadowRadius: 6,
