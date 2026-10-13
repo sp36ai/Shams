@@ -1,7 +1,12 @@
 /**
- * HomeHero — the Home screen's one panel: the gold mandala on a midnight
- * panel, a row of three metric capsules, a row of three round actions, and
- * whatever the caller puts below them (Home's tile grid and tier line).
+ * HomeHero — the Home screen's one panel, filling the space between the
+ * header and the tab bar edge to edge: a row of three metric capsules, the
+ * gold mandala, a row of three round actions, and whatever the caller puts
+ * below them (Home's tile grid and tier line).
+ *
+ * The capsules always read left to right in the order given, whatever the
+ * app's layout direction: they are a timeline (sunrise, hora, sunset), and
+ * the owner wants that order on screen in every language.
  *
  * Home is meant to fit on one screen without scrolling, so the panel fills
  * the height it is given and the mandala takes whatever height is left once
@@ -21,7 +26,7 @@ import React, { useState } from 'react';
 import { StyleSheet, View, useWindowDimensions, type LayoutChangeEvent } from 'react-native';
 import Svg, { Circle, Defs, RadialGradient, Stop } from 'react-native-svg';
 
-import { RADIUS, SPACING } from '@theme/themes';
+import { SPACING } from '@theme/themes';
 import type { IconName } from '@components/TabIcon';
 import MandalaEmblem from './MandalaEmblem';
 import AstroMetricCapsule, { type MetricGlyph } from './AstroMetricCapsule';
@@ -51,14 +56,14 @@ interface HomeHeroProps {
   children?: React.ReactNode;
 }
 
-const PANEL_PADDING = 14;
+const PANEL_PADDING = 12;
 const MANDALA_MAX = 320;
 const MANDALA_MIN = 110;
 
 const HomeHero: React.FC<HomeHeroProps> = ({ metrics, actions, children }) => {
   const { width } = useWindowDimensions();
   // The emblem never exceeds the panel's inner width…
-  const inner = width - SPACING.xl * 2 - PANEL_PADDING * 2;
+  const inner = width - SPACING.xl * 2;
   const widthLimit = Math.min(MANDALA_MAX, Math.round(inner * 0.92));
   // …nor the height left for it, measured from its flexible slot.
   const [slotHeight, setSlotHeight] = useState<number | null>(null);
@@ -71,6 +76,18 @@ const HomeHero: React.FC<HomeHeroProps> = ({ metrics, actions, children }) => {
 
   return (
     <View style={styles.panel} testID="home-hero">
+      <View style={styles.metricRow}>
+        {metrics.map(m => (
+          <AstroMetricCapsule
+            key={m.key}
+            testID={`home-hero-metric-${m.key}`}
+            label={m.label}
+            value={m.value}
+            glyph={m.glyph}
+          />
+        ))}
+      </View>
+
       <View style={styles.mandalaSlot} onLayout={onSlotLayout}>
         {mandalaSize !== null && (
           <>
@@ -96,18 +113,6 @@ const HomeHero: React.FC<HomeHeroProps> = ({ metrics, actions, children }) => {
         )}
       </View>
 
-      <View style={styles.metricRow}>
-        {metrics.map(m => (
-          <AstroMetricCapsule
-            key={m.key}
-            testID={`home-hero-metric-${m.key}`}
-            label={m.label}
-            value={m.value}
-            glyph={m.glyph}
-          />
-        ))}
-      </View>
-
       <View style={styles.actionRow}>
         {actions.map(a => (
           <CelestialActionButton
@@ -128,14 +133,9 @@ const HomeHero: React.FC<HomeHeroProps> = ({ metrics, actions, children }) => {
 const styles = StyleSheet.create({
   panel: {
     flexGrow: 1,
-    marginHorizontal: SPACING.xl,
-    marginTop: 10,
-    paddingHorizontal: PANEL_PADDING,
+    paddingHorizontal: SPACING.xl,
     paddingTop: PANEL_PADDING,
     paddingBottom: PANEL_PADDING,
-    borderRadius: RADIUS.xl,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: CELESTIAL.bronze,
     backgroundColor: CELESTIAL.midnight,
     overflow: 'hidden',
     alignItems: 'center',
@@ -155,13 +155,14 @@ const styles = StyleSheet.create({
   },
   metricRow: {
     flexDirection: 'row',
+    direction: 'ltr',
     alignSelf: 'stretch',
     gap: 10,
+    marginBottom: 12,
   },
   actionRow: {
     flexDirection: 'row',
     alignSelf: 'stretch',
-    marginTop: 12,
   },
 });
 

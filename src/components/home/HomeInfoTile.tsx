@@ -53,9 +53,9 @@ const styles = StyleSheet.create({
   tile: {
     flexBasis: '31%',
     flexGrow: 1,
-    minHeight: 60,
+    minHeight: 54,
     paddingHorizontal: 8,
-    paddingVertical: 8,
+    paddingVertical: 6,
     borderRadius: 12,
     borderWidth: 1,
     borderColor: CELESTIAL.antiqueGold + '80',

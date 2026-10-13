@@ -101,6 +101,21 @@ describe('OracleScreen hero', () => {
     );
   });
 
+  it('puts the capsules first, in the order sunrise, current hora, sunset', async () => {
+    mockNavigation();
+    await renderScreen(<OracleScreen />);
+    const tree = JSON.stringify(screen.toJSON());
+    const ids = [
+      '"home-hero-metric-sunrise"',
+      '"home-hero-metric-hora"',
+      '"home-hero-metric-sunset"',
+      '"home-hero-action-ask"',
+    ];
+    const positions = ids.map(id => tree.indexOf(id));
+    expect(positions.every(p => p >= 0)).toBe(true);
+    expect([...positions].sort((a, b) => a - b)).toEqual(positions);
+  });
+
   it('opens the full text of a tile in the detail sheet, and closes it', async () => {
     mockNavigation();
     await renderScreen(<OracleScreen />);

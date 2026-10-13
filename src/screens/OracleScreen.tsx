@@ -438,24 +438,14 @@ const OracleScreen: React.FC = () => {
       <OrnamentDivider style={styles.headerDivider} />
 
       <ScrollView
-        style={styles.scroll}
+        style={[styles.scroll, { backgroundColor: CELESTIAL.midnight }]}
         contentContainerStyle={styles.scrollBody}
         showsVerticalScrollIndicator={false}
       >
         {/* Void-of-course Moon warning — classical horary caution */}
         {skyExtras.voidOfCourse.isVoid && (
-          <View
-            style={[
-              styles.vocBanner,
-              { backgroundColor: colors.surface, borderColor: colors.borderAccent },
-            ]}
-          >
-            <Text
-              style={[
-                typography('caption'),
-                { color: colors.goldBright, textAlign: 'center', lineHeight: 18 },
-              ]}
-            >
+          <View style={styles.vocBanner}>
+            <Text style={[typography('caption'), styles.vocText]}>
               {'☾ '}
               {t('oracle.voidOfCourseBanner', {
                 time: formatClockTime(skyExtras.voidOfCourse.signExitMs),
@@ -470,17 +460,17 @@ const OracleScreen: React.FC = () => {
         <HomeHero
           metrics={[
             {
-              key: 'hora',
-              label: t('oracle.currentHoraLabel'),
-              glyph: 'hora',
-              value: horaCountdown,
-            },
-            {
               key: 'sunrise',
               label: t('oracle.sunriseLabel'),
               glyph: 'sunrise',
               value:
                 skyExtras.sunTimes === null ? null : formatClockTime(skyExtras.sunTimes.sunriseMs),
+            },
+            {
+              key: 'hora',
+              label: t('oracle.currentHoraLabel'),
+              glyph: 'hora',
+              value: horaCountdown,
             },
             {
               key: 'sunset',
@@ -540,14 +530,7 @@ const OracleScreen: React.FC = () => {
         </HomeHero>
 
         {/* Brand signature */}
-        <Text
-          style={[
-            typography('caption'),
-            { color: colors.textFaint, textAlign: 'center', marginTop: 6, fontSize: 11 },
-          ]}
-        >
-          {t('app.poweredBy')}
-        </Text>
+        <Text style={[typography('caption'), styles.signature]}>{t('app.poweredBy')}</Text>
       </ScrollView>
 
       {/* Trial day banners — thin gold strip, max 44px, above tab bar */}
@@ -657,8 +640,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     alignSelf: 'stretch',
-    gap: 8,
-    marginTop: 14,
+    gap: 6,
+    marginTop: 12,
   },
   tierLine: {
     flexDirection: 'row',
@@ -666,7 +649,7 @@ const styles = StyleSheet.create({
     alignItems: 'baseline',
     justifyContent: 'center',
     gap: 6,
-    marginTop: 12,
+    marginTop: 10,
   },
   tierLabel: {
     color: CELESTIAL.antiqueGold,
@@ -708,15 +691,29 @@ const styles = StyleSheet.create({
   },
   scrollBody: {
     flexGrow: 1,
-    paddingBottom: 8,
+    paddingBottom: 4,
   },
   vocBanner: {
     marginHorizontal: SPACING.xl,
-    marginTop: 12,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
+    marginTop: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
     borderRadius: RADIUS.md,
     borderWidth: StyleSheet.hairlineWidth,
+    borderColor: CELESTIAL.antiqueGold + '80',
+    backgroundColor: CELESTIAL.deepTeal,
+  },
+  vocText: {
+    color: CELESTIAL.champagne,
+    textAlign: 'center',
+    fontSize: 12,
+    lineHeight: 16,
+  },
+  signature: {
+    color: CELESTIAL.antiqueGold,
+    textAlign: 'center',
+    fontSize: 11,
+    paddingBottom: 2,
   },
   inlineRow: {
     flexDirection: 'row',
