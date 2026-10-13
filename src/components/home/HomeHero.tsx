@@ -1,8 +1,8 @@
 /**
  * HomeHero — the Home screen's one panel, filling the space between the
  * header and the tab bar edge to edge: a row of three metric capsules, the
- * gold mandala, a row of three round actions, and whatever the caller puts
- * below them (Home's tile grid and tier line).
+ * gold mandala — which is also the Ask Shams button — and whatever the caller
+ * puts below it (Home's tile grid and tier line).
  *
  * The capsules always read left to right in the order given, whatever the
  * app's layout direction: they are a timeline (sunrise, hora, sunset), and
@@ -27,10 +27,8 @@ import { StyleSheet, View, useWindowDimensions, type LayoutChangeEvent } from 'r
 import Svg, { Circle, Defs, RadialGradient, Stop } from 'react-native-svg';
 
 import { SPACING } from '@theme/themes';
-import type { IconName } from '@components/TabIcon';
 import MandalaEmblem from './MandalaEmblem';
 import AstroMetricCapsule, { type MetricGlyph } from './AstroMetricCapsule';
-import CelestialActionButton from './CelestialActionButton';
 import { CELESTIAL } from './celestialPalette';
 
 export interface HeroMetric {
@@ -42,17 +40,13 @@ export interface HeroMetric {
   value: string | null;
 }
 
-export interface HeroAction {
-  key: string;
-  label: string;
-  icon: IconName;
-  onPress: () => void;
-}
-
 interface HomeHeroProps {
   metrics: HeroMetric[];
-  actions: HeroAction[];
-  /** Shown below the action row, inside the panel. */
+  /** Pressing the mandala asks Shams (after its lift animation). */
+  onAsk: () => void;
+  /** Screen-reader label for the mandala button. */
+  askLabel: string;
+  /** Shown below the mandala, inside the panel. */
   children?: React.ReactNode;
 }
 
@@ -60,7 +54,7 @@ const PANEL_PADDING = 12;
 const MANDALA_MAX = 320;
 const MANDALA_MIN = 110;
 
-const HomeHero: React.FC<HomeHeroProps> = ({ metrics, actions, children }) => {
+const HomeHero: React.FC<HomeHeroProps> = ({ metrics, onAsk, askLabel, children }) => {
   const { width } = useWindowDimensions();
   // The emblem never exceeds the panel's inner width…
   const inner = width - SPACING.xl * 2;
@@ -88,7 +82,7 @@ const HomeHero: React.FC<HomeHeroProps> = ({ metrics, actions, children }) => {
         ))}
       </View>
 
-      <View style={styles.mandalaSlot} onLayout={onSlotLayout}>
+      <View style={styles.mandalaSlot} onLayout={onSlotLayout} testID="home-mandala-slot">
         {mandalaSize !== null && (
           <>
             {/* Ambient illumination behind the emblem */}
@@ -108,21 +102,14 @@ const HomeHero: React.FC<HomeHeroProps> = ({ metrics, actions, children }) => {
                 />
               </Svg>
             </View>
-            <MandalaEmblem size={mandalaSize} />
+            <MandalaEmblem
+              size={mandalaSize}
+              testID="home-hero-action-ask"
+              onPress={onAsk}
+              accessibilityLabel={askLabel}
+            />
           </>
         )}
-      </View>
-
-      <View style={styles.actionRow}>
-        {actions.map(a => (
-          <CelestialActionButton
-            key={a.key}
-            testID={`home-hero-action-${a.key}`}
-            label={a.label}
-            icon={a.icon}
-            onPress={a.onPress}
-          />
-        ))}
       </View>
 
       {children}
@@ -147,6 +134,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 12,
+    // Above the tiles, so the lift animation swells over them.
+    zIndex: 2,
+    elevation: 2,
   },
   ambient: {
     position: 'absolute',
@@ -159,10 +149,6 @@ const styles = StyleSheet.create({
     alignSelf: 'stretch',
     gap: 10,
     marginBottom: 12,
-  },
-  actionRow: {
-    flexDirection: 'row',
-    alignSelf: 'stretch',
   },
 });
 

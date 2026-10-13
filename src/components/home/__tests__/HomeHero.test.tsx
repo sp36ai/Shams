@@ -4,7 +4,7 @@
  * missing.
  */
 import React from 'react';
-import { screen, userEvent } from '@testing-library/react-native';
+import { fireEvent, screen, userEvent, waitFor } from '@testing-library/react-native';
 import { renderScreen } from '../../../test-utils/renderScreen';
 import HomeHero from '../HomeHero';
 
@@ -16,7 +16,8 @@ describe('HomeHero', () => {
           { key: 'hora', label: 'Current Hora', glyph: 'hora', value: '42m' },
           { key: 'sunrise', label: 'Sunrise', glyph: 'sunrise', value: null },
         ]}
-        actions={[]}
+        onAsk={jest.fn()}
+        askLabel="Ask Shams"
       />,
     );
 
@@ -29,22 +30,17 @@ describe('HomeHero', () => {
     expect(screen.getByText('—')).toBeTruthy();
   });
 
-  it('calls the handler of the action that was pressed, and only that one', async () => {
+  it('asks once when the mandala is pressed, however often it is tapped', async () => {
     const ask = jest.fn();
-    const other = jest.fn();
-    await renderScreen(
-      <HomeHero
-        metrics={[]}
-        actions={[
-          { key: 'ask', label: 'Ask Shams', icon: 'oracle', onPress: ask },
-          { key: 'readings', label: 'Readings', icon: 'history', onPress: other },
-        ]}
-      />,
-    );
+    await renderScreen(<HomeHero metrics={[]} onAsk={ask} askLabel="Ask Shams" />);
+    await fireEvent(screen.getByTestId('home-mandala-slot'), 'layout', {
+      nativeEvent: { layout: { x: 0, y: 0, width: 320, height: 240 } },
+    });
 
-    await userEvent.setup().press(screen.getByLabelText('Ask Shams'));
+    const user = userEvent.setup();
+    await user.press(screen.getByLabelText('Ask Shams'));
+    await user.press(screen.getByLabelText('Ask Shams'));
 
-    expect(ask).toHaveBeenCalledTimes(1);
-    expect(other).not.toHaveBeenCalled();
+    await waitFor(() => expect(ask).toHaveBeenCalledTimes(1), { timeout: 3000 });
   });
 });

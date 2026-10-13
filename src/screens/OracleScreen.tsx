@@ -3,8 +3,8 @@
  * --------------------------------------------------------------------------
  * The first screen the seeker lands on after onboarding (Oracle is the
  * initial tab in MainTabs). A passive status surface that fits on one screen:
- * the hero panel holds the mandala, the live sky capsules, the three primary
- * actions (Ask Shams, Al-Falak, Readings), a grid of one-line tiles (Current
+ * the hero panel holds the live sky capsules, the mandala (pressing it asks
+ * Shams — it opens a new Reading), a grid of one-line tiles (Current
  * Hora, Today's Sky, Moon Manzil, Favored Now, Daily Dhikr, Today's Blessing)
  * and the tier/quota line. Each tile opens its full text in a detail sheet.
  * Asking happens in a Reading (ReadingScreen), which owns the composer, the
@@ -454,9 +454,8 @@ const OracleScreen: React.FC = () => {
           </View>
         )}
 
-        {/* Hero — mandala, live sky capsules and the three primary actions.
-            Every value is one this screen already shows further down (hora
-            countdown, sunrise, sunset); every action is an existing route. */}
+        {/* Hero — live sky capsules, and the mandala, which opens a new
+            Reading (Ask Shams). Readings and Al-Falak are in the tab bar. */}
         <HomeHero
           metrics={[
             {
@@ -480,26 +479,8 @@ const OracleScreen: React.FC = () => {
                 skyExtras.sunTimes === null ? null : formatClockTime(skyExtras.sunTimes.sunsetMs),
             },
           ]}
-          actions={[
-            {
-              key: 'ask',
-              label: t('oracle.askShamsCta'),
-              icon: 'oracle',
-              onPress: () => navigation.push('Reading', {}),
-            },
-            {
-              key: 'alfalak',
-              label: t('nav.alFalakTab'),
-              icon: 'skyclock',
-              onPress: () => navigation.navigate('AlFalak'),
-            },
-            {
-              key: 'readings',
-              label: t('nav.readingsTab'),
-              icon: 'history',
-              onPress: () => navigation.navigate('Readings'),
-            },
-          ]}
+          onAsk={() => navigation.push('Reading', {})}
+          askLabel={t('oracle.askShamsCta')}
         >
           {/* Everything else on Home as one-line tiles; each opens its full
               text in the detail sheet below, so Home fits on one screen. */}

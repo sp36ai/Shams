@@ -12,7 +12,7 @@
  * disconnected during a refactor fails here immediately.
  */
 import React from 'react';
-import { screen, userEvent } from '@testing-library/react-native';
+import { fireEvent, screen, userEvent, waitFor } from '@testing-library/react-native';
 import { useNavigation } from '@react-navigation/native';
 import { renderScreen } from '../../test-utils/renderScreen';
 import OracleScreen from '../OracleScreen';
@@ -63,27 +63,41 @@ describe('OracleScreen hero', () => {
     return handle;
   }
 
-  it('opens an empty Reading from the hero Ask button', async () => {
+  /** The mandala renders once its slot is measured; tests have no layout pass. */
+  async function layoutMandalaSlot(): Promise<void> {
+    await fireEvent(screen.getByTestId('home-mandala-slot'), 'layout', {
+      nativeEvent: { layout: { x: 0, y: 0, width: 320, height: 240 } },
+    });
+  }
+
+  it('opens an empty Reading when the mandala is pressed', async () => {
     const { push, navigate } = mockNavigation();
     await renderScreen(<OracleScreen />);
+    await layoutMandalaSlot();
 
     await userEvent.setup().press(screen.getByTestId('home-hero-action-ask'));
 
-    expect(push).toHaveBeenCalledWith('Reading', {});
+    // After the lift animation, not before it.
+    await waitFor(() => expect(push).toHaveBeenCalledWith('Reading', {}), { timeout: 3000 });
+    expect(push).toHaveBeenCalledTimes(1);
     expect(navigate).not.toHaveBeenCalled();
   });
 
-  it.each([
-    ['alfalak', 'AlFalak'],
-    ['readings', 'Readings'],
-  ])('hero %s button navigates to the %s tab', async (key, route) => {
-    const { navigate, push } = mockNavigation();
+  it('labels the mandala as the Ask Shams button', async () => {
+    mockNavigation();
     await renderScreen(<OracleScreen />);
+    await layoutMandalaSlot();
 
-    await userEvent.setup().press(screen.getByTestId(`home-hero-action-${key}`));
+    const mandala = screen.getByTestId('home-hero-action-ask');
+    expect(mandala.props.accessibilityRole).toBe('button');
+    expect(mandala.props.accessibilityLabel).toBe('Ask Shams');
+  });
 
-    expect(navigate).toHaveBeenCalledWith(route);
-    expect(push).not.toHaveBeenCalled();
+  it('no longer shows the round Readings / Al-Falak / Ask buttons', async () => {
+    mockNavigation();
+    await renderScreen(<OracleScreen />);
+    expect(screen.queryByTestId('home-hero-action-alfalak')).toBeNull();
+    expect(screen.queryByTestId('home-hero-action-readings')).toBeNull();
   });
 
   it('labels each metric capsule with its real value, never a placeholder number', async () => {
@@ -109,7 +123,8 @@ describe('OracleScreen hero', () => {
       '"home-hero-metric-sunrise"',
       '"home-hero-metric-hora"',
       '"home-hero-metric-sunset"',
-      '"home-hero-action-ask"',
+      '"home-mandala-slot"',
+      '"home-tile-hora"',
     ];
     const positions = ids.map(id => tree.indexOf(id));
     expect(positions.every(p => p >= 0)).toBe(true);
@@ -151,7 +166,7 @@ describe('OracleScreen layout', () => {
     const ids = [
       '"home-hero"',
       '"home-hero-metric-hora"',
-      '"home-hero-action-ask"',
+      '"home-mandala-slot"',
       '"home-tile-hora"',
       '"home-tile-sky"',
       '"home-tile-manzil"',
