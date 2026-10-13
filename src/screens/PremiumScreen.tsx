@@ -10,6 +10,7 @@ import { usePurchase, type PurchasePlan } from '@hooks/usePurchase';
 import type { RootStackParamList } from '@navigation/types';
 import StarfieldBackground from '@components/StarfieldBackground';
 import Button from '@components/ui/Button';
+import BrandFooter from '@components/ui/BrandFooter';
 
 const KHASS_GOLD = '#B8952A';
 
@@ -358,6 +359,7 @@ const PremiumScreen: React.FC = () => {
           </Text>
         </Pressable>
       </ScrollView>
+      <BrandFooter />
     </SafeAreaView>
   );
 };

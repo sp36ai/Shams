@@ -11,7 +11,10 @@ import {
   DEFAULT_THEME_ID,
   THEME_IDS,
   THEME_TIER,
+  VISIBLE_THEME_IDS,
   isThemeUnlocked,
+  isValidThemeId,
+  pickerThemeIds,
   tierMeetsRequirement,
   type ThemeId,
 } from '../themes';
@@ -134,4 +137,21 @@ describe('isThemeUnlocked — TEMPORARY testing-mode override', () => {
       }
     });
   }
+});
+
+describe('theme picker list', () => {
+  it('offers exactly Midnight Celestial, Dār al-Shams and Layl al-Baḥr', () => {
+    expect(VISIBLE_THEME_IDS).toEqual(['midnightCelestial', 'darAlShams', 'laylAlBahr']);
+    expect(pickerThemeIds('darAlShams')).toEqual(VISIBLE_THEME_IDS);
+  });
+
+  it('still shows a hidden theme while it is the active one', () => {
+    expect(pickerThemeIds('kanzAlAsrar')).toEqual([...VISIBLE_THEME_IDS, 'kanzAlAsrar']);
+  });
+
+  it('keeps every hidden theme valid, so existing users are not reset', () => {
+    for (const id of THEME_IDS) {
+      expect(isValidThemeId(id)).toBe(true);
+    }
+  });
 });

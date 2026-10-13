@@ -49,6 +49,7 @@ import HomeHero from '@components/home/HomeHero';
 import HomeInfoTile from '@components/home/HomeInfoTile';
 import HomeDetailSheet from '@components/home/HomeDetailSheet';
 import HomeMenu, { HomeMenuButton } from '@components/home/HomeMenu';
+import GenieGuide, { GenieButton } from '@components/home/GenieGuide';
 import { CELESTIAL } from '@components/home/celestialPalette';
 import OrnamentDivider from '@components/ui/OrnamentDivider';
 import { buildDailySkyMessage } from '@utils/dailySkyMessage';
@@ -82,6 +83,7 @@ const OracleScreen: React.FC = () => {
   const navigation = useNavigation<AppNavigation>();
 
   const [menuOpen, setMenuOpen] = useState(false);
+  const [genieOpen, setGenieOpen] = useState(false);
 
   // Home's panel runs from the top edge to the bottom edge, so while Home is
   // focused the status bar takes the panel's midnight (in every theme); the
@@ -529,8 +531,14 @@ const OracleScreen: React.FC = () => {
           </View>
         </HomeHero>
 
-        {/* Brand signature */}
-        <Text style={[typography('caption'), styles.signature]}>{t('app.poweredBy')}</Text>
+        {/* Brand signature, with the Genie guide at the end corner */}
+        <View style={styles.footerRow}>
+          <View style={styles.footerSide} />
+          <Text style={[typography('caption'), styles.signature]}>{t('app.poweredBy')}</Text>
+          <View style={[styles.footerSide, styles.footerSideEnd]}>
+            <GenieButton onPress={() => setGenieOpen(true)} accessibilityLabel="Genie guide" />
+          </View>
+        </View>
       </ScrollView>
 
       {/* Trial day banners — thin gold strip, max 44px, above tab bar */}
@@ -594,6 +602,8 @@ const OracleScreen: React.FC = () => {
           },
         ]}
       />
+
+      <GenieGuide visible={genieOpen} onClose={() => setGenieOpen(false)} />
 
       <HomeDetailSheet title={openTileLabel} onClose={() => setOpenTile(null)}>
         {renderTileDetail(openTile)}
@@ -726,7 +736,18 @@ const styles = StyleSheet.create({
     color: CELESTIAL.antiqueGold,
     textAlign: 'center',
     fontSize: 11,
-    paddingBottom: 2,
+  },
+  footerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: SPACING.xl,
+    paddingTop: 4,
+  },
+  footerSide: {
+    flex: 1,
+  },
+  footerSideEnd: {
+    alignItems: 'flex-end',
   },
   inlineRow: {
     flexDirection: 'row',

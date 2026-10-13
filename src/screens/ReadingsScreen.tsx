@@ -55,6 +55,7 @@ import StarfieldBackground from '@components/StarfieldBackground';
 import VerdictSeal from '@components/oracle/VerdictSeal';
 import RkpWatchCard, { STATE_TONE } from '@components/oracle/RkpWatchCard';
 import RemedyProtocolCard from '@components/oracle/RemedyProtocolCard';
+import BrandFooter from '@components/ui/BrandFooter';
 
 /* -------------------------------------------------------------------------- */
 /*  Verdict types from the persisted verdictJson                              */
@@ -394,6 +395,7 @@ const ReadingsScreen: React.FC = () => {
           }}
         />
       )}
+      <BrandFooter />
     </SafeAreaView>
   );
 };

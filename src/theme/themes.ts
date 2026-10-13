@@ -824,6 +824,25 @@ export const THEME_IDS: readonly ThemeId[] = [
   'kanzAlAsrar',
 ];
 
+/**
+ * The themes offered in the theme picker (owner decision): three colour
+ * themes. Every other theme still exists and still works — a user already
+ * on one keeps it, and the picker shows it while it is active so they can see
+ * what they are on — but it is no longer offered.
+ */
+export const VISIBLE_THEME_IDS: readonly ThemeId[] = [
+  'midnightCelestial',
+  'darAlShams',
+  'laylAlBahr',
+];
+
+/** The picker's list: the visible themes, plus the active one if it is hidden. */
+export function pickerThemeIds(activeId: ThemeId): readonly ThemeId[] {
+  return VISIBLE_THEME_IDS.includes(activeId)
+    ? VISIBLE_THEME_IDS
+    : [...VISIBLE_THEME_IDS, activeId];
+}
+
 // New installs start in Midnight Celestial. Existing users keep whatever theme
 // is already persisted (ThemeProvider writes the active id on first launch).
 export const DEFAULT_THEME_ID: ThemeId = 'midnightCelestial';

@@ -187,6 +187,15 @@ describe('OracleScreen hero', () => {
   });
 });
 
+describe('OracleScreen genie', () => {
+  it('opens the Genie guide from the 🧞 button', async () => {
+    await renderScreen(<OracleScreen />);
+    expect(screen.queryByTestId('genie-guide')).toBeNull();
+    await userEvent.setup().press(screen.getByTestId('genie-btn'));
+    expect(screen.getByTestId('genie-guide')).toBeTruthy();
+  });
+});
+
 describe('OracleScreen layout', () => {
   it('keeps everything inside the hero: capsules, actions, tiles, then tier', async () => {
     await renderScreen(<OracleScreen />);

@@ -92,6 +92,7 @@ import ChatBubble from '@components/oracle/ChatBubble';
 import ChatComposer from '@components/oracle/ChatComposer';
 import ReadingHeader from '@components/oracle/ReadingHeader';
 import { requestRef } from '@utils/requestRef';
+import BrandFooter from '@components/ui/BrandFooter';
 
 /**
  * Maps a send failure to a message the seeker can act on. Firebase callable
@@ -887,6 +888,7 @@ const ReadingScreen: React.FC = () => {
           }
         />
       </KeyboardAvoidingView>
+      <BrandFooter />
     </SafeAreaView>
   );
 };

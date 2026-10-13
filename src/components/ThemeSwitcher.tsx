@@ -21,7 +21,7 @@ import { useNavigation } from '@react-navigation/native';
 import type { AppNavigation } from '@navigation/types';
 import { useTheme, useColors } from '@theme/ThemeProvider';
 import {
-  THEME_IDS,
+  pickerThemeIds,
   THEME_TIER,
   getTheme,
   isThemeUnlocked,
@@ -66,7 +66,7 @@ export function ThemeSwitcher() {
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.row}
       >
-        {THEME_IDS.map(id => {
+        {pickerThemeIds(themeId).map(id => {
           const t = getTheme(id);
           const isActive = id === themeId;
           const unlocked = isThemeUnlocked(id, plan);
