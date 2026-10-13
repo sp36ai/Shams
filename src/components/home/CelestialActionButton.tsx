@@ -8,6 +8,7 @@
 
 import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import Svg, { Circle, Defs, RadialGradient, Stop } from 'react-native-svg';
 
 import { useTypography } from '@theme/useTypography';
 import TabIcon, { type IconName } from '@components/TabIcon';
@@ -42,6 +43,19 @@ const CelestialActionButton: React.FC<CelestialActionButtonProps> = ({
           { opacity: pressed ? 0.85 : 1, transform: [{ scale: pressed ? 0.95 : 1 }] },
         ]}
       >
+        {/* Lit dome: lighter teal at the top-centre, falling to midnight at the rim */}
+        <View pointerEvents="none" style={StyleSheet.absoluteFill}>
+          <Svg width={SIZE} height={SIZE}>
+            <Defs>
+              <RadialGradient id="btnDome" cx="50%" cy="35%" rx="65%" ry="65%">
+                <Stop offset="0%" stopColor="#1C4459" stopOpacity={1} />
+                <Stop offset="60%" stopColor={CELESTIAL.deepTeal} stopOpacity={1} />
+                <Stop offset="100%" stopColor={CELESTIAL.midnight} stopOpacity={1} />
+              </RadialGradient>
+            </Defs>
+            <Circle cx={SIZE / 2} cy={SIZE / 2} r={SIZE / 2} fill="url(#btnDome)" />
+          </Svg>
+        </View>
         <View pointerEvents="none" style={styles.innerRing} />
         <TabIcon name={icon} color={CELESTIAL.champagne} size={22} />
       </Pressable>
@@ -65,16 +79,17 @@ const styles = StyleSheet.create({
     width: SIZE,
     height: SIZE,
     borderRadius: SIZE / 2,
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: CELESTIAL.antiqueGold,
-    backgroundColor: CELESTIAL.deepTeal,
+    backgroundColor: CELESTIAL.midnight,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: CELESTIAL.antiqueGold,
-    shadowOpacity: 0.25,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 3 },
-    elevation: 4,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOpacity: 0.5,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 6,
   },
   innerRing: {
     position: 'absolute',
@@ -84,7 +99,7 @@ const styles = StyleSheet.create({
     bottom: 3,
     borderRadius: SIZE / 2 - 3,
     borderWidth: 1,
-    borderColor: CELESTIAL.champagne + '2E',
+    borderColor: CELESTIAL.champagne + '40',
   },
   label: {
     marginTop: 7,

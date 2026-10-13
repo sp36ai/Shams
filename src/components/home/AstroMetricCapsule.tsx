@@ -68,6 +68,7 @@ const AstroMetricCapsule: React.FC<AstroMetricCapsuleProps> = ({ label, value, g
       </View>
       <View style={styles.capsule}>
         <View pointerEvents="none" style={styles.capsuleHighlight} />
+        <View pointerEvents="none" style={styles.capsuleShade} />
         <Text
           style={[typography('subheading'), styles.value, { color: CELESTIAL.champagne }]}
           numberOfLines={1}
@@ -104,24 +105,32 @@ const styles = StyleSheet.create({
     paddingVertical: 9,
     paddingHorizontal: 8,
     borderRadius: RADIUS.pill,
-    borderWidth: 1,
-    borderColor: CELESTIAL.antiqueGold + '66',
+    borderWidth: 1.2,
+    borderColor: CELESTIAL.antiqueGold + 'B3',
     backgroundColor: CELESTIAL.deepTeal,
     overflow: 'hidden',
     shadowColor: '#000',
-    shadowOpacity: 0.35,
+    shadowOpacity: 0.5,
     shadowRadius: 6,
-    shadowOffset: { width: 0, height: 3 },
-    elevation: 3,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 5,
   },
-  // A faint lighter top half — the capsule's restrained inner sheen.
+  // A soft lighter top half and a darker lower edge give the capsule depth.
   capsuleHighlight: {
     position: 'absolute',
     top: 0,
     left: 0,
     right: 0,
     height: '50%',
-    backgroundColor: CELESTIAL.ivory + '0A',
+    backgroundColor: CELESTIAL.ivory + '12',
+  },
+  capsuleShade: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: '35%',
+    backgroundColor: '#00000040',
   },
   value: {
     fontSize: 16,

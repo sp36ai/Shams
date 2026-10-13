@@ -44,13 +44,13 @@ interface HomeHeroProps {
 }
 
 const PANEL_PADDING = 16;
-const MANDALA_MAX = 300;
+const MANDALA_MAX = 320;
 
 const HomeHero: React.FC<HomeHeroProps> = ({ metrics, actions }) => {
   const { width } = useWindowDimensions();
   // Scale the emblem with the screen, leaving the panel's gutters clear.
   const inner = width - SPACING.xl * 2 - PANEL_PADDING * 2;
-  const mandalaSize = Math.max(160, Math.min(MANDALA_MAX, Math.round(inner * 0.86)));
+  const mandalaSize = Math.max(160, Math.min(MANDALA_MAX, Math.round(inner * 0.92)));
   const panelWidth = width - SPACING.xl * 2;
 
   return (
@@ -60,7 +60,7 @@ const HomeHero: React.FC<HomeHeroProps> = ({ metrics, actions }) => {
         <Svg width={panelWidth} height={mandalaSize + 80}>
           <Defs>
             <RadialGradient id="heroAmbient" cx="50%" cy="50%" rx="50%" ry="50%">
-              <Stop offset="0%" stopColor={CELESTIAL.deepTeal} stopOpacity={1} />
+              <Stop offset="0%" stopColor={CELESTIAL.deepTeal} stopOpacity={0.7} />
               <Stop offset="100%" stopColor={CELESTIAL.midnight} stopOpacity={0} />
             </RadialGradient>
           </Defs>
