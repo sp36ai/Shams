@@ -156,4 +156,17 @@ jest.mock('react-native-tts', () => ({
   },
 }));
 
+// react-native-iap needs the native Nitro module, which jest cannot load.
+// Store calls resolve to "nothing available": no products, no purchases.
+jest.mock('react-native-iap', () => ({
+  initConnection: jest.fn(() => Promise.resolve(true)),
+  endConnection: jest.fn(() => Promise.resolve(true)),
+  fetchProducts: jest.fn(() => Promise.resolve([])),
+  getAvailablePurchases: jest.fn(() => Promise.resolve([])),
+  requestPurchase: jest.fn(() => Promise.resolve(null)),
+  finishTransaction: jest.fn(() => Promise.resolve(true)),
+  purchaseUpdatedListener: jest.fn(() => ({ remove: jest.fn() })),
+  purchaseErrorListener: jest.fn(() => ({ remove: jest.fn() })),
+}));
+
 jest.setTimeout(15000);

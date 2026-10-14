@@ -119,7 +119,10 @@ function httpsPost(url: string, body: string, headers: Record<string, string>): 
   });
 }
 
-function httpsGet(url: string, accessToken: string): Promise<{ status: number; body: string }> {
+export function httpsGet(
+  url: string,
+  accessToken: string,
+): Promise<{ status: number; body: string }> {
   return new Promise((resolve, reject) => {
     const u = new URL(url);
     const req = https.request(
@@ -142,7 +145,7 @@ function httpsGet(url: string, accessToken: string): Promise<{ status: number; b
   });
 }
 
-function httpsPostAuth(
+export function httpsPostAuth(
   url: string,
   accessToken: string,
 ): Promise<{ status: number; body: string }> {
@@ -171,11 +174,11 @@ function httpsPostAuth(
 // Full (unshortened, unlike requestMeta's log-correlation IP hash) SHA-256 —
 // collision resistance matters here since it's the actual dedup/binding key,
 // not just a log-friendly identifier.
-function hashPurchaseToken(token: string): string {
+export function hashPurchaseToken(token: string): string {
   return crypto.createHash('sha256').update(token).digest('hex');
 }
 
-async function getGoogleAccessToken(): Promise<string> {
+export async function getGoogleAccessToken(): Promise<string> {
   const clientEmail = GOOGLE_PLAY_CLIENT_EMAIL.value();
   const privateKey = GOOGLE_PLAY_PRIVATE_KEY.value().replace(/\\n/g, '\n');
 

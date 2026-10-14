@@ -5,9 +5,6 @@
 
 import { SKU_MAP } from '../usePurchase';
 
-// The native store module cannot load under jest; the mapping does not use it.
-jest.mock('react-native-iap', () => ({}));
-
 describe('SKU_MAP', () => {
   it('sells Premium as the shams_premium_monthly product', () => {
     expect(SKU_MAP.premium_monthly).toBe('shams_premium_monthly');

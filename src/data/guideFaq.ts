@@ -78,7 +78,7 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     id: 'coins',
     question: 'What are the gold coins?',
     answer:
-      'Coins pay for what goes beyond your plan: 1 coin = ₹10. After a verdict you can discuss your reading with the Oracle; that conversation is charged by length, like ChatGPT — 1 coin per 10,000 tokens, so a typical reply costs less than 1 coin. On the free plan, an extra question beyond the free one costs 3 coins. Tap the gold coin at the top of Home to see your balance.',
+      'Coins pay for what goes beyond your plan: 1 coin = ₹10. After a verdict you can discuss your reading with the Oracle; that conversation is charged by length, like ChatGPT — 1 coin per 10,000 tokens, so a typical reply costs less than 1 coin. On the free plan, an extra question beyond the free one costs 3 coins. Tap the gold coin at the top of Home to see your balance and buy coin packs through Google Play: 10, 30 or 100 coins.',
   },
   {
     id: 'location',

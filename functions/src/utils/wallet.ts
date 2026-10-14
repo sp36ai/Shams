@@ -109,6 +109,55 @@ export async function chargeDiscussion(
   });
 }
 
+export type CoinPurchaseCredit =
+  | { status: 'credited'; creditedMilli: number; balanceMilli: number }
+  | { status: 'already_credited'; balanceMilli: number }
+  | { status: 'other_account' };
+
+/**
+ * Credit a Google Play coin pack exactly once. The purchase token (hashed) is
+ * bound to the buyer in /purchaseTokens in the same transaction as the
+ * credit, so verifying the same purchase again — a retry, a reinstall, the
+ * app's recovery of an unfinished purchase — never credits twice, and a
+ * token can never be redeemed by a second account.
+ */
+export async function creditCoinPurchase(
+  userId: string,
+  tokenHash: string,
+  purchase: { productId: string; orderId: string; amountMilli: number },
+): Promise<CoinPurchaseCredit> {
+  if (!Number.isInteger(purchase.amountMilli) || purchase.amountMilli <= 0) {
+    throw new Error('creditCoinPurchase: amount must be a positive integer of millicoins');
+  }
+  const tokenRef = db.collection('purchaseTokens').doc(tokenHash);
+  return db.runTransaction(async tx => {
+    const tokenSnap = await tx.get(tokenRef);
+    const walletSnap = await tx.get(walletRef(userId));
+    const balance = walletSnap.exists ? balanceOf(walletSnap.data()) : 0;
+    if (tokenSnap.exists) {
+      const boundUserId = (tokenSnap.data() as { userId?: unknown } | undefined)?.userId;
+      return boundUserId === userId
+        ? { status: 'already_credited', balanceMilli: balance }
+        : { status: 'other_account' };
+    }
+    tx.set(tokenRef, {
+      userId,
+      kind: 'coins',
+      productId: purchase.productId,
+      orderId: purchase.orderId,
+      creditedMilli: purchase.amountMilli,
+      boundAt: FieldValue.serverTimestamp(),
+    });
+    const after = balance + purchase.amountMilli;
+    writeBalance(tx, userId, after, {
+      type: 'purchase',
+      amountMilli: purchase.amountMilli,
+      note: `${purchase.productId} ${purchase.orderId}`,
+    });
+    return { status: 'credited', creditedMilli: purchase.amountMilli, balanceMilli: after };
+  });
+}
+
 /** Add coins (admin grant, purchase or refund). `amountMilli` must be positive. */
 export async function creditWallet(
   userId: string,

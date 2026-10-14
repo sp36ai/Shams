@@ -51,6 +51,15 @@ export const PAID_DAILY_FAIR_USE = 10;
 export const TOKENS_PER_MILLICOIN = 10;
 /** Discussion: a turn needs at least this balance to start (1 coin). */
 export const MIN_DISCUSSION_BALANCE_MILLI = 1 * MILLI_PER_COIN;
+/**
+ * Coin packs sold through Google Play as consumable in-app products (owner
+ * decision 2026-10-14): ₹10 per coin, no bonuses. Product id → coins.
+ */
+export const COIN_PACKS: Record<string, number> = {
+  shams_coins_10: 10,
+  shams_coins_30: 30,
+  shams_coins_100: 100,
+};
 
 export const REGION = 'asia-south1'; // Mumbai — closest to primary user base
 

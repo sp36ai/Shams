@@ -284,7 +284,14 @@ export const en: StringTable = {
       'Discussion after a verdict is charged by length, like ChatGPT: 1 coin per 10,000 tokens. A typical reply costs less than 1 coin.',
     premium:
       'Premium ₹299/month: unlimited questions (fair use: 10 a day). Discussion still uses coins.',
-    buySoon: 'Buying coins is coming soon.',
+    buyTitle: 'Buy coins',
+    packCoins: '{{coins}} coins',
+    purchaseAdded: '{{coins}} coins added.',
+    purchasePending:
+      'Your payment is pending. The coins are added as soon as Google Play confirms it.',
+    purchaseFailed:
+      'The purchase could not be confirmed. If you were charged, the coins are added the next time you open your wallet.',
+    packsUnavailable: 'Coin packs are not available right now. Please try again later.',
     seePremium: 'See Premium',
     freeQuestionLabel: 'Free question',
     available: 'Available',

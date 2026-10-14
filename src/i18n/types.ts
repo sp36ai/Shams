@@ -355,7 +355,12 @@ export interface StringTable {
     priceQuestion: string;
     priceDiscussion: string;
     premium: string;
-    buySoon: string;
+    buyTitle: string;
+    packCoins: string;
+    purchaseAdded: string;
+    purchasePending: string;
+    purchaseFailed: string;
+    packsUnavailable: string;
     seePremium: string;
     freeQuestionLabel: string;
     available: string;

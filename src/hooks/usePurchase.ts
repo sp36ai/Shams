@@ -18,6 +18,7 @@ import { ensureAppCheckReady } from '../firebase/appCheck';
 import { withTimeout } from '../utils/withTimeout';
 import { useQuotaStore } from '@stores/quotaStore';
 import type { PlanTier } from '@stores/quotaStore';
+import { isCoinSku } from '../data/coinPacks';
 
 export type PurchasePlan =
   | 'premium_monthly'
@@ -109,7 +110,8 @@ export function usePurchase(): PurchaseState {
     // purchaseUpdatedListener fires for renewals and deferred purchases
     // that complete outside the requestPurchase flow (e.g., Play Store auto-renewal).
     const updateSub = purchaseUpdatedListener((p: Purchase) => {
-      if (!p.purchaseToken || !p.productId) {
+      // Coin packs are consumables, verified and finished by useCoinPurchase.
+      if (!p.purchaseToken || !p.productId || isCoinSku(p.productId)) {
         return;
       }
       verifyWithServer(p.purchaseToken, p.productId)
@@ -218,7 +220,7 @@ export function usePurchase(): PurchaseState {
       const purchases = await getAvailablePurchases();
 
       for (const p of purchases) {
-        if (!p.purchaseToken || !p.productId) {
+        if (!p.purchaseToken || !p.productId || isCoinSku(p.productId)) {
           continue;
         }
         const { verified, planExpiry } = await verifyWithServer(p.purchaseToken, p.productId);

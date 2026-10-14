@@ -13,6 +13,7 @@
  *   razorpayWebhook          — HTTP    — Razorpay payment event handler
  *   setAdminClaim            — callable — manage administrative privileges
  *   grantCoins               — callable — admin-only coin grant (testing, goodwill)
+ *   verifyCoinPurchase       — callable — verify a Google Play coin pack, credit the wallet once
  *   health                   — HTTP    — readiness/liveness check
  *
  * Auth model:
@@ -31,6 +32,7 @@ export { getQuota } from './functions/quota';
 export { syncReadings, deleteReading } from './functions/readings';
 export { deleteAccount } from './functions/account';
 export { verifyGooglePlayPurchase } from './functions/payments/googlePlay';
+export { verifyCoinPurchase } from './functions/payments/googlePlayCoins';
 export { razorpayWebhook } from './functions/payments/razorpay';
 export { health } from './functions/health';
 export { setAdminClaim, grantCoins } from './functions/admin';

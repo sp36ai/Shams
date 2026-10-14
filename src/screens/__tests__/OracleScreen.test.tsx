@@ -217,6 +217,32 @@ describe('OracleScreen coins', () => {
     await userEvent.setup().press(screen.getByTestId('coin-chip'));
     expect(screen.getByTestId('wallet-balance')).toBeTruthy();
   });
+
+  it('offers the three coin packs at ₹10 a coin', async () => {
+    await renderScreen(<OracleScreen />);
+    await userEvent.setup().press(screen.getByTestId('coin-chip'));
+    for (const [coins, price] of [
+      ['10', '₹100'],
+      ['30', '₹300'],
+      ['100', '₹1000'],
+    ]) {
+      expect(screen.getByTestId(`wallet-pack-${coins}`)).toBeTruthy();
+      expect(screen.getByText(price)).toBeTruthy();
+    }
+  });
+
+  it('says so, and credits nothing, when Google Play has no such pack', async () => {
+    useWalletStore.getState().update({ mode: 'coins', balanceMilli: 5_000 });
+    await renderScreen(<OracleScreen />);
+    const user = userEvent.setup();
+    await user.press(screen.getByTestId('coin-chip'));
+    await user.press(screen.getByTestId('wallet-pack-10'));
+    await waitFor(() => expect(screen.getByTestId('wallet-notice')).toBeTruthy());
+    expect(
+      screen.getByText('Coin packs are not available right now. Please try again later.'),
+    ).toBeTruthy();
+    expect(useWalletStore.getState().balanceMilli).toBe(5_000);
+  });
 });
 
 describe('OracleScreen layout', () => {
