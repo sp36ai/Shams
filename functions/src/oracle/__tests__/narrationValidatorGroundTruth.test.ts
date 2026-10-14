@@ -68,8 +68,14 @@ function baseNarration(overrides: Partial<NarrationFields> = {}): NarrationField
 // Same question/moment as scripts/adversarial-harness/contracts.ts's
 // employment-001/business-007 seeds -- the real engine chain is
 // deterministic, so this reproduces the identical contract.
+// Moved on 2026-10-14: under the node-axis rule (owner decision 2026-10-14)
+// the original 2026-08-15 11:00 moment reads REVERSING, whose rationale no
+// longer states the retrograde. The same clock time five weeks later keeps
+// every property the tests rely on (Burj Jadi, South, Neutral relation,
+// reversal POSSIBLE, Mirrikh obstructing) and is retrograde in both factors
+// and rationale, which is what this fixture pins.
 const primary = contractFor(
-  '2026-08-15T11:00:00+04:00',
+  '2026-09-19T11:00:00+04:00',
   'Will I get the job I interviewed for?',
   'r-5er-employment-001',
 ); // genuinely retrograde -- see precondition test below
