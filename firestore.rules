@@ -87,6 +87,21 @@ service cloud.firestore {
       allow write: if false; // Admin SDK only
     }
 
+    // ── /wallets/{userId} and /wallets/{userId}/ledger/{entryId} ─────────────
+    // Coin balances (utils/wallet.ts). Every change is made by Cloud Functions
+    // (Admin SDK) together with a ledger entry; the owner may read both to
+    // show their balance and history. No client writes, ever.
+
+    match /wallets/{userId} {
+      allow read:  if isOwner(userId) || isAdmin();
+      allow write: if false; // Admin SDK only
+
+      match /ledger/{entryId} {
+        allow read:  if isOwner(userId) || isAdmin();
+        allow write: if false; // Admin SDK only
+      }
+    }
+
     // ── /rateLimits/{userId}/minutes/{minuteKey} ─────────────────────────────
     // Written exclusively by Cloud Functions. Clients have no access.
 

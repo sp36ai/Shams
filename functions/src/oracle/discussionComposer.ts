@@ -175,6 +175,11 @@ export interface DiscussionReply {
    * together with `isNewQuestion` — that reply already points elsewhere.
    */
   readonly conversationComplete: boolean;
+  /**
+   * Model tokens (input + output, every attempt that went into this reply)
+   * as reported by the API's `usage` — what a coins-mode turn is priced on.
+   */
+  readonly tokensUsed: number;
 }
 
 const LANG_NAME: Readonly<Record<LangCode, string>> = Object.freeze({
@@ -581,6 +586,23 @@ interface DraftReply {
   readonly answer: string;
   readonly isNewQuestion: boolean;
   readonly conversationComplete: boolean;
+  /** This call's input + output tokens, from the API's `usage`. */
+  readonly tokens: number;
+}
+
+/** Input + output tokens from a Messages API `usage` object (0 when absent). */
+export function tokensFromUsage(usage: unknown): number {
+  if (usage === null || typeof usage !== 'object') {
+    return 0;
+  }
+  const u = usage as Record<string, unknown>;
+  const n = (k: string): number => (typeof u[k] === 'number' && Number.isFinite(u[k]) ? u[k] : 0);
+  return (
+    n('input_tokens') +
+    n('output_tokens') +
+    n('cache_creation_input_tokens') +
+    n('cache_read_input_tokens')
+  );
 }
 
 /** Why a draft may not be shown: log fields, plus the wording to avoid on a rewrite. */
@@ -695,7 +717,10 @@ async function requestDraft(
       return null;
     }
 
-    const json = (await res.json()) as { content?: Array<{ type: string; text?: string }> };
+    const json = (await res.json()) as {
+      content?: Array<{ type: string; text?: string }>;
+      usage?: unknown;
+    };
     const raw = json.content?.find(b => b.type === 'text')?.text ?? '';
     const parsed = JSON.parse(stripJsonFence(raw)) as {
       answer?: unknown;
@@ -713,6 +738,7 @@ async function requestDraft(
       isNewQuestion: parsed.is_new_question === true,
       conversationComplete:
         parsed.conversation_complete === true && parsed.is_new_question !== true,
+      tokens: tokensFromUsage(json.usage),
     };
   } catch (err) {
     logger.warn('oracle discussion failed', { ...ctx, err: String(err) });
@@ -751,7 +777,7 @@ export async function composeDiscussionReply(
   }
   const firstRejection = rejectionOf(input, first);
   if (firstRejection === null) {
-    return first;
+    return { ...withoutTokens(first), tokensUsed: first.tokens };
   }
 
   // A rejected draft is often a correct answer phrased in wording a
@@ -796,5 +822,13 @@ export async function composeDiscussionReply(
     return null;
   }
   logger.info('oracle discussion rewrite passed validation', ctx);
-  return second;
+  return { ...withoutTokens(second), tokensUsed: first.tokens + second.tokens };
+}
+
+function withoutTokens(d: DraftReply): Omit<DiscussionReply, 'tokensUsed'> {
+  return {
+    answer: d.answer,
+    isNewQuestion: d.isNewQuestion,
+    conversationComplete: d.conversationComplete,
+  };
 }

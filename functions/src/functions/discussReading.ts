@@ -45,7 +45,14 @@ import { enforceRateLimit } from '../middleware/rateLimit';
 import { parse, DiscussReadingSchema } from '../middleware/validate';
 import { measure } from '../middleware/telemetry';
 import { logger, hashText } from '../utils/logger';
-import { ORACLE_FUNCTION_OPTS, ANTHROPIC_API_KEY, DISCUSSION_TURN_LIMIT } from '../config';
+import {
+  ORACLE_FUNCTION_OPTS,
+  ANTHROPIC_API_KEY,
+  DISCUSSION_TURN_LIMIT,
+  MIN_DISCUSSION_BALANCE_MILLI,
+} from '../config';
+import { monetizationModeFor } from '../utils/monetization';
+import { chargeDiscussion, getBalanceMilli } from '../utils/wallet';
 import { claimRequest, completeRequest, releaseRequest } from '../utils/idempotency';
 import type { AuditLogDoc, ReadingDoc } from '../types';
 import type { WatchOracleComposition } from '../oracle/responseComposer';
@@ -188,6 +195,10 @@ export interface DiscussReadingResponse {
    * reading are declined with the same error as an exhausted budget.
    */
   conversationComplete: boolean;
+  /** Coins mode: what this reply cost, in millicoins (1 coin = 1000). */
+  coinsChargedMilli?: number;
+  /** Coins mode: the wallet balance after this reply, in millicoins. */
+  balanceMilli?: number;
 }
 
 export const discussReading = onCall(
@@ -233,6 +244,29 @@ export const discussReading = onCall(
       };
 
       const readingRef = db.collection('readings').doc(input.readingId);
+
+      // ── Coins mode: discussion is paid by tokens (utils/monetization.ts) ──
+      //
+      // A turn only starts with at least MIN_DISCUSSION_BALANCE_MILLI in the
+      // wallet; the reply is charged after it is served, by the tokens it
+      // actually used, and never takes the balance below zero. Nothing is
+      // charged for a turn that produces no reply.
+      const mode = await monetizationModeFor(userId);
+      if (mode === 'coins') {
+        const balanceMilli = await getBalanceMilli(userId);
+        if (balanceMilli < MIN_DISCUSSION_BALANCE_MILLI) {
+          await release();
+          throw new HttpsError(
+            'failed-precondition',
+            'Discussing a reading needs coins. Add coins to continue the conversation.',
+            {
+              reason: 'insufficient_coins',
+              balanceMilli,
+              minBalanceMilli: MIN_DISCUSSION_BALANCE_MILLI,
+            },
+          );
+        }
+      }
 
       // ── Load + ownership + turn budget, atomically ───────────────────────
       //
@@ -401,11 +435,29 @@ export const discussReading = onCall(
         logger.warn('discussReading: audit log write failed', { err: String(err) });
       }
 
+      let charge: { chargedMilli: number; balanceMilli: number } | null = null;
+      if (mode === 'coins') {
+        try {
+          charge = await chargeDiscussion(userId, input.readingId, reply.tokensUsed);
+        } catch (err) {
+          // The seeker already has the reply; a failed charge is ours to absorb.
+          logger.error('discussReading: coin charge failed', {
+            ...logContext,
+            tokens: reply.tokensUsed,
+            err: String(err),
+            userId,
+          });
+        }
+      }
+
       const response: DiscussReadingResponse = {
         answer: reply.answer,
         isNewQuestion: reply.isNewQuestion,
         turnsRemaining,
         conversationComplete: reply.conversationComplete,
+        ...(charge !== null
+          ? { coinsChargedMilli: charge.chargedMilli, balanceMilli: charge.balanceMilli }
+          : {}),
       };
 
       // Stored, so a retry replays THIS answer rather than spending another

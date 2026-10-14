@@ -183,6 +183,17 @@ export const SetAdminClaimSchema = z
 
 export type SetAdminClaimInput = z.infer<typeof SetAdminClaimSchema>;
 
+/** grantCoins (admin only): whole coins, 1–1000 per grant. */
+export const GrantCoinsSchema = z
+  .object({
+    targetUid: z.string().min(1).max(128),
+    coins: z.number().int().min(1).max(1000),
+    note: z.string().max(200).optional(),
+  })
+  .strict();
+
+export type GrantCoinsInput = z.infer<typeof GrantCoinsSchema>;
+
 // ── Parser helper ────────────────────────────────────────────────────────────
 
 export function parse<T>(schema: z.ZodSchema<T>, data: unknown): T {
