@@ -1,0 +1,6318 @@
+{
+  "generatedBy": "functions/scripts/scoring-review.ts",
+  "readingSet": "4 questions × every 5 minutes of 2026-10-01..30, UTC offset +330 min",
+  "readings": 34560,
+  "distinctChartsInReadingSet": 264,
+  "audit1_contribution": {
+    "replicaMatchesEngineOnEveryReading": true,
+    "mismatches": [],
+    "meanByStep": {
+      "ruler_dignity": 0.279,
+      "ruler_relation": -0.083,
+      "target_witnesses": -1.667,
+      "fulfilment_witnesses": -1.667,
+      "ruler_placement": 0.115,
+      "combustion": -0.065
+    },
+    "sumOfStepMeans": -3.088,
+    "negativePct": {
+      "ruler_dignity": 21.02,
+      "ruler_relation": 20.83,
+      "target_witnesses": 58.33,
+      "fulfilment_witnesses": 58.33,
+      "ruler_placement": 16.52,
+      "combustion": 6.48
+    },
+    "positivePct": {
+      "ruler_dignity": 34.96,
+      "ruler_relation": 16.67,
+      "target_witnesses": 8.33,
+      "fulfilment_witnesses": 8.33,
+      "ruler_placement": 27.98,
+      "combustion": 0
+    }
+  },
+  "audit2_contacts": {
+    "table": [
+      {
+        "planet": "Ketu",
+        "role": "target",
+        "occupiesPerReading": 0.083,
+        "aspectsPerReading": 0.25,
+        "meanPointsPerReading": -0.667
+      },
+      {
+        "planet": "Rahu",
+        "role": "fulfilment",
+        "occupiesPerReading": 0.083,
+        "aspectsPerReading": 0.25,
+        "meanPointsPerReading": -0.667
+      },
+      {
+        "planet": "Mars",
+        "role": "fulfilment",
+        "occupiesPerReading": 0.083,
+        "aspectsPerReading": 0.25,
+        "meanPointsPerReading": -0.667
+      },
+      {
+        "planet": "Ketu",
+        "role": "fulfilment",
+        "occupiesPerReading": 0.083,
+        "aspectsPerReading": 0.25,
+        "meanPointsPerReading": -0.667
+      },
+      {
+        "planet": "Saturn",
+        "role": "target",
+        "occupiesPerReading": 0.083,
+        "aspectsPerReading": 0.25,
+        "meanPointsPerReading": -0.667
+      },
+      {
+        "planet": "Saturn",
+        "role": "fulfilment",
+        "occupiesPerReading": 0.083,
+        "aspectsPerReading": 0.25,
+        "meanPointsPerReading": -0.667
+      },
+      {
+        "planet": "Rahu",
+        "role": "target",
+        "occupiesPerReading": 0.083,
+        "aspectsPerReading": 0.25,
+        "meanPointsPerReading": -0.667
+      },
+      {
+        "planet": "Mars",
+        "role": "target",
+        "occupiesPerReading": 0.083,
+        "aspectsPerReading": 0.25,
+        "meanPointsPerReading": -0.667
+      },
+      {
+        "planet": "Mercury",
+        "role": "target",
+        "occupiesPerReading": 0.083,
+        "aspectsPerReading": 0.083,
+        "meanPointsPerReading": 0
+      },
+      {
+        "planet": "Moon",
+        "role": "target",
+        "occupiesPerReading": 0.083,
+        "aspectsPerReading": 0.083,
+        "meanPointsPerReading": 0
+      },
+      {
+        "planet": "Sun",
+        "role": "fulfilment",
+        "occupiesPerReading": 0.083,
+        "aspectsPerReading": 0.083,
+        "meanPointsPerReading": 0
+      },
+      {
+        "planet": "Mercury",
+        "role": "fulfilment",
+        "occupiesPerReading": 0.083,
+        "aspectsPerReading": 0.083,
+        "meanPointsPerReading": 0
+      },
+      {
+        "planet": "Moon",
+        "role": "fulfilment",
+        "occupiesPerReading": 0.083,
+        "aspectsPerReading": 0.083,
+        "meanPointsPerReading": 0
+      },
+      {
+        "planet": "Sun",
+        "role": "target",
+        "occupiesPerReading": 0.083,
+        "aspectsPerReading": 0.083,
+        "meanPointsPerReading": 0
+      },
+      {
+        "planet": "Venus",
+        "role": "target",
+        "occupiesPerReading": 0.083,
+        "aspectsPerReading": 0.083,
+        "meanPointsPerReading": 0.333
+      },
+      {
+        "planet": "Venus",
+        "role": "fulfilment",
+        "occupiesPerReading": 0.083,
+        "aspectsPerReading": 0.083,
+        "meanPointsPerReading": 0.333
+      },
+      {
+        "planet": "Jupiter",
+        "role": "fulfilment",
+        "occupiesPerReading": 0.083,
+        "aspectsPerReading": 0.25,
+        "meanPointsPerReading": 0.667
+      },
+      {
+        "planet": "Jupiter",
+        "role": "target",
+        "occupiesPerReading": 0.083,
+        "aspectsPerReading": 0.25,
+        "meanPointsPerReading": 0.667
+      }
+    ],
+    "samePlanetWitnessesBothHousesPct": 45.83,
+    "samePlanetScoredInBothHousesPct": 45.83,
+    "matterRulerAlsoScoredAsWitnessPct": 22.92,
+    "bothNodesOnSameHouse_perJudgedHousePct": 16.67,
+    "nodeContactsPerJudgmentPct": {
+      "0": 25,
+      "1": 33.33,
+      "2": 25,
+      "3": 16.67
+    }
+  },
+  "audit3_replay": {
+    "overall": {
+      "n": 34560,
+      "meanScore": {
+        "CURRENT": -3.09,
+        "AXIS_PER_HOUSE": -2.42,
+        "AXIS_PER_JUDGMENT": -1.92
+      },
+      "statePct": {
+        "CURRENT": {
+          "FULFILLED": 0.18,
+          "MOVING": 0.58,
+          "DELAYED": 29.34,
+          "BLOCKED": 33.67,
+          "REVERSING": 23.31,
+          "UNFORMED": 12.92
+        },
+        "AXIS_PER_HOUSE": {
+          "FULFILLED": 0.18,
+          "MOVING": 0.58,
+          "DELAYED": 32.52,
+          "BLOCKED": 24.63,
+          "REVERSING": 26.42,
+          "UNFORMED": 15.67
+        },
+        "AXIS_PER_JUDGMENT": {
+          "FULFILLED": 0.18,
+          "MOVING": 0.58,
+          "DELAYED": 37.6,
+          "BLOCKED": 17.47,
+          "REVERSING": 26.86,
+          "UNFORMED": 17.31
+        }
+      }
+    },
+    "transitions": {
+      "AXIS_PER_HOUSE": {
+        "BLOCKED": {
+          "BLOCKED": 8513,
+          "UNFORMED": 952,
+          "DELAYED": 1098,
+          "REVERSING": 1074
+        },
+        "DELAYED": {
+          "DELAYED": 10140
+        },
+        "UNFORMED": {
+          "UNFORMED": 4465
+        },
+        "REVERSING": {
+          "REVERSING": 8056
+        },
+        "FULFILLED": {
+          "FULFILLED": 61
+        },
+        "MOVING": {
+          "MOVING": 201
+        }
+      },
+      "AXIS_PER_JUDGMENT": {
+        "BLOCKED": {
+          "DELAYED": 2854,
+          "UNFORMED": 1519,
+          "BLOCKED": 6037,
+          "REVERSING": 1227
+        },
+        "DELAYED": {
+          "DELAYED": 10140
+        },
+        "UNFORMED": {
+          "UNFORMED": 4465
+        },
+        "REVERSING": {
+          "REVERSING": 8056
+        },
+        "FULFILLED": {
+          "FULFILLED": 61
+        },
+        "MOVING": {
+          "MOVING": 201
+        }
+      }
+    },
+    "boundaryCrossings": {
+      "AXIS_PER_HOUSE": {
+        "noThresholdCrossed": 31436,
+        "crossesBlocked(-5)": 3124
+      },
+      "AXIS_PER_JUDGMENT": {
+        "crossesBlocked(-5)": 5600,
+        "noThresholdCrossed": 28960
+      }
+    },
+    "scoreHistogram": {
+      "CURRENT": {
+        "0": 2158,
+        "1": 955,
+        "2": 2490,
+        "3": 1250,
+        "4": 241,
+        "5": 479,
+        "-8": 1132,
+        "-2": 5700,
+        "-6": 2495,
+        "-3": 3240,
+        "-5": 4485,
+        "-10": 720,
+        "-4": 4292,
+        "-1": 2118,
+        "-7": 1365,
+        "-11": 1123,
+        "-12": 317
+      },
+      "AXIS_PER_HOUSE": {
+        "0": 2158,
+        "1": 955,
+        "2": 2490,
+        "3": 1250,
+        "4": 241,
+        "5": 479,
+        "-6": 1175,
+        "-2": 7786,
+        "-4": 4658,
+        "-1": 3771,
+        "-5": 5178,
+        "-8": 720,
+        "-3": 2259,
+        "-9": 1123,
+        "-10": 317
+      },
+      "AXIS_PER_JUDGMENT": {
+        "0": 3106,
+        "1": 2153,
+        "2": 2490,
+        "3": 1250,
+        "4": 241,
+        "5": 479,
+        "-4": 4342,
+        "-2": 8204,
+        "-3": 3193,
+        "-6": 845,
+        "-1": 3065,
+        "-5": 3752,
+        "-7": 1123,
+        "-8": 317
+      }
+    }
+  },
+  "audit4_breakdown": {
+    "byQuestion": {
+      "Xfghbf (general)": {
+        "n": 8640,
+        "meanScore": {
+          "CURRENT": -3.12,
+          "AXIS_PER_HOUSE": -2.45,
+          "AXIS_PER_JUDGMENT": -1.45
+        },
+        "statePct": {
+          "CURRENT": {
+            "FULFILLED": 0,
+            "MOVING": 0,
+            "DELAYED": 24.65,
+            "BLOCKED": 33.33,
+            "REVERSING": 27.09,
+            "UNFORMED": 14.92
+          },
+          "AXIS_PER_HOUSE": {
+            "FULFILLED": 0,
+            "MOVING": 0,
+            "DELAYED": 24.65,
+            "BLOCKED": 28.66,
+            "REVERSING": 27.09,
+            "UNFORMED": 19.59
+          },
+          "AXIS_PER_JUDGMENT": {
+            "FULFILLED": 0,
+            "MOVING": 0,
+            "DELAYED": 44.98,
+            "BLOCKED": 8.33,
+            "REVERSING": 27.09,
+            "UNFORMED": 19.59
+          }
+        }
+      },
+      "Will I get the new job? (career)": {
+        "n": 8640,
+        "meanScore": {
+          "CURRENT": -3.11,
+          "AXIS_PER_HOUSE": -2.45,
+          "AXIS_PER_JUDGMENT": -2.45
+        },
+        "statePct": {
+          "CURRENT": {
+            "FULFILLED": 0.71,
+            "MOVING": 0,
+            "DELAYED": 25.72,
+            "BLOCKED": 39.2,
+            "REVERSING": 22.53,
+            "UNFORMED": 11.84
+          },
+          "AXIS_PER_HOUSE": {
+            "FULFILLED": 0.71,
+            "MOVING": 0,
+            "DELAYED": 25.72,
+            "BLOCKED": 33.58,
+            "REVERSING": 22.53,
+            "UNFORMED": 17.47
+          },
+          "AXIS_PER_JUDGMENT": {
+            "FULFILLED": 0.71,
+            "MOVING": 0,
+            "DELAYED": 25.72,
+            "BLOCKED": 33.58,
+            "REVERSING": 22.53,
+            "UNFORMED": 17.47
+          }
+        }
+      },
+      "Will I marry her? (marriage)": {
+        "n": 8640,
+        "meanScore": {
+          "CURRENT": -3.92,
+          "AXIS_PER_HOUSE": -3.25,
+          "AXIS_PER_JUDGMENT": -2.25
+        },
+        "statePct": {
+          "CURRENT": {
+            "FULFILLED": 0,
+            "MOVING": 1.62,
+            "DELAYED": 26.4,
+            "BLOCKED": 50,
+            "REVERSING": 15.96,
+            "UNFORMED": 6.02
+          },
+          "AXIS_PER_HOUSE": {
+            "FULFILLED": 0,
+            "MOVING": 1.62,
+            "DELAYED": 34.73,
+            "BLOCKED": 33.33,
+            "REVERSING": 23.58,
+            "UNFORMED": 6.74
+          },
+          "AXIS_PER_JUDGMENT": {
+            "FULFILLED": 0,
+            "MOVING": 1.62,
+            "DELAYED": 34.73,
+            "BLOCKED": 25,
+            "REVERSING": 25.35,
+            "UNFORMED": 13.3
+          }
+        }
+      },
+      "Will my money come back? (finance)": {
+        "n": 8640,
+        "meanScore": {
+          "CURRENT": -2.2,
+          "AXIS_PER_HOUSE": -1.53,
+          "AXIS_PER_JUDGMENT": -1.53
+        },
+        "statePct": {
+          "CURRENT": {
+            "FULFILLED": 0,
+            "MOVING": 0.71,
+            "DELAYED": 40.59,
+            "BLOCKED": 12.15,
+            "REVERSING": 27.65,
+            "UNFORMED": 18.9
+          },
+          "AXIS_PER_HOUSE": {
+            "FULFILLED": 0,
+            "MOVING": 0.71,
+            "DELAYED": 44.97,
+            "BLOCKED": 2.96,
+            "REVERSING": 32.47,
+            "UNFORMED": 18.9
+          },
+          "AXIS_PER_JUDGMENT": {
+            "FULFILLED": 0,
+            "MOVING": 0.71,
+            "DELAYED": 44.97,
+            "BLOCKED": 2.96,
+            "REVERSING": 32.47,
+            "UNFORMED": 18.9
+          }
+        }
+      }
+    },
+    "byHour": {
+      "0": {
+        "n": 1440,
+        "meanScore": {
+          "CURRENT": -3.08,
+          "AXIS_PER_HOUSE": -2.42,
+          "AXIS_PER_JUDGMENT": -1.92
+        },
+        "statePct": {
+          "CURRENT": {
+            "FULFILLED": 0.21,
+            "MOVING": 0.63,
+            "DELAYED": 29.58,
+            "BLOCKED": 33.61,
+            "REVERSING": 23.06,
+            "UNFORMED": 12.92
+          },
+          "AXIS_PER_HOUSE": {
+            "FULFILLED": 0.21,
+            "MOVING": 0.63,
+            "DELAYED": 32.78,
+            "BLOCKED": 24.51,
+            "REVERSING": 26.11,
+            "UNFORMED": 15.76
+          },
+          "AXIS_PER_JUDGMENT": {
+            "FULFILLED": 0.21,
+            "MOVING": 0.63,
+            "DELAYED": 37.85,
+            "BLOCKED": 17.36,
+            "REVERSING": 26.53,
+            "UNFORMED": 17.43
+          }
+        }
+      },
+      "1": {
+        "n": 1440,
+        "meanScore": {
+          "CURRENT": -3.08,
+          "AXIS_PER_HOUSE": -2.42,
+          "AXIS_PER_JUDGMENT": -1.92
+        },
+        "statePct": {
+          "CURRENT": {
+            "FULFILLED": 0.21,
+            "MOVING": 0.63,
+            "DELAYED": 29.58,
+            "BLOCKED": 33.61,
+            "REVERSING": 23.06,
+            "UNFORMED": 12.92
+          },
+          "AXIS_PER_HOUSE": {
+            "FULFILLED": 0.21,
+            "MOVING": 0.63,
+            "DELAYED": 32.78,
+            "BLOCKED": 24.51,
+            "REVERSING": 26.11,
+            "UNFORMED": 15.76
+          },
+          "AXIS_PER_JUDGMENT": {
+            "FULFILLED": 0.21,
+            "MOVING": 0.63,
+            "DELAYED": 37.85,
+            "BLOCKED": 17.36,
+            "REVERSING": 26.53,
+            "UNFORMED": 17.43
+          }
+        }
+      },
+      "2": {
+        "n": 1440,
+        "meanScore": {
+          "CURRENT": -3.08,
+          "AXIS_PER_HOUSE": -2.42,
+          "AXIS_PER_JUDGMENT": -1.92
+        },
+        "statePct": {
+          "CURRENT": {
+            "FULFILLED": 0.21,
+            "MOVING": 0.63,
+            "DELAYED": 29.58,
+            "BLOCKED": 33.61,
+            "REVERSING": 23.06,
+            "UNFORMED": 12.92
+          },
+          "AXIS_PER_HOUSE": {
+            "FULFILLED": 0.21,
+            "MOVING": 0.63,
+            "DELAYED": 32.78,
+            "BLOCKED": 24.51,
+            "REVERSING": 26.11,
+            "UNFORMED": 15.76
+          },
+          "AXIS_PER_JUDGMENT": {
+            "FULFILLED": 0.21,
+            "MOVING": 0.63,
+            "DELAYED": 37.85,
+            "BLOCKED": 17.36,
+            "REVERSING": 26.53,
+            "UNFORMED": 17.43
+          }
+        }
+      },
+      "3": {
+        "n": 1440,
+        "meanScore": {
+          "CURRENT": -3.09,
+          "AXIS_PER_HOUSE": -2.42,
+          "AXIS_PER_JUDGMENT": -1.92
+        },
+        "statePct": {
+          "CURRENT": {
+            "FULFILLED": 0.21,
+            "MOVING": 0.63,
+            "DELAYED": 29.58,
+            "BLOCKED": 33.61,
+            "REVERSING": 23.06,
+            "UNFORMED": 12.92
+          },
+          "AXIS_PER_HOUSE": {
+            "FULFILLED": 0.21,
+            "MOVING": 0.63,
+            "DELAYED": 32.78,
+            "BLOCKED": 24.58,
+            "REVERSING": 26.11,
+            "UNFORMED": 15.69
+          },
+          "AXIS_PER_JUDGMENT": {
+            "FULFILLED": 0.21,
+            "MOVING": 0.63,
+            "DELAYED": 37.85,
+            "BLOCKED": 17.43,
+            "REVERSING": 26.53,
+            "UNFORMED": 17.36
+          }
+        }
+      },
+      "4": {
+        "n": 1440,
+        "meanScore": {
+          "CURRENT": -3.09,
+          "AXIS_PER_HOUSE": -2.42,
+          "AXIS_PER_JUDGMENT": -1.92
+        },
+        "statePct": {
+          "CURRENT": {
+            "FULFILLED": 0.21,
+            "MOVING": 0.63,
+            "DELAYED": 29.58,
+            "BLOCKED": 33.61,
+            "REVERSING": 23.06,
+            "UNFORMED": 12.92
+          },
+          "AXIS_PER_HOUSE": {
+            "FULFILLED": 0.21,
+            "MOVING": 0.63,
+            "DELAYED": 32.78,
+            "BLOCKED": 24.58,
+            "REVERSING": 26.11,
+            "UNFORMED": 15.69
+          },
+          "AXIS_PER_JUDGMENT": {
+            "FULFILLED": 0.21,
+            "MOVING": 0.63,
+            "DELAYED": 37.85,
+            "BLOCKED": 17.43,
+            "REVERSING": 26.53,
+            "UNFORMED": 17.36
+          }
+        }
+      },
+      "5": {
+        "n": 1440,
+        "meanScore": {
+          "CURRENT": -3.09,
+          "AXIS_PER_HOUSE": -2.42,
+          "AXIS_PER_JUDGMENT": -1.92
+        },
+        "statePct": {
+          "CURRENT": {
+            "FULFILLED": 0.21,
+            "MOVING": 0.63,
+            "DELAYED": 29.58,
+            "BLOCKED": 33.61,
+            "REVERSING": 23.06,
+            "UNFORMED": 12.92
+          },
+          "AXIS_PER_HOUSE": {
+            "FULFILLED": 0.21,
+            "MOVING": 0.63,
+            "DELAYED": 32.78,
+            "BLOCKED": 24.58,
+            "REVERSING": 26.11,
+            "UNFORMED": 15.69
+          },
+          "AXIS_PER_JUDGMENT": {
+            "FULFILLED": 0.21,
+            "MOVING": 0.63,
+            "DELAYED": 37.85,
+            "BLOCKED": 17.43,
+            "REVERSING": 26.53,
+            "UNFORMED": 17.36
+          }
+        }
+      },
+      "6": {
+        "n": 1440,
+        "meanScore": {
+          "CURRENT": -3.09,
+          "AXIS_PER_HOUSE": -2.42,
+          "AXIS_PER_JUDGMENT": -1.92
+        },
+        "statePct": {
+          "CURRENT": {
+            "FULFILLED": 0.21,
+            "MOVING": 0.63,
+            "DELAYED": 29.58,
+            "BLOCKED": 33.61,
+            "REVERSING": 23.06,
+            "UNFORMED": 12.92
+          },
+          "AXIS_PER_HOUSE": {
+            "FULFILLED": 0.21,
+            "MOVING": 0.63,
+            "DELAYED": 32.78,
+            "BLOCKED": 24.58,
+            "REVERSING": 26.11,
+            "UNFORMED": 15.69
+          },
+          "AXIS_PER_JUDGMENT": {
+            "FULFILLED": 0.21,
+            "MOVING": 0.63,
+            "DELAYED": 37.85,
+            "BLOCKED": 17.43,
+            "REVERSING": 26.53,
+            "UNFORMED": 17.36
+          }
+        }
+      },
+      "7": {
+        "n": 1440,
+        "meanScore": {
+          "CURRENT": -3.08,
+          "AXIS_PER_HOUSE": -2.42,
+          "AXIS_PER_JUDGMENT": -1.92
+        },
+        "statePct": {
+          "CURRENT": {
+            "FULFILLED": 0.21,
+            "MOVING": 0.63,
+            "DELAYED": 29.38,
+            "BLOCKED": 33.61,
+            "REVERSING": 23.06,
+            "UNFORMED": 13.13
+          },
+          "AXIS_PER_HOUSE": {
+            "FULFILLED": 0.21,
+            "MOVING": 0.63,
+            "DELAYED": 32.57,
+            "BLOCKED": 24.58,
+            "REVERSING": 26.11,
+            "UNFORMED": 15.9
+          },
+          "AXIS_PER_JUDGMENT": {
+            "FULFILLED": 0.21,
+            "MOVING": 0.63,
+            "DELAYED": 37.64,
+            "BLOCKED": 17.43,
+            "REVERSING": 26.53,
+            "UNFORMED": 17.57
+          }
+        }
+      },
+      "8": {
+        "n": 1440,
+        "meanScore": {
+          "CURRENT": -3.09,
+          "AXIS_PER_HOUSE": -2.42,
+          "AXIS_PER_JUDGMENT": -1.92
+        },
+        "statePct": {
+          "CURRENT": {
+            "FULFILLED": 0.21,
+            "MOVING": 0.63,
+            "DELAYED": 29.38,
+            "BLOCKED": 33.68,
+            "REVERSING": 22.99,
+            "UNFORMED": 13.13
+          },
+          "AXIS_PER_HOUSE": {
+            "FULFILLED": 0.21,
+            "MOVING": 0.63,
+            "DELAYED": 32.57,
+            "BLOCKED": 24.72,
+            "REVERSING": 25.97,
+            "UNFORMED": 15.9
+          },
+          "AXIS_PER_JUDGMENT": {
+            "FULFILLED": 0.21,
+            "MOVING": 0.63,
+            "DELAYED": 37.64,
+            "BLOCKED": 17.57,
+            "REVERSING": 26.39,
+            "UNFORMED": 17.57
+          }
+        }
+      },
+      "9": {
+        "n": 1440,
+        "meanScore": {
+          "CURRENT": -3.09,
+          "AXIS_PER_HOUSE": -2.42,
+          "AXIS_PER_JUDGMENT": -1.92
+        },
+        "statePct": {
+          "CURRENT": {
+            "FULFILLED": 0.21,
+            "MOVING": 0.63,
+            "DELAYED": 29.38,
+            "BLOCKED": 33.68,
+            "REVERSING": 22.99,
+            "UNFORMED": 13.13
+          },
+          "AXIS_PER_HOUSE": {
+            "FULFILLED": 0.21,
+            "MOVING": 0.63,
+            "DELAYED": 32.57,
+            "BLOCKED": 24.72,
+            "REVERSING": 25.97,
+            "UNFORMED": 15.9
+          },
+          "AXIS_PER_JUDGMENT": {
+            "FULFILLED": 0.21,
+            "MOVING": 0.63,
+            "DELAYED": 37.64,
+            "BLOCKED": 17.57,
+            "REVERSING": 26.39,
+            "UNFORMED": 17.57
+          }
+        }
+      },
+      "10": {
+        "n": 1440,
+        "meanScore": {
+          "CURRENT": -3.09,
+          "AXIS_PER_HOUSE": -2.42,
+          "AXIS_PER_JUDGMENT": -1.92
+        },
+        "statePct": {
+          "CURRENT": {
+            "FULFILLED": 0.21,
+            "MOVING": 0.63,
+            "DELAYED": 29.38,
+            "BLOCKED": 33.68,
+            "REVERSING": 22.99,
+            "UNFORMED": 13.13
+          },
+          "AXIS_PER_HOUSE": {
+            "FULFILLED": 0.21,
+            "MOVING": 0.63,
+            "DELAYED": 32.57,
+            "BLOCKED": 24.65,
+            "REVERSING": 26.04,
+            "UNFORMED": 15.9
+          },
+          "AXIS_PER_JUDGMENT": {
+            "FULFILLED": 0.21,
+            "MOVING": 0.63,
+            "DELAYED": 37.64,
+            "BLOCKED": 17.5,
+            "REVERSING": 26.46,
+            "UNFORMED": 17.57
+          }
+        }
+      },
+      "11": {
+        "n": 1440,
+        "meanScore": {
+          "CURRENT": -3.09,
+          "AXIS_PER_HOUSE": -2.42,
+          "AXIS_PER_JUDGMENT": -1.92
+        },
+        "statePct": {
+          "CURRENT": {
+            "FULFILLED": 0.21,
+            "MOVING": 0.63,
+            "DELAYED": 29.38,
+            "BLOCKED": 33.68,
+            "REVERSING": 22.99,
+            "UNFORMED": 13.13
+          },
+          "AXIS_PER_HOUSE": {
+            "FULFILLED": 0.21,
+            "MOVING": 0.63,
+            "DELAYED": 32.57,
+            "BLOCKED": 24.65,
+            "REVERSING": 26.04,
+            "UNFORMED": 15.9
+          },
+          "AXIS_PER_JUDGMENT": {
+            "FULFILLED": 0.21,
+            "MOVING": 0.63,
+            "DELAYED": 37.64,
+            "BLOCKED": 17.5,
+            "REVERSING": 26.46,
+            "UNFORMED": 17.57
+          }
+        }
+      },
+      "12": {
+        "n": 1440,
+        "meanScore": {
+          "CURRENT": -3.09,
+          "AXIS_PER_HOUSE": -2.42,
+          "AXIS_PER_JUDGMENT": -1.92
+        },
+        "statePct": {
+          "CURRENT": {
+            "FULFILLED": 0.21,
+            "MOVING": 0.63,
+            "DELAYED": 29.38,
+            "BLOCKED": 33.68,
+            "REVERSING": 22.99,
+            "UNFORMED": 13.13
+          },
+          "AXIS_PER_HOUSE": {
+            "FULFILLED": 0.21,
+            "MOVING": 0.63,
+            "DELAYED": 32.57,
+            "BLOCKED": 24.65,
+            "REVERSING": 26.04,
+            "UNFORMED": 15.9
+          },
+          "AXIS_PER_JUDGMENT": {
+            "FULFILLED": 0.21,
+            "MOVING": 0.63,
+            "DELAYED": 37.64,
+            "BLOCKED": 17.5,
+            "REVERSING": 26.46,
+            "UNFORMED": 17.57
+          }
+        }
+      },
+      "13": {
+        "n": 1440,
+        "meanScore": {
+          "CURRENT": -3.09,
+          "AXIS_PER_HOUSE": -2.42,
+          "AXIS_PER_JUDGMENT": -1.92
+        },
+        "statePct": {
+          "CURRENT": {
+            "FULFILLED": 0.14,
+            "MOVING": 0.56,
+            "DELAYED": 29.31,
+            "BLOCKED": 33.68,
+            "REVERSING": 23.26,
+            "UNFORMED": 13.06
+          },
+          "AXIS_PER_HOUSE": {
+            "FULFILLED": 0.14,
+            "MOVING": 0.56,
+            "DELAYED": 32.5,
+            "BLOCKED": 24.65,
+            "REVERSING": 26.32,
+            "UNFORMED": 15.83
+          },
+          "AXIS_PER_JUDGMENT": {
+            "FULFILLED": 0.14,
+            "MOVING": 0.56,
+            "DELAYED": 37.57,
+            "BLOCKED": 17.5,
+            "REVERSING": 26.74,
+            "UNFORMED": 17.5
+          }
+        }
+      },
+      "14": {
+        "n": 1440,
+        "meanScore": {
+          "CURRENT": -3.09,
+          "AXIS_PER_HOUSE": -2.42,
+          "AXIS_PER_JUDGMENT": -1.92
+        },
+        "statePct": {
+          "CURRENT": {
+            "FULFILLED": 0.14,
+            "MOVING": 0.56,
+            "DELAYED": 29.17,
+            "BLOCKED": 33.68,
+            "REVERSING": 23.4,
+            "UNFORMED": 13.06
+          },
+          "AXIS_PER_HOUSE": {
+            "FULFILLED": 0.14,
+            "MOVING": 0.56,
+            "DELAYED": 32.29,
+            "BLOCKED": 24.65,
+            "REVERSING": 26.6,
+            "UNFORMED": 15.76
+          },
+          "AXIS_PER_JUDGMENT": {
+            "FULFILLED": 0.14,
+            "MOVING": 0.56,
+            "DELAYED": 37.36,
+            "BLOCKED": 17.5,
+            "REVERSING": 27.01,
+            "UNFORMED": 17.43
+          }
+        }
+      },
+      "15": {
+        "n": 1440,
+        "meanScore": {
+          "CURRENT": -3.09,
+          "AXIS_PER_HOUSE": -2.42,
+          "AXIS_PER_JUDGMENT": -1.92
+        },
+        "statePct": {
+          "CURRENT": {
+            "FULFILLED": 0.14,
+            "MOVING": 0.49,
+            "DELAYED": 29.17,
+            "BLOCKED": 33.68,
+            "REVERSING": 23.4,
+            "UNFORMED": 13.13
+          },
+          "AXIS_PER_HOUSE": {
+            "FULFILLED": 0.14,
+            "MOVING": 0.49,
+            "DELAYED": 32.29,
+            "BLOCKED": 24.58,
+            "REVERSING": 26.6,
+            "UNFORMED": 15.9
+          },
+          "AXIS_PER_JUDGMENT": {
+            "FULFILLED": 0.14,
+            "MOVING": 0.49,
+            "DELAYED": 37.36,
+            "BLOCKED": 17.43,
+            "REVERSING": 27.08,
+            "UNFORMED": 17.5
+          }
+        }
+      },
+      "16": {
+        "n": 1440,
+        "meanScore": {
+          "CURRENT": -3.09,
+          "AXIS_PER_HOUSE": -2.42,
+          "AXIS_PER_JUDGMENT": -1.92
+        },
+        "statePct": {
+          "CURRENT": {
+            "FULFILLED": 0.14,
+            "MOVING": 0.49,
+            "DELAYED": 29.03,
+            "BLOCKED": 33.68,
+            "REVERSING": 23.75,
+            "UNFORMED": 12.92
+          },
+          "AXIS_PER_HOUSE": {
+            "FULFILLED": 0.14,
+            "MOVING": 0.49,
+            "DELAYED": 32.15,
+            "BLOCKED": 24.58,
+            "REVERSING": 26.94,
+            "UNFORMED": 15.69
+          },
+          "AXIS_PER_JUDGMENT": {
+            "FULFILLED": 0.14,
+            "MOVING": 0.49,
+            "DELAYED": 37.22,
+            "BLOCKED": 17.43,
+            "REVERSING": 27.43,
+            "UNFORMED": 17.29
+          }
+        }
+      },
+      "17": {
+        "n": 1440,
+        "meanScore": {
+          "CURRENT": -3.09,
+          "AXIS_PER_HOUSE": -2.42,
+          "AXIS_PER_JUDGMENT": -1.92
+        },
+        "statePct": {
+          "CURRENT": {
+            "FULFILLED": 0.14,
+            "MOVING": 0.49,
+            "DELAYED": 29.03,
+            "BLOCKED": 33.68,
+            "REVERSING": 23.75,
+            "UNFORMED": 12.92
+          },
+          "AXIS_PER_HOUSE": {
+            "FULFILLED": 0.14,
+            "MOVING": 0.49,
+            "DELAYED": 32.15,
+            "BLOCKED": 24.58,
+            "REVERSING": 26.94,
+            "UNFORMED": 15.69
+          },
+          "AXIS_PER_JUDGMENT": {
+            "FULFILLED": 0.14,
+            "MOVING": 0.49,
+            "DELAYED": 37.22,
+            "BLOCKED": 17.43,
+            "REVERSING": 27.43,
+            "UNFORMED": 17.29
+          }
+        }
+      },
+      "18": {
+        "n": 1440,
+        "meanScore": {
+          "CURRENT": -3.09,
+          "AXIS_PER_HOUSE": -2.42,
+          "AXIS_PER_JUDGMENT": -1.92
+        },
+        "statePct": {
+          "CURRENT": {
+            "FULFILLED": 0.14,
+            "MOVING": 0.56,
+            "DELAYED": 29.03,
+            "BLOCKED": 33.68,
+            "REVERSING": 23.75,
+            "UNFORMED": 12.85
+          },
+          "AXIS_PER_HOUSE": {
+            "FULFILLED": 0.14,
+            "MOVING": 0.56,
+            "DELAYED": 32.15,
+            "BLOCKED": 24.58,
+            "REVERSING": 26.94,
+            "UNFORMED": 15.63
+          },
+          "AXIS_PER_JUDGMENT": {
+            "FULFILLED": 0.14,
+            "MOVING": 0.56,
+            "DELAYED": 37.22,
+            "BLOCKED": 17.43,
+            "REVERSING": 27.43,
+            "UNFORMED": 17.22
+          }
+        }
+      },
+      "19": {
+        "n": 1440,
+        "meanScore": {
+          "CURRENT": -3.09,
+          "AXIS_PER_HOUSE": -2.42,
+          "AXIS_PER_JUDGMENT": -1.92
+        },
+        "statePct": {
+          "CURRENT": {
+            "FULFILLED": 0.14,
+            "MOVING": 0.56,
+            "DELAYED": 29.17,
+            "BLOCKED": 33.61,
+            "REVERSING": 23.75,
+            "UNFORMED": 12.78
+          },
+          "AXIS_PER_HOUSE": {
+            "FULFILLED": 0.14,
+            "MOVING": 0.56,
+            "DELAYED": 32.29,
+            "BLOCKED": 24.65,
+            "REVERSING": 26.94,
+            "UNFORMED": 15.42
+          },
+          "AXIS_PER_JUDGMENT": {
+            "FULFILLED": 0.14,
+            "MOVING": 0.56,
+            "DELAYED": 37.36,
+            "BLOCKED": 17.5,
+            "REVERSING": 27.43,
+            "UNFORMED": 17.01
+          }
+        }
+      },
+      "20": {
+        "n": 1440,
+        "meanScore": {
+          "CURRENT": -3.09,
+          "AXIS_PER_HOUSE": -2.43,
+          "AXIS_PER_JUDGMENT": -1.93
+        },
+        "statePct": {
+          "CURRENT": {
+            "FULFILLED": 0.14,
+            "MOVING": 0.56,
+            "DELAYED": 29.24,
+            "BLOCKED": 33.75,
+            "REVERSING": 23.75,
+            "UNFORMED": 12.57
+          },
+          "AXIS_PER_HOUSE": {
+            "FULFILLED": 0.14,
+            "MOVING": 0.56,
+            "DELAYED": 32.43,
+            "BLOCKED": 24.79,
+            "REVERSING": 26.94,
+            "UNFORMED": 15.14
+          },
+          "AXIS_PER_JUDGMENT": {
+            "FULFILLED": 0.14,
+            "MOVING": 0.56,
+            "DELAYED": 37.57,
+            "BLOCKED": 17.57,
+            "REVERSING": 27.43,
+            "UNFORMED": 16.74
+          }
+        }
+      },
+      "21": {
+        "n": 1440,
+        "meanScore": {
+          "CURRENT": -3.09,
+          "AXIS_PER_HOUSE": -2.42,
+          "AXIS_PER_JUDGMENT": -1.92
+        },
+        "statePct": {
+          "CURRENT": {
+            "FULFILLED": 0.14,
+            "MOVING": 0.63,
+            "DELAYED": 29.24,
+            "BLOCKED": 33.75,
+            "REVERSING": 23.75,
+            "UNFORMED": 12.5
+          },
+          "AXIS_PER_HOUSE": {
+            "FULFILLED": 0.14,
+            "MOVING": 0.63,
+            "DELAYED": 32.43,
+            "BLOCKED": 24.79,
+            "REVERSING": 26.94,
+            "UNFORMED": 15.07
+          },
+          "AXIS_PER_JUDGMENT": {
+            "FULFILLED": 0.14,
+            "MOVING": 0.63,
+            "DELAYED": 37.57,
+            "BLOCKED": 17.57,
+            "REVERSING": 27.43,
+            "UNFORMED": 16.67
+          }
+        }
+      },
+      "22": {
+        "n": 1440,
+        "meanScore": {
+          "CURRENT": -3.1,
+          "AXIS_PER_HOUSE": -2.43,
+          "AXIS_PER_JUDGMENT": -1.93
+        },
+        "statePct": {
+          "CURRENT": {
+            "FULFILLED": 0.14,
+            "MOVING": 0.49,
+            "DELAYED": 29.24,
+            "BLOCKED": 33.82,
+            "REVERSING": 23.75,
+            "UNFORMED": 12.57
+          },
+          "AXIS_PER_HOUSE": {
+            "FULFILLED": 0.14,
+            "MOVING": 0.49,
+            "DELAYED": 32.43,
+            "BLOCKED": 24.72,
+            "REVERSING": 26.94,
+            "UNFORMED": 15.28
+          },
+          "AXIS_PER_JUDGMENT": {
+            "FULFILLED": 0.14,
+            "MOVING": 0.49,
+            "DELAYED": 37.57,
+            "BLOCKED": 17.5,
+            "REVERSING": 27.43,
+            "UNFORMED": 16.88
+          }
+        }
+      },
+      "23": {
+        "n": 1440,
+        "meanScore": {
+          "CURRENT": -3.1,
+          "AXIS_PER_HOUSE": -2.44,
+          "AXIS_PER_JUDGMENT": -1.94
+        },
+        "statePct": {
+          "CURRENT": {
+            "FULFILLED": 0.14,
+            "MOVING": 0.49,
+            "DELAYED": 29.24,
+            "BLOCKED": 33.82,
+            "REVERSING": 23.75,
+            "UNFORMED": 12.57
+          },
+          "AXIS_PER_HOUSE": {
+            "FULFILLED": 0.14,
+            "MOVING": 0.49,
+            "DELAYED": 32.43,
+            "BLOCKED": 24.72,
+            "REVERSING": 26.94,
+            "UNFORMED": 15.28
+          },
+          "AXIS_PER_JUDGMENT": {
+            "FULFILLED": 0.14,
+            "MOVING": 0.49,
+            "DELAYED": 37.57,
+            "BLOCKED": 17.5,
+            "REVERSING": 27.43,
+            "UNFORMED": 16.88
+          }
+        }
+      }
+    },
+    "byAscendant": {
+      "Burj Hamal": {
+        "n": 2880,
+        "meanScore": {
+          "CURRENT": -6.67,
+          "AXIS_PER_HOUSE": -4.67,
+          "AXIS_PER_JUDGMENT": -3.67
+        },
+        "statePct": {
+          "CURRENT": {
+            "FULFILLED": 0,
+            "MOVING": 0,
+            "DELAYED": 0,
+            "BLOCKED": 100,
+            "REVERSING": 0,
+            "UNFORMED": 0
+          },
+          "AXIS_PER_HOUSE": {
+            "FULFILLED": 0,
+            "MOVING": 0,
+            "DELAYED": 2.15,
+            "BLOCKED": 58.4,
+            "REVERSING": 37.29,
+            "UNFORMED": 2.15
+          },
+          "AXIS_PER_JUDGMENT": {
+            "FULFILLED": 0,
+            "MOVING": 0,
+            "DELAYED": 27.15,
+            "BLOCKED": 33.4,
+            "REVERSING": 37.29,
+            "UNFORMED": 2.15
+          }
+        }
+      },
+      "Burj Saur": {
+        "n": 2880,
+        "meanScore": {
+          "CURRENT": -0.59,
+          "AXIS_PER_HOUSE": -0.09,
+          "AXIS_PER_JUDGMENT": -0.09
+        },
+        "statePct": {
+          "CURRENT": {
+            "FULFILLED": 0,
+            "MOVING": 0,
+            "DELAYED": 27.15,
+            "BLOCKED": 0,
+            "REVERSING": 53.13,
+            "UNFORMED": 19.72
+          },
+          "AXIS_PER_HOUSE": {
+            "FULFILLED": 0,
+            "MOVING": 0,
+            "DELAYED": 27.15,
+            "BLOCKED": 0,
+            "REVERSING": 53.13,
+            "UNFORMED": 19.72
+          },
+          "AXIS_PER_JUDGMENT": {
+            "FULFILLED": 0,
+            "MOVING": 0,
+            "DELAYED": 27.15,
+            "BLOCKED": 0,
+            "REVERSING": 53.13,
+            "UNFORMED": 19.72
+          }
+        }
+      },
+      "Burj Jauza": {
+        "n": 2880,
+        "meanScore": {
+          "CURRENT": -0.71,
+          "AXIS_PER_HOUSE": -0.71,
+          "AXIS_PER_JUDGMENT": 0.29
+        },
+        "statePct": {
+          "CURRENT": {
+            "FULFILLED": 0,
+            "MOVING": 0,
+            "DELAYED": 52.05,
+            "BLOCKED": 0,
+            "REVERSING": 5.28,
+            "UNFORMED": 42.67
+          },
+          "AXIS_PER_HOUSE": {
+            "FULFILLED": 0,
+            "MOVING": 0,
+            "DELAYED": 52.05,
+            "BLOCKED": 0,
+            "REVERSING": 5.28,
+            "UNFORMED": 42.67
+          },
+          "AXIS_PER_JUDGMENT": {
+            "FULFILLED": 0,
+            "MOVING": 0,
+            "DELAYED": 52.05,
+            "BLOCKED": 0,
+            "REVERSING": 5.28,
+            "UNFORMED": 42.67
+          }
+        }
+      },
+      "Burj Sartan": {
+        "n": 2880,
+        "meanScore": {
+          "CURRENT": -3.18,
+          "AXIS_PER_HOUSE": -2.68,
+          "AXIS_PER_JUDGMENT": -2.68
+        },
+        "statePct": {
+          "CURRENT": {
+            "FULFILLED": 0,
+            "MOVING": 0,
+            "DELAYED": 27.08,
+            "BLOCKED": 10.97,
+            "REVERSING": 25,
+            "UNFORMED": 36.94
+          },
+          "AXIS_PER_HOUSE": {
+            "FULFILLED": 0,
+            "MOVING": 0,
+            "DELAYED": 38.06,
+            "BLOCKED": 0,
+            "REVERSING": 25,
+            "UNFORMED": 36.94
+          },
+          "AXIS_PER_JUDGMENT": {
+            "FULFILLED": 0,
+            "MOVING": 0,
+            "DELAYED": 38.06,
+            "BLOCKED": 0,
+            "REVERSING": 25,
+            "UNFORMED": 36.94
+          }
+        }
+      },
+      "Burj Asad": {
+        "n": 2880,
+        "meanScore": {
+          "CURRENT": -6.56,
+          "AXIS_PER_HOUSE": -5.56,
+          "AXIS_PER_JUDGMENT": -4.56
+        },
+        "statePct": {
+          "CURRENT": {
+            "FULFILLED": 0,
+            "MOVING": 0,
+            "DELAYED": 21.88,
+            "BLOCKED": 58.89,
+            "REVERSING": 19.24,
+            "UNFORMED": 0
+          },
+          "AXIS_PER_HOUSE": {
+            "FULFILLED": 0,
+            "MOVING": 0,
+            "DELAYED": 21.88,
+            "BLOCKED": 44.86,
+            "REVERSING": 19.24,
+            "UNFORMED": 14.03
+          },
+          "AXIS_PER_JUDGMENT": {
+            "FULFILLED": 0,
+            "MOVING": 0,
+            "DELAYED": 32.85,
+            "BLOCKED": 33.89,
+            "REVERSING": 19.24,
+            "UNFORMED": 14.03
+          }
+        }
+      },
+      "Burj Sunbula": {
+        "n": 2880,
+        "meanScore": {
+          "CURRENT": 0.41,
+          "AXIS_PER_HOUSE": 0.41,
+          "AXIS_PER_JUDGMENT": 0.41
+        },
+        "statePct": {
+          "CURRENT": {
+            "FULFILLED": 0,
+            "MOVING": 2.12,
+            "DELAYED": 44.72,
+            "BLOCKED": 0,
+            "REVERSING": 33.44,
+            "UNFORMED": 19.72
+          },
+          "AXIS_PER_HOUSE": {
+            "FULFILLED": 0,
+            "MOVING": 2.12,
+            "DELAYED": 44.72,
+            "BLOCKED": 0,
+            "REVERSING": 33.44,
+            "UNFORMED": 19.72
+          },
+          "AXIS_PER_JUDGMENT": {
+            "FULFILLED": 0,
+            "MOVING": 2.12,
+            "DELAYED": 44.72,
+            "BLOCKED": 0,
+            "REVERSING": 33.44,
+            "UNFORMED": 19.72
+          }
+        }
+      },
+      "Burj Meezan": {
+        "n": 2880,
+        "meanScore": {
+          "CURRENT": -4.81,
+          "AXIS_PER_HOUSE": -2.81,
+          "AXIS_PER_JUDGMENT": -1.81
+        },
+        "statePct": {
+          "CURRENT": {
+            "FULFILLED": 0,
+            "MOVING": 0,
+            "DELAYED": 25,
+            "BLOCKED": 48.23,
+            "REVERSING": 22.88,
+            "UNFORMED": 3.89
+          },
+          "AXIS_PER_HOUSE": {
+            "FULFILLED": 0,
+            "MOVING": 0,
+            "DELAYED": 50,
+            "BLOCKED": 6.35,
+            "REVERSING": 22.88,
+            "UNFORMED": 20.76
+          },
+          "AXIS_PER_JUDGMENT": {
+            "FULFILLED": 0,
+            "MOVING": 0,
+            "DELAYED": 50,
+            "BLOCKED": 6.35,
+            "REVERSING": 22.88,
+            "UNFORMED": 20.76
+          }
+        }
+      },
+      "Burj Aqrab": {
+        "n": 2880,
+        "meanScore": {
+          "CURRENT": -3.02,
+          "AXIS_PER_HOUSE": -2.52,
+          "AXIS_PER_JUDGMENT": -2.52
+        },
+        "statePct": {
+          "CURRENT": {
+            "FULFILLED": 0,
+            "MOVING": 0,
+            "DELAYED": 52.12,
+            "BLOCKED": 10.97,
+            "REVERSING": 22.88,
+            "UNFORMED": 14.03
+          },
+          "AXIS_PER_HOUSE": {
+            "FULFILLED": 0,
+            "MOVING": 0,
+            "DELAYED": 52.12,
+            "BLOCKED": 10.97,
+            "REVERSING": 22.88,
+            "UNFORMED": 14.03
+          },
+          "AXIS_PER_JUDGMENT": {
+            "FULFILLED": 0,
+            "MOVING": 0,
+            "DELAYED": 52.12,
+            "BLOCKED": 10.97,
+            "REVERSING": 22.88,
+            "UNFORMED": 14.03
+          }
+        }
+      },
+      "Burj Qaus": {
+        "n": 2880,
+        "meanScore": {
+          "CURRENT": -4.26,
+          "AXIS_PER_HOUSE": -4.26,
+          "AXIS_PER_JUDGMENT": -3.26
+        },
+        "statePct": {
+          "CURRENT": {
+            "FULFILLED": 0,
+            "MOVING": 0,
+            "DELAYED": 0,
+            "BLOCKED": 75,
+            "REVERSING": 25,
+            "UNFORMED": 0
+          },
+          "AXIS_PER_HOUSE": {
+            "FULFILLED": 0,
+            "MOVING": 0,
+            "DELAYED": 0,
+            "BLOCKED": 75,
+            "REVERSING": 25,
+            "UNFORMED": 0
+          },
+          "AXIS_PER_JUDGMENT": {
+            "FULFILLED": 0,
+            "MOVING": 0,
+            "DELAYED": 25,
+            "BLOCKED": 25,
+            "REVERSING": 30.31,
+            "UNFORMED": 19.69
+          }
+        }
+      },
+      "Burj Jadi": {
+        "n": 2880,
+        "meanScore": {
+          "CURRENT": 0.7,
+          "AXIS_PER_HOUSE": 1.2,
+          "AXIS_PER_JUDGMENT": 1.2
+        },
+        "statePct": {
+          "CURRENT": {
+            "FULFILLED": 2.12,
+            "MOVING": 4.86,
+            "DELAYED": 2.08,
+            "BLOCKED": 0,
+            "REVERSING": 72.88,
+            "UNFORMED": 18.06
+          },
+          "AXIS_PER_HOUSE": {
+            "FULFILLED": 2.12,
+            "MOVING": 4.86,
+            "DELAYED": 2.08,
+            "BLOCKED": 0,
+            "REVERSING": 72.88,
+            "UNFORMED": 18.06
+          },
+          "AXIS_PER_JUDGMENT": {
+            "FULFILLED": 2.12,
+            "MOVING": 4.86,
+            "DELAYED": 2.08,
+            "BLOCKED": 0,
+            "REVERSING": 72.88,
+            "UNFORMED": 18.06
+          }
+        }
+      },
+      "Burj Dalw": {
+        "n": 2880,
+        "meanScore": {
+          "CURRENT": -6.86,
+          "AXIS_PER_HOUSE": -5.86,
+          "AXIS_PER_JUDGMENT": -4.86
+        },
+        "statePct": {
+          "CURRENT": {
+            "FULFILLED": 0,
+            "MOVING": 0,
+            "DELAYED": 25,
+            "BLOCKED": 75,
+            "REVERSING": 0,
+            "UNFORMED": 0
+          },
+          "AXIS_PER_HOUSE": {
+            "FULFILLED": 0,
+            "MOVING": 0,
+            "DELAYED": 25,
+            "BLOCKED": 75,
+            "REVERSING": 0,
+            "UNFORMED": 0
+          },
+          "AXIS_PER_JUDGMENT": {
+            "FULFILLED": 0,
+            "MOVING": 0,
+            "DELAYED": 25,
+            "BLOCKED": 75,
+            "REVERSING": 0,
+            "UNFORMED": 0
+          }
+        }
+      },
+      "Burj Hoot": {
+        "n": 2880,
+        "meanScore": {
+          "CURRENT": -1.51,
+          "AXIS_PER_HOUSE": -1.51,
+          "AXIS_PER_JUDGMENT": -1.51
+        },
+        "statePct": {
+          "CURRENT": {
+            "FULFILLED": 0,
+            "MOVING": 0,
+            "DELAYED": 75,
+            "BLOCKED": 25,
+            "REVERSING": 0,
+            "UNFORMED": 0
+          },
+          "AXIS_PER_HOUSE": {
+            "FULFILLED": 0,
+            "MOVING": 0,
+            "DELAYED": 75,
+            "BLOCKED": 25,
+            "REVERSING": 0,
+            "UNFORMED": 0
+          },
+          "AXIS_PER_JUDGMENT": {
+            "FULFILLED": 0,
+            "MOVING": 0,
+            "DELAYED": 75,
+            "BLOCKED": 25,
+            "REVERSING": 0,
+            "UNFORMED": 0
+          }
+        }
+      }
+    },
+    "byNodeAxisPosition": {
+      "Rahu in house 1 counted from the target": {
+        "n": 2880,
+        "meanScore": {
+          "CURRENT": -7,
+          "AXIS_PER_HOUSE": -5,
+          "AXIS_PER_JUDGMENT": -4
+        },
+        "statePct": {
+          "CURRENT": {
+            "FULFILLED": 0,
+            "MOVING": 0,
+            "DELAYED": 0,
+            "BLOCKED": 50,
+            "REVERSING": 50,
+            "UNFORMED": 0
+          },
+          "AXIS_PER_HOUSE": {
+            "FULFILLED": 0,
+            "MOVING": 0,
+            "DELAYED": 0,
+            "BLOCKED": 50,
+            "REVERSING": 50,
+            "UNFORMED": 0
+          },
+          "AXIS_PER_JUDGMENT": {
+            "FULFILLED": 0,
+            "MOVING": 0,
+            "DELAYED": 0,
+            "BLOCKED": 50,
+            "REVERSING": 50,
+            "UNFORMED": 0
+          }
+        }
+      },
+      "Rahu in house 2 counted from the target": {
+        "n": 2880,
+        "meanScore": {
+          "CURRENT": -2.25,
+          "AXIS_PER_HOUSE": -1.75,
+          "AXIS_PER_JUDGMENT": -1.75
+        },
+        "statePct": {
+          "CURRENT": {
+            "FULFILLED": 0,
+            "MOVING": 0,
+            "DELAYED": 0,
+            "BLOCKED": 25,
+            "REVERSING": 75,
+            "UNFORMED": 0
+          },
+          "AXIS_PER_HOUSE": {
+            "FULFILLED": 0,
+            "MOVING": 0,
+            "DELAYED": 0,
+            "BLOCKED": 25,
+            "REVERSING": 75,
+            "UNFORMED": 0
+          },
+          "AXIS_PER_JUDGMENT": {
+            "FULFILLED": 0,
+            "MOVING": 0,
+            "DELAYED": 0,
+            "BLOCKED": 25,
+            "REVERSING": 75,
+            "UNFORMED": 0
+          }
+        }
+      },
+      "Rahu in house 3 counted from the target": {
+        "n": 2880,
+        "meanScore": {
+          "CURRENT": -2.75,
+          "AXIS_PER_HOUSE": -2.75,
+          "AXIS_PER_JUDGMENT": -1.75
+        },
+        "statePct": {
+          "CURRENT": {
+            "FULFILLED": 0,
+            "MOVING": 0,
+            "DELAYED": 75,
+            "BLOCKED": 25,
+            "REVERSING": 0,
+            "UNFORMED": 0
+          },
+          "AXIS_PER_HOUSE": {
+            "FULFILLED": 0,
+            "MOVING": 0,
+            "DELAYED": 75,
+            "BLOCKED": 25,
+            "REVERSING": 0,
+            "UNFORMED": 0
+          },
+          "AXIS_PER_JUDGMENT": {
+            "FULFILLED": 0,
+            "MOVING": 0,
+            "DELAYED": 100,
+            "BLOCKED": 0,
+            "REVERSING": 0,
+            "UNFORMED": 0
+          }
+        }
+      },
+      "Rahu in house 4 counted from the target": {
+        "n": 2880,
+        "meanScore": {
+          "CURRENT": -2.75,
+          "AXIS_PER_HOUSE": -2.25,
+          "AXIS_PER_JUDGMENT": -2.25
+        },
+        "statePct": {
+          "CURRENT": {
+            "FULFILLED": 0,
+            "MOVING": 0,
+            "DELAYED": 75,
+            "BLOCKED": 25,
+            "REVERSING": 0,
+            "UNFORMED": 0
+          },
+          "AXIS_PER_HOUSE": {
+            "FULFILLED": 0,
+            "MOVING": 0,
+            "DELAYED": 75,
+            "BLOCKED": 25,
+            "REVERSING": 0,
+            "UNFORMED": 0
+          },
+          "AXIS_PER_JUDGMENT": {
+            "FULFILLED": 0,
+            "MOVING": 0,
+            "DELAYED": 75,
+            "BLOCKED": 25,
+            "REVERSING": 0,
+            "UNFORMED": 0
+          }
+        }
+      },
+      "Rahu in house 5 counted from the target": {
+        "n": 2880,
+        "meanScore": {
+          "CURRENT": -0.34,
+          "AXIS_PER_HOUSE": 0.66,
+          "AXIS_PER_JUDGMENT": 1.66
+        },
+        "statePct": {
+          "CURRENT": {
+            "FULFILLED": 2.12,
+            "MOVING": 2.12,
+            "DELAYED": 0,
+            "BLOCKED": 25,
+            "REVERSING": 68.65,
+            "UNFORMED": 2.12
+          },
+          "AXIS_PER_HOUSE": {
+            "FULFILLED": 2.12,
+            "MOVING": 2.12,
+            "DELAYED": 0,
+            "BLOCKED": 0,
+            "REVERSING": 91.49,
+            "UNFORMED": 4.27
+          },
+          "AXIS_PER_JUDGMENT": {
+            "FULFILLED": 2.12,
+            "MOVING": 2.12,
+            "DELAYED": 0,
+            "BLOCKED": 0,
+            "REVERSING": 91.49,
+            "UNFORMED": 4.27
+          }
+        }
+      },
+      "Rahu in house 6 counted from the target": {
+        "n": 2880,
+        "meanScore": {
+          "CURRENT": -4.02,
+          "AXIS_PER_HOUSE": -4.02,
+          "AXIS_PER_JUDGMENT": -4.02
+        },
+        "statePct": {
+          "CURRENT": {
+            "FULFILLED": 0,
+            "MOVING": 0,
+            "DELAYED": 39.44,
+            "BLOCKED": 50.49,
+            "REVERSING": 10.07,
+            "UNFORMED": 0
+          },
+          "AXIS_PER_HOUSE": {
+            "FULFILLED": 0,
+            "MOVING": 0,
+            "DELAYED": 39.44,
+            "BLOCKED": 50.49,
+            "REVERSING": 10.07,
+            "UNFORMED": 0
+          },
+          "AXIS_PER_JUDGMENT": {
+            "FULFILLED": 0,
+            "MOVING": 0,
+            "DELAYED": 39.44,
+            "BLOCKED": 50.49,
+            "REVERSING": 10.07,
+            "UNFORMED": 0
+          }
+        }
+      },
+      "Rahu in house 7 counted from the target": {
+        "n": 2880,
+        "meanScore": {
+          "CURRENT": -6.99,
+          "AXIS_PER_HOUSE": -4.99,
+          "AXIS_PER_JUDGMENT": -3.99
+        },
+        "statePct": {
+          "CURRENT": {
+            "FULFILLED": 0,
+            "MOVING": 0,
+            "DELAYED": 0,
+            "BLOCKED": 71.94,
+            "REVERSING": 0,
+            "UNFORMED": 28.06
+          },
+          "AXIS_PER_HOUSE": {
+            "FULFILLED": 0,
+            "MOVING": 0,
+            "DELAYED": 10.97,
+            "BLOCKED": 46.94,
+            "REVERSING": 0,
+            "UNFORMED": 42.08
+          },
+          "AXIS_PER_JUDGMENT": {
+            "FULFILLED": 0,
+            "MOVING": 0,
+            "DELAYED": 21.94,
+            "BLOCKED": 35.97,
+            "REVERSING": 0,
+            "UNFORMED": 42.08
+          }
+        }
+      },
+      "Rahu in house 8 counted from the target": {
+        "n": 2880,
+        "meanScore": {
+          "CURRENT": -2.36,
+          "AXIS_PER_HOUSE": -1.86,
+          "AXIS_PER_JUDGMENT": -1.86
+        },
+        "statePct": {
+          "CURRENT": {
+            "FULFILLED": 0,
+            "MOVING": 4.86,
+            "DELAYED": 6.22,
+            "BLOCKED": 23.23,
+            "REVERSING": 0,
+            "UNFORMED": 65.69
+          },
+          "AXIS_PER_HOUSE": {
+            "FULFILLED": 0,
+            "MOVING": 4.86,
+            "DELAYED": 6.22,
+            "BLOCKED": 6.35,
+            "REVERSING": 0,
+            "UNFORMED": 82.57
+          },
+          "AXIS_PER_JUDGMENT": {
+            "FULFILLED": 0,
+            "MOVING": 4.86,
+            "DELAYED": 6.22,
+            "BLOCKED": 6.35,
+            "REVERSING": 0,
+            "UNFORMED": 82.57
+          }
+        }
+      },
+      "Rahu in house 9 counted from the target": {
+        "n": 2880,
+        "meanScore": {
+          "CURRENT": -2.02,
+          "AXIS_PER_HOUSE": -2.02,
+          "AXIS_PER_JUDGMENT": -1.02
+        },
+        "statePct": {
+          "CURRENT": {
+            "FULFILLED": 0,
+            "MOVING": 0,
+            "DELAYED": 0,
+            "BLOCKED": 25,
+            "REVERSING": 15.83,
+            "UNFORMED": 59.17
+          },
+          "AXIS_PER_HOUSE": {
+            "FULFILLED": 0,
+            "MOVING": 0,
+            "DELAYED": 0,
+            "BLOCKED": 25,
+            "REVERSING": 15.83,
+            "UNFORMED": 59.17
+          },
+          "AXIS_PER_JUDGMENT": {
+            "FULFILLED": 0,
+            "MOVING": 0,
+            "DELAYED": 0,
+            "BLOCKED": 0,
+            "REVERSING": 21.15,
+            "UNFORMED": 78.85
+          }
+        }
+      },
+      "Rahu in house 10 counted from the target": {
+        "n": 2880,
+        "meanScore": {
+          "CURRENT": -3.59,
+          "AXIS_PER_HOUSE": -3.09,
+          "AXIS_PER_JUDGMENT": -3.09
+        },
+        "statePct": {
+          "CURRENT": {
+            "FULFILLED": 0,
+            "MOVING": 0,
+            "DELAYED": 6.42,
+            "BLOCKED": 33.4,
+            "REVERSING": 60.17,
+            "UNFORMED": 0
+          },
+          "AXIS_PER_HOUSE": {
+            "FULFILLED": 0,
+            "MOVING": 0,
+            "DELAYED": 8.58,
+            "BLOCKED": 16.81,
+            "REVERSING": 74.62,
+            "UNFORMED": 0
+          },
+          "AXIS_PER_JUDGMENT": {
+            "FULFILLED": 0,
+            "MOVING": 0,
+            "DELAYED": 8.58,
+            "BLOCKED": 16.81,
+            "REVERSING": 74.62,
+            "UNFORMED": 0
+          }
+        }
+      },
+      "Rahu in house 11 counted from the target": {
+        "n": 2880,
+        "meanScore": {
+          "CURRENT": -4.5,
+          "AXIS_PER_HOUSE": -3.5,
+          "AXIS_PER_JUDGMENT": -2.5
+        },
+        "statePct": {
+          "CURRENT": {
+            "FULFILLED": 0,
+            "MOVING": 0,
+            "DELAYED": 50,
+            "BLOCKED": 50,
+            "REVERSING": 0,
+            "UNFORMED": 0
+          },
+          "AXIS_PER_HOUSE": {
+            "FULFILLED": 0,
+            "MOVING": 0,
+            "DELAYED": 75,
+            "BLOCKED": 25,
+            "REVERSING": 0,
+            "UNFORMED": 0
+          },
+          "AXIS_PER_JUDGMENT": {
+            "FULFILLED": 0,
+            "MOVING": 0,
+            "DELAYED": 100,
+            "BLOCKED": 0,
+            "REVERSING": 0,
+            "UNFORMED": 0
+          }
+        }
+      },
+      "Rahu in house 12 counted from the target": {
+        "n": 2880,
+        "meanScore": {
+          "CURRENT": 1.5,
+          "AXIS_PER_HOUSE": 1.5,
+          "AXIS_PER_JUDGMENT": 1.5
+        },
+        "statePct": {
+          "CURRENT": {
+            "FULFILLED": 0,
+            "MOVING": 0,
+            "DELAYED": 100,
+            "BLOCKED": 0,
+            "REVERSING": 0,
+            "UNFORMED": 0
+          },
+          "AXIS_PER_HOUSE": {
+            "FULFILLED": 0,
+            "MOVING": 0,
+            "DELAYED": 100,
+            "BLOCKED": 0,
+            "REVERSING": 0,
+            "UNFORMED": 0
+          },
+          "AXIS_PER_JUDGMENT": {
+            "FULFILLED": 0,
+            "MOVING": 0,
+            "DELAYED": 100,
+            "BLOCKED": 0,
+            "REVERSING": 0,
+            "UNFORMED": 0
+          }
+        }
+      }
+    }
+  },
+  "audit5_skyVariation": {
+    "replicaMismatches": 0,
+    "twoYearsOverall": {
+      "n": 35040,
+      "meanScore": {
+        "CURRENT": -3.54,
+        "AXIS_PER_HOUSE": -2.87,
+        "AXIS_PER_JUDGMENT": -2.37
+      },
+      "statePct": {
+        "CURRENT": {
+          "FULFILLED": 1.46,
+          "MOVING": 3.58,
+          "DELAYED": 17.26,
+          "BLOCKED": 38.62,
+          "REVERSING": 10.65,
+          "UNFORMED": 28.43
+        },
+        "AXIS_PER_HOUSE": {
+          "FULFILLED": 1.74,
+          "MOVING": 4.18,
+          "DELAYED": 19.18,
+          "BLOCKED": 30.91,
+          "REVERSING": 11.6,
+          "UNFORMED": 32.39
+        },
+        "AXIS_PER_JUDGMENT": {
+          "FULFILLED": 1.76,
+          "MOVING": 5.27,
+          "DELAYED": 21.68,
+          "BLOCKED": 24.59,
+          "REVERSING": 12.41,
+          "UNFORMED": 34.29
+        }
+      }
+    },
+    "byMonth": {
+      "2026-01": {
+        "n": 1488,
+        "meanScore": {
+          "CURRENT": -4.18,
+          "AXIS_PER_HOUSE": -3.52,
+          "AXIS_PER_JUDGMENT": -3.02
+        },
+        "statePct": {
+          "CURRENT": {
+            "FULFILLED": 0,
+            "MOVING": 0.4,
+            "DELAYED": 6.52,
+            "BLOCKED": 45.36,
+            "REVERSING": 6.32,
+            "UNFORMED": 41.4
+          },
+          "AXIS_PER_HOUSE": {
+            "FULFILLED": 0,
+            "MOVING": 0.4,
+            "DELAYED": 8.74,
+            "BLOCKED": 35.55,
+            "REVERSING": 6.32,
+            "UNFORMED": 48.99
+          },
+          "AXIS_PER_JUDGMENT": {
+            "FULFILLED": 0,
+            "MOVING": 0.4,
+            "DELAYED": 9.88,
+            "BLOCKED": 28.83,
+            "REVERSING": 7.33,
+            "UNFORMED": 53.56
+          }
+        }
+      },
+      "2026-02": {
+        "n": 1344,
+        "meanScore": {
+          "CURRENT": -3.98,
+          "AXIS_PER_HOUSE": -3.31,
+          "AXIS_PER_JUDGMENT": -2.81
+        },
+        "statePct": {
+          "CURRENT": {
+            "FULFILLED": 0,
+            "MOVING": 1.26,
+            "DELAYED": 7.51,
+            "BLOCKED": 42.78,
+            "REVERSING": 5.43,
+            "UNFORMED": 43.01
+          },
+          "AXIS_PER_HOUSE": {
+            "FULFILLED": 0,
+            "MOVING": 5.06,
+            "DELAYED": 11.83,
+            "BLOCKED": 35.04,
+            "REVERSING": 5.43,
+            "UNFORMED": 42.63
+          },
+          "AXIS_PER_JUDGMENT": {
+            "FULFILLED": 0.37,
+            "MOVING": 6.4,
+            "DELAYED": 12.2,
+            "BLOCKED": 31.47,
+            "REVERSING": 5.88,
+            "UNFORMED": 43.68
+          }
+        }
+      },
+      "2026-03": {
+        "n": 1488,
+        "meanScore": {
+          "CURRENT": -4.01,
+          "AXIS_PER_HOUSE": -3.35,
+          "AXIS_PER_JUDGMENT": -2.85
+        },
+        "statePct": {
+          "CURRENT": {
+            "FULFILLED": 0,
+            "MOVING": 4.5,
+            "DELAYED": 13.31,
+            "BLOCKED": 43.01,
+            "REVERSING": 13.1,
+            "UNFORMED": 26.08
+          },
+          "AXIS_PER_HOUSE": {
+            "FULFILLED": 0,
+            "MOVING": 4.5,
+            "DELAYED": 13.44,
+            "BLOCKED": 36.22,
+            "REVERSING": 13.1,
+            "UNFORMED": 32.73
+          },
+          "AXIS_PER_JUDGMENT": {
+            "FULFILLED": 0,
+            "MOVING": 5.78,
+            "DELAYED": 15.19,
+            "BLOCKED": 28.76,
+            "REVERSING": 13.91,
+            "UNFORMED": 36.36
+          }
+        }
+      },
+      "2026-04": {
+        "n": 1440,
+        "meanScore": {
+          "CURRENT": -3.86,
+          "AXIS_PER_HOUSE": -3.19,
+          "AXIS_PER_JUDGMENT": -2.69
+        },
+        "statePct": {
+          "CURRENT": {
+            "FULFILLED": 0,
+            "MOVING": 5.49,
+            "DELAYED": 12.71,
+            "BLOCKED": 39.58,
+            "REVERSING": 0,
+            "UNFORMED": 42.22
+          },
+          "AXIS_PER_HOUSE": {
+            "FULFILLED": 0,
+            "MOVING": 7.01,
+            "DELAYED": 12.71,
+            "BLOCKED": 33.33,
+            "REVERSING": 0,
+            "UNFORMED": 46.94
+          },
+          "AXIS_PER_JUDGMENT": {
+            "FULFILLED": 0,
+            "MOVING": 9.38,
+            "DELAYED": 15.56,
+            "BLOCKED": 25.76,
+            "REVERSING": 0,
+            "UNFORMED": 49.31
+          }
+        }
+      },
+      "2026-05": {
+        "n": 1488,
+        "meanScore": {
+          "CURRENT": -3.47,
+          "AXIS_PER_HOUSE": -2.8,
+          "AXIS_PER_JUDGMENT": -2.3
+        },
+        "statePct": {
+          "CURRENT": {
+            "FULFILLED": 0.2,
+            "MOVING": 2.35,
+            "DELAYED": 18.35,
+            "BLOCKED": 33.4,
+            "REVERSING": 0,
+            "UNFORMED": 45.7
+          },
+          "AXIS_PER_HOUSE": {
+            "FULFILLED": 0.2,
+            "MOVING": 3.97,
+            "DELAYED": 20.63,
+            "BLOCKED": 25.27,
+            "REVERSING": 0,
+            "UNFORMED": 49.93
+          },
+          "AXIS_PER_JUDGMENT": {
+            "FULFILLED": 0.2,
+            "MOVING": 6.65,
+            "DELAYED": 24.53,
+            "BLOCKED": 19.76,
+            "REVERSING": 0,
+            "UNFORMED": 48.86
+          }
+        }
+      },
+      "2026-06": {
+        "n": 1440,
+        "meanScore": {
+          "CURRENT": -3.06,
+          "AXIS_PER_HOUSE": -2.4,
+          "AXIS_PER_JUDGMENT": -1.9
+        },
+        "statePct": {
+          "CURRENT": {
+            "FULFILLED": 4.51,
+            "MOVING": 7.22,
+            "DELAYED": 22.5,
+            "BLOCKED": 37.85,
+            "REVERSING": 0.28,
+            "UNFORMED": 27.64
+          },
+          "AXIS_PER_HOUSE": {
+            "FULFILLED": 4.51,
+            "MOVING": 7.22,
+            "DELAYED": 25.14,
+            "BLOCKED": 30.21,
+            "REVERSING": 0.28,
+            "UNFORMED": 32.64
+          },
+          "AXIS_PER_JUDGMENT": {
+            "FULFILLED": 4.51,
+            "MOVING": 8.26,
+            "DELAYED": 29.31,
+            "BLOCKED": 22.99,
+            "REVERSING": 0.35,
+            "UNFORMED": 34.58
+          }
+        }
+      },
+      "2026-07": {
+        "n": 1488,
+        "meanScore": {
+          "CURRENT": -3.4,
+          "AXIS_PER_HOUSE": -2.74,
+          "AXIS_PER_JUDGMENT": -2.24
+        },
+        "statePct": {
+          "CURRENT": {
+            "FULFILLED": 1.14,
+            "MOVING": 5.65,
+            "DELAYED": 16.87,
+            "BLOCKED": 41.47,
+            "REVERSING": 11.42,
+            "UNFORMED": 23.45
+          },
+          "AXIS_PER_HOUSE": {
+            "FULFILLED": 1.14,
+            "MOVING": 7.12,
+            "DELAYED": 18.82,
+            "BLOCKED": 34.41,
+            "REVERSING": 11.42,
+            "UNFORMED": 27.08
+          },
+          "AXIS_PER_JUDGMENT": {
+            "FULFILLED": 1.14,
+            "MOVING": 7.12,
+            "DELAYED": 22.98,
+            "BLOCKED": 23.19,
+            "REVERSING": 12.43,
+            "UNFORMED": 33.13
+          }
+        }
+      },
+      "2026-08": {
+        "n": 1488,
+        "meanScore": {
+          "CURRENT": -3.97,
+          "AXIS_PER_HOUSE": -3.3,
+          "AXIS_PER_JUDGMENT": -2.8
+        },
+        "statePct": {
+          "CURRENT": {
+            "FULFILLED": 2.42,
+            "MOVING": 2.15,
+            "DELAYED": 27.69,
+            "BLOCKED": 45.7,
+            "REVERSING": 10.55,
+            "UNFORMED": 11.49
+          },
+          "AXIS_PER_HOUSE": {
+            "FULFILLED": 2.42,
+            "MOVING": 2.15,
+            "DELAYED": 27.89,
+            "BLOCKED": 42.07,
+            "REVERSING": 12.5,
+            "UNFORMED": 12.97
+          },
+          "AXIS_PER_JUDGMENT": {
+            "FULFILLED": 2.42,
+            "MOVING": 2.15,
+            "DELAYED": 33.87,
+            "BLOCKED": 35.89,
+            "REVERSING": 12.5,
+            "UNFORMED": 13.17
+          }
+        }
+      },
+      "2026-09": {
+        "n": 1440,
+        "meanScore": {
+          "CURRENT": -2.77,
+          "AXIS_PER_HOUSE": -2.1,
+          "AXIS_PER_JUDGMENT": -1.6
+        },
+        "statePct": {
+          "CURRENT": {
+            "FULFILLED": 4.51,
+            "MOVING": 2.36,
+            "DELAYED": 30.14,
+            "BLOCKED": 34.03,
+            "REVERSING": 10.42,
+            "UNFORMED": 18.54
+          },
+          "AXIS_PER_HOUSE": {
+            "FULFILLED": 4.51,
+            "MOVING": 2.36,
+            "DELAYED": 34.24,
+            "BLOCKED": 24.93,
+            "REVERSING": 11.67,
+            "UNFORMED": 22.29
+          },
+          "AXIS_PER_JUDGMENT": {
+            "FULFILLED": 4.51,
+            "MOVING": 5.14,
+            "DELAYED": 37.43,
+            "BLOCKED": 20.56,
+            "REVERSING": 11.67,
+            "UNFORMED": 20.69
+          }
+        }
+      },
+      "2026-10": {
+        "n": 1488,
+        "meanScore": {
+          "CURRENT": -3.1,
+          "AXIS_PER_HOUSE": -2.43,
+          "AXIS_PER_JUDGMENT": -1.93
+        },
+        "statePct": {
+          "CURRENT": {
+            "FULFILLED": 0.2,
+            "MOVING": 0.6,
+            "DELAYED": 29.23,
+            "BLOCKED": 33.8,
+            "REVERSING": 23.25,
+            "UNFORMED": 12.9
+          },
+          "AXIS_PER_HOUSE": {
+            "FULFILLED": 0.2,
+            "MOVING": 0.6,
+            "DELAYED": 32.46,
+            "BLOCKED": 24.73,
+            "REVERSING": 26.34,
+            "UNFORMED": 15.66
+          },
+          "AXIS_PER_JUDGMENT": {
+            "FULFILLED": 0.2,
+            "MOVING": 0.6,
+            "DELAYED": 37.57,
+            "BLOCKED": 17.54,
+            "REVERSING": 26.81,
+            "UNFORMED": 17.27
+          }
+        }
+      },
+      "2026-11": {
+        "n": 1440,
+        "meanScore": {
+          "CURRENT": -3.63,
+          "AXIS_PER_HOUSE": -2.97,
+          "AXIS_PER_JUDGMENT": -2.47
+        },
+        "statePct": {
+          "CURRENT": {
+            "FULFILLED": 1.11,
+            "MOVING": 1.46,
+            "DELAYED": 29.38,
+            "BLOCKED": 34.72,
+            "REVERSING": 15.69,
+            "UNFORMED": 17.64
+          },
+          "AXIS_PER_HOUSE": {
+            "FULFILLED": 1.11,
+            "MOVING": 1.46,
+            "DELAYED": 31.6,
+            "BLOCKED": 23.82,
+            "REVERSING": 21.04,
+            "UNFORMED": 20.97
+          },
+          "AXIS_PER_JUDGMENT": {
+            "FULFILLED": 1.11,
+            "MOVING": 4.24,
+            "DELAYED": 33.4,
+            "BLOCKED": 20,
+            "REVERSING": 21.46,
+            "UNFORMED": 19.79
+          }
+        }
+      },
+      "2026-12": {
+        "n": 1488,
+        "meanScore": {
+          "CURRENT": -3.12,
+          "AXIS_PER_HOUSE": -2.45,
+          "AXIS_PER_JUDGMENT": -1.95
+        },
+        "statePct": {
+          "CURRENT": {
+            "FULFILLED": 5.91,
+            "MOVING": 9.07,
+            "DELAYED": 11.02,
+            "BLOCKED": 39.65,
+            "REVERSING": 8.53,
+            "UNFORMED": 25.81
+          },
+          "AXIS_PER_HOUSE": {
+            "FULFILLED": 9.41,
+            "MOVING": 5.71,
+            "DELAYED": 11.02,
+            "BLOCKED": 32.59,
+            "REVERSING": 10.22,
+            "UNFORMED": 31.05
+          },
+          "AXIS_PER_JUDGMENT": {
+            "FULFILLED": 9.41,
+            "MOVING": 7.39,
+            "DELAYED": 11.09,
+            "BLOCKED": 27.22,
+            "REVERSING": 10.89,
+            "UNFORMED": 34.01
+          }
+        }
+      },
+      "2027-01": {
+        "n": 1488,
+        "meanScore": {
+          "CURRENT": -3.5,
+          "AXIS_PER_HOUSE": -2.84,
+          "AXIS_PER_JUDGMENT": -2.34
+        },
+        "statePct": {
+          "CURRENT": {
+            "FULFILLED": 0.2,
+            "MOVING": 2.02,
+            "DELAYED": 7.86,
+            "BLOCKED": 36.42,
+            "REVERSING": 20.97,
+            "UNFORMED": 32.53
+          },
+          "AXIS_PER_HOUSE": {
+            "FULFILLED": 0.34,
+            "MOVING": 3.09,
+            "DELAYED": 8.53,
+            "BLOCKED": 26.14,
+            "REVERSING": 20.97,
+            "UNFORMED": 40.93
+          },
+          "AXIS_PER_JUDGMENT": {
+            "FULFILLED": 0.34,
+            "MOVING": 3.43,
+            "DELAYED": 11.29,
+            "BLOCKED": 20.16,
+            "REVERSING": 22.18,
+            "UNFORMED": 42.61
+          }
+        }
+      },
+      "2027-02": {
+        "n": 1344,
+        "meanScore": {
+          "CURRENT": -3.3,
+          "AXIS_PER_HOUSE": -2.64,
+          "AXIS_PER_JUDGMENT": -2.14
+        },
+        "statePct": {
+          "CURRENT": {
+            "FULFILLED": 0,
+            "MOVING": 0.97,
+            "DELAYED": 2.9,
+            "BLOCKED": 34.08,
+            "REVERSING": 36.24,
+            "UNFORMED": 25.82
+          },
+          "AXIS_PER_HOUSE": {
+            "FULFILLED": 0,
+            "MOVING": 3.72,
+            "DELAYED": 4.09,
+            "BLOCKED": 25.82,
+            "REVERSING": 36.76,
+            "UNFORMED": 29.61
+          },
+          "AXIS_PER_JUDGMENT": {
+            "FULFILLED": 0,
+            "MOVING": 4.02,
+            "DELAYED": 4.24,
+            "BLOCKED": 19.49,
+            "REVERSING": 41.89,
+            "UNFORMED": 30.36
+          }
+        }
+      },
+      "2027-03": {
+        "n": 1488,
+        "meanScore": {
+          "CURRENT": -3.4,
+          "AXIS_PER_HOUSE": -2.73,
+          "AXIS_PER_JUDGMENT": -2.23
+        },
+        "statePct": {
+          "CURRENT": {
+            "FULFILLED": 0,
+            "MOVING": 0.6,
+            "DELAYED": 4.3,
+            "BLOCKED": 32.39,
+            "REVERSING": 27.62,
+            "UNFORMED": 35.08
+          },
+          "AXIS_PER_HOUSE": {
+            "FULFILLED": 0,
+            "MOVING": 1.21,
+            "DELAYED": 5.85,
+            "BLOCKED": 24.8,
+            "REVERSING": 28.49,
+            "UNFORMED": 39.65
+          },
+          "AXIS_PER_JUDGMENT": {
+            "FULFILLED": 0,
+            "MOVING": 2.82,
+            "DELAYED": 8.27,
+            "BLOCKED": 18.75,
+            "REVERSING": 31.18,
+            "UNFORMED": 38.98
+          }
+        }
+      },
+      "2027-04": {
+        "n": 1440,
+        "meanScore": {
+          "CURRENT": -3.48,
+          "AXIS_PER_HOUSE": -2.81,
+          "AXIS_PER_JUDGMENT": -2.31
+        },
+        "statePct": {
+          "CURRENT": {
+            "FULFILLED": 0,
+            "MOVING": 3.06,
+            "DELAYED": 24.31,
+            "BLOCKED": 38.4,
+            "REVERSING": 6.67,
+            "UNFORMED": 27.57
+          },
+          "AXIS_PER_HOUSE": {
+            "FULFILLED": 0,
+            "MOVING": 3.33,
+            "DELAYED": 26.46,
+            "BLOCKED": 27.92,
+            "REVERSING": 7.57,
+            "UNFORMED": 34.72
+          },
+          "AXIS_PER_JUDGMENT": {
+            "FULFILLED": 0,
+            "MOVING": 3.33,
+            "DELAYED": 29.65,
+            "BLOCKED": 22.85,
+            "REVERSING": 7.64,
+            "UNFORMED": 36.53
+          }
+        }
+      },
+      "2027-05": {
+        "n": 1488,
+        "meanScore": {
+          "CURRENT": -2.93,
+          "AXIS_PER_HOUSE": -2.26,
+          "AXIS_PER_JUDGMENT": -1.76
+        },
+        "statePct": {
+          "CURRENT": {
+            "FULFILLED": 0.54,
+            "MOVING": 4.7,
+            "DELAYED": 23.45,
+            "BLOCKED": 31.38,
+            "REVERSING": 0,
+            "UNFORMED": 39.92
+          },
+          "AXIS_PER_HOUSE": {
+            "FULFILLED": 2.02,
+            "MOVING": 7.53,
+            "DELAYED": 25.81,
+            "BLOCKED": 21.44,
+            "REVERSING": 0,
+            "UNFORMED": 43.21
+          },
+          "AXIS_PER_JUDGMENT": {
+            "FULFILLED": 2.02,
+            "MOVING": 7.53,
+            "DELAYED": 27.42,
+            "BLOCKED": 15.93,
+            "REVERSING": 0,
+            "UNFORMED": 47.11
+          }
+        }
+      },
+      "2027-06": {
+        "n": 1440,
+        "meanScore": {
+          "CURRENT": -2.72,
+          "AXIS_PER_HOUSE": -2.06,
+          "AXIS_PER_JUDGMENT": -1.56
+        },
+        "statePct": {
+          "CURRENT": {
+            "FULFILLED": 0.21,
+            "MOVING": 2.99,
+            "DELAYED": 25,
+            "BLOCKED": 23.96,
+            "REVERSING": 8.54,
+            "UNFORMED": 39.31
+          },
+          "AXIS_PER_HOUSE": {
+            "FULFILLED": 0.42,
+            "MOVING": 3.75,
+            "DELAYED": 28.75,
+            "BLOCKED": 15.21,
+            "REVERSING": 8.89,
+            "UNFORMED": 42.99
+          },
+          "AXIS_PER_JUDGMENT": {
+            "FULFILLED": 0.56,
+            "MOVING": 10.35,
+            "DELAYED": 28.89,
+            "BLOCKED": 13.33,
+            "REVERSING": 9.93,
+            "UNFORMED": 36.94
+          }
+        }
+      },
+      "2027-07": {
+        "n": 1488,
+        "meanScore": {
+          "CURRENT": -3.92,
+          "AXIS_PER_HOUSE": -3.26,
+          "AXIS_PER_JUDGMENT": -2.76
+        },
+        "statePct": {
+          "CURRENT": {
+            "FULFILLED": 0,
+            "MOVING": 3.7,
+            "DELAYED": 29.17,
+            "BLOCKED": 42,
+            "REVERSING": 1.75,
+            "UNFORMED": 23.39
+          },
+          "AXIS_PER_HOUSE": {
+            "FULFILLED": 0,
+            "MOVING": 3.7,
+            "DELAYED": 32.26,
+            "BLOCKED": 34.88,
+            "REVERSING": 1.81,
+            "UNFORMED": 27.35
+          },
+          "AXIS_PER_JUDGMENT": {
+            "FULFILLED": 0,
+            "MOVING": 3.9,
+            "DELAYED": 33.67,
+            "BLOCKED": 29.57,
+            "REVERSING": 2.02,
+            "UNFORMED": 30.85
+          }
+        }
+      },
+      "2027-08": {
+        "n": 1488,
+        "meanScore": {
+          "CURRENT": -4.86,
+          "AXIS_PER_HOUSE": -4.2,
+          "AXIS_PER_JUDGMENT": -3.7
+        },
+        "statePct": {
+          "CURRENT": {
+            "FULFILLED": 3.76,
+            "MOVING": 1.81,
+            "DELAYED": 17.07,
+            "BLOCKED": 54.44,
+            "REVERSING": 6.85,
+            "UNFORMED": 16.06
+          },
+          "AXIS_PER_HOUSE": {
+            "FULFILLED": 3.76,
+            "MOVING": 2.08,
+            "DELAYED": 19.22,
+            "BLOCKED": 48.52,
+            "REVERSING": 7.39,
+            "UNFORMED": 19.02
+          },
+          "AXIS_PER_JUDGMENT": {
+            "FULFILLED": 3.76,
+            "MOVING": 2.22,
+            "DELAYED": 21.51,
+            "BLOCKED": 40.05,
+            "REVERSING": 8.2,
+            "UNFORMED": 24.26
+          }
+        }
+      },
+      "2027-09": {
+        "n": 1440,
+        "meanScore": {
+          "CURRENT": -3.9,
+          "AXIS_PER_HOUSE": -3.23,
+          "AXIS_PER_JUDGMENT": -2.73
+        },
+        "statePct": {
+          "CURRENT": {
+            "FULFILLED": 4.51,
+            "MOVING": 4.38,
+            "DELAYED": 13.33,
+            "BLOCKED": 46.53,
+            "REVERSING": 8.33,
+            "UNFORMED": 22.92
+          },
+          "AXIS_PER_HOUSE": {
+            "FULFILLED": 4.51,
+            "MOVING": 4.38,
+            "DELAYED": 13.96,
+            "BLOCKED": 40.76,
+            "REVERSING": 8.96,
+            "UNFORMED": 27.43
+          },
+          "AXIS_PER_JUDGMENT": {
+            "FULFILLED": 4.51,
+            "MOVING": 5.21,
+            "DELAYED": 16.32,
+            "BLOCKED": 32.43,
+            "REVERSING": 8.96,
+            "UNFORMED": 32.57
+          }
+        }
+      },
+      "2027-10": {
+        "n": 1488,
+        "meanScore": {
+          "CURRENT": -3.04,
+          "AXIS_PER_HOUSE": -2.37,
+          "AXIS_PER_JUDGMENT": -1.87
+        },
+        "statePct": {
+          "CURRENT": {
+            "FULFILLED": 4.5,
+            "MOVING": 7.73,
+            "DELAYED": 16.87,
+            "BLOCKED": 37.16,
+            "REVERSING": 12.63,
+            "UNFORMED": 21.1
+          },
+          "AXIS_PER_HOUSE": {
+            "FULFILLED": 5.85,
+            "MOVING": 6.52,
+            "DELAYED": 17.81,
+            "BLOCKED": 31.99,
+            "REVERSING": 14.99,
+            "UNFORMED": 22.85
+          },
+          "AXIS_PER_JUDGMENT": {
+            "FULFILLED": 5.85,
+            "MOVING": 6.52,
+            "DELAYED": 19.35,
+            "BLOCKED": 22.38,
+            "REVERSING": 16.73,
+            "UNFORMED": 29.17
+          }
+        }
+      },
+      "2027-11": {
+        "n": 1440,
+        "meanScore": {
+          "CURRENT": -3.32,
+          "AXIS_PER_HOUSE": -2.65,
+          "AXIS_PER_JUDGMENT": -2.15
+        },
+        "statePct": {
+          "CURRENT": {
+            "FULFILLED": 1.18,
+            "MOVING": 10.49,
+            "DELAYED": 14.03,
+            "BLOCKED": 36.74,
+            "REVERSING": 10.35,
+            "UNFORMED": 27.22
+          },
+          "AXIS_PER_HOUSE": {
+            "FULFILLED": 1.18,
+            "MOVING": 11.39,
+            "DELAYED": 14.51,
+            "BLOCKED": 30.14,
+            "REVERSING": 13.61,
+            "UNFORMED": 29.17
+          },
+          "AXIS_PER_JUDGMENT": {
+            "FULFILLED": 1.18,
+            "MOVING": 11.39,
+            "DELAYED": 17.01,
+            "BLOCKED": 23.68,
+            "REVERSING": 15.49,
+            "UNFORMED": 31.25
+          }
+        }
+      },
+      "2027-12": {
+        "n": 1488,
+        "meanScore": {
+          "CURRENT": -3.89,
+          "AXIS_PER_HOUSE": -3.22,
+          "AXIS_PER_JUDGMENT": -2.72
+        },
+        "statePct": {
+          "CURRENT": {
+            "FULFILLED": 0,
+            "MOVING": 0.81,
+            "DELAYED": 9.41,
+            "BLOCKED": 41.53,
+            "REVERSING": 11.76,
+            "UNFORMED": 36.49
+          },
+          "AXIS_PER_HOUSE": {
+            "FULFILLED": 0,
+            "MOVING": 2.28,
+            "DELAYED": 13.44,
+            "BLOCKED": 35.35,
+            "REVERSING": 11.76,
+            "UNFORMED": 37.16
+          },
+          "AXIS_PER_JUDGMENT": {
+            "FULFILLED": 0,
+            "MOVING": 2.76,
+            "DELAYED": 18.08,
+            "BLOCKED": 29.3,
+            "REVERSING": 11.76,
+            "UNFORMED": 38.1
+          }
+        }
+      }
+    },
+    "byQuestionTypeByMonth": {
+      "general": {
+        "2026-01": {
+          "n": 372,
+          "meanScore": {
+            "CURRENT": -4.14,
+            "AXIS_PER_HOUSE": -3.48,
+            "AXIS_PER_JUDGMENT": -2.48
+          },
+          "statePct": {
+            "CURRENT": {
+              "FULFILLED": 0,
+              "MOVING": 0.81,
+              "DELAYED": 5.65,
+              "BLOCKED": 43.82,
+              "REVERSING": 12.63,
+              "UNFORMED": 37.1
+            },
+            "AXIS_PER_HOUSE": {
+              "FULFILLED": 0,
+              "MOVING": 0.81,
+              "DELAYED": 5.65,
+              "BLOCKED": 30.11,
+              "REVERSING": 12.63,
+              "UNFORMED": 50.81
+            },
+            "AXIS_PER_JUDGMENT": {
+              "FULFILLED": 0,
+              "MOVING": 0.81,
+              "DELAYED": 10.22,
+              "BLOCKED": 15.32,
+              "REVERSING": 13.44,
+              "UNFORMED": 60.22
+            }
+          }
+        },
+        "2026-02": {
+          "n": 336,
+          "meanScore": {
+            "CURRENT": -3.88,
+            "AXIS_PER_HOUSE": -3.21,
+            "AXIS_PER_JUDGMENT": -2.21
+          },
+          "statePct": {
+            "CURRENT": {
+              "FULFILLED": 0,
+              "MOVING": 0,
+              "DELAYED": 8.04,
+              "BLOCKED": 34.82,
+              "REVERSING": 12.8,
+              "UNFORMED": 44.35
+            },
+            "AXIS_PER_HOUSE": {
+              "FULFILLED": 0,
+              "MOVING": 0,
+              "DELAYED": 14.88,
+              "BLOCKED": 22.92,
+              "REVERSING": 12.8,
+              "UNFORMED": 49.4
+            },
+            "AXIS_PER_JUDGMENT": {
+              "FULFILLED": 0,
+              "MOVING": 5.06,
+              "DELAYED": 16.37,
+              "BLOCKED": 17.26,
+              "REVERSING": 12.8,
+              "UNFORMED": 48.51
+            }
+          }
+        },
+        "2026-03": {
+          "n": 372,
+          "meanScore": {
+            "CURRENT": -3.72,
+            "AXIS_PER_HOUSE": -3.05,
+            "AXIS_PER_JUDGMENT": -2.05
+          },
+          "statePct": {
+            "CURRENT": {
+              "FULFILLED": 0,
+              "MOVING": 0,
+              "DELAYED": 19.62,
+              "BLOCKED": 27.69,
+              "REVERSING": 16.94,
+              "UNFORMED": 35.75
+            },
+            "AXIS_PER_HOUSE": {
+              "FULFILLED": 0,
+              "MOVING": 0,
+              "DELAYED": 19.89,
+              "BLOCKED": 19.35,
+              "REVERSING": 16.94,
+              "UNFORMED": 43.82
+            },
+            "AXIS_PER_JUDGMENT": {
+              "FULFILLED": 0,
+              "MOVING": 1.61,
+              "DELAYED": 23.39,
+              "BLOCKED": 4.84,
+              "REVERSING": 16.94,
+              "UNFORMED": 53.23
+            }
+          }
+        },
+        "2026-04": {
+          "n": 360,
+          "meanScore": {
+            "CURRENT": -3.88,
+            "AXIS_PER_HOUSE": -3.21,
+            "AXIS_PER_JUDGMENT": -2.21
+          },
+          "statePct": {
+            "CURRENT": {
+              "FULFILLED": 0,
+              "MOVING": 4.17,
+              "DELAYED": 14.72,
+              "BLOCKED": 37.22,
+              "REVERSING": 0,
+              "UNFORMED": 43.89
+            },
+            "AXIS_PER_HOUSE": {
+              "FULFILLED": 0,
+              "MOVING": 4.17,
+              "DELAYED": 14.72,
+              "BLOCKED": 28.61,
+              "REVERSING": 0,
+              "UNFORMED": 52.5
+            },
+            "AXIS_PER_JUDGMENT": {
+              "FULFILLED": 0,
+              "MOVING": 4.72,
+              "DELAYED": 20.56,
+              "BLOCKED": 18.61,
+              "REVERSING": 0,
+              "UNFORMED": 56.11
+            }
+          }
+        },
+        "2026-05": {
+          "n": 372,
+          "meanScore": {
+            "CURRENT": -3.44,
+            "AXIS_PER_HOUSE": -2.77,
+            "AXIS_PER_JUDGMENT": -1.77
+          },
+          "statePct": {
+            "CURRENT": {
+              "FULFILLED": 0,
+              "MOVING": 2.69,
+              "DELAYED": 25.54,
+              "BLOCKED": 25.81,
+              "REVERSING": 0,
+              "UNFORMED": 45.97
+            },
+            "AXIS_PER_HOUSE": {
+              "FULFILLED": 0,
+              "MOVING": 2.96,
+              "DELAYED": 25.54,
+              "BLOCKED": 14.52,
+              "REVERSING": 0,
+              "UNFORMED": 56.99
+            },
+            "AXIS_PER_JUDGMENT": {
+              "FULFILLED": 0,
+              "MOVING": 9.41,
+              "DELAYED": 29.03,
+              "BLOCKED": 11.02,
+              "REVERSING": 0,
+              "UNFORMED": 50.54
+            }
+          }
+        },
+        "2026-06": {
+          "n": 360,
+          "meanScore": {
+            "CURRENT": -2.97,
+            "AXIS_PER_HOUSE": -2.3,
+            "AXIS_PER_JUDGMENT": -1.3
+          },
+          "statePct": {
+            "CURRENT": {
+              "FULFILLED": 6.11,
+              "MOVING": 8.06,
+              "DELAYED": 19.17,
+              "BLOCKED": 41.67,
+              "REVERSING": 0.28,
+              "UNFORMED": 24.72
+            },
+            "AXIS_PER_HOUSE": {
+              "FULFILLED": 6.11,
+              "MOVING": 8.06,
+              "DELAYED": 20,
+              "BLOCKED": 30.28,
+              "REVERSING": 0.28,
+              "UNFORMED": 35.28
+            },
+            "AXIS_PER_JUDGMENT": {
+              "FULFILLED": 6.11,
+              "MOVING": 10.83,
+              "DELAYED": 25,
+              "BLOCKED": 18.06,
+              "REVERSING": 0.56,
+              "UNFORMED": 39.44
+            }
+          }
+        },
+        "2026-07": {
+          "n": 372,
+          "meanScore": {
+            "CURRENT": -3.25,
+            "AXIS_PER_HOUSE": -2.59,
+            "AXIS_PER_JUDGMENT": -1.59
+          },
+          "statePct": {
+            "CURRENT": {
+              "FULFILLED": 1.08,
+              "MOVING": 6.99,
+              "DELAYED": 9.95,
+              "BLOCKED": 44.62,
+              "REVERSING": 11.83,
+              "UNFORMED": 25.54
+            },
+            "AXIS_PER_HOUSE": {
+              "FULFILLED": 1.08,
+              "MOVING": 6.99,
+              "DELAYED": 9.95,
+              "BLOCKED": 40.32,
+              "REVERSING": 11.83,
+              "UNFORMED": 29.84
+            },
+            "AXIS_PER_JUDGMENT": {
+              "FULFILLED": 1.08,
+              "MOVING": 6.99,
+              "DELAYED": 17.2,
+              "BLOCKED": 19.35,
+              "REVERSING": 14.52,
+              "UNFORMED": 40.86
+            }
+          }
+        },
+        "2026-08": {
+          "n": 372,
+          "meanScore": {
+            "CURRENT": -4.07,
+            "AXIS_PER_HOUSE": -3.41,
+            "AXIS_PER_JUDGMENT": -2.41
+          },
+          "statePct": {
+            "CURRENT": {
+              "FULFILLED": 0.54,
+              "MOVING": 1.08,
+              "DELAYED": 33.06,
+              "BLOCKED": 48.66,
+              "REVERSING": 8.33,
+              "UNFORMED": 8.33
+            },
+            "AXIS_PER_HOUSE": {
+              "FULFILLED": 0.54,
+              "MOVING": 1.08,
+              "DELAYED": 33.06,
+              "BLOCKED": 44.09,
+              "REVERSING": 8.33,
+              "UNFORMED": 12.9
+            },
+            "AXIS_PER_JUDGMENT": {
+              "FULFILLED": 0.54,
+              "MOVING": 1.08,
+              "DELAYED": 40.86,
+              "BLOCKED": 36.29,
+              "REVERSING": 8.33,
+              "UNFORMED": 12.9
+            }
+          }
+        },
+        "2026-09": {
+          "n": 360,
+          "meanScore": {
+            "CURRENT": -2.8,
+            "AXIS_PER_HOUSE": -2.14,
+            "AXIS_PER_JUDGMENT": -1.14
+          },
+          "statePct": {
+            "CURRENT": {
+              "FULFILLED": 0,
+              "MOVING": 1.11,
+              "DELAYED": 29.72,
+              "BLOCKED": 40.28,
+              "REVERSING": 8.33,
+              "UNFORMED": 20.56
+            },
+            "AXIS_PER_HOUSE": {
+              "FULFILLED": 0,
+              "MOVING": 1.11,
+              "DELAYED": 34.17,
+              "BLOCKED": 28.06,
+              "REVERSING": 8.33,
+              "UNFORMED": 28.33
+            },
+            "AXIS_PER_JUDGMENT": {
+              "FULFILLED": 0,
+              "MOVING": 7.78,
+              "DELAYED": 45.83,
+              "BLOCKED": 14.44,
+              "REVERSING": 8.33,
+              "UNFORMED": 23.61
+            }
+          }
+        },
+        "2026-10": {
+          "n": 372,
+          "meanScore": {
+            "CURRENT": -3.13,
+            "AXIS_PER_HOUSE": -2.46,
+            "AXIS_PER_JUDGMENT": -1.46
+          },
+          "statePct": {
+            "CURRENT": {
+              "FULFILLED": 0,
+              "MOVING": 0,
+              "DELAYED": 24.46,
+              "BLOCKED": 33.33,
+              "REVERSING": 27.15,
+              "UNFORMED": 15.05
+            },
+            "AXIS_PER_HOUSE": {
+              "FULFILLED": 0,
+              "MOVING": 0,
+              "DELAYED": 24.46,
+              "BLOCKED": 28.76,
+              "REVERSING": 27.15,
+              "UNFORMED": 19.62
+            },
+            "AXIS_PER_JUDGMENT": {
+              "FULFILLED": 0,
+              "MOVING": 0,
+              "DELAYED": 44.89,
+              "BLOCKED": 8.33,
+              "REVERSING": 27.15,
+              "UNFORMED": 19.62
+            }
+          }
+        },
+        "2026-11": {
+          "n": 360,
+          "meanScore": {
+            "CURRENT": -3.66,
+            "AXIS_PER_HOUSE": -2.99,
+            "AXIS_PER_JUDGMENT": -1.99
+          },
+          "statePct": {
+            "CURRENT": {
+              "FULFILLED": 0,
+              "MOVING": 0,
+              "DELAYED": 25.56,
+              "BLOCKED": 31.39,
+              "REVERSING": 19.17,
+              "UNFORMED": 23.89
+            },
+            "AXIS_PER_HOUSE": {
+              "FULFILLED": 0,
+              "MOVING": 0,
+              "DELAYED": 30.56,
+              "BLOCKED": 14.44,
+              "REVERSING": 27.22,
+              "UNFORMED": 27.78
+            },
+            "AXIS_PER_JUDGMENT": {
+              "FULFILLED": 0,
+              "MOVING": 6.67,
+              "DELAYED": 34.72,
+              "BLOCKED": 10.28,
+              "REVERSING": 27.22,
+              "UNFORMED": 21.11
+            }
+          }
+        },
+        "2026-12": {
+          "n": 372,
+          "meanScore": {
+            "CURRENT": -3.05,
+            "AXIS_PER_HOUSE": -2.38,
+            "AXIS_PER_JUDGMENT": -1.38
+          },
+          "statePct": {
+            "CURRENT": {
+              "FULFILLED": 6.99,
+              "MOVING": 13.98,
+              "DELAYED": 7.53,
+              "BLOCKED": 44.62,
+              "REVERSING": 7.53,
+              "UNFORMED": 19.35
+            },
+            "AXIS_PER_HOUSE": {
+              "FULFILLED": 6.99,
+              "MOVING": 13.98,
+              "DELAYED": 7.53,
+              "BLOCKED": 40.86,
+              "REVERSING": 8.87,
+              "UNFORMED": 21.77
+            },
+            "AXIS_PER_JUDGMENT": {
+              "FULFILLED": 6.99,
+              "MOVING": 18.01,
+              "DELAYED": 7.8,
+              "BLOCKED": 29.57,
+              "REVERSING": 10.22,
+              "UNFORMED": 27.42
+            }
+          }
+        },
+        "2027-01": {
+          "n": 372,
+          "meanScore": {
+            "CURRENT": -3.53,
+            "AXIS_PER_HOUSE": -2.87,
+            "AXIS_PER_JUDGMENT": -1.87
+          },
+          "statePct": {
+            "CURRENT": {
+              "FULFILLED": 0.27,
+              "MOVING": 3.49,
+              "DELAYED": 4.57,
+              "BLOCKED": 42.47,
+              "REVERSING": 17.2,
+              "UNFORMED": 31.99
+            },
+            "AXIS_PER_HOUSE": {
+              "FULFILLED": 0.27,
+              "MOVING": 3.49,
+              "DELAYED": 6.45,
+              "BLOCKED": 31.45,
+              "REVERSING": 17.2,
+              "UNFORMED": 41.13
+            },
+            "AXIS_PER_JUDGMENT": {
+              "FULFILLED": 0.27,
+              "MOVING": 4.84,
+              "DELAYED": 8.87,
+              "BLOCKED": 19.89,
+              "REVERSING": 21.51,
+              "UNFORMED": 44.62
+            }
+          }
+        },
+        "2027-02": {
+          "n": 336,
+          "meanScore": {
+            "CURRENT": -3.4,
+            "AXIS_PER_HOUSE": -2.74,
+            "AXIS_PER_JUDGMENT": -1.74
+          },
+          "statePct": {
+            "CURRENT": {
+              "FULFILLED": 0,
+              "MOVING": 2.68,
+              "DELAYED": 8.33,
+              "BLOCKED": 30.06,
+              "REVERSING": 31.85,
+              "UNFORMED": 27.08
+            },
+            "AXIS_PER_HOUSE": {
+              "FULFILLED": 0,
+              "MOVING": 2.68,
+              "DELAYED": 11.61,
+              "BLOCKED": 22.32,
+              "REVERSING": 32.74,
+              "UNFORMED": 30.65
+            },
+            "AXIS_PER_JUDGMENT": {
+              "FULFILLED": 0,
+              "MOVING": 3.87,
+              "DELAYED": 11.9,
+              "BLOCKED": 8.33,
+              "REVERSING": 44.64,
+              "UNFORMED": 31.25
+            }
+          }
+        },
+        "2027-03": {
+          "n": 372,
+          "meanScore": {
+            "CURRENT": -3.53,
+            "AXIS_PER_HOUSE": -2.86,
+            "AXIS_PER_JUDGMENT": -1.86
+          },
+          "statePct": {
+            "CURRENT": {
+              "FULFILLED": 0,
+              "MOVING": 0,
+              "DELAYED": 5.38,
+              "BLOCKED": 31.45,
+              "REVERSING": 26.61,
+              "UNFORMED": 36.56
+            },
+            "AXIS_PER_HOUSE": {
+              "FULFILLED": 0,
+              "MOVING": 0,
+              "DELAYED": 8.87,
+              "BLOCKED": 22.85,
+              "REVERSING": 26.61,
+              "UNFORMED": 41.67
+            },
+            "AXIS_PER_JUDGMENT": {
+              "FULFILLED": 0,
+              "MOVING": 5.38,
+              "DELAYED": 17.47,
+              "BLOCKED": 3.23,
+              "REVERSING": 34.95,
+              "UNFORMED": 38.98
+            }
+          }
+        },
+        "2027-04": {
+          "n": 360,
+          "meanScore": {
+            "CURRENT": -3.51,
+            "AXIS_PER_HOUSE": -2.84,
+            "AXIS_PER_JUDGMENT": -1.84
+          },
+          "statePct": {
+            "CURRENT": {
+              "FULFILLED": 0,
+              "MOVING": 3.33,
+              "DELAYED": 28.06,
+              "BLOCKED": 34.17,
+              "REVERSING": 7.5,
+              "UNFORMED": 26.94
+            },
+            "AXIS_PER_HOUSE": {
+              "FULFILLED": 0,
+              "MOVING": 3.33,
+              "DELAYED": 29.17,
+              "BLOCKED": 24.44,
+              "REVERSING": 7.5,
+              "UNFORMED": 35.56
+            },
+            "AXIS_PER_JUDGMENT": {
+              "FULFILLED": 0,
+              "MOVING": 3.33,
+              "DELAYED": 40,
+              "BLOCKED": 9.17,
+              "REVERSING": 7.78,
+              "UNFORMED": 39.72
+            }
+          }
+        },
+        "2027-05": {
+          "n": 372,
+          "meanScore": {
+            "CURRENT": -3.03,
+            "AXIS_PER_HOUSE": -2.36,
+            "AXIS_PER_JUDGMENT": -1.36
+          },
+          "statePct": {
+            "CURRENT": {
+              "FULFILLED": 2.15,
+              "MOVING": 0,
+              "DELAYED": 25.81,
+              "BLOCKED": 25,
+              "REVERSING": 0,
+              "UNFORMED": 47.04
+            },
+            "AXIS_PER_HOUSE": {
+              "FULFILLED": 2.15,
+              "MOVING": 0,
+              "DELAYED": 31.72,
+              "BLOCKED": 14.78,
+              "REVERSING": 0,
+              "UNFORMED": 51.34
+            },
+            "AXIS_PER_JUDGMENT": {
+              "FULFILLED": 2.15,
+              "MOVING": 0,
+              "DELAYED": 32.8,
+              "BLOCKED": 5.91,
+              "REVERSING": 0,
+              "UNFORMED": 59.14
+            }
+          }
+        },
+        "2027-06": {
+          "n": 360,
+          "meanScore": {
+            "CURRENT": -2.82,
+            "AXIS_PER_HOUSE": -2.16,
+            "AXIS_PER_JUDGMENT": -1.16
+          },
+          "statePct": {
+            "CURRENT": {
+              "FULFILLED": 0.83,
+              "MOVING": 0.56,
+              "DELAYED": 28.61,
+              "BLOCKED": 14.17,
+              "REVERSING": 10.83,
+              "UNFORMED": 45
+            },
+            "AXIS_PER_HOUSE": {
+              "FULFILLED": 0.83,
+              "MOVING": 1.39,
+              "DELAYED": 35.28,
+              "BLOCKED": 6.11,
+              "REVERSING": 11.11,
+              "UNFORMED": 45.28
+            },
+            "AXIS_PER_JUDGMENT": {
+              "FULFILLED": 1.39,
+              "MOVING": 13.61,
+              "DELAYED": 35.56,
+              "BLOCKED": 4.44,
+              "REVERSING": 11.11,
+              "UNFORMED": 33.89
+            }
+          }
+        },
+        "2027-07": {
+          "n": 372,
+          "meanScore": {
+            "CURRENT": -3.71,
+            "AXIS_PER_HOUSE": -3.04,
+            "AXIS_PER_JUDGMENT": -2.04
+          },
+          "statePct": {
+            "CURRENT": {
+              "FULFILLED": 0,
+              "MOVING": 4.3,
+              "DELAYED": 31.99,
+              "BLOCKED": 44.62,
+              "REVERSING": 1.88,
+              "UNFORMED": 17.2
+            },
+            "AXIS_PER_HOUSE": {
+              "FULFILLED": 0,
+              "MOVING": 4.3,
+              "DELAYED": 31.99,
+              "BLOCKED": 35.48,
+              "REVERSING": 2.15,
+              "UNFORMED": 26.08
+            },
+            "AXIS_PER_JUDGMENT": {
+              "FULFILLED": 0,
+              "MOVING": 5.11,
+              "DELAYED": 35.22,
+              "BLOCKED": 26.08,
+              "REVERSING": 2.15,
+              "UNFORMED": 31.45
+            }
+          }
+        },
+        "2027-08": {
+          "n": 372,
+          "meanScore": {
+            "CURRENT": -4.61,
+            "AXIS_PER_HOUSE": -3.95,
+            "AXIS_PER_JUDGMENT": -2.95
+          },
+          "statePct": {
+            "CURRENT": {
+              "FULFILLED": 3.76,
+              "MOVING": 0,
+              "DELAYED": 20.43,
+              "BLOCKED": 53.49,
+              "REVERSING": 5.91,
+              "UNFORMED": 16.4
+            },
+            "AXIS_PER_HOUSE": {
+              "FULFILLED": 3.76,
+              "MOVING": 0,
+              "DELAYED": 20.97,
+              "BLOCKED": 50,
+              "REVERSING": 5.91,
+              "UNFORMED": 19.35
+            },
+            "AXIS_PER_JUDGMENT": {
+              "FULFILLED": 3.76,
+              "MOVING": 0.54,
+              "DELAYED": 27.15,
+              "BLOCKED": 33.06,
+              "REVERSING": 7.53,
+              "UNFORMED": 27.96
+            }
+          }
+        },
+        "2027-09": {
+          "n": 360,
+          "meanScore": {
+            "CURRENT": -3.85,
+            "AXIS_PER_HOUSE": -3.19,
+            "AXIS_PER_JUDGMENT": -2.19
+          },
+          "statePct": {
+            "CURRENT": {
+              "FULFILLED": 2.5,
+              "MOVING": 2.22,
+              "DELAYED": 19.17,
+              "BLOCKED": 41.67,
+              "REVERSING": 8.33,
+              "UNFORMED": 26.11
+            },
+            "AXIS_PER_HOUSE": {
+              "FULFILLED": 2.5,
+              "MOVING": 2.22,
+              "DELAYED": 19.17,
+              "BLOCKED": 40.56,
+              "REVERSING": 8.33,
+              "UNFORMED": 27.22
+            },
+            "AXIS_PER_JUDGMENT": {
+              "FULFILLED": 2.5,
+              "MOVING": 5.56,
+              "DELAYED": 22.78,
+              "BLOCKED": 25.28,
+              "REVERSING": 8.33,
+              "UNFORMED": 35.56
+            }
+          }
+        },
+        "2027-10": {
+          "n": 372,
+          "meanScore": {
+            "CURRENT": -3.01,
+            "AXIS_PER_HOUSE": -2.34,
+            "AXIS_PER_JUDGMENT": -1.34
+          },
+          "statePct": {
+            "CURRENT": {
+              "FULFILLED": 8.06,
+              "MOVING": 6.72,
+              "DELAYED": 13.98,
+              "BLOCKED": 41.67,
+              "REVERSING": 13.98,
+              "UNFORMED": 15.59
+            },
+            "AXIS_PER_HOUSE": {
+              "FULFILLED": 8.06,
+              "MOVING": 6.72,
+              "DELAYED": 14.78,
+              "BLOCKED": 35.22,
+              "REVERSING": 18.55,
+              "UNFORMED": 16.67
+            },
+            "AXIS_PER_JUDGMENT": {
+              "FULFILLED": 8.06,
+              "MOVING": 6.72,
+              "DELAYED": 19.35,
+              "BLOCKED": 15.05,
+              "REVERSING": 22.31,
+              "UNFORMED": 28.49
+            }
+          }
+        },
+        "2027-11": {
+          "n": 360,
+          "meanScore": {
+            "CURRENT": -3.27,
+            "AXIS_PER_HOUSE": -2.61,
+            "AXIS_PER_JUDGMENT": -1.61
+          },
+          "statePct": {
+            "CURRENT": {
+              "FULFILLED": 0,
+              "MOVING": 20.83,
+              "DELAYED": 9.17,
+              "BLOCKED": 43.61,
+              "REVERSING": 9.17,
+              "UNFORMED": 17.22
+            },
+            "AXIS_PER_HOUSE": {
+              "FULFILLED": 0,
+              "MOVING": 20.83,
+              "DELAYED": 10.56,
+              "BLOCKED": 33.61,
+              "REVERSING": 16.67,
+              "UNFORMED": 18.33
+            },
+            "AXIS_PER_JUDGMENT": {
+              "FULFILLED": 0,
+              "MOVING": 20.83,
+              "DELAYED": 18.33,
+              "BLOCKED": 20.28,
+              "REVERSING": 16.67,
+              "UNFORMED": 23.89
+            }
+          }
+        },
+        "2027-12": {
+          "n": 372,
+          "meanScore": {
+            "CURRENT": -3.81,
+            "AXIS_PER_HOUSE": -3.15,
+            "AXIS_PER_JUDGMENT": -2.15
+          },
+          "statePct": {
+            "CURRENT": {
+              "FULFILLED": 0,
+              "MOVING": 0,
+              "DELAYED": 6.18,
+              "BLOCKED": 34.95,
+              "REVERSING": 12.37,
+              "UNFORMED": 46.51
+            },
+            "AXIS_PER_HOUSE": {
+              "FULFILLED": 0,
+              "MOVING": 0,
+              "DELAYED": 10.75,
+              "BLOCKED": 27.15,
+              "REVERSING": 12.37,
+              "UNFORMED": 49.73
+            },
+            "AXIS_PER_JUDGMENT": {
+              "FULFILLED": 0,
+              "MOVING": 0.81,
+              "DELAYED": 23.12,
+              "BLOCKED": 11.56,
+              "REVERSING": 12.37,
+              "UNFORMED": 52.15
+            }
+          }
+        }
+      },
+      "career": {
+        "2026-01": {
+          "n": 372,
+          "meanScore": {
+            "CURRENT": -4.26,
+            "AXIS_PER_HOUSE": -3.59,
+            "AXIS_PER_JUDGMENT": -3.59
+          },
+          "statePct": {
+            "CURRENT": {
+              "FULFILLED": 0,
+              "MOVING": 0,
+              "DELAYED": 4.3,
+              "BLOCKED": 38.71,
+              "REVERSING": 8.33,
+              "UNFORMED": 48.66
+            },
+            "AXIS_PER_HOUSE": {
+              "FULFILLED": 0,
+              "MOVING": 0,
+              "DELAYED": 4.57,
+              "BLOCKED": 37.63,
+              "REVERSING": 8.33,
+              "UNFORMED": 49.46
+            },
+            "AXIS_PER_JUDGMENT": {
+              "FULFILLED": 0,
+              "MOVING": 0,
+              "DELAYED": 4.57,
+              "BLOCKED": 37.63,
+              "REVERSING": 8.33,
+              "UNFORMED": 49.46
+            }
+          }
+        },
+        "2026-02": {
+          "n": 336,
+          "meanScore": {
+            "CURRENT": -4.06,
+            "AXIS_PER_HOUSE": -3.39,
+            "AXIS_PER_JUDGMENT": -3.39
+          },
+          "statePct": {
+            "CURRENT": {
+              "FULFILLED": 0,
+              "MOVING": 3.27,
+              "DELAYED": 6.85,
+              "BLOCKED": 49.7,
+              "REVERSING": 3.87,
+              "UNFORMED": 36.31
+            },
+            "AXIS_PER_HOUSE": {
+              "FULFILLED": 0,
+              "MOVING": 8.33,
+              "DELAYED": 11.9,
+              "BLOCKED": 42.56,
+              "REVERSING": 3.87,
+              "UNFORMED": 33.33
+            },
+            "AXIS_PER_JUDGMENT": {
+              "FULFILLED": 0,
+              "MOVING": 8.33,
+              "DELAYED": 11.9,
+              "BLOCKED": 42.56,
+              "REVERSING": 3.87,
+              "UNFORMED": 33.33
+            }
+          }
+        },
+        "2026-03": {
+          "n": 372,
+          "meanScore": {
+            "CURRENT": -4.08,
+            "AXIS_PER_HOUSE": -3.41,
+            "AXIS_PER_JUDGMENT": -3.41
+          },
+          "statePct": {
+            "CURRENT": {
+              "FULFILLED": 0,
+              "MOVING": 8.33,
+              "DELAYED": 13.17,
+              "BLOCKED": 51.88,
+              "REVERSING": 13.44,
+              "UNFORMED": 13.17
+            },
+            "AXIS_PER_HOUSE": {
+              "FULFILLED": 0,
+              "MOVING": 8.33,
+              "DELAYED": 13.17,
+              "BLOCKED": 43.01,
+              "REVERSING": 13.44,
+              "UNFORMED": 22.04
+            },
+            "AXIS_PER_JUDGMENT": {
+              "FULFILLED": 0,
+              "MOVING": 8.33,
+              "DELAYED": 13.17,
+              "BLOCKED": 43.01,
+              "REVERSING": 13.44,
+              "UNFORMED": 22.04
+            }
+          }
+        },
+        "2026-04": {
+          "n": 360,
+          "meanScore": {
+            "CURRENT": -3.86,
+            "AXIS_PER_HOUSE": -3.2,
+            "AXIS_PER_JUDGMENT": -3.2
+          },
+          "statePct": {
+            "CURRENT": {
+              "FULFILLED": 0,
+              "MOVING": 8.33,
+              "DELAYED": 17.78,
+              "BLOCKED": 33.33,
+              "REVERSING": 0,
+              "UNFORMED": 40.56
+            },
+            "AXIS_PER_HOUSE": {
+              "FULFILLED": 0,
+              "MOVING": 8.33,
+              "DELAYED": 17.78,
+              "BLOCKED": 28.06,
+              "REVERSING": 0,
+              "UNFORMED": 45.83
+            },
+            "AXIS_PER_JUDGMENT": {
+              "FULFILLED": 0,
+              "MOVING": 8.33,
+              "DELAYED": 17.78,
+              "BLOCKED": 28.06,
+              "REVERSING": 0,
+              "UNFORMED": 45.83
+            }
+          }
+        },
+        "2026-05": {
+          "n": 372,
+          "meanScore": {
+            "CURRENT": -3.44,
+            "AXIS_PER_HOUSE": -2.77,
+            "AXIS_PER_JUDGMENT": -2.77
+          },
+          "statePct": {
+            "CURRENT": {
+              "FULFILLED": 0,
+              "MOVING": 3.49,
+              "DELAYED": 17.47,
+              "BLOCKED": 28.76,
+              "REVERSING": 0,
+              "UNFORMED": 50.27
+            },
+            "AXIS_PER_HOUSE": {
+              "FULFILLED": 0,
+              "MOVING": 3.49,
+              "DELAYED": 22.04,
+              "BLOCKED": 22.04,
+              "REVERSING": 0,
+              "UNFORMED": 52.42
+            },
+            "AXIS_PER_JUDGMENT": {
+              "FULFILLED": 0,
+              "MOVING": 3.49,
+              "DELAYED": 22.04,
+              "BLOCKED": 22.04,
+              "REVERSING": 0,
+              "UNFORMED": 52.42
+            }
+          }
+        },
+        "2026-06": {
+          "n": 360,
+          "meanScore": {
+            "CURRENT": -3.23,
+            "AXIS_PER_HOUSE": -2.57,
+            "AXIS_PER_JUDGMENT": -2.57
+          },
+          "statePct": {
+            "CURRENT": {
+              "FULFILLED": 0.28,
+              "MOVING": 5.56,
+              "DELAYED": 27.5,
+              "BLOCKED": 31.67,
+              "REVERSING": 0.28,
+              "UNFORMED": 34.72
+            },
+            "AXIS_PER_HOUSE": {
+              "FULFILLED": 0.28,
+              "MOVING": 5.56,
+              "DELAYED": 32.22,
+              "BLOCKED": 24.44,
+              "REVERSING": 0.28,
+              "UNFORMED": 37.22
+            },
+            "AXIS_PER_JUDGMENT": {
+              "FULFILLED": 0.28,
+              "MOVING": 5.56,
+              "DELAYED": 32.22,
+              "BLOCKED": 24.44,
+              "REVERSING": 0.28,
+              "UNFORMED": 37.22
+            }
+          }
+        },
+        "2026-07": {
+          "n": 372,
+          "meanScore": {
+            "CURRENT": -3.55,
+            "AXIS_PER_HOUSE": -2.89,
+            "AXIS_PER_JUDGMENT": -2.89
+          },
+          "statePct": {
+            "CURRENT": {
+              "FULFILLED": 0,
+              "MOVING": 2.15,
+              "DELAYED": 27.15,
+              "BLOCKED": 37.1,
+              "REVERSING": 9.41,
+              "UNFORMED": 24.19
+            },
+            "AXIS_PER_HOUSE": {
+              "FULFILLED": 0,
+              "MOVING": 8.06,
+              "DELAYED": 27.69,
+              "BLOCKED": 31.72,
+              "REVERSING": 9.41,
+              "UNFORMED": 23.12
+            },
+            "AXIS_PER_JUDGMENT": {
+              "FULFILLED": 0,
+              "MOVING": 8.06,
+              "DELAYED": 27.69,
+              "BLOCKED": 31.72,
+              "REVERSING": 9.41,
+              "UNFORMED": 23.12
+            }
+          }
+        },
+        "2026-08": {
+          "n": 372,
+          "meanScore": {
+            "CURRENT": -4.23,
+            "AXIS_PER_HOUSE": -3.56,
+            "AXIS_PER_JUDGMENT": -3.56
+          },
+          "statePct": {
+            "CURRENT": {
+              "FULFILLED": 0,
+              "MOVING": 0.54,
+              "DELAYED": 23.12,
+              "BLOCKED": 50.27,
+              "REVERSING": 8.87,
+              "UNFORMED": 17.2
+            },
+            "AXIS_PER_HOUSE": {
+              "FULFILLED": 0,
+              "MOVING": 0.54,
+              "DELAYED": 23.92,
+              "BLOCKED": 40.32,
+              "REVERSING": 16.67,
+              "UNFORMED": 18.55
+            },
+            "AXIS_PER_JUDGMENT": {
+              "FULFILLED": 0,
+              "MOVING": 0.54,
+              "DELAYED": 23.92,
+              "BLOCKED": 40.32,
+              "REVERSING": 16.67,
+              "UNFORMED": 18.55
+            }
+          }
+        },
+        "2026-09": {
+          "n": 360,
+          "meanScore": {
+            "CURRENT": -2.93,
+            "AXIS_PER_HOUSE": -2.26,
+            "AXIS_PER_JUDGMENT": -2.26
+          },
+          "statePct": {
+            "CURRENT": {
+              "FULFILLED": 7.78,
+              "MOVING": 0,
+              "DELAYED": 24.17,
+              "BLOCKED": 40,
+              "REVERSING": 8.33,
+              "UNFORMED": 19.72
+            },
+            "AXIS_PER_HOUSE": {
+              "FULFILLED": 7.78,
+              "MOVING": 0,
+              "DELAYED": 25,
+              "BLOCKED": 30.28,
+              "REVERSING": 13.33,
+              "UNFORMED": 23.61
+            },
+            "AXIS_PER_JUDGMENT": {
+              "FULFILLED": 7.78,
+              "MOVING": 0,
+              "DELAYED": 25,
+              "BLOCKED": 30.28,
+              "REVERSING": 13.33,
+              "UNFORMED": 23.61
+            }
+          }
+        },
+        "2026-10": {
+          "n": 372,
+          "meanScore": {
+            "CURRENT": -3.12,
+            "AXIS_PER_HOUSE": -2.46,
+            "AXIS_PER_JUDGMENT": -2.46
+          },
+          "statePct": {
+            "CURRENT": {
+              "FULFILLED": 0.81,
+              "MOVING": 0,
+              "DELAYED": 25.81,
+              "BLOCKED": 39.25,
+              "REVERSING": 22.58,
+              "UNFORMED": 11.56
+            },
+            "AXIS_PER_HOUSE": {
+              "FULFILLED": 0.81,
+              "MOVING": 0,
+              "DELAYED": 25.81,
+              "BLOCKED": 33.6,
+              "REVERSING": 22.58,
+              "UNFORMED": 17.2
+            },
+            "AXIS_PER_JUDGMENT": {
+              "FULFILLED": 0.81,
+              "MOVING": 0,
+              "DELAYED": 25.81,
+              "BLOCKED": 33.6,
+              "REVERSING": 22.58,
+              "UNFORMED": 17.2
+            }
+          }
+        },
+        "2026-11": {
+          "n": 360,
+          "meanScore": {
+            "CURRENT": -3.61,
+            "AXIS_PER_HOUSE": -2.94,
+            "AXIS_PER_JUDGMENT": -2.94
+          },
+          "statePct": {
+            "CURRENT": {
+              "FULFILLED": 0,
+              "MOVING": 2.22,
+              "DELAYED": 31.39,
+              "BLOCKED": 39.17,
+              "REVERSING": 12.5,
+              "UNFORMED": 14.72
+            },
+            "AXIS_PER_HOUSE": {
+              "FULFILLED": 0,
+              "MOVING": 2.22,
+              "DELAYED": 33.61,
+              "BLOCKED": 25.28,
+              "REVERSING": 19.72,
+              "UNFORMED": 19.17
+            },
+            "AXIS_PER_JUDGMENT": {
+              "FULFILLED": 0,
+              "MOVING": 2.22,
+              "DELAYED": 33.61,
+              "BLOCKED": 25.28,
+              "REVERSING": 19.72,
+              "UNFORMED": 19.17
+            }
+          }
+        },
+        "2026-12": {
+          "n": 372,
+          "meanScore": {
+            "CURRENT": -3.18,
+            "AXIS_PER_HOUSE": -2.51,
+            "AXIS_PER_JUDGMENT": -2.51
+          },
+          "statePct": {
+            "CURRENT": {
+              "FULFILLED": 0,
+              "MOVING": 8.33,
+              "DELAYED": 16.13,
+              "BLOCKED": 40.32,
+              "REVERSING": 10.75,
+              "UNFORMED": 24.46
+            },
+            "AXIS_PER_HOUSE": {
+              "FULFILLED": 0,
+              "MOVING": 8.33,
+              "DELAYED": 16.13,
+              "BLOCKED": 18.55,
+              "REVERSING": 14.78,
+              "UNFORMED": 42.2
+            },
+            "AXIS_PER_JUDGMENT": {
+              "FULFILLED": 0,
+              "MOVING": 8.33,
+              "DELAYED": 16.13,
+              "BLOCKED": 18.55,
+              "REVERSING": 14.78,
+              "UNFORMED": 42.2
+            }
+          }
+        },
+        "2027-01": {
+          "n": 372,
+          "meanScore": {
+            "CURRENT": -3.56,
+            "AXIS_PER_HOUSE": -2.89,
+            "AXIS_PER_JUDGMENT": -2.89
+          },
+          "statePct": {
+            "CURRENT": {
+              "FULFILLED": 0,
+              "MOVING": 1.61,
+              "DELAYED": 10.48,
+              "BLOCKED": 33.6,
+              "REVERSING": 27.96,
+              "UNFORMED": 26.34
+            },
+            "AXIS_PER_HOUSE": {
+              "FULFILLED": 0,
+              "MOVING": 2.15,
+              "DELAYED": 10.48,
+              "BLOCKED": 13.71,
+              "REVERSING": 27.96,
+              "UNFORMED": 45.7
+            },
+            "AXIS_PER_JUDGMENT": {
+              "FULFILLED": 0,
+              "MOVING": 2.15,
+              "DELAYED": 10.48,
+              "BLOCKED": 13.71,
+              "REVERSING": 27.96,
+              "UNFORMED": 45.7
+            }
+          }
+        },
+        "2027-02": {
+          "n": 336,
+          "meanScore": {
+            "CURRENT": -3.57,
+            "AXIS_PER_HOUSE": -2.9,
+            "AXIS_PER_JUDGMENT": -2.9
+          },
+          "statePct": {
+            "CURRENT": {
+              "FULFILLED": 0,
+              "MOVING": 0,
+              "DELAYED": 0,
+              "BLOCKED": 40.48,
+              "REVERSING": 37.8,
+              "UNFORMED": 21.73
+            },
+            "AXIS_PER_HOUSE": {
+              "FULFILLED": 0,
+              "MOVING": 2.68,
+              "DELAYED": 0.6,
+              "BLOCKED": 28.27,
+              "REVERSING": 37.8,
+              "UNFORMED": 30.65
+            },
+            "AXIS_PER_JUDGMENT": {
+              "FULFILLED": 0,
+              "MOVING": 2.68,
+              "DELAYED": 0.6,
+              "BLOCKED": 28.27,
+              "REVERSING": 37.8,
+              "UNFORMED": 30.65
+            }
+          }
+        },
+        "2027-03": {
+          "n": 372,
+          "meanScore": {
+            "CURRENT": -3.53,
+            "AXIS_PER_HOUSE": -2.86,
+            "AXIS_PER_JUDGMENT": -2.86
+          },
+          "statePct": {
+            "CURRENT": {
+              "FULFILLED": 0,
+              "MOVING": 0,
+              "DELAYED": 1.34,
+              "BLOCKED": 43.82,
+              "REVERSING": 17.2,
+              "UNFORMED": 37.63
+            },
+            "AXIS_PER_HOUSE": {
+              "FULFILLED": 0,
+              "MOVING": 0,
+              "DELAYED": 2.15,
+              "BLOCKED": 33.33,
+              "REVERSING": 19.89,
+              "UNFORMED": 44.62
+            },
+            "AXIS_PER_JUDGMENT": {
+              "FULFILLED": 0,
+              "MOVING": 0,
+              "DELAYED": 2.15,
+              "BLOCKED": 33.33,
+              "REVERSING": 19.89,
+              "UNFORMED": 44.62
+            }
+          }
+        },
+        "2027-04": {
+          "n": 360,
+          "meanScore": {
+            "CURRENT": -3.67,
+            "AXIS_PER_HOUSE": -3.01,
+            "AXIS_PER_JUDGMENT": -3.01
+          },
+          "statePct": {
+            "CURRENT": {
+              "FULFILLED": 0,
+              "MOVING": 7.5,
+              "DELAYED": 5.83,
+              "BLOCKED": 58.33,
+              "REVERSING": 3.61,
+              "UNFORMED": 24.72
+            },
+            "AXIS_PER_HOUSE": {
+              "FULFILLED": 0,
+              "MOVING": 7.5,
+              "DELAYED": 12.22,
+              "BLOCKED": 38.61,
+              "REVERSING": 7.22,
+              "UNFORMED": 34.44
+            },
+            "AXIS_PER_JUDGMENT": {
+              "FULFILLED": 0,
+              "MOVING": 7.5,
+              "DELAYED": 12.22,
+              "BLOCKED": 38.61,
+              "REVERSING": 7.22,
+              "UNFORMED": 34.44
+            }
+          }
+        },
+        "2027-05": {
+          "n": 372,
+          "meanScore": {
+            "CURRENT": -3.08,
+            "AXIS_PER_HOUSE": -2.41,
+            "AXIS_PER_JUDGMENT": -2.41
+          },
+          "statePct": {
+            "CURRENT": {
+              "FULFILLED": 0,
+              "MOVING": 8.33,
+              "DELAYED": 23.39,
+              "BLOCKED": 38.71,
+              "REVERSING": 0,
+              "UNFORMED": 29.57
+            },
+            "AXIS_PER_HOUSE": {
+              "FULFILLED": 0,
+              "MOVING": 10.48,
+              "DELAYED": 23.39,
+              "BLOCKED": 25.54,
+              "REVERSING": 0,
+              "UNFORMED": 40.59
+            },
+            "AXIS_PER_JUDGMENT": {
+              "FULFILLED": 0,
+              "MOVING": 10.48,
+              "DELAYED": 23.39,
+              "BLOCKED": 25.54,
+              "REVERSING": 0,
+              "UNFORMED": 40.59
+            }
+          }
+        },
+        "2027-06": {
+          "n": 360,
+          "meanScore": {
+            "CURRENT": -3.12,
+            "AXIS_PER_HOUSE": -2.45,
+            "AXIS_PER_JUDGMENT": -2.45
+          },
+          "statePct": {
+            "CURRENT": {
+              "FULFILLED": 0,
+              "MOVING": 1.11,
+              "DELAYED": 22.78,
+              "BLOCKED": 30.56,
+              "REVERSING": 6.67,
+              "UNFORMED": 38.89
+            },
+            "AXIS_PER_HOUSE": {
+              "FULFILLED": 0,
+              "MOVING": 2.22,
+              "DELAYED": 22.78,
+              "BLOCKED": 23.61,
+              "REVERSING": 6.67,
+              "UNFORMED": 44.72
+            },
+            "AXIS_PER_JUDGMENT": {
+              "FULFILLED": 0,
+              "MOVING": 2.22,
+              "DELAYED": 22.78,
+              "BLOCKED": 23.61,
+              "REVERSING": 6.67,
+              "UNFORMED": 44.72
+            }
+          }
+        },
+        "2027-07": {
+          "n": 372,
+          "meanScore": {
+            "CURRENT": -3.99,
+            "AXIS_PER_HOUSE": -3.32,
+            "AXIS_PER_JUDGMENT": -3.32
+          },
+          "statePct": {
+            "CURRENT": {
+              "FULFILLED": 0,
+              "MOVING": 0,
+              "DELAYED": 23.66,
+              "BLOCKED": 44.09,
+              "REVERSING": 1.88,
+              "UNFORMED": 30.38
+            },
+            "AXIS_PER_HOUSE": {
+              "FULFILLED": 0,
+              "MOVING": 0,
+              "DELAYED": 29.3,
+              "BLOCKED": 36.83,
+              "REVERSING": 1.88,
+              "UNFORMED": 31.99
+            },
+            "AXIS_PER_JUDGMENT": {
+              "FULFILLED": 0,
+              "MOVING": 0,
+              "DELAYED": 29.3,
+              "BLOCKED": 36.83,
+              "REVERSING": 1.88,
+              "UNFORMED": 31.99
+            }
+          }
+        },
+        "2027-08": {
+          "n": 372,
+          "meanScore": {
+            "CURRENT": -4.99,
+            "AXIS_PER_HOUSE": -4.32,
+            "AXIS_PER_JUDGMENT": -4.32
+          },
+          "statePct": {
+            "CURRENT": {
+              "FULFILLED": 3.76,
+              "MOVING": 0.54,
+              "DELAYED": 5.65,
+              "BLOCKED": 62.37,
+              "REVERSING": 9.68,
+              "UNFORMED": 18.01
+            },
+            "AXIS_PER_HOUSE": {
+              "FULFILLED": 3.76,
+              "MOVING": 1.61,
+              "DELAYED": 9.68,
+              "BLOCKED": 51.88,
+              "REVERSING": 11.83,
+              "UNFORMED": 21.24
+            },
+            "AXIS_PER_JUDGMENT": {
+              "FULFILLED": 3.76,
+              "MOVING": 1.61,
+              "DELAYED": 9.68,
+              "BLOCKED": 51.88,
+              "REVERSING": 11.83,
+              "UNFORMED": 21.24
+            }
+          }
+        },
+        "2027-09": {
+          "n": 360,
+          "meanScore": {
+            "CURRENT": -3.87,
+            "AXIS_PER_HOUSE": -3.2,
+            "AXIS_PER_JUDGMENT": -3.2
+          },
+          "statePct": {
+            "CURRENT": {
+              "FULFILLED": 8.33,
+              "MOVING": 0,
+              "DELAYED": 6.67,
+              "BLOCKED": 52.78,
+              "REVERSING": 8.33,
+              "UNFORMED": 23.89
+            },
+            "AXIS_PER_HOUSE": {
+              "FULFILLED": 8.33,
+              "MOVING": 0,
+              "DELAYED": 9.17,
+              "BLOCKED": 38.33,
+              "REVERSING": 10.83,
+              "UNFORMED": 33.33
+            },
+            "AXIS_PER_JUDGMENT": {
+              "FULFILLED": 8.33,
+              "MOVING": 0,
+              "DELAYED": 9.17,
+              "BLOCKED": 38.33,
+              "REVERSING": 10.83,
+              "UNFORMED": 33.33
+            }
+          }
+        },
+        "2027-10": {
+          "n": 372,
+          "meanScore": {
+            "CURRENT": -3.03,
+            "AXIS_PER_HOUSE": -2.36,
+            "AXIS_PER_JUDGMENT": -2.36
+          },
+          "statePct": {
+            "CURRENT": {
+              "FULFILLED": 0.81,
+              "MOVING": 6.45,
+              "DELAYED": 18.55,
+              "BLOCKED": 31.72,
+              "REVERSING": 14.78,
+              "UNFORMED": 27.69
+            },
+            "AXIS_PER_HOUSE": {
+              "FULFILLED": 0.81,
+              "MOVING": 6.45,
+              "DELAYED": 21.24,
+              "BLOCKED": 20.16,
+              "REVERSING": 19.62,
+              "UNFORMED": 31.72
+            },
+            "AXIS_PER_JUDGMENT": {
+              "FULFILLED": 0.81,
+              "MOVING": 6.45,
+              "DELAYED": 21.24,
+              "BLOCKED": 20.16,
+              "REVERSING": 19.62,
+              "UNFORMED": 31.72
+            }
+          }
+        },
+        "2027-11": {
+          "n": 360,
+          "meanScore": {
+            "CURRENT": -3.26,
+            "AXIS_PER_HOUSE": -2.6,
+            "AXIS_PER_JUDGMENT": -2.6
+          },
+          "statePct": {
+            "CURRENT": {
+              "FULFILLED": 0,
+              "MOVING": 0.83,
+              "DELAYED": 18.89,
+              "BLOCKED": 31.94,
+              "REVERSING": 11.94,
+              "UNFORMED": 36.39
+            },
+            "AXIS_PER_HOUSE": {
+              "FULFILLED": 0,
+              "MOVING": 0.83,
+              "DELAYED": 19.17,
+              "BLOCKED": 20.56,
+              "REVERSING": 16.67,
+              "UNFORMED": 42.78
+            },
+            "AXIS_PER_JUDGMENT": {
+              "FULFILLED": 0,
+              "MOVING": 0.83,
+              "DELAYED": 19.17,
+              "BLOCKED": 20.56,
+              "REVERSING": 16.67,
+              "UNFORMED": 42.78
+            }
+          }
+        },
+        "2027-12": {
+          "n": 372,
+          "meanScore": {
+            "CURRENT": -3.88,
+            "AXIS_PER_HOUSE": -3.22,
+            "AXIS_PER_JUDGMENT": -3.22
+          },
+          "statePct": {
+            "CURRENT": {
+              "FULFILLED": 0,
+              "MOVING": 0,
+              "DELAYED": 1.08,
+              "BLOCKED": 56.72,
+              "REVERSING": 12.37,
+              "UNFORMED": 29.84
+            },
+            "AXIS_PER_HOUSE": {
+              "FULFILLED": 0,
+              "MOVING": 0,
+              "DELAYED": 9.41,
+              "BLOCKED": 45.7,
+              "REVERSING": 12.37,
+              "UNFORMED": 32.53
+            },
+            "AXIS_PER_JUDGMENT": {
+              "FULFILLED": 0,
+              "MOVING": 0,
+              "DELAYED": 9.41,
+              "BLOCKED": 45.7,
+              "REVERSING": 12.37,
+              "UNFORMED": 32.53
+            }
+          }
+        }
+      },
+      "marriage": {
+        "2026-01": {
+          "n": 372,
+          "meanScore": {
+            "CURRENT": -4.94,
+            "AXIS_PER_HOUSE": -4.27,
+            "AXIS_PER_JUDGMENT": -3.27
+          },
+          "statePct": {
+            "CURRENT": {
+              "FULFILLED": 0,
+              "MOVING": 0,
+              "DELAYED": 8.6,
+              "BLOCKED": 52.15,
+              "REVERSING": 4.3,
+              "UNFORMED": 34.95
+            },
+            "AXIS_PER_HOUSE": {
+              "FULFILLED": 0,
+              "MOVING": 0,
+              "DELAYED": 8.6,
+              "BLOCKED": 44.62,
+              "REVERSING": 4.3,
+              "UNFORMED": 42.47
+            },
+            "AXIS_PER_JUDGMENT": {
+              "FULFILLED": 0,
+              "MOVING": 0,
+              "DELAYED": 8.6,
+              "BLOCKED": 32.53,
+              "REVERSING": 7.53,
+              "UNFORMED": 51.34
+            }
+          }
+        },
+        "2026-02": {
+          "n": 336,
+          "meanScore": {
+            "CURRENT": -4.82,
+            "AXIS_PER_HOUSE": -4.15,
+            "AXIS_PER_JUDGMENT": -3.15
+          },
+          "statePct": {
+            "CURRENT": {
+              "FULFILLED": 0,
+              "MOVING": 0,
+              "DELAYED": 2.38,
+              "BLOCKED": 49.11,
+              "REVERSING": 3.87,
+              "UNFORMED": 44.64
+            },
+            "AXIS_PER_HOUSE": {
+              "FULFILLED": 0,
+              "MOVING": 5.06,
+              "DELAYED": 2.38,
+              "BLOCKED": 45.83,
+              "REVERSING": 3.87,
+              "UNFORMED": 42.86
+            },
+            "AXIS_PER_JUDGMENT": {
+              "FULFILLED": 1.49,
+              "MOVING": 5.36,
+              "DELAYED": 2.38,
+              "BLOCKED": 37.2,
+              "REVERSING": 5.65,
+              "UNFORMED": 47.92
+            }
+          }
+        },
+        "2026-03": {
+          "n": 372,
+          "meanScore": {
+            "CURRENT": -4.84,
+            "AXIS_PER_HOUSE": -4.18,
+            "AXIS_PER_JUDGMENT": -3.18
+          },
+          "statePct": {
+            "CURRENT": {
+              "FULFILLED": 0,
+              "MOVING": 0,
+              "DELAYED": 13.98,
+              "BLOCKED": 48.39,
+              "REVERSING": 8.6,
+              "UNFORMED": 29.03
+            },
+            "AXIS_PER_HOUSE": {
+              "FULFILLED": 0,
+              "MOVING": 0,
+              "DELAYED": 13.98,
+              "BLOCKED": 46.77,
+              "REVERSING": 8.6,
+              "UNFORMED": 30.65
+            },
+            "AXIS_PER_JUDGMENT": {
+              "FULFILLED": 0,
+              "MOVING": 3.49,
+              "DELAYED": 17.47,
+              "BLOCKED": 31.45,
+              "REVERSING": 11.83,
+              "UNFORMED": 35.75
+            }
+          }
+        },
+        "2026-04": {
+          "n": 360,
+          "meanScore": {
+            "CURRENT": -4.61,
+            "AXIS_PER_HOUSE": -3.94,
+            "AXIS_PER_JUDGMENT": -2.94
+          },
+          "statePct": {
+            "CURRENT": {
+              "FULFILLED": 0,
+              "MOVING": 1.11,
+              "DELAYED": 9.44,
+              "BLOCKED": 55.56,
+              "REVERSING": 0,
+              "UNFORMED": 33.89
+            },
+            "AXIS_PER_HOUSE": {
+              "FULFILLED": 0,
+              "MOVING": 1.11,
+              "DELAYED": 9.44,
+              "BLOCKED": 45.56,
+              "REVERSING": 0,
+              "UNFORMED": 43.89
+            },
+            "AXIS_PER_JUDGMENT": {
+              "FULFILLED": 0,
+              "MOVING": 10,
+              "DELAYED": 15,
+              "BLOCKED": 25.28,
+              "REVERSING": 0,
+              "UNFORMED": 49.72
+            }
+          }
+        },
+        "2026-05": {
+          "n": 372,
+          "meanScore": {
+            "CURRENT": -4.31,
+            "AXIS_PER_HOUSE": -3.64,
+            "AXIS_PER_JUDGMENT": -2.64
+          },
+          "statePct": {
+            "CURRENT": {
+              "FULFILLED": 0,
+              "MOVING": 0,
+              "DELAYED": 6.72,
+              "BLOCKED": 54.84,
+              "REVERSING": 0,
+              "UNFORMED": 38.44
+            },
+            "AXIS_PER_HOUSE": {
+              "FULFILLED": 0,
+              "MOVING": 0,
+              "DELAYED": 6.72,
+              "BLOCKED": 44.89,
+              "REVERSING": 0,
+              "UNFORMED": 48.39
+            },
+            "AXIS_PER_JUDGMENT": {
+              "FULFILLED": 0,
+              "MOVING": 4.3,
+              "DELAYED": 18.82,
+              "BLOCKED": 26.34,
+              "REVERSING": 0,
+              "UNFORMED": 50.54
+            }
+          }
+        },
+        "2026-06": {
+          "n": 360,
+          "meanScore": {
+            "CURRENT": -3.88,
+            "AXIS_PER_HOUSE": -3.21,
+            "AXIS_PER_JUDGMENT": -2.21
+          },
+          "statePct": {
+            "CURRENT": {
+              "FULFILLED": 6.11,
+              "MOVING": 5.28,
+              "DELAYED": 10.56,
+              "BLOCKED": 55,
+              "REVERSING": 0.28,
+              "UNFORMED": 22.78
+            },
+            "AXIS_PER_HOUSE": {
+              "FULFILLED": 6.11,
+              "MOVING": 5.28,
+              "DELAYED": 10.56,
+              "BLOCKED": 49.44,
+              "REVERSING": 0.28,
+              "UNFORMED": 28.33
+            },
+            "AXIS_PER_JUDGMENT": {
+              "FULFILLED": 6.11,
+              "MOVING": 6.67,
+              "DELAYED": 22.22,
+              "BLOCKED": 32.78,
+              "REVERSING": 0.28,
+              "UNFORMED": 31.94
+            }
+          }
+        },
+        "2026-07": {
+          "n": 372,
+          "meanScore": {
+            "CURRENT": -4.16,
+            "AXIS_PER_HOUSE": -3.49,
+            "AXIS_PER_JUDGMENT": -2.49
+          },
+          "statePct": {
+            "CURRENT": {
+              "FULFILLED": 3.49,
+              "MOVING": 1.88,
+              "DELAYED": 7.53,
+              "BLOCKED": 52.42,
+              "REVERSING": 11.29,
+              "UNFORMED": 23.39
+            },
+            "AXIS_PER_HOUSE": {
+              "FULFILLED": 3.49,
+              "MOVING": 1.88,
+              "DELAYED": 14.78,
+              "BLOCKED": 45.16,
+              "REVERSING": 11.29,
+              "UNFORMED": 23.39
+            },
+            "AXIS_PER_JUDGMENT": {
+              "FULFILLED": 3.49,
+              "MOVING": 1.88,
+              "DELAYED": 24.19,
+              "BLOCKED": 21.24,
+              "REVERSING": 12.63,
+              "UNFORMED": 36.56
+            }
+          }
+        },
+        "2026-08": {
+          "n": 372,
+          "meanScore": {
+            "CURRENT": -4.58,
+            "AXIS_PER_HOUSE": -3.92,
+            "AXIS_PER_JUDGMENT": -2.92
+          },
+          "statePct": {
+            "CURRENT": {
+              "FULFILLED": 8.6,
+              "MOVING": 5.65,
+              "DELAYED": 9.95,
+              "BLOCKED": 64.78,
+              "REVERSING": 8.33,
+              "UNFORMED": 2.69
+            },
+            "AXIS_PER_HOUSE": {
+              "FULFILLED": 8.6,
+              "MOVING": 5.65,
+              "DELAYED": 9.95,
+              "BLOCKED": 64.78,
+              "REVERSING": 8.33,
+              "UNFORMED": 2.69
+            },
+            "AXIS_PER_JUDGMENT": {
+              "FULFILLED": 8.6,
+              "MOVING": 5.65,
+              "DELAYED": 26.08,
+              "BLOCKED": 47.85,
+              "REVERSING": 8.33,
+              "UNFORMED": 3.49
+            }
+          }
+        },
+        "2026-09": {
+          "n": 360,
+          "meanScore": {
+            "CURRENT": -3.48,
+            "AXIS_PER_HOUSE": -2.81,
+            "AXIS_PER_JUDGMENT": -1.81
+          },
+          "statePct": {
+            "CURRENT": {
+              "FULFILLED": 5.83,
+              "MOVING": 2.22,
+              "DELAYED": 28.61,
+              "BLOCKED": 42.5,
+              "REVERSING": 8.33,
+              "UNFORMED": 12.5
+            },
+            "AXIS_PER_HOUSE": {
+              "FULFILLED": 5.83,
+              "MOVING": 2.22,
+              "DELAYED": 36.39,
+              "BLOCKED": 31.39,
+              "REVERSING": 8.33,
+              "UNFORMED": 15.83
+            },
+            "AXIS_PER_JUDGMENT": {
+              "FULFILLED": 5.83,
+              "MOVING": 6.67,
+              "DELAYED": 37.5,
+              "BLOCKED": 27.5,
+              "REVERSING": 8.33,
+              "UNFORMED": 14.17
+            }
+          }
+        },
+        "2026-10": {
+          "n": 372,
+          "meanScore": {
+            "CURRENT": -3.92,
+            "AXIS_PER_HOUSE": -3.26,
+            "AXIS_PER_JUDGMENT": -2.26
+          },
+          "statePct": {
+            "CURRENT": {
+              "FULFILLED": 0,
+              "MOVING": 1.61,
+              "DELAYED": 26.34,
+              "BLOCKED": 50,
+              "REVERSING": 15.86,
+              "UNFORMED": 6.18
+            },
+            "AXIS_PER_HOUSE": {
+              "FULFILLED": 0,
+              "MOVING": 1.61,
+              "DELAYED": 34.68,
+              "BLOCKED": 33.33,
+              "REVERSING": 23.39,
+              "UNFORMED": 6.99
+            },
+            "AXIS_PER_JUDGMENT": {
+              "FULFILLED": 0,
+              "MOVING": 1.61,
+              "DELAYED": 34.68,
+              "BLOCKED": 25,
+              "REVERSING": 25.27,
+              "UNFORMED": 13.44
+            }
+          }
+        },
+        "2026-11": {
+          "n": 360,
+          "meanScore": {
+            "CURRENT": -4.58,
+            "AXIS_PER_HOUSE": -3.91,
+            "AXIS_PER_JUDGMENT": -2.91
+          },
+          "statePct": {
+            "CURRENT": {
+              "FULFILLED": 0,
+              "MOVING": 0.28,
+              "DELAYED": 26.94,
+              "BLOCKED": 42.78,
+              "REVERSING": 13.06,
+              "UNFORMED": 16.94
+            },
+            "AXIS_PER_HOUSE": {
+              "FULFILLED": 0,
+              "MOVING": 0.28,
+              "DELAYED": 27.22,
+              "BLOCKED": 41.94,
+              "REVERSING": 13.61,
+              "UNFORMED": 16.94
+            },
+            "AXIS_PER_JUDGMENT": {
+              "FULFILLED": 0,
+              "MOVING": 4.72,
+              "DELAYED": 30.28,
+              "BLOCKED": 30.83,
+              "REVERSING": 15.28,
+              "UNFORMED": 18.89
+            }
+          }
+        },
+        "2026-12": {
+          "n": 372,
+          "meanScore": {
+            "CURRENT": -4.06,
+            "AXIS_PER_HOUSE": -3.4,
+            "AXIS_PER_JUDGMENT": -2.4
+          },
+          "statePct": {
+            "CURRENT": {
+              "FULFILLED": 13.98,
+              "MOVING": 0,
+              "DELAYED": 5.91,
+              "BLOCKED": 49.19,
+              "REVERSING": 7.26,
+              "UNFORMED": 23.66
+            },
+            "AXIS_PER_HOUSE": {
+              "FULFILLED": 13.98,
+              "MOVING": 0,
+              "DELAYED": 5.91,
+              "BLOCKED": 49.19,
+              "REVERSING": 7.26,
+              "UNFORMED": 23.66
+            },
+            "AXIS_PER_JUDGMENT": {
+              "FULFILLED": 13.98,
+              "MOVING": 2.69,
+              "DELAYED": 5.91,
+              "BLOCKED": 38.98,
+              "REVERSING": 8.6,
+              "UNFORMED": 29.84
+            }
+          }
+        },
+        "2027-01": {
+          "n": 372,
+          "meanScore": {
+            "CURRENT": -4.31,
+            "AXIS_PER_HOUSE": -3.65,
+            "AXIS_PER_JUDGMENT": -2.65
+          },
+          "statePct": {
+            "CURRENT": {
+              "FULFILLED": 0.54,
+              "MOVING": 2.42,
+              "DELAYED": 0,
+              "BLOCKED": 50.27,
+              "REVERSING": 17.2,
+              "UNFORMED": 29.57
+            },
+            "AXIS_PER_HOUSE": {
+              "FULFILLED": 0.54,
+              "MOVING": 2.42,
+              "DELAYED": 0,
+              "BLOCKED": 41.94,
+              "REVERSING": 17.2,
+              "UNFORMED": 37.9
+            },
+            "AXIS_PER_JUDGMENT": {
+              "FULFILLED": 0.54,
+              "MOVING": 2.42,
+              "DELAYED": 8.6,
+              "BLOCKED": 29.57,
+              "REVERSING": 17.74,
+              "UNFORMED": 41.13
+            }
+          }
+        },
+        "2027-02": {
+          "n": 336,
+          "meanScore": {
+            "CURRENT": -3.9,
+            "AXIS_PER_HOUSE": -3.23,
+            "AXIS_PER_JUDGMENT": -2.23
+          },
+          "statePct": {
+            "CURRENT": {
+              "FULFILLED": 0,
+              "MOVING": 0,
+              "DELAYED": 0,
+              "BLOCKED": 47.92,
+              "REVERSING": 30.65,
+              "UNFORMED": 21.43
+            },
+            "AXIS_PER_HOUSE": {
+              "FULFILLED": 0,
+              "MOVING": 0,
+              "DELAYED": 0.6,
+              "BLOCKED": 36.01,
+              "REVERSING": 31.85,
+              "UNFORMED": 31.55
+            },
+            "AXIS_PER_JUDGMENT": {
+              "FULFILLED": 0,
+              "MOVING": 0,
+              "DELAYED": 0.89,
+              "BLOCKED": 24.7,
+              "REVERSING": 40.48,
+              "UNFORMED": 33.93
+            }
+          }
+        },
+        "2027-03": {
+          "n": 372,
+          "meanScore": {
+            "CURRENT": -4.02,
+            "AXIS_PER_HOUSE": -3.36,
+            "AXIS_PER_JUDGMENT": -2.36
+          },
+          "statePct": {
+            "CURRENT": {
+              "FULFILLED": 0,
+              "MOVING": 0,
+              "DELAYED": 0,
+              "BLOCKED": 39.25,
+              "REVERSING": 31.72,
+              "UNFORMED": 29.03
+            },
+            "AXIS_PER_HOUSE": {
+              "FULFILLED": 0,
+              "MOVING": 0,
+              "DELAYED": 1.88,
+              "BLOCKED": 30.38,
+              "REVERSING": 32.53,
+              "UNFORMED": 35.22
+            },
+            "AXIS_PER_JUDGMENT": {
+              "FULFILLED": 0,
+              "MOVING": 1.08,
+              "DELAYED": 2.96,
+              "BLOCKED": 25.81,
+              "REVERSING": 34.95,
+              "UNFORMED": 35.22
+            }
+          }
+        },
+        "2027-04": {
+          "n": 360,
+          "meanScore": {
+            "CURRENT": -4.11,
+            "AXIS_PER_HOUSE": -3.44,
+            "AXIS_PER_JUDGMENT": -2.44
+          },
+          "statePct": {
+            "CURRENT": {
+              "FULFILLED": 0,
+              "MOVING": 0,
+              "DELAYED": 27.5,
+              "BLOCKED": 38.06,
+              "REVERSING": 7.78,
+              "UNFORMED": 26.67
+            },
+            "AXIS_PER_HOUSE": {
+              "FULFILLED": 0,
+              "MOVING": 0,
+              "DELAYED": 28.61,
+              "BLOCKED": 31.67,
+              "REVERSING": 7.78,
+              "UNFORMED": 31.94
+            },
+            "AXIS_PER_JUDGMENT": {
+              "FULFILLED": 0,
+              "MOVING": 0,
+              "DELAYED": 30.56,
+              "BLOCKED": 26.67,
+              "REVERSING": 7.78,
+              "UNFORMED": 35
+            }
+          }
+        },
+        "2027-05": {
+          "n": 372,
+          "meanScore": {
+            "CURRENT": -3.63,
+            "AXIS_PER_HOUSE": -2.97,
+            "AXIS_PER_JUDGMENT": -1.97
+          },
+          "statePct": {
+            "CURRENT": {
+              "FULFILLED": 0,
+              "MOVING": 2.15,
+              "DELAYED": 19.09,
+              "BLOCKED": 48.66,
+              "REVERSING": 0,
+              "UNFORMED": 30.11
+            },
+            "AXIS_PER_HOUSE": {
+              "FULFILLED": 0,
+              "MOVING": 2.15,
+              "DELAYED": 22.58,
+              "BLOCKED": 32.26,
+              "REVERSING": 0,
+              "UNFORMED": 43.01
+            },
+            "AXIS_PER_JUDGMENT": {
+              "FULFILLED": 0,
+              "MOVING": 2.15,
+              "DELAYED": 27.96,
+              "BLOCKED": 19.09,
+              "REVERSING": 0,
+              "UNFORMED": 50.81
+            }
+          }
+        },
+        "2027-06": {
+          "n": 360,
+          "meanScore": {
+            "CURRENT": -3.25,
+            "AXIS_PER_HOUSE": -2.58,
+            "AXIS_PER_JUDGMENT": -1.58
+          },
+          "statePct": {
+            "CURRENT": {
+              "FULFILLED": 0,
+              "MOVING": 1.67,
+              "DELAYED": 18.89,
+              "BLOCKED": 35,
+              "REVERSING": 5.56,
+              "UNFORMED": 38.89
+            },
+            "AXIS_PER_HOUSE": {
+              "FULFILLED": 0,
+              "MOVING": 1.67,
+              "DELAYED": 27.22,
+              "BLOCKED": 20.28,
+              "REVERSING": 6.67,
+              "UNFORMED": 44.17
+            },
+            "AXIS_PER_JUDGMENT": {
+              "FULFILLED": 0,
+              "MOVING": 15.83,
+              "DELAYED": 27.5,
+              "BLOCKED": 14.44,
+              "REVERSING": 10.83,
+              "UNFORMED": 31.39
+            }
+          }
+        },
+        "2027-07": {
+          "n": 372,
+          "meanScore": {
+            "CURRENT": -4.87,
+            "AXIS_PER_HOUSE": -4.21,
+            "AXIS_PER_JUDGMENT": -3.21
+          },
+          "statePct": {
+            "CURRENT": {
+              "FULFILLED": 0,
+              "MOVING": 5.38,
+              "DELAYED": 31.99,
+              "BLOCKED": 49.46,
+              "REVERSING": 1.08,
+              "UNFORMED": 12.1
+            },
+            "AXIS_PER_HOUSE": {
+              "FULFILLED": 0,
+              "MOVING": 5.38,
+              "DELAYED": 31.99,
+              "BLOCKED": 47.58,
+              "REVERSING": 1.08,
+              "UNFORMED": 13.98
+            },
+            "AXIS_PER_JUDGMENT": {
+              "FULFILLED": 0,
+              "MOVING": 5.38,
+              "DELAYED": 34.41,
+              "BLOCKED": 35.75,
+              "REVERSING": 1.88,
+              "UNFORMED": 22.58
+            }
+          }
+        },
+        "2027-08": {
+          "n": 372,
+          "meanScore": {
+            "CURRENT": -5.77,
+            "AXIS_PER_HOUSE": -5.1,
+            "AXIS_PER_JUDGMENT": -4.1
+          },
+          "statePct": {
+            "CURRENT": {
+              "FULFILLED": 3.76,
+              "MOVING": 0,
+              "DELAYED": 19.09,
+              "BLOCKED": 57.8,
+              "REVERSING": 5.91,
+              "UNFORMED": 13.44
+            },
+            "AXIS_PER_HOUSE": {
+              "FULFILLED": 3.76,
+              "MOVING": 0,
+              "DELAYED": 19.09,
+              "BLOCKED": 55.38,
+              "REVERSING": 5.91,
+              "UNFORMED": 15.86
+            },
+            "AXIS_PER_JUDGMENT": {
+              "FULFILLED": 3.76,
+              "MOVING": 0,
+              "DELAYED": 22.04,
+              "BLOCKED": 38.44,
+              "REVERSING": 7.53,
+              "UNFORMED": 28.23
+            }
+          }
+        },
+        "2027-09": {
+          "n": 360,
+          "meanScore": {
+            "CURRENT": -4.77,
+            "AXIS_PER_HOUSE": -4.11,
+            "AXIS_PER_JUDGMENT": -3.11
+          },
+          "statePct": {
+            "CURRENT": {
+              "FULFILLED": 4.72,
+              "MOVING": 0,
+              "DELAYED": 10.83,
+              "BLOCKED": 58.33,
+              "REVERSING": 8.33,
+              "UNFORMED": 17.78
+            },
+            "AXIS_PER_HOUSE": {
+              "FULFILLED": 4.72,
+              "MOVING": 0,
+              "DELAYED": 10.83,
+              "BLOCKED": 51.39,
+              "REVERSING": 8.33,
+              "UNFORMED": 24.72
+            },
+            "AXIS_PER_JUDGMENT": {
+              "FULFILLED": 4.72,
+              "MOVING": 0,
+              "DELAYED": 16.67,
+              "BLOCKED": 33.33,
+              "REVERSING": 8.33,
+              "UNFORMED": 36.94
+            }
+          }
+        },
+        "2027-10": {
+          "n": 372,
+          "meanScore": {
+            "CURRENT": -3.92,
+            "AXIS_PER_HOUSE": -3.26,
+            "AXIS_PER_JUDGMENT": -2.26
+          },
+          "statePct": {
+            "CURRENT": {
+              "FULFILLED": 9.14,
+              "MOVING": 4.84,
+              "DELAYED": 12.1,
+              "BLOCKED": 57.26,
+              "REVERSING": 4.84,
+              "UNFORMED": 11.83
+            },
+            "AXIS_PER_HOUSE": {
+              "FULFILLED": 9.14,
+              "MOVING": 4.84,
+              "DELAYED": 12.1,
+              "BLOCKED": 56.45,
+              "REVERSING": 4.84,
+              "UNFORMED": 12.63
+            },
+            "AXIS_PER_JUDGMENT": {
+              "FULFILLED": 9.14,
+              "MOVING": 4.84,
+              "DELAYED": 13.71,
+              "BLOCKED": 38.17,
+              "REVERSING": 8.06,
+              "UNFORMED": 26.08
+            }
+          }
+        },
+        "2027-11": {
+          "n": 360,
+          "meanScore": {
+            "CURRENT": -4.23,
+            "AXIS_PER_HOUSE": -3.56,
+            "AXIS_PER_JUDGMENT": -2.56
+          },
+          "statePct": {
+            "CURRENT": {
+              "FULFILLED": 4.72,
+              "MOVING": 9.17,
+              "DELAYED": 9.17,
+              "BLOCKED": 50,
+              "REVERSING": 3.61,
+              "UNFORMED": 23.33
+            },
+            "AXIS_PER_HOUSE": {
+              "FULFILLED": 4.72,
+              "MOVING": 9.17,
+              "DELAYED": 9.17,
+              "BLOCKED": 48.06,
+              "REVERSING": 4.44,
+              "UNFORMED": 24.44
+            },
+            "AXIS_PER_JUDGMENT": {
+              "FULFILLED": 4.72,
+              "MOVING": 9.17,
+              "DELAYED": 11.39,
+              "BLOCKED": 35.56,
+              "REVERSING": 11.94,
+              "UNFORMED": 27.22
+            }
+          }
+        },
+        "2027-12": {
+          "n": 372,
+          "meanScore": {
+            "CURRENT": -4.74,
+            "AXIS_PER_HOUSE": -4.07,
+            "AXIS_PER_JUDGMENT": -3.07
+          },
+          "statePct": {
+            "CURRENT": {
+              "FULFILLED": 0,
+              "MOVING": 0,
+              "DELAYED": 12.1,
+              "BLOCKED": 48.12,
+              "REVERSING": 9.95,
+              "UNFORMED": 29.84
+            },
+            "AXIS_PER_HOUSE": {
+              "FULFILLED": 0,
+              "MOVING": 0,
+              "DELAYED": 15.32,
+              "BLOCKED": 44.35,
+              "REVERSING": 9.95,
+              "UNFORMED": 30.38
+            },
+            "AXIS_PER_JUDGMENT": {
+              "FULFILLED": 0,
+              "MOVING": 1.08,
+              "DELAYED": 21.51,
+              "BLOCKED": 35.75,
+              "REVERSING": 9.95,
+              "UNFORMED": 31.72
+            }
+          }
+        }
+      },
+      "finance": {
+        "2026-01": {
+          "n": 372,
+          "meanScore": {
+            "CURRENT": -3.4,
+            "AXIS_PER_HOUSE": -2.74,
+            "AXIS_PER_JUDGMENT": -2.74
+          },
+          "statePct": {
+            "CURRENT": {
+              "FULFILLED": 0,
+              "MOVING": 0.81,
+              "DELAYED": 7.53,
+              "BLOCKED": 46.77,
+              "REVERSING": 0,
+              "UNFORMED": 44.89
+            },
+            "AXIS_PER_HOUSE": {
+              "FULFILLED": 0,
+              "MOVING": 0.81,
+              "DELAYED": 16.13,
+              "BLOCKED": 29.84,
+              "REVERSING": 0,
+              "UNFORMED": 53.23
+            },
+            "AXIS_PER_JUDGMENT": {
+              "FULFILLED": 0,
+              "MOVING": 0.81,
+              "DELAYED": 16.13,
+              "BLOCKED": 29.84,
+              "REVERSING": 0,
+              "UNFORMED": 53.23
+            }
+          }
+        },
+        "2026-02": {
+          "n": 336,
+          "meanScore": {
+            "CURRENT": -3.15,
+            "AXIS_PER_HOUSE": -2.48,
+            "AXIS_PER_JUDGMENT": -2.48
+          },
+          "statePct": {
+            "CURRENT": {
+              "FULFILLED": 0,
+              "MOVING": 1.79,
+              "DELAYED": 12.8,
+              "BLOCKED": 37.5,
+              "REVERSING": 1.19,
+              "UNFORMED": 46.73
+            },
+            "AXIS_PER_HOUSE": {
+              "FULFILLED": 0,
+              "MOVING": 6.85,
+              "DELAYED": 18.15,
+              "BLOCKED": 28.87,
+              "REVERSING": 1.19,
+              "UNFORMED": 44.94
+            },
+            "AXIS_PER_JUDGMENT": {
+              "FULFILLED": 0,
+              "MOVING": 6.85,
+              "DELAYED": 18.15,
+              "BLOCKED": 28.87,
+              "REVERSING": 1.19,
+              "UNFORMED": 44.94
+            }
+          }
+        },
+        "2026-03": {
+          "n": 372,
+          "meanScore": {
+            "CURRENT": -3.41,
+            "AXIS_PER_HOUSE": -2.75,
+            "AXIS_PER_JUDGMENT": -2.75
+          },
+          "statePct": {
+            "CURRENT": {
+              "FULFILLED": 0,
+              "MOVING": 9.68,
+              "DELAYED": 6.45,
+              "BLOCKED": 44.09,
+              "REVERSING": 13.44,
+              "UNFORMED": 26.34
+            },
+            "AXIS_PER_HOUSE": {
+              "FULFILLED": 0,
+              "MOVING": 9.68,
+              "DELAYED": 6.72,
+              "BLOCKED": 35.75,
+              "REVERSING": 13.44,
+              "UNFORMED": 34.41
+            },
+            "AXIS_PER_JUDGMENT": {
+              "FULFILLED": 0,
+              "MOVING": 9.68,
+              "DELAYED": 6.72,
+              "BLOCKED": 35.75,
+              "REVERSING": 13.44,
+              "UNFORMED": 34.41
+            }
+          }
+        },
+        "2026-04": {
+          "n": 360,
+          "meanScore": {
+            "CURRENT": -3.08,
+            "AXIS_PER_HOUSE": -2.41,
+            "AXIS_PER_JUDGMENT": -2.41
+          },
+          "statePct": {
+            "CURRENT": {
+              "FULFILLED": 0,
+              "MOVING": 8.33,
+              "DELAYED": 8.89,
+              "BLOCKED": 32.22,
+              "REVERSING": 0,
+              "UNFORMED": 50.56
+            },
+            "AXIS_PER_HOUSE": {
+              "FULFILLED": 0,
+              "MOVING": 14.44,
+              "DELAYED": 8.89,
+              "BLOCKED": 31.11,
+              "REVERSING": 0,
+              "UNFORMED": 45.56
+            },
+            "AXIS_PER_JUDGMENT": {
+              "FULFILLED": 0,
+              "MOVING": 14.44,
+              "DELAYED": 8.89,
+              "BLOCKED": 31.11,
+              "REVERSING": 0,
+              "UNFORMED": 45.56
+            }
+          }
+        },
+        "2026-05": {
+          "n": 372,
+          "meanScore": {
+            "CURRENT": -2.69,
+            "AXIS_PER_HOUSE": -2.03,
+            "AXIS_PER_JUDGMENT": -2.03
+          },
+          "statePct": {
+            "CURRENT": {
+              "FULFILLED": 0.81,
+              "MOVING": 3.23,
+              "DELAYED": 23.66,
+              "BLOCKED": 24.19,
+              "REVERSING": 0,
+              "UNFORMED": 48.12
+            },
+            "AXIS_PER_HOUSE": {
+              "FULFILLED": 0.81,
+              "MOVING": 9.41,
+              "DELAYED": 28.23,
+              "BLOCKED": 19.62,
+              "REVERSING": 0,
+              "UNFORMED": 41.94
+            },
+            "AXIS_PER_JUDGMENT": {
+              "FULFILLED": 0.81,
+              "MOVING": 9.41,
+              "DELAYED": 28.23,
+              "BLOCKED": 19.62,
+              "REVERSING": 0,
+              "UNFORMED": 41.94
+            }
+          }
+        },
+        "2026-06": {
+          "n": 360,
+          "meanScore": {
+            "CURRENT": -2.17,
+            "AXIS_PER_HOUSE": -1.51,
+            "AXIS_PER_JUDGMENT": -1.51
+          },
+          "statePct": {
+            "CURRENT": {
+              "FULFILLED": 5.56,
+              "MOVING": 10,
+              "DELAYED": 32.78,
+              "BLOCKED": 23.06,
+              "REVERSING": 0.28,
+              "UNFORMED": 28.33
+            },
+            "AXIS_PER_HOUSE": {
+              "FULFILLED": 5.56,
+              "MOVING": 10,
+              "DELAYED": 37.78,
+              "BLOCKED": 16.67,
+              "REVERSING": 0.28,
+              "UNFORMED": 29.72
+            },
+            "AXIS_PER_JUDGMENT": {
+              "FULFILLED": 5.56,
+              "MOVING": 10,
+              "DELAYED": 37.78,
+              "BLOCKED": 16.67,
+              "REVERSING": 0.28,
+              "UNFORMED": 29.72
+            }
+          }
+        },
+        "2026-07": {
+          "n": 372,
+          "meanScore": {
+            "CURRENT": -2.65,
+            "AXIS_PER_HOUSE": -1.99,
+            "AXIS_PER_JUDGMENT": -1.99
+          },
+          "statePct": {
+            "CURRENT": {
+              "FULFILLED": 0,
+              "MOVING": 11.56,
+              "DELAYED": 22.85,
+              "BLOCKED": 31.72,
+              "REVERSING": 13.17,
+              "UNFORMED": 20.7
+            },
+            "AXIS_PER_HOUSE": {
+              "FULFILLED": 0,
+              "MOVING": 11.56,
+              "DELAYED": 22.85,
+              "BLOCKED": 20.43,
+              "REVERSING": 13.17,
+              "UNFORMED": 31.99
+            },
+            "AXIS_PER_JUDGMENT": {
+              "FULFILLED": 0,
+              "MOVING": 11.56,
+              "DELAYED": 22.85,
+              "BLOCKED": 20.43,
+              "REVERSING": 13.17,
+              "UNFORMED": 31.99
+            }
+          }
+        },
+        "2026-08": {
+          "n": 372,
+          "meanScore": {
+            "CURRENT": -3,
+            "AXIS_PER_HOUSE": -2.33,
+            "AXIS_PER_JUDGMENT": -2.33
+          },
+          "statePct": {
+            "CURRENT": {
+              "FULFILLED": 0.54,
+              "MOVING": 1.34,
+              "DELAYED": 44.62,
+              "BLOCKED": 19.09,
+              "REVERSING": 16.67,
+              "UNFORMED": 17.74
+            },
+            "AXIS_PER_HOUSE": {
+              "FULFILLED": 0.54,
+              "MOVING": 1.34,
+              "DELAYED": 44.62,
+              "BLOCKED": 19.09,
+              "REVERSING": 16.67,
+              "UNFORMED": 17.74
+            },
+            "AXIS_PER_JUDGMENT": {
+              "FULFILLED": 0.54,
+              "MOVING": 1.34,
+              "DELAYED": 44.62,
+              "BLOCKED": 19.09,
+              "REVERSING": 16.67,
+              "UNFORMED": 17.74
+            }
+          }
+        },
+        "2026-09": {
+          "n": 360,
+          "meanScore": {
+            "CURRENT": -1.86,
+            "AXIS_PER_HOUSE": -1.19,
+            "AXIS_PER_JUDGMENT": -1.19
+          },
+          "statePct": {
+            "CURRENT": {
+              "FULFILLED": 4.44,
+              "MOVING": 6.11,
+              "DELAYED": 38.06,
+              "BLOCKED": 13.33,
+              "REVERSING": 16.67,
+              "UNFORMED": 21.39
+            },
+            "AXIS_PER_HOUSE": {
+              "FULFILLED": 4.44,
+              "MOVING": 6.11,
+              "DELAYED": 41.39,
+              "BLOCKED": 10,
+              "REVERSING": 16.67,
+              "UNFORMED": 21.39
+            },
+            "AXIS_PER_JUDGMENT": {
+              "FULFILLED": 4.44,
+              "MOVING": 6.11,
+              "DELAYED": 41.39,
+              "BLOCKED": 10,
+              "REVERSING": 16.67,
+              "UNFORMED": 21.39
+            }
+          }
+        },
+        "2026-10": {
+          "n": 372,
+          "meanScore": {
+            "CURRENT": -2.21,
+            "AXIS_PER_HOUSE": -1.54,
+            "AXIS_PER_JUDGMENT": -1.54
+          },
+          "statePct": {
+            "CURRENT": {
+              "FULFILLED": 0,
+              "MOVING": 0.81,
+              "DELAYED": 40.32,
+              "BLOCKED": 12.63,
+              "REVERSING": 27.42,
+              "UNFORMED": 18.82
+            },
+            "AXIS_PER_HOUSE": {
+              "FULFILLED": 0,
+              "MOVING": 0.81,
+              "DELAYED": 44.89,
+              "BLOCKED": 3.23,
+              "REVERSING": 32.26,
+              "UNFORMED": 18.82
+            },
+            "AXIS_PER_JUDGMENT": {
+              "FULFILLED": 0,
+              "MOVING": 0.81,
+              "DELAYED": 44.89,
+              "BLOCKED": 3.23,
+              "REVERSING": 32.26,
+              "UNFORMED": 18.82
+            }
+          }
+        },
+        "2026-11": {
+          "n": 360,
+          "meanScore": {
+            "CURRENT": -2.69,
+            "AXIS_PER_HOUSE": -2.03,
+            "AXIS_PER_JUDGMENT": -2.03
+          },
+          "statePct": {
+            "CURRENT": {
+              "FULFILLED": 4.44,
+              "MOVING": 3.33,
+              "DELAYED": 33.61,
+              "BLOCKED": 25.56,
+              "REVERSING": 18.06,
+              "UNFORMED": 15
+            },
+            "AXIS_PER_HOUSE": {
+              "FULFILLED": 4.44,
+              "MOVING": 3.33,
+              "DELAYED": 35,
+              "BLOCKED": 13.61,
+              "REVERSING": 23.61,
+              "UNFORMED": 20
+            },
+            "AXIS_PER_JUDGMENT": {
+              "FULFILLED": 4.44,
+              "MOVING": 3.33,
+              "DELAYED": 35,
+              "BLOCKED": 13.61,
+              "REVERSING": 23.61,
+              "UNFORMED": 20
+            }
+          }
+        },
+        "2026-12": {
+          "n": 372,
+          "meanScore": {
+            "CURRENT": -2.19,
+            "AXIS_PER_HOUSE": -1.52,
+            "AXIS_PER_JUDGMENT": -1.52
+          },
+          "statePct": {
+            "CURRENT": {
+              "FULFILLED": 2.69,
+              "MOVING": 13.98,
+              "DELAYED": 14.52,
+              "BLOCKED": 24.46,
+              "REVERSING": 8.6,
+              "UNFORMED": 35.75
+            },
+            "AXIS_PER_HOUSE": {
+              "FULFILLED": 16.67,
+              "MOVING": 0.54,
+              "DELAYED": 14.52,
+              "BLOCKED": 21.77,
+              "REVERSING": 9.95,
+              "UNFORMED": 36.56
+            },
+            "AXIS_PER_JUDGMENT": {
+              "FULFILLED": 16.67,
+              "MOVING": 0.54,
+              "DELAYED": 14.52,
+              "BLOCKED": 21.77,
+              "REVERSING": 9.95,
+              "UNFORMED": 36.56
+            }
+          }
+        },
+        "2027-01": {
+          "n": 372,
+          "meanScore": {
+            "CURRENT": -2.61,
+            "AXIS_PER_HOUSE": -1.95,
+            "AXIS_PER_JUDGMENT": -1.95
+          },
+          "statePct": {
+            "CURRENT": {
+              "FULFILLED": 0,
+              "MOVING": 0.54,
+              "DELAYED": 16.4,
+              "BLOCKED": 19.35,
+              "REVERSING": 21.51,
+              "UNFORMED": 42.2
+            },
+            "AXIS_PER_HOUSE": {
+              "FULFILLED": 0.54,
+              "MOVING": 4.3,
+              "DELAYED": 17.2,
+              "BLOCKED": 17.47,
+              "REVERSING": 21.51,
+              "UNFORMED": 38.98
+            },
+            "AXIS_PER_JUDGMENT": {
+              "FULFILLED": 0.54,
+              "MOVING": 4.3,
+              "DELAYED": 17.2,
+              "BLOCKED": 17.47,
+              "REVERSING": 21.51,
+              "UNFORMED": 38.98
+            }
+          }
+        },
+        "2027-02": {
+          "n": 336,
+          "meanScore": {
+            "CURRENT": -2.34,
+            "AXIS_PER_HOUSE": -1.68,
+            "AXIS_PER_JUDGMENT": -1.68
+          },
+          "statePct": {
+            "CURRENT": {
+              "FULFILLED": 0,
+              "MOVING": 1.19,
+              "DELAYED": 3.27,
+              "BLOCKED": 17.86,
+              "REVERSING": 44.64,
+              "UNFORMED": 33.04
+            },
+            "AXIS_PER_HOUSE": {
+              "FULFILLED": 0,
+              "MOVING": 9.52,
+              "DELAYED": 3.57,
+              "BLOCKED": 16.67,
+              "REVERSING": 44.64,
+              "UNFORMED": 25.6
+            },
+            "AXIS_PER_JUDGMENT": {
+              "FULFILLED": 0,
+              "MOVING": 9.52,
+              "DELAYED": 3.57,
+              "BLOCKED": 16.67,
+              "REVERSING": 44.64,
+              "UNFORMED": 25.6
+            }
+          }
+        },
+        "2027-03": {
+          "n": 372,
+          "meanScore": {
+            "CURRENT": -2.52,
+            "AXIS_PER_HOUSE": -1.85,
+            "AXIS_PER_JUDGMENT": -1.85
+          },
+          "statePct": {
+            "CURRENT": {
+              "FULFILLED": 0,
+              "MOVING": 2.42,
+              "DELAYED": 10.48,
+              "BLOCKED": 15.05,
+              "REVERSING": 34.95,
+              "UNFORMED": 37.1
+            },
+            "AXIS_PER_HOUSE": {
+              "FULFILLED": 0,
+              "MOVING": 4.84,
+              "DELAYED": 10.48,
+              "BLOCKED": 12.63,
+              "REVERSING": 34.95,
+              "UNFORMED": 37.1
+            },
+            "AXIS_PER_JUDGMENT": {
+              "FULFILLED": 0,
+              "MOVING": 4.84,
+              "DELAYED": 10.48,
+              "BLOCKED": 12.63,
+              "REVERSING": 34.95,
+              "UNFORMED": 37.1
+            }
+          }
+        },
+        "2027-04": {
+          "n": 360,
+          "meanScore": {
+            "CURRENT": -2.63,
+            "AXIS_PER_HOUSE": -1.97,
+            "AXIS_PER_JUDGMENT": -1.97
+          },
+          "statePct": {
+            "CURRENT": {
+              "FULFILLED": 0,
+              "MOVING": 1.39,
+              "DELAYED": 35.83,
+              "BLOCKED": 23.06,
+              "REVERSING": 7.78,
+              "UNFORMED": 31.94
+            },
+            "AXIS_PER_HOUSE": {
+              "FULFILLED": 0,
+              "MOVING": 2.5,
+              "DELAYED": 35.83,
+              "BLOCKED": 16.94,
+              "REVERSING": 7.78,
+              "UNFORMED": 36.94
+            },
+            "AXIS_PER_JUDGMENT": {
+              "FULFILLED": 0,
+              "MOVING": 2.5,
+              "DELAYED": 35.83,
+              "BLOCKED": 16.94,
+              "REVERSING": 7.78,
+              "UNFORMED": 36.94
+            }
+          }
+        },
+        "2027-05": {
+          "n": 372,
+          "meanScore": {
+            "CURRENT": -1.97,
+            "AXIS_PER_HOUSE": -1.3,
+            "AXIS_PER_JUDGMENT": -1.3
+          },
+          "statePct": {
+            "CURRENT": {
+              "FULFILLED": 0,
+              "MOVING": 8.33,
+              "DELAYED": 25.54,
+              "BLOCKED": 13.17,
+              "REVERSING": 0,
+              "UNFORMED": 52.96
+            },
+            "AXIS_PER_HOUSE": {
+              "FULFILLED": 5.91,
+              "MOVING": 17.47,
+              "DELAYED": 25.54,
+              "BLOCKED": 13.17,
+              "REVERSING": 0,
+              "UNFORMED": 37.9
+            },
+            "AXIS_PER_JUDGMENT": {
+              "FULFILLED": 5.91,
+              "MOVING": 17.47,
+              "DELAYED": 25.54,
+              "BLOCKED": 13.17,
+              "REVERSING": 0,
+              "UNFORMED": 37.9
+            }
+          }
+        },
+        "2027-06": {
+          "n": 360,
+          "meanScore": {
+            "CURRENT": -1.71,
+            "AXIS_PER_HOUSE": -1.04,
+            "AXIS_PER_JUDGMENT": -1.04
+          },
+          "statePct": {
+            "CURRENT": {
+              "FULFILLED": 0,
+              "MOVING": 8.61,
+              "DELAYED": 29.72,
+              "BLOCKED": 16.11,
+              "REVERSING": 11.11,
+              "UNFORMED": 34.44
+            },
+            "AXIS_PER_HOUSE": {
+              "FULFILLED": 0.83,
+              "MOVING": 9.72,
+              "DELAYED": 29.72,
+              "BLOCKED": 10.83,
+              "REVERSING": 11.11,
+              "UNFORMED": 37.78
+            },
+            "AXIS_PER_JUDGMENT": {
+              "FULFILLED": 0.83,
+              "MOVING": 9.72,
+              "DELAYED": 29.72,
+              "BLOCKED": 10.83,
+              "REVERSING": 11.11,
+              "UNFORMED": 37.78
+            }
+          }
+        },
+        "2027-07": {
+          "n": 372,
+          "meanScore": {
+            "CURRENT": -3.12,
+            "AXIS_PER_HOUSE": -2.45,
+            "AXIS_PER_JUDGMENT": -2.45
+          },
+          "statePct": {
+            "CURRENT": {
+              "FULFILLED": 0,
+              "MOVING": 5.11,
+              "DELAYED": 29.03,
+              "BLOCKED": 29.84,
+              "REVERSING": 2.15,
+              "UNFORMED": 33.87
+            },
+            "AXIS_PER_HOUSE": {
+              "FULFILLED": 0,
+              "MOVING": 5.11,
+              "DELAYED": 35.75,
+              "BLOCKED": 19.62,
+              "REVERSING": 2.15,
+              "UNFORMED": 37.37
+            },
+            "AXIS_PER_JUDGMENT": {
+              "FULFILLED": 0,
+              "MOVING": 5.11,
+              "DELAYED": 35.75,
+              "BLOCKED": 19.62,
+              "REVERSING": 2.15,
+              "UNFORMED": 37.37
+            }
+          }
+        },
+        "2027-08": {
+          "n": 372,
+          "meanScore": {
+            "CURRENT": -4.09,
+            "AXIS_PER_HOUSE": -3.43,
+            "AXIS_PER_JUDGMENT": -3.43
+          },
+          "statePct": {
+            "CURRENT": {
+              "FULFILLED": 3.76,
+              "MOVING": 6.72,
+              "DELAYED": 23.12,
+              "BLOCKED": 44.09,
+              "REVERSING": 5.91,
+              "UNFORMED": 16.4
+            },
+            "AXIS_PER_HOUSE": {
+              "FULFILLED": 3.76,
+              "MOVING": 6.72,
+              "DELAYED": 27.15,
+              "BLOCKED": 36.83,
+              "REVERSING": 5.91,
+              "UNFORMED": 19.62
+            },
+            "AXIS_PER_JUDGMENT": {
+              "FULFILLED": 3.76,
+              "MOVING": 6.72,
+              "DELAYED": 27.15,
+              "BLOCKED": 36.83,
+              "REVERSING": 5.91,
+              "UNFORMED": 19.62
+            }
+          }
+        },
+        "2027-09": {
+          "n": 360,
+          "meanScore": {
+            "CURRENT": -3.09,
+            "AXIS_PER_HOUSE": -2.42,
+            "AXIS_PER_JUDGMENT": -2.42
+          },
+          "statePct": {
+            "CURRENT": {
+              "FULFILLED": 2.5,
+              "MOVING": 15.28,
+              "DELAYED": 16.67,
+              "BLOCKED": 33.33,
+              "REVERSING": 8.33,
+              "UNFORMED": 23.89
+            },
+            "AXIS_PER_HOUSE": {
+              "FULFILLED": 2.5,
+              "MOVING": 15.28,
+              "DELAYED": 16.67,
+              "BLOCKED": 32.78,
+              "REVERSING": 8.33,
+              "UNFORMED": 24.44
+            },
+            "AXIS_PER_JUDGMENT": {
+              "FULFILLED": 2.5,
+              "MOVING": 15.28,
+              "DELAYED": 16.67,
+              "BLOCKED": 32.78,
+              "REVERSING": 8.33,
+              "UNFORMED": 24.44
+            }
+          }
+        },
+        "2027-10": {
+          "n": 372,
+          "meanScore": {
+            "CURRENT": -2.2,
+            "AXIS_PER_HOUSE": -1.53,
+            "AXIS_PER_JUDGMENT": -1.53
+          },
+          "statePct": {
+            "CURRENT": {
+              "FULFILLED": 0,
+              "MOVING": 12.9,
+              "DELAYED": 22.85,
+              "BLOCKED": 18.01,
+              "REVERSING": 16.94,
+              "UNFORMED": 29.3
+            },
+            "AXIS_PER_HOUSE": {
+              "FULFILLED": 5.38,
+              "MOVING": 8.06,
+              "DELAYED": 23.12,
+              "BLOCKED": 16.13,
+              "REVERSING": 16.94,
+              "UNFORMED": 30.38
+            },
+            "AXIS_PER_JUDGMENT": {
+              "FULFILLED": 5.38,
+              "MOVING": 8.06,
+              "DELAYED": 23.12,
+              "BLOCKED": 16.13,
+              "REVERSING": 16.94,
+              "UNFORMED": 30.38
+            }
+          }
+        },
+        "2027-11": {
+          "n": 360,
+          "meanScore": {
+            "CURRENT": -2.52,
+            "AXIS_PER_HOUSE": -1.85,
+            "AXIS_PER_JUDGMENT": -1.85
+          },
+          "statePct": {
+            "CURRENT": {
+              "FULFILLED": 0,
+              "MOVING": 11.11,
+              "DELAYED": 18.89,
+              "BLOCKED": 21.39,
+              "REVERSING": 16.67,
+              "UNFORMED": 31.94
+            },
+            "AXIS_PER_HOUSE": {
+              "FULFILLED": 0,
+              "MOVING": 14.72,
+              "DELAYED": 19.17,
+              "BLOCKED": 18.33,
+              "REVERSING": 16.67,
+              "UNFORMED": 31.11
+            },
+            "AXIS_PER_JUDGMENT": {
+              "FULFILLED": 0,
+              "MOVING": 14.72,
+              "DELAYED": 19.17,
+              "BLOCKED": 18.33,
+              "REVERSING": 16.67,
+              "UNFORMED": 31.11
+            }
+          }
+        },
+        "2027-12": {
+          "n": 372,
+          "meanScore": {
+            "CURRENT": -3.11,
+            "AXIS_PER_HOUSE": -2.44,
+            "AXIS_PER_JUDGMENT": -2.44
+          },
+          "statePct": {
+            "CURRENT": {
+              "FULFILLED": 0,
+              "MOVING": 3.23,
+              "DELAYED": 18.28,
+              "BLOCKED": 26.34,
+              "REVERSING": 12.37,
+              "UNFORMED": 39.78
+            },
+            "AXIS_PER_HOUSE": {
+              "FULFILLED": 0,
+              "MOVING": 9.14,
+              "DELAYED": 18.28,
+              "BLOCKED": 24.19,
+              "REVERSING": 12.37,
+              "UNFORMED": 36.02
+            },
+            "AXIS_PER_JUDGMENT": {
+              "FULFILLED": 0,
+              "MOVING": 9.14,
+              "DELAYED": 18.28,
+              "BLOCKED": 24.19,
+              "REVERSING": 12.37,
+              "UNFORMED": 36.02
+            }
+          }
+        }
+      }
+    }
+  },
+  "goldenCorpus": {
+    "cases": 111,
+    "currentMatchesStored": 71,
+    "storedMismatch": [
+      "ambiguous-002",
+      "ambiguous-003",
+      "disputes-005",
+      "employment-003",
+      "employment-005",
+      "family-002",
+      "family-003",
+      "family-004",
+      "finance-005",
+      "general-001",
+      "general-002",
+      "health-001",
+      "health-002",
+      "lostitem-001",
+      "marriage-004",
+      "marriage-006",
+      "marriage-008",
+      "multiintent-003",
+      "pad-business-07",
+      "pad-disputes-23",
+      "pad-disputes-24",
+      "pad-education-19",
+      "pad-education-20",
+      "pad-employment-09",
+      "pad-employment-11",
+      "pad-family-21",
+      "pad-family-22",
+      "pad-finance-13",
+      "pad-general-27",
+      "pad-general-28",
+      "pad-property-15",
+      "pad-relationship-04",
+      "pad-spiritual-25",
+      "property-003",
+      "property-004",
+      "spiritual-001",
+      "spiritual-002",
+      "timing-25",
+      "timing-29",
+      "timing-59"
+    ],
+    "changed": {
+      "AXIS_PER_HOUSE": [
+        "education-002: BLOCKED (-6) → REVERSING (-4)",
+        "employment-001: BLOCKED (-5) → REVERSING (-3)",
+        "employment-006: BLOCKED (-5) → UNFORMED (-3)",
+        "family-001: BLOCKED (-7) → UNFORMED (-3)",
+        "multiintent-001: BLOCKED (-5) → UNFORMED (-3)",
+        "pad-finance-14: BLOCKED (-5) → UNFORMED (-3)",
+        "pad-travel-18: BLOCKED (-6) → DELAYED (-4)",
+        "property-001: UNFORMED (0) → MOVING (2)",
+        "timing-00: BLOCKED (-5) → UNFORMED (-3)",
+        "timing-01: BLOCKED (-5) → UNFORMED (-3)",
+        "timing-04: BLOCKED (-5) → UNFORMED (-3)",
+        "timing-30: BLOCKED (-5) → REVERSING (-3)",
+        "travel-001: BLOCKED (-6) → DELAYED (-4)",
+        "travel-003: BLOCKED (-6) → REVERSING (-4)"
+      ],
+      "AXIS_PER_JUDGMENT": [
+        "business-006: BLOCKED (-8) → DELAYED (-4)",
+        "education-002: BLOCKED (-6) → REVERSING (-4)",
+        "employment-001: BLOCKED (-5) → REVERSING (-3)",
+        "employment-006: BLOCKED (-5) → UNFORMED (-3)",
+        "family-001: BLOCKED (-7) → UNFORMED (-1)",
+        "general-001: BLOCKED (-8) → DELAYED (-4)",
+        "health-001: BLOCKED (-8) → DELAYED (-4)",
+        "marriage-001: BLOCKED (-8) → DELAYED (-4)",
+        "marriage-006: BLOCKED (-8) → DELAYED (-4)",
+        "multiintent-001: BLOCKED (-5) → UNFORMED (-3)",
+        "pad-business-05: BLOCKED (-8) → DELAYED (-4)",
+        "pad-finance-14: BLOCKED (-5) → UNFORMED (-3)",
+        "pad-general-27: BLOCKED (-8) → DELAYED (-4)",
+        "pad-relationship-01: BLOCKED (-8) → DELAYED (-4)",
+        "pad-travel-18: BLOCKED (-6) → DELAYED (-2)",
+        "property-001: UNFORMED (0) → MOVING (2)",
+        "timing-00: BLOCKED (-5) → UNFORMED (-3)",
+        "timing-01: BLOCKED (-5) → UNFORMED (-3)",
+        "timing-04: BLOCKED (-5) → UNFORMED (-3)",
+        "timing-30: BLOCKED (-5) → REVERSING (-3)",
+        "travel-001: BLOCKED (-6) → DELAYED (-2)",
+        "travel-003: BLOCKED (-6) → REVERSING (-2)"
+      ]
+    }
+  }
+}
