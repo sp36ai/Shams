@@ -186,13 +186,22 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({
           style={[
             styles.bubble,
             styles.oracleBubble,
-            { backgroundColor: colors.surface, borderColor: colors.negative + '55' },
+            {
+              backgroundColor: colors.surface,
+              // A declined question is the Oracle speaking, not a failure.
+              borderColor: message.declined === true ? colors.border : colors.negative + '55',
+            },
           ]}
         >
-          <Text style={[typography('body'), { color: colors.textMuted }]}>
+          <Text
+            style={[
+              typography('body'),
+              { color: message.declined === true ? colors.text : colors.textMuted },
+            ]}
+          >
             {message.errorMessage ?? t('oracleChat.failedGeneric')}
           </Text>
-          {failureRef !== undefined && (
+          {failureRef !== undefined && message.declined !== true && (
             <Text
               selectable
               style={[typography('caption'), styles.failureRef, { color: colors.textMuted }]}
@@ -200,7 +209,7 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({
               {t('oracleChat.failureRef', { ref: failureRef })}
             </Text>
           )}
-          {message.replyToId !== undefined && (
+          {message.replyToId !== undefined && message.declined !== true && (
             <Pressable
               onPress={() => onRetry(message.replyToId!)}
               style={({ pressed }) => [styles.retryBtn, { opacity: pressed ? 0.7 : 1 }]}

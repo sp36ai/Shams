@@ -76,6 +76,12 @@ export interface ReadingMessage {
   closesDiscussion?: boolean;
   /** Present on a 'failed' message — shown next to the retry control. */
   errorMessage?: string;
+  /**
+   * On a 'failed' message: the Oracle declined this question as not about the
+   * seeker's own life (owner decision 2026-10-14). Retrying the same words
+   * would only be declined again, so no retry control is offered.
+   */
+  declined?: boolean;
   /** On an oracle message: the user message id this is answering. */
   replyToId?: string;
   /**

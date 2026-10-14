@@ -33,11 +33,12 @@
  * string and was not modified by this refactor).
  *
  * DEPLOYMENT NOTE:
- * The mystical Shams al-Asrār narration voice is loaded from
- * watchOracleSynthesisPrompt.ts (WATCH_ORACLE_SYNTHESIS_PROMPT constant).
- * This orchestrates the response composition with Claude Opus 5 using the
- * mystical manuscript register, proper confidence calibration, and full
- * remedy protocol integration. Verify Cloud Functions redeploy.
+ * The Shams al-Asrār narration voice is loaded from
+ * watchOracleSynthesisPrompt.ts (WATCH_ORACLE_SYNTHESIS_PROMPT constant):
+ * a warm, direct, answer-first chat register (owner decision 2026-10-14,
+ * replacing the earlier manuscript register whose fixed imagery made every
+ * reading sound alike), with confidence calibration and the remedy protocol
+ * unchanged. Verify Cloud Functions redeploy.
  */
 
 import { ANTHROPIC_API_KEY } from '../config';
