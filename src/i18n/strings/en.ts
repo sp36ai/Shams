@@ -142,6 +142,8 @@ export const en: StringTable = {
     readingChart: 'Reading the chart…',
     retry: 'Retry',
     failedGeneric: 'The scrolls of this moment have not opened their seal. Try again.',
+    outOfScope:
+      'I read the chart for questions about your own life — your work, family, love, money, health or plans. Ask me something like “Will I get the job?” or “Will my marriage happen this year?”',
     failureRef: 'Ref {{ref}}',
     quotaExhausted: "Today's questions are used. Come back tomorrow, or upgrade for unlimited.",
     micPermissionDenied: 'Microphone access is needed for voice questions. Enable it in Settings.',

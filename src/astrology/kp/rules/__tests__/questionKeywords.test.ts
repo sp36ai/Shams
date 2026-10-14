@@ -51,3 +51,24 @@ describe('apps are business (owner decision 2026-10-10)', () => {
     expect(classifyQuestion('Will my app make money?')).toBe('finance');
   });
 });
+
+describe('inflected forms of existing keywords', () => {
+  it('matches the listed inflected forms of existing keywords', () => {
+    expect(classifyQuestion('Will I get married this year?')).toBe('marriage');
+    expect(classifyQuestion('When will I get married?')).toBe('marriage');
+    expect(classifyQuestion('Has he proposed yet?')).toBe('marriage');
+    expect(classifyQuestion('Will my exams go well?')).toBe('education');
+    expect(classifyQuestion('Am I travelling next month?')).toBe('travel');
+    expect(classifyQuestion('Will my debts be cleared?')).toBe('finance');
+  });
+
+  it('adds no new vocabulary and leaves generic words alone', () => {
+    expect(classifyQuestion('Will I get selected?')).toBe('general');
+    expect(classifyQuestion('Is someone plotting against me?')).toBe('general');
+    expect(classifyQuestion('Are you kidding?')).toBe('general');
+    // 'fail' is an education keyword, but a failing business is business.
+    expect(classifyQuestion('Should I close my failing business?')).toBe('business');
+    // Whole-word boundaries still hold: "artwork" is not "work".
+    expect(classifyQuestion('Will my artwork sell?')).toBe('general');
+  });
+});

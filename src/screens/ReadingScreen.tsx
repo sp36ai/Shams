@@ -120,6 +120,9 @@ export function errorMessageFor(
   const reason = typeof details?.reason === 'string' ? details.reason : null;
   const coins = (milli: unknown): string => (typeof milli === 'number' ? formatCoins(milli) : '—');
 
+  if (reason === 'out_of_scope') {
+    return t('oracleChat.outOfScope');
+  }
   if (reason === 'free_used') {
     return t('wallet.freeQuestionUsed', {
       cost: coins(details?.questionCostMilli),
@@ -167,6 +170,23 @@ export function errorMessageFor(
     return t('oracleChat.discussionReadingGone');
   }
   return t('oracleChat.failedGeneric');
+}
+
+/**
+ * Whether askWatchOracle declined the question as not about the seeker's own
+ * life (functions/src/oracle/questionScope.ts). Nothing was charged; the
+ * seeker only needs to ask something else. Exported for direct unit testing.
+ */
+export function isOutOfScopeError(err: unknown): boolean {
+  if (typeof err !== 'object' || err === null || !('details' in err)) {
+    return false;
+  }
+  const details = (err as { details: unknown }).details;
+  return (
+    typeof details === 'object' &&
+    details !== null &&
+    (details as { reason?: unknown }).reason === 'out_of_scope'
+  );
 }
 
 /** One row of the conversation: a Reading's moment chip, or a message. */
@@ -425,6 +445,7 @@ const ReadingScreen: React.FC = () => {
         updateMessage(targetThreadId, oracleMessageId, {
           status: 'failed',
           errorMessage: errorMessageFor(err, t),
+          ...(isOutOfScopeError(err) ? { declined: true } : {}),
         });
         setThreadStatus(targetThreadId, 'error');
       }

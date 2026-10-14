@@ -45,7 +45,7 @@
  *   the offset for a trusted value.
  */
 
-import { onCall } from 'firebase-functions/v2/https';
+import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import type { DocumentReference } from 'firebase-admin/firestore';
 import { db } from '../utils/admin';
 import { verifyAuth } from '../middleware/auth';
@@ -78,6 +78,7 @@ import type { ReadingContract } from '../oracle/readingContract';
 
 import type { WatchState, WatchVerdict } from '../engine/rkp/watchJudgment';
 import { requestRef } from '../utils/requestRef';
+import { isOutOfScopeQuestion } from '../oracle/questionScope';
 
 /**
  * The six watch states expressed in the app's existing verdict vocabulary, so
@@ -162,6 +163,26 @@ export const askWatchOracle = onCall(
       const input = parse(AskWatchOracleSchema, request.data);
 
       await enforceRateLimit(userId);
+
+      // ── Scope gate, BEFORE the request is claimed or charged ──────────────
+      //
+      // Owner decision 2026-10-14: text that is not about the seeker's own
+      // life ("Name two cat breeds") is declined, not judged. Nothing is
+      // claimed, charged or cast, so the seeker can simply ask something else.
+      // The gate only decides whether to cast; see oracle/questionScope.ts.
+      if (isOutOfScopeQuestion(input.question, classifyQuestion(input.question))) {
+        logger.info('askWatchOracle: declined out-of-scope question', {
+          ...(requestRef(input.requestId) !== undefined
+            ? { ref: requestRef(input.requestId) }
+            : {}),
+          userId,
+        });
+        throw new HttpsError(
+          'invalid-argument',
+          'The Oracle answers questions about your own life and matters.',
+          { reason: 'out_of_scope' },
+        );
+      }
 
       // ── Idempotency, BEFORE anything is charged or cast ──────────────────
       //
