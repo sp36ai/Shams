@@ -176,12 +176,12 @@
     "overall": {
       "n": 34560,
       "meanScore": {
-        "BEFORE_AXIS_RULE": -3.09,
-        "CURRENT": -2.42,
+        "CURRENT": -3.09,
+        "AXIS_PER_HOUSE": -2.42,
         "AXIS_PER_JUDGMENT": -1.92
       },
       "statePct": {
-        "BEFORE_AXIS_RULE": {
+        "CURRENT": {
           "FULFILLED": 0.18,
           "MOVING": 0.58,
           "DELAYED": 29.34,
@@ -189,7 +189,7 @@
           "REVERSING": 23.31,
           "UNFORMED": 12.92
         },
-        "CURRENT": {
+        "AXIS_PER_HOUSE": {
           "FULFILLED": 0.18,
           "MOVING": 0.58,
           "DELAYED": 32.52,
@@ -208,7 +208,7 @@
       }
     },
     "transitions": {
-      "CURRENT": {
+      "AXIS_PER_HOUSE": {
         "BLOCKED": {
           "BLOCKED": 8513,
           "UNFORMED": 952,
@@ -256,7 +256,7 @@
       }
     },
     "boundaryCrossings": {
-      "CURRENT": {
+      "AXIS_PER_HOUSE": {
         "noThresholdCrossed": 31436,
         "crossesBlocked(-5)": 3124
       },
@@ -266,7 +266,7 @@
       }
     },
     "scoreHistogram": {
-      "BEFORE_AXIS_RULE": {
+      "CURRENT": {
         "0": 2158,
         "1": 955,
         "2": 2490,
@@ -285,7 +285,7 @@
         "-11": 1123,
         "-12": 317
       },
-      "CURRENT": {
+      "AXIS_PER_HOUSE": {
         "0": 2158,
         "1": 955,
         "2": 2490,
@@ -325,12 +325,12 @@
       "Xfghbf (general)": {
         "n": 8640,
         "meanScore": {
-          "BEFORE_AXIS_RULE": -3.12,
-          "CURRENT": -2.45,
+          "CURRENT": -3.12,
+          "AXIS_PER_HOUSE": -2.45,
           "AXIS_PER_JUDGMENT": -1.45
         },
         "statePct": {
-          "BEFORE_AXIS_RULE": {
+          "CURRENT": {
             "FULFILLED": 0,
             "MOVING": 0,
             "DELAYED": 24.65,
@@ -338,7 +338,7 @@
             "REVERSING": 27.09,
             "UNFORMED": 14.92
           },
-          "CURRENT": {
+          "AXIS_PER_HOUSE": {
             "FULFILLED": 0,
             "MOVING": 0,
             "DELAYED": 24.65,
@@ -359,12 +359,12 @@
       "Will I get the new job? (career)": {
         "n": 8640,
         "meanScore": {
-          "BEFORE_AXIS_RULE": -3.11,
-          "CURRENT": -2.45,
+          "CURRENT": -3.11,
+          "AXIS_PER_HOUSE": -2.45,
           "AXIS_PER_JUDGMENT": -2.45
         },
         "statePct": {
-          "BEFORE_AXIS_RULE": {
+          "CURRENT": {
             "FULFILLED": 0.71,
             "MOVING": 0,
             "DELAYED": 25.72,
@@ -372,7 +372,7 @@
             "REVERSING": 22.53,
             "UNFORMED": 11.84
           },
-          "CURRENT": {
+          "AXIS_PER_HOUSE": {
             "FULFILLED": 0.71,
             "MOVING": 0,
             "DELAYED": 25.72,
@@ -393,12 +393,12 @@
       "Will I marry her? (marriage)": {
         "n": 8640,
         "meanScore": {
-          "BEFORE_AXIS_RULE": -3.92,
-          "CURRENT": -3.25,
+          "CURRENT": -3.92,
+          "AXIS_PER_HOUSE": -3.25,
           "AXIS_PER_JUDGMENT": -2.25
         },
         "statePct": {
-          "BEFORE_AXIS_RULE": {
+          "CURRENT": {
             "FULFILLED": 0,
             "MOVING": 1.62,
             "DELAYED": 26.4,
@@ -406,7 +406,7 @@
             "REVERSING": 15.96,
             "UNFORMED": 6.02
           },
-          "CURRENT": {
+          "AXIS_PER_HOUSE": {
             "FULFILLED": 0,
             "MOVING": 1.62,
             "DELAYED": 34.73,
@@ -427,12 +427,12 @@
       "Will my money come back? (finance)": {
         "n": 8640,
         "meanScore": {
-          "BEFORE_AXIS_RULE": -2.2,
-          "CURRENT": -1.53,
+          "CURRENT": -2.2,
+          "AXIS_PER_HOUSE": -1.53,
           "AXIS_PER_JUDGMENT": -1.53
         },
         "statePct": {
-          "BEFORE_AXIS_RULE": {
+          "CURRENT": {
             "FULFILLED": 0,
             "MOVING": 0.71,
             "DELAYED": 40.59,
@@ -440,7 +440,7 @@
             "REVERSING": 27.65,
             "UNFORMED": 18.9
           },
-          "CURRENT": {
+          "AXIS_PER_HOUSE": {
             "FULFILLED": 0,
             "MOVING": 0.71,
             "DELAYED": 44.97,
@@ -463,12 +463,12 @@
       "0": {
         "n": 1440,
         "meanScore": {
-          "BEFORE_AXIS_RULE": -3.08,
-          "CURRENT": -2.42,
+          "CURRENT": -3.08,
+          "AXIS_PER_HOUSE": -2.42,
           "AXIS_PER_JUDGMENT": -1.92
         },
         "statePct": {
-          "BEFORE_AXIS_RULE": {
+          "CURRENT": {
             "FULFILLED": 0.21,
             "MOVING": 0.63,
             "DELAYED": 29.58,
@@ -476,7 +476,7 @@
             "REVERSING": 23.06,
             "UNFORMED": 12.92
           },
-          "CURRENT": {
+          "AXIS_PER_HOUSE": {
             "FULFILLED": 0.21,
             "MOVING": 0.63,
             "DELAYED": 32.78,
@@ -497,12 +497,12 @@
       "1": {
         "n": 1440,
         "meanScore": {
-          "BEFORE_AXIS_RULE": -3.08,
-          "CURRENT": -2.42,
+          "CURRENT": -3.08,
+          "AXIS_PER_HOUSE": -2.42,
           "AXIS_PER_JUDGMENT": -1.92
         },
         "statePct": {
-          "BEFORE_AXIS_RULE": {
+          "CURRENT": {
             "FULFILLED": 0.21,
             "MOVING": 0.63,
             "DELAYED": 29.58,
@@ -510,7 +510,7 @@
             "REVERSING": 23.06,
             "UNFORMED": 12.92
           },
-          "CURRENT": {
+          "AXIS_PER_HOUSE": {
             "FULFILLED": 0.21,
             "MOVING": 0.63,
             "DELAYED": 32.78,
@@ -531,12 +531,12 @@
       "2": {
         "n": 1440,
         "meanScore": {
-          "BEFORE_AXIS_RULE": -3.08,
-          "CURRENT": -2.42,
+          "CURRENT": -3.08,
+          "AXIS_PER_HOUSE": -2.42,
           "AXIS_PER_JUDGMENT": -1.92
         },
         "statePct": {
-          "BEFORE_AXIS_RULE": {
+          "CURRENT": {
             "FULFILLED": 0.21,
             "MOVING": 0.63,
             "DELAYED": 29.58,
@@ -544,7 +544,7 @@
             "REVERSING": 23.06,
             "UNFORMED": 12.92
           },
-          "CURRENT": {
+          "AXIS_PER_HOUSE": {
             "FULFILLED": 0.21,
             "MOVING": 0.63,
             "DELAYED": 32.78,
@@ -565,12 +565,12 @@
       "3": {
         "n": 1440,
         "meanScore": {
-          "BEFORE_AXIS_RULE": -3.09,
-          "CURRENT": -2.42,
+          "CURRENT": -3.09,
+          "AXIS_PER_HOUSE": -2.42,
           "AXIS_PER_JUDGMENT": -1.92
         },
         "statePct": {
-          "BEFORE_AXIS_RULE": {
+          "CURRENT": {
             "FULFILLED": 0.21,
             "MOVING": 0.63,
             "DELAYED": 29.58,
@@ -578,7 +578,7 @@
             "REVERSING": 23.06,
             "UNFORMED": 12.92
           },
-          "CURRENT": {
+          "AXIS_PER_HOUSE": {
             "FULFILLED": 0.21,
             "MOVING": 0.63,
             "DELAYED": 32.78,
@@ -599,12 +599,12 @@
       "4": {
         "n": 1440,
         "meanScore": {
-          "BEFORE_AXIS_RULE": -3.09,
-          "CURRENT": -2.42,
+          "CURRENT": -3.09,
+          "AXIS_PER_HOUSE": -2.42,
           "AXIS_PER_JUDGMENT": -1.92
         },
         "statePct": {
-          "BEFORE_AXIS_RULE": {
+          "CURRENT": {
             "FULFILLED": 0.21,
             "MOVING": 0.63,
             "DELAYED": 29.58,
@@ -612,7 +612,7 @@
             "REVERSING": 23.06,
             "UNFORMED": 12.92
           },
-          "CURRENT": {
+          "AXIS_PER_HOUSE": {
             "FULFILLED": 0.21,
             "MOVING": 0.63,
             "DELAYED": 32.78,
@@ -633,12 +633,12 @@
       "5": {
         "n": 1440,
         "meanScore": {
-          "BEFORE_AXIS_RULE": -3.09,
-          "CURRENT": -2.42,
+          "CURRENT": -3.09,
+          "AXIS_PER_HOUSE": -2.42,
           "AXIS_PER_JUDGMENT": -1.92
         },
         "statePct": {
-          "BEFORE_AXIS_RULE": {
+          "CURRENT": {
             "FULFILLED": 0.21,
             "MOVING": 0.63,
             "DELAYED": 29.58,
@@ -646,7 +646,7 @@
             "REVERSING": 23.06,
             "UNFORMED": 12.92
           },
-          "CURRENT": {
+          "AXIS_PER_HOUSE": {
             "FULFILLED": 0.21,
             "MOVING": 0.63,
             "DELAYED": 32.78,
@@ -667,12 +667,12 @@
       "6": {
         "n": 1440,
         "meanScore": {
-          "BEFORE_AXIS_RULE": -3.09,
-          "CURRENT": -2.42,
+          "CURRENT": -3.09,
+          "AXIS_PER_HOUSE": -2.42,
           "AXIS_PER_JUDGMENT": -1.92
         },
         "statePct": {
-          "BEFORE_AXIS_RULE": {
+          "CURRENT": {
             "FULFILLED": 0.21,
             "MOVING": 0.63,
             "DELAYED": 29.58,
@@ -680,7 +680,7 @@
             "REVERSING": 23.06,
             "UNFORMED": 12.92
           },
-          "CURRENT": {
+          "AXIS_PER_HOUSE": {
             "FULFILLED": 0.21,
             "MOVING": 0.63,
             "DELAYED": 32.78,
@@ -701,12 +701,12 @@
       "7": {
         "n": 1440,
         "meanScore": {
-          "BEFORE_AXIS_RULE": -3.08,
-          "CURRENT": -2.42,
+          "CURRENT": -3.08,
+          "AXIS_PER_HOUSE": -2.42,
           "AXIS_PER_JUDGMENT": -1.92
         },
         "statePct": {
-          "BEFORE_AXIS_RULE": {
+          "CURRENT": {
             "FULFILLED": 0.21,
             "MOVING": 0.63,
             "DELAYED": 29.38,
@@ -714,7 +714,7 @@
             "REVERSING": 23.06,
             "UNFORMED": 13.13
           },
-          "CURRENT": {
+          "AXIS_PER_HOUSE": {
             "FULFILLED": 0.21,
             "MOVING": 0.63,
             "DELAYED": 32.57,
@@ -735,12 +735,12 @@
       "8": {
         "n": 1440,
         "meanScore": {
-          "BEFORE_AXIS_RULE": -3.09,
-          "CURRENT": -2.42,
+          "CURRENT": -3.09,
+          "AXIS_PER_HOUSE": -2.42,
           "AXIS_PER_JUDGMENT": -1.92
         },
         "statePct": {
-          "BEFORE_AXIS_RULE": {
+          "CURRENT": {
             "FULFILLED": 0.21,
             "MOVING": 0.63,
             "DELAYED": 29.38,
@@ -748,7 +748,7 @@
             "REVERSING": 22.99,
             "UNFORMED": 13.13
           },
-          "CURRENT": {
+          "AXIS_PER_HOUSE": {
             "FULFILLED": 0.21,
             "MOVING": 0.63,
             "DELAYED": 32.57,
@@ -769,12 +769,12 @@
       "9": {
         "n": 1440,
         "meanScore": {
-          "BEFORE_AXIS_RULE": -3.09,
-          "CURRENT": -2.42,
+          "CURRENT": -3.09,
+          "AXIS_PER_HOUSE": -2.42,
           "AXIS_PER_JUDGMENT": -1.92
         },
         "statePct": {
-          "BEFORE_AXIS_RULE": {
+          "CURRENT": {
             "FULFILLED": 0.21,
             "MOVING": 0.63,
             "DELAYED": 29.38,
@@ -782,7 +782,7 @@
             "REVERSING": 22.99,
             "UNFORMED": 13.13
           },
-          "CURRENT": {
+          "AXIS_PER_HOUSE": {
             "FULFILLED": 0.21,
             "MOVING": 0.63,
             "DELAYED": 32.57,
@@ -803,12 +803,12 @@
       "10": {
         "n": 1440,
         "meanScore": {
-          "BEFORE_AXIS_RULE": -3.09,
-          "CURRENT": -2.42,
+          "CURRENT": -3.09,
+          "AXIS_PER_HOUSE": -2.42,
           "AXIS_PER_JUDGMENT": -1.92
         },
         "statePct": {
-          "BEFORE_AXIS_RULE": {
+          "CURRENT": {
             "FULFILLED": 0.21,
             "MOVING": 0.63,
             "DELAYED": 29.38,
@@ -816,7 +816,7 @@
             "REVERSING": 22.99,
             "UNFORMED": 13.13
           },
-          "CURRENT": {
+          "AXIS_PER_HOUSE": {
             "FULFILLED": 0.21,
             "MOVING": 0.63,
             "DELAYED": 32.57,
@@ -837,12 +837,12 @@
       "11": {
         "n": 1440,
         "meanScore": {
-          "BEFORE_AXIS_RULE": -3.09,
-          "CURRENT": -2.42,
+          "CURRENT": -3.09,
+          "AXIS_PER_HOUSE": -2.42,
           "AXIS_PER_JUDGMENT": -1.92
         },
         "statePct": {
-          "BEFORE_AXIS_RULE": {
+          "CURRENT": {
             "FULFILLED": 0.21,
             "MOVING": 0.63,
             "DELAYED": 29.38,
@@ -850,7 +850,7 @@
             "REVERSING": 22.99,
             "UNFORMED": 13.13
           },
-          "CURRENT": {
+          "AXIS_PER_HOUSE": {
             "FULFILLED": 0.21,
             "MOVING": 0.63,
             "DELAYED": 32.57,
@@ -871,12 +871,12 @@
       "12": {
         "n": 1440,
         "meanScore": {
-          "BEFORE_AXIS_RULE": -3.09,
-          "CURRENT": -2.42,
+          "CURRENT": -3.09,
+          "AXIS_PER_HOUSE": -2.42,
           "AXIS_PER_JUDGMENT": -1.92
         },
         "statePct": {
-          "BEFORE_AXIS_RULE": {
+          "CURRENT": {
             "FULFILLED": 0.21,
             "MOVING": 0.63,
             "DELAYED": 29.38,
@@ -884,7 +884,7 @@
             "REVERSING": 22.99,
             "UNFORMED": 13.13
           },
-          "CURRENT": {
+          "AXIS_PER_HOUSE": {
             "FULFILLED": 0.21,
             "MOVING": 0.63,
             "DELAYED": 32.57,
@@ -905,12 +905,12 @@
       "13": {
         "n": 1440,
         "meanScore": {
-          "BEFORE_AXIS_RULE": -3.09,
-          "CURRENT": -2.42,
+          "CURRENT": -3.09,
+          "AXIS_PER_HOUSE": -2.42,
           "AXIS_PER_JUDGMENT": -1.92
         },
         "statePct": {
-          "BEFORE_AXIS_RULE": {
+          "CURRENT": {
             "FULFILLED": 0.14,
             "MOVING": 0.56,
             "DELAYED": 29.31,
@@ -918,7 +918,7 @@
             "REVERSING": 23.26,
             "UNFORMED": 13.06
           },
-          "CURRENT": {
+          "AXIS_PER_HOUSE": {
             "FULFILLED": 0.14,
             "MOVING": 0.56,
             "DELAYED": 32.5,
@@ -939,12 +939,12 @@
       "14": {
         "n": 1440,
         "meanScore": {
-          "BEFORE_AXIS_RULE": -3.09,
-          "CURRENT": -2.42,
+          "CURRENT": -3.09,
+          "AXIS_PER_HOUSE": -2.42,
           "AXIS_PER_JUDGMENT": -1.92
         },
         "statePct": {
-          "BEFORE_AXIS_RULE": {
+          "CURRENT": {
             "FULFILLED": 0.14,
             "MOVING": 0.56,
             "DELAYED": 29.17,
@@ -952,7 +952,7 @@
             "REVERSING": 23.4,
             "UNFORMED": 13.06
           },
-          "CURRENT": {
+          "AXIS_PER_HOUSE": {
             "FULFILLED": 0.14,
             "MOVING": 0.56,
             "DELAYED": 32.29,
@@ -973,12 +973,12 @@
       "15": {
         "n": 1440,
         "meanScore": {
-          "BEFORE_AXIS_RULE": -3.09,
-          "CURRENT": -2.42,
+          "CURRENT": -3.09,
+          "AXIS_PER_HOUSE": -2.42,
           "AXIS_PER_JUDGMENT": -1.92
         },
         "statePct": {
-          "BEFORE_AXIS_RULE": {
+          "CURRENT": {
             "FULFILLED": 0.14,
             "MOVING": 0.49,
             "DELAYED": 29.17,
@@ -986,7 +986,7 @@
             "REVERSING": 23.4,
             "UNFORMED": 13.13
           },
-          "CURRENT": {
+          "AXIS_PER_HOUSE": {
             "FULFILLED": 0.14,
             "MOVING": 0.49,
             "DELAYED": 32.29,
@@ -1007,12 +1007,12 @@
       "16": {
         "n": 1440,
         "meanScore": {
-          "BEFORE_AXIS_RULE": -3.09,
-          "CURRENT": -2.42,
+          "CURRENT": -3.09,
+          "AXIS_PER_HOUSE": -2.42,
           "AXIS_PER_JUDGMENT": -1.92
         },
         "statePct": {
-          "BEFORE_AXIS_RULE": {
+          "CURRENT": {
             "FULFILLED": 0.14,
             "MOVING": 0.49,
             "DELAYED": 29.03,
@@ -1020,7 +1020,7 @@
             "REVERSING": 23.75,
             "UNFORMED": 12.92
           },
-          "CURRENT": {
+          "AXIS_PER_HOUSE": {
             "FULFILLED": 0.14,
             "MOVING": 0.49,
             "DELAYED": 32.15,
@@ -1041,12 +1041,12 @@
       "17": {
         "n": 1440,
         "meanScore": {
-          "BEFORE_AXIS_RULE": -3.09,
-          "CURRENT": -2.42,
+          "CURRENT": -3.09,
+          "AXIS_PER_HOUSE": -2.42,
           "AXIS_PER_JUDGMENT": -1.92
         },
         "statePct": {
-          "BEFORE_AXIS_RULE": {
+          "CURRENT": {
             "FULFILLED": 0.14,
             "MOVING": 0.49,
             "DELAYED": 29.03,
@@ -1054,7 +1054,7 @@
             "REVERSING": 23.75,
             "UNFORMED": 12.92
           },
-          "CURRENT": {
+          "AXIS_PER_HOUSE": {
             "FULFILLED": 0.14,
             "MOVING": 0.49,
             "DELAYED": 32.15,
@@ -1075,12 +1075,12 @@
       "18": {
         "n": 1440,
         "meanScore": {
-          "BEFORE_AXIS_RULE": -3.09,
-          "CURRENT": -2.42,
+          "CURRENT": -3.09,
+          "AXIS_PER_HOUSE": -2.42,
           "AXIS_PER_JUDGMENT": -1.92
         },
         "statePct": {
-          "BEFORE_AXIS_RULE": {
+          "CURRENT": {
             "FULFILLED": 0.14,
             "MOVING": 0.56,
             "DELAYED": 29.03,
@@ -1088,7 +1088,7 @@
             "REVERSING": 23.75,
             "UNFORMED": 12.85
           },
-          "CURRENT": {
+          "AXIS_PER_HOUSE": {
             "FULFILLED": 0.14,
             "MOVING": 0.56,
             "DELAYED": 32.15,
@@ -1109,12 +1109,12 @@
       "19": {
         "n": 1440,
         "meanScore": {
-          "BEFORE_AXIS_RULE": -3.09,
-          "CURRENT": -2.42,
+          "CURRENT": -3.09,
+          "AXIS_PER_HOUSE": -2.42,
           "AXIS_PER_JUDGMENT": -1.92
         },
         "statePct": {
-          "BEFORE_AXIS_RULE": {
+          "CURRENT": {
             "FULFILLED": 0.14,
             "MOVING": 0.56,
             "DELAYED": 29.17,
@@ -1122,7 +1122,7 @@
             "REVERSING": 23.75,
             "UNFORMED": 12.78
           },
-          "CURRENT": {
+          "AXIS_PER_HOUSE": {
             "FULFILLED": 0.14,
             "MOVING": 0.56,
             "DELAYED": 32.29,
@@ -1143,12 +1143,12 @@
       "20": {
         "n": 1440,
         "meanScore": {
-          "BEFORE_AXIS_RULE": -3.09,
-          "CURRENT": -2.43,
+          "CURRENT": -3.09,
+          "AXIS_PER_HOUSE": -2.43,
           "AXIS_PER_JUDGMENT": -1.93
         },
         "statePct": {
-          "BEFORE_AXIS_RULE": {
+          "CURRENT": {
             "FULFILLED": 0.14,
             "MOVING": 0.56,
             "DELAYED": 29.24,
@@ -1156,7 +1156,7 @@
             "REVERSING": 23.75,
             "UNFORMED": 12.57
           },
-          "CURRENT": {
+          "AXIS_PER_HOUSE": {
             "FULFILLED": 0.14,
             "MOVING": 0.56,
             "DELAYED": 32.43,
@@ -1177,12 +1177,12 @@
       "21": {
         "n": 1440,
         "meanScore": {
-          "BEFORE_AXIS_RULE": -3.09,
-          "CURRENT": -2.42,
+          "CURRENT": -3.09,
+          "AXIS_PER_HOUSE": -2.42,
           "AXIS_PER_JUDGMENT": -1.92
         },
         "statePct": {
-          "BEFORE_AXIS_RULE": {
+          "CURRENT": {
             "FULFILLED": 0.14,
             "MOVING": 0.63,
             "DELAYED": 29.24,
@@ -1190,7 +1190,7 @@
             "REVERSING": 23.75,
             "UNFORMED": 12.5
           },
-          "CURRENT": {
+          "AXIS_PER_HOUSE": {
             "FULFILLED": 0.14,
             "MOVING": 0.63,
             "DELAYED": 32.43,
@@ -1211,12 +1211,12 @@
       "22": {
         "n": 1440,
         "meanScore": {
-          "BEFORE_AXIS_RULE": -3.1,
-          "CURRENT": -2.43,
+          "CURRENT": -3.1,
+          "AXIS_PER_HOUSE": -2.43,
           "AXIS_PER_JUDGMENT": -1.93
         },
         "statePct": {
-          "BEFORE_AXIS_RULE": {
+          "CURRENT": {
             "FULFILLED": 0.14,
             "MOVING": 0.49,
             "DELAYED": 29.24,
@@ -1224,7 +1224,7 @@
             "REVERSING": 23.75,
             "UNFORMED": 12.57
           },
-          "CURRENT": {
+          "AXIS_PER_HOUSE": {
             "FULFILLED": 0.14,
             "MOVING": 0.49,
             "DELAYED": 32.43,
@@ -1245,12 +1245,12 @@
       "23": {
         "n": 1440,
         "meanScore": {
-          "BEFORE_AXIS_RULE": -3.1,
-          "CURRENT": -2.44,
+          "CURRENT": -3.1,
+          "AXIS_PER_HOUSE": -2.44,
           "AXIS_PER_JUDGMENT": -1.94
         },
         "statePct": {
-          "BEFORE_AXIS_RULE": {
+          "CURRENT": {
             "FULFILLED": 0.14,
             "MOVING": 0.49,
             "DELAYED": 29.24,
@@ -1258,7 +1258,7 @@
             "REVERSING": 23.75,
             "UNFORMED": 12.57
           },
-          "CURRENT": {
+          "AXIS_PER_HOUSE": {
             "FULFILLED": 0.14,
             "MOVING": 0.49,
             "DELAYED": 32.43,
@@ -1281,12 +1281,12 @@
       "Burj Hamal": {
         "n": 2880,
         "meanScore": {
-          "BEFORE_AXIS_RULE": -6.67,
-          "CURRENT": -4.67,
+          "CURRENT": -6.67,
+          "AXIS_PER_HOUSE": -4.67,
           "AXIS_PER_JUDGMENT": -3.67
         },
         "statePct": {
-          "BEFORE_AXIS_RULE": {
+          "CURRENT": {
             "FULFILLED": 0,
             "MOVING": 0,
             "DELAYED": 0,
@@ -1294,7 +1294,7 @@
             "REVERSING": 0,
             "UNFORMED": 0
           },
-          "CURRENT": {
+          "AXIS_PER_HOUSE": {
             "FULFILLED": 0,
             "MOVING": 0,
             "DELAYED": 2.15,
@@ -1315,12 +1315,12 @@
       "Burj Saur": {
         "n": 2880,
         "meanScore": {
-          "BEFORE_AXIS_RULE": -0.59,
-          "CURRENT": -0.09,
+          "CURRENT": -0.59,
+          "AXIS_PER_HOUSE": -0.09,
           "AXIS_PER_JUDGMENT": -0.09
         },
         "statePct": {
-          "BEFORE_AXIS_RULE": {
+          "CURRENT": {
             "FULFILLED": 0,
             "MOVING": 0,
             "DELAYED": 27.15,
@@ -1328,7 +1328,7 @@
             "REVERSING": 53.13,
             "UNFORMED": 19.72
           },
-          "CURRENT": {
+          "AXIS_PER_HOUSE": {
             "FULFILLED": 0,
             "MOVING": 0,
             "DELAYED": 27.15,
@@ -1349,12 +1349,12 @@
       "Burj Jauza": {
         "n": 2880,
         "meanScore": {
-          "BEFORE_AXIS_RULE": -0.71,
           "CURRENT": -0.71,
+          "AXIS_PER_HOUSE": -0.71,
           "AXIS_PER_JUDGMENT": 0.29
         },
         "statePct": {
-          "BEFORE_AXIS_RULE": {
+          "CURRENT": {
             "FULFILLED": 0,
             "MOVING": 0,
             "DELAYED": 52.05,
@@ -1362,7 +1362,7 @@
             "REVERSING": 5.28,
             "UNFORMED": 42.67
           },
-          "CURRENT": {
+          "AXIS_PER_HOUSE": {
             "FULFILLED": 0,
             "MOVING": 0,
             "DELAYED": 52.05,
@@ -1383,12 +1383,12 @@
       "Burj Sartan": {
         "n": 2880,
         "meanScore": {
-          "BEFORE_AXIS_RULE": -3.18,
-          "CURRENT": -2.68,
+          "CURRENT": -3.18,
+          "AXIS_PER_HOUSE": -2.68,
           "AXIS_PER_JUDGMENT": -2.68
         },
         "statePct": {
-          "BEFORE_AXIS_RULE": {
+          "CURRENT": {
             "FULFILLED": 0,
             "MOVING": 0,
             "DELAYED": 27.08,
@@ -1396,7 +1396,7 @@
             "REVERSING": 25,
             "UNFORMED": 36.94
           },
-          "CURRENT": {
+          "AXIS_PER_HOUSE": {
             "FULFILLED": 0,
             "MOVING": 0,
             "DELAYED": 38.06,
@@ -1417,12 +1417,12 @@
       "Burj Asad": {
         "n": 2880,
         "meanScore": {
-          "BEFORE_AXIS_RULE": -6.56,
-          "CURRENT": -5.56,
+          "CURRENT": -6.56,
+          "AXIS_PER_HOUSE": -5.56,
           "AXIS_PER_JUDGMENT": -4.56
         },
         "statePct": {
-          "BEFORE_AXIS_RULE": {
+          "CURRENT": {
             "FULFILLED": 0,
             "MOVING": 0,
             "DELAYED": 21.88,
@@ -1430,7 +1430,7 @@
             "REVERSING": 19.24,
             "UNFORMED": 0
           },
-          "CURRENT": {
+          "AXIS_PER_HOUSE": {
             "FULFILLED": 0,
             "MOVING": 0,
             "DELAYED": 21.88,
@@ -1451,12 +1451,12 @@
       "Burj Sunbula": {
         "n": 2880,
         "meanScore": {
-          "BEFORE_AXIS_RULE": 0.41,
           "CURRENT": 0.41,
+          "AXIS_PER_HOUSE": 0.41,
           "AXIS_PER_JUDGMENT": 0.41
         },
         "statePct": {
-          "BEFORE_AXIS_RULE": {
+          "CURRENT": {
             "FULFILLED": 0,
             "MOVING": 2.12,
             "DELAYED": 44.72,
@@ -1464,7 +1464,7 @@
             "REVERSING": 33.44,
             "UNFORMED": 19.72
           },
-          "CURRENT": {
+          "AXIS_PER_HOUSE": {
             "FULFILLED": 0,
             "MOVING": 2.12,
             "DELAYED": 44.72,
@@ -1485,12 +1485,12 @@
       "Burj Meezan": {
         "n": 2880,
         "meanScore": {
-          "BEFORE_AXIS_RULE": -4.81,
-          "CURRENT": -2.81,
+          "CURRENT": -4.81,
+          "AXIS_PER_HOUSE": -2.81,
           "AXIS_PER_JUDGMENT": -1.81
         },
         "statePct": {
-          "BEFORE_AXIS_RULE": {
+          "CURRENT": {
             "FULFILLED": 0,
             "MOVING": 0,
             "DELAYED": 25,
@@ -1498,7 +1498,7 @@
             "REVERSING": 22.88,
             "UNFORMED": 3.89
           },
-          "CURRENT": {
+          "AXIS_PER_HOUSE": {
             "FULFILLED": 0,
             "MOVING": 0,
             "DELAYED": 50,
@@ -1519,12 +1519,12 @@
       "Burj Aqrab": {
         "n": 2880,
         "meanScore": {
-          "BEFORE_AXIS_RULE": -3.02,
-          "CURRENT": -2.52,
+          "CURRENT": -3.02,
+          "AXIS_PER_HOUSE": -2.52,
           "AXIS_PER_JUDGMENT": -2.52
         },
         "statePct": {
-          "BEFORE_AXIS_RULE": {
+          "CURRENT": {
             "FULFILLED": 0,
             "MOVING": 0,
             "DELAYED": 52.12,
@@ -1532,7 +1532,7 @@
             "REVERSING": 22.88,
             "UNFORMED": 14.03
           },
-          "CURRENT": {
+          "AXIS_PER_HOUSE": {
             "FULFILLED": 0,
             "MOVING": 0,
             "DELAYED": 52.12,
@@ -1553,12 +1553,12 @@
       "Burj Qaus": {
         "n": 2880,
         "meanScore": {
-          "BEFORE_AXIS_RULE": -4.26,
           "CURRENT": -4.26,
+          "AXIS_PER_HOUSE": -4.26,
           "AXIS_PER_JUDGMENT": -3.26
         },
         "statePct": {
-          "BEFORE_AXIS_RULE": {
+          "CURRENT": {
             "FULFILLED": 0,
             "MOVING": 0,
             "DELAYED": 0,
@@ -1566,7 +1566,7 @@
             "REVERSING": 25,
             "UNFORMED": 0
           },
-          "CURRENT": {
+          "AXIS_PER_HOUSE": {
             "FULFILLED": 0,
             "MOVING": 0,
             "DELAYED": 0,
@@ -1587,12 +1587,12 @@
       "Burj Jadi": {
         "n": 2880,
         "meanScore": {
-          "BEFORE_AXIS_RULE": 0.7,
-          "CURRENT": 1.2,
+          "CURRENT": 0.7,
+          "AXIS_PER_HOUSE": 1.2,
           "AXIS_PER_JUDGMENT": 1.2
         },
         "statePct": {
-          "BEFORE_AXIS_RULE": {
+          "CURRENT": {
             "FULFILLED": 2.12,
             "MOVING": 4.86,
             "DELAYED": 2.08,
@@ -1600,7 +1600,7 @@
             "REVERSING": 72.88,
             "UNFORMED": 18.06
           },
-          "CURRENT": {
+          "AXIS_PER_HOUSE": {
             "FULFILLED": 2.12,
             "MOVING": 4.86,
             "DELAYED": 2.08,
@@ -1621,12 +1621,12 @@
       "Burj Dalw": {
         "n": 2880,
         "meanScore": {
-          "BEFORE_AXIS_RULE": -6.86,
-          "CURRENT": -5.86,
+          "CURRENT": -6.86,
+          "AXIS_PER_HOUSE": -5.86,
           "AXIS_PER_JUDGMENT": -4.86
         },
         "statePct": {
-          "BEFORE_AXIS_RULE": {
+          "CURRENT": {
             "FULFILLED": 0,
             "MOVING": 0,
             "DELAYED": 25,
@@ -1634,7 +1634,7 @@
             "REVERSING": 0,
             "UNFORMED": 0
           },
-          "CURRENT": {
+          "AXIS_PER_HOUSE": {
             "FULFILLED": 0,
             "MOVING": 0,
             "DELAYED": 25,
@@ -1655,12 +1655,12 @@
       "Burj Hoot": {
         "n": 2880,
         "meanScore": {
-          "BEFORE_AXIS_RULE": -1.51,
           "CURRENT": -1.51,
+          "AXIS_PER_HOUSE": -1.51,
           "AXIS_PER_JUDGMENT": -1.51
         },
         "statePct": {
-          "BEFORE_AXIS_RULE": {
+          "CURRENT": {
             "FULFILLED": 0,
             "MOVING": 0,
             "DELAYED": 75,
@@ -1668,7 +1668,7 @@
             "REVERSING": 0,
             "UNFORMED": 0
           },
-          "CURRENT": {
+          "AXIS_PER_HOUSE": {
             "FULFILLED": 0,
             "MOVING": 0,
             "DELAYED": 75,
@@ -1691,12 +1691,12 @@
       "Rahu in house 1 counted from the target": {
         "n": 2880,
         "meanScore": {
-          "BEFORE_AXIS_RULE": -7,
-          "CURRENT": -5,
+          "CURRENT": -7,
+          "AXIS_PER_HOUSE": -5,
           "AXIS_PER_JUDGMENT": -4
         },
         "statePct": {
-          "BEFORE_AXIS_RULE": {
+          "CURRENT": {
             "FULFILLED": 0,
             "MOVING": 0,
             "DELAYED": 0,
@@ -1704,7 +1704,7 @@
             "REVERSING": 50,
             "UNFORMED": 0
           },
-          "CURRENT": {
+          "AXIS_PER_HOUSE": {
             "FULFILLED": 0,
             "MOVING": 0,
             "DELAYED": 0,
@@ -1725,12 +1725,12 @@
       "Rahu in house 2 counted from the target": {
         "n": 2880,
         "meanScore": {
-          "BEFORE_AXIS_RULE": -2.25,
-          "CURRENT": -1.75,
+          "CURRENT": -2.25,
+          "AXIS_PER_HOUSE": -1.75,
           "AXIS_PER_JUDGMENT": -1.75
         },
         "statePct": {
-          "BEFORE_AXIS_RULE": {
+          "CURRENT": {
             "FULFILLED": 0,
             "MOVING": 0,
             "DELAYED": 0,
@@ -1738,7 +1738,7 @@
             "REVERSING": 75,
             "UNFORMED": 0
           },
-          "CURRENT": {
+          "AXIS_PER_HOUSE": {
             "FULFILLED": 0,
             "MOVING": 0,
             "DELAYED": 0,
@@ -1759,12 +1759,12 @@
       "Rahu in house 3 counted from the target": {
         "n": 2880,
         "meanScore": {
-          "BEFORE_AXIS_RULE": -2.75,
           "CURRENT": -2.75,
+          "AXIS_PER_HOUSE": -2.75,
           "AXIS_PER_JUDGMENT": -1.75
         },
         "statePct": {
-          "BEFORE_AXIS_RULE": {
+          "CURRENT": {
             "FULFILLED": 0,
             "MOVING": 0,
             "DELAYED": 75,
@@ -1772,7 +1772,7 @@
             "REVERSING": 0,
             "UNFORMED": 0
           },
-          "CURRENT": {
+          "AXIS_PER_HOUSE": {
             "FULFILLED": 0,
             "MOVING": 0,
             "DELAYED": 75,
@@ -1793,12 +1793,12 @@
       "Rahu in house 4 counted from the target": {
         "n": 2880,
         "meanScore": {
-          "BEFORE_AXIS_RULE": -2.75,
-          "CURRENT": -2.25,
+          "CURRENT": -2.75,
+          "AXIS_PER_HOUSE": -2.25,
           "AXIS_PER_JUDGMENT": -2.25
         },
         "statePct": {
-          "BEFORE_AXIS_RULE": {
+          "CURRENT": {
             "FULFILLED": 0,
             "MOVING": 0,
             "DELAYED": 75,
@@ -1806,7 +1806,7 @@
             "REVERSING": 0,
             "UNFORMED": 0
           },
-          "CURRENT": {
+          "AXIS_PER_HOUSE": {
             "FULFILLED": 0,
             "MOVING": 0,
             "DELAYED": 75,
@@ -1827,12 +1827,12 @@
       "Rahu in house 5 counted from the target": {
         "n": 2880,
         "meanScore": {
-          "BEFORE_AXIS_RULE": -0.34,
-          "CURRENT": 0.66,
+          "CURRENT": -0.34,
+          "AXIS_PER_HOUSE": 0.66,
           "AXIS_PER_JUDGMENT": 1.66
         },
         "statePct": {
-          "BEFORE_AXIS_RULE": {
+          "CURRENT": {
             "FULFILLED": 2.12,
             "MOVING": 2.12,
             "DELAYED": 0,
@@ -1840,7 +1840,7 @@
             "REVERSING": 68.65,
             "UNFORMED": 2.12
           },
-          "CURRENT": {
+          "AXIS_PER_HOUSE": {
             "FULFILLED": 2.12,
             "MOVING": 2.12,
             "DELAYED": 0,
@@ -1861,12 +1861,12 @@
       "Rahu in house 6 counted from the target": {
         "n": 2880,
         "meanScore": {
-          "BEFORE_AXIS_RULE": -4.02,
           "CURRENT": -4.02,
+          "AXIS_PER_HOUSE": -4.02,
           "AXIS_PER_JUDGMENT": -4.02
         },
         "statePct": {
-          "BEFORE_AXIS_RULE": {
+          "CURRENT": {
             "FULFILLED": 0,
             "MOVING": 0,
             "DELAYED": 39.44,
@@ -1874,7 +1874,7 @@
             "REVERSING": 10.07,
             "UNFORMED": 0
           },
-          "CURRENT": {
+          "AXIS_PER_HOUSE": {
             "FULFILLED": 0,
             "MOVING": 0,
             "DELAYED": 39.44,
@@ -1895,12 +1895,12 @@
       "Rahu in house 7 counted from the target": {
         "n": 2880,
         "meanScore": {
-          "BEFORE_AXIS_RULE": -6.99,
-          "CURRENT": -4.99,
+          "CURRENT": -6.99,
+          "AXIS_PER_HOUSE": -4.99,
           "AXIS_PER_JUDGMENT": -3.99
         },
         "statePct": {
-          "BEFORE_AXIS_RULE": {
+          "CURRENT": {
             "FULFILLED": 0,
             "MOVING": 0,
             "DELAYED": 0,
@@ -1908,7 +1908,7 @@
             "REVERSING": 0,
             "UNFORMED": 28.06
           },
-          "CURRENT": {
+          "AXIS_PER_HOUSE": {
             "FULFILLED": 0,
             "MOVING": 0,
             "DELAYED": 10.97,
@@ -1929,12 +1929,12 @@
       "Rahu in house 8 counted from the target": {
         "n": 2880,
         "meanScore": {
-          "BEFORE_AXIS_RULE": -2.36,
-          "CURRENT": -1.86,
+          "CURRENT": -2.36,
+          "AXIS_PER_HOUSE": -1.86,
           "AXIS_PER_JUDGMENT": -1.86
         },
         "statePct": {
-          "BEFORE_AXIS_RULE": {
+          "CURRENT": {
             "FULFILLED": 0,
             "MOVING": 4.86,
             "DELAYED": 6.22,
@@ -1942,7 +1942,7 @@
             "REVERSING": 0,
             "UNFORMED": 65.69
           },
-          "CURRENT": {
+          "AXIS_PER_HOUSE": {
             "FULFILLED": 0,
             "MOVING": 4.86,
             "DELAYED": 6.22,
@@ -1963,12 +1963,12 @@
       "Rahu in house 9 counted from the target": {
         "n": 2880,
         "meanScore": {
-          "BEFORE_AXIS_RULE": -2.02,
           "CURRENT": -2.02,
+          "AXIS_PER_HOUSE": -2.02,
           "AXIS_PER_JUDGMENT": -1.02
         },
         "statePct": {
-          "BEFORE_AXIS_RULE": {
+          "CURRENT": {
             "FULFILLED": 0,
             "MOVING": 0,
             "DELAYED": 0,
@@ -1976,7 +1976,7 @@
             "REVERSING": 15.83,
             "UNFORMED": 59.17
           },
-          "CURRENT": {
+          "AXIS_PER_HOUSE": {
             "FULFILLED": 0,
             "MOVING": 0,
             "DELAYED": 0,
@@ -1997,12 +1997,12 @@
       "Rahu in house 10 counted from the target": {
         "n": 2880,
         "meanScore": {
-          "BEFORE_AXIS_RULE": -3.59,
-          "CURRENT": -3.09,
+          "CURRENT": -3.59,
+          "AXIS_PER_HOUSE": -3.09,
           "AXIS_PER_JUDGMENT": -3.09
         },
         "statePct": {
-          "BEFORE_AXIS_RULE": {
+          "CURRENT": {
             "FULFILLED": 0,
             "MOVING": 0,
             "DELAYED": 6.42,
@@ -2010,7 +2010,7 @@
             "REVERSING": 60.17,
             "UNFORMED": 0
           },
-          "CURRENT": {
+          "AXIS_PER_HOUSE": {
             "FULFILLED": 0,
             "MOVING": 0,
             "DELAYED": 8.58,
@@ -2031,12 +2031,12 @@
       "Rahu in house 11 counted from the target": {
         "n": 2880,
         "meanScore": {
-          "BEFORE_AXIS_RULE": -4.5,
-          "CURRENT": -3.5,
+          "CURRENT": -4.5,
+          "AXIS_PER_HOUSE": -3.5,
           "AXIS_PER_JUDGMENT": -2.5
         },
         "statePct": {
-          "BEFORE_AXIS_RULE": {
+          "CURRENT": {
             "FULFILLED": 0,
             "MOVING": 0,
             "DELAYED": 50,
@@ -2044,7 +2044,7 @@
             "REVERSING": 0,
             "UNFORMED": 0
           },
-          "CURRENT": {
+          "AXIS_PER_HOUSE": {
             "FULFILLED": 0,
             "MOVING": 0,
             "DELAYED": 75,
@@ -2065,12 +2065,12 @@
       "Rahu in house 12 counted from the target": {
         "n": 2880,
         "meanScore": {
-          "BEFORE_AXIS_RULE": 1.5,
           "CURRENT": 1.5,
+          "AXIS_PER_HOUSE": 1.5,
           "AXIS_PER_JUDGMENT": 1.5
         },
         "statePct": {
-          "BEFORE_AXIS_RULE": {
+          "CURRENT": {
             "FULFILLED": 0,
             "MOVING": 0,
             "DELAYED": 100,
@@ -2078,7 +2078,7 @@
             "REVERSING": 0,
             "UNFORMED": 0
           },
-          "CURRENT": {
+          "AXIS_PER_HOUSE": {
             "FULFILLED": 0,
             "MOVING": 0,
             "DELAYED": 100,
@@ -2103,12 +2103,12 @@
     "twoYearsOverall": {
       "n": 35040,
       "meanScore": {
-        "BEFORE_AXIS_RULE": -3.54,
-        "CURRENT": -2.87,
+        "CURRENT": -3.54,
+        "AXIS_PER_HOUSE": -2.87,
         "AXIS_PER_JUDGMENT": -2.37
       },
       "statePct": {
-        "BEFORE_AXIS_RULE": {
+        "CURRENT": {
           "FULFILLED": 1.46,
           "MOVING": 3.58,
           "DELAYED": 17.26,
@@ -2116,7 +2116,7 @@
           "REVERSING": 10.65,
           "UNFORMED": 28.43
         },
-        "CURRENT": {
+        "AXIS_PER_HOUSE": {
           "FULFILLED": 1.74,
           "MOVING": 4.18,
           "DELAYED": 19.18,
@@ -2138,12 +2138,12 @@
       "2026-01": {
         "n": 1488,
         "meanScore": {
-          "BEFORE_AXIS_RULE": -4.18,
-          "CURRENT": -3.52,
+          "CURRENT": -4.18,
+          "AXIS_PER_HOUSE": -3.52,
           "AXIS_PER_JUDGMENT": -3.02
         },
         "statePct": {
-          "BEFORE_AXIS_RULE": {
+          "CURRENT": {
             "FULFILLED": 0,
             "MOVING": 0.4,
             "DELAYED": 6.52,
@@ -2151,7 +2151,7 @@
             "REVERSING": 6.32,
             "UNFORMED": 41.4
           },
-          "CURRENT": {
+          "AXIS_PER_HOUSE": {
             "FULFILLED": 0,
             "MOVING": 0.4,
             "DELAYED": 8.74,
@@ -2172,12 +2172,12 @@
       "2026-02": {
         "n": 1344,
         "meanScore": {
-          "BEFORE_AXIS_RULE": -3.98,
-          "CURRENT": -3.31,
+          "CURRENT": -3.98,
+          "AXIS_PER_HOUSE": -3.31,
           "AXIS_PER_JUDGMENT": -2.81
         },
         "statePct": {
-          "BEFORE_AXIS_RULE": {
+          "CURRENT": {
             "FULFILLED": 0,
             "MOVING": 1.26,
             "DELAYED": 7.51,
@@ -2185,7 +2185,7 @@
             "REVERSING": 5.43,
             "UNFORMED": 43.01
           },
-          "CURRENT": {
+          "AXIS_PER_HOUSE": {
             "FULFILLED": 0,
             "MOVING": 5.06,
             "DELAYED": 11.83,
@@ -2206,12 +2206,12 @@
       "2026-03": {
         "n": 1488,
         "meanScore": {
-          "BEFORE_AXIS_RULE": -4.01,
-          "CURRENT": -3.35,
+          "CURRENT": -4.01,
+          "AXIS_PER_HOUSE": -3.35,
           "AXIS_PER_JUDGMENT": -2.85
         },
         "statePct": {
-          "BEFORE_AXIS_RULE": {
+          "CURRENT": {
             "FULFILLED": 0,
             "MOVING": 4.5,
             "DELAYED": 13.31,
@@ -2219,7 +2219,7 @@
             "REVERSING": 13.1,
             "UNFORMED": 26.08
           },
-          "CURRENT": {
+          "AXIS_PER_HOUSE": {
             "FULFILLED": 0,
             "MOVING": 4.5,
             "DELAYED": 13.44,
@@ -2240,12 +2240,12 @@
       "2026-04": {
         "n": 1440,
         "meanScore": {
-          "BEFORE_AXIS_RULE": -3.86,
-          "CURRENT": -3.19,
+          "CURRENT": -3.86,
+          "AXIS_PER_HOUSE": -3.19,
           "AXIS_PER_JUDGMENT": -2.69
         },
         "statePct": {
-          "BEFORE_AXIS_RULE": {
+          "CURRENT": {
             "FULFILLED": 0,
             "MOVING": 5.49,
             "DELAYED": 12.71,
@@ -2253,7 +2253,7 @@
             "REVERSING": 0,
             "UNFORMED": 42.22
           },
-          "CURRENT": {
+          "AXIS_PER_HOUSE": {
             "FULFILLED": 0,
             "MOVING": 7.01,
             "DELAYED": 12.71,
@@ -2274,12 +2274,12 @@
       "2026-05": {
         "n": 1488,
         "meanScore": {
-          "BEFORE_AXIS_RULE": -3.47,
-          "CURRENT": -2.8,
+          "CURRENT": -3.47,
+          "AXIS_PER_HOUSE": -2.8,
           "AXIS_PER_JUDGMENT": -2.3
         },
         "statePct": {
-          "BEFORE_AXIS_RULE": {
+          "CURRENT": {
             "FULFILLED": 0.2,
             "MOVING": 2.35,
             "DELAYED": 18.35,
@@ -2287,7 +2287,7 @@
             "REVERSING": 0,
             "UNFORMED": 45.7
           },
-          "CURRENT": {
+          "AXIS_PER_HOUSE": {
             "FULFILLED": 0.2,
             "MOVING": 3.97,
             "DELAYED": 20.63,
@@ -2308,12 +2308,12 @@
       "2026-06": {
         "n": 1440,
         "meanScore": {
-          "BEFORE_AXIS_RULE": -3.06,
-          "CURRENT": -2.4,
+          "CURRENT": -3.06,
+          "AXIS_PER_HOUSE": -2.4,
           "AXIS_PER_JUDGMENT": -1.9
         },
         "statePct": {
-          "BEFORE_AXIS_RULE": {
+          "CURRENT": {
             "FULFILLED": 4.51,
             "MOVING": 7.22,
             "DELAYED": 22.5,
@@ -2321,7 +2321,7 @@
             "REVERSING": 0.28,
             "UNFORMED": 27.64
           },
-          "CURRENT": {
+          "AXIS_PER_HOUSE": {
             "FULFILLED": 4.51,
             "MOVING": 7.22,
             "DELAYED": 25.14,
@@ -2342,12 +2342,12 @@
       "2026-07": {
         "n": 1488,
         "meanScore": {
-          "BEFORE_AXIS_RULE": -3.4,
-          "CURRENT": -2.74,
+          "CURRENT": -3.4,
+          "AXIS_PER_HOUSE": -2.74,
           "AXIS_PER_JUDGMENT": -2.24
         },
         "statePct": {
-          "BEFORE_AXIS_RULE": {
+          "CURRENT": {
             "FULFILLED": 1.14,
             "MOVING": 5.65,
             "DELAYED": 16.87,
@@ -2355,7 +2355,7 @@
             "REVERSING": 11.42,
             "UNFORMED": 23.45
           },
-          "CURRENT": {
+          "AXIS_PER_HOUSE": {
             "FULFILLED": 1.14,
             "MOVING": 7.12,
             "DELAYED": 18.82,
@@ -2376,12 +2376,12 @@
       "2026-08": {
         "n": 1488,
         "meanScore": {
-          "BEFORE_AXIS_RULE": -3.97,
-          "CURRENT": -3.3,
+          "CURRENT": -3.97,
+          "AXIS_PER_HOUSE": -3.3,
           "AXIS_PER_JUDGMENT": -2.8
         },
         "statePct": {
-          "BEFORE_AXIS_RULE": {
+          "CURRENT": {
             "FULFILLED": 2.42,
             "MOVING": 2.15,
             "DELAYED": 27.69,
@@ -2389,7 +2389,7 @@
             "REVERSING": 10.55,
             "UNFORMED": 11.49
           },
-          "CURRENT": {
+          "AXIS_PER_HOUSE": {
             "FULFILLED": 2.42,
             "MOVING": 2.15,
             "DELAYED": 27.89,
@@ -2410,12 +2410,12 @@
       "2026-09": {
         "n": 1440,
         "meanScore": {
-          "BEFORE_AXIS_RULE": -2.77,
-          "CURRENT": -2.1,
+          "CURRENT": -2.77,
+          "AXIS_PER_HOUSE": -2.1,
           "AXIS_PER_JUDGMENT": -1.6
         },
         "statePct": {
-          "BEFORE_AXIS_RULE": {
+          "CURRENT": {
             "FULFILLED": 4.51,
             "MOVING": 2.36,
             "DELAYED": 30.14,
@@ -2423,7 +2423,7 @@
             "REVERSING": 10.42,
             "UNFORMED": 18.54
           },
-          "CURRENT": {
+          "AXIS_PER_HOUSE": {
             "FULFILLED": 4.51,
             "MOVING": 2.36,
             "DELAYED": 34.24,
@@ -2444,12 +2444,12 @@
       "2026-10": {
         "n": 1488,
         "meanScore": {
-          "BEFORE_AXIS_RULE": -3.1,
-          "CURRENT": -2.43,
+          "CURRENT": -3.1,
+          "AXIS_PER_HOUSE": -2.43,
           "AXIS_PER_JUDGMENT": -1.93
         },
         "statePct": {
-          "BEFORE_AXIS_RULE": {
+          "CURRENT": {
             "FULFILLED": 0.2,
             "MOVING": 0.6,
             "DELAYED": 29.23,
@@ -2457,7 +2457,7 @@
             "REVERSING": 23.25,
             "UNFORMED": 12.9
           },
-          "CURRENT": {
+          "AXIS_PER_HOUSE": {
             "FULFILLED": 0.2,
             "MOVING": 0.6,
             "DELAYED": 32.46,
@@ -2478,12 +2478,12 @@
       "2026-11": {
         "n": 1440,
         "meanScore": {
-          "BEFORE_AXIS_RULE": -3.63,
-          "CURRENT": -2.97,
+          "CURRENT": -3.63,
+          "AXIS_PER_HOUSE": -2.97,
           "AXIS_PER_JUDGMENT": -2.47
         },
         "statePct": {
-          "BEFORE_AXIS_RULE": {
+          "CURRENT": {
             "FULFILLED": 1.11,
             "MOVING": 1.46,
             "DELAYED": 29.38,
@@ -2491,7 +2491,7 @@
             "REVERSING": 15.69,
             "UNFORMED": 17.64
           },
-          "CURRENT": {
+          "AXIS_PER_HOUSE": {
             "FULFILLED": 1.11,
             "MOVING": 1.46,
             "DELAYED": 31.6,
@@ -2512,12 +2512,12 @@
       "2026-12": {
         "n": 1488,
         "meanScore": {
-          "BEFORE_AXIS_RULE": -3.12,
-          "CURRENT": -2.45,
+          "CURRENT": -3.12,
+          "AXIS_PER_HOUSE": -2.45,
           "AXIS_PER_JUDGMENT": -1.95
         },
         "statePct": {
-          "BEFORE_AXIS_RULE": {
+          "CURRENT": {
             "FULFILLED": 5.91,
             "MOVING": 9.07,
             "DELAYED": 11.02,
@@ -2525,7 +2525,7 @@
             "REVERSING": 8.53,
             "UNFORMED": 25.81
           },
-          "CURRENT": {
+          "AXIS_PER_HOUSE": {
             "FULFILLED": 9.41,
             "MOVING": 5.71,
             "DELAYED": 11.02,
@@ -2546,12 +2546,12 @@
       "2027-01": {
         "n": 1488,
         "meanScore": {
-          "BEFORE_AXIS_RULE": -3.5,
-          "CURRENT": -2.84,
+          "CURRENT": -3.5,
+          "AXIS_PER_HOUSE": -2.84,
           "AXIS_PER_JUDGMENT": -2.34
         },
         "statePct": {
-          "BEFORE_AXIS_RULE": {
+          "CURRENT": {
             "FULFILLED": 0.2,
             "MOVING": 2.02,
             "DELAYED": 7.86,
@@ -2559,7 +2559,7 @@
             "REVERSING": 20.97,
             "UNFORMED": 32.53
           },
-          "CURRENT": {
+          "AXIS_PER_HOUSE": {
             "FULFILLED": 0.34,
             "MOVING": 3.09,
             "DELAYED": 8.53,
@@ -2580,12 +2580,12 @@
       "2027-02": {
         "n": 1344,
         "meanScore": {
-          "BEFORE_AXIS_RULE": -3.3,
-          "CURRENT": -2.64,
+          "CURRENT": -3.3,
+          "AXIS_PER_HOUSE": -2.64,
           "AXIS_PER_JUDGMENT": -2.14
         },
         "statePct": {
-          "BEFORE_AXIS_RULE": {
+          "CURRENT": {
             "FULFILLED": 0,
             "MOVING": 0.97,
             "DELAYED": 2.9,
@@ -2593,7 +2593,7 @@
             "REVERSING": 36.24,
             "UNFORMED": 25.82
           },
-          "CURRENT": {
+          "AXIS_PER_HOUSE": {
             "FULFILLED": 0,
             "MOVING": 3.72,
             "DELAYED": 4.09,
@@ -2614,12 +2614,12 @@
       "2027-03": {
         "n": 1488,
         "meanScore": {
-          "BEFORE_AXIS_RULE": -3.4,
-          "CURRENT": -2.73,
+          "CURRENT": -3.4,
+          "AXIS_PER_HOUSE": -2.73,
           "AXIS_PER_JUDGMENT": -2.23
         },
         "statePct": {
-          "BEFORE_AXIS_RULE": {
+          "CURRENT": {
             "FULFILLED": 0,
             "MOVING": 0.6,
             "DELAYED": 4.3,
@@ -2627,7 +2627,7 @@
             "REVERSING": 27.62,
             "UNFORMED": 35.08
           },
-          "CURRENT": {
+          "AXIS_PER_HOUSE": {
             "FULFILLED": 0,
             "MOVING": 1.21,
             "DELAYED": 5.85,
@@ -2648,12 +2648,12 @@
       "2027-04": {
         "n": 1440,
         "meanScore": {
-          "BEFORE_AXIS_RULE": -3.48,
-          "CURRENT": -2.81,
+          "CURRENT": -3.48,
+          "AXIS_PER_HOUSE": -2.81,
           "AXIS_PER_JUDGMENT": -2.31
         },
         "statePct": {
-          "BEFORE_AXIS_RULE": {
+          "CURRENT": {
             "FULFILLED": 0,
             "MOVING": 3.06,
             "DELAYED": 24.31,
@@ -2661,7 +2661,7 @@
             "REVERSING": 6.67,
             "UNFORMED": 27.57
           },
-          "CURRENT": {
+          "AXIS_PER_HOUSE": {
             "FULFILLED": 0,
             "MOVING": 3.33,
             "DELAYED": 26.46,
@@ -2682,12 +2682,12 @@
       "2027-05": {
         "n": 1488,
         "meanScore": {
-          "BEFORE_AXIS_RULE": -2.93,
-          "CURRENT": -2.26,
+          "CURRENT": -2.93,
+          "AXIS_PER_HOUSE": -2.26,
           "AXIS_PER_JUDGMENT": -1.76
         },
         "statePct": {
-          "BEFORE_AXIS_RULE": {
+          "CURRENT": {
             "FULFILLED": 0.54,
             "MOVING": 4.7,
             "DELAYED": 23.45,
@@ -2695,7 +2695,7 @@
             "REVERSING": 0,
             "UNFORMED": 39.92
           },
-          "CURRENT": {
+          "AXIS_PER_HOUSE": {
             "FULFILLED": 2.02,
             "MOVING": 7.53,
             "DELAYED": 25.81,
@@ -2716,12 +2716,12 @@
       "2027-06": {
         "n": 1440,
         "meanScore": {
-          "BEFORE_AXIS_RULE": -2.72,
-          "CURRENT": -2.06,
+          "CURRENT": -2.72,
+          "AXIS_PER_HOUSE": -2.06,
           "AXIS_PER_JUDGMENT": -1.56
         },
         "statePct": {
-          "BEFORE_AXIS_RULE": {
+          "CURRENT": {
             "FULFILLED": 0.21,
             "MOVING": 2.99,
             "DELAYED": 25,
@@ -2729,7 +2729,7 @@
             "REVERSING": 8.54,
             "UNFORMED": 39.31
           },
-          "CURRENT": {
+          "AXIS_PER_HOUSE": {
             "FULFILLED": 0.42,
             "MOVING": 3.75,
             "DELAYED": 28.75,
@@ -2750,12 +2750,12 @@
       "2027-07": {
         "n": 1488,
         "meanScore": {
-          "BEFORE_AXIS_RULE": -3.92,
-          "CURRENT": -3.26,
+          "CURRENT": -3.92,
+          "AXIS_PER_HOUSE": -3.26,
           "AXIS_PER_JUDGMENT": -2.76
         },
         "statePct": {
-          "BEFORE_AXIS_RULE": {
+          "CURRENT": {
             "FULFILLED": 0,
             "MOVING": 3.7,
             "DELAYED": 29.17,
@@ -2763,7 +2763,7 @@
             "REVERSING": 1.75,
             "UNFORMED": 23.39
           },
-          "CURRENT": {
+          "AXIS_PER_HOUSE": {
             "FULFILLED": 0,
             "MOVING": 3.7,
             "DELAYED": 32.26,
@@ -2784,12 +2784,12 @@
       "2027-08": {
         "n": 1488,
         "meanScore": {
-          "BEFORE_AXIS_RULE": -4.86,
-          "CURRENT": -4.2,
+          "CURRENT": -4.86,
+          "AXIS_PER_HOUSE": -4.2,
           "AXIS_PER_JUDGMENT": -3.7
         },
         "statePct": {
-          "BEFORE_AXIS_RULE": {
+          "CURRENT": {
             "FULFILLED": 3.76,
             "MOVING": 1.81,
             "DELAYED": 17.07,
@@ -2797,7 +2797,7 @@
             "REVERSING": 6.85,
             "UNFORMED": 16.06
           },
-          "CURRENT": {
+          "AXIS_PER_HOUSE": {
             "FULFILLED": 3.76,
             "MOVING": 2.08,
             "DELAYED": 19.22,
@@ -2818,12 +2818,12 @@
       "2027-09": {
         "n": 1440,
         "meanScore": {
-          "BEFORE_AXIS_RULE": -3.9,
-          "CURRENT": -3.23,
+          "CURRENT": -3.9,
+          "AXIS_PER_HOUSE": -3.23,
           "AXIS_PER_JUDGMENT": -2.73
         },
         "statePct": {
-          "BEFORE_AXIS_RULE": {
+          "CURRENT": {
             "FULFILLED": 4.51,
             "MOVING": 4.38,
             "DELAYED": 13.33,
@@ -2831,7 +2831,7 @@
             "REVERSING": 8.33,
             "UNFORMED": 22.92
           },
-          "CURRENT": {
+          "AXIS_PER_HOUSE": {
             "FULFILLED": 4.51,
             "MOVING": 4.38,
             "DELAYED": 13.96,
@@ -2852,12 +2852,12 @@
       "2027-10": {
         "n": 1488,
         "meanScore": {
-          "BEFORE_AXIS_RULE": -3.04,
-          "CURRENT": -2.37,
+          "CURRENT": -3.04,
+          "AXIS_PER_HOUSE": -2.37,
           "AXIS_PER_JUDGMENT": -1.87
         },
         "statePct": {
-          "BEFORE_AXIS_RULE": {
+          "CURRENT": {
             "FULFILLED": 4.5,
             "MOVING": 7.73,
             "DELAYED": 16.87,
@@ -2865,7 +2865,7 @@
             "REVERSING": 12.63,
             "UNFORMED": 21.1
           },
-          "CURRENT": {
+          "AXIS_PER_HOUSE": {
             "FULFILLED": 5.85,
             "MOVING": 6.52,
             "DELAYED": 17.81,
@@ -2886,12 +2886,12 @@
       "2027-11": {
         "n": 1440,
         "meanScore": {
-          "BEFORE_AXIS_RULE": -3.32,
-          "CURRENT": -2.65,
+          "CURRENT": -3.32,
+          "AXIS_PER_HOUSE": -2.65,
           "AXIS_PER_JUDGMENT": -2.15
         },
         "statePct": {
-          "BEFORE_AXIS_RULE": {
+          "CURRENT": {
             "FULFILLED": 1.18,
             "MOVING": 10.49,
             "DELAYED": 14.03,
@@ -2899,7 +2899,7 @@
             "REVERSING": 10.35,
             "UNFORMED": 27.22
           },
-          "CURRENT": {
+          "AXIS_PER_HOUSE": {
             "FULFILLED": 1.18,
             "MOVING": 11.39,
             "DELAYED": 14.51,
@@ -2920,12 +2920,12 @@
       "2027-12": {
         "n": 1488,
         "meanScore": {
-          "BEFORE_AXIS_RULE": -3.89,
-          "CURRENT": -3.22,
+          "CURRENT": -3.89,
+          "AXIS_PER_HOUSE": -3.22,
           "AXIS_PER_JUDGMENT": -2.72
         },
         "statePct": {
-          "BEFORE_AXIS_RULE": {
+          "CURRENT": {
             "FULFILLED": 0,
             "MOVING": 0.81,
             "DELAYED": 9.41,
@@ -2933,7 +2933,7 @@
             "REVERSING": 11.76,
             "UNFORMED": 36.49
           },
-          "CURRENT": {
+          "AXIS_PER_HOUSE": {
             "FULFILLED": 0,
             "MOVING": 2.28,
             "DELAYED": 13.44,
@@ -2957,12 +2957,12 @@
         "2026-01": {
           "n": 372,
           "meanScore": {
-            "BEFORE_AXIS_RULE": -4.14,
-            "CURRENT": -3.48,
+            "CURRENT": -4.14,
+            "AXIS_PER_HOUSE": -3.48,
             "AXIS_PER_JUDGMENT": -2.48
           },
           "statePct": {
-            "BEFORE_AXIS_RULE": {
+            "CURRENT": {
               "FULFILLED": 0,
               "MOVING": 0.81,
               "DELAYED": 5.65,
@@ -2970,7 +2970,7 @@
               "REVERSING": 12.63,
               "UNFORMED": 37.1
             },
-            "CURRENT": {
+            "AXIS_PER_HOUSE": {
               "FULFILLED": 0,
               "MOVING": 0.81,
               "DELAYED": 5.65,
@@ -2991,12 +2991,12 @@
         "2026-02": {
           "n": 336,
           "meanScore": {
-            "BEFORE_AXIS_RULE": -3.88,
-            "CURRENT": -3.21,
+            "CURRENT": -3.88,
+            "AXIS_PER_HOUSE": -3.21,
             "AXIS_PER_JUDGMENT": -2.21
           },
           "statePct": {
-            "BEFORE_AXIS_RULE": {
+            "CURRENT": {
               "FULFILLED": 0,
               "MOVING": 0,
               "DELAYED": 8.04,
@@ -3004,7 +3004,7 @@
               "REVERSING": 12.8,
               "UNFORMED": 44.35
             },
-            "CURRENT": {
+            "AXIS_PER_HOUSE": {
               "FULFILLED": 0,
               "MOVING": 0,
               "DELAYED": 14.88,
@@ -3025,12 +3025,12 @@
         "2026-03": {
           "n": 372,
           "meanScore": {
-            "BEFORE_AXIS_RULE": -3.72,
-            "CURRENT": -3.05,
+            "CURRENT": -3.72,
+            "AXIS_PER_HOUSE": -3.05,
             "AXIS_PER_JUDGMENT": -2.05
           },
           "statePct": {
-            "BEFORE_AXIS_RULE": {
+            "CURRENT": {
               "FULFILLED": 0,
               "MOVING": 0,
               "DELAYED": 19.62,
@@ -3038,7 +3038,7 @@
               "REVERSING": 16.94,
               "UNFORMED": 35.75
             },
-            "CURRENT": {
+            "AXIS_PER_HOUSE": {
               "FULFILLED": 0,
               "MOVING": 0,
               "DELAYED": 19.89,
@@ -3059,12 +3059,12 @@
         "2026-04": {
           "n": 360,
           "meanScore": {
-            "BEFORE_AXIS_RULE": -3.88,
-            "CURRENT": -3.21,
+            "CURRENT": -3.88,
+            "AXIS_PER_HOUSE": -3.21,
             "AXIS_PER_JUDGMENT": -2.21
           },
           "statePct": {
-            "BEFORE_AXIS_RULE": {
+            "CURRENT": {
               "FULFILLED": 0,
               "MOVING": 4.17,
               "DELAYED": 14.72,
@@ -3072,7 +3072,7 @@
               "REVERSING": 0,
               "UNFORMED": 43.89
             },
-            "CURRENT": {
+            "AXIS_PER_HOUSE": {
               "FULFILLED": 0,
               "MOVING": 4.17,
               "DELAYED": 14.72,
@@ -3093,12 +3093,12 @@
         "2026-05": {
           "n": 372,
           "meanScore": {
-            "BEFORE_AXIS_RULE": -3.44,
-            "CURRENT": -2.77,
+            "CURRENT": -3.44,
+            "AXIS_PER_HOUSE": -2.77,
             "AXIS_PER_JUDGMENT": -1.77
           },
           "statePct": {
-            "BEFORE_AXIS_RULE": {
+            "CURRENT": {
               "FULFILLED": 0,
               "MOVING": 2.69,
               "DELAYED": 25.54,
@@ -3106,7 +3106,7 @@
               "REVERSING": 0,
               "UNFORMED": 45.97
             },
-            "CURRENT": {
+            "AXIS_PER_HOUSE": {
               "FULFILLED": 0,
               "MOVING": 2.96,
               "DELAYED": 25.54,
@@ -3127,12 +3127,12 @@
         "2026-06": {
           "n": 360,
           "meanScore": {
-            "BEFORE_AXIS_RULE": -2.97,
-            "CURRENT": -2.3,
+            "CURRENT": -2.97,
+            "AXIS_PER_HOUSE": -2.3,
             "AXIS_PER_JUDGMENT": -1.3
           },
           "statePct": {
-            "BEFORE_AXIS_RULE": {
+            "CURRENT": {
               "FULFILLED": 6.11,
               "MOVING": 8.06,
               "DELAYED": 19.17,
@@ -3140,7 +3140,7 @@
               "REVERSING": 0.28,
               "UNFORMED": 24.72
             },
-            "CURRENT": {
+            "AXIS_PER_HOUSE": {
               "FULFILLED": 6.11,
               "MOVING": 8.06,
               "DELAYED": 20,
@@ -3161,12 +3161,12 @@
         "2026-07": {
           "n": 372,
           "meanScore": {
-            "BEFORE_AXIS_RULE": -3.25,
-            "CURRENT": -2.59,
+            "CURRENT": -3.25,
+            "AXIS_PER_HOUSE": -2.59,
             "AXIS_PER_JUDGMENT": -1.59
           },
           "statePct": {
-            "BEFORE_AXIS_RULE": {
+            "CURRENT": {
               "FULFILLED": 1.08,
               "MOVING": 6.99,
               "DELAYED": 9.95,
@@ -3174,7 +3174,7 @@
               "REVERSING": 11.83,
               "UNFORMED": 25.54
             },
-            "CURRENT": {
+            "AXIS_PER_HOUSE": {
               "FULFILLED": 1.08,
               "MOVING": 6.99,
               "DELAYED": 9.95,
@@ -3195,12 +3195,12 @@
         "2026-08": {
           "n": 372,
           "meanScore": {
-            "BEFORE_AXIS_RULE": -4.07,
-            "CURRENT": -3.41,
+            "CURRENT": -4.07,
+            "AXIS_PER_HOUSE": -3.41,
             "AXIS_PER_JUDGMENT": -2.41
           },
           "statePct": {
-            "BEFORE_AXIS_RULE": {
+            "CURRENT": {
               "FULFILLED": 0.54,
               "MOVING": 1.08,
               "DELAYED": 33.06,
@@ -3208,7 +3208,7 @@
               "REVERSING": 8.33,
               "UNFORMED": 8.33
             },
-            "CURRENT": {
+            "AXIS_PER_HOUSE": {
               "FULFILLED": 0.54,
               "MOVING": 1.08,
               "DELAYED": 33.06,
@@ -3229,12 +3229,12 @@
         "2026-09": {
           "n": 360,
           "meanScore": {
-            "BEFORE_AXIS_RULE": -2.8,
-            "CURRENT": -2.14,
+            "CURRENT": -2.8,
+            "AXIS_PER_HOUSE": -2.14,
             "AXIS_PER_JUDGMENT": -1.14
           },
           "statePct": {
-            "BEFORE_AXIS_RULE": {
+            "CURRENT": {
               "FULFILLED": 0,
               "MOVING": 1.11,
               "DELAYED": 29.72,
@@ -3242,7 +3242,7 @@
               "REVERSING": 8.33,
               "UNFORMED": 20.56
             },
-            "CURRENT": {
+            "AXIS_PER_HOUSE": {
               "FULFILLED": 0,
               "MOVING": 1.11,
               "DELAYED": 34.17,
@@ -3263,12 +3263,12 @@
         "2026-10": {
           "n": 372,
           "meanScore": {
-            "BEFORE_AXIS_RULE": -3.13,
-            "CURRENT": -2.46,
+            "CURRENT": -3.13,
+            "AXIS_PER_HOUSE": -2.46,
             "AXIS_PER_JUDGMENT": -1.46
           },
           "statePct": {
-            "BEFORE_AXIS_RULE": {
+            "CURRENT": {
               "FULFILLED": 0,
               "MOVING": 0,
               "DELAYED": 24.46,
@@ -3276,7 +3276,7 @@
               "REVERSING": 27.15,
               "UNFORMED": 15.05
             },
-            "CURRENT": {
+            "AXIS_PER_HOUSE": {
               "FULFILLED": 0,
               "MOVING": 0,
               "DELAYED": 24.46,
@@ -3297,12 +3297,12 @@
         "2026-11": {
           "n": 360,
           "meanScore": {
-            "BEFORE_AXIS_RULE": -3.66,
-            "CURRENT": -2.99,
+            "CURRENT": -3.66,
+            "AXIS_PER_HOUSE": -2.99,
             "AXIS_PER_JUDGMENT": -1.99
           },
           "statePct": {
-            "BEFORE_AXIS_RULE": {
+            "CURRENT": {
               "FULFILLED": 0,
               "MOVING": 0,
               "DELAYED": 25.56,
@@ -3310,7 +3310,7 @@
               "REVERSING": 19.17,
               "UNFORMED": 23.89
             },
-            "CURRENT": {
+            "AXIS_PER_HOUSE": {
               "FULFILLED": 0,
               "MOVING": 0,
               "DELAYED": 30.56,
@@ -3331,12 +3331,12 @@
         "2026-12": {
           "n": 372,
           "meanScore": {
-            "BEFORE_AXIS_RULE": -3.05,
-            "CURRENT": -2.38,
+            "CURRENT": -3.05,
+            "AXIS_PER_HOUSE": -2.38,
             "AXIS_PER_JUDGMENT": -1.38
           },
           "statePct": {
-            "BEFORE_AXIS_RULE": {
+            "CURRENT": {
               "FULFILLED": 6.99,
               "MOVING": 13.98,
               "DELAYED": 7.53,
@@ -3344,7 +3344,7 @@
               "REVERSING": 7.53,
               "UNFORMED": 19.35
             },
-            "CURRENT": {
+            "AXIS_PER_HOUSE": {
               "FULFILLED": 6.99,
               "MOVING": 13.98,
               "DELAYED": 7.53,
@@ -3365,12 +3365,12 @@
         "2027-01": {
           "n": 372,
           "meanScore": {
-            "BEFORE_AXIS_RULE": -3.53,
-            "CURRENT": -2.87,
+            "CURRENT": -3.53,
+            "AXIS_PER_HOUSE": -2.87,
             "AXIS_PER_JUDGMENT": -1.87
           },
           "statePct": {
-            "BEFORE_AXIS_RULE": {
+            "CURRENT": {
               "FULFILLED": 0.27,
               "MOVING": 3.49,
               "DELAYED": 4.57,
@@ -3378,7 +3378,7 @@
               "REVERSING": 17.2,
               "UNFORMED": 31.99
             },
-            "CURRENT": {
+            "AXIS_PER_HOUSE": {
               "FULFILLED": 0.27,
               "MOVING": 3.49,
               "DELAYED": 6.45,
@@ -3399,12 +3399,12 @@
         "2027-02": {
           "n": 336,
           "meanScore": {
-            "BEFORE_AXIS_RULE": -3.4,
-            "CURRENT": -2.74,
+            "CURRENT": -3.4,
+            "AXIS_PER_HOUSE": -2.74,
             "AXIS_PER_JUDGMENT": -1.74
           },
           "statePct": {
-            "BEFORE_AXIS_RULE": {
+            "CURRENT": {
               "FULFILLED": 0,
               "MOVING": 2.68,
               "DELAYED": 8.33,
@@ -3412,7 +3412,7 @@
               "REVERSING": 31.85,
               "UNFORMED": 27.08
             },
-            "CURRENT": {
+            "AXIS_PER_HOUSE": {
               "FULFILLED": 0,
               "MOVING": 2.68,
               "DELAYED": 11.61,
@@ -3433,12 +3433,12 @@
         "2027-03": {
           "n": 372,
           "meanScore": {
-            "BEFORE_AXIS_RULE": -3.53,
-            "CURRENT": -2.86,
+            "CURRENT": -3.53,
+            "AXIS_PER_HOUSE": -2.86,
             "AXIS_PER_JUDGMENT": -1.86
           },
           "statePct": {
-            "BEFORE_AXIS_RULE": {
+            "CURRENT": {
               "FULFILLED": 0,
               "MOVING": 0,
               "DELAYED": 5.38,
@@ -3446,7 +3446,7 @@
               "REVERSING": 26.61,
               "UNFORMED": 36.56
             },
-            "CURRENT": {
+            "AXIS_PER_HOUSE": {
               "FULFILLED": 0,
               "MOVING": 0,
               "DELAYED": 8.87,
@@ -3467,12 +3467,12 @@
         "2027-04": {
           "n": 360,
           "meanScore": {
-            "BEFORE_AXIS_RULE": -3.51,
-            "CURRENT": -2.84,
+            "CURRENT": -3.51,
+            "AXIS_PER_HOUSE": -2.84,
             "AXIS_PER_JUDGMENT": -1.84
           },
           "statePct": {
-            "BEFORE_AXIS_RULE": {
+            "CURRENT": {
               "FULFILLED": 0,
               "MOVING": 3.33,
               "DELAYED": 28.06,
@@ -3480,7 +3480,7 @@
               "REVERSING": 7.5,
               "UNFORMED": 26.94
             },
-            "CURRENT": {
+            "AXIS_PER_HOUSE": {
               "FULFILLED": 0,
               "MOVING": 3.33,
               "DELAYED": 29.17,
@@ -3501,12 +3501,12 @@
         "2027-05": {
           "n": 372,
           "meanScore": {
-            "BEFORE_AXIS_RULE": -3.03,
-            "CURRENT": -2.36,
+            "CURRENT": -3.03,
+            "AXIS_PER_HOUSE": -2.36,
             "AXIS_PER_JUDGMENT": -1.36
           },
           "statePct": {
-            "BEFORE_AXIS_RULE": {
+            "CURRENT": {
               "FULFILLED": 2.15,
               "MOVING": 0,
               "DELAYED": 25.81,
@@ -3514,7 +3514,7 @@
               "REVERSING": 0,
               "UNFORMED": 47.04
             },
-            "CURRENT": {
+            "AXIS_PER_HOUSE": {
               "FULFILLED": 2.15,
               "MOVING": 0,
               "DELAYED": 31.72,
@@ -3535,12 +3535,12 @@
         "2027-06": {
           "n": 360,
           "meanScore": {
-            "BEFORE_AXIS_RULE": -2.82,
-            "CURRENT": -2.16,
+            "CURRENT": -2.82,
+            "AXIS_PER_HOUSE": -2.16,
             "AXIS_PER_JUDGMENT": -1.16
           },
           "statePct": {
-            "BEFORE_AXIS_RULE": {
+            "CURRENT": {
               "FULFILLED": 0.83,
               "MOVING": 0.56,
               "DELAYED": 28.61,
@@ -3548,7 +3548,7 @@
               "REVERSING": 10.83,
               "UNFORMED": 45
             },
-            "CURRENT": {
+            "AXIS_PER_HOUSE": {
               "FULFILLED": 0.83,
               "MOVING": 1.39,
               "DELAYED": 35.28,
@@ -3569,12 +3569,12 @@
         "2027-07": {
           "n": 372,
           "meanScore": {
-            "BEFORE_AXIS_RULE": -3.71,
-            "CURRENT": -3.04,
+            "CURRENT": -3.71,
+            "AXIS_PER_HOUSE": -3.04,
             "AXIS_PER_JUDGMENT": -2.04
           },
           "statePct": {
-            "BEFORE_AXIS_RULE": {
+            "CURRENT": {
               "FULFILLED": 0,
               "MOVING": 4.3,
               "DELAYED": 31.99,
@@ -3582,7 +3582,7 @@
               "REVERSING": 1.88,
               "UNFORMED": 17.2
             },
-            "CURRENT": {
+            "AXIS_PER_HOUSE": {
               "FULFILLED": 0,
               "MOVING": 4.3,
               "DELAYED": 31.99,
@@ -3603,12 +3603,12 @@
         "2027-08": {
           "n": 372,
           "meanScore": {
-            "BEFORE_AXIS_RULE": -4.61,
-            "CURRENT": -3.95,
+            "CURRENT": -4.61,
+            "AXIS_PER_HOUSE": -3.95,
             "AXIS_PER_JUDGMENT": -2.95
           },
           "statePct": {
-            "BEFORE_AXIS_RULE": {
+            "CURRENT": {
               "FULFILLED": 3.76,
               "MOVING": 0,
               "DELAYED": 20.43,
@@ -3616,7 +3616,7 @@
               "REVERSING": 5.91,
               "UNFORMED": 16.4
             },
-            "CURRENT": {
+            "AXIS_PER_HOUSE": {
               "FULFILLED": 3.76,
               "MOVING": 0,
               "DELAYED": 20.97,
@@ -3637,12 +3637,12 @@
         "2027-09": {
           "n": 360,
           "meanScore": {
-            "BEFORE_AXIS_RULE": -3.85,
-            "CURRENT": -3.19,
+            "CURRENT": -3.85,
+            "AXIS_PER_HOUSE": -3.19,
             "AXIS_PER_JUDGMENT": -2.19
           },
           "statePct": {
-            "BEFORE_AXIS_RULE": {
+            "CURRENT": {
               "FULFILLED": 2.5,
               "MOVING": 2.22,
               "DELAYED": 19.17,
@@ -3650,7 +3650,7 @@
               "REVERSING": 8.33,
               "UNFORMED": 26.11
             },
-            "CURRENT": {
+            "AXIS_PER_HOUSE": {
               "FULFILLED": 2.5,
               "MOVING": 2.22,
               "DELAYED": 19.17,
@@ -3671,12 +3671,12 @@
         "2027-10": {
           "n": 372,
           "meanScore": {
-            "BEFORE_AXIS_RULE": -3.01,
-            "CURRENT": -2.34,
+            "CURRENT": -3.01,
+            "AXIS_PER_HOUSE": -2.34,
             "AXIS_PER_JUDGMENT": -1.34
           },
           "statePct": {
-            "BEFORE_AXIS_RULE": {
+            "CURRENT": {
               "FULFILLED": 8.06,
               "MOVING": 6.72,
               "DELAYED": 13.98,
@@ -3684,7 +3684,7 @@
               "REVERSING": 13.98,
               "UNFORMED": 15.59
             },
-            "CURRENT": {
+            "AXIS_PER_HOUSE": {
               "FULFILLED": 8.06,
               "MOVING": 6.72,
               "DELAYED": 14.78,
@@ -3705,12 +3705,12 @@
         "2027-11": {
           "n": 360,
           "meanScore": {
-            "BEFORE_AXIS_RULE": -3.27,
-            "CURRENT": -2.61,
+            "CURRENT": -3.27,
+            "AXIS_PER_HOUSE": -2.61,
             "AXIS_PER_JUDGMENT": -1.61
           },
           "statePct": {
-            "BEFORE_AXIS_RULE": {
+            "CURRENT": {
               "FULFILLED": 0,
               "MOVING": 20.83,
               "DELAYED": 9.17,
@@ -3718,7 +3718,7 @@
               "REVERSING": 9.17,
               "UNFORMED": 17.22
             },
-            "CURRENT": {
+            "AXIS_PER_HOUSE": {
               "FULFILLED": 0,
               "MOVING": 20.83,
               "DELAYED": 10.56,
@@ -3739,12 +3739,12 @@
         "2027-12": {
           "n": 372,
           "meanScore": {
-            "BEFORE_AXIS_RULE": -3.81,
-            "CURRENT": -3.15,
+            "CURRENT": -3.81,
+            "AXIS_PER_HOUSE": -3.15,
             "AXIS_PER_JUDGMENT": -2.15
           },
           "statePct": {
-            "BEFORE_AXIS_RULE": {
+            "CURRENT": {
               "FULFILLED": 0,
               "MOVING": 0,
               "DELAYED": 6.18,
@@ -3752,7 +3752,7 @@
               "REVERSING": 12.37,
               "UNFORMED": 46.51
             },
-            "CURRENT": {
+            "AXIS_PER_HOUSE": {
               "FULFILLED": 0,
               "MOVING": 0,
               "DELAYED": 10.75,
@@ -3775,12 +3775,12 @@
         "2026-01": {
           "n": 372,
           "meanScore": {
-            "BEFORE_AXIS_RULE": -4.26,
-            "CURRENT": -3.59,
+            "CURRENT": -4.26,
+            "AXIS_PER_HOUSE": -3.59,
             "AXIS_PER_JUDGMENT": -3.59
           },
           "statePct": {
-            "BEFORE_AXIS_RULE": {
+            "CURRENT": {
               "FULFILLED": 0,
               "MOVING": 0,
               "DELAYED": 4.3,
@@ -3788,7 +3788,7 @@
               "REVERSING": 8.33,
               "UNFORMED": 48.66
             },
-            "CURRENT": {
+            "AXIS_PER_HOUSE": {
               "FULFILLED": 0,
               "MOVING": 0,
               "DELAYED": 4.57,
@@ -3809,12 +3809,12 @@
         "2026-02": {
           "n": 336,
           "meanScore": {
-            "BEFORE_AXIS_RULE": -4.06,
-            "CURRENT": -3.39,
+            "CURRENT": -4.06,
+            "AXIS_PER_HOUSE": -3.39,
             "AXIS_PER_JUDGMENT": -3.39
           },
           "statePct": {
-            "BEFORE_AXIS_RULE": {
+            "CURRENT": {
               "FULFILLED": 0,
               "MOVING": 3.27,
               "DELAYED": 6.85,
@@ -3822,7 +3822,7 @@
               "REVERSING": 3.87,
               "UNFORMED": 36.31
             },
-            "CURRENT": {
+            "AXIS_PER_HOUSE": {
               "FULFILLED": 0,
               "MOVING": 8.33,
               "DELAYED": 11.9,
@@ -3843,12 +3843,12 @@
         "2026-03": {
           "n": 372,
           "meanScore": {
-            "BEFORE_AXIS_RULE": -4.08,
-            "CURRENT": -3.41,
+            "CURRENT": -4.08,
+            "AXIS_PER_HOUSE": -3.41,
             "AXIS_PER_JUDGMENT": -3.41
           },
           "statePct": {
-            "BEFORE_AXIS_RULE": {
+            "CURRENT": {
               "FULFILLED": 0,
               "MOVING": 8.33,
               "DELAYED": 13.17,
@@ -3856,7 +3856,7 @@
               "REVERSING": 13.44,
               "UNFORMED": 13.17
             },
-            "CURRENT": {
+            "AXIS_PER_HOUSE": {
               "FULFILLED": 0,
               "MOVING": 8.33,
               "DELAYED": 13.17,
@@ -3877,12 +3877,12 @@
         "2026-04": {
           "n": 360,
           "meanScore": {
-            "BEFORE_AXIS_RULE": -3.86,
-            "CURRENT": -3.2,
+            "CURRENT": -3.86,
+            "AXIS_PER_HOUSE": -3.2,
             "AXIS_PER_JUDGMENT": -3.2
           },
           "statePct": {
-            "BEFORE_AXIS_RULE": {
+            "CURRENT": {
               "FULFILLED": 0,
               "MOVING": 8.33,
               "DELAYED": 17.78,
@@ -3890,7 +3890,7 @@
               "REVERSING": 0,
               "UNFORMED": 40.56
             },
-            "CURRENT": {
+            "AXIS_PER_HOUSE": {
               "FULFILLED": 0,
               "MOVING": 8.33,
               "DELAYED": 17.78,
@@ -3911,12 +3911,12 @@
         "2026-05": {
           "n": 372,
           "meanScore": {
-            "BEFORE_AXIS_RULE": -3.44,
-            "CURRENT": -2.77,
+            "CURRENT": -3.44,
+            "AXIS_PER_HOUSE": -2.77,
             "AXIS_PER_JUDGMENT": -2.77
           },
           "statePct": {
-            "BEFORE_AXIS_RULE": {
+            "CURRENT": {
               "FULFILLED": 0,
               "MOVING": 3.49,
               "DELAYED": 17.47,
@@ -3924,7 +3924,7 @@
               "REVERSING": 0,
               "UNFORMED": 50.27
             },
-            "CURRENT": {
+            "AXIS_PER_HOUSE": {
               "FULFILLED": 0,
               "MOVING": 3.49,
               "DELAYED": 22.04,
@@ -3945,12 +3945,12 @@
         "2026-06": {
           "n": 360,
           "meanScore": {
-            "BEFORE_AXIS_RULE": -3.23,
-            "CURRENT": -2.57,
+            "CURRENT": -3.23,
+            "AXIS_PER_HOUSE": -2.57,
             "AXIS_PER_JUDGMENT": -2.57
           },
           "statePct": {
-            "BEFORE_AXIS_RULE": {
+            "CURRENT": {
               "FULFILLED": 0.28,
               "MOVING": 5.56,
               "DELAYED": 27.5,
@@ -3958,7 +3958,7 @@
               "REVERSING": 0.28,
               "UNFORMED": 34.72
             },
-            "CURRENT": {
+            "AXIS_PER_HOUSE": {
               "FULFILLED": 0.28,
               "MOVING": 5.56,
               "DELAYED": 32.22,
@@ -3979,12 +3979,12 @@
         "2026-07": {
           "n": 372,
           "meanScore": {
-            "BEFORE_AXIS_RULE": -3.55,
-            "CURRENT": -2.89,
+            "CURRENT": -3.55,
+            "AXIS_PER_HOUSE": -2.89,
             "AXIS_PER_JUDGMENT": -2.89
           },
           "statePct": {
-            "BEFORE_AXIS_RULE": {
+            "CURRENT": {
               "FULFILLED": 0,
               "MOVING": 2.15,
               "DELAYED": 27.15,
@@ -3992,7 +3992,7 @@
               "REVERSING": 9.41,
               "UNFORMED": 24.19
             },
-            "CURRENT": {
+            "AXIS_PER_HOUSE": {
               "FULFILLED": 0,
               "MOVING": 8.06,
               "DELAYED": 27.69,
@@ -4013,12 +4013,12 @@
         "2026-08": {
           "n": 372,
           "meanScore": {
-            "BEFORE_AXIS_RULE": -4.23,
-            "CURRENT": -3.56,
+            "CURRENT": -4.23,
+            "AXIS_PER_HOUSE": -3.56,
             "AXIS_PER_JUDGMENT": -3.56
           },
           "statePct": {
-            "BEFORE_AXIS_RULE": {
+            "CURRENT": {
               "FULFILLED": 0,
               "MOVING": 0.54,
               "DELAYED": 23.12,
@@ -4026,7 +4026,7 @@
               "REVERSING": 8.87,
               "UNFORMED": 17.2
             },
-            "CURRENT": {
+            "AXIS_PER_HOUSE": {
               "FULFILLED": 0,
               "MOVING": 0.54,
               "DELAYED": 23.92,
@@ -4047,12 +4047,12 @@
         "2026-09": {
           "n": 360,
           "meanScore": {
-            "BEFORE_AXIS_RULE": -2.93,
-            "CURRENT": -2.26,
+            "CURRENT": -2.93,
+            "AXIS_PER_HOUSE": -2.26,
             "AXIS_PER_JUDGMENT": -2.26
           },
           "statePct": {
-            "BEFORE_AXIS_RULE": {
+            "CURRENT": {
               "FULFILLED": 7.78,
               "MOVING": 0,
               "DELAYED": 24.17,
@@ -4060,7 +4060,7 @@
               "REVERSING": 8.33,
               "UNFORMED": 19.72
             },
-            "CURRENT": {
+            "AXIS_PER_HOUSE": {
               "FULFILLED": 7.78,
               "MOVING": 0,
               "DELAYED": 25,
@@ -4081,12 +4081,12 @@
         "2026-10": {
           "n": 372,
           "meanScore": {
-            "BEFORE_AXIS_RULE": -3.12,
-            "CURRENT": -2.46,
+            "CURRENT": -3.12,
+            "AXIS_PER_HOUSE": -2.46,
             "AXIS_PER_JUDGMENT": -2.46
           },
           "statePct": {
-            "BEFORE_AXIS_RULE": {
+            "CURRENT": {
               "FULFILLED": 0.81,
               "MOVING": 0,
               "DELAYED": 25.81,
@@ -4094,7 +4094,7 @@
               "REVERSING": 22.58,
               "UNFORMED": 11.56
             },
-            "CURRENT": {
+            "AXIS_PER_HOUSE": {
               "FULFILLED": 0.81,
               "MOVING": 0,
               "DELAYED": 25.81,
@@ -4115,12 +4115,12 @@
         "2026-11": {
           "n": 360,
           "meanScore": {
-            "BEFORE_AXIS_RULE": -3.61,
-            "CURRENT": -2.94,
+            "CURRENT": -3.61,
+            "AXIS_PER_HOUSE": -2.94,
             "AXIS_PER_JUDGMENT": -2.94
           },
           "statePct": {
-            "BEFORE_AXIS_RULE": {
+            "CURRENT": {
               "FULFILLED": 0,
               "MOVING": 2.22,
               "DELAYED": 31.39,
@@ -4128,7 +4128,7 @@
               "REVERSING": 12.5,
               "UNFORMED": 14.72
             },
-            "CURRENT": {
+            "AXIS_PER_HOUSE": {
               "FULFILLED": 0,
               "MOVING": 2.22,
               "DELAYED": 33.61,
@@ -4149,12 +4149,12 @@
         "2026-12": {
           "n": 372,
           "meanScore": {
-            "BEFORE_AXIS_RULE": -3.18,
-            "CURRENT": -2.51,
+            "CURRENT": -3.18,
+            "AXIS_PER_HOUSE": -2.51,
             "AXIS_PER_JUDGMENT": -2.51
           },
           "statePct": {
-            "BEFORE_AXIS_RULE": {
+            "CURRENT": {
               "FULFILLED": 0,
               "MOVING": 8.33,
               "DELAYED": 16.13,
@@ -4162,7 +4162,7 @@
               "REVERSING": 10.75,
               "UNFORMED": 24.46
             },
-            "CURRENT": {
+            "AXIS_PER_HOUSE": {
               "FULFILLED": 0,
               "MOVING": 8.33,
               "DELAYED": 16.13,
@@ -4183,12 +4183,12 @@
         "2027-01": {
           "n": 372,
           "meanScore": {
-            "BEFORE_AXIS_RULE": -3.56,
-            "CURRENT": -2.89,
+            "CURRENT": -3.56,
+            "AXIS_PER_HOUSE": -2.89,
             "AXIS_PER_JUDGMENT": -2.89
           },
           "statePct": {
-            "BEFORE_AXIS_RULE": {
+            "CURRENT": {
               "FULFILLED": 0,
               "MOVING": 1.61,
               "DELAYED": 10.48,
@@ -4196,7 +4196,7 @@
               "REVERSING": 27.96,
               "UNFORMED": 26.34
             },
-            "CURRENT": {
+            "AXIS_PER_HOUSE": {
               "FULFILLED": 0,
               "MOVING": 2.15,
               "DELAYED": 10.48,
@@ -4217,12 +4217,12 @@
         "2027-02": {
           "n": 336,
           "meanScore": {
-            "BEFORE_AXIS_RULE": -3.57,
-            "CURRENT": -2.9,
+            "CURRENT": -3.57,
+            "AXIS_PER_HOUSE": -2.9,
             "AXIS_PER_JUDGMENT": -2.9
           },
           "statePct": {
-            "BEFORE_AXIS_RULE": {
+            "CURRENT": {
               "FULFILLED": 0,
               "MOVING": 0,
               "DELAYED": 0,
@@ -4230,7 +4230,7 @@
               "REVERSING": 37.8,
               "UNFORMED": 21.73
             },
-            "CURRENT": {
+            "AXIS_PER_HOUSE": {
               "FULFILLED": 0,
               "MOVING": 2.68,
               "DELAYED": 0.6,
@@ -4251,12 +4251,12 @@
         "2027-03": {
           "n": 372,
           "meanScore": {
-            "BEFORE_AXIS_RULE": -3.53,
-            "CURRENT": -2.86,
+            "CURRENT": -3.53,
+            "AXIS_PER_HOUSE": -2.86,
             "AXIS_PER_JUDGMENT": -2.86
           },
           "statePct": {
-            "BEFORE_AXIS_RULE": {
+            "CURRENT": {
               "FULFILLED": 0,
               "MOVING": 0,
               "DELAYED": 1.34,
@@ -4264,7 +4264,7 @@
               "REVERSING": 17.2,
               "UNFORMED": 37.63
             },
-            "CURRENT": {
+            "AXIS_PER_HOUSE": {
               "FULFILLED": 0,
               "MOVING": 0,
               "DELAYED": 2.15,
@@ -4285,12 +4285,12 @@
         "2027-04": {
           "n": 360,
           "meanScore": {
-            "BEFORE_AXIS_RULE": -3.67,
-            "CURRENT": -3.01,
+            "CURRENT": -3.67,
+            "AXIS_PER_HOUSE": -3.01,
             "AXIS_PER_JUDGMENT": -3.01
           },
           "statePct": {
-            "BEFORE_AXIS_RULE": {
+            "CURRENT": {
               "FULFILLED": 0,
               "MOVING": 7.5,
               "DELAYED": 5.83,
@@ -4298,7 +4298,7 @@
               "REVERSING": 3.61,
               "UNFORMED": 24.72
             },
-            "CURRENT": {
+            "AXIS_PER_HOUSE": {
               "FULFILLED": 0,
               "MOVING": 7.5,
               "DELAYED": 12.22,
@@ -4319,12 +4319,12 @@
         "2027-05": {
           "n": 372,
           "meanScore": {
-            "BEFORE_AXIS_RULE": -3.08,
-            "CURRENT": -2.41,
+            "CURRENT": -3.08,
+            "AXIS_PER_HOUSE": -2.41,
             "AXIS_PER_JUDGMENT": -2.41
           },
           "statePct": {
-            "BEFORE_AXIS_RULE": {
+            "CURRENT": {
               "FULFILLED": 0,
               "MOVING": 8.33,
               "DELAYED": 23.39,
@@ -4332,7 +4332,7 @@
               "REVERSING": 0,
               "UNFORMED": 29.57
             },
-            "CURRENT": {
+            "AXIS_PER_HOUSE": {
               "FULFILLED": 0,
               "MOVING": 10.48,
               "DELAYED": 23.39,
@@ -4353,12 +4353,12 @@
         "2027-06": {
           "n": 360,
           "meanScore": {
-            "BEFORE_AXIS_RULE": -3.12,
-            "CURRENT": -2.45,
+            "CURRENT": -3.12,
+            "AXIS_PER_HOUSE": -2.45,
             "AXIS_PER_JUDGMENT": -2.45
           },
           "statePct": {
-            "BEFORE_AXIS_RULE": {
+            "CURRENT": {
               "FULFILLED": 0,
               "MOVING": 1.11,
               "DELAYED": 22.78,
@@ -4366,7 +4366,7 @@
               "REVERSING": 6.67,
               "UNFORMED": 38.89
             },
-            "CURRENT": {
+            "AXIS_PER_HOUSE": {
               "FULFILLED": 0,
               "MOVING": 2.22,
               "DELAYED": 22.78,
@@ -4387,12 +4387,12 @@
         "2027-07": {
           "n": 372,
           "meanScore": {
-            "BEFORE_AXIS_RULE": -3.99,
-            "CURRENT": -3.32,
+            "CURRENT": -3.99,
+            "AXIS_PER_HOUSE": -3.32,
             "AXIS_PER_JUDGMENT": -3.32
           },
           "statePct": {
-            "BEFORE_AXIS_RULE": {
+            "CURRENT": {
               "FULFILLED": 0,
               "MOVING": 0,
               "DELAYED": 23.66,
@@ -4400,7 +4400,7 @@
               "REVERSING": 1.88,
               "UNFORMED": 30.38
             },
-            "CURRENT": {
+            "AXIS_PER_HOUSE": {
               "FULFILLED": 0,
               "MOVING": 0,
               "DELAYED": 29.3,
@@ -4421,12 +4421,12 @@
         "2027-08": {
           "n": 372,
           "meanScore": {
-            "BEFORE_AXIS_RULE": -4.99,
-            "CURRENT": -4.32,
+            "CURRENT": -4.99,
+            "AXIS_PER_HOUSE": -4.32,
             "AXIS_PER_JUDGMENT": -4.32
           },
           "statePct": {
-            "BEFORE_AXIS_RULE": {
+            "CURRENT": {
               "FULFILLED": 3.76,
               "MOVING": 0.54,
               "DELAYED": 5.65,
@@ -4434,7 +4434,7 @@
               "REVERSING": 9.68,
               "UNFORMED": 18.01
             },
-            "CURRENT": {
+            "AXIS_PER_HOUSE": {
               "FULFILLED": 3.76,
               "MOVING": 1.61,
               "DELAYED": 9.68,
@@ -4455,12 +4455,12 @@
         "2027-09": {
           "n": 360,
           "meanScore": {
-            "BEFORE_AXIS_RULE": -3.87,
-            "CURRENT": -3.2,
+            "CURRENT": -3.87,
+            "AXIS_PER_HOUSE": -3.2,
             "AXIS_PER_JUDGMENT": -3.2
           },
           "statePct": {
-            "BEFORE_AXIS_RULE": {
+            "CURRENT": {
               "FULFILLED": 8.33,
               "MOVING": 0,
               "DELAYED": 6.67,
@@ -4468,7 +4468,7 @@
               "REVERSING": 8.33,
               "UNFORMED": 23.89
             },
-            "CURRENT": {
+            "AXIS_PER_HOUSE": {
               "FULFILLED": 8.33,
               "MOVING": 0,
               "DELAYED": 9.17,
@@ -4489,12 +4489,12 @@
         "2027-10": {
           "n": 372,
           "meanScore": {
-            "BEFORE_AXIS_RULE": -3.03,
-            "CURRENT": -2.36,
+            "CURRENT": -3.03,
+            "AXIS_PER_HOUSE": -2.36,
             "AXIS_PER_JUDGMENT": -2.36
           },
           "statePct": {
-            "BEFORE_AXIS_RULE": {
+            "CURRENT": {
               "FULFILLED": 0.81,
               "MOVING": 6.45,
               "DELAYED": 18.55,
@@ -4502,7 +4502,7 @@
               "REVERSING": 14.78,
               "UNFORMED": 27.69
             },
-            "CURRENT": {
+            "AXIS_PER_HOUSE": {
               "FULFILLED": 0.81,
               "MOVING": 6.45,
               "DELAYED": 21.24,
@@ -4523,12 +4523,12 @@
         "2027-11": {
           "n": 360,
           "meanScore": {
-            "BEFORE_AXIS_RULE": -3.26,
-            "CURRENT": -2.6,
+            "CURRENT": -3.26,
+            "AXIS_PER_HOUSE": -2.6,
             "AXIS_PER_JUDGMENT": -2.6
           },
           "statePct": {
-            "BEFORE_AXIS_RULE": {
+            "CURRENT": {
               "FULFILLED": 0,
               "MOVING": 0.83,
               "DELAYED": 18.89,
@@ -4536,7 +4536,7 @@
               "REVERSING": 11.94,
               "UNFORMED": 36.39
             },
-            "CURRENT": {
+            "AXIS_PER_HOUSE": {
               "FULFILLED": 0,
               "MOVING": 0.83,
               "DELAYED": 19.17,
@@ -4557,12 +4557,12 @@
         "2027-12": {
           "n": 372,
           "meanScore": {
-            "BEFORE_AXIS_RULE": -3.88,
-            "CURRENT": -3.22,
+            "CURRENT": -3.88,
+            "AXIS_PER_HOUSE": -3.22,
             "AXIS_PER_JUDGMENT": -3.22
           },
           "statePct": {
-            "BEFORE_AXIS_RULE": {
+            "CURRENT": {
               "FULFILLED": 0,
               "MOVING": 0,
               "DELAYED": 1.08,
@@ -4570,7 +4570,7 @@
               "REVERSING": 12.37,
               "UNFORMED": 29.84
             },
-            "CURRENT": {
+            "AXIS_PER_HOUSE": {
               "FULFILLED": 0,
               "MOVING": 0,
               "DELAYED": 9.41,
@@ -4593,12 +4593,12 @@
         "2026-01": {
           "n": 372,
           "meanScore": {
-            "BEFORE_AXIS_RULE": -4.94,
-            "CURRENT": -4.27,
+            "CURRENT": -4.94,
+            "AXIS_PER_HOUSE": -4.27,
             "AXIS_PER_JUDGMENT": -3.27
           },
           "statePct": {
-            "BEFORE_AXIS_RULE": {
+            "CURRENT": {
               "FULFILLED": 0,
               "MOVING": 0,
               "DELAYED": 8.6,
@@ -4606,7 +4606,7 @@
               "REVERSING": 4.3,
               "UNFORMED": 34.95
             },
-            "CURRENT": {
+            "AXIS_PER_HOUSE": {
               "FULFILLED": 0,
               "MOVING": 0,
               "DELAYED": 8.6,
@@ -4627,12 +4627,12 @@
         "2026-02": {
           "n": 336,
           "meanScore": {
-            "BEFORE_AXIS_RULE": -4.82,
-            "CURRENT": -4.15,
+            "CURRENT": -4.82,
+            "AXIS_PER_HOUSE": -4.15,
             "AXIS_PER_JUDGMENT": -3.15
           },
           "statePct": {
-            "BEFORE_AXIS_RULE": {
+            "CURRENT": {
               "FULFILLED": 0,
               "MOVING": 0,
               "DELAYED": 2.38,
@@ -4640,7 +4640,7 @@
               "REVERSING": 3.87,
               "UNFORMED": 44.64
             },
-            "CURRENT": {
+            "AXIS_PER_HOUSE": {
               "FULFILLED": 0,
               "MOVING": 5.06,
               "DELAYED": 2.38,
@@ -4661,12 +4661,12 @@
         "2026-03": {
           "n": 372,
           "meanScore": {
-            "BEFORE_AXIS_RULE": -4.84,
-            "CURRENT": -4.18,
+            "CURRENT": -4.84,
+            "AXIS_PER_HOUSE": -4.18,
             "AXIS_PER_JUDGMENT": -3.18
           },
           "statePct": {
-            "BEFORE_AXIS_RULE": {
+            "CURRENT": {
               "FULFILLED": 0,
               "MOVING": 0,
               "DELAYED": 13.98,
@@ -4674,7 +4674,7 @@
               "REVERSING": 8.6,
               "UNFORMED": 29.03
             },
-            "CURRENT": {
+            "AXIS_PER_HOUSE": {
               "FULFILLED": 0,
               "MOVING": 0,
               "DELAYED": 13.98,
@@ -4695,12 +4695,12 @@
         "2026-04": {
           "n": 360,
           "meanScore": {
-            "BEFORE_AXIS_RULE": -4.61,
-            "CURRENT": -3.94,
+            "CURRENT": -4.61,
+            "AXIS_PER_HOUSE": -3.94,
             "AXIS_PER_JUDGMENT": -2.94
           },
           "statePct": {
-            "BEFORE_AXIS_RULE": {
+            "CURRENT": {
               "FULFILLED": 0,
               "MOVING": 1.11,
               "DELAYED": 9.44,
@@ -4708,7 +4708,7 @@
               "REVERSING": 0,
               "UNFORMED": 33.89
             },
-            "CURRENT": {
+            "AXIS_PER_HOUSE": {
               "FULFILLED": 0,
               "MOVING": 1.11,
               "DELAYED": 9.44,
@@ -4729,12 +4729,12 @@
         "2026-05": {
           "n": 372,
           "meanScore": {
-            "BEFORE_AXIS_RULE": -4.31,
-            "CURRENT": -3.64,
+            "CURRENT": -4.31,
+            "AXIS_PER_HOUSE": -3.64,
             "AXIS_PER_JUDGMENT": -2.64
           },
           "statePct": {
-            "BEFORE_AXIS_RULE": {
+            "CURRENT": {
               "FULFILLED": 0,
               "MOVING": 0,
               "DELAYED": 6.72,
@@ -4742,7 +4742,7 @@
               "REVERSING": 0,
               "UNFORMED": 38.44
             },
-            "CURRENT": {
+            "AXIS_PER_HOUSE": {
               "FULFILLED": 0,
               "MOVING": 0,
               "DELAYED": 6.72,
@@ -4763,12 +4763,12 @@
         "2026-06": {
           "n": 360,
           "meanScore": {
-            "BEFORE_AXIS_RULE": -3.88,
-            "CURRENT": -3.21,
+            "CURRENT": -3.88,
+            "AXIS_PER_HOUSE": -3.21,
             "AXIS_PER_JUDGMENT": -2.21
           },
           "statePct": {
-            "BEFORE_AXIS_RULE": {
+            "CURRENT": {
               "FULFILLED": 6.11,
               "MOVING": 5.28,
               "DELAYED": 10.56,
@@ -4776,7 +4776,7 @@
               "REVERSING": 0.28,
               "UNFORMED": 22.78
             },
-            "CURRENT": {
+            "AXIS_PER_HOUSE": {
               "FULFILLED": 6.11,
               "MOVING": 5.28,
               "DELAYED": 10.56,
@@ -4797,12 +4797,12 @@
         "2026-07": {
           "n": 372,
           "meanScore": {
-            "BEFORE_AXIS_RULE": -4.16,
-            "CURRENT": -3.49,
+            "CURRENT": -4.16,
+            "AXIS_PER_HOUSE": -3.49,
             "AXIS_PER_JUDGMENT": -2.49
           },
           "statePct": {
-            "BEFORE_AXIS_RULE": {
+            "CURRENT": {
               "FULFILLED": 3.49,
               "MOVING": 1.88,
               "DELAYED": 7.53,
@@ -4810,7 +4810,7 @@
               "REVERSING": 11.29,
               "UNFORMED": 23.39
             },
-            "CURRENT": {
+            "AXIS_PER_HOUSE": {
               "FULFILLED": 3.49,
               "MOVING": 1.88,
               "DELAYED": 14.78,
@@ -4831,12 +4831,12 @@
         "2026-08": {
           "n": 372,
           "meanScore": {
-            "BEFORE_AXIS_RULE": -4.58,
-            "CURRENT": -3.92,
+            "CURRENT": -4.58,
+            "AXIS_PER_HOUSE": -3.92,
             "AXIS_PER_JUDGMENT": -2.92
           },
           "statePct": {
-            "BEFORE_AXIS_RULE": {
+            "CURRENT": {
               "FULFILLED": 8.6,
               "MOVING": 5.65,
               "DELAYED": 9.95,
@@ -4844,7 +4844,7 @@
               "REVERSING": 8.33,
               "UNFORMED": 2.69
             },
-            "CURRENT": {
+            "AXIS_PER_HOUSE": {
               "FULFILLED": 8.6,
               "MOVING": 5.65,
               "DELAYED": 9.95,
@@ -4865,12 +4865,12 @@
         "2026-09": {
           "n": 360,
           "meanScore": {
-            "BEFORE_AXIS_RULE": -3.48,
-            "CURRENT": -2.81,
+            "CURRENT": -3.48,
+            "AXIS_PER_HOUSE": -2.81,
             "AXIS_PER_JUDGMENT": -1.81
           },
           "statePct": {
-            "BEFORE_AXIS_RULE": {
+            "CURRENT": {
               "FULFILLED": 5.83,
               "MOVING": 2.22,
               "DELAYED": 28.61,
@@ -4878,7 +4878,7 @@
               "REVERSING": 8.33,
               "UNFORMED": 12.5
             },
-            "CURRENT": {
+            "AXIS_PER_HOUSE": {
               "FULFILLED": 5.83,
               "MOVING": 2.22,
               "DELAYED": 36.39,
@@ -4899,12 +4899,12 @@
         "2026-10": {
           "n": 372,
           "meanScore": {
-            "BEFORE_AXIS_RULE": -3.92,
-            "CURRENT": -3.26,
+            "CURRENT": -3.92,
+            "AXIS_PER_HOUSE": -3.26,
             "AXIS_PER_JUDGMENT": -2.26
           },
           "statePct": {
-            "BEFORE_AXIS_RULE": {
+            "CURRENT": {
               "FULFILLED": 0,
               "MOVING": 1.61,
               "DELAYED": 26.34,
@@ -4912,7 +4912,7 @@
               "REVERSING": 15.86,
               "UNFORMED": 6.18
             },
-            "CURRENT": {
+            "AXIS_PER_HOUSE": {
               "FULFILLED": 0,
               "MOVING": 1.61,
               "DELAYED": 34.68,
@@ -4933,12 +4933,12 @@
         "2026-11": {
           "n": 360,
           "meanScore": {
-            "BEFORE_AXIS_RULE": -4.58,
-            "CURRENT": -3.91,
+            "CURRENT": -4.58,
+            "AXIS_PER_HOUSE": -3.91,
             "AXIS_PER_JUDGMENT": -2.91
           },
           "statePct": {
-            "BEFORE_AXIS_RULE": {
+            "CURRENT": {
               "FULFILLED": 0,
               "MOVING": 0.28,
               "DELAYED": 26.94,
@@ -4946,7 +4946,7 @@
               "REVERSING": 13.06,
               "UNFORMED": 16.94
             },
-            "CURRENT": {
+            "AXIS_PER_HOUSE": {
               "FULFILLED": 0,
               "MOVING": 0.28,
               "DELAYED": 27.22,
@@ -4967,12 +4967,12 @@
         "2026-12": {
           "n": 372,
           "meanScore": {
-            "BEFORE_AXIS_RULE": -4.06,
-            "CURRENT": -3.4,
+            "CURRENT": -4.06,
+            "AXIS_PER_HOUSE": -3.4,
             "AXIS_PER_JUDGMENT": -2.4
           },
           "statePct": {
-            "BEFORE_AXIS_RULE": {
+            "CURRENT": {
               "FULFILLED": 13.98,
               "MOVING": 0,
               "DELAYED": 5.91,
@@ -4980,7 +4980,7 @@
               "REVERSING": 7.26,
               "UNFORMED": 23.66
             },
-            "CURRENT": {
+            "AXIS_PER_HOUSE": {
               "FULFILLED": 13.98,
               "MOVING": 0,
               "DELAYED": 5.91,
@@ -5001,12 +5001,12 @@
         "2027-01": {
           "n": 372,
           "meanScore": {
-            "BEFORE_AXIS_RULE": -4.31,
-            "CURRENT": -3.65,
+            "CURRENT": -4.31,
+            "AXIS_PER_HOUSE": -3.65,
             "AXIS_PER_JUDGMENT": -2.65
           },
           "statePct": {
-            "BEFORE_AXIS_RULE": {
+            "CURRENT": {
               "FULFILLED": 0.54,
               "MOVING": 2.42,
               "DELAYED": 0,
@@ -5014,7 +5014,7 @@
               "REVERSING": 17.2,
               "UNFORMED": 29.57
             },
-            "CURRENT": {
+            "AXIS_PER_HOUSE": {
               "FULFILLED": 0.54,
               "MOVING": 2.42,
               "DELAYED": 0,
@@ -5035,12 +5035,12 @@
         "2027-02": {
           "n": 336,
           "meanScore": {
-            "BEFORE_AXIS_RULE": -3.9,
-            "CURRENT": -3.23,
+            "CURRENT": -3.9,
+            "AXIS_PER_HOUSE": -3.23,
             "AXIS_PER_JUDGMENT": -2.23
           },
           "statePct": {
-            "BEFORE_AXIS_RULE": {
+            "CURRENT": {
               "FULFILLED": 0,
               "MOVING": 0,
               "DELAYED": 0,
@@ -5048,7 +5048,7 @@
               "REVERSING": 30.65,
               "UNFORMED": 21.43
             },
-            "CURRENT": {
+            "AXIS_PER_HOUSE": {
               "FULFILLED": 0,
               "MOVING": 0,
               "DELAYED": 0.6,
@@ -5069,12 +5069,12 @@
         "2027-03": {
           "n": 372,
           "meanScore": {
-            "BEFORE_AXIS_RULE": -4.02,
-            "CURRENT": -3.36,
+            "CURRENT": -4.02,
+            "AXIS_PER_HOUSE": -3.36,
             "AXIS_PER_JUDGMENT": -2.36
           },
           "statePct": {
-            "BEFORE_AXIS_RULE": {
+            "CURRENT": {
               "FULFILLED": 0,
               "MOVING": 0,
               "DELAYED": 0,
@@ -5082,7 +5082,7 @@
               "REVERSING": 31.72,
               "UNFORMED": 29.03
             },
-            "CURRENT": {
+            "AXIS_PER_HOUSE": {
               "FULFILLED": 0,
               "MOVING": 0,
               "DELAYED": 1.88,
@@ -5103,12 +5103,12 @@
         "2027-04": {
           "n": 360,
           "meanScore": {
-            "BEFORE_AXIS_RULE": -4.11,
-            "CURRENT": -3.44,
+            "CURRENT": -4.11,
+            "AXIS_PER_HOUSE": -3.44,
             "AXIS_PER_JUDGMENT": -2.44
           },
           "statePct": {
-            "BEFORE_AXIS_RULE": {
+            "CURRENT": {
               "FULFILLED": 0,
               "MOVING": 0,
               "DELAYED": 27.5,
@@ -5116,7 +5116,7 @@
               "REVERSING": 7.78,
               "UNFORMED": 26.67
             },
-            "CURRENT": {
+            "AXIS_PER_HOUSE": {
               "FULFILLED": 0,
               "MOVING": 0,
               "DELAYED": 28.61,
@@ -5137,12 +5137,12 @@
         "2027-05": {
           "n": 372,
           "meanScore": {
-            "BEFORE_AXIS_RULE": -3.63,
-            "CURRENT": -2.97,
+            "CURRENT": -3.63,
+            "AXIS_PER_HOUSE": -2.97,
             "AXIS_PER_JUDGMENT": -1.97
           },
           "statePct": {
-            "BEFORE_AXIS_RULE": {
+            "CURRENT": {
               "FULFILLED": 0,
               "MOVING": 2.15,
               "DELAYED": 19.09,
@@ -5150,7 +5150,7 @@
               "REVERSING": 0,
               "UNFORMED": 30.11
             },
-            "CURRENT": {
+            "AXIS_PER_HOUSE": {
               "FULFILLED": 0,
               "MOVING": 2.15,
               "DELAYED": 22.58,
@@ -5171,12 +5171,12 @@
         "2027-06": {
           "n": 360,
           "meanScore": {
-            "BEFORE_AXIS_RULE": -3.25,
-            "CURRENT": -2.58,
+            "CURRENT": -3.25,
+            "AXIS_PER_HOUSE": -2.58,
             "AXIS_PER_JUDGMENT": -1.58
           },
           "statePct": {
-            "BEFORE_AXIS_RULE": {
+            "CURRENT": {
               "FULFILLED": 0,
               "MOVING": 1.67,
               "DELAYED": 18.89,
@@ -5184,7 +5184,7 @@
               "REVERSING": 5.56,
               "UNFORMED": 38.89
             },
-            "CURRENT": {
+            "AXIS_PER_HOUSE": {
               "FULFILLED": 0,
               "MOVING": 1.67,
               "DELAYED": 27.22,
@@ -5205,12 +5205,12 @@
         "2027-07": {
           "n": 372,
           "meanScore": {
-            "BEFORE_AXIS_RULE": -4.87,
-            "CURRENT": -4.21,
+            "CURRENT": -4.87,
+            "AXIS_PER_HOUSE": -4.21,
             "AXIS_PER_JUDGMENT": -3.21
           },
           "statePct": {
-            "BEFORE_AXIS_RULE": {
+            "CURRENT": {
               "FULFILLED": 0,
               "MOVING": 5.38,
               "DELAYED": 31.99,
@@ -5218,7 +5218,7 @@
               "REVERSING": 1.08,
               "UNFORMED": 12.1
             },
-            "CURRENT": {
+            "AXIS_PER_HOUSE": {
               "FULFILLED": 0,
               "MOVING": 5.38,
               "DELAYED": 31.99,
@@ -5239,12 +5239,12 @@
         "2027-08": {
           "n": 372,
           "meanScore": {
-            "BEFORE_AXIS_RULE": -5.77,
-            "CURRENT": -5.1,
+            "CURRENT": -5.77,
+            "AXIS_PER_HOUSE": -5.1,
             "AXIS_PER_JUDGMENT": -4.1
           },
           "statePct": {
-            "BEFORE_AXIS_RULE": {
+            "CURRENT": {
               "FULFILLED": 3.76,
               "MOVING": 0,
               "DELAYED": 19.09,
@@ -5252,7 +5252,7 @@
               "REVERSING": 5.91,
               "UNFORMED": 13.44
             },
-            "CURRENT": {
+            "AXIS_PER_HOUSE": {
               "FULFILLED": 3.76,
               "MOVING": 0,
               "DELAYED": 19.09,
@@ -5273,12 +5273,12 @@
         "2027-09": {
           "n": 360,
           "meanScore": {
-            "BEFORE_AXIS_RULE": -4.77,
-            "CURRENT": -4.11,
+            "CURRENT": -4.77,
+            "AXIS_PER_HOUSE": -4.11,
             "AXIS_PER_JUDGMENT": -3.11
           },
           "statePct": {
-            "BEFORE_AXIS_RULE": {
+            "CURRENT": {
               "FULFILLED": 4.72,
               "MOVING": 0,
               "DELAYED": 10.83,
@@ -5286,7 +5286,7 @@
               "REVERSING": 8.33,
               "UNFORMED": 17.78
             },
-            "CURRENT": {
+            "AXIS_PER_HOUSE": {
               "FULFILLED": 4.72,
               "MOVING": 0,
               "DELAYED": 10.83,
@@ -5307,12 +5307,12 @@
         "2027-10": {
           "n": 372,
           "meanScore": {
-            "BEFORE_AXIS_RULE": -3.92,
-            "CURRENT": -3.26,
+            "CURRENT": -3.92,
+            "AXIS_PER_HOUSE": -3.26,
             "AXIS_PER_JUDGMENT": -2.26
           },
           "statePct": {
-            "BEFORE_AXIS_RULE": {
+            "CURRENT": {
               "FULFILLED": 9.14,
               "MOVING": 4.84,
               "DELAYED": 12.1,
@@ -5320,7 +5320,7 @@
               "REVERSING": 4.84,
               "UNFORMED": 11.83
             },
-            "CURRENT": {
+            "AXIS_PER_HOUSE": {
               "FULFILLED": 9.14,
               "MOVING": 4.84,
               "DELAYED": 12.1,
@@ -5341,12 +5341,12 @@
         "2027-11": {
           "n": 360,
           "meanScore": {
-            "BEFORE_AXIS_RULE": -4.23,
-            "CURRENT": -3.56,
+            "CURRENT": -4.23,
+            "AXIS_PER_HOUSE": -3.56,
             "AXIS_PER_JUDGMENT": -2.56
           },
           "statePct": {
-            "BEFORE_AXIS_RULE": {
+            "CURRENT": {
               "FULFILLED": 4.72,
               "MOVING": 9.17,
               "DELAYED": 9.17,
@@ -5354,7 +5354,7 @@
               "REVERSING": 3.61,
               "UNFORMED": 23.33
             },
-            "CURRENT": {
+            "AXIS_PER_HOUSE": {
               "FULFILLED": 4.72,
               "MOVING": 9.17,
               "DELAYED": 9.17,
@@ -5375,12 +5375,12 @@
         "2027-12": {
           "n": 372,
           "meanScore": {
-            "BEFORE_AXIS_RULE": -4.74,
-            "CURRENT": -4.07,
+            "CURRENT": -4.74,
+            "AXIS_PER_HOUSE": -4.07,
             "AXIS_PER_JUDGMENT": -3.07
           },
           "statePct": {
-            "BEFORE_AXIS_RULE": {
+            "CURRENT": {
               "FULFILLED": 0,
               "MOVING": 0,
               "DELAYED": 12.1,
@@ -5388,7 +5388,7 @@
               "REVERSING": 9.95,
               "UNFORMED": 29.84
             },
-            "CURRENT": {
+            "AXIS_PER_HOUSE": {
               "FULFILLED": 0,
               "MOVING": 0,
               "DELAYED": 15.32,
@@ -5411,12 +5411,12 @@
         "2026-01": {
           "n": 372,
           "meanScore": {
-            "BEFORE_AXIS_RULE": -3.4,
-            "CURRENT": -2.74,
+            "CURRENT": -3.4,
+            "AXIS_PER_HOUSE": -2.74,
             "AXIS_PER_JUDGMENT": -2.74
           },
           "statePct": {
-            "BEFORE_AXIS_RULE": {
+            "CURRENT": {
               "FULFILLED": 0,
               "MOVING": 0.81,
               "DELAYED": 7.53,
@@ -5424,7 +5424,7 @@
               "REVERSING": 0,
               "UNFORMED": 44.89
             },
-            "CURRENT": {
+            "AXIS_PER_HOUSE": {
               "FULFILLED": 0,
               "MOVING": 0.81,
               "DELAYED": 16.13,
@@ -5445,12 +5445,12 @@
         "2026-02": {
           "n": 336,
           "meanScore": {
-            "BEFORE_AXIS_RULE": -3.15,
-            "CURRENT": -2.48,
+            "CURRENT": -3.15,
+            "AXIS_PER_HOUSE": -2.48,
             "AXIS_PER_JUDGMENT": -2.48
           },
           "statePct": {
-            "BEFORE_AXIS_RULE": {
+            "CURRENT": {
               "FULFILLED": 0,
               "MOVING": 1.79,
               "DELAYED": 12.8,
@@ -5458,7 +5458,7 @@
               "REVERSING": 1.19,
               "UNFORMED": 46.73
             },
-            "CURRENT": {
+            "AXIS_PER_HOUSE": {
               "FULFILLED": 0,
               "MOVING": 6.85,
               "DELAYED": 18.15,
@@ -5479,12 +5479,12 @@
         "2026-03": {
           "n": 372,
           "meanScore": {
-            "BEFORE_AXIS_RULE": -3.41,
-            "CURRENT": -2.75,
+            "CURRENT": -3.41,
+            "AXIS_PER_HOUSE": -2.75,
             "AXIS_PER_JUDGMENT": -2.75
           },
           "statePct": {
-            "BEFORE_AXIS_RULE": {
+            "CURRENT": {
               "FULFILLED": 0,
               "MOVING": 9.68,
               "DELAYED": 6.45,
@@ -5492,7 +5492,7 @@
               "REVERSING": 13.44,
               "UNFORMED": 26.34
             },
-            "CURRENT": {
+            "AXIS_PER_HOUSE": {
               "FULFILLED": 0,
               "MOVING": 9.68,
               "DELAYED": 6.72,
@@ -5513,12 +5513,12 @@
         "2026-04": {
           "n": 360,
           "meanScore": {
-            "BEFORE_AXIS_RULE": -3.08,
-            "CURRENT": -2.41,
+            "CURRENT": -3.08,
+            "AXIS_PER_HOUSE": -2.41,
             "AXIS_PER_JUDGMENT": -2.41
           },
           "statePct": {
-            "BEFORE_AXIS_RULE": {
+            "CURRENT": {
               "FULFILLED": 0,
               "MOVING": 8.33,
               "DELAYED": 8.89,
@@ -5526,7 +5526,7 @@
               "REVERSING": 0,
               "UNFORMED": 50.56
             },
-            "CURRENT": {
+            "AXIS_PER_HOUSE": {
               "FULFILLED": 0,
               "MOVING": 14.44,
               "DELAYED": 8.89,
@@ -5547,12 +5547,12 @@
         "2026-05": {
           "n": 372,
           "meanScore": {
-            "BEFORE_AXIS_RULE": -2.69,
-            "CURRENT": -2.03,
+            "CURRENT": -2.69,
+            "AXIS_PER_HOUSE": -2.03,
             "AXIS_PER_JUDGMENT": -2.03
           },
           "statePct": {
-            "BEFORE_AXIS_RULE": {
+            "CURRENT": {
               "FULFILLED": 0.81,
               "MOVING": 3.23,
               "DELAYED": 23.66,
@@ -5560,7 +5560,7 @@
               "REVERSING": 0,
               "UNFORMED": 48.12
             },
-            "CURRENT": {
+            "AXIS_PER_HOUSE": {
               "FULFILLED": 0.81,
               "MOVING": 9.41,
               "DELAYED": 28.23,
@@ -5581,12 +5581,12 @@
         "2026-06": {
           "n": 360,
           "meanScore": {
-            "BEFORE_AXIS_RULE": -2.17,
-            "CURRENT": -1.51,
+            "CURRENT": -2.17,
+            "AXIS_PER_HOUSE": -1.51,
             "AXIS_PER_JUDGMENT": -1.51
           },
           "statePct": {
-            "BEFORE_AXIS_RULE": {
+            "CURRENT": {
               "FULFILLED": 5.56,
               "MOVING": 10,
               "DELAYED": 32.78,
@@ -5594,7 +5594,7 @@
               "REVERSING": 0.28,
               "UNFORMED": 28.33
             },
-            "CURRENT": {
+            "AXIS_PER_HOUSE": {
               "FULFILLED": 5.56,
               "MOVING": 10,
               "DELAYED": 37.78,
@@ -5615,12 +5615,12 @@
         "2026-07": {
           "n": 372,
           "meanScore": {
-            "BEFORE_AXIS_RULE": -2.65,
-            "CURRENT": -1.99,
+            "CURRENT": -2.65,
+            "AXIS_PER_HOUSE": -1.99,
             "AXIS_PER_JUDGMENT": -1.99
           },
           "statePct": {
-            "BEFORE_AXIS_RULE": {
+            "CURRENT": {
               "FULFILLED": 0,
               "MOVING": 11.56,
               "DELAYED": 22.85,
@@ -5628,7 +5628,7 @@
               "REVERSING": 13.17,
               "UNFORMED": 20.7
             },
-            "CURRENT": {
+            "AXIS_PER_HOUSE": {
               "FULFILLED": 0,
               "MOVING": 11.56,
               "DELAYED": 22.85,
@@ -5649,12 +5649,12 @@
         "2026-08": {
           "n": 372,
           "meanScore": {
-            "BEFORE_AXIS_RULE": -3,
-            "CURRENT": -2.33,
+            "CURRENT": -3,
+            "AXIS_PER_HOUSE": -2.33,
             "AXIS_PER_JUDGMENT": -2.33
           },
           "statePct": {
-            "BEFORE_AXIS_RULE": {
+            "CURRENT": {
               "FULFILLED": 0.54,
               "MOVING": 1.34,
               "DELAYED": 44.62,
@@ -5662,7 +5662,7 @@
               "REVERSING": 16.67,
               "UNFORMED": 17.74
             },
-            "CURRENT": {
+            "AXIS_PER_HOUSE": {
               "FULFILLED": 0.54,
               "MOVING": 1.34,
               "DELAYED": 44.62,
@@ -5683,12 +5683,12 @@
         "2026-09": {
           "n": 360,
           "meanScore": {
-            "BEFORE_AXIS_RULE": -1.86,
-            "CURRENT": -1.19,
+            "CURRENT": -1.86,
+            "AXIS_PER_HOUSE": -1.19,
             "AXIS_PER_JUDGMENT": -1.19
           },
           "statePct": {
-            "BEFORE_AXIS_RULE": {
+            "CURRENT": {
               "FULFILLED": 4.44,
               "MOVING": 6.11,
               "DELAYED": 38.06,
@@ -5696,7 +5696,7 @@
               "REVERSING": 16.67,
               "UNFORMED": 21.39
             },
-            "CURRENT": {
+            "AXIS_PER_HOUSE": {
               "FULFILLED": 4.44,
               "MOVING": 6.11,
               "DELAYED": 41.39,
@@ -5717,12 +5717,12 @@
         "2026-10": {
           "n": 372,
           "meanScore": {
-            "BEFORE_AXIS_RULE": -2.21,
-            "CURRENT": -1.54,
+            "CURRENT": -2.21,
+            "AXIS_PER_HOUSE": -1.54,
             "AXIS_PER_JUDGMENT": -1.54
           },
           "statePct": {
-            "BEFORE_AXIS_RULE": {
+            "CURRENT": {
               "FULFILLED": 0,
               "MOVING": 0.81,
               "DELAYED": 40.32,
@@ -5730,7 +5730,7 @@
               "REVERSING": 27.42,
               "UNFORMED": 18.82
             },
-            "CURRENT": {
+            "AXIS_PER_HOUSE": {
               "FULFILLED": 0,
               "MOVING": 0.81,
               "DELAYED": 44.89,
@@ -5751,12 +5751,12 @@
         "2026-11": {
           "n": 360,
           "meanScore": {
-            "BEFORE_AXIS_RULE": -2.69,
-            "CURRENT": -2.03,
+            "CURRENT": -2.69,
+            "AXIS_PER_HOUSE": -2.03,
             "AXIS_PER_JUDGMENT": -2.03
           },
           "statePct": {
-            "BEFORE_AXIS_RULE": {
+            "CURRENT": {
               "FULFILLED": 4.44,
               "MOVING": 3.33,
               "DELAYED": 33.61,
@@ -5764,7 +5764,7 @@
               "REVERSING": 18.06,
               "UNFORMED": 15
             },
-            "CURRENT": {
+            "AXIS_PER_HOUSE": {
               "FULFILLED": 4.44,
               "MOVING": 3.33,
               "DELAYED": 35,
@@ -5785,12 +5785,12 @@
         "2026-12": {
           "n": 372,
           "meanScore": {
-            "BEFORE_AXIS_RULE": -2.19,
-            "CURRENT": -1.52,
+            "CURRENT": -2.19,
+            "AXIS_PER_HOUSE": -1.52,
             "AXIS_PER_JUDGMENT": -1.52
           },
           "statePct": {
-            "BEFORE_AXIS_RULE": {
+            "CURRENT": {
               "FULFILLED": 2.69,
               "MOVING": 13.98,
               "DELAYED": 14.52,
@@ -5798,7 +5798,7 @@
               "REVERSING": 8.6,
               "UNFORMED": 35.75
             },
-            "CURRENT": {
+            "AXIS_PER_HOUSE": {
               "FULFILLED": 16.67,
               "MOVING": 0.54,
               "DELAYED": 14.52,
@@ -5819,12 +5819,12 @@
         "2027-01": {
           "n": 372,
           "meanScore": {
-            "BEFORE_AXIS_RULE": -2.61,
-            "CURRENT": -1.95,
+            "CURRENT": -2.61,
+            "AXIS_PER_HOUSE": -1.95,
             "AXIS_PER_JUDGMENT": -1.95
           },
           "statePct": {
-            "BEFORE_AXIS_RULE": {
+            "CURRENT": {
               "FULFILLED": 0,
               "MOVING": 0.54,
               "DELAYED": 16.4,
@@ -5832,7 +5832,7 @@
               "REVERSING": 21.51,
               "UNFORMED": 42.2
             },
-            "CURRENT": {
+            "AXIS_PER_HOUSE": {
               "FULFILLED": 0.54,
               "MOVING": 4.3,
               "DELAYED": 17.2,
@@ -5853,12 +5853,12 @@
         "2027-02": {
           "n": 336,
           "meanScore": {
-            "BEFORE_AXIS_RULE": -2.34,
-            "CURRENT": -1.68,
+            "CURRENT": -2.34,
+            "AXIS_PER_HOUSE": -1.68,
             "AXIS_PER_JUDGMENT": -1.68
           },
           "statePct": {
-            "BEFORE_AXIS_RULE": {
+            "CURRENT": {
               "FULFILLED": 0,
               "MOVING": 1.19,
               "DELAYED": 3.27,
@@ -5866,7 +5866,7 @@
               "REVERSING": 44.64,
               "UNFORMED": 33.04
             },
-            "CURRENT": {
+            "AXIS_PER_HOUSE": {
               "FULFILLED": 0,
               "MOVING": 9.52,
               "DELAYED": 3.57,
@@ -5887,12 +5887,12 @@
         "2027-03": {
           "n": 372,
           "meanScore": {
-            "BEFORE_AXIS_RULE": -2.52,
-            "CURRENT": -1.85,
+            "CURRENT": -2.52,
+            "AXIS_PER_HOUSE": -1.85,
             "AXIS_PER_JUDGMENT": -1.85
           },
           "statePct": {
-            "BEFORE_AXIS_RULE": {
+            "CURRENT": {
               "FULFILLED": 0,
               "MOVING": 2.42,
               "DELAYED": 10.48,
@@ -5900,7 +5900,7 @@
               "REVERSING": 34.95,
               "UNFORMED": 37.1
             },
-            "CURRENT": {
+            "AXIS_PER_HOUSE": {
               "FULFILLED": 0,
               "MOVING": 4.84,
               "DELAYED": 10.48,
@@ -5921,12 +5921,12 @@
         "2027-04": {
           "n": 360,
           "meanScore": {
-            "BEFORE_AXIS_RULE": -2.63,
-            "CURRENT": -1.97,
+            "CURRENT": -2.63,
+            "AXIS_PER_HOUSE": -1.97,
             "AXIS_PER_JUDGMENT": -1.97
           },
           "statePct": {
-            "BEFORE_AXIS_RULE": {
+            "CURRENT": {
               "FULFILLED": 0,
               "MOVING": 1.39,
               "DELAYED": 35.83,
@@ -5934,7 +5934,7 @@
               "REVERSING": 7.78,
               "UNFORMED": 31.94
             },
-            "CURRENT": {
+            "AXIS_PER_HOUSE": {
               "FULFILLED": 0,
               "MOVING": 2.5,
               "DELAYED": 35.83,
@@ -5955,12 +5955,12 @@
         "2027-05": {
           "n": 372,
           "meanScore": {
-            "BEFORE_AXIS_RULE": -1.97,
-            "CURRENT": -1.3,
+            "CURRENT": -1.97,
+            "AXIS_PER_HOUSE": -1.3,
             "AXIS_PER_JUDGMENT": -1.3
           },
           "statePct": {
-            "BEFORE_AXIS_RULE": {
+            "CURRENT": {
               "FULFILLED": 0,
               "MOVING": 8.33,
               "DELAYED": 25.54,
@@ -5968,7 +5968,7 @@
               "REVERSING": 0,
               "UNFORMED": 52.96
             },
-            "CURRENT": {
+            "AXIS_PER_HOUSE": {
               "FULFILLED": 5.91,
               "MOVING": 17.47,
               "DELAYED": 25.54,
@@ -5989,12 +5989,12 @@
         "2027-06": {
           "n": 360,
           "meanScore": {
-            "BEFORE_AXIS_RULE": -1.71,
-            "CURRENT": -1.04,
+            "CURRENT": -1.71,
+            "AXIS_PER_HOUSE": -1.04,
             "AXIS_PER_JUDGMENT": -1.04
           },
           "statePct": {
-            "BEFORE_AXIS_RULE": {
+            "CURRENT": {
               "FULFILLED": 0,
               "MOVING": 8.61,
               "DELAYED": 29.72,
@@ -6002,7 +6002,7 @@
               "REVERSING": 11.11,
               "UNFORMED": 34.44
             },
-            "CURRENT": {
+            "AXIS_PER_HOUSE": {
               "FULFILLED": 0.83,
               "MOVING": 9.72,
               "DELAYED": 29.72,
@@ -6023,12 +6023,12 @@
         "2027-07": {
           "n": 372,
           "meanScore": {
-            "BEFORE_AXIS_RULE": -3.12,
-            "CURRENT": -2.45,
+            "CURRENT": -3.12,
+            "AXIS_PER_HOUSE": -2.45,
             "AXIS_PER_JUDGMENT": -2.45
           },
           "statePct": {
-            "BEFORE_AXIS_RULE": {
+            "CURRENT": {
               "FULFILLED": 0,
               "MOVING": 5.11,
               "DELAYED": 29.03,
@@ -6036,7 +6036,7 @@
               "REVERSING": 2.15,
               "UNFORMED": 33.87
             },
-            "CURRENT": {
+            "AXIS_PER_HOUSE": {
               "FULFILLED": 0,
               "MOVING": 5.11,
               "DELAYED": 35.75,
@@ -6057,12 +6057,12 @@
         "2027-08": {
           "n": 372,
           "meanScore": {
-            "BEFORE_AXIS_RULE": -4.09,
-            "CURRENT": -3.43,
+            "CURRENT": -4.09,
+            "AXIS_PER_HOUSE": -3.43,
             "AXIS_PER_JUDGMENT": -3.43
           },
           "statePct": {
-            "BEFORE_AXIS_RULE": {
+            "CURRENT": {
               "FULFILLED": 3.76,
               "MOVING": 6.72,
               "DELAYED": 23.12,
@@ -6070,7 +6070,7 @@
               "REVERSING": 5.91,
               "UNFORMED": 16.4
             },
-            "CURRENT": {
+            "AXIS_PER_HOUSE": {
               "FULFILLED": 3.76,
               "MOVING": 6.72,
               "DELAYED": 27.15,
@@ -6091,12 +6091,12 @@
         "2027-09": {
           "n": 360,
           "meanScore": {
-            "BEFORE_AXIS_RULE": -3.09,
-            "CURRENT": -2.42,
+            "CURRENT": -3.09,
+            "AXIS_PER_HOUSE": -2.42,
             "AXIS_PER_JUDGMENT": -2.42
           },
           "statePct": {
-            "BEFORE_AXIS_RULE": {
+            "CURRENT": {
               "FULFILLED": 2.5,
               "MOVING": 15.28,
               "DELAYED": 16.67,
@@ -6104,7 +6104,7 @@
               "REVERSING": 8.33,
               "UNFORMED": 23.89
             },
-            "CURRENT": {
+            "AXIS_PER_HOUSE": {
               "FULFILLED": 2.5,
               "MOVING": 15.28,
               "DELAYED": 16.67,
@@ -6125,12 +6125,12 @@
         "2027-10": {
           "n": 372,
           "meanScore": {
-            "BEFORE_AXIS_RULE": -2.2,
-            "CURRENT": -1.53,
+            "CURRENT": -2.2,
+            "AXIS_PER_HOUSE": -1.53,
             "AXIS_PER_JUDGMENT": -1.53
           },
           "statePct": {
-            "BEFORE_AXIS_RULE": {
+            "CURRENT": {
               "FULFILLED": 0,
               "MOVING": 12.9,
               "DELAYED": 22.85,
@@ -6138,7 +6138,7 @@
               "REVERSING": 16.94,
               "UNFORMED": 29.3
             },
-            "CURRENT": {
+            "AXIS_PER_HOUSE": {
               "FULFILLED": 5.38,
               "MOVING": 8.06,
               "DELAYED": 23.12,
@@ -6159,12 +6159,12 @@
         "2027-11": {
           "n": 360,
           "meanScore": {
-            "BEFORE_AXIS_RULE": -2.52,
-            "CURRENT": -1.85,
+            "CURRENT": -2.52,
+            "AXIS_PER_HOUSE": -1.85,
             "AXIS_PER_JUDGMENT": -1.85
           },
           "statePct": {
-            "BEFORE_AXIS_RULE": {
+            "CURRENT": {
               "FULFILLED": 0,
               "MOVING": 11.11,
               "DELAYED": 18.89,
@@ -6172,7 +6172,7 @@
               "REVERSING": 16.67,
               "UNFORMED": 31.94
             },
-            "CURRENT": {
+            "AXIS_PER_HOUSE": {
               "FULFILLED": 0,
               "MOVING": 14.72,
               "DELAYED": 19.17,
@@ -6193,12 +6193,12 @@
         "2027-12": {
           "n": 372,
           "meanScore": {
-            "BEFORE_AXIS_RULE": -3.11,
-            "CURRENT": -2.44,
+            "CURRENT": -3.11,
+            "AXIS_PER_HOUSE": -2.44,
             "AXIS_PER_JUDGMENT": -2.44
           },
           "statePct": {
-            "BEFORE_AXIS_RULE": {
+            "CURRENT": {
               "FULFILLED": 0,
               "MOVING": 3.23,
               "DELAYED": 18.28,
@@ -6206,7 +6206,7 @@
               "REVERSING": 12.37,
               "UNFORMED": 39.78
             },
-            "CURRENT": {
+            "AXIS_PER_HOUSE": {
               "FULFILLED": 0,
               "MOVING": 9.14,
               "DELAYED": 18.28,
@@ -6273,7 +6273,7 @@
       "timing-59"
     ],
     "changed": {
-      "CURRENT": [
+      "AXIS_PER_HOUSE": [
         "education-002: BLOCKED (-6) → REVERSING (-4)",
         "employment-001: BLOCKED (-5) → REVERSING (-3)",
         "employment-006: BLOCKED (-5) → UNFORMED (-3)",

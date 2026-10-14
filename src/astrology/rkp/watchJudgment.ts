@@ -193,26 +193,10 @@ export function judgeWatchChart(chart: WatchChart, qType: QuestionType): WatchVe
   }
 
   // ── 3. Who sits on, and who looks at, the matter's Ghar ─────────────────
-  // Owner decision, 2026-10-14: Ras and Dhanab are one axis. When both touch
-  // the same judged Ghar (they are always opposite, so Ras's gaze reaches
-  // Dhanab's Ghar and back), the axis counts once there, as one malefic
-  // contact, with one factor naming both. A single node touching a Ghar
-  // counts exactly as before.
-  const targetAxis = nodeAxisOn(target);
   const onTarget = [...target.occupants, ...target.aspectedBy];
   let sawBenefic = false;
   let sawMalefic = false;
-  if (targetAxis) {
-    score -= 2;
-    sawMalefic = true;
-    factors.push(
-      `${chart.planets.Rahu.name} and ${chart.planets.Ketu.name}, one node axis, fall on the ${gharLabel(targetHouse)} — friction on the matter.`,
-    );
-  }
   for (const planet of onTarget) {
-    if (targetAxis && isNodePlanet(planet)) {
-      continue;
-    }
     const pos = chart.planets[planet];
     const how = target.occupants.includes(planet) ? 'sits in' : 'casts its gaze on';
     if (isBenefic(planet)) {
@@ -227,19 +211,8 @@ export function judgeWatchChart(chart: WatchChart, qType: QuestionType): WatchVe
   }
 
   // ── 4. The Ghar of fulfilment ────────────────────────────────────────────
-  // The node axis counts once here too (see step 3).
-  const fulfilmentAxis = nodeAxisOn(fulfilment);
-  if (fulfilmentAxis) {
-    score -= 2;
-    factors.push(
-      `${chart.planets.Rahu.name} and ${chart.planets.Ketu.name}, one node axis, weigh on the 11th Ghar — fulfilment itself is obstructed.`,
-    );
-  }
   const onFulfilment = [...fulfilment.occupants, ...fulfilment.aspectedBy];
   for (const planet of onFulfilment) {
-    if (fulfilmentAxis && isNodePlanet(planet)) {
-      continue;
-    }
     if (isBenefic(planet)) {
       score += 2;
       factors.push(
@@ -338,19 +311,6 @@ export function judgeWatchChart(chart: WatchChart, qType: QuestionType): WatchVe
 /* -------------------------------------------------------------------------- */
 /*  Internals                                                                 */
 /* -------------------------------------------------------------------------- */
-
-function isNodePlanet(planet: Planet): boolean {
-  return planet === 'Rahu' || planet === 'Ketu';
-}
-
-/** Whether both nodes — the Ras–Dhanab axis — touch this Ghar (sit in or gaze on it). */
-function nodeAxisOn(house: {
-  readonly occupants: readonly Planet[];
-  readonly aspectedBy: readonly Planet[];
-}): boolean {
-  const touching = [...house.occupants, ...house.aspectedBy];
-  return touching.includes('Rahu') && touching.includes('Ketu');
-}
 
 /**
  * Obstruction precedence: a malefic actually ON the matter outranks one merely

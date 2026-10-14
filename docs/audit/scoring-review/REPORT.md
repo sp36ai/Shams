@@ -1,30 +1,5 @@
 # Scoring Integrity Review — RKP watch judgment
 
-> **Owner decision, 2026-10-14 (after this review): Ras and Dhanab are one
-> axis.** On each judged Ghar (the matter's Ghar and the 11th) the two nodes
-> together count as one malefic contact (−2 at most), with one factor naming
-> both. This is the "axis once per house" option below. Everything else stays
-> frozen: the 5/7/9 gaze convention, every other planet's ±2, the
-> obstruction precedence, thresholds and state precedence. The open question
-> of a planet touching both judged Ghars is unchanged by this rule, so an axis
-> on both Ghars counts once on each.
->
-> Implemented in `src/astrology/rkp/watchJudgment.ts` (synced to
-> `functions/src/engine`) with deterministic tests. The harness now checks the
-> engine against this rule (`CURRENT`) and keeps the earlier rule as
-> `BEFORE_AXIS_RULE`: 0 mismatches on all 69,600 readings.
->
-> | Two years, 2026–2027 | Mean | FULFILLED | MOVING | DELAYED | BLOCKED | REVERSING | UNFORMED |
-> |---|---|---|---|---|---|---|---|
-> | Before the rule | −3.54 | 1.46% | 3.58% | 17.26% | 38.62% | 10.65% | 28.43% |
-> | **With the axis rule** | **−2.87** | **1.74%** | **4.18%** | **19.18%** | **30.91%** | **11.60%** | **32.39%** |
->
-> Three narration-validator test fixtures pinned real moments whose verdict
-> this rule changed. They were moved to the nearest moments with the same
-> pinned properties. No validator assertion was changed.
->
-> The sections below describe the rules as they stood **before** this decision.
-
 **Status:** read-only diagnostic. **No engine change.** Rules, weights, aspect
 conventions, thresholds and precedence are frozen (owner decision,
 2026-10-14). Every variant below exists only inside the analysis harness and

@@ -58,11 +58,8 @@ function waitContract(): ReadingContract {
 
 /** Real, engine-produced UNCERTAIN/low-confidence contract — exercises checkUnsupportedCertainty. */
 function uncertainContract(): ReadingContract {
-  // Moved from 05:00 to 05:05 on 2026-10-14: the node-axis rule (owner decision
-  // 2026-10-14) turned the 05:00 reading MOVING; 05:05 is the nearest moment that
-  // is still UNCERTAIN and low-confidence, which is all this fixture is for.
   return contractFor(
-    '2026-08-15T05:05:00+05:30',
+    '2026-08-15T05:00:00+05:30',
     'Will I pass my upcoming exam?',
     'r-5cr-uncertain',
   );
