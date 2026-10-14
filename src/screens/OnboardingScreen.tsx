@@ -19,6 +19,7 @@ import StarfieldBackground from '@components/StarfieldBackground';
 import Button from '@components/ui/Button';
 import { useSettingsStore, type SeekerProfile } from '@stores/settingsStore';
 import BrandFooter from '@components/ui/BrandFooter';
+import { useTranslation } from '@i18n/I18nProvider';
 
 // ── Question definitions ──────────────────────────────────────────────────────
 
@@ -100,6 +101,7 @@ const OnboardingScreen: React.FC = () => {
   const { theme } = useTheme();
   const colors = useColors();
   const typography = useTypography();
+  const t = useTranslation();
   const scrollRef = useRef<ScrollView>(null);
   const { width } = useWindowDimensions();
 
@@ -157,6 +159,16 @@ const OnboardingScreen: React.FC = () => {
     markOnboardingComplete();
   }, [markOnboardingComplete]);
 
+  // Owner decision 2026-10-14: the profile questions are optional. Skipping
+  // takes the default profile (the same one inferProfile falls back to) and
+  // makes no server call. The profile only chooses the guidance line on
+  // Home's "Today's Sky for You"; it never reaches the verdict.
+  const skipHidden = inferring || profile !== null;
+  const handleSkip = useCallback(() => {
+    setSeekerProfile('clarity', ['', '', '']);
+    markOnboardingComplete();
+  }, [setSeekerProfile, markOnboardingComplete]);
+
   return (
     <SafeAreaView
       style={[styles.root, { backgroundColor: theme.colors.bg }]}
@@ -168,6 +180,22 @@ const OnboardingScreen: React.FC = () => {
         nebula2={colors.nebula2}
         nebula3={colors.nebula3}
       />
+
+      {/* Optional: skip the profile questions. Hidden (space kept, so the
+          questions don't jump) once the answers are being read. */}
+      <Pressable
+        testID="onboarding-skip-btn"
+        onPress={handleSkip}
+        disabled={skipHidden}
+        hitSlop={12}
+        style={({ pressed }) => [styles.skip, { opacity: skipHidden ? 0 : pressed ? 0.6 : 1 }]}
+        accessibilityRole="button"
+        accessibilityLabel={t('common.skip')}
+        accessibilityElementsHidden={skipHidden}
+        importantForAccessibility={skipHidden ? 'no-hide-descendants' : 'auto'}
+      >
+        <Text style={[typography('button'), { color: colors.textMuted }]}>{t('common.skip')}</Text>
+      </Pressable>
 
       <ScrollView
         ref={scrollRef}
@@ -325,6 +353,11 @@ const ornStyles = StyleSheet.create({
 
 const styles = StyleSheet.create({
   root: { flex: 1 },
+  skip: {
+    alignSelf: 'flex-end',
+    paddingHorizontal: 20,
+    paddingVertical: 8,
+  },
   slider: { flex: 1 },
   slide: {
     flex: 1,
