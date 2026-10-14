@@ -1003,6 +1003,33 @@ describe('errorMessageFor', () => {
   const t = ((key: string) => key) as unknown as Parameters<typeof errorMessageFor>[1];
   const exhausted = { code: 'resource-exhausted' };
 
+  it('explains a used free question with the price and balance the server sent', () => {
+    const calls: Array<[string, unknown]> = [];
+    const tt = ((key: string, params?: unknown) => {
+      calls.push([key, params]);
+      return key;
+    }) as unknown as Parameters<typeof errorMessageFor>[1];
+    const err = {
+      code: 'resource-exhausted',
+      details: { reason: 'free_used', questionCostMilli: 3000, balanceMilli: 1500 },
+    };
+    expect(errorMessageFor(err, tt)).toBe('wallet.freeQuestionUsed');
+    expect(calls[0]).toEqual(['wallet.freeQuestionUsed', { cost: '3.0', balance: '1.5' }]);
+  });
+
+  it('explains the paid fair-use limit', () => {
+    const err = { code: 'resource-exhausted', details: { reason: 'fair_use', limit: 10 } };
+    expect(errorMessageFor(err, t)).toBe('wallet.fairUseReached');
+  });
+
+  it('explains that discussing needs coins, rather than calling it the follow-up limit', () => {
+    const err = {
+      code: 'failed-precondition',
+      details: { reason: 'insufficient_coins', balanceMilli: 200, minBalanceMilli: 1000 },
+    };
+    expect(errorMessageFor(err, t, 'discuss')).toBe('wallet.discussionNeedsCoins');
+  });
+
   it('reports the daily quota when a cast is refused', () => {
     expect(errorMessageFor(exhausted, t)).toBe('oracleChat.quotaExhausted');
   });

@@ -79,10 +79,10 @@ name: 'Settings — plan display and sign out'
 - tapOn:
     id: 'onboarding-enter-btn'
 
-# Settings is a gear icon in the Home header, not a tab.
+# Settings is in Home's ≡ menu (top corner of the header), not a tab.
 - extendedWaitUntil:
     visible:
-      id: 'settings-gear-btn'
+      id: 'home-menu-btn'
     timeout: 30000
 
 # Home screen capture — visual evidence only, no assertion. Taken on Home
@@ -100,7 +100,9 @@ name: 'Settings — plan display and sign out'
 - takeScreenshot: shams-home-screen
 
 - tapOn:
-    id: 'settings-gear-btn'
+    id: 'home-menu-btn'
+- tapOn:
+    id: 'home-menu-settings'
 - assertVisible: 'AL-DAFTAR'
 
 # Free plan shown for the pre-seeded test account (never upgraded)

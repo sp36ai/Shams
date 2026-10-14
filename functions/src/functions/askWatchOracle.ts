@@ -187,8 +187,9 @@ export const askWatchOracle = onCall(
       // Costs the same as an astronomical reading — same helper, same ledger.
       let plan: Awaited<ReturnType<typeof claimQuotaSlot>>['plan'];
       let remaining: Awaited<ReturnType<typeof claimQuotaSlot>>['remaining'];
+      let charge: Awaited<ReturnType<typeof claimQuotaSlot>>['charge'];
       try {
-        ({ plan, remaining } = await claimQuotaSlot(userId));
+        ({ plan, remaining, charge } = await claimQuotaSlot(userId));
       } catch (err) {
         // Out of quota, or the ledger failed: nothing was cast, so the claim
         // must not outlive the attempt — tomorrow's retry is a real attempt.
@@ -348,7 +349,9 @@ export const askWatchOracle = onCall(
           stack: err instanceof Error ? err.stack : undefined,
           userId,
         });
-        await refundQuotaSlot(userId).catch(refundErr => {
+        // Gives back exactly what was charged: a daily slot, the week's free
+        // question, or the coins an extra question cost.
+        await refundQuotaSlot(userId, charge).catch(refundErr => {
           logger.warn('askWatchOracle: quota refund failed after engine error', {
             err: String(refundErr),
             userId,

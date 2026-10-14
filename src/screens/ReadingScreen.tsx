@@ -92,6 +92,8 @@ import ChatBubble from '@components/oracle/ChatBubble';
 import ChatComposer from '@components/oracle/ChatComposer';
 import ReadingHeader from '@components/oracle/ReadingHeader';
 import { requestRef } from '@utils/requestRef';
+import BrandFooter from '@components/ui/BrandFooter';
+import { formatCoins, useWalletStore } from '@stores/walletStore';
 
 /**
  * Maps a send failure to a message the seeker can act on. Firebase callable
@@ -108,6 +110,33 @@ export function errorMessageFor(
     typeof err === 'object' && err !== null && 'code' in err
       ? String((err as { code: unknown }).code)
       : '';
+  // The coin economy's refusals carry their reason (and the numbers to show)
+  // in the callable error's `details` — see functions/src/utils/quotaSlots.ts
+  // and discussReading.ts.
+  const details =
+    typeof err === 'object' && err !== null && 'details' in err
+      ? ((err as { details: unknown }).details as Record<string, unknown> | null)
+      : null;
+  const reason = typeof details?.reason === 'string' ? details.reason : null;
+  const coins = (milli: unknown): string => (typeof milli === 'number' ? formatCoins(milli) : '—');
+
+  if (reason === 'free_used') {
+    return t('wallet.freeQuestionUsed', {
+      cost: coins(details?.questionCostMilli),
+      balance: coins(details?.balanceMilli),
+    });
+  }
+  if (reason === 'fair_use') {
+    return t('wallet.fairUseReached', {
+      limit: typeof details?.limit === 'number' ? String(details.limit) : '—',
+    });
+  }
+  if (reason === 'insufficient_coins') {
+    return t('wallet.discussionNeedsCoins', {
+      balance: coins(details?.balanceMilli),
+      min: coins(details?.minBalanceMilli),
+    });
+  }
 
   if (call === 'discuss' && code === 'resource-exhausted') {
     // discussReading's limit is per Reading (DISCUSSION_TURN_LIMIT), not the
@@ -449,6 +478,10 @@ const ReadingScreen: React.FC = () => {
           suggestsNewQuestion: result.isNewQuestion,
           closesDiscussion: result.conversationComplete,
         });
+        if (result.balanceMilli !== undefined) {
+          // Coins mode: the server charged this reply; show the new balance.
+          useWalletStore.getState().update({ balanceMilli: result.balanceMilli });
+        }
       } catch (err) {
         const code =
           typeof err === 'object' && err !== null && 'code' in err
@@ -887,6 +920,7 @@ const ReadingScreen: React.FC = () => {
           }
         />
       </KeyboardAvoidingView>
+      <BrandFooter />
     </SafeAreaView>
   );
 };

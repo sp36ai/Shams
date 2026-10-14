@@ -37,6 +37,21 @@ export function todayKey(now = Date.now()): string {
  */
 export const DISCUSSION_TURN_LIMIT = 40;
 
+// ── Coin economy (owner decision 2026-10-14) ──────────────────────────────
+// Applies only where utils/monetization.ts says the seeker is in 'coins' mode.
+// Amounts are integer millicoins: 1 coin = 1000 milli = ₹10.
+export const MILLI_PER_COIN = 1000;
+/** Free plan: one question per this many days, counted from the last free one. */
+export const FREE_QUESTION_INTERVAL_DAYS = 7;
+/** Free plan: price of a question beyond the free one (3 coins = ₹30). */
+export const EXTRA_QUESTION_COST_MILLI = 3 * MILLI_PER_COIN;
+/** Paid plan: fair-use cap on questions per UTC day ("unlimited*"). */
+export const PAID_DAILY_FAIR_USE = 10;
+/** Discussion price: 1 coin per 10,000 model tokens, i.e. 10 tokens per millicoin. */
+export const TOKENS_PER_MILLICOIN = 10;
+/** Discussion: a turn needs at least this balance to start (1 coin). */
+export const MIN_DISCUSSION_BALANCE_MILLI = 1 * MILLI_PER_COIN;
+
 export const REGION = 'asia-south1'; // Mumbai — closest to primary user base
 
 export const FUNCTION_OPTS = {
@@ -76,6 +91,10 @@ export const RATE_LIMIT_PER_MINUTE = defineInt('RATE_LIMIT_PER_MINUTE', {
  * Create these exact SKU strings in Google Play Console → Subscriptions.
  */
 export const PLAY_PRODUCT_MAP: Record<string, PlanTier> = {
+  // Premium ₹299/month (owner decision 2026-10-14): the one plan sold from
+  // now on. Maps to the top tier so it unlocks everything (both premium
+  // themes included). The four below stay mapped for existing subscribers.
+  shams_premium_monthly: 'khass',
   mureed_monthly: 'mureed',
   mureed_annual: 'mureed',
   khass_monthly: 'khass',

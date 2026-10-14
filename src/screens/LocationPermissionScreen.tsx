@@ -51,6 +51,7 @@ import { useTranslation } from '@i18n/I18nProvider';
 import { useSettingsStore } from '@stores/settingsStore';
 import { requestLocationPermission, isLocationUsable } from '@utils/permissions';
 import { acquireLocation } from '@utils/acquireLocation';
+import BrandFooter from '@components/ui/BrandFooter';
 
 type ScreenStatus = 'idle' | 'requesting' | 'granted' | 'denied' | 'blocked';
 
@@ -201,6 +202,7 @@ const LocationPermissionScreen: React.FC = () => {
           {'  ✦'}
         </Text>
       </ScrollView>
+      <BrandFooter />
     </SafeAreaView>
   );
 };

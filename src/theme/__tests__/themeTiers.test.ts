@@ -2,15 +2,21 @@
  * Tier-gating regression tests.
  * --------------------------------------------------------------------------
  * Covers THEME_TIER / tierMeetsRequirement / isThemeUnlocked in themes.ts —
- * the logic that decides which of the 8 themes a user on a given plan may
+ * the logic that decides which of the 9 themes a user on a given plan may
  * select. See src/theme/ThemeProvider.tsx and src/components/ThemeSwitcher.tsx
  * for where this is enforced.
  */
 
 import {
+  DEFAULT_THEME_ID,
   THEME_IDS,
   THEME_TIER,
+  VISIBLE_THEME_IDS,
+  getHomeStyle,
+  getTheme,
   isThemeUnlocked,
+  isValidThemeId,
+  pickerThemeIds,
   tierMeetsRequirement,
   type ThemeId,
 } from '../themes';
@@ -23,21 +29,32 @@ describe('THEME_TIER', () => {
     }
   });
 
-  it('darAlShams is the one free-tier theme', () => {
+  it('midnightCelestial (the default) and darAlShams are the free-tier themes', () => {
     const freeThemes = THEME_IDS.filter(id => THEME_TIER[id] === 'free');
-    expect(freeThemes).toEqual(['darAlShams']);
+    expect(freeThemes).toEqual(['midnightCelestial', 'darAlShams']);
   });
 
-  it('the five original colour variants require Mureed', () => {
+  it('the default theme is free, so no plan can lock a user out of it', () => {
+    expect(THEME_TIER[DEFAULT_THEME_ID]).toBe('free');
+  });
+
+  it('the five original colour variants and Qamar al-Fiḍḍa require Mureed', () => {
     const mureedThemes = THEME_IDS.filter(id => THEME_TIER[id] === 'mureed');
     expect(mureedThemes.sort()).toEqual(
-      ['laylAlBahr', 'narAlHadid', 'subhAlWahy', 'zaytunAlHikma', 'sirrAlBanafsaj'].sort(),
+      [
+        'laylAlBahr',
+        'narAlHadid',
+        'subhAlWahy',
+        'zaytunAlHikma',
+        'sirrAlBanafsaj',
+        'qamarAlFidda',
+      ].sort(),
     );
   });
 
-  it('the two newest themes require Khāṣṣ', () => {
+  it('Quṭb, Kanz and Zumurrud al-Malakūt require Khāṣṣ', () => {
     const khassThemes = THEME_IDS.filter(id => THEME_TIER[id] === 'khass');
-    expect(khassThemes.sort()).toEqual(['qutbAlAnwar', 'kanzAlAsrar'].sort());
+    expect(khassThemes.sort()).toEqual(['qutbAlAnwar', 'kanzAlAsrar', 'zumurrudAlMalakut'].sort());
   });
 });
 
@@ -71,7 +88,7 @@ function realGatingDecision(id: ThemeId, userTier: PlanTier): boolean {
 describe('the real per-tier gating decision (bypassing testing mode)', () => {
   const casesByPlan: Record<PlanTier, { unlocked: ThemeId[]; locked: ThemeId[] }> = {
     free: {
-      unlocked: ['darAlShams'],
+      unlocked: ['midnightCelestial', 'darAlShams'],
       locked: [
         'laylAlBahr',
         'narAlHadid',
@@ -84,6 +101,7 @@ describe('the real per-tier gating decision (bypassing testing mode)', () => {
     },
     mureed: {
       unlocked: [
+        'midnightCelestial',
         'darAlShams',
         'laylAlBahr',
         'narAlHadid',
@@ -128,4 +146,73 @@ describe('isThemeUnlocked — TEMPORARY testing-mode override', () => {
       }
     });
   }
+});
+
+describe('theme picker list', () => {
+  it('offers the three colour themes and the two premium themes', () => {
+    expect(VISIBLE_THEME_IDS).toEqual([
+      'midnightCelestial',
+      'darAlShams',
+      'laylAlBahr',
+      'qamarAlFidda',
+      'zumurrudAlMalakut',
+    ]);
+    expect(pickerThemeIds('darAlShams')).toEqual(VISIBLE_THEME_IDS);
+  });
+
+  it('still shows a hidden theme while it is the active one', () => {
+    expect(pickerThemeIds('kanzAlAsrar')).toEqual([...VISIBLE_THEME_IDS, 'kanzAlAsrar']);
+  });
+
+  it('keeps every hidden theme valid, so existing users are not reset', () => {
+    for (const id of THEME_IDS) {
+      expect(isValidThemeId(id)).toBe(true);
+    }
+  });
+});
+
+describe('Home style per theme', () => {
+  it('keeps the original Midnight Celestial hero exactly', () => {
+    const home = getHomeStyle(getTheme('midnightCelestial'));
+    expect(home.palette).toEqual({
+      midnight: '#061722',
+      deepTeal: '#0B2735',
+      antiqueGold: '#C5A36A',
+      champagne: '#F2D9A0',
+      bronze: '#80603D',
+      ivory: '#F6EBDD',
+      amber: '#D89A4A',
+    });
+    expect(home).toMatchObject({
+      tileShape: 'rounded',
+      tileLayout: 'grid',
+      capsule: 'pill',
+      emblem: 'gold',
+    });
+  });
+
+  it('gives colour themes their own palette from their colours, with the original shapes', () => {
+    const theme = getTheme('laylAlBahr');
+    const home = getHomeStyle(theme);
+    expect(home.palette.midnight).toBe(theme.colors.bg);
+    expect(home.palette.antiqueGold).toBe(theme.colors.gold);
+    expect(home).toMatchObject({ tileShape: 'rounded', capsule: 'pill', emblem: 'gold' });
+  });
+
+  it('makes the two premium themes differ from each other in shape and emblem, not just colour', () => {
+    const qamar = getHomeStyle(getTheme('qamarAlFidda'));
+    const zumurrud = getHomeStyle(getTheme('zumurrudAlMalakut'));
+    expect(qamar).toMatchObject({
+      tileShape: 'facet',
+      tileLayout: 'list',
+      capsule: 'medallion',
+      emblem: 'silver',
+    });
+    expect(zumurrud).toMatchObject({
+      tileShape: 'arch',
+      tileLayout: 'grid',
+      capsule: 'tablet',
+      emblem: 'emerald',
+    });
+  });
 });

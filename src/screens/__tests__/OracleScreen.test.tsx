@@ -12,16 +12,11 @@
  * disconnected during a refactor fails here immediately.
  */
 import React from 'react';
-import { screen, userEvent, waitFor } from '@testing-library/react-native';
+import { fireEvent, screen, userEvent, waitFor } from '@testing-library/react-native';
 import { useNavigation } from '@react-navigation/native';
-import Voice from '@react-native-voice/voice';
 import { renderScreen } from '../../test-utils/renderScreen';
 import OracleScreen from '../OracleScreen';
-
-jest.mock('@utils/permissions', () => ({
-  checkMicrophonePermission: jest.fn(() => Promise.resolve('granted')),
-  requestMicrophonePermission: jest.fn(() => Promise.resolve('granted')),
-}));
+import { useWalletStore } from '@stores/walletStore';
 
 describe('OracleScreen navigation wiring', () => {
   /**
@@ -43,72 +38,42 @@ describe('OracleScreen navigation wiring', () => {
     return handle;
   }
 
-  it('navigates to Settings when the header gear is pressed', async () => {
+  it('has no settings gear any more; Settings is in the menu', async () => {
+    mockNavigation();
+    await renderScreen(<OracleScreen />);
+    expect(screen.queryByTestId('settings-gear-btn')).toBeNull();
+    expect(screen.getByTestId('home-menu-btn').props.accessibilityLabel).toBe('Menu');
+  });
+
+  it('opens the menu with Al-Falak, Readings and Settings, in that order', async () => {
+    mockNavigation();
+    await renderScreen(<OracleScreen />);
+    expect(screen.queryByTestId('home-menu')).toBeNull();
+
+    await userEvent.setup().press(screen.getByTestId('home-menu-btn'));
+
+    const tree = JSON.stringify(screen.toJSON());
+    const ids = ['"home-menu-alfalak"', '"home-menu-readings"', '"home-menu-settings"'];
+    const positions = ids.map(id => tree.indexOf(id));
+    expect(positions.every(p => p >= 0)).toBe(true);
+    expect([...positions].sort((a, b) => a - b)).toEqual(positions);
+  });
+
+  it.each([
+    ['alfalak', 'AlFalak'],
+    ['readings', 'Readings'],
+    ['settings', 'Settings'],
+  ])('menu item %s navigates to %s and closes the menu', async (key, route) => {
     const { navigate } = mockNavigation();
     await renderScreen(<OracleScreen />);
-
     const user = userEvent.setup();
-    await user.press(screen.getByTestId('settings-gear-btn'));
 
-    expect(navigate).toHaveBeenCalledWith('Settings');
-  });
+    await user.press(screen.getByTestId('home-menu-btn'));
+    await user.press(screen.getByTestId(`home-menu-${key}`));
 
-  it('opens an empty Reading when the ask button is pressed with nothing typed', async () => {
-    const { push } = mockNavigation();
-    await renderScreen(<OracleScreen />);
-
-    const user = userEvent.setup();
-    await user.press(screen.getByTestId('ask-shams-btn'));
-
-    // push, not navigate: a Reading is always its own screen, never a params
-    // update to one already on the stack.
-    expect(push).toHaveBeenCalledWith('Reading', {});
-  });
-
-  it('carries a typed question into the Reading it opens', async () => {
-    const { push } = mockNavigation();
-    await renderScreen(<OracleScreen />);
-
-    const user = userEvent.setup();
-    await user.type(
-      screen.getByTestId('home-ask-input'),
-      'Should I accept this business opportunity?',
-    );
-    await user.press(screen.getByTestId('ask-shams-btn'));
-
-    // Home owns the composer that STARTS a Reading; the Reading itself is
-    // created on the other side, when the question is actually submitted.
-    expect(push).toHaveBeenCalledWith('Reading', {
-      initialQuestion: 'Should I accept this business opportunity?',
-      initialQuestionKind: 'text',
-    });
-  });
-
-  // A spoken question takes the same route as a typed one: Home hands it to a
-  // new Reading, which asks askWatchOracle. Nothing voice-specific beyond the
-  // kind tag travels with it.
-  it('opens a Reading with a spoken question when the recognizer stops on its own', async () => {
-    const { push } = mockNavigation();
-    await renderScreen(<OracleScreen />);
-
-    const user = userEvent.setup();
-    await user.press(screen.getByTestId('home-ask-mic-btn'));
-    await waitFor(() => expect(Voice.start).toHaveBeenCalled());
-
-    const voice = Voice as unknown as {
-      onSpeechEnd?: () => void;
-      onSpeechResults?: (e: { value?: string[] }) => void;
-    };
-    voice.onSpeechEnd?.();
-    voice.onSpeechResults?.({ value: ['Will I get the job?'] });
-
-    await waitFor(() =>
-      expect(push).toHaveBeenCalledWith('Reading', {
-        initialQuestion: 'Will I get the job?',
-        initialQuestionKind: 'voice',
-      }),
-    );
-    expect(push).toHaveBeenCalledTimes(1);
+    expect(navigate).toHaveBeenCalledWith(route);
+    expect(navigate).toHaveBeenCalledTimes(1);
+    expect(screen.queryByTestId('home-menu')).toBeNull();
   });
 });
 
@@ -127,27 +92,41 @@ describe('OracleScreen hero', () => {
     return handle;
   }
 
-  it('opens an empty Reading from the hero Ask button', async () => {
+  /** The mandala renders once its slot is measured; tests have no layout pass. */
+  async function layoutMandalaSlot(): Promise<void> {
+    await fireEvent(screen.getByTestId('home-mandala-slot'), 'layout', {
+      nativeEvent: { layout: { x: 0, y: 0, width: 320, height: 240 } },
+    });
+  }
+
+  it('opens an empty Reading when the mandala is pressed', async () => {
     const { push, navigate } = mockNavigation();
     await renderScreen(<OracleScreen />);
+    await layoutMandalaSlot();
 
     await userEvent.setup().press(screen.getByTestId('home-hero-action-ask'));
 
-    expect(push).toHaveBeenCalledWith('Reading', {});
+    // After the lift animation, not before it.
+    await waitFor(() => expect(push).toHaveBeenCalledWith('Reading', {}), { timeout: 3000 });
+    expect(push).toHaveBeenCalledTimes(1);
     expect(navigate).not.toHaveBeenCalled();
   });
 
-  it.each([
-    ['alfalak', 'AlFalak'],
-    ['readings', 'Readings'],
-  ])('hero %s button navigates to the %s tab', async (key, route) => {
-    const { navigate, push } = mockNavigation();
+  it('labels the mandala as the Ask Shams button', async () => {
+    mockNavigation();
     await renderScreen(<OracleScreen />);
+    await layoutMandalaSlot();
 
-    await userEvent.setup().press(screen.getByTestId(`home-hero-action-${key}`));
+    const mandala = screen.getByTestId('home-hero-action-ask');
+    expect(mandala.props.accessibilityRole).toBe('button');
+    expect(mandala.props.accessibilityLabel).toBe('Ask Shams');
+  });
 
-    expect(navigate).toHaveBeenCalledWith(route);
-    expect(push).not.toHaveBeenCalled();
+  it('no longer shows the round Readings / Al-Falak / Ask buttons', async () => {
+    mockNavigation();
+    await renderScreen(<OracleScreen />);
+    expect(screen.queryByTestId('home-hero-action-alfalak')).toBeNull();
+    expect(screen.queryByTestId('home-hero-action-readings')).toBeNull();
   });
 
   it('labels each metric capsule with its real value, never a placeholder number', async () => {
@@ -165,30 +144,105 @@ describe('OracleScreen hero', () => {
     );
   });
 
-  it('puts the hero above the Current Hora card', async () => {
+  it('puts the capsules first, in the order sunrise, current hora, sunset', async () => {
     mockNavigation();
     await renderScreen(<OracleScreen />);
     const tree = JSON.stringify(screen.toJSON());
-    expect(tree.indexOf('"home-hero"')).toBeGreaterThanOrEqual(0);
-    expect(tree.indexOf('"home-hero"')).toBeLessThan(tree.indexOf('"CURRENT HORA"'));
+    const ids = [
+      '"home-hero-metric-sunrise"',
+      '"home-hero-metric-hora"',
+      '"home-hero-metric-sunset"',
+      '"home-mandala-slot"',
+      '"home-tile-hora"',
+    ];
+    const positions = ids.map(id => tree.indexOf(id));
+    expect(positions.every(p => p >= 0)).toBe(true);
+    expect([...positions].sort((a, b) => a - b)).toEqual(positions);
+  });
+
+  it('opens the full text of a tile in the detail sheet, and closes it', async () => {
+    mockNavigation();
+    await renderScreen(<OracleScreen />);
+    const user = userEvent.setup();
+
+    expect(screen.queryByTestId('home-detail-sheet')).toBeNull();
+    await user.press(screen.getByTestId('home-tile-favored'));
+    expect(screen.getByTestId('home-detail-sheet')).toBeTruthy();
+    // The tile's label, and the same label as the sheet's title.
+    expect(screen.getAllByText('FAVORED NOW')).toHaveLength(2);
+
+    await user.press(screen.getByTestId('home-detail-close'));
+    expect(screen.queryByTestId('home-detail-sheet')).toBeNull();
+  });
+
+  it('opens Al-Falak from the Current Hora detail', async () => {
+    const { navigate } = mockNavigation();
+    await renderScreen(<OracleScreen />);
+    const user = userEvent.setup();
+
+    await user.press(screen.getByTestId('home-tile-hora'));
+    await user.press(screen.getByTestId('home-detail-open-alfalak'));
+
+    expect(navigate).toHaveBeenCalledWith('AlFalak');
+    expect(screen.queryByTestId('home-detail-sheet')).toBeNull();
+  });
+});
+
+describe('OracleScreen genie', () => {
+  it('opens the Genie guide from the 🧞 button', async () => {
+    await renderScreen(<OracleScreen />);
+    expect(screen.queryByTestId('genie-guide')).toBeNull();
+    await userEvent.setup().press(screen.getByTestId('genie-btn'));
+    expect(screen.getByTestId('genie-guide')).toBeTruthy();
+  });
+});
+
+describe('OracleScreen coins', () => {
+  beforeEach(() => useWalletStore.getState().reset());
+
+  it('shows a dash, never a made-up number, until the server reports a balance', async () => {
+    await renderScreen(<OracleScreen />);
+    expect(screen.getByTestId('coin-chip').props.accessibilityLabel).toContain('—');
+  });
+
+  it('shows the server-reported balance with one decimal', async () => {
+    useWalletStore.getState().update({ mode: 'coins', balanceMilli: 12_300 });
+    await renderScreen(<OracleScreen />);
+    expect(screen.getByText('12.3')).toBeTruthy();
+  });
+
+  it('opens the wallet from the gold coin', async () => {
+    await renderScreen(<OracleScreen />);
+    expect(screen.queryByTestId('wallet-balance')).toBeNull();
+    await userEvent.setup().press(screen.getByTestId('coin-chip'));
+    expect(screen.getByTestId('wallet-balance')).toBeTruthy();
   });
 });
 
 describe('OracleScreen layout', () => {
-  it('follows the Observatory Hall order: hora, sky, ask, manzil, tier', async () => {
+  it('keeps everything inside the hero: capsules, actions, tiles, then tier', async () => {
     await renderScreen(<OracleScreen />);
-    // Each section's own heading, in the order the design system lists them.
-    const headings = [
-      'CURRENT HORA',
-      "TODAY'S SKY FOR YOU",
-      'What would you like to ask?',
-      'MOON MANZIL',
-      'YOUR TIER',
-    ];
-    // Rendered order is document order in the serialised tree.
     const tree = JSON.stringify(screen.toJSON());
-    const positions = headings.map(h => tree.indexOf(JSON.stringify(h)));
+    const ids = [
+      '"home-hero"',
+      '"home-hero-metric-hora"',
+      '"home-mandala-slot"',
+      '"home-tile-hora"',
+      '"home-tile-sky"',
+      '"home-tile-manzil"',
+      '"home-tile-favored"',
+      '"home-tile-blessing"',
+      '"home-tier-line"',
+    ];
+    const positions = ids.map(id => tree.indexOf(id));
     expect(positions.every(p => p >= 0)).toBe(true);
     expect([...positions].sort((a, b) => a - b)).toEqual(positions);
+  });
+
+  it('no longer duplicates the Ask box or the Reading History row', async () => {
+    await renderScreen(<OracleScreen />);
+    expect(screen.queryByTestId('home-ask-input')).toBeNull();
+    expect(screen.queryByText('What would you like to ask?')).toBeNull();
+    expect(screen.queryByText('Reading History')).toBeNull();
   });
 });

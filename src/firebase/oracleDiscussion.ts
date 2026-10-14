@@ -80,6 +80,10 @@ export interface DiscussReadingResult {
    * declines later follow-ups on this reading.
    */
   conversationComplete: boolean;
+  /** Coins mode: what this reply cost, in millicoins (absent otherwise). */
+  coinsChargedMilli?: number;
+  /** Coins mode: the wallet balance after this reply, in millicoins. */
+  balanceMilli?: number;
 }
 
 /** Turns the server accepts in one call — matches DiscussReadingSchema. */
@@ -113,6 +117,8 @@ export async function discussReading(args: DiscussReadingInput): Promise<Discuss
     isNewQuestion: boolean;
     turnsRemaining: number;
     conversationComplete?: boolean;
+    coinsChargedMilli?: number;
+    balanceMilli?: number;
   };
 
   return {
@@ -121,5 +127,10 @@ export async function discussReading(args: DiscussReadingInput): Promise<Discuss
     turnsRemaining: data.turnsRemaining,
     // Absent from a server deployed before the field existed.
     conversationComplete: data.conversationComplete === true,
+    // Coins mode only — absent when discussion is not charged.
+    ...(typeof data.coinsChargedMilli === 'number'
+      ? { coinsChargedMilli: data.coinsChargedMilli }
+      : {}),
+    ...(typeof data.balanceMilli === 'number' ? { balanceMilli: data.balanceMilli } : {}),
   };
 }

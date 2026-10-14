@@ -4,24 +4,25 @@
  *
  * Presentation only: the value comes from the screen's existing sky hooks.
  * A null value shows an em dash ("not available yet"), never a placeholder
- * number. Colours are the hero's fixed Midnight Celestial palette.
+ * number. Colours and shape come from the theme's Home style: a rounded
+ * pill, a round medallion or an arch-top tablet.
  */
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 
 import { useTypography } from '@theme/useTypography';
-import { RADIUS } from '@theme/themes';
-import { CELESTIAL } from './celestialPalette';
+import { RADIUS, type HomePalette, type HomeStyle } from '@theme/themes';
+import { useHomeStyle } from './homeStyle';
 
 export type MetricGlyph = 'hora' | 'sunrise' | 'sunset';
 
 const GLYPH = 14;
 
 /** Small line glyphs: an hourglass, and a sun on the horizon with an arrow. */
-const Glyph: React.FC<{ kind: MetricGlyph }> = ({ kind }) => {
-  const stroke = { stroke: CELESTIAL.antiqueGold, strokeWidth: 1.2, fill: 'none' } as const;
+const Glyph: React.FC<{ kind: MetricGlyph; color: string }> = ({ kind, color }) => {
+  const stroke = { stroke: color, strokeWidth: 1.2, fill: 'none' } as const;
   if (kind === 'hora') {
     return (
       <Svg width={GLYPH} height={GLYPH} viewBox="0 0 14 14">
@@ -54,15 +55,14 @@ interface AstroMetricCapsuleProps {
 
 const AstroMetricCapsule: React.FC<AstroMetricCapsuleProps> = ({ label, value, glyph, testID }) => {
   const typography = useTypography();
+  const { palette: P, capsule } = useHomeStyle();
+  const styles = useMemo(() => makeStyles(P, capsule), [P, capsule]);
   const shown = value ?? '—';
   return (
     <View style={styles.col} testID={testID} accessible accessibilityLabel={`${label}: ${shown}`}>
       <View style={styles.labelRow}>
-        <Glyph kind={glyph} />
-        <Text
-          style={[typography('caption'), styles.label, { color: CELESTIAL.ivory }]}
-          numberOfLines={1}
-        >
+        <Glyph kind={glyph} color={P.antiqueGold} />
+        <Text style={[typography('caption'), styles.label, { color: P.ivory }]} numberOfLines={1}>
           {label}
         </Text>
       </View>
@@ -70,7 +70,7 @@ const AstroMetricCapsule: React.FC<AstroMetricCapsuleProps> = ({ label, value, g
         <View pointerEvents="none" style={styles.capsuleHighlight} />
         <View pointerEvents="none" style={styles.capsuleShade} />
         <Text
-          style={[typography('subheading'), styles.value, { color: CELESTIAL.champagne }]}
+          style={[typography('subheading'), styles.value, { color: P.champagne }]}
           numberOfLines={1}
           adjustsFontSizeToFit
           minimumFontScale={0.75}
@@ -82,60 +82,82 @@ const AstroMetricCapsule: React.FC<AstroMetricCapsuleProps> = ({ label, value, g
   );
 };
 
-const styles = StyleSheet.create({
-  col: {
-    flex: 1,
-    alignItems: 'center',
+/** Shape of the value holder for each capsule style. */
+const SHAPES: Record<HomeStyle['capsule'], object> = {
+  pill: { alignSelf: 'stretch', borderRadius: RADIUS.pill, paddingVertical: 9 },
+  // A round coin: as wide as it is tall.
+  medallion: {
+    alignSelf: 'center',
+    width: 76,
+    height: 76,
+    borderRadius: 38,
+    justifyContent: 'center',
   },
-  labelRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    marginBottom: 6,
-    maxWidth: '100%',
-  },
-  label: {
-    fontSize: 11.5,
-    opacity: 0.85,
-    flexShrink: 1,
-  },
-  capsule: {
+  // A mihrab-like tablet: round arch on top, nearly square at the foot.
+  tablet: {
     alignSelf: 'stretch',
-    alignItems: 'center',
-    paddingVertical: 9,
-    paddingHorizontal: 8,
-    borderRadius: RADIUS.pill,
-    borderWidth: 1.2,
-    borderColor: CELESTIAL.antiqueGold + 'B3',
-    backgroundColor: CELESTIAL.deepTeal,
-    overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOpacity: 0.5,
-    shadowRadius: 6,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 5,
+    paddingTop: 12,
+    paddingBottom: 8,
+    borderTopLeftRadius: 26,
+    borderTopRightRadius: 26,
+    borderBottomLeftRadius: 6,
+    borderBottomRightRadius: 6,
   },
-  // A soft lighter top half and a darker lower edge give the capsule depth.
-  capsuleHighlight: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    height: '50%',
-    backgroundColor: CELESTIAL.ivory + '12',
-  },
-  capsuleShade: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    height: '35%',
-    backgroundColor: '#00000040',
-  },
-  value: {
-    fontSize: 16,
-    fontVariant: ['tabular-nums'],
-  },
-});
+};
+
+const makeStyles = (P: HomePalette, capsuleStyle: HomeStyle['capsule']) =>
+  StyleSheet.create({
+    col: {
+      flex: 1,
+      alignItems: 'center',
+    },
+    labelRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 4,
+      marginBottom: 6,
+      maxWidth: '100%',
+    },
+    label: {
+      fontSize: 11.5,
+      opacity: 0.85,
+      flexShrink: 1,
+    },
+    capsule: {
+      alignItems: 'center',
+      paddingHorizontal: 8,
+      ...SHAPES[capsuleStyle],
+      borderWidth: 1.2,
+      borderColor: P.antiqueGold + 'B3',
+      backgroundColor: P.deepTeal,
+      overflow: 'hidden',
+      shadowColor: '#000',
+      shadowOpacity: 0.5,
+      shadowRadius: 6,
+      shadowOffset: { width: 0, height: 4 },
+      elevation: 5,
+    },
+    // A soft lighter top half and a darker lower edge give the capsule depth.
+    capsuleHighlight: {
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      right: 0,
+      height: '50%',
+      backgroundColor: P.ivory + '12',
+    },
+    capsuleShade: {
+      position: 'absolute',
+      bottom: 0,
+      left: 0,
+      right: 0,
+      height: '35%',
+      backgroundColor: '#00000040',
+    },
+    value: {
+      fontSize: 16,
+      fontVariant: ['tabular-nums'],
+    },
+  });
 
 export default AstroMetricCapsule;

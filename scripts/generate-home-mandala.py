@@ -9,6 +9,13 @@ it to the transparent PNG the app ships:
     assets/images/home-mandala.svg   source of truth (edit this script, not the SVG)
     assets/images/home-mandala.png   960 x 960, transparent, used by MandalaEmblem
 
+Colour variants (same geometry, different metal and medallion) for the
+premium themes, written alongside as home-mandala-<variant>.svg / .png:
+
+    gold     the default artwork (Midnight Celestial and every colour theme)
+    silver   moonlit silver filigree, indigo well, pearl crescent
+    emerald  gold filigree, emerald well, gold crescent
+
 The relief comes from SVG lighting filters (feDiffuseLighting /
 feSpecularLighting) over a gold gradient with the filigree cut out by a mask.
 react-native-svg does not implement those filters, which is why the app shows
@@ -21,15 +28,37 @@ PNG step (set CHROME=/path/to/chrome if it is not on PATH as chromium /
 google-chrome).
 
 Usage:
-    python3 scripts/generate-home-mandala.py
+    python3 scripts/generate-home-mandala.py [gold|silver|emerald ...]   (default: gold)
 """
 import math, os, shutil, subprocess, sys, tempfile
 
 from PIL import Image
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-OUT_SVG = os.path.join(ROOT, 'assets', 'images', 'home-mandala.svg')
-OUT_PNG = os.path.join(ROOT, 'assets', 'images', 'home-mandala.png')
+IMAGES = os.path.join(ROOT, 'assets', 'images')
+
+# Colour keys per variant. 'gold' reproduces the original artwork exactly.
+VARIANTS = {
+    'gold': dict(
+        metal=('#EFD49A', '#B98C48', '#7E5527', '#C79C58', '#5A3A18'), spec='#FFF4D6',
+        aura=('#E9B96A', '#C5A36A'), spark='#F2D9A0',
+        well=('#16314A', '#0A1A2A', '#030A12'), moonGlow=('#FFC976', '#E39A45'),
+        moon=('#FFF0C8', '#F7C979', '#D98C3A'), star='#FFE7B0'),
+    'silver': dict(
+        metal=('#F4F7FC', '#B4BECD', '#5D6879', '#C9D2DF', '#343C4A'), spec='#FFFFFF',
+        aura=('#AFC3E6', '#C9D3E3'), spark='#E6EEFA',
+        well=('#1C2A4A', '#0D1528', '#04070F'), moonGlow=('#DCE8FF', '#8FA6D6'),
+        moon=('#FFFFFF', '#E3EAF5', '#A7B4CC'), star='#F4F8FF'),
+    'emerald': dict(
+        metal=('#F3DA9C', '#C49A4E', '#80592A', '#D2A963', '#5C3D18'), spec='#FFF6DC',
+        aura=('#5FBF92', '#D4AF5A'), spark='#F3DC9A',
+        well=('#145A43', '#0A3326', '#03140E'), moonGlow=('#FFE09A', '#C99A3E'),
+        moon=('#FFF4D2', '#F0CF80', '#C9952F'), star='#FFEAB4'),
+}
+
+def outputs(variant):
+    stem = 'home-mandala' if variant == 'gold' else f'home-mandala-{variant}'
+    return os.path.join(IMAGES, stem + '.svg'), os.path.join(IMAGES, stem + '.png')
 PNG_SIZE = 960
 
 C = 500
@@ -123,12 +152,13 @@ def crescent(cx, cy, r):
     p1 = (mx + h*dy/d, my - h*dx/d); p2 = (mx - h*dy/d, my + h*dx/d)
     return f"M{P(*p1)} A{r},{r} 0 1 0 {P(*p2)} A{ir:.1f},{ir:.1f} 0 1 1 {P(*p1)} Z"
 
-svg = f'''<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="1000" viewBox="0 0 1000 1000">
+def build_svg(v):
+    return f'''<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="1000" viewBox="0 0 1000 1000">
 <defs>
   <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1">
-    <stop offset="0" stop-color="#EFD49A"/><stop offset="0.25" stop-color="#B98C48"/>
-    <stop offset="0.5" stop-color="#7E5527"/><stop offset="0.75" stop-color="#C79C58"/>
-    <stop offset="1" stop-color="#5A3A18"/>
+    <stop offset="0" stop-color="{v['metal'][0]}"/><stop offset="0.25" stop-color="{v['metal'][1]}"/>
+    <stop offset="0.5" stop-color="{v['metal'][2]}"/><stop offset="0.75" stop-color="{v['metal'][3]}"/>
+    <stop offset="1" stop-color="{v['metal'][4]}"/>
   </linearGradient>
   <mask id="cut" maskUnits="userSpaceOnUse" x="0" y="0" width="1000" height="1000">
     <g fill="white">{''.join(silhouette)}</g>
@@ -137,7 +167,7 @@ svg = f'''<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="1000" vie
   </mask>
   <filter id="emboss" x="-5%" y="-5%" width="110%" height="110%" color-interpolation-filters="sRGB">
     <feGaussianBlur in="SourceAlpha" stdDeviation="2.6" result="b"/>
-    <feSpecularLighting in="b" surfaceScale="6" specularConstant="1.05" specularExponent="30" lighting-color="#FFF4D6" result="s">
+    <feSpecularLighting in="b" surfaceScale="6" specularConstant="1.05" specularExponent="30" lighting-color="{v['spec']}" result="s">
       <fePointLight x="260" y="120" z="520"/></feSpecularLighting>
     <feComposite in="s" in2="SourceAlpha" operator="in" result="si"/>
     <feDiffuseLighting in="b" surfaceScale="6" diffuseConstant="1.05" lighting-color="#FFFFFF" result="d">
@@ -148,15 +178,15 @@ svg = f'''<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="1000" vie
     <feDropShadow in="lit" dx="0" dy="6" stdDeviation="7" flood-color="#000" flood-opacity="0.65"/>
   </filter>
   <radialGradient id="aura" cx="0.5" cy="0.5" r="0.5">
-    <stop offset="0" stop-color="#E9B96A" stop-opacity="0.28"/><stop offset="0.55" stop-color="#C5A36A" stop-opacity="0.08"/>
-    <stop offset="1" stop-color="#C5A36A" stop-opacity="0"/></radialGradient>
+    <stop offset="0" stop-color="{v['aura'][0]}" stop-opacity="0.28"/><stop offset="0.55" stop-color="{v['aura'][1]}" stop-opacity="0.08"/>
+    <stop offset="1" stop-color="{v['aura'][1]}" stop-opacity="0"/></radialGradient>
   <radialGradient id="well" cx="0.5" cy="0.42" r="0.6">
-    <stop offset="0" stop-color="#16314A"/><stop offset="0.6" stop-color="#0A1A2A"/><stop offset="1" stop-color="#030A12"/></radialGradient>
+    <stop offset="0" stop-color="{v['well'][0]}"/><stop offset="0.6" stop-color="{v['well'][1]}"/><stop offset="1" stop-color="{v['well'][2]}"/></radialGradient>
   <radialGradient id="moonGlow" cx="0.5" cy="0.5" r="0.5">
-    <stop offset="0" stop-color="#FFC976" stop-opacity="0.75"/><stop offset="0.5" stop-color="#E39A45" stop-opacity="0.22"/>
-    <stop offset="1" stop-color="#E39A45" stop-opacity="0"/></radialGradient>
+    <stop offset="0" stop-color="{v['moonGlow'][0]}" stop-opacity="0.75"/><stop offset="0.5" stop-color="{v['moonGlow'][1]}" stop-opacity="0.22"/>
+    <stop offset="1" stop-color="{v['moonGlow'][1]}" stop-opacity="0"/></radialGradient>
   <linearGradient id="moon" x1="0" y1="0" x2="1" y2="1">
-    <stop offset="0" stop-color="#FFF0C8"/><stop offset="0.5" stop-color="#F7C979"/><stop offset="1" stop-color="#D98C3A"/></linearGradient>
+    <stop offset="0" stop-color="{v['moon'][0]}"/><stop offset="0.5" stop-color="{v['moon'][1]}"/><stop offset="1" stop-color="{v['moon'][2]}"/></linearGradient>
   <filter id="inner" x="-10%" y="-10%" width="120%" height="120%">
     <feGaussianBlur in="SourceAlpha" stdDeviation="14" result="b"/>
     <feOffset dy="10" result="o"/><feComposite in="SourceAlpha" in2="o" operator="out" result="ring"/>
@@ -166,7 +196,7 @@ svg = f'''<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="1000" vie
     <feGaussianBlur stdDeviation="5" result="g"/><feMerge><feMergeNode in="g"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
 </defs>
 <circle cx="{C}" cy="{C}" r="500" fill="url(#aura)"/>
-<g fill="#F2D9A0" filter="url(#glow)">{''.join(sparks)}</g>
+<g fill="{v['spark']}" filter="url(#glow)">{''.join(sparks)}</g>
 <g filter="url(#emboss)">
   <rect x="0" y="0" width="1000" height="1000" fill="url(#gold)" mask="url(#cut)"/>
   <circle cx="{C}" cy="{C}" r="150" fill="none" stroke="url(#gold)" stroke-width="16"/>
@@ -174,13 +204,9 @@ svg = f'''<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="1000" vie
 <circle cx="{C}" cy="{C}" r="142" fill="url(#well)" filter="url(#inner)"/>
 <circle cx="{C-8}" cy="{C+2}" r="120" fill="url(#moonGlow)"/>
 <path d="{crescent(C-12, C+4, 66)}" fill="url(#moon)" filter="url(#glow)"/>
-<path d="{star4(C+52, C-30, 15)}" fill="#FFE7B0" filter="url(#glow)"/>
-<circle cx="{C+70}" cy="{C+40}" r="2.6" fill="#FFE7B0"/><circle cx="{C-60}" cy="{C-70}" r="2" fill="#FFE7B0"/>
+<path d="{star4(C+52, C-30, 15)}" fill="{v['star']}" filter="url(#glow)"/>
+<circle cx="{C+70}" cy="{C+40}" r="2.6" fill="{v['star']}"/><circle cx="{C-60}" cy="{C-70}" r="2" fill="{v['star']}"/>
 </svg>'''
-
-with open(OUT_SVG, 'w') as fh:
-    fh.write(svg)
-print(f'wrote {OUT_SVG}')
 
 chrome = os.environ.get('CHROME') or next(
     (p for p in (shutil.which(n) for n in ('chromium', 'chromium-browser', 'google-chrome')) if p),
@@ -189,19 +215,31 @@ chrome = os.environ.get('CHROME') or next(
 if chrome is None:
     sys.exit('No Chromium found: set CHROME=/path/to/chrome to render the PNG.')
 
-html = ('<html><body style="margin:0;background:transparent">'
-        + svg.replace('width="1000" height="1000"', f'width="{PNG_SIZE}" height="{PNG_SIZE}"', 1)
-        + '</body></html>')
-with tempfile.TemporaryDirectory() as tmp:
-    page = os.path.join(tmp, 'm.html')
-    with open(page, 'w') as fh:
-        fh.write(html)
-    shot = os.path.join(tmp, 'shot.png')
-    # Headless Chromium's capture is shorter than --window-size by its
-    # (invisible) browser chrome, so capture a taller window and crop.
-    subprocess.run([chrome, '--headless', '--no-sandbox', '--disable-gpu', '--hide-scrollbars',
-                    '--default-background-color=00000000', f'--window-size={PNG_SIZE},{PNG_SIZE + 200}',
-                    f'--screenshot={shot}', 'file://' + page], check=True,
-                   stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-    Image.open(shot).crop((0, 0, PNG_SIZE, PNG_SIZE)).save(OUT_PNG, optimize=True)
-print(f'wrote {OUT_PNG}')
+def render(svg, out_png):
+    html = ('<html><body style="margin:0;background:transparent">'
+            + svg.replace('width="1000" height="1000"', f'width="{PNG_SIZE}" height="{PNG_SIZE}"', 1)
+            + '</body></html>')
+    with tempfile.TemporaryDirectory() as tmp:
+        page = os.path.join(tmp, 'm.html')
+        with open(page, 'w') as fh:
+            fh.write(html)
+        shot = os.path.join(tmp, 'shot.png')
+        # Headless Chromium's capture is shorter than --window-size by its
+        # (invisible) browser chrome, so capture a taller window and crop.
+        subprocess.run([chrome, '--headless', '--no-sandbox', '--disable-gpu', '--hide-scrollbars',
+                        '--default-background-color=00000000', f'--window-size={PNG_SIZE},{PNG_SIZE + 200}',
+                        f'--screenshot={shot}', 'file://' + page], check=True,
+                       stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        Image.open(shot).crop((0, 0, PNG_SIZE, PNG_SIZE)).save(out_png, optimize=True)
+    print(f'wrote {out_png}')
+
+
+for name in (sys.argv[1:] or ['gold']):
+    if name not in VARIANTS:
+        sys.exit(f'Unknown variant {name!r}; choose from {", ".join(VARIANTS)}.')
+    out_svg, out_png = outputs(name)
+    svg = build_svg(VARIANTS[name])
+    with open(out_svg, 'w') as fh:
+        fh.write(svg)
+    print(f'wrote {out_svg}')
+    render(svg, out_png)

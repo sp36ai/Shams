@@ -19,9 +19,20 @@ import { withTimeout } from '../utils/withTimeout';
 import { useQuotaStore } from '@stores/quotaStore';
 import type { PlanTier } from '@stores/quotaStore';
 
-export type PurchasePlan = 'mureed_monthly' | 'mureed_annual' | 'khass_monthly' | 'khass_annual';
+export type PurchasePlan =
+  | 'premium_monthly'
+  | 'mureed_monthly'
+  | 'mureed_annual'
+  | 'khass_monthly'
+  | 'khass_annual';
 
+/**
+ * premium_monthly (₹299/month, owner decision 2026-10-14) is the one plan
+ * sold; it must exist in Play Console as `shams_premium_monthly`. The older
+ * four stay so existing subscribers can still be restored and verified.
+ */
 export const SKU_MAP: Record<PurchasePlan, string> = {
+  premium_monthly: 'shams_premium_monthly',
   mureed_monthly: 'mureed_monthly',
   mureed_annual: 'mureed_annual',
   khass_monthly: 'khass_monthly',
@@ -39,6 +50,7 @@ const PACKAGE_NAME = 'com.astrosarfaraz.shamsalasrar';
 const APP_CHECK_GATE_TIMEOUT_MS = 8000;
 
 function tierFromPlan(plan: PurchasePlan): PlanTier {
+  // Premium is the top tier (unlocks everything), same mapping as the server.
   return plan.startsWith('mureed') ? 'mureed' : 'khass';
 }
 
