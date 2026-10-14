@@ -72,3 +72,21 @@ describe('inflected forms of existing keywords', () => {
     expect(classifyQuestion('Will my artwork sell?')).toBe('general');
   });
 });
+
+describe('relationship and business words (owner decision 2026-10-14)', () => {
+  it('judges girlfriend / ex as marriage', () => {
+    expect(classifyQuestion('Will my girlfriend come back?')).toBe('marriage');
+    expect(classifyQuestion('Will my ex return?')).toBe('marriage');
+  });
+
+  it('judges shop / sales / contract as business', () => {
+    expect(classifyQuestion('Will my shop do well?')).toBe('business');
+    expect(classifyQuestion('Will my sales increase?')).toBe('business');
+    expect(classifyQuestion('Will I get the contract?')).toBe('business');
+  });
+
+  it('keeps an earlier type when the question names one', () => {
+    expect(classifyQuestion('Will I sign the job contract?')).toBe('career');
+    expect(classifyQuestion('Should I go shopping?')).toBe('general');
+  });
+});

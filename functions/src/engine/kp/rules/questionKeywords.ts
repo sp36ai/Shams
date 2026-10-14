@@ -78,6 +78,9 @@ export const QUESTION_KEYWORDS: Readonly<Record<QuestionType, readonly string[]>
     'weddings',
     'proposed',
     'proposing',
+    // Owner decision 2026-10-14.
+    'girlfriend',
+    'ex',
     // UR
     'شادی',
     'رشتہ',
@@ -301,6 +304,12 @@ export const QUESTION_KEYWORDS: Readonly<Record<QuestionType, readonly string[]>
     'enterprise',
     'app',
     'apps',
+    // Owner decision 2026-10-14.
+    'shop',
+    'shops',
+    'sales',
+    'contract',
+    'contracts',
     // UR
     'کاروبار',
     'تجارت',
