@@ -4,8 +4,11 @@
  * READ-ONLY DIAGNOSTIC. Same status as generate-golden-corpus.ts: not part
  * of the deployed bundle, not imported by anything under src/, not run by
  * CI. It changes nothing about how askWatchOracle judges. The engine's rules,
- * weights, aspect conventions, thresholds and precedence are FROZEN; the
- * counterfactual variants below exist only inside this script.
+ * weights, aspect conventions, thresholds and precedence are FROZEN except
+ * for the one rule the owner approved after this review (2026-10-14): Ras and
+ * Dhanab count as one axis, once per judged Ghar. The script now checks the
+ * replica against the engine under that rule (CURRENT) and keeps the earlier
+ * rule (BEFORE_AXIS_RULE) for comparison.
  *
  * What it does, on the identical set of readings (4 questions × every 5
  * minutes of October 2026, IST = 34,560 readings) plus the 111-case golden
@@ -26,11 +29,13 @@
  *      24 months (each day at 12:00–12:55, one reading per ascendant slot)
  *      to separate a structural lean from that month's sky.
  *
- * Variants (illustrations for the owner, NOT proposed rules):
- *   AXIS_PER_HOUSE      within one judged house, Ras and Dhanab together
- *                       count at most once (one −2), however many contacts.
- *   AXIS_PER_JUDGMENT   across the whole judgment (target + 11th), the node
- *                       pair counts at most once (one −2).
+ * Rule sets:
+ *   BEFORE_AXIS_RULE    the rules up to 2026-10-14: each node scored on its
+ *                       own, every contact −2.
+ *   CURRENT             the approved rule: within one judged house, Ras and
+ *                       Dhanab together count at most once (one −2).
+ *   AXIS_PER_JUDGMENT   illustration only, NOT a rule: across the whole
+ *                       judgment (target + 11th), the pair counts once.
  *
  * Run with:  npx vite-node scripts/scoring-review.ts   (from functions/)
  * Output:    docs/audit/scoring-review/results.json
@@ -62,8 +67,8 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const REPO = resolve(__dirname, '../..');
 const OUT_DIR = resolve(REPO, 'docs/audit/scoring-review');
 
-type Variant = 'CURRENT' | 'AXIS_PER_HOUSE' | 'AXIS_PER_JUDGMENT';
-const VARIANTS: readonly Variant[] = ['CURRENT', 'AXIS_PER_HOUSE', 'AXIS_PER_JUDGMENT'];
+type Variant = 'BEFORE_AXIS_RULE' | 'CURRENT' | 'AXIS_PER_JUDGMENT';
+const VARIANTS: readonly Variant[] = ['BEFORE_AXIS_RULE', 'CURRENT', 'AXIS_PER_JUDGMENT'];
 const STATES: readonly WatchState[] = [
   'FULFILLED',
   'MOVING',
@@ -115,10 +120,10 @@ function witnessPoints(contacts: Contact[], variant: Variant): number {
   const sum = (cs: Contact[]): number => cs.reduce((a, c) => a + c.points, 0);
   const nonNode = contacts.filter(c => !isNode(c.planet));
   const node = contacts.filter(c => isNode(c.planet));
-  if (variant === 'CURRENT') {
+  if (variant === 'BEFORE_AXIS_RULE') {
     return sum(contacts);
   }
-  if (variant === 'AXIS_PER_HOUSE') {
+  if (variant === 'CURRENT') {
     let total = sum(nonNode);
     for (const role of ['target', 'fulfilment'] as const) {
       if (node.some(c => c.role === role)) {
@@ -224,8 +229,8 @@ class Group {
   n = 0;
   scoreSum: Record<Variant, number> = blank(VARIANTS);
   states: Record<Variant, Record<WatchState, number>> = {
+    BEFORE_AXIS_RULE: blank(STATES),
     CURRENT: blank(STATES),
-    AXIS_PER_HOUSE: blank(STATES),
     AXIS_PER_JUDGMENT: blank(STATES),
   };
   add(r: Replica): void {
@@ -292,16 +297,16 @@ function main(): void {
 
   // replay
   const transitions: Record<string, Record<string, Record<string, number>>> = {
-    AXIS_PER_HOUSE: {},
+    CURRENT: {},
     AXIS_PER_JUDGMENT: {},
   };
   const boundary: Record<string, Record<string, number>> = {
-    AXIS_PER_HOUSE: {},
+    CURRENT: {},
     AXIS_PER_JUDGMENT: {},
   };
   const histogram: Record<Variant, Record<number, number>> = {
+    BEFORE_AXIS_RULE: {},
     CURRENT: {},
-    AXIS_PER_HOUSE: {},
     AXIS_PER_JUDGMENT: {},
   };
 
@@ -324,9 +329,11 @@ function main(): void {
     );
 
     // 1. contribution audit — replica must equal the engine exactly
+    // The steps are the pre-axis-rule contributions, so they sum to the
+    // BEFORE_AXIS_RULE score; the engine itself now runs the CURRENT rule.
     const total = STEPS.reduce((a, s) => a + r.steps[s], 0);
     if (
-      total !== v.score ||
+      total !== r.score.BEFORE_AXIS_RULE ||
       r.score.CURRENT !== v.score ||
       r.state.CURRENT !== v.state ||
       r.confidence.CURRENT !== v.confidence
@@ -367,17 +374,17 @@ function main(): void {
     nodeContactsHist[nodeContacts] = (nodeContactsHist[nodeContacts] ?? 0) + 1;
 
     // 3. replay
-    for (const alt of ['AXIS_PER_HOUSE', 'AXIS_PER_JUDGMENT'] as const) {
-      const from = r.state.CURRENT;
+    for (const alt of ['CURRENT', 'AXIS_PER_JUDGMENT'] as const) {
+      const from = r.state.BEFORE_AXIS_RULE;
       const to = r.state[alt];
       transitions[alt][from] = transitions[alt][from] ?? {};
       transitions[alt][from][to] = (transitions[alt][from][to] ?? 0) + 1;
       const crossed =
-        (r.score.CURRENT <= -5) !== (r.score[alt] <= -5)
+        (r.score.BEFORE_AXIS_RULE <= -5) !== (r.score[alt] <= -5)
           ? 'crossesBlocked(-5)'
-          : (r.score.CURRENT >= 5) !== (r.score[alt] >= 5)
+          : (r.score.BEFORE_AXIS_RULE >= 5) !== (r.score[alt] >= 5)
             ? 'crossesFulfilled(+5)'
-            : (r.score.CURRENT >= 2) !== (r.score[alt] >= 2)
+            : (r.score.BEFORE_AXIS_RULE >= 2) !== (r.score[alt] >= 2)
               ? 'crossesMoving(+2)'
               : 'noThresholdCrossed';
       boundary[alt][crossed] = (boundary[alt][crossed] ?? 0) + 1;
@@ -429,7 +436,7 @@ function main(): void {
   // Golden corpus replay
   const casesDir = resolve(REPO, 'docs/audit/golden-corpus/cases');
   const golden = { cases: 0, currentMatchesStored: 0, storedMismatch: [] as string[], changed: {} as Record<string, string[]> };
-  for (const alt of ['AXIS_PER_HOUSE', 'AXIS_PER_JUDGMENT']) golden.changed[alt] = [];
+  for (const alt of ['CURRENT', 'AXIS_PER_JUDGMENT']) golden.changed[alt] = [];
   for (const file of readdirSync(casesDir).filter(f => f.endsWith('.json')).sort()) {
     const c = JSON.parse(readFileSync(resolve(casesDir, file), 'utf8')) as {
       id: string;
@@ -440,14 +447,14 @@ function main(): void {
     const chart = buildWatchChart(localIsoFromOffset(new Date(c.input.utcInstant), c.input.utcOffsetMinutes));
     const r = replicate(chart, qType);
     golden.cases++;
-    if (r.score.CURRENT === c.verdict.score && r.state.CURRENT === c.verdict.state) {
+    if (r.score.BEFORE_AXIS_RULE === c.verdict.score && r.state.BEFORE_AXIS_RULE === c.verdict.state) {
       golden.currentMatchesStored++;
     } else {
       golden.storedMismatch.push(c.id);
     }
-    for (const alt of ['AXIS_PER_HOUSE', 'AXIS_PER_JUDGMENT'] as const) {
-      if (r.state[alt] !== r.state.CURRENT) {
-        golden.changed[alt].push(`${c.id}: ${r.state.CURRENT} (${r.score.CURRENT}) → ${r.state[alt]} (${r.score[alt]})`);
+    for (const alt of ['CURRENT', 'AXIS_PER_JUDGMENT'] as const) {
+      if (r.state[alt] !== r.state.BEFORE_AXIS_RULE) {
+        golden.changed[alt].push(`${c.id}: ${r.state.BEFORE_AXIS_RULE} (${r.score.BEFORE_AXIS_RULE}) → ${r.state[alt]} (${r.score[alt]})`);
       }
     }
   }
