@@ -4,6 +4,18 @@ import { ensureAppCheckReady } from '../firebase/appCheck';
 import { withTimeout } from '../utils/withTimeout';
 import { useQuotaStore, selectQuestionsLeft } from '@stores/quotaStore';
 import type { PlanTier } from '@stores/quotaStore';
+import { useWalletStore, type MonetizationMode } from '@stores/walletStore';
+
+/** getQuota's response — the coin fields are absent on servers before the coin economy. */
+interface QuotaResponse {
+  plan: PlanTier;
+  planExpiry: string | null;
+  remaining: number | null;
+  mode?: MonetizationMode;
+  balanceMilli?: number;
+  nextFreeAt?: string | null;
+  questionCostMilli?: number;
+}
 
 export interface QuotaState {
   canAsk: boolean;
@@ -67,9 +79,7 @@ export function useQuota(): QuotaState {
       // degrade to "unknown remaining" instead of taking the screen down.
       try {
         regionalFunctions()
-          .httpsCallable<object, { plan: PlanTier; planExpiry: string | null; remaining: number }>(
-            'getQuota',
-          )({})
+          .httpsCallable<object, QuotaResponse>('getQuota')({})
           .then(r => {
             _cachedRemaining = r.data.remaining;
             _lastFetchAt = Date.now();
@@ -86,6 +96,12 @@ export function useQuota(): QuotaState {
             // ReadingScreen mount, at most once per QUOTA_TTL_MS) self-corrects
             // instead.
             useQuotaStore.getState().setPlan(r.data.plan, r.data.planExpiry);
+            useWalletStore.getState().update({
+              mode: r.data.mode ?? 'legacy',
+              balanceMilli: r.data.balanceMilli ?? null,
+              nextFreeAt: r.data.nextFreeAt ?? null,
+              questionCostMilli: r.data.questionCostMilli ?? null,
+            });
           })
           .catch(() => setServerRemaining(null))
           .finally(() => setLoading(false));
@@ -101,7 +117,23 @@ export function useQuota(): QuotaState {
   }, [refresh]);
 
   const isPremium = currentPlan !== 'free';
-  const canAsk = storeCanAsk && (isPremium || serverRemaining === null || serverRemaining > 0);
+  const mode = useWalletStore(s => s.mode);
+  const balanceMilli = useWalletStore(s => s.balanceMilli);
+  const questionCostMilli = useWalletStore(s => s.questionCostMilli);
+  // Coins mode (server-reported): a free seeker past the week's free question
+  // can still ask when the wallet covers an extra question, and a paid plan
+  // is bounded by its fair-use count. The server enforces both either way.
+  const coinsCanAsk =
+    serverRemaining === null ||
+    serverRemaining > 0 ||
+    (!isPremium &&
+      balanceMilli !== null &&
+      questionCostMilli !== null &&
+      balanceMilli >= questionCostMilli);
+  const canAsk =
+    mode === 'coins'
+      ? coinsCanAsk
+      : storeCanAsk && (isPremium || serverRemaining === null || serverRemaining > 0);
 
   return {
     canAsk,

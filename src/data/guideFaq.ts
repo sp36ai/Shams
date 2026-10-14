@@ -13,8 +13,6 @@
  * guide shows English in every language until then).
  */
 
-import { FREE_DAILY_LIMIT } from '@stores/quotaStore';
-
 export interface GuideEntry {
   id: string;
   question: string;
@@ -73,13 +71,20 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
   {
     id: 'quota',
     question: 'How many questions can I ask?',
-    answer: `On the free plan you can ask up to ${FREE_DAILY_LIMIT} questions a day. The line at the bottom of Home shows your plan and how many questions are left today.`,
+    answer:
+      'The line at the bottom of Home shows your plan and what you can ask right now — your free question, when the next one comes, or what is left today. Premium (₹299 a month) gives unlimited questions, with a fair-use limit of 10 a day.',
+  },
+  {
+    id: 'coins',
+    question: 'What are the gold coins?',
+    answer:
+      'Coins pay for what goes beyond your plan: 1 coin = ₹10. After a verdict you can discuss your reading with the Oracle; that conversation is charged by length, like ChatGPT — 1 coin per 10,000 tokens, so a typical reply costs less than 1 coin. On the free plan, an extra question beyond the free one costs 3 coins. Tap the gold coin at the top of Home to see your balance.',
   },
   {
     id: 'location',
     question: 'Why does the app need my location?',
     answer:
-      'Sunrise, sunset, the planetary hours and the sky the Oracle reads all depend on where you are. Your coordinates are shown in the pill at the top of Home.',
+      'Sunrise, sunset, the planetary hours and the sky the Oracle reads all depend on where you are. Your coordinates are shown under the app name at the top of Home.',
   },
   {
     id: 'settings',

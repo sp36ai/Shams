@@ -50,6 +50,9 @@ import HomeInfoTile from '@components/home/HomeInfoTile';
 import HomeDetailSheet from '@components/home/HomeDetailSheet';
 import HomeMenu, { HomeMenuButton } from '@components/home/HomeMenu';
 import GenieGuide, { GenieButton } from '@components/home/GenieGuide';
+import CoinChip from '@components/home/CoinChip';
+import WalletSheet from '@components/home/WalletSheet';
+import { useWalletStore } from '@stores/walletStore';
 import { useHomeStyle } from '@components/home/homeStyle';
 import OrnamentDivider from '@components/ui/OrnamentDivider';
 import { buildDailySkyMessage } from '@utils/dailySkyMessage';
@@ -61,6 +64,11 @@ import { getManzilaDisplay } from '@astrology/manazil';
 // Fallback coordinates when no fix is stored yet (mirrors the pairing used
 // by SkyClockScreen's lon-only fallback — location is mandatory in practice,
 // this only covers the brief window before the first GPS fix lands).
+// The paid plan's fair-use cap, shown beside today's remaining count. Mirrors
+// functions/src/config.ts PAID_DAILY_FAIR_USE — display only; the server
+// enforces it.
+const PAID_FAIR_USE_SHOWN = 10;
+
 const FALLBACK_LAT = 31.634;
 const FALLBACK_LON = 74.3587;
 
@@ -86,6 +94,7 @@ const OracleScreen: React.FC = () => {
 
   const [menuOpen, setMenuOpen] = useState(false);
   const [genieOpen, setGenieOpen] = useState(false);
+  const [walletOpen, setWalletOpen] = useState(false);
 
   // Home's panel runs from the top edge to the bottom edge, so while Home is
   // focused the status bar takes the panel's midnight (in every theme); the
@@ -127,7 +136,9 @@ const OracleScreen: React.FC = () => {
     (s: ReturnType<typeof useSettingsStore.getState>) => s.seekerName,
   );
 
-  const { questionsLeft } = useQuota();
+  const { questionsLeft, serverRemaining } = useQuota();
+  const walletMode = useWalletStore(st => st.mode);
+  const nextFreeAt = useWalletStore(st => st.nextFreeAt);
   const plan = useQuotaStore(s => s.plan);
   const trialActive = useQuotaStore(s => s.trialActive);
 
@@ -258,10 +269,30 @@ const OracleScreen: React.FC = () => {
     </View>
   );
 
-  const quotaLabel =
+  // What the bottom line says about asking. Coins mode (server-reported):
+  // free plan → the week's free question (or when the next one comes),
+  // paid plan → today's fair-use count. Otherwise the original daily quota.
+  let quotaCaption = t('oracle.todaysQuotaLabel');
+  let quotaLabel =
     questionsLeft === Infinity
       ? '∞'
       : `${questionsLeft} / ${trialActive ? TRIAL_DAILY_LIMIT : FREE_DAILY_LIMIT}`;
+  if (walletMode === 'coins') {
+    if (plan === 'free') {
+      quotaCaption = nextFreeAt === null ? t('wallet.freeQuestionLabel') : t('wallet.nextLabel');
+      quotaLabel =
+        nextFreeAt === null
+          ? t('wallet.available')
+          : new Date(nextFreeAt).toLocaleDateString(DATE_LOCALE[lang], {
+              weekday: 'short',
+              day: 'numeric',
+              month: 'short',
+            });
+    } else {
+      quotaCaption = t('wallet.todayLabel');
+      quotaLabel = serverRemaining === null ? '—' : `${serverRemaining} / ${PAID_FAIR_USE_SHOWN}`;
+    }
+  }
 
   // Home tiles: one headline each; the full text opens in the detail sheet.
   type TileKey = 'hora' | 'sky' | 'manzil' | 'favored' | 'dhikr' | 'blessing';
@@ -418,7 +449,7 @@ const OracleScreen: React.FC = () => {
     <SafeAreaView style={[styles.root, { backgroundColor: P.midnight }]} edges={['top', 'bottom']}>
       <StarfieldBackground starColor={colors.starfield} />
 
-      {/* Header — menu, today's date over the wordmark, and location */}
+      {/* Header — menu; date, wordmark and location; the gold coin balance */}
       <View style={styles.header}>
         <HomeMenuButton
           onPress={() => setMenuOpen(true)}
@@ -436,24 +467,25 @@ const OracleScreen: React.FC = () => {
           >
             {t('app.name')}
           </Text>
+          <View style={styles.locationLine} testID="home-location">
+            <TabIcon
+              name="pin"
+              color={lastLocation === null ? colors.negative : P.antiqueGold}
+              size={11}
+            />
+            <Text
+              style={[
+                typography('caption'),
+                styles.locationText,
+                lastLocation === null && { color: colors.negative },
+              ]}
+              numberOfLines={1}
+            >
+              {locationLabel}
+            </Text>
+          </View>
         </View>
-        <View style={styles.locationChip}>
-          <TabIcon
-            name="pin"
-            color={lastLocation === null ? colors.negative : P.champagne}
-            size={13}
-          />
-          <Text
-            style={[
-              typography('caption'),
-              styles.locationText,
-              lastLocation === null && { color: colors.negative },
-            ]}
-            numberOfLines={1}
-          >
-            {locationLabel}
-          </Text>
-        </View>
+        <CoinChip onPress={() => setWalletOpen(true)} />
       </View>
       <OrnamentDivider style={styles.headerDivider} />
 
@@ -516,7 +548,7 @@ const OracleScreen: React.FC = () => {
             ))}
           </View>
 
-          {/* Tier and today's quota */}
+          {/* Plan and what can be asked now (server-reported) */}
           <View style={styles.tierLine} testID="home-tier-line">
             <Text style={[typography('label'), styles.tierLabel]}>
               {t('oracle.yourTierLabel').toUpperCase()}
@@ -524,7 +556,7 @@ const OracleScreen: React.FC = () => {
             <Text style={[typography('caption'), styles.tierValue]}>{tierLabel}</Text>
             <Text style={[typography('caption'), styles.tierDot]}>·</Text>
             <Text style={[typography('label'), styles.tierLabel]}>
-              {t('oracle.todaysQuotaLabel').toUpperCase()}
+              {quotaCaption.toUpperCase()}
             </Text>
             <Text style={[typography('caption'), styles.tierValue]}>{quotaLabel}</Text>
           </View>
@@ -604,6 +636,15 @@ const OracleScreen: React.FC = () => {
 
       <GenieGuide visible={genieOpen} onClose={() => setGenieOpen(false)} />
 
+      <WalletSheet
+        visible={walletOpen}
+        onClose={() => setWalletOpen(false)}
+        onSeePremium={() => {
+          setWalletOpen(false);
+          navigation.navigate('Premium');
+        }}
+      />
+
       <HomeDetailSheet title={openTileLabel} onClose={() => setOpenTile(null)}>
         {renderTileDetail(openTile)}
       </HomeDetailSheet>
@@ -642,21 +683,16 @@ const makeStyles = (P: HomePalette) =>
     headerBrand: {
       flex: 1,
     },
-    locationChip: {
+    locationLine: {
       flexDirection: 'row',
       alignItems: 'center',
-      gap: 5,
-      borderWidth: 1,
-      borderColor: P.antiqueGold + '80',
-      backgroundColor: P.deepTeal,
-      borderRadius: RADIUS.pill,
-      paddingHorizontal: 11,
-      paddingVertical: 6,
-      maxWidth: 140,
+      gap: 3,
+      marginTop: 1,
     },
+
     locationText: {
-      color: P.champagne,
-      fontSize: 12,
+      color: P.antiqueGold,
+      fontSize: 11,
     },
     scroll: { flex: 1 },
     tileGrid: {

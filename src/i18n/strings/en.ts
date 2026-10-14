@@ -272,6 +272,32 @@ export const en: StringTable = {
     deleteAccountError: 'Account deletion failed. Please try again or contact support.',
   },
 
+  wallet: {
+    title: 'Your coins',
+    coinsA11y: '{{coins}} coins. Open wallet',
+    unknown: 'Your balance appears here once coins are active on your account.',
+    rate: '1 coin = ₹10',
+    freeAvailable: 'Your free question for this week is available.',
+    nextFree: 'Next free question: {{date}}',
+    priceQuestion: 'An extra question costs {{coins}} coins.',
+    priceDiscussion:
+      'Discussion after a verdict is charged by length, like ChatGPT: 1 coin per 10,000 tokens. A typical reply costs less than 1 coin.',
+    premium:
+      'Premium ₹299/month: unlimited questions (fair use: 10 a day). Discussion still uses coins.',
+    buySoon: 'Buying coins is coming soon.',
+    seePremium: 'See Premium',
+    freeQuestionLabel: 'Free question',
+    available: 'Available',
+    nextLabel: 'Next free',
+    todayLabel: 'Today',
+    freeQuestionUsed:
+      'Your free question for this week is used. An extra question costs {{cost}} coins; you have {{balance}}.',
+    fairUseReached:
+      "You've reached today's fair-use limit of {{limit}} questions. It resets at midnight UTC.",
+    discussionNeedsCoins:
+      'Discussing a reading uses coins. You have {{balance}}; at least {{min}} is needed to continue.',
+  },
+
   theme: {
     midnightCelestial: 'Midnight Celestial',
     darAlShams: 'Dār al-Shams',

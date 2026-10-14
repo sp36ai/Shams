@@ -16,6 +16,7 @@ import { fireEvent, screen, userEvent, waitFor } from '@testing-library/react-na
 import { useNavigation } from '@react-navigation/native';
 import { renderScreen } from '../../test-utils/renderScreen';
 import OracleScreen from '../OracleScreen';
+import { useWalletStore } from '@stores/walletStore';
 
 describe('OracleScreen navigation wiring', () => {
   /**
@@ -193,6 +194,28 @@ describe('OracleScreen genie', () => {
     expect(screen.queryByTestId('genie-guide')).toBeNull();
     await userEvent.setup().press(screen.getByTestId('genie-btn'));
     expect(screen.getByTestId('genie-guide')).toBeTruthy();
+  });
+});
+
+describe('OracleScreen coins', () => {
+  beforeEach(() => useWalletStore.getState().reset());
+
+  it('shows a dash, never a made-up number, until the server reports a balance', async () => {
+    await renderScreen(<OracleScreen />);
+    expect(screen.getByTestId('coin-chip').props.accessibilityLabel).toContain('—');
+  });
+
+  it('shows the server-reported balance with one decimal', async () => {
+    useWalletStore.getState().update({ mode: 'coins', balanceMilli: 12_300 });
+    await renderScreen(<OracleScreen />);
+    expect(screen.getByText('12.3')).toBeTruthy();
+  });
+
+  it('opens the wallet from the gold coin', async () => {
+    await renderScreen(<OracleScreen />);
+    expect(screen.queryByTestId('wallet-balance')).toBeNull();
+    await userEvent.setup().press(screen.getByTestId('coin-chip'));
+    expect(screen.getByTestId('wallet-balance')).toBeTruthy();
   });
 });
 
