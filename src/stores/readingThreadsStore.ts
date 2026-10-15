@@ -780,6 +780,20 @@ export function isDiscussionClosed(thread: ReadingThread): boolean {
   return thread.messages.some(m => m.closesDiscussion === true);
 }
 
+/**
+ * The most transcript turns one follow-up may carry. Must match
+ * `turns.max(20)` in functions/src/middleware/validate.ts
+ * (DiscussReadingSchema): the server rejects a longer transcript outright.
+ * Before this cap the whole history was sent, so with 40 follow-ups allowed
+ * per reading every follow-up after the 11th failed with invalid-argument
+ * and no retry could recover (audit 2026-10-15).
+ *
+ * Dropping the oldest turns loses no authority: the verdict, diagnosis,
+ * timing and remedies are reloaded server-side from the stored reading on
+ * every follow-up, never taken from this transcript.
+ */
+export const MAX_DISCUSSION_TURNS = 20;
+
 export function discussionTurnsFor(
   thread: ReadingThread,
   beforeMessageId?: string,
@@ -806,5 +820,5 @@ export function discussionTurnsFor(
       turns.push({ role: 'oracle', text: m.text });
     }
   }
-  return turns;
+  return turns.slice(-MAX_DISCUSSION_TURNS);
 }

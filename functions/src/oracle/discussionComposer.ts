@@ -67,6 +67,7 @@
  * documented residual limitation of label-based attribution.
  */
 
+import { agentShortName } from './agentNames';
 import { ANTHROPIC_API_KEY } from '../config';
 import { logger } from '../utils/logger';
 import { ORACLE_DISCUSSION_PROMPT } from '../prompts/oracleDiscussionPrompt';
@@ -265,7 +266,7 @@ ${oracle.narration.why_this_remedy ? `  Why these:      ${oracle.narration.why_t
   Primary pattern:    ${oracle?.diagnosis.primaryPattern ?? 'not recorded'}
   Secondary patterns: ${oracle?.diagnosis.secondaryPatterns.join(', ') || 'none'}
   Timing posture:     ${formatTimingPosture(oracle)}
-  Obstructing agent:  ${oracle?.diagnosis.obstructingAgent ?? 'none'}
+  Obstructing agent:  ${agentShortName(oracle?.diagnosis.obstructingAgent ?? null) ?? 'none'}
 
 CHART RATIONALE (the engine's own reasoning)
 ${(oracle?.diagnosis.rationale ?? []).map(r => `  - ${r}`).join('\n') || '  (not recorded)'}

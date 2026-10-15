@@ -9,82 +9,102 @@
  * settled before narration ever ran. Every sentence below is built from a
  * fixed string plus a contract value; nothing here is invented, and nothing
  * here can vary between two readings with the identical contract (verified:
- * `narrationFallback.test.ts`'s determinism test).
+ * narrationValidator.test.ts's determinism test).
+ *
+ * Voice (audit 2026-10-15): the same warm, direct, answer-first register as
+ * watchOracleSynthesisPrompt.ts, still deliberately plain — no imagery, no
+ * claim the contract does not hold. The earlier template leaked engine terms
+ * to seekers ("Mars is the obstructing influence", "MoonDisagreement", "the
+ * querent's ruler regards the ruler of the matter as an enemy") and read
+ * remedy names as a broken sentence ("Consider Relationship Counselling, …
+ * are indicated").
  */
 
 import type { ReadingContract } from './readingContract';
 import type { NarrationFields } from './responseComposer';
+import { agentGlossedName } from './agentNames';
 
-const OUTCOME_LABEL: Readonly<Record<ReadingContract['diagnosis']['outcome'], string>> =
-  Object.freeze({
-    FAVOURABLE: 'The chart supports this matter.',
-    UNFAVOURABLE: 'The chart does not support this matter as it stands.',
-    DELAYED: 'The matter may materialise, though not on the timeline hoped for.',
-    UNCERTAIN: 'The chart has not settled on this matter; the signal is mixed.',
-    CONDITIONAL: 'The matter is supported, but with a condition still to be met.',
-    PREMATURE: 'The matter is sound, but the timing is not yet ready for it.',
-    ESCALATING: 'The matter is gathering strength.',
-    DECLINING: 'The opportunity in this matter is weakening.',
-  });
+type Outcome = ReadingContract['diagnosis']['outcome'];
+type Pattern = ReadingContract['diagnosis']['primaryPattern'];
+type Posture = ReadingContract['diagnosis']['timingPosture'];
 
-/**
- * The diagnosis's imbalance patterns, as the seeker reads them. The engine's
- * own `rationale` names these as tokens ("indicates UNCERTAINTY +
- * INSTABILITY") — it is an audit record, not prose — so the fallback states
- * the patterns from this table instead of repeating it.
- */
-const PATTERN_LABEL: Readonly<Record<ReadingContract['diagnosis']['primaryPattern'], string>> =
-  Object.freeze({
-    OBSTRUCTION: 'obstruction',
-    UNCERTAINTY: 'uncertainty',
-    CONFLICT: 'conflict between the parties',
-    INSTABILITY: 'instability',
-    ATTACHMENT: 'attachment that is hard to release',
-    HASTE: 'haste',
-    POOR_TIMING: 'timing that does not yet fit',
-    EXTERNAL_OPPOSITION: 'opposition from another party',
-    NEEDS_PATIENCE: 'a need for patience',
-    NEEDS_DECISIVE_ACTION: 'a need for decisive action',
-    FAVOURABLE_FLOW: 'a favourable flow',
-  });
+/** The answer, first, in plain words. */
+const OUTCOME_ANSWER: Readonly<Record<Outcome, string>> = Object.freeze({
+  FAVOURABLE: 'Yes, the way is open for this.',
+  UNFAVOURABLE: 'Not as things stand. The chart does not support this in its present form.',
+  DELAYED: 'Not yet. This can still come, but later than you hoped.',
+  UNCERTAIN: 'The chart has not settled on this yet. The signal is mixed.',
+  CONDITIONAL: 'Yes, but only once something gives way first.',
+  PREMATURE: 'The matter is sound, but its time has not come yet.',
+  ESCALATING: 'This is gathering strength.',
+  DECLINING: 'The opening in this matter is fading.',
+});
 
-/** An engine token anywhere in a sentence: BLOCKED, UNFAVOURABLE, POOR_TIMING. */
-const ENGINE_TOKEN = /\b[A-Z]{2,}(?:_[A-Z]+)*\b/;
+/** What the outcome means for the seeker's decision. */
+const OUTCOME_MEANING: Readonly<Record<Outcome, string>> = Object.freeze({
+  FAVOURABLE: 'Nothing in the reading is holding this back.',
+  UNFAVOURABLE: 'Pushing harder now is unlikely to change it.',
+  DELAYED: 'This is a delay, not a refusal. Do not read the wait as a no.',
+  UNCERTAIN: 'It is worth asking again later, once things have moved.',
+  CONDITIONAL: 'The matter can stand, but not until that condition is met.',
+  PREMATURE: 'This is about timing, not about the matter itself.',
+  ESCALATING: 'What you put into it now is likely to build.',
+  DECLINING: 'If you act, act on what is already in front of you.',
+});
 
-function joinLabels(labels: readonly string[]): string {
-  return labels.length <= 1
-    ? (labels[0] ?? '')
-    : `${labels.slice(0, -1).join(', ')} and ${labels[labels.length - 1]}`;
+const PATTERN_LABEL: Readonly<Record<Pattern, string>> = Object.freeze({
+  OBSTRUCTION: 'something standing across the path',
+  UNCERTAINTY: 'uncertainty',
+  CONFLICT: 'conflict between the people involved',
+  INSTABILITY: 'instability',
+  ATTACHMENT: 'an attachment that is hard to let go of',
+  HASTE: 'haste',
+  POOR_TIMING: 'timing that does not fit yet',
+  EXTERNAL_OPPOSITION: 'opposition from someone else',
+  NEEDS_PATIENCE: 'a need for patience',
+  NEEDS_DECISIVE_ACTION: 'a need for a clear decision',
+  FAVOURABLE_FLOW: 'a favourable flow',
+});
+
+const POSTURE_ADVICE: Readonly<Record<Posture, string>> = Object.freeze({
+  ACT_NOW: 'Act on this while the way is open.',
+  ACT_SOON: 'A near window is open. Act within it.',
+  WAIT: 'Hold back for now, and do not force the next step.',
+  WAIT_LONG: 'This needs a longer wait before it settles. Keep every step reversible.',
+  UNKNOWN: 'The reading gives no clear timing here, so move carefully.',
+});
+
+const OUTCOME_SIGNATURE: Readonly<Record<Outcome, string>> = Object.freeze({
+  FAVOURABLE: 'A good door. Walk through it.',
+  UNFAVOURABLE: 'Not this door, not now.',
+  DELAYED: 'Slow, but not closed.',
+  UNCERTAIN: 'Ask again when the water has settled.',
+  CONDITIONAL: 'Open, once the knot is loosened.',
+  PREMATURE: 'Right matter, early hour.',
+  ESCALATING: 'It is building.',
+  DECLINING: 'Take what is in reach.',
+});
+
+function finding(diagnosis: ReadingContract['diagnosis']): string {
+  const agent = agentGlossedName(diagnosis.obstructingAgent);
+  return agent === null
+    ? OUTCOME_ANSWER[diagnosis.outcome]
+    : `${OUTCOME_ANSWER[diagnosis.outcome]} ${agent}, is what holds it back.`;
 }
 
-/**
- * The interpretation: the patterns in plain words, then whichever lines of
- * the engine's rationale are already plain prose. Lines carrying an engine
- * token are left out — what they say is either the outcome (rkp_finding
- * already states it) or the patterns (stated here from PATTERN_LABEL).
- */
+/** At most the two leading patterns: the reading's character, not its audit trail. */
 function interpretationFor(diagnosis: ReadingContract['diagnosis']): string {
   const patterns = [diagnosis.primaryPattern, ...diagnosis.secondaryPatterns]
     .filter((p, i, all) => all.indexOf(p) === i)
     .map(p => PATTERN_LABEL[p])
-    .filter((label): label is string => label !== undefined);
-  const sentences: string[] = [];
-  if (patterns.length > 0) {
-    sentences.push(`The pattern the chart shows is ${joinLabels(patterns)}.`);
-  }
-  sentences.push(...diagnosis.rationale.filter(line => !ENGINE_TOKEN.test(line)));
-  return sentences.length > 0 ? sentences.join(' ') : `This reading concerns ${diagnosis.qType}.`;
+    .filter((label): label is string => label !== undefined)
+    .slice(0, 2);
+  const shape =
+    patterns.length === 0
+      ? ''
+      : `What the reading shows around this is ${patterns.join(' and ')}. `;
+  return `${shape}${OUTCOME_MEANING[diagnosis.outcome]}`;
 }
-
-const TIMING_POSTURE_LABEL: Readonly<
-  Record<ReadingContract['diagnosis']['timingPosture'], string>
-> = Object.freeze({
-  ACT_NOW: 'Act on this without delay.',
-  ACT_SOON: 'A near window is open — act within it.',
-  WAIT: 'Wait before acting further.',
-  WAIT_LONG: 'A longer wait is indicated before this settles.',
-  UNKNOWN: 'The chart gives no clear timing signal here.',
-});
 
 function timingWindowSentence(timing: { minDays: number; maxDays: number } | null): string {
   if (timing === null) {
@@ -96,31 +116,25 @@ function timingWindowSentence(timing: { minDays: number; maxDays: number } | nul
 }
 
 /**
- * Builds a complete, valid `NarrationFields` object using only contract
- * data. Deliberately plain rather than an attempt at the mystical register
- * — reproducing that voice deterministically from a template would itself
- * risk reading as a fabricated claim; honest and unadorned is the safer
- * choice for a safety fallback specifically.
+ * Deterministic fallback narration, built entirely from contract data. Plain
+ * by design: a template must not imitate inspiration it does not have, so it
+ * speaks the settled reading simply and claims nothing beyond it.
  */
 export function buildDeterministicFallbackNarration(contract: ReadingContract): NarrationFields {
   const { diagnosis, remedy } = contract;
 
-  const rkp_finding = `${OUTCOME_LABEL[diagnosis.outcome]}${diagnosis.obstructingAgent ? ` ${diagnosis.obstructingAgent} is the obstructing influence.` : ''}`;
-
-  const interpretation = interpretationFor(diagnosis);
-
-  const recommended_approach = `${TIMING_POSTURE_LABEL[diagnosis.timingPosture]}${timingWindowSentence(diagnosis.timing)}`;
-
   const why_this_remedy =
     remedy.interventionRequired && remedy.steps.length > 0
-      ? `${remedy.steps.map(s => s.name).join(', ')} ${remedy.steps.length === 1 ? 'is' : 'are'} indicated for this reading.`
+      ? remedy.steps.length === 1
+        ? 'The step counselled below is what the tradition offers for this pattern.'
+        : `The ${remedy.steps.length} steps counselled below are what the tradition offers for this pattern.`
       : remedy.guidance;
 
   return {
-    rkp_finding,
-    interpretation,
-    recommended_approach,
+    rkp_finding: finding(diagnosis),
+    interpretation: interpretationFor(diagnosis),
+    recommended_approach: `${POSTURE_ADVICE[diagnosis.timingPosture]}${timingWindowSentence(diagnosis.timing)}`,
     why_this_remedy,
-    signature: 'This reading stands as the chart has cast it.',
+    signature: OUTCOME_SIGNATURE[diagnosis.outcome],
   };
 }
