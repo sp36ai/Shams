@@ -83,6 +83,24 @@ def main() -> int:
             print(f"edits.validate -> {code}: {json.dumps(res, indent=2)}")
         if code != 200:
             print(f"::error::Google Play rejects this release: {json.dumps(res)}")
+
+        # One machine-readable verdict line. FAILED_PRECONDITION on the track
+        # is how Play answers while it withholds a track from the account
+        # (seen on production, 14-15 Oct 2026); anything else is reported as
+        # unknown rather than guessed at.
+        error_status = res.get("error", {}).get("status") if isinstance(res, dict) else None
+        if code == 200:
+            access = "unlocked"
+        elif error_status == "FAILED_PRECONDITION":
+            access = "locked"
+        else:
+            access = "unknown"
+        verdict = f"{track.upper()}_ACCESS={access}"
+        print(f"\n{verdict}")
+        summary = os.environ.get("GITHUB_STEP_SUMMARY")
+        if summary:
+            with open(summary, "a", encoding="utf-8") as f:
+                f.write(f"**{verdict}** (latest version code {latest}; nothing was committed)\n")
     finally:
         call("DELETE", f"/edits/{edit_id}")
     return 0
