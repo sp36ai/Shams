@@ -13,6 +13,7 @@ import {
   searchThreads,
   groupByRecency,
   discussionTurnsFor,
+  MAX_DISCUSSION_TURNS,
   isDiscussionClosed,
   conversationOf,
   contextFrom,
@@ -319,6 +320,35 @@ describe('discussionTurnsFor', () => {
     );
   });
 
+  it('stays within the server limit on a long conversation (20 turns)', () => {
+    // discussReading allows 40 follow-ups per reading, but its schema rejects
+    // a transcript longer than 20 turns. Sending the whole history broke every
+    // follow-up after the 11th with invalid-argument (audit 2026-10-15).
+    const long: ReadingThread = {
+      ...thread,
+      messages: [
+        message({ id: 'u0', text: 'Should I accept?' }),
+        message({ id: 'o0', role: 'oracle', text: '', variant: 'reading', reading: reading() }),
+        ...Array.from({ length: 15 }, (_, i) => [
+          message({ id: `u${i + 1}`, text: `question ${i + 1}` }),
+          message({
+            id: `o${i + 1}`,
+            role: 'oracle',
+            text: `answer ${i + 1}`,
+            variant: 'discussion',
+          }),
+        ]).flat(),
+        message({ id: 'u16', text: 'question 16' }),
+      ],
+    };
+    const turns = discussionTurnsFor(long, 'u16');
+    expect(turns.length).toBeLessThanOrEqual(MAX_DISCUSSION_TURNS);
+    expect(MAX_DISCUSSION_TURNS).toBe(20);
+    // The most recent exchange is always kept, in order.
+    expect(turns[turns.length - 1]).toEqual({ role: 'oracle', text: 'answer 15' });
+    expect(turns[turns.length - 2]).toEqual({ role: 'seeker', text: 'question 15' });
+  });
+
   it('skips turns that never resolved', () => {
     const pending: ReadingThread = {
       ...thread,
@@ -595,5 +625,53 @@ describe('recovering after the app closed mid-call', () => {
     const thread: ReadingThread = { ...openThread(), messages: [message({ id: 'u0' })] };
 
     expect(recoverInterruptedMessages([thread])[0]).toBe(thread);
+  });
+});
+
+describe('a follow-up after an app restart (audit 2026-10-15)', () => {
+  it('still targets the same reading and rebuilds the same transcript', () => {
+    const store = useReadingThreadsStore.getState();
+    openThread();
+    store.attachReading('t1', reading('r-original'));
+    store.addMessage(
+      't1',
+      message({
+        id: 'o0',
+        role: 'oracle',
+        text: '',
+        variant: 'reading',
+        reading: reading('r-original'),
+      }),
+    );
+    store.addMessage('t1', message({ id: 'u1', text: 'Why is it slow?' }));
+    store.addMessage(
+      't1',
+      message({ id: 'o1', role: 'oracle', text: 'Zuhal is holding it.', variant: 'discussion' }),
+    );
+    store.addMessage('t1', message({ id: 'u2', text: 'And the remedy?' }));
+    // A follow-up was in flight when the app died.
+    store.addMessage(
+      't1',
+      message({ id: 'o2', role: 'oracle', text: '', variant: 'discussion', status: 'sending' }),
+    );
+
+    const before = threadById(useReadingThreadsStore.getState().threads, 't1')!;
+
+    // "Restart": what survives is only what was written to MMKV.
+    const restored = recoverInterruptedMessages(
+      JSON.parse(storage.getString(KEYS.READING_THREADS) as string) as ReadingThread[],
+    ).find(t => t.id === 't1')!;
+
+    // The follow-up resolves to the same server reading — the server loads the
+    // verdict from that id, so the judgment cannot drift across a restart.
+    expect(restored.readingId).toBe('r-original');
+    expect(restored.readingId).toBe(before.readingId);
+    expect(discussionTurnsFor(restored, 'u2')).toEqual(discussionTurnsFor(before, 'u2'));
+    expect(discussionTurnsFor(restored, 'u2')).toEqual([
+      { role: 'seeker', text: 'Why is it slow?' },
+      { role: 'oracle', text: 'Zuhal is holding it.' },
+    ]);
+    // The interrupted reply is offered for retry instead of hanging forever.
+    expect(restored.messages.find(m => m.id === 'o2')?.status).toBe('failed');
   });
 });

@@ -41,6 +41,7 @@
  * unchanged. Verify Cloud Functions redeploy.
  */
 
+import { agentShortName } from './agentNames';
 import { ANTHROPIC_API_KEY } from '../config';
 import { logger } from '../utils/logger';
 import { WATCH_ORACLE_SYNTHESIS_PROMPT } from '../prompts/watchOracleSynthesisPrompt';
@@ -279,7 +280,7 @@ ${questionBlock}RKP DIAGNOSIS (settled — explain, do not revise)
   Timing posture:     ${diagnosis.timingPosture}
   Timing window:      ${formatTiming(diagnosis.timing)}
   Confidence:         ${diagnosis.confidence.toFixed(2)}
-  Obstructing agent:  ${diagnosis.obstructingAgent ?? 'none'}
+  Obstructing agent:  ${agentShortName(diagnosis.obstructingAgent) ?? 'none'}
   Target house:       ${diagnosis.targetHouse}
   Question type:      ${diagnosis.questionType}
 
