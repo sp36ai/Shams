@@ -64,6 +64,19 @@ When the 1st Ghar's ruler also rules the matter's Ghar (every 1st-Ghar question 
 no score and states no factor. Previously the classical table counted the planet its own friend
 and added +2 on every such reading.
 
+### Ras and Dhanab as one axis
+
+Owner decision, 2026-10-14, for the watch engine (`src/astrology/rkp/watchJudgment.ts`, steps 3
+and 4), following the Scoring Integrity Review. Ras and Dhanab are one axis. When both nodes
+touch the same judged Ghar (the matter's Ghar or the 11th), by sitting in it or gazing on it, the
+axis counts once there: one malefic contact (−2) and one factor naming both. A single node
+touching a Ghar counts exactly as before. The axis touching both judged Ghars counts once on each.
+
+Unchanged: the nodes' 5th/7th/9th gaze convention, every other planet's ±2, the obstruction
+precedence (Zuhal > Mirrikh > Ras > Dhanab), confidence banding, verdict thresholds and state
+precedence. Whether any planet touching both judged Ghars should count once is a separate,
+still-open question.
+
 ### Lending and returning questions
 
 Owner decision, 2026-10-08. Questions about something lent, borrowed or held by someone else
