@@ -18,7 +18,7 @@ This is **ideal for unit testing**. We must:
 
 1. Write test fixtures for 50+ scenarios
 2. Cover all 5 verdict kinds (YES, NO, CONDITIONAL, DELAYED, UNCLEAR)
-3. Test edge cases (retrograde planets, boundary house hits, Kotamraju filter logic)
+3. Test edge cases (retrograde planets, boundary house hits) — ~~Kotamraju filter logic~~ *(superseded: KP-era, removed with the KP engine; not part of RKP, do not test or re-implement)*
 4. Ensure narrations are generated correctly in all 3 languages
 5. Lock in the output hash for regression detection
 
