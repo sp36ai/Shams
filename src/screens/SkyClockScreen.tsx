@@ -520,7 +520,7 @@ const SkyClockScreen: React.FC = () => {
         {/* Disclaimer */}
         <Text style={[typography('caption'), styles.disclaimer, { color: colors.textFaint }]}>
           Sidereal positions are mean-longitude approximations (±1–5°) for display only. Horary
-          judgment uses the full KP engine on the server.
+          judgment uses the RKP Watch Engine on the server.
         </Text>
       </ScrollView>
       <BrandFooter />
