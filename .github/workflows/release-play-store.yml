@@ -63,6 +63,10 @@ jobs:
     name: Build AAB and deploy to Play Store
     runs-on: ubuntu-24.04
     if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    # Only a manual run that picks the production track uses the protected
+    # `production` environment; every other run (including the automatic
+    # post-CI internal release) uses `play-internal`.
+    environment: ${{ (github.event_name == 'workflow_dispatch' && github.event.inputs.track == 'production') && 'production' || 'play-internal' }}
     env:
       # Single source of truth for "is this a dry run": only a manual run with
       # dry_run ticked. Accepts the typed boolean (inputs.dry_run) or its
