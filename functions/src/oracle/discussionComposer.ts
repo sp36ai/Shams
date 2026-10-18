@@ -212,6 +212,22 @@ export function flattenText(raw: string, maxChars: number): string {
   );
 }
 
+/**
+ * The JSON shape ORACLE_DISCUSSION_PROMPT asks for, enforced by the API
+ * (structured outputs). Production logs (7–17 Oct 2026) showed every
+ * follow-up failing to parse because the model answered in plain prose.
+ */
+const DISCUSSION_REPLY_SCHEMA = {
+  type: 'object',
+  properties: {
+    answer: { type: 'string' },
+    is_new_question: { type: 'boolean' },
+    conversation_complete: { type: 'boolean' },
+  },
+  required: ['answer', 'is_new_question', 'conversation_complete'],
+  additionalProperties: false,
+} as const;
+
 function stripJsonFence(text: string): string {
   const trimmed = text.trim();
   const fenced = /^```(?:json)?\s*([\s\S]*?)\s*```$/.exec(trimmed);
@@ -701,7 +717,10 @@ async function requestDraft(
         // Opus 5 thinks by default and max_tokens bounds thinking + reply
         // together — a short reply still needs room ahead of it.
         max_tokens: 2048,
-        output_config: { effort: 'low' },
+        output_config: {
+          effort: 'low',
+          format: { type: 'json_schema', schema: DISCUSSION_REPLY_SCHEMA },
+        },
         system,
         messages,
       }),
