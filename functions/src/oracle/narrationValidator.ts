@@ -544,12 +544,32 @@ const HEDGE_QUALIFIERS: readonly string[] = Object.freeze([
   'perhaps',
 ]);
 
-/** Extracts every "N day(s)" or "Nth day"-shaped number mentioned in the text. */
+/**
+ * Folds Arabic-Indic (٠-٩), Extended Arabic-Indic / Urdu (۰-۹) and
+ * Devanagari (०-९) digits to ASCII. Follow-ups are written in the seeker's
+ * language, and a day count in those digits must reach the same window check.
+ */
+function toAsciiDigits(text: string): string {
+  return text.replace(/[٠-٩۰-۹०-९]/g, d => {
+    const cp = d.codePointAt(0) ?? 0;
+    const zero = cp >= 0x0966 ? 0x0966 : cp >= 0x06f0 ? 0x06f0 : 0x0660;
+    return String(cp - zero);
+  });
+}
+
+/**
+ * Extracts every "N day(s)" or "Nth day"-shaped number mentioned in the text,
+ * including Urdu "N دن" / "N روز" and Hindi "N दिन".
+ */
 function extractDayCounts(text: string): number[] {
   const out: number[] = [];
-  const re = /(\d+)(?:st|nd|rd|th)?\s*day/gi;
+  // Urdu/Hindi unit words must stand alone (or take their plural ending):
+  // "دن" also starts دنیا (world), "روز" starts روزگار (employment).
+  const re =
+    /(\d+)(?:st|nd|rd|th)?\s*(?:day|(?:دن(?:وں)?|روز(?:وں)?)(?![؀-ۿ])|दिन(?:ों)?(?![ऀ-ॿ]))/gi;
+  const folded = toAsciiDigits(text);
   let m: RegExpExecArray | null;
-  while ((m = re.exec(text)) !== null) {
+  while ((m = re.exec(folded)) !== null) {
     out.push(Number(m[1]));
   }
   return out;
