@@ -12,7 +12,16 @@
  * verdict kept, dates correct, narration not rejected into the fallback,
  * card and voice carrying the same dates, and no plain claim of Nusrat's
  * plan or of her contacting Rafiq. Passing it is necessary, not sufficient —
- * the honesty of the prose is still a reader's judgment. Costs one model call.
+ * the honesty of the prose is still a reader's judgment.
+ *
+ * The second test asks the follow-up "Which dates do you mean?" against that
+ * same reading. Follow-up replies are not given the calendar dates (the
+ * discussion brief carries the day window only, and the validator rejects
+ * any date a model writes), so today the expected answer restates the days
+ * and points to the card. That is recorded as current behaviour for the
+ * owner to accept or change, not asserted as the right one.
+ *
+ * Costs two or three model calls.
  */
 
 import { describe, expect, it, vi } from 'vitest';
@@ -36,7 +45,8 @@ vi.mock('firebase-functions/v2', () => ({
   },
 }));
 
-import { composeWatchOracleResponse } from '../responseComposer';
+import { composeWatchOracleResponse, type WatchOracleCompositionResult } from '../responseComposer';
+import { composeDiscussionReply } from '../discussionComposer';
 import type { DisplayWatchVerdict } from '../../engine/rkp/watchJudgment';
 
 const LIVE = process.env.LIVE_ANTHROPIC === '1';
@@ -73,9 +83,11 @@ const INTENTION_CLAIMS: readonly RegExp[] = [
 ];
 
 describe.skipIf(!LIVE)('LIVE — Rafiq–Nusrat staging transcript', () => {
+  let reading: WatchOracleCompositionResult | null = null;
+
   it('real narration keeps the verdict, the dates and the honesty rule', async () => {
     warnings.length = 0;
-    const { composition } = await composeWatchOracleResponse({
+    reading = await composeWatchOracleResponse({
       verdict: VERDICT,
       question: QUESTION,
       seekerName: 'Rafiq',
@@ -85,6 +97,7 @@ describe.skipIf(!LIVE)('LIVE — Rafiq–Nusrat staging transcript', () => {
       utcOffsetMinutes: 330,
     });
 
+    const { composition } = reading;
     const n = composition.narration;
     console.warn(
       [
@@ -128,6 +141,58 @@ describe.skipIf(!LIVE)('LIVE — Rafiq–Nusrat staging transcript', () => {
     ].join(' ');
     for (const claim of INTENTION_CLAIMS) {
       expect(everything).not.toMatch(claim);
+    }
+  }, 120_000);
+
+  it('follow-up "Which dates do you mean?" — recorded for review', async () => {
+    expect(reading).not.toBeNull();
+    const { composition, contract } = reading!;
+    const opening = [
+      composition.narration?.rkp_finding,
+      composition.narration?.interpretation,
+      composition.narration?.recommended_approach,
+    ]
+      .filter(Boolean)
+      .join(' ');
+
+    warnings.length = 0;
+    const reply = await composeDiscussionReply({
+      groundings: [
+        {
+          label: 'the reading about Nusrat',
+          question: QUESTION,
+          verdict: 'DELAYED',
+          confidence: composition.diagnosis.confidence,
+          computedAt: contract.provenance.computedAt,
+          oracle: composition,
+          narration: null,
+          contract,
+        },
+      ],
+      turns: [
+        { role: 'seeker', text: QUESTION },
+        { role: 'oracle', text: opening },
+      ],
+      message: 'Which dates do you mean?',
+      replyLang: 'en',
+    });
+
+    console.warn(
+      [
+        '──────── FOLLOW-UP ────────',
+        'Seeker:  Which dates do you mean?',
+        `Oracle:  ${reply?.answer ?? '(no reply — rejected or failed; see warnings above)'}`,
+        `Card still shows: 42–63 days · ${composition.timingWindow?.label ?? '(none)'}`,
+        `Warnings: ${warnings.length === 0 ? 'none' : warnings.join(' | ')}`,
+        '───────────────────────────',
+      ].join('\n'),
+    );
+
+    // A reply must exist; whether "days, see the card" is the right answer
+    // is the owner's call, so the text itself is only printed.
+    expect(reply).not.toBeNull();
+    for (const claim of INTENTION_CLAIMS) {
+      expect(reply!.answer).not.toMatch(claim);
     }
   }, 120_000);
 });
