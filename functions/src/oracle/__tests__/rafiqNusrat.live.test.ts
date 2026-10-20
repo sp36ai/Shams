@@ -18,8 +18,8 @@
  * same reading. Follow-up replies are not given the calendar dates (the
  * discussion brief carries the day window only, and the validator rejects
  * any date a model writes), so today the expected answer restates the days
- * and points to the card. That is recorded as current behaviour for the
- * owner to accept or change, not asserted as the right one.
+ * and points to the card. Owner decision 2026-10-20: follow-ups stay
+ * days-only for now. The reply is still printed for review, not judged.
  *
  * Costs two or three model calls.
  */

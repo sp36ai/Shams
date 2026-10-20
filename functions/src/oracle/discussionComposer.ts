@@ -234,6 +234,13 @@ function stripJsonFence(text: string): string {
   return fenced?.[1] ?? trimmed;
 }
 
+/**
+ * Follow-ups get the timing posture only — no day window, and never the
+ * calendar dates in `oracle.timingWindow`. Owner decision 2026-10-20: keep
+ * follow-ups days-only for now; the dates live on the card and in the
+ * spoken reading. Giving follow-ups the dates would also need the follow-up
+ * prompt and its validator changed, so it is a separate change, not a fix.
+ */
 function formatTimingPosture(oracle: WatchOracleComposition | null): string {
   return oracle ? oracle.diagnosis.timingPosture : 'not recorded';
 }
