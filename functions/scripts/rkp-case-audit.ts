@@ -16,10 +16,12 @@
  * Writes:   ../docs/rkp-audit/case_records.json and case_records.md
  */
 
+import { execSync } from 'node:child_process';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
-import { buildWatchChart, houseOf } from '../src/engine/rkp/watchChart';
+import { ENGINE_VERSION } from '../src/engine/primitives/chartBuilder';
+import { buildWatchChart, houseOf, type WatchChart } from '../src/engine/rkp/watchChart';
 import { judgeWatchChart } from '../src/engine/rkp/watchJudgment';
 import { HOUSE_MATRIX } from '../src/engine/kp/rules/houseMatrix';
 import { classifyQuestion } from '../src/engine/kp/rules/questionKeywords';
@@ -57,9 +59,71 @@ function stepOf(factor: string): string {
   return 'unclassified';
 }
 
+/**
+ * Independent cross-check of the engine's aspect output.
+ *
+ * The table below is written out separately from rules.ts, from the ledger's
+ * row L9 (inclusive house-distance, every planet the 7th, plus the special
+ * aspects). It checks the engine against the DOCUMENTED table — it does not
+ * show the table is RKP's. Any mismatch aborts the run, so a record is never
+ * written from a chart whose aspect data disagrees with the ledger.
+ */
+const LEDGER_L9: Readonly<Record<string, readonly number[]>> = {
+  Sun: [7],
+  Moon: [7],
+  Mars: [4, 7, 8],
+  Mercury: [7],
+  Jupiter: [5, 7, 9],
+  Venus: [7],
+  Saturn: [3, 7, 10],
+  Rahu: [5, 7, 9],
+  Ketu: [5, 7, 9],
+};
+
+function crossCheck(id: string, chart: WatchChart): void {
+  for (const h of chart.houses) {
+    const expectedAspectors = Object.values(chart.planets)
+      .filter(p => (LEDGER_L9[p.planet] ?? []).includes(((h.house - p.house + 12) % 12) + 1))
+      .map(p => p.planet)
+      .sort();
+    const gotAspectors = [...h.aspectedBy].sort();
+    const expectedOccupants = Object.values(chart.planets)
+      .filter(p => p.house === h.house)
+      .map(p => p.planet)
+      .sort();
+    const gotOccupants = [...h.occupants].sort();
+    if (
+      expectedAspectors.join() !== gotAspectors.join() ||
+      expectedOccupants.join() !== gotOccupants.join()
+    ) {
+      throw new Error(`${id}: Ghar ${h.house} disagrees with the ledger L9 table`);
+    }
+  }
+}
+
+function git(args: string): string {
+  try {
+    return execSync(`git ${args}`, { cwd: resolve(__dirname, '../..'), encoding: 'utf8' }).trim();
+  } catch {
+    return 'unavailable';
+  }
+}
+
+const provenance = {
+  generator: 'functions/scripts/rkp-case-audit.ts',
+  gitCommit: git('rev-parse --short HEAD'),
+  workingTreeDirty: git('status --porcelain -- src functions/src').length > 0,
+  engineVersion: ENGINE_VERSION,
+  ayanamsa: 'Lahiri (primitives/ayanamsa.ts, sidereal mode 1)',
+  location: 'inert 0,0 — watch frame ignores cusps, planets are location-independent',
+  functionsCalled: ['buildWatchChart', 'judgeWatchChart', 'classifyQuestion'],
+  aspectCrossCheck: 'engine houses[].occupants/aspectedBy == ledger L9 table, all 12 Ghars, every case',
+} as const;
+
 function record(c: AuditCase) {
   const qType = classifyQuestion(c.question);
   const chart = buildWatchChart(c.iso);
+  crossCheck(c.id, chart);
   const verdict = judgeWatchChart(chart, qType);
   const matrix = HOUSE_MATRIX[qType];
   const target = houseOf(chart, verdict.targetHouse);
@@ -118,7 +182,10 @@ const records = CASES.map(record);
 
 const outDir = resolve(__dirname, '../../docs/rkp-audit');
 mkdirSync(outDir, { recursive: true });
-writeFileSync(resolve(outDir, 'case_records.json'), JSON.stringify(records, null, 2) + '\n');
+writeFileSync(
+  resolve(outDir, 'case_records.json'),
+  JSON.stringify({ provenance, cases: records }, null, 2) + '\n',
+);
 
 const list = (xs: readonly string[]): string => (xs.length === 0 ? '—' : xs.join(', '));
 const md: string[] = [
@@ -128,6 +195,9 @@ const md: string[] = [
   '`judgeWatchChart`. Nothing is recomputed: aspect lists are the engine\'s own',
   '`WatchChart.houses[].aspectedBy`. This file records what the engine DID, not',
   'what RKP requires. See RKP_RULE_LEDGER.md for the status of each rule.',
+  '',
+  `Provenance: commit ${provenance.gitCommit}${provenance.workingTreeDirty ? ' (+uncommitted engine changes)' : ''}, engine ${provenance.engineVersion}, ${provenance.ayanamsa}.`,
+  `Aspect cross-check against ledger L9: passed for all ${records.length} cases.`,
   '',
 ];
 for (const r of records) {

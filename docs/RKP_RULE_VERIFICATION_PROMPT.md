@@ -109,7 +109,7 @@ B10. Timing windows by the target ruler (days): Qamar 3–7, Utarid 7–14,
     ×0.7 if exalted. Are these RKP numbers or my own?
 
 -----------------------------------------------------------------------------
-PART B-2 — THE THREE SUSPICIOUS PATTERNS (answer in depth)
+PART B-2 — THE FIVE SUSPICIOUS PATTERNS (answer in depth)
 -----------------------------------------------------------------------------
 I ran the engine over about 1,950 moments spread across all of 2026 per
 question type. Share of results that were a clear yes (Fulfilled or Moving) /

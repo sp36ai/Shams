@@ -78,6 +78,18 @@ by planet?
 **2.10 The 11th Ghar.** Now: the 11th is always the Ghar of fulfilment, for
 every question. Is that so, or does it depend on the question?
 
+**2.11 Strength by sign.** Now: exaltation Shams-Hamal, Qamar-Saur,
+Mirrikh-Jadi, Utarid-Sunbula, Mushtari-Sartan, Zuhrah-Hoot, Zuhal-Meezan;
+debilitation is the opposite sign; own signs Shams Asad, Qamar Sartan, Mirrikh
+Hamal and Aqrab, Utarid Jauza and Sunbula, Mushtari Qaus and Hoot, Zuhrah Saur
+and Meezan, Zuhal Jadi and Dalw. Ras is exalted in Saur and Dhanab in Aqrab,
+and neither has an own sign. Confirm or correct each (the node exaltations
+especially).
+
+**2.12 Confidence (low priority).** Now: how sure the answer sounds depends
+only on the size of the total score, and drops one level when a benefic and a
+malefic both touch the matter. Is that how you want confidence shown?
+
 ## Part 3 — The question table
 
 **3.1** The rules document lists, for each question type, the Ghars that help

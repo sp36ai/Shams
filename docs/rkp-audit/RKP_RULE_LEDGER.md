@@ -61,6 +61,56 @@ Absence from a classical text is not evidence against a rule either.
 | L22 | Confidence bands by score magnitude; downgrade when benefic and malefic both present | `bandConfidence` | HYPOTHESIS | No source |
 | L23 | Timing base days per planet, ×1.5 retrograde, ×1.5 weak, ×0.7 exalted | `BASE_TIMING`, `computeTiming` | HYPOTHESIS | Doc §6 describes a different timing method (dasha years × score ratio). Code comment says "reflecting classical speed" |
 
+## Authority is not implementation
+
+Each ledger row says how well a rule is **established as RKP**. It does not say
+the code applies the rule correctly. Those are separate questions:
+
+| Question | Current conclusion |
+|---|---|
+| Does the owner's document specify numerical scoring? | Yes, for the older Moon-sub-lord flow (+2/−2, ±1, ≥3 / ≤−2) |
+| Are the watch engine's own weights and thresholds owner-confirmed? | No (L14–L19, L21) |
+| Does the code apply those weights as written? | Tested against the *current* behaviour: `src/astrology/rkp/__tests__` (96 tests, passing on this branch) pin the weights, the ladder, obstruction order and timing multipliers |
+| Does the verdict follow the owner's intended rules? | Unverified until the owner's rules are recorded here and compared with the code |
+
+Two consequences:
+
+- Those 96 tests freeze today's behaviour, including the HYPOTHESIS rows. They
+  show the code does what it says, not that what it says is RKP. A confirmed
+  correction will legitimately require changing the matching tests, and that
+  change belongs in the same commit as the rule, with the owner's confirmation
+  cited here.
+- Some tests are labelled "audit finding #1 / #2 / #3" (state-resolution order,
+  reversal independent of state, "bespoke" timing model). I could not locate the
+  document those findings came from. L21 and L23 should be read with that in
+  mind: a previous review already flagged both as engineering choices.
+
+## Cross-references
+
+How the other audit documents point to ledger rows. A line in either document
+that maps to no row, or a row no document asks about, is a gap.
+
+| Verification prompt | Confirmation sheet | Ledger |
+|---|---|---|
+| A1 | 1.1 | L1 |
+| A2, A3 | 1.2 | L2, L3, L4 |
+| B1 | 3.1 | L5, L6 |
+| B2 | 2.10 | L7 |
+| B3 | 2.2 | L8 |
+| B4 | 2.6 | L9 |
+| B5 | 2.11 | L10 |
+| B6, B6a | 2.8 | L11 |
+| B7 step 1 / H4 | 2.7, 2.1 | L12, L14 |
+| B7 step 2 | 2.1 | L13, L15 |
+| B7 steps 3–4 / H1 | 2.3, 2.1 | L16, L17 |
+| B7 step 5 | 2.1 | L18 |
+| B7 step 6 | 2.9 | L19 |
+| B8 | 2.1 | L21 |
+| B9 / H3 / H5 | 2.5 | L20 |
+| B10 | 4.1 | L23 |
+| H2 | 2.4 | L16, L17 (a NEW rule the engine does not have) |
+| — | 2.12 | L22 |
+
 ## Summary
 
 - VERIFIED-OWNER: L3, L5, L13.
