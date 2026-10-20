@@ -243,6 +243,10 @@ or changes, recorded for the owner to confirm:
 - The summary lists S4 case B ("no blanket −2 for career, business, legal,
   financial") as a divergence. It is still not implemented (see dispositions).
 
+Read-only simulation of the open readings (S7 strict vs broad, S4 B1/B2), with the
+Case 3 longitude check and the node-aspect counts: `OD-002_OPEN_RULE_SIMULATION.md`.
+Nothing there is implemented.
+
 Entry format for each decision once confirmed:
 
 ```
