@@ -1,0 +1,1130 @@
+[
+  {
+    "id": "case-1",
+    "question": "Will I get the job?",
+    "localMoment": "2026-10-20T07:28:00+05:30",
+    "questionType": "career",
+    "watchMinute": 28,
+    "lagna": "Burj Sunbula",
+    "houseMatrix": {
+      "primary": 10,
+      "favorable": [
+        6,
+        10,
+        11
+      ],
+      "denial": [
+        5,
+        8,
+        12
+      ]
+    },
+    "targetGhar": {
+      "ghar": 10,
+      "label": "10th Ghar",
+      "sign": "Burj Jauza",
+      "ruler": "Utarid",
+      "occupants": [],
+      "aspectedBy": [
+        "Ras al-Tinnin"
+      ]
+    },
+    "fulfilmentGhar": {
+      "ghar": 11,
+      "label": "11th Ghar",
+      "sign": "Burj Sartan",
+      "ruler": "Qamar",
+      "occupants": [
+        "Mirrikh",
+        "Mushtari"
+      ],
+      "aspectedBy": [
+        "Qamar"
+      ]
+    },
+    "querentRuler": {
+      "planet": "Utarid",
+      "sign": "Burj Meezan",
+      "degreeInSign": 25.9,
+      "ghar": 2,
+      "dignity": "FriendlySign",
+      "retrograde": false,
+      "combust": false
+    },
+    "matterRuler": {
+      "planet": "Utarid",
+      "sign": "Burj Meezan",
+      "degreeInSign": 25.9,
+      "ghar": 2,
+      "dignity": "FriendlySign",
+      "retrograde": false,
+      "combust": false
+    },
+    "rulerRelationAsRecorded": "Friend",
+    "planets": [
+      {
+        "planet": "Shams",
+        "sign": "Burj Meezan",
+        "degreeInSign": 2.47,
+        "ghar": 2,
+        "dignity": "Debilitated",
+        "retrograde": false,
+        "combust": false,
+        "aspectsGhars": [
+          8
+        ]
+      },
+      {
+        "planet": "Qamar",
+        "sign": "Burj Jadi",
+        "degreeInSign": 17.96,
+        "ghar": 5,
+        "dignity": "NeutralSign",
+        "retrograde": false,
+        "combust": false,
+        "aspectsGhars": [
+          11
+        ]
+      },
+      {
+        "planet": "Mirrikh",
+        "sign": "Burj Sartan",
+        "degreeInSign": 18.19,
+        "ghar": 11,
+        "dignity": "Debilitated",
+        "retrograde": false,
+        "combust": false,
+        "aspectsGhars": [
+          2,
+          5,
+          6
+        ]
+      },
+      {
+        "planet": "Utarid",
+        "sign": "Burj Meezan",
+        "degreeInSign": 25.9,
+        "ghar": 2,
+        "dignity": "FriendlySign",
+        "retrograde": false,
+        "combust": false,
+        "aspectsGhars": [
+          8
+        ]
+      },
+      {
+        "planet": "Mushtari",
+        "sign": "Burj Sartan",
+        "degreeInSign": 28.13,
+        "ghar": 11,
+        "dignity": "Exalted",
+        "retrograde": false,
+        "combust": false,
+        "aspectsGhars": [
+          3,
+          5,
+          7
+        ]
+      },
+      {
+        "planet": "Zuhrah",
+        "sign": "Burj Meezan",
+        "degreeInSign": 8.94,
+        "ghar": 2,
+        "dignity": "OwnSign",
+        "retrograde": true,
+        "combust": true,
+        "aspectsGhars": [
+          8
+        ]
+      },
+      {
+        "planet": "Zuhal",
+        "sign": "Burj Hoot",
+        "degreeInSign": 15.59,
+        "ghar": 7,
+        "dignity": "NeutralSign",
+        "retrograde": true,
+        "combust": false,
+        "aspectsGhars": [
+          9,
+          1,
+          4
+        ]
+      },
+      {
+        "planet": "Ras al-Tinnin",
+        "sign": "Burj Dalw",
+        "degreeInSign": 2.47,
+        "ghar": 6,
+        "dignity": "FriendlySign",
+        "retrograde": true,
+        "combust": false,
+        "aspectsGhars": [
+          10,
+          12,
+          2
+        ]
+      },
+      {
+        "planet": "Dhanab al-Tinnin",
+        "sign": "Burj Asad",
+        "degreeInSign": 2.47,
+        "ghar": 12,
+        "dignity": "EnemySign",
+        "retrograde": true,
+        "combust": false,
+        "aspectsGhars": [
+          4,
+          6,
+          8
+        ]
+      }
+    ],
+    "engineVerdict": {
+      "state": "UNFORMED",
+      "score": -2,
+      "confidence": "MODERATE",
+      "obstruction": "Rahu",
+      "reversal": "NONE",
+      "timing": null
+    },
+    "factors": [
+      {
+        "step": "S3 on/aspecting target Ghar",
+        "text": "Ras al-Tinnin casts its gaze on the 10th Ghar — friction on the matter."
+      },
+      {
+        "step": "S4 fulfilment Ghar (11th)",
+        "text": "Mirrikh weighs on the 11th Ghar — fulfilment itself is obstructed."
+      },
+      {
+        "step": "S4 fulfilment Ghar (11th)",
+        "text": "Mushtari supports the 11th Ghar — the desire has room to materialise."
+      }
+    ]
+  },
+  {
+    "id": "case-2",
+    "question": "Will I get the job?",
+    "localMoment": "2026-03-12T16:42:00+05:30",
+    "questionType": "career",
+    "watchMinute": 42,
+    "lagna": "Burj Qaus",
+    "houseMatrix": {
+      "primary": 10,
+      "favorable": [
+        6,
+        10,
+        11
+      ],
+      "denial": [
+        5,
+        8,
+        12
+      ]
+    },
+    "targetGhar": {
+      "ghar": 10,
+      "label": "10th Ghar",
+      "sign": "Burj Sunbula",
+      "ruler": "Utarid",
+      "occupants": [],
+      "aspectedBy": [
+        "Mirrikh",
+        "Zuhrah",
+        "Zuhal"
+      ]
+    },
+    "fulfilmentGhar": {
+      "ghar": 11,
+      "label": "11th Ghar",
+      "sign": "Burj Meezan",
+      "ruler": "Zuhrah",
+      "occupants": [],
+      "aspectedBy": [
+        "Mushtari",
+        "Ras al-Tinnin"
+      ]
+    },
+    "querentRuler": {
+      "planet": "Mushtari",
+      "sign": "Burj Jauza",
+      "degreeInSign": 20.26,
+      "ghar": 7,
+      "dignity": "EnemySign",
+      "retrograde": false,
+      "combust": false
+    },
+    "matterRuler": {
+      "planet": "Utarid",
+      "sign": "Burj Dalw",
+      "degreeInSign": 18.15,
+      "ghar": 3,
+      "dignity": "NeutralSign",
+      "retrograde": true,
+      "combust": true
+    },
+    "rulerRelationAsRecorded": "Enemy",
+    "planets": [
+      {
+        "planet": "Shams",
+        "sign": "Burj Dalw",
+        "degreeInSign": 27.67,
+        "ghar": 3,
+        "dignity": "EnemySign",
+        "retrograde": false,
+        "combust": false,
+        "aspectsGhars": [
+          9
+        ]
+      },
+      {
+        "planet": "Qamar",
+        "sign": "Burj Qaus",
+        "degreeInSign": 9.31,
+        "ghar": 1,
+        "dignity": "NeutralSign",
+        "retrograde": false,
+        "combust": false,
+        "aspectsGhars": [
+          7
+        ]
+      },
+      {
+        "planet": "Mirrikh",
+        "sign": "Burj Dalw",
+        "degreeInSign": 13.57,
+        "ghar": 3,
+        "dignity": "NeutralSign",
+        "retrograde": false,
+        "combust": true,
+        "aspectsGhars": [
+          6,
+          9,
+          10
+        ]
+      },
+      {
+        "planet": "Utarid",
+        "sign": "Burj Dalw",
+        "degreeInSign": 18.15,
+        "ghar": 3,
+        "dignity": "NeutralSign",
+        "retrograde": true,
+        "combust": true,
+        "aspectsGhars": [
+          9
+        ]
+      },
+      {
+        "planet": "Mushtari",
+        "sign": "Burj Jauza",
+        "degreeInSign": 20.26,
+        "ghar": 7,
+        "dignity": "EnemySign",
+        "retrograde": false,
+        "combust": false,
+        "aspectsGhars": [
+          11,
+          1,
+          3
+        ]
+      },
+      {
+        "planet": "Zuhrah",
+        "sign": "Burj Hoot",
+        "degreeInSign": 13.27,
+        "ghar": 4,
+        "dignity": "Exalted",
+        "retrograde": false,
+        "combust": false,
+        "aspectsGhars": [
+          10
+        ]
+      },
+      {
+        "planet": "Zuhal",
+        "sign": "Burj Hoot",
+        "degreeInSign": 8.63,
+        "ghar": 4,
+        "dignity": "NeutralSign",
+        "retrograde": false,
+        "combust": true,
+        "aspectsGhars": [
+          6,
+          10,
+          1
+        ]
+      },
+      {
+        "planet": "Ras al-Tinnin",
+        "sign": "Burj Dalw",
+        "degreeInSign": 14.22,
+        "ghar": 3,
+        "dignity": "FriendlySign",
+        "retrograde": true,
+        "combust": false,
+        "aspectsGhars": [
+          7,
+          9,
+          11
+        ]
+      },
+      {
+        "planet": "Dhanab al-Tinnin",
+        "sign": "Burj Asad",
+        "degreeInSign": 14.22,
+        "ghar": 9,
+        "dignity": "EnemySign",
+        "retrograde": true,
+        "combust": false,
+        "aspectsGhars": [
+          1,
+          3,
+          5
+        ]
+      }
+    ],
+    "engineVerdict": {
+      "state": "BLOCKED",
+      "score": -5,
+      "confidence": "MODERATE",
+      "obstruction": "Saturn",
+      "reversal": "POSSIBLE",
+      "timing": {
+        "minDays": 11,
+        "maxDays": 21
+      }
+    },
+    "factors": [
+      {
+        "step": "S2 querent-vs-matter ruler",
+        "text": "Mushtari (your own ruler) counts Utarid an enemy — expect rigidity and refusal to adjust."
+      },
+      {
+        "step": "S3 on/aspecting target Ghar",
+        "text": "Mirrikh casts its gaze on the 10th Ghar — friction on the matter."
+      },
+      {
+        "step": "S3 on/aspecting target Ghar",
+        "text": "Zuhrah casts its gaze on the 10th Ghar — protection and expansion."
+      },
+      {
+        "step": "S3 on/aspecting target Ghar",
+        "text": "Zuhal casts its gaze on the 10th Ghar — friction on the matter."
+      },
+      {
+        "step": "S4 fulfilment Ghar (11th)",
+        "text": "Mushtari supports the 11th Ghar — the desire has room to materialise."
+      },
+      {
+        "step": "S4 fulfilment Ghar (11th)",
+        "text": "Ras al-Tinnin weighs on the 11th Ghar — fulfilment itself is obstructed."
+      },
+      {
+        "step": "S6 retrograde (no points)",
+        "text": "Utarid is retrograde — decisions already taken on this matter are liable to be reopened."
+      },
+      {
+        "step": "S6 combust",
+        "text": "Utarid is combust under Shams — the matter's own agent is obscured from view."
+      },
+      {
+        "step": "S9 confidence downgrade",
+        "text": "Benefic and malefic witnesses both fall on the matter — the reading carries genuine conflict."
+      }
+    ]
+  },
+  {
+    "id": "case-3",
+    "question": "Will my marriage happen this year?",
+    "localMoment": "2026-06-05T11:13:00+05:30",
+    "questionType": "marriage",
+    "watchMinute": 13,
+    "lagna": "Burj Jauza",
+    "houseMatrix": {
+      "primary": 7,
+      "favorable": [
+        7,
+        11,
+        2
+      ],
+      "denial": [
+        6,
+        8,
+        12
+      ]
+    },
+    "targetGhar": {
+      "ghar": 7,
+      "label": "7th Ghar",
+      "sign": "Burj Qaus",
+      "ruler": "Mushtari",
+      "occupants": [],
+      "aspectedBy": [
+        "Utarid",
+        "Mushtari",
+        "Zuhrah",
+        "Zuhal",
+        "Dhanab al-Tinnin"
+      ]
+    },
+    "fulfilmentGhar": {
+      "ghar": 11,
+      "label": "11th Ghar",
+      "sign": "Burj Hamal",
+      "ruler": "Mirrikh",
+      "occupants": [
+        "Mirrikh"
+      ],
+      "aspectedBy": [
+        "Dhanab al-Tinnin"
+      ]
+    },
+    "querentRuler": {
+      "planet": "Utarid",
+      "sign": "Burj Jauza",
+      "degreeInSign": 11.87,
+      "ghar": 1,
+      "dignity": "OwnSign",
+      "retrograde": false,
+      "combust": false
+    },
+    "matterRuler": {
+      "planet": "Mushtari",
+      "sign": "Burj Jauza",
+      "degreeInSign": 29.97,
+      "ghar": 1,
+      "dignity": "EnemySign",
+      "retrograde": false,
+      "combust": false
+    },
+    "rulerRelationAsRecorded": "Neutral",
+    "planets": [
+      {
+        "planet": "Shams",
+        "sign": "Burj Saur",
+        "degreeInSign": 20.38,
+        "ghar": 12,
+        "dignity": "EnemySign",
+        "retrograde": false,
+        "combust": false,
+        "aspectsGhars": [
+          6
+        ]
+      },
+      {
+        "planet": "Qamar",
+        "sign": "Burj Jadi",
+        "degreeInSign": 13.78,
+        "ghar": 8,
+        "dignity": "NeutralSign",
+        "retrograde": false,
+        "combust": false,
+        "aspectsGhars": [
+          2
+        ]
+      },
+      {
+        "planet": "Mirrikh",
+        "sign": "Burj Hamal",
+        "degreeInSign": 18.68,
+        "ghar": 11,
+        "dignity": "OwnSign",
+        "retrograde": false,
+        "combust": false,
+        "aspectsGhars": [
+          2,
+          5,
+          6
+        ]
+      },
+      {
+        "planet": "Utarid",
+        "sign": "Burj Jauza",
+        "degreeInSign": 11.87,
+        "ghar": 1,
+        "dignity": "OwnSign",
+        "retrograde": false,
+        "combust": false,
+        "aspectsGhars": [
+          7
+        ]
+      },
+      {
+        "planet": "Mushtari",
+        "sign": "Burj Jauza",
+        "degreeInSign": 29.97,
+        "ghar": 1,
+        "dignity": "EnemySign",
+        "retrograde": false,
+        "combust": false,
+        "aspectsGhars": [
+          5,
+          7,
+          9
+        ]
+      },
+      {
+        "planet": "Zuhrah",
+        "sign": "Burj Jauza",
+        "degreeInSign": 26.18,
+        "ghar": 1,
+        "dignity": "FriendlySign",
+        "retrograde": false,
+        "combust": false,
+        "aspectsGhars": [
+          7
+        ]
+      },
+      {
+        "planet": "Zuhal",
+        "sign": "Burj Hoot",
+        "degreeInSign": 18.09,
+        "ghar": 10,
+        "dignity": "NeutralSign",
+        "retrograde": false,
+        "combust": false,
+        "aspectsGhars": [
+          12,
+          4,
+          7
+        ]
+      },
+      {
+        "planet": "Ras al-Tinnin",
+        "sign": "Burj Dalw",
+        "degreeInSign": 9.73,
+        "ghar": 9,
+        "dignity": "FriendlySign",
+        "retrograde": true,
+        "combust": false,
+        "aspectsGhars": [
+          1,
+          3,
+          5
+        ]
+      },
+      {
+        "planet": "Dhanab al-Tinnin",
+        "sign": "Burj Asad",
+        "degreeInSign": 9.73,
+        "ghar": 3,
+        "dignity": "EnemySign",
+        "retrograde": true,
+        "combust": false,
+        "aspectsGhars": [
+          7,
+          9,
+          11
+        ]
+      }
+    ],
+    "engineVerdict": {
+      "state": "BLOCKED",
+      "score": -6,
+      "confidence": "HIGH",
+      "obstruction": "Saturn",
+      "reversal": "NONE",
+      "timing": {
+        "minDays": 90,
+        "maxDays": 135
+      }
+    },
+    "factors": [
+      {
+        "step": "unclassified",
+        "text": "Mushtari rules the 7th Ghar but is EnemySign in Jauza — it cannot deliver unaided."
+      },
+      {
+        "step": "S3 on/aspecting target Ghar",
+        "text": "Mushtari casts its gaze on the 7th Ghar — protection and expansion."
+      },
+      {
+        "step": "S3 on/aspecting target Ghar",
+        "text": "Zuhrah casts its gaze on the 7th Ghar — protection and expansion."
+      },
+      {
+        "step": "S3 on/aspecting target Ghar",
+        "text": "Zuhal casts its gaze on the 7th Ghar — friction on the matter."
+      },
+      {
+        "step": "S3 on/aspecting target Ghar",
+        "text": "Dhanab al-Tinnin casts its gaze on the 7th Ghar — friction on the matter."
+      },
+      {
+        "step": "S4 fulfilment Ghar (11th)",
+        "text": "Mirrikh weighs on the 11th Ghar — fulfilment itself is obstructed."
+      },
+      {
+        "step": "S4 fulfilment Ghar (11th)",
+        "text": "Dhanab al-Tinnin weighs on the 11th Ghar — fulfilment itself is obstructed."
+      },
+      {
+        "step": "S9 confidence downgrade",
+        "text": "Benefic and malefic witnesses both fall on the matter — the reading carries genuine conflict."
+      }
+    ]
+  },
+  {
+    "id": "case-4",
+    "question": "Will my business grow?",
+    "localMoment": "2026-12-02T09:51:00+05:30",
+    "questionType": "business",
+    "watchMinute": 51,
+    "lagna": "Burj Dalw",
+    "houseMatrix": {
+      "primary": 7,
+      "favorable": [
+        7,
+        10,
+        11
+      ],
+      "denial": [
+        6,
+        8,
+        12
+      ]
+    },
+    "targetGhar": {
+      "ghar": 7,
+      "label": "7th Ghar",
+      "sign": "Burj Asad",
+      "ruler": "Shams",
+      "occupants": [
+        "Qamar",
+        "Mirrikh",
+        "Mushtari",
+        "Dhanab al-Tinnin"
+      ],
+      "aspectedBy": [
+        "Ras al-Tinnin"
+      ]
+    },
+    "fulfilmentGhar": {
+      "ghar": 11,
+      "label": "11th Ghar",
+      "sign": "Burj Qaus",
+      "ruler": "Mushtari",
+      "occupants": [],
+      "aspectedBy": [
+        "Mushtari",
+        "Zuhal",
+        "Dhanab al-Tinnin"
+      ]
+    },
+    "querentRuler": {
+      "planet": "Zuhal",
+      "sign": "Burj Hoot",
+      "degreeInSign": 13.53,
+      "ghar": 2,
+      "dignity": "NeutralSign",
+      "retrograde": true,
+      "combust": false
+    },
+    "matterRuler": {
+      "planet": "Shams",
+      "sign": "Burj Aqrab",
+      "degreeInSign": 15.76,
+      "ghar": 10,
+      "dignity": "FriendlySign",
+      "retrograde": false,
+      "combust": false
+    },
+    "rulerRelationAsRecorded": "Enemy",
+    "planets": [
+      {
+        "planet": "Shams",
+        "sign": "Burj Aqrab",
+        "degreeInSign": 15.76,
+        "ghar": 10,
+        "dignity": "FriendlySign",
+        "retrograde": false,
+        "combust": false,
+        "aspectsGhars": [
+          4
+        ]
+      },
+      {
+        "planet": "Qamar",
+        "sign": "Burj Asad",
+        "degreeInSign": 27.18,
+        "ghar": 7,
+        "dignity": "FriendlySign",
+        "retrograde": false,
+        "combust": false,
+        "aspectsGhars": [
+          1
+        ]
+      },
+      {
+        "planet": "Mirrikh",
+        "sign": "Burj Asad",
+        "degreeInSign": 8.14,
+        "ghar": 7,
+        "dignity": "FriendlySign",
+        "retrograde": false,
+        "combust": false,
+        "aspectsGhars": [
+          10,
+          1,
+          2
+        ]
+      },
+      {
+        "planet": "Utarid",
+        "sign": "Burj Meezan",
+        "degreeInSign": 29.37,
+        "ghar": 9,
+        "dignity": "FriendlySign",
+        "retrograde": false,
+        "combust": false,
+        "aspectsGhars": [
+          3
+        ]
+      },
+      {
+        "planet": "Mushtari",
+        "sign": "Burj Asad",
+        "degreeInSign": 2.58,
+        "ghar": 7,
+        "dignity": "FriendlySign",
+        "retrograde": false,
+        "combust": false,
+        "aspectsGhars": [
+          11,
+          1,
+          3
+        ]
+      },
+      {
+        "planet": "Zuhrah",
+        "sign": "Burj Meezan",
+        "degreeInSign": 4.45,
+        "ghar": 9,
+        "dignity": "OwnSign",
+        "retrograde": false,
+        "combust": false,
+        "aspectsGhars": [
+          3
+        ]
+      },
+      {
+        "planet": "Zuhal",
+        "sign": "Burj Hoot",
+        "degreeInSign": 13.53,
+        "ghar": 2,
+        "dignity": "NeutralSign",
+        "retrograde": true,
+        "combust": false,
+        "aspectsGhars": [
+          4,
+          8,
+          11
+        ]
+      },
+      {
+        "planet": "Ras al-Tinnin",
+        "sign": "Burj Dalw",
+        "degreeInSign": 0.19,
+        "ghar": 1,
+        "dignity": "FriendlySign",
+        "retrograde": true,
+        "combust": false,
+        "aspectsGhars": [
+          5,
+          7,
+          9
+        ]
+      },
+      {
+        "planet": "Dhanab al-Tinnin",
+        "sign": "Burj Asad",
+        "degreeInSign": 0.19,
+        "ghar": 7,
+        "dignity": "EnemySign",
+        "retrograde": true,
+        "combust": false,
+        "aspectsGhars": [
+          11,
+          1,
+          3
+        ]
+      }
+    ],
+    "engineVerdict": {
+      "state": "BLOCKED",
+      "score": -7,
+      "confidence": "HIGH",
+      "obstruction": "Mars",
+      "reversal": "POSSIBLE",
+      "timing": {
+        "minDays": 14,
+        "maxDays": 30
+      }
+    },
+    "factors": [
+      {
+        "step": "S2 querent-vs-matter ruler",
+        "text": "Zuhal (your own ruler) counts Shams an enemy — expect rigidity and refusal to adjust."
+      },
+      {
+        "step": "S3 on/aspecting target Ghar",
+        "text": "Mirrikh sits in the 7th Ghar — friction on the matter."
+      },
+      {
+        "step": "S3 on/aspecting target Ghar",
+        "text": "Mushtari sits in the 7th Ghar — protection and expansion."
+      },
+      {
+        "step": "S3 on/aspecting target Ghar",
+        "text": "Dhanab al-Tinnin sits in the 7th Ghar — friction on the matter."
+      },
+      {
+        "step": "S3 on/aspecting target Ghar",
+        "text": "Ras al-Tinnin casts its gaze on the 7th Ghar — friction on the matter."
+      },
+      {
+        "step": "S4 fulfilment Ghar (11th)",
+        "text": "Mushtari supports the 11th Ghar — the desire has room to materialise."
+      },
+      {
+        "step": "S4 fulfilment Ghar (11th)",
+        "text": "Zuhal weighs on the 11th Ghar — fulfilment itself is obstructed."
+      },
+      {
+        "step": "S4 fulfilment Ghar (11th)",
+        "text": "Dhanab al-Tinnin weighs on the 11th Ghar — fulfilment itself is obstructed."
+      },
+      {
+        "step": "S5 ruler placement",
+        "text": "Shams has landed in the 10th Ghar, a supporting house for this question."
+      },
+      {
+        "step": "S9 confidence downgrade",
+        "text": "Benefic and malefic witnesses both fall on the matter — the reading carries genuine conflict."
+      }
+    ]
+  },
+  {
+    "id": "case-5",
+    "question": "Will I recover from illness?",
+    "localMoment": "2026-08-17T20:07:00+05:30",
+    "questionType": "health",
+    "watchMinute": 7,
+    "lagna": "Burj Saur",
+    "houseMatrix": {
+      "primary": 1,
+      "favorable": [
+        1,
+        5,
+        11
+      ],
+      "denial": [
+        6,
+        8,
+        12
+      ]
+    },
+    "targetGhar": {
+      "ghar": 1,
+      "label": "1st Ghar",
+      "sign": "Burj Saur",
+      "ruler": "Zuhrah",
+      "occupants": [],
+      "aspectedBy": [
+        "Zuhal"
+      ]
+    },
+    "fulfilmentGhar": {
+      "ghar": 11,
+      "label": "11th Ghar",
+      "sign": "Burj Hoot",
+      "ruler": "Mushtari",
+      "occupants": [
+        "Zuhal"
+      ],
+      "aspectedBy": [
+        "Mushtari",
+        "Zuhrah"
+      ]
+    },
+    "querentRuler": {
+      "planet": "Zuhrah",
+      "sign": "Burj Sunbula",
+      "degreeInSign": 16.33,
+      "ghar": 5,
+      "dignity": "Debilitated",
+      "retrograde": false,
+      "combust": false
+    },
+    "matterRuler": {
+      "planet": "Zuhrah",
+      "sign": "Burj Sunbula",
+      "degreeInSign": 16.33,
+      "ghar": 5,
+      "dignity": "Debilitated",
+      "retrograde": false,
+      "combust": false
+    },
+    "rulerRelationAsRecorded": "Friend",
+    "planets": [
+      {
+        "planet": "Shams",
+        "sign": "Burj Asad",
+        "degreeInSign": 0.49,
+        "ghar": 4,
+        "dignity": "OwnSign",
+        "retrograde": false,
+        "combust": false,
+        "aspectsGhars": [
+          10
+        ]
+      },
+      {
+        "planet": "Qamar",
+        "sign": "Burj Meezan",
+        "degreeInSign": 2.01,
+        "ghar": 6,
+        "dignity": "NeutralSign",
+        "retrograde": false,
+        "combust": false,
+        "aspectsGhars": [
+          12
+        ]
+      },
+      {
+        "planet": "Mirrikh",
+        "sign": "Burj Jauza",
+        "degreeInSign": 9.9,
+        "ghar": 2,
+        "dignity": "EnemySign",
+        "retrograde": false,
+        "combust": false,
+        "aspectsGhars": [
+          5,
+          8,
+          9
+        ]
+      },
+      {
+        "planet": "Utarid",
+        "sign": "Burj Sartan",
+        "degreeInSign": 19.98,
+        "ghar": 3,
+        "dignity": "EnemySign",
+        "retrograde": false,
+        "combust": true,
+        "aspectsGhars": [
+          9
+        ]
+      },
+      {
+        "planet": "Mushtari",
+        "sign": "Burj Sartan",
+        "degreeInSign": 15.68,
+        "ghar": 3,
+        "dignity": "Exalted",
+        "retrograde": false,
+        "combust": false,
+        "aspectsGhars": [
+          7,
+          9,
+          11
+        ]
+      },
+      {
+        "planet": "Zuhrah",
+        "sign": "Burj Sunbula",
+        "degreeInSign": 16.33,
+        "ghar": 5,
+        "dignity": "Debilitated",
+        "retrograde": false,
+        "combust": false,
+        "aspectsGhars": [
+          11
+        ]
+      },
+      {
+        "planet": "Zuhal",
+        "sign": "Burj Hoot",
+        "degreeInSign": 19.82,
+        "ghar": 11,
+        "dignity": "NeutralSign",
+        "retrograde": true,
+        "combust": false,
+        "aspectsGhars": [
+          1,
+          5,
+          8
+        ]
+      },
+      {
+        "planet": "Ras al-Tinnin",
+        "sign": "Burj Dalw",
+        "degreeInSign": 5.84,
+        "ghar": 10,
+        "dignity": "FriendlySign",
+        "retrograde": true,
+        "combust": false,
+        "aspectsGhars": [
+          2,
+          4,
+          6
+        ]
+      },
+      {
+        "planet": "Dhanab al-Tinnin",
+        "sign": "Burj Asad",
+        "degreeInSign": 5.84,
+        "ghar": 4,
+        "dignity": "EnemySign",
+        "retrograde": true,
+        "combust": false,
+        "aspectsGhars": [
+          8,
+          10,
+          12
+        ]
+      }
+    ],
+    "engineVerdict": {
+      "state": "DELAYED",
+      "score": -1,
+      "confidence": "LOW",
+      "obstruction": "Saturn",
+      "reversal": "NONE",
+      "timing": {
+        "minDays": 15,
+        "maxDays": 32
+      }
+    },
+    "factors": [
+      {
+        "step": "unclassified",
+        "text": "Zuhrah rules the 1st Ghar but is Debilitated in Sunbula — it cannot deliver unaided."
+      },
+      {
+        "step": "S3 on/aspecting target Ghar",
+        "text": "Zuhal casts its gaze on the 1st Ghar — friction on the matter."
+      },
+      {
+        "step": "S4 fulfilment Ghar (11th)",
+        "text": "Zuhal weighs on the 11th Ghar — fulfilment itself is obstructed."
+      },
+      {
+        "step": "S4 fulfilment Ghar (11th)",
+        "text": "Mushtari supports the 11th Ghar — the desire has room to materialise."
+      },
+      {
+        "step": "S4 fulfilment Ghar (11th)",
+        "text": "Zuhrah supports the 11th Ghar — the desire has room to materialise."
+      },
+      {
+        "step": "S5 ruler placement",
+        "text": "Zuhrah has landed in the 5th Ghar, a supporting house for this question."
+      }
+    ]
+  }
+]
