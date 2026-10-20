@@ -421,13 +421,23 @@ L14–L17 and L21.
 
 | Point | Commit | What it is | Test results recorded |
 |---|---|---|---|
-| Pre-change baseline | `72a5021` | Engine as on `origin/main` before any OD-002 rule; fresh golden capture reproduced from it byte for byte | `src/astrology/rkp` tests: 96 passing. Full functions and app counts at this commit were not captured |
+| Pre-change baseline | `72a5021` | Engine as on `origin/main` before any OD-002 rule; fresh golden capture reproduced from it byte for byte | `src/astrology/rkp` tests: 96 passing; all of `src/astrology`: 122 passing (measured in the rollback drill below). Full functions and app counts at this commit itself were not captured |
 | Phase 1 | `ddac7db` | Rules `3be9f30`, fixtures `652e28b`, client minute `ddac7db`. Engine version `2.0.0-moshier` | `src/astrology`: 134 passing; functions: 747 passing (2 skipped); app: 435 passing; typecheck and lint clean |
 | Audit artefacts since | later docs-only commits | No source change after `ddac7db`: `git diff ddac7db HEAD -- src functions/src` is empty | — |
 
-Roll back to the pre-change engine with `72a5021`'s `src/astrology` and `functions/src/engine`. Compare any later
-experiment with the phase-1 case records (`case_records.json`, `OD-002_phase1_attribution.json`) and with the
-per-case golden replay (`golden_replay_OD-002_phase1.md`).
+Rollback, drilled on a disposable worktree branch (since deleted) on 2026-10-20: from the current head,
+`git checkout 72a5021 -- src/astrology functions/src/engine functions/src/oracle/__tests__`.
+
+| Step | Result |
+|---|---|
+| Engine files only (`src/astrology`, `functions/src/engine`) | `src/astrology` tests 122 pass, but **4 functions tests fail**: the validator fixtures were re-picked for the new engine, so they need the old moments back |
+| Plus `functions/src/oracle/__tests__` | functions tests 747 pass (2 skipped) |
+| App tests after the rollback | 422 pass and 1 fails: `useTextToSpeech › speak()`, an intermittent failure that also failed before these changes (checked earlier on the unmodified engine) |
+
+The client-minute change (`ddac7db`: `clientSentAtMs` in the schema, callable, client wrapper and screen) is
+independent of the rules and stays unless it is reverted separately. Compare any later experiment with the
+phase-1 case records (`case_records.json`, `OD-002_phase1_attribution.json`) and the per-case golden replay
+(`golden_replay_OD-002_phase1.md`).
 
 ## Release controls (apply to every rule change)
 
