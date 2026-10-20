@@ -70,8 +70,8 @@ rule and the timing modality never change a state in these 111 cases (modality c
 | partly Ras/Dhanab cast no aspects (S5) / Exalted/own benefic +3; malefic aspect −1 (2.3); the rest needs a combination | 1 | property-001 |
 
 "Only a combination" (30 cases) means no single rule moves the case by itself; the change comes from two or
-more rules together, mostly the ±-weight changes and the new thresholds. Those are the cases most worth
-reading by hand.
+more rules together. Which combination was not broken down further (a pairwise replay would do it). Those
+are the cases most worth reading by hand.
 
 ## 4. Priority lists
 
