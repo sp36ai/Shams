@@ -42,9 +42,10 @@ function contractFor(
 
 /** A blocked, obstructed reading — negative polarity, WAIT posture. */
 function blockedContract(): ReadingContract {
-  // business-001 in the golden corpus is BLOCKED with obstruction Ras — a
-  // known-shape real contract, not a hand-fabricated one.
-  return contractFor('2026-08-15T11:30:00+05:00', 'Will my new business succeed?');
+  // A real engine contract, not a hand-fabricated one: negative polarity, WAIT,
+  // with an obstructing agent. Re-picked (11:30 -> 11:24, same day) when owner
+  // decision OD-002 changed the weights.
+  return contractFor('2026-08-15T11:24:00+05:00', 'Will my new business succeed?');
 }
 
 function baseNarration(overrides: Partial<NarrationFields> = {}): NarrationFields {
@@ -564,7 +565,8 @@ describe('buildDeterministicFallbackNarration', () => {
 });
 
 // A production Reading (10 Oct 2026, 16:28 IST): DELAYED, so phrases from
-// both polarity lists are refused; timing window 7–14 days.
+// both polarity lists are refused. Its timing window was 7–14 days; owner
+// decision OD-002 (sign modality) makes it 6–11 days for the same moment.
 describe('validateNarration — denied phrases and day ordinals', () => {
   const contract = contractFor(
     '2026-10-10T16:28:00+05:30',
@@ -580,7 +582,7 @@ describe('validateNarration — denied phrases and day ordinals', () => {
 
   it('fixes the reading the tests rely on', () => {
     expect(contract.diagnosis.outcome).toBe('DELAYED');
-    expect(contract.diagnosis.timing).toEqual({ minDays: 7, maxDays: 14 });
+    expect(contract.diagnosis.timing).toEqual({ minDays: 6, maxDays: 11 });
   });
 
   it('accepts a refused phrase denied in its own clause', () => {
@@ -618,18 +620,20 @@ describe('validateNarration — denied phrases and day ordinals', () => {
   });
 
   it('reads "the Nth day" as a day count inside the window, not a date', () => {
-    expect(check('Look again after the 14th day.').valid).toBe(true);
+    expect(check('Look again after the 11th day.').valid).toBe(true);
     expect(codes('Look again after the 30th day.')).toContain('TIMING_ALTERATION');
-    expect(codes('Look again on the 14th.')).toContain('TIMING_FABRICATION');
+    expect(codes('Look again on the 11th.')).toContain('TIMING_FABRICATION');
   });
 });
 
-// A production Reading (11 Oct 2026, 22:01 IST): business, BLOCKED by
-// Mirrikh, with Ras al-Tinnin and Dhanab al-Tinnin in its own factor lines.
-// The follow-up "Is my business connected to this?" failed on the two
-// false positives below.
+// A reading that names BOTH Ras al-Tinnin and Dhanab al-Tinnin in its own factor
+// lines. The follow-up "Is my business connected to this?" once failed on the
+// two false positives below. Owner decision OD-002 removed the nodes' aspects,
+// so the two nodes, always opposite each other, can appear together only when
+// the matter's Ghar and the 11th are opposite: a children question (5th and
+// 11th). The same moment is kept, with a children question.
 describe('validateNarration — planets in the factor lines and house lists', () => {
-  const contract = contractFor('2026-10-11T22:01:00+05:30', 'When should I launch this app');
+  const contract = contractFor('2026-10-11T22:01:00+05:30', 'Will I have a baby this year?');
   const check = (text: string) =>
     validateNarration(contract, baseNarration({ interpretation: text }));
   const codes = (text: string) => {
@@ -638,7 +642,7 @@ describe('validateNarration — planets in the factor lines and house lists', ()
   };
 
   it('fixes the reading the tests rely on', () => {
-    expect(contract.question.questionType).toBe('business');
+    expect(contract.question.questionType).toBe('children');
     expect(contract.celestialEntities).not.toContain('Rahu');
     expect(contract.judgment.factors.join(' ')).toContain('Ras al-Tinnin');
     expect(contract.judgment.factors.join(' ')).toContain('Dhanab al-Tinnin');

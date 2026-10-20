@@ -43,24 +43,30 @@ function contractFor(
 
 describe('a question asked about "today" on a reading that says wait', () => {
   const contract = contractFor(
-    '2026-10-08T13:00:00+05:30',
+    '2026-10-08T13:05:00+05:30',
     'Will bilal give my laptop today',
     'general',
   );
 
-  it('is the reading from the device screenshot: blocked by Dhanab, wait 45–90 days', () => {
-    expect(contract.diagnosis.outcome).toBe('UNFAVOURABLE');
+  // The device-screenshot reading of 8 Oct 2026 was blocked by Dhanab with a
+  // 45–90 day wait. Owner decision OD-002 (nodes no longer aspect; new weights
+  // and timing) makes that moment a different reading; the test now uses 13:05, held by Zuhal,
+  // wait 12–25 days. The test needs a WAIT reading with a named agent and a
+  // window, not those particular values.
+  it('is a waiting reading, held by Zuhal, with a 12–25 day window', () => {
+    expect(contract.diagnosis.outcome).toBe('DECLINING');
     expect(contract.diagnosis.timingPosture).toBe('WAIT');
-    expect(contract.diagnosis.timing).toEqual({ minDays: 45, maxDays: 90 });
+    expect(contract.diagnosis.obstructingAgent).toBe('Saturn');
+    expect(contract.diagnosis.timing).toEqual({ minDays: 12, maxDays: 25 });
   });
 
   it('rejects narration that answers the question in its own words ("not today")', () => {
     const result = validateNarration(contract, {
       rkp_finding:
-        'The door you are knocking on stays shut for now. Bilal will not return the laptop today; Dhanab sits across the matter.',
+        'The door you are knocking on stays shut for now. Bilal will not return the laptop today; Zuhal sits across the matter.',
       interpretation:
         'What you are waiting for is held, not lost, and the hand holding it is not ready to open.',
-      recommended_approach: 'Let the matter rest. The window the chart gives is 45 to 90 days.',
+      recommended_approach: 'Let the matter rest. The window the chart gives is 12 to 25 days.',
       why_this_remedy: null,
       signature: 'The veil lifts in its own time.',
     });
@@ -71,7 +77,7 @@ describe('a question asked about "today" on a reading that says wait', () => {
 
 describe('the deterministic fallback for that reading', () => {
   const contract = contractFor(
-    '2026-10-08T13:00:00+05:30',
+    '2026-10-08T13:05:00+05:30',
     'Will bilal give my laptop today',
     'general',
   );
@@ -91,7 +97,7 @@ describe('the deterministic fallback for that reading', () => {
 
 describe('a follow-up reply on that reading', () => {
   const contract = contractFor(
-    '2026-10-08T13:00:00+05:30',
+    '2026-10-08T13:05:00+05:30',
     'Will bilal give my laptop today',
     'general',
   );
@@ -99,7 +105,7 @@ describe('a follow-up reply on that reading', () => {
   it('is rejected when it answers "not today" — and a rejected follow-up returns no reply', () => {
     const result = validateDiscussionReply(
       contract,
-      'Not today. The chart gives this matter a window of 45 to 90 days.',
+      'Not today. The chart gives this matter a window of 12 to 25 days.',
     );
     expect(result.valid).toBe(false);
   });

@@ -56,17 +56,18 @@ function contractFor(moment: string, question: string, readingId: string): Readi
   });
 }
 
-// Inspected once by hand (see file header): UNFAVOURABLE, WAIT, timing
-// {45,90}, obstructingAgent 'Dhanab', confidence 0.95, celestialEntities
-// ['Mirrikh','Venus','Dhanab'].
+// Chosen to be UNFAVOURABLE, WAIT, high confidence, with an obstructing agent
+// other than Mirrikh and no Mushtari/Jupiter among its entities. Re-picked
+// (11:30 -> 11:24, same day) when owner decision OD-002 changed the weights;
+// the preconditions below are what the fixtures rely on, not the moment.
 const PRIMARY = contractFor(
-  '2026-08-15T11:30:00+05:00',
+  '2026-08-15T11:24:00+05:00',
   'Will my new business succeed?',
   'r-adversarial-primary',
 );
-// Inspected once by hand: UNCERTAIN, confidence 0.2.
+// UNCERTAIN, low confidence. Re-picked (05:00 -> 05:05, same day) under OD-002.
 const SECONDARY = contractFor(
-  '2026-08-15T05:00:00+05:30',
+  '2026-08-15T05:05:00+05:30',
   'Will I pass my upcoming exam?',
   'r-adversarial-secondary',
 );

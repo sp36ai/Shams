@@ -69,7 +69,7 @@ function baseNarration(overrides: Partial<NarrationFields> = {}): NarrationField
 // employment-001/business-007 seeds -- the real engine chain is
 // deterministic, so this reproduces the identical contract.
 const primary = contractFor(
-  '2026-08-15T11:00:00+04:00',
+  '2026-08-15T11:05:00+04:00', // 11:00 before owner decision OD-002 changed the weights
   'Will I get the job I interviewed for?',
   'r-5er-employment-001',
 ); // genuinely retrograde -- see precondition test below

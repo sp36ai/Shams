@@ -53,13 +53,13 @@ function contractFor(moment: string, question: string, readingId: string): Readi
 
 /** Real, engine-produced BLOCKED/WAIT contract — same shape as adversarialNarration.test.ts's PRIMARY. */
 function waitContract(): ReadingContract {
-  return contractFor('2026-08-15T11:30:00+05:00', 'Will my new business succeed?', 'r-5cr-wait');
+  return contractFor('2026-08-15T11:24:00+05:00', 'Will my new business succeed?', 'r-5cr-wait');
 }
 
 /** Real, engine-produced UNCERTAIN/low-confidence contract — exercises checkUnsupportedCertainty. */
 function uncertainContract(): ReadingContract {
   return contractFor(
-    '2026-08-15T05:00:00+05:30',
+    '2026-08-15T05:05:00+05:30',
     'Will I pass my upcoming exam?',
     'r-5cr-uncertain',
   );
