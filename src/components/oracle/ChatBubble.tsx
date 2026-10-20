@@ -344,6 +344,7 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({
               lagnaRulerName={reading.lagnaRulerName}
               verdict={reading.verdict}
               directionalFocus={directionalFocusFor(reading.verdict)}
+              timingDates={reading.oracle?.timingWindow?.label}
             />
             {reading.oracle !== undefined && (
               <RemedyProtocolCard composition={reading.oracle} showFinding={false} />

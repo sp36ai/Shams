@@ -296,6 +296,9 @@ export const askWatchOracle = onCall(
             // ReadingContract.provenance.computedAt, not a second,
             // independently-taken instant a few milliseconds later.
             computedAt: instant,
+            // Only to write the engine's day window as the seeker's local
+            // calendar dates (timingWindow.ts) — the same zone the chart used.
+            utcOffsetMinutes: input.utcOffsetMinutes,
           });
           oracleResponse = result.composition;
           readingContract = result.contract;

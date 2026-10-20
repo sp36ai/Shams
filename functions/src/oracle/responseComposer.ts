@@ -58,6 +58,11 @@ import {
 import { toNarrationContext, type NarrationContext } from './narrationContext';
 import { validateNarration } from './narrationValidator';
 import { buildDeterministicFallbackNarration } from './narrationFallback';
+import {
+  computeTimingWindowDates,
+  timingWindowSpokenSentence,
+  type TimingWindowDates,
+} from './timingWindow';
 
 // Raised from 25s — Claude Opus 5 thinks by default, so synthesis is slower
 // than it was on the non-thinking Opus 4.1. askWatchOracle runs under
@@ -124,6 +129,14 @@ export interface WatchOracleComposition {
    * null (synthesis failed outright — nothing to speak).
    */
   readonly speakableText: string | null;
+  /**
+   * The engine's day window as the seeker's local calendar dates, or null
+   * when the engine gave no window or the caller gave no timezone. Computed
+   * after validation from contract timing + the reading's instant — never
+   * model-written (see timingWindow.ts). When present, `speakableText` ends
+   * with the same dates in one fixed sentence, so card and voice agree.
+   */
+  readonly timingWindow: TimingWindowDates | null;
   /** Fixed closing attribution — see ORACLE_BRAND_SEAL. Never model-written. */
   readonly brandSeal: string;
   /**
@@ -195,6 +208,12 @@ export interface CompositionInput {
    * care about the exact instant don't need to supply one.
    */
   readonly computedAt?: Date;
+  /**
+   * The querent's offset from UTC in minutes, as askWatchOracle already
+   * validated it. Only used to write the engine's day window as local
+   * calendar dates; absent means no dates are shown, never guessed.
+   */
+  readonly utcOffsetMinutes?: number;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -427,7 +446,17 @@ export interface WatchOracleCompositionResult {
 export async function composeWatchOracleResponse(
   input: CompositionInput,
 ): Promise<WatchOracleCompositionResult> {
-  const { verdict, question, seekerName, motherName, traditions, readingId, computedAt } = input;
+  const {
+    verdict,
+    question,
+    seekerName,
+    motherName,
+    traditions,
+    readingId,
+    computedAt,
+    utcOffsetMinutes,
+  } = input;
+  const instant = computedAt ?? new Date();
 
   // ── 1. Diagnosis (deterministic) ─────────────────────────────────────────
   const diagnosis = diagnose(verdict);
@@ -471,7 +500,7 @@ export async function composeWatchOracleResponse(
   // buildReadingContract() itself. See readingContract.ts's own header.
   const contract = buildReadingContract({
     readingId: readingId ?? '',
-    computedAt: computedAt ?? new Date(),
+    computedAt: instant,
     question,
     verdict,
     diagnosis,
@@ -526,11 +555,26 @@ export async function composeWatchOracleResponse(
   // introduce a claim `contract` doesn't already support; not re-validated
   // for the same reason `buildDeterministicFallbackNarration()`'s own output
   // never has been). `null` only when synthesis produced nothing to speak.
-  const speakableText = narration !== null ? buildSpeakableText(narration) : null;
+  //
+  // The calendar sentence is appended AFTER validation, deliberately: it is
+  // fixed wording over contract timing (timingWindow.ts), not model text,
+  // and the validator rightly rejects any calendar date a model writes.
+  const timingWindow = computeTimingWindowDates(
+    contract.diagnosis.timing,
+    instant,
+    utcOffsetMinutes,
+  );
+  const speakableText =
+    narration === null
+      ? null
+      : timingWindow === null
+        ? buildSpeakableText(narration)
+        : `${buildSpeakableText(narration)} ${timingWindowSpokenSentence(timingWindow)}`;
 
   const composition: WatchOracleComposition = Object.freeze({
     narration,
     speakableText,
+    timingWindow,
     brandSeal: ORACLE_BRAND_SEAL,
     suggestedQuestions: selectSuggestedQuestions(diagnosis),
     ...base,

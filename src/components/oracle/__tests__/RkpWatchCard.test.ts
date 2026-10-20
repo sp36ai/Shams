@@ -8,6 +8,7 @@ import {
   rulerRowValue,
   STATE_HEADLINE,
   timingLabel,
+  timingRowValue,
   groupFactors,
 } from '../RkpWatchCard';
 
@@ -52,6 +53,27 @@ describe('timing label', () => {
 
   it('says so plainly when the chart gives no timing', () => {
     expect(timingLabel(verdictWith({ timing: null }))).toBe('Unclear');
+  });
+});
+
+describe('timing row', () => {
+  it('adds the server-computed dates beside the days', () => {
+    expect(
+      timingRowValue(verdictWith({ timing: { minDays: 42, maxDays: 63 } }), '1–22 December 2026'),
+    ).toBe('42–63 days · 1–22 December 2026');
+  });
+
+  it('shows days alone when no dates were sent (older readings)', () => {
+    expect(timingRowValue(verdictWith({ timing: { minDays: 42, maxDays: 63 } }), undefined)).toBe(
+      '42–63 days',
+    );
+    expect(timingRowValue(verdictWith({ timing: { minDays: 42, maxDays: 63 } }), null)).toBe(
+      '42–63 days',
+    );
+  });
+
+  it('never attaches dates to a reading with no timing', () => {
+    expect(timingRowValue(verdictWith({ timing: null }), '1–22 December 2026')).toBe('Unclear');
   });
 });
 

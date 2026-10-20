@@ -40,6 +40,7 @@ const GROUNDING: ReadingGrounding = {
     },
     speakableText:
       'The house that carries the sale is supported.. This is not a denial.. Let the window arrive.',
+    timingWindow: null,
     brandSeal:
       '✨ "These words are unveiled under the banner of Shams al-Asrār, by Astro Sarfaraz." ✨',
     suggestedQuestions: ['What is causing the delay?'],

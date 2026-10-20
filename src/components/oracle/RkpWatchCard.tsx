@@ -84,6 +84,17 @@ export function timingLabel(verdict: DisplayWatchVerdict): string {
 }
 
 /**
+ * The Timing row: the engine's days, then — when the server sent them — the
+ * same window as the seeker's calendar dates ("42–63 days · 1–22 December
+ * 2026"). The dates are server-computed (functions/src/oracle/timingWindow.ts)
+ * and shown as given; nothing is recomputed on the device.
+ */
+export function timingRowValue(verdict: DisplayWatchVerdict, datesLabel?: string | null): string {
+  const days = timingLabel(verdict);
+  return verdict.timing !== null && datesLabel ? `${days} · ${datesLabel}` : days;
+}
+
+/**
  * The "Ruled by" row. When the matter's Ghar is the querent's own (every
  * 1st-Ghar question), the two rulers are the same planet and "X, which your
  * ruler X counts friend" is a planet judging itself — say what it is instead.
@@ -215,6 +226,8 @@ export interface RkpWatchCardProps {
    * opens on what was judged, without restating the answer.
    */
   showVerdict?: boolean;
+  /** Server-computed calendar label for the window, e.g. "1–22 December 2026". */
+  timingDates?: string | null;
 }
 
 const RkpWatchCard: React.FC<RkpWatchCardProps> = ({
@@ -224,6 +237,7 @@ const RkpWatchCard: React.FC<RkpWatchCardProps> = ({
   verdict,
   directionalFocus,
   showVerdict = true,
+  timingDates,
 }) => {
   const colors = useColors();
   const typography = useTypography();
@@ -328,7 +342,12 @@ const RkpWatchCard: React.FC<RkpWatchCardProps> = ({
         colors={colors}
         typography={typography}
       />
-      <Row label="Timing" value={timingLabel(verdict)} colors={colors} typography={typography} />
+      <Row
+        label="Timing"
+        value={timingRowValue(verdict, timingDates)}
+        colors={colors}
+        typography={typography}
+      />
       {obstruction !== null && (
         <Row label="Held by" value={obstruction} colors={colors} typography={typography} />
       )}

@@ -70,6 +70,19 @@ export interface WatchOracleComposition {
    */
   readonly speakableText?: string | null;
   /**
+   * The engine's day window as the seeker's local calendar dates —
+   * server-computed (functions/src/oracle/timingWindow.ts), never
+   * model-written. Null when the engine gave no window; absent on readings
+   * composed before this field existed.
+   */
+  readonly timingWindow?: {
+    readonly minDays: number;
+    readonly maxDays: number;
+    readonly startDate: string;
+    readonly endDate: string;
+    readonly label: string;
+  } | null;
+  /**
    * Fixed closing attribution, identical on every reading and never
    * model-written — the server's counterpart is ORACLE_BRAND_SEAL in
    * functions/src/oracle/responseComposer.ts. Optional here so cached
