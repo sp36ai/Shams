@@ -283,6 +283,19 @@ that maps to no row, or a row no document asks about, is a gap.
 
 ## Status after OD-002 (phase 1 implemented)
 
+> **EXPERIMENTAL IMPLEMENTATION — not a verified RKP release.** The branch
+> `claude/chat-qa-36u5ig` applies the owner's answers as written in OD-002. It is
+> not for merge or deployment. Passing tests show the code does what it says,
+> not that the rules are authentic. No further judgment-changing commit until the
+> review in `OD-002_PHASE1_REVIEW.md` is answered.
+>
+> **Authentication of OD-002 is not established.** The reply was produced in an
+> AI-assisted conversation and states in the first person that it is the owner's.
+> It is recorded as written, not as an authenticated confirmation of each
+> implementation detail. Before release, each implemented rule needs a
+> confirmation attributable to the owner (for example a signed note or a recorded
+> voice confirmation of the list of rules in the review).
+
 Commits on `claude/chat-qa-36u5ig`: `3be9f30` (rules), `652e28b` (fixtures and
 golden replay report), `ddac7db` (client minute). Engine unit tests (134),
 functions tests (747) and client tests (435) pass. Not merged, not deployed.
@@ -314,6 +327,26 @@ Mirrikh and Dhanab sitting (−2 each), Zuhal counts the 7th's ruler an enemy
 (−2), and nothing in the owner's answers adds enough to reach +1. Either a rule
 that drives his judgment is not yet written down (for example the 7th's ruler
 standing in the 10th), or the pending rules above move it. This needs the owner.
+
+## Dispositions of the open questions (audit recommendation, not an owner ruling)
+
+| # | Question | Disposition | Why |
+|---|---|---|---|
+| 1 | Ordinary or enemy-sign malefic in the 3rd/6th/10th/11th; debilitated −1 for all types | UNKNOWN, not implemented | Two separate rules — a Ghar exception and a dignity penalty — to be confirmed and tested separately |
+| 2 | Utarid, Shams, Qamar near malefics | UNKNOWN, not implemented | Occupancy, conjunction and aspect must be recorded separately; weights per question not stated |
+| 3 | Zuhal on the 10th: replace or add to the malefic score; business too | UNKNOWN, not implemented | Replace vs add changes scoring materially; business must be confirmed on its own, not inherited from career |
+| 4 | Self-protection +2 | UNKNOWN, not implemented | The "opposite Ghar, aspects back" reading and the "ruler in its own Ghar" reading are different rules |
+| 5 | Case 4 (business) | UNRESOLVED | No special exception. Needs the owner's full judgment of the original question: Ghars, ruling planets, and the reason it is affirmative |
+
+## Unrecovered source of the legacy "audit finding" tests
+
+`src/astrology/rkp/__tests__/watchJudgment.test.ts` has 15 tests (8 + 2 + 5) in
+three blocks labelled "audit finding #1 / #2 / #3" (state-resolution order,
+reversal independent of state, the "bespoke" timing model). The file first
+appears in commit `cf513e9`, whose message is about an unrelated end-to-end wait;
+no audit document matching those findings exists in the repository
+(`RKP_KP_FORENSIC_AUDIT.md` covers the KP flow). The source is UNRECOVERED. An
+earlier note here said "14"; the count is 15.
 
 ## Summary
 

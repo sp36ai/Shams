@@ -1,0 +1,3044 @@
+{
+ "ambiguous-001": {
+  "question": "Will it work out?",
+  "qType": "career",
+  "old": {
+   "state": "DELAYED",
+   "score": 2,
+   "timing": {
+    "minDays": 42,
+    "maxDays": 63
+   },
+   "obstruction": "Saturn"
+  },
+  "new": {
+   "state": "FULFILLED",
+   "score": 5,
+   "timing": {
+    "minDays": 34,
+    "maxDays": 50
+   },
+   "obstruction": "Saturn"
+  },
+  "alone_moves": [],
+  "alone_reproduces": [],
+  "removal_changes_state": []
+ },
+ "ambiguous-002": {
+  "question": "Should I do it or not?",
+  "qType": "general",
+  "old": {
+   "state": "UNFORMED",
+   "score": 0,
+   "timing": null,
+   "obstruction": "None"
+  },
+  "new": {
+   "state": "MOVING",
+   "score": 3,
+   "timing": {
+    "minDays": 3,
+    "maxDays": 7
+   },
+   "obstruction": "None"
+  },
+  "alone_moves": [
+   "scaling"
+  ],
+  "alone_reproduces": [
+   "scaling"
+  ],
+  "removal_changes_state": []
+ },
+ "ambiguous-003": {
+  "question": "What should I do?",
+  "qType": "general",
+  "old": {
+   "state": "DELAYED",
+   "score": -2,
+   "timing": {
+    "minDays": 11,
+    "maxDays": 21
+   },
+   "obstruction": "Saturn"
+  },
+  "new": {
+   "state": "DELAYED",
+   "score": 2,
+   "timing": {
+    "minDays": 8,
+    "maxDays": 17
+   },
+   "obstruction": "Saturn"
+  },
+  "alone_moves": [],
+  "alone_reproduces": [],
+  "removal_changes_state": []
+ },
+ "business-001": {
+  "question": "Will my new business succeed?",
+  "qType": "business",
+  "old": {
+   "state": "BLOCKED",
+   "score": -9,
+   "timing": {
+    "minDays": 15,
+    "maxDays": 32
+   },
+   "obstruction": "Rahu"
+  },
+  "new": {
+   "state": "DELAYED",
+   "score": -5,
+   "timing": {
+    "minDays": 15,
+    "maxDays": 32
+   },
+   "obstruction": "None"
+  },
+  "alone_moves": [],
+  "alone_reproduces": [],
+  "removal_changes_state": [
+   "nodes",
+   "ladder"
+  ]
+ },
+ "business-002": {
+  "question": "Should I take on a business partner?",
+  "qType": "marriage",
+  "old": {
+   "state": "DELAYED",
+   "score": 3,
+   "timing": {
+    "minDays": 45,
+    "maxDays": 90
+   },
+   "obstruction": "None"
+  },
+  "new": {
+   "state": "FULFILLED",
+   "score": 6,
+   "timing": {
+    "minDays": 45,
+    "maxDays": 90
+   },
+   "obstruction": "None"
+  },
+  "alone_moves": [
+   "scaling"
+  ],
+  "alone_reproduces": [
+   "scaling"
+  ],
+  "removal_changes_state": []
+ },
+ "business-003": {
+  "question": "Will my shop turn a profit this year?",
+  "qType": "finance",
+  "old": {
+   "state": "UNFORMED",
+   "score": -2,
+   "timing": null,
+   "obstruction": "None"
+  },
+  "new": {
+   "state": "MOVING",
+   "score": 2,
+   "timing": {
+    "minDays": 3,
+    "maxDays": 7
+   },
+   "obstruction": "None"
+  },
+  "alone_moves": [],
+  "alone_reproduces": [],
+  "removal_changes_state": []
+ },
+ "business-004": {
+  "question": "Should I expand my business to a new city?",
+  "qType": "business",
+  "old": {
+   "state": "REVERSING",
+   "score": -2,
+   "timing": {
+    "minDays": 135,
+    "maxDays": 225
+   },
+   "obstruction": "Mars"
+  },
+  "new": {
+   "state": "REVERSING",
+   "score": 1,
+   "timing": {
+    "minDays": 135,
+    "maxDays": 225
+   },
+   "obstruction": "Mars"
+  },
+  "alone_moves": [],
+  "alone_reproduces": [],
+  "removal_changes_state": []
+ },
+ "business-005": {
+  "question": "Will my startup get funded?",
+  "qType": "business",
+  "old": {
+   "state": "FULFILLED",
+   "score": 7,
+   "timing": {
+    "minDays": 42,
+    "maxDays": 63
+   },
+   "obstruction": "Saturn"
+  },
+  "new": {
+   "state": "FULFILLED",
+   "score": 9,
+   "timing": {
+    "minDays": 34,
+    "maxDays": 50
+   },
+   "obstruction": "Saturn"
+  },
+  "alone_moves": [],
+  "alone_reproduces": [],
+  "removal_changes_state": []
+ },
+ "business-006": {
+  "question": "Is my business partner trustworthy?",
+  "qType": "marriage",
+  "old": {
+   "state": "BLOCKED",
+   "score": -8,
+   "timing": {
+    "minDays": 45,
+    "maxDays": 90
+   },
+   "obstruction": "Ketu"
+  },
+  "new": {
+   "state": "DELAYED",
+   "score": -3,
+   "timing": {
+    "minDays": 45,
+    "maxDays": 90
+   },
+   "obstruction": "MoonDisagreement"
+  },
+  "alone_moves": [
+   "nodes"
+  ],
+  "alone_reproduces": [
+   "nodes"
+  ],
+  "removal_changes_state": []
+ },
+ "business-007": {
+  "question": "Should I close my failing business?",
+  "qType": "business",
+  "old": {
+   "state": "BLOCKED",
+   "score": -5,
+   "timing": {
+    "minDays": 15,
+    "maxDays": 32
+   },
+   "obstruction": "Saturn"
+  },
+  "new": {
+   "state": "DELAYED",
+   "score": -2,
+   "timing": {
+    "minDays": 15,
+    "maxDays": 32
+   },
+   "obstruction": "Saturn"
+  },
+  "alone_moves": [
+   "scaling",
+   "ladder"
+  ],
+  "alone_reproduces": [
+   "scaling",
+   "ladder"
+  ],
+  "removal_changes_state": []
+ },
+ "disputes-001": {
+  "question": "Will I win my court case?",
+  "qType": "legal",
+  "old": {
+   "state": "BLOCKED",
+   "score": -11,
+   "timing": {
+    "minDays": 11,
+    "maxDays": 21
+   },
+   "obstruction": "Saturn"
+  },
+  "new": {
+   "state": "BLOCKED",
+   "score": -6,
+   "timing": {
+    "minDays": 8,
+    "maxDays": 17
+   },
+   "obstruction": "Saturn"
+  },
+  "alone_moves": [],
+  "alone_reproduces": [],
+  "removal_changes_state": []
+ },
+ "disputes-002": {
+  "question": "Is my business rival trying to sabotage me?",
+  "qType": "business",
+  "old": {
+   "state": "DELAYED",
+   "score": 2,
+   "timing": {
+    "minDays": 45,
+    "maxDays": 90
+   },
+   "obstruction": "None"
+  },
+  "new": {
+   "state": "FULFILLED",
+   "score": 5,
+   "timing": {
+    "minDays": 45,
+    "maxDays": 90
+   },
+   "obstruction": "None"
+  },
+  "alone_moves": [],
+  "alone_reproduces": [],
+  "removal_changes_state": [
+   "scaling"
+  ]
+ },
+ "disputes-003": {
+  "question": "Will the legal notice against me be withdrawn?",
+  "qType": "legal",
+  "old": {
+   "state": "DELAYED",
+   "score": -2,
+   "timing": {
+    "minDays": 45,
+    "maxDays": 90
+   },
+   "obstruction": "None"
+  },
+  "new": {
+   "state": "DELAYED",
+   "score": 2,
+   "timing": {
+    "minDays": 45,
+    "maxDays": 90
+   },
+   "obstruction": "None"
+  },
+  "alone_moves": [],
+  "alone_reproduces": [],
+  "removal_changes_state": []
+ },
+ "disputes-004": {
+  "question": "Should I settle out of court?",
+  "qType": "legal",
+  "old": {
+   "state": "BLOCKED",
+   "score": -6,
+   "timing": {
+    "minDays": 42,
+    "maxDays": 63
+   },
+   "obstruction": "Saturn"
+  },
+  "new": {
+   "state": "DELAYED",
+   "score": -1,
+   "timing": {
+    "minDays": 34,
+    "maxDays": 50
+   },
+   "obstruction": "Saturn"
+  },
+  "alone_moves": [
+   "nodes",
+   "scaling"
+  ],
+  "alone_reproduces": [
+   "nodes",
+   "scaling"
+  ],
+  "removal_changes_state": []
+ },
+ "disputes-005": {
+  "question": "Does my colleague mean me harm?",
+  "qType": "general",
+  "old": {
+   "state": "DELAYED",
+   "score": -2,
+   "timing": {
+    "minDays": 11,
+    "maxDays": 21
+   },
+   "obstruction": "Saturn"
+  },
+  "new": {
+   "state": "DELAYED",
+   "score": 2,
+   "timing": {
+    "minDays": 8,
+    "maxDays": 17
+   },
+   "obstruction": "Saturn"
+  },
+  "alone_moves": [],
+  "alone_reproduces": [],
+  "removal_changes_state": []
+ },
+ "education-001": {
+  "question": "Will I pass my upcoming exam?",
+  "qType": "education",
+  "old": {
+   "state": "REVERSING",
+   "score": -2,
+   "timing": {
+    "minDays": 135,
+    "maxDays": 225
+   },
+   "obstruction": "Mars"
+  },
+  "new": {
+   "state": "REVERSING",
+   "score": 2,
+   "timing": {
+    "minDays": 135,
+    "maxDays": 225
+   },
+   "obstruction": "Mars"
+  },
+  "alone_moves": [],
+  "alone_reproduces": [],
+  "removal_changes_state": []
+ },
+ "education-002": {
+  "question": "Will I get admission to this university?",
+  "qType": "education",
+  "old": {
+   "state": "BLOCKED",
+   "score": -6,
+   "timing": {
+    "minDays": 135,
+    "maxDays": 225
+   },
+   "obstruction": "Rahu"
+  },
+  "new": {
+   "state": "REVERSING",
+   "score": -2,
+   "timing": {
+    "minDays": 135,
+    "maxDays": 225
+   },
+   "obstruction": "Rahu"
+  },
+  "alone_moves": [
+   "nodes",
+   "scaling"
+  ],
+  "alone_reproduces": [
+   "nodes",
+   "scaling"
+  ],
+  "removal_changes_state": []
+ },
+ "education-003": {
+  "question": "Should I pursue a higher degree abroad?",
+  "qType": "travel",
+  "old": {
+   "state": "UNFORMED",
+   "score": -4,
+   "timing": null,
+   "obstruction": "Ketu"
+  },
+  "new": {
+   "state": "UNFORMED",
+   "score": 0,
+   "timing": null,
+   "obstruction": "Ketu"
+  },
+  "alone_moves": [
+   "travel"
+  ],
+  "alone_reproduces": [],
+  "removal_changes_state": [
+   "travel"
+  ]
+ },
+ "education-004": {
+  "question": "Will I win the scholarship I applied for?",
+  "qType": "education",
+  "old": {
+   "state": "DELAYED",
+   "score": -4,
+   "timing": {
+    "minDays": 45,
+    "maxDays": 90
+   },
+   "obstruction": "Ketu"
+  },
+  "new": {
+   "state": "DELAYED",
+   "score": 0,
+   "timing": {
+    "minDays": 45,
+    "maxDays": 90
+   },
+   "obstruction": "None"
+  },
+  "alone_moves": [],
+  "alone_reproduces": [],
+  "removal_changes_state": []
+ },
+ "education-005": {
+  "question": "Should my child change schools?",
+  "qType": "children",
+  "old": {
+   "state": "MOVING",
+   "score": 4,
+   "timing": {
+    "minDays": 3,
+    "maxDays": 7
+   },
+   "obstruction": "None"
+  },
+  "new": {
+   "state": "FULFILLED",
+   "score": 8,
+   "timing": {
+    "minDays": 3,
+    "maxDays": 7
+   },
+   "obstruction": "None"
+  },
+  "alone_moves": [
+   "sign",
+   "scaling",
+   "ladder"
+  ],
+  "alone_reproduces": [
+   "sign",
+   "scaling",
+   "ladder"
+  ],
+  "removal_changes_state": []
+ },
+ "employment-001": {
+  "question": "Will I get the job I interviewed for?",
+  "qType": "career",
+  "old": {
+   "state": "BLOCKED",
+   "score": -5,
+   "timing": {
+    "minDays": 135,
+    "maxDays": 225
+   },
+   "obstruction": "Mars"
+  },
+  "new": {
+   "state": "REVERSING",
+   "score": -1,
+   "timing": {
+    "minDays": 135,
+    "maxDays": 225
+   },
+   "obstruction": "Mars"
+  },
+  "alone_moves": [
+   "nodes",
+   "scaling",
+   "ladder"
+  ],
+  "alone_reproduces": [
+   "nodes",
+   "scaling",
+   "ladder"
+  ],
+  "removal_changes_state": []
+ },
+ "employment-002": {
+  "question": "Should I resign from my current job?",
+  "qType": "career",
+  "old": {
+   "state": "REVERSING",
+   "score": 1,
+   "timing": {
+    "minDays": 135,
+    "maxDays": 225
+   },
+   "obstruction": "Rahu"
+  },
+  "new": {
+   "state": "FULFILLED",
+   "score": 4,
+   "timing": {
+    "minDays": 135,
+    "maxDays": 225
+   },
+   "obstruction": "Rahu"
+  },
+  "alone_moves": [],
+  "alone_reproduces": [],
+  "removal_changes_state": [
+   "nodes",
+   "scaling",
+   "ladder"
+  ]
+ },
+ "employment-003": {
+  "question": "Will I get promoted this year?",
+  "qType": "career",
+  "old": {
+   "state": "DELAYED",
+   "score": 2,
+   "timing": {
+    "minDays": 42,
+    "maxDays": 63
+   },
+   "obstruction": "Saturn"
+  },
+  "new": {
+   "state": "FULFILLED",
+   "score": 5,
+   "timing": {
+    "minDays": 34,
+    "maxDays": 50
+   },
+   "obstruction": "Saturn"
+  },
+  "alone_moves": [],
+  "alone_reproduces": [],
+  "removal_changes_state": []
+ },
+ "employment-004": {
+  "question": "Is my job at risk of layoffs?",
+  "qType": "career",
+  "old": {
+   "state": "BLOCKED",
+   "score": -7,
+   "timing": {
+    "minDays": 45,
+    "maxDays": 90
+   },
+   "obstruction": "Ketu"
+  },
+  "new": {
+   "state": "DELAYED",
+   "score": -3,
+   "timing": {
+    "minDays": 45,
+    "maxDays": 90
+   },
+   "obstruction": "None"
+  },
+  "alone_moves": [],
+  "alone_reproduces": [],
+  "removal_changes_state": []
+ },
+ "employment-005": {
+  "question": "Should I switch careers entirely?",
+  "qType": "general",
+  "old": {
+   "state": "DELAYED",
+   "score": -2,
+   "timing": {
+    "minDays": 11,
+    "maxDays": 21
+   },
+   "obstruction": "Saturn"
+  },
+  "new": {
+   "state": "DELAYED",
+   "score": 2,
+   "timing": {
+    "minDays": 8,
+    "maxDays": 17
+   },
+   "obstruction": "Saturn"
+  },
+  "alone_moves": [],
+  "alone_reproduces": [],
+  "removal_changes_state": []
+ },
+ "employment-006": {
+  "question": "Will my visa sponsorship for this job be approved?",
+  "qType": "career",
+  "old": {
+   "state": "BLOCKED",
+   "score": -5,
+   "timing": {
+    "minDays": 3,
+    "maxDays": 7
+   },
+   "obstruction": "MoonDisagreement"
+  },
+  "new": {
+   "state": "UNFORMED",
+   "score": -1,
+   "timing": null,
+   "obstruction": "MoonDisagreement"
+  },
+  "alone_moves": [
+   "nodes",
+   "sign",
+   "scaling",
+   "ladder"
+  ],
+  "alone_reproduces": [
+   "nodes",
+   "sign",
+   "scaling",
+   "ladder"
+  ],
+  "removal_changes_state": []
+ },
+ "family-001": {
+  "question": "Will I be blessed with a child soon?",
+  "qType": "children",
+  "old": {
+   "state": "BLOCKED",
+   "score": -7,
+   "timing": {
+    "minDays": 14,
+    "maxDays": 30
+   },
+   "obstruction": "Ketu"
+  },
+  "new": {
+   "state": "UNFORMED",
+   "score": -2,
+   "timing": null,
+   "obstruction": "Ketu"
+  },
+  "alone_moves": [
+   "nodes"
+  ],
+  "alone_reproduces": [
+   "nodes"
+  ],
+  "removal_changes_state": []
+ },
+ "family-002": {
+  "question": "Will my family conflict be resolved?",
+  "qType": "enemies",
+  "old": {
+   "state": "DELAYED",
+   "score": -2,
+   "timing": {
+    "minDays": 15,
+    "maxDays": 32
+   },
+   "obstruction": "Rahu"
+  },
+  "new": {
+   "state": "DELAYED",
+   "score": 1,
+   "timing": {
+    "minDays": 15,
+    "maxDays": 32
+   },
+   "obstruction": "None"
+  },
+  "alone_moves": [],
+  "alone_reproduces": [],
+  "removal_changes_state": []
+ },
+ "family-003": {
+  "question": "Is my son's health going to improve?",
+  "qType": "health",
+  "old": {
+   "state": "BLOCKED",
+   "score": -9,
+   "timing": {
+    "minDays": 11,
+    "maxDays": 21
+   },
+   "obstruction": "Mars"
+  },
+  "new": {
+   "state": "DELAYED",
+   "score": -4,
+   "timing": {
+    "minDays": 8,
+    "maxDays": 17
+   },
+   "obstruction": "Mars"
+  },
+  "alone_moves": [],
+  "alone_reproduces": [],
+  "removal_changes_state": [
+   "nodes"
+  ]
+ },
+ "family-004": {
+  "question": "Will my parents reconcile?",
+  "qType": "general",
+  "old": {
+   "state": "UNFORMED",
+   "score": 0,
+   "timing": null,
+   "obstruction": "None"
+  },
+  "new": {
+   "state": "MOVING",
+   "score": 3,
+   "timing": {
+    "minDays": 3,
+    "maxDays": 7
+   },
+   "obstruction": "None"
+  },
+  "alone_moves": [
+   "scaling"
+  ],
+  "alone_reproduces": [
+   "scaling"
+  ],
+  "removal_changes_state": []
+ },
+ "family-005": {
+  "question": "Will my daughter's custody case go in my favour?",
+  "qType": "legal",
+  "old": {
+   "state": "REVERSING",
+   "score": -2,
+   "timing": {
+    "minDays": 135,
+    "maxDays": 225
+   },
+   "obstruction": "Rahu"
+  },
+  "new": {
+   "state": "REVERSING",
+   "score": 1,
+   "timing": {
+    "minDays": 135,
+    "maxDays": 225
+   },
+   "obstruction": "Rahu"
+  },
+  "alone_moves": [],
+  "alone_reproduces": [],
+  "removal_changes_state": []
+ },
+ "finance-001": {
+  "question": "Will I recover the money I lent?",
+  "qType": "finance",
+  "old": {
+   "state": "BLOCKED",
+   "score": -7,
+   "timing": {
+    "minDays": 15,
+    "maxDays": 32
+   },
+   "obstruction": "Saturn"
+  },
+  "new": {
+   "state": "DELAYED",
+   "score": -4,
+   "timing": {
+    "minDays": 15,
+    "maxDays": 32
+   },
+   "obstruction": "Saturn"
+  },
+  "alone_moves": [],
+  "alone_reproduces": [],
+  "removal_changes_state": []
+ },
+ "finance-002": {
+  "question": "Should I invest my savings in this fund?",
+  "qType": "finance",
+  "old": {
+   "state": "DELAYED",
+   "score": -3,
+   "timing": {
+    "minDays": 11,
+    "maxDays": 21
+   },
+   "obstruction": "Mars"
+  },
+  "new": {
+   "state": "DELAYED",
+   "score": 1,
+   "timing": {
+    "minDays": 8,
+    "maxDays": 17
+   },
+   "obstruction": "Mars"
+  },
+  "alone_moves": [],
+  "alone_reproduces": [],
+  "removal_changes_state": []
+ },
+ "finance-003": {
+  "question": "Will I get out of debt this year?",
+  "qType": "finance",
+  "old": {
+   "state": "UNFORMED",
+   "score": -2,
+   "timing": null,
+   "obstruction": "None"
+  },
+  "new": {
+   "state": "MOVING",
+   "score": 2,
+   "timing": {
+    "minDays": 3,
+    "maxDays": 7
+   },
+   "obstruction": "None"
+  },
+  "alone_moves": [],
+  "alone_reproduces": [],
+  "removal_changes_state": []
+ },
+ "finance-004": {
+  "question": "Will my loan application be approved?",
+  "qType": "finance",
+  "old": {
+   "state": "UNFORMED",
+   "score": -4,
+   "timing": null,
+   "obstruction": "Ketu"
+  },
+  "new": {
+   "state": "UNFORMED",
+   "score": 0,
+   "timing": null,
+   "obstruction": "Ketu"
+  },
+  "alone_moves": [],
+  "alone_reproduces": [],
+  "removal_changes_state": []
+ },
+ "finance-005": {
+  "question": "Is it safe to buy gold now?",
+  "qType": "general",
+  "old": {
+   "state": "DELAYED",
+   "score": -2,
+   "timing": {
+    "minDays": 11,
+    "maxDays": 21
+   },
+   "obstruction": "Saturn"
+  },
+  "new": {
+   "state": "DELAYED",
+   "score": 2,
+   "timing": {
+    "minDays": 8,
+    "maxDays": 17
+   },
+   "obstruction": "Saturn"
+  },
+  "alone_moves": [],
+  "alone_reproduces": [],
+  "removal_changes_state": []
+ },
+ "finance-006": {
+  "question": "Will my inheritance dispute be resolved in my favour?",
+  "qType": "legal",
+  "old": {
+   "state": "DELAYED",
+   "score": 0,
+   "timing": {
+    "minDays": 42,
+    "maxDays": 63
+   },
+   "obstruction": "Saturn"
+  },
+  "new": {
+   "state": "DELAYED",
+   "score": 3,
+   "timing": {
+    "minDays": 34,
+    "maxDays": 50
+   },
+   "obstruction": "Saturn"
+  },
+  "alone_moves": [],
+  "alone_reproduces": [],
+  "removal_changes_state": []
+ },
+ "general-001": {
+  "question": "What does my future hold?",
+  "qType": "general",
+  "old": {
+   "state": "BLOCKED",
+   "score": -8,
+   "timing": {
+    "minDays": 45,
+    "maxDays": 90
+   },
+   "obstruction": "Ketu"
+  },
+  "new": {
+   "state": "DELAYED",
+   "score": -3,
+   "timing": {
+    "minDays": 45,
+    "maxDays": 90
+   },
+   "obstruction": "None"
+  },
+  "alone_moves": [
+   "nodes"
+  ],
+  "alone_reproduces": [
+   "nodes"
+  ],
+  "removal_changes_state": []
+ },
+ "general-002": {
+  "question": "Is this a good time for me overall?",
+  "qType": "general",
+  "old": {
+   "state": "DELAYED",
+   "score": -2,
+   "timing": {
+    "minDays": 15,
+    "maxDays": 32
+   },
+   "obstruction": "Saturn"
+  },
+  "new": {
+   "state": "DELAYED",
+   "score": 0,
+   "timing": {
+    "minDays": 15,
+    "maxDays": 32
+   },
+   "obstruction": "Saturn"
+  },
+  "alone_moves": [],
+  "alone_reproduces": [],
+  "removal_changes_state": []
+ },
+ "health-001": {
+  "question": "Will my illness be cured soon?",
+  "qType": "health",
+  "old": {
+   "state": "BLOCKED",
+   "score": -8,
+   "timing": {
+    "minDays": 45,
+    "maxDays": 90
+   },
+   "obstruction": "Ketu"
+  },
+  "new": {
+   "state": "DELAYED",
+   "score": -3,
+   "timing": {
+    "minDays": 45,
+    "maxDays": 90
+   },
+   "obstruction": "None"
+  },
+  "alone_moves": [
+   "nodes"
+  ],
+  "alone_reproduces": [
+   "nodes"
+  ],
+  "removal_changes_state": []
+ },
+ "health-002": {
+  "question": "Should I undergo the surgery my doctor recommends?",
+  "qType": "health",
+  "old": {
+   "state": "DELAYED",
+   "score": -1,
+   "timing": {
+    "minDays": 15,
+    "maxDays": 32
+   },
+   "obstruction": "Saturn"
+  },
+  "new": {
+   "state": "DELAYED",
+   "score": 1,
+   "timing": {
+    "minDays": 15,
+    "maxDays": 32
+   },
+   "obstruction": "Saturn"
+  },
+  "alone_moves": [],
+  "alone_reproduces": [],
+  "removal_changes_state": []
+ },
+ "lostitem-001": {
+  "question": "Will I recover my lost ring?",
+  "qType": "health",
+  "old": {
+   "state": "DELAYED",
+   "score": -2,
+   "timing": {
+    "minDays": 11,
+    "maxDays": 21
+   },
+   "obstruction": "Saturn"
+  },
+  "new": {
+   "state": "DELAYED",
+   "score": 2,
+   "timing": {
+    "minDays": 8,
+    "maxDays": 17
+   },
+   "obstruction": "Saturn"
+  },
+  "alone_moves": [],
+  "alone_reproduces": [],
+  "removal_changes_state": []
+ },
+ "marriage-001": {
+  "question": "Will I marry the person I love?",
+  "qType": "marriage",
+  "old": {
+   "state": "BLOCKED",
+   "score": -8,
+   "timing": {
+    "minDays": 45,
+    "maxDays": 90
+   },
+   "obstruction": "Ketu"
+  },
+  "new": {
+   "state": "DELAYED",
+   "score": -3,
+   "timing": {
+    "minDays": 45,
+    "maxDays": 90
+   },
+   "obstruction": "MoonDisagreement"
+  },
+  "alone_moves": [
+   "nodes"
+  ],
+  "alone_reproduces": [
+   "nodes"
+  ],
+  "removal_changes_state": []
+ },
+ "marriage-002": {
+  "question": "When will my marriage proposal be accepted?",
+  "qType": "marriage",
+  "old": {
+   "state": "BLOCKED",
+   "score": -5,
+   "timing": {
+    "minDays": 15,
+    "maxDays": 32
+   },
+   "obstruction": "Saturn"
+  },
+  "new": {
+   "state": "DELAYED",
+   "score": -2,
+   "timing": {
+    "minDays": 15,
+    "maxDays": 32
+   },
+   "obstruction": "Saturn"
+  },
+  "alone_moves": [
+   "scaling",
+   "ladder"
+  ],
+  "alone_reproduces": [
+   "scaling",
+   "ladder"
+  ],
+  "removal_changes_state": []
+ },
+ "marriage-003": {
+  "question": "Should I marry the person my family has chosen?",
+  "qType": "marriage",
+  "old": {
+   "state": "BLOCKED",
+   "score": -12,
+   "timing": {
+    "minDays": 11,
+    "maxDays": 21
+   },
+   "obstruction": "Mars"
+  },
+  "new": {
+   "state": "BLOCKED",
+   "score": -7,
+   "timing": {
+    "minDays": 8,
+    "maxDays": 17
+   },
+   "obstruction": "Mars"
+  },
+  "alone_moves": [],
+  "alone_reproduces": [],
+  "removal_changes_state": []
+ },
+ "marriage-004": {
+  "question": "Will my engagement survive?",
+  "qType": "general",
+  "old": {
+   "state": "REVERSING",
+   "score": 2,
+   "timing": {
+    "minDays": 135,
+    "maxDays": 225
+   },
+   "obstruction": "Mars"
+  },
+  "new": {
+   "state": "FULFILLED",
+   "score": 5,
+   "timing": {
+    "minDays": 135,
+    "maxDays": 225
+   },
+   "obstruction": "Mars"
+  },
+  "alone_moves": [],
+  "alone_reproduces": [],
+  "removal_changes_state": [
+   "scaling",
+   "ladder"
+  ]
+ },
+ "marriage-005": {
+  "question": "Is my spouse being faithful to me?",
+  "qType": "marriage",
+  "old": {
+   "state": "BLOCKED",
+   "score": -7,
+   "timing": {
+    "minDays": 11,
+    "maxDays": 21
+   },
+   "obstruction": "Saturn"
+  },
+  "new": {
+   "state": "DELAYED",
+   "score": -2,
+   "timing": {
+    "minDays": 8,
+    "maxDays": 17
+   },
+   "obstruction": "Saturn"
+  },
+  "alone_moves": [
+   "scaling"
+  ],
+  "alone_reproduces": [
+   "scaling"
+  ],
+  "removal_changes_state": [
+   "scaling"
+  ]
+ },
+ "marriage-006": {
+  "question": "Will my divorce be finalised soon?",
+  "qType": "general",
+  "old": {
+   "state": "BLOCKED",
+   "score": -8,
+   "timing": {
+    "minDays": 45,
+    "maxDays": 90
+   },
+   "obstruction": "Ketu"
+  },
+  "new": {
+   "state": "DELAYED",
+   "score": -3,
+   "timing": {
+    "minDays": 45,
+    "maxDays": 90
+   },
+   "obstruction": "None"
+  },
+  "alone_moves": [
+   "nodes"
+  ],
+  "alone_reproduces": [
+   "nodes"
+  ],
+  "removal_changes_state": []
+ },
+ "marriage-007": {
+  "question": "Should I reconcile with my ex-partner?",
+  "qType": "marriage",
+  "old": {
+   "state": "DELAYED",
+   "score": 3,
+   "timing": {
+    "minDays": 45,
+    "maxDays": 90
+   },
+   "obstruction": "None"
+  },
+  "new": {
+   "state": "FULFILLED",
+   "score": 6,
+   "timing": {
+    "minDays": 45,
+    "maxDays": 90
+   },
+   "obstruction": "None"
+  },
+  "alone_moves": [
+   "scaling"
+  ],
+  "alone_reproduces": [
+   "scaling"
+  ],
+  "removal_changes_state": []
+ },
+ "marriage-008": {
+  "question": "Will my in-laws accept me?",
+  "qType": "general",
+  "old": {
+   "state": "BLOCKED",
+   "score": -9,
+   "timing": {
+    "minDays": 11,
+    "maxDays": 21
+   },
+   "obstruction": "Mars"
+  },
+  "new": {
+   "state": "DELAYED",
+   "score": -4,
+   "timing": {
+    "minDays": 8,
+    "maxDays": 17
+   },
+   "obstruction": "Mars"
+  },
+  "alone_moves": [],
+  "alone_reproduces": [],
+  "removal_changes_state": [
+   "nodes"
+  ]
+ },
+ "multiintent-001": {
+  "question": "Will I get the job and also be able to marry my partner this year?",
+  "qType": "career",
+  "old": {
+   "state": "BLOCKED",
+   "score": -5,
+   "timing": {
+    "minDays": 3,
+    "maxDays": 7
+   },
+   "obstruction": "MoonDisagreement"
+  },
+  "new": {
+   "state": "UNFORMED",
+   "score": -1,
+   "timing": null,
+   "obstruction": "MoonDisagreement"
+  },
+  "alone_moves": [
+   "nodes",
+   "sign",
+   "scaling",
+   "ladder"
+  ],
+  "alone_reproduces": [
+   "nodes",
+   "sign",
+   "scaling",
+   "ladder"
+  ],
+  "removal_changes_state": []
+ },
+ "multiintent-002": {
+  "question": "Should I take the loan to start my business and move house at the same time?",
+  "qType": "finance",
+  "old": {
+   "state": "DELAYED",
+   "score": -4,
+   "timing": {
+    "minDays": 42,
+    "maxDays": 63
+   },
+   "obstruction": "Saturn"
+  },
+  "new": {
+   "state": "DELAYED",
+   "score": 2,
+   "timing": {
+    "minDays": 34,
+    "maxDays": 50
+   },
+   "obstruction": "Saturn"
+  },
+  "alone_moves": [],
+  "alone_reproduces": [],
+  "removal_changes_state": []
+ },
+ "multiintent-003": {
+  "question": "Will my health improve and will I also win the court case?",
+  "qType": "health",
+  "old": {
+   "state": "BLOCKED",
+   "score": -7,
+   "timing": {
+    "minDays": 42,
+    "maxDays": 63
+   },
+   "obstruction": "Saturn"
+  },
+  "new": {
+   "state": "DELAYED",
+   "score": -1,
+   "timing": {
+    "minDays": 34,
+    "maxDays": 50
+   },
+   "obstruction": "Saturn"
+  },
+  "alone_moves": [
+   "nodes",
+   "scaling"
+  ],
+  "alone_reproduces": [
+   "nodes",
+   "scaling"
+  ],
+  "removal_changes_state": []
+ },
+ "pad-business-05": {
+  "question": "Will my business deal close this week?",
+  "qType": "business",
+  "old": {
+   "state": "BLOCKED",
+   "score": -8,
+   "timing": {
+    "minDays": 45,
+    "maxDays": 90
+   },
+   "obstruction": "Ketu"
+  },
+  "new": {
+   "state": "DELAYED",
+   "score": -3,
+   "timing": {
+    "minDays": 45,
+    "maxDays": 90
+   },
+   "obstruction": "MoonDisagreement"
+  },
+  "alone_moves": [
+   "nodes"
+  ],
+  "alone_reproduces": [
+   "nodes"
+  ],
+  "removal_changes_state": []
+ },
+ "pad-business-06": {
+  "question": "Should I sign the new business contract?",
+  "qType": "business",
+  "old": {
+   "state": "BLOCKED",
+   "score": -5,
+   "timing": {
+    "minDays": 15,
+    "maxDays": 32
+   },
+   "obstruction": "Saturn"
+  },
+  "new": {
+   "state": "DELAYED",
+   "score": -2,
+   "timing": {
+    "minDays": 15,
+    "maxDays": 32
+   },
+   "obstruction": "Saturn"
+  },
+  "alone_moves": [
+   "scaling",
+   "ladder"
+  ],
+  "alone_reproduces": [
+   "scaling",
+   "ladder"
+  ],
+  "removal_changes_state": []
+ },
+ "pad-business-07": {
+  "question": "Will my e-commerce store take off?",
+  "qType": "general",
+  "old": {
+   "state": "BLOCKED",
+   "score": -9,
+   "timing": {
+    "minDays": 11,
+    "maxDays": 21
+   },
+   "obstruction": "Mars"
+  },
+  "new": {
+   "state": "DELAYED",
+   "score": -4,
+   "timing": {
+    "minDays": 8,
+    "maxDays": 17
+   },
+   "obstruction": "Mars"
+  },
+  "alone_moves": [],
+  "alone_reproduces": [],
+  "removal_changes_state": [
+   "nodes"
+  ]
+ },
+ "pad-business-08": {
+  "question": "Will I be able to hire the right staff for my business?",
+  "qType": "business",
+  "old": {
+   "state": "BLOCKED",
+   "score": -13,
+   "timing": {
+    "minDays": 14,
+    "maxDays": 30
+   },
+   "obstruction": "Ketu"
+  },
+  "new": {
+   "state": "BLOCKED",
+   "score": -6,
+   "timing": {
+    "minDays": 11,
+    "maxDays": 24
+   },
+   "obstruction": "Ketu"
+  },
+  "alone_moves": [],
+  "alone_reproduces": [],
+  "removal_changes_state": []
+ },
+ "pad-disputes-23": {
+  "question": "Will my neighbour drop the complaint against me?",
+  "qType": "general",
+  "old": {
+   "state": "DELAYED",
+   "score": -3,
+   "timing": {
+    "minDays": 45,
+    "maxDays": 90
+   },
+   "obstruction": "None"
+  },
+  "new": {
+   "state": "DELAYED",
+   "score": 1,
+   "timing": {
+    "minDays": 45,
+    "maxDays": 90
+   },
+   "obstruction": "None"
+  },
+  "alone_moves": [],
+  "alone_reproduces": [],
+  "removal_changes_state": []
+ },
+ "pad-disputes-24": {
+  "question": "Should I file a police report about this matter?",
+  "qType": "general",
+  "old": {
+   "state": "BLOCKED",
+   "score": -7,
+   "timing": {
+    "minDays": 42,
+    "maxDays": 63
+   },
+   "obstruction": "Saturn"
+  },
+  "new": {
+   "state": "DELAYED",
+   "score": -1,
+   "timing": {
+    "minDays": 34,
+    "maxDays": 50
+   },
+   "obstruction": "Saturn"
+  },
+  "alone_moves": [
+   "nodes",
+   "scaling"
+  ],
+  "alone_reproduces": [
+   "nodes",
+   "scaling"
+  ],
+  "removal_changes_state": []
+ },
+ "pad-education-19": {
+  "question": "Will I clear my entrance test this attempt?",
+  "qType": "general",
+  "old": {
+   "state": "DELAYED",
+   "score": -3,
+   "timing": {
+    "minDays": 45,
+    "maxDays": 90
+   },
+   "obstruction": "None"
+  },
+  "new": {
+   "state": "DELAYED",
+   "score": 1,
+   "timing": {
+    "minDays": 45,
+    "maxDays": 90
+   },
+   "obstruction": "None"
+  },
+  "alone_moves": [],
+  "alone_reproduces": [],
+  "removal_changes_state": []
+ },
+ "pad-education-20": {
+  "question": "Should I choose engineering or medicine?",
+  "qType": "health",
+  "old": {
+   "state": "UNFORMED",
+   "score": 0,
+   "timing": null,
+   "obstruction": "None"
+  },
+  "new": {
+   "state": "MOVING",
+   "score": 3,
+   "timing": {
+    "minDays": 3,
+    "maxDays": 7
+   },
+   "obstruction": "None"
+  },
+  "alone_moves": [
+   "scaling"
+  ],
+  "alone_reproduces": [
+   "scaling"
+  ],
+  "removal_changes_state": []
+ },
+ "pad-employment-09": {
+  "question": "Will my transfer request at work be approved?",
+  "qType": "career",
+  "old": {
+   "state": "BLOCKED",
+   "score": -5,
+   "timing": {
+    "minDays": 42,
+    "maxDays": 63
+   },
+   "obstruction": "Saturn"
+  },
+  "new": {
+   "state": "DELAYED",
+   "score": 1,
+   "timing": {
+    "minDays": 34,
+    "maxDays": 50
+   },
+   "obstruction": "Saturn"
+  },
+  "alone_moves": [
+   "nodes",
+   "scaling",
+   "ladder"
+  ],
+  "alone_reproduces": [
+   "nodes",
+   "scaling",
+   "ladder"
+  ],
+  "removal_changes_state": []
+ },
+ "pad-employment-10": {
+  "question": "Will I clear my job probation period?",
+  "qType": "career",
+  "old": {
+   "state": "REVERSING",
+   "score": 1,
+   "timing": {
+    "minDays": 135,
+    "maxDays": 225
+   },
+   "obstruction": "Rahu"
+  },
+  "new": {
+   "state": "FULFILLED",
+   "score": 4,
+   "timing": {
+    "minDays": 135,
+    "maxDays": 225
+   },
+   "obstruction": "Rahu"
+  },
+  "alone_moves": [],
+  "alone_reproduces": [],
+  "removal_changes_state": [
+   "nodes",
+   "scaling",
+   "ladder"
+  ]
+ },
+ "pad-employment-11": {
+  "question": "Should I ask for a raise this quarter?",
+  "qType": "general",
+  "old": {
+   "state": "BLOCKED",
+   "score": -9,
+   "timing": {
+    "minDays": 11,
+    "maxDays": 21
+   },
+   "obstruction": "Mars"
+  },
+  "new": {
+   "state": "DELAYED",
+   "score": -4,
+   "timing": {
+    "minDays": 8,
+    "maxDays": 17
+   },
+   "obstruction": "Mars"
+  },
+  "alone_moves": [],
+  "alone_reproduces": [],
+  "removal_changes_state": [
+   "nodes"
+  ]
+ },
+ "pad-family-21": {
+  "question": "Will my grandmother recover from her illness?",
+  "qType": "health",
+  "old": {
+   "state": "BLOCKED",
+   "score": -9,
+   "timing": {
+    "minDays": 14,
+    "maxDays": 30
+   },
+   "obstruction": "Ketu"
+  },
+  "new": {
+   "state": "UNFORMED",
+   "score": -4,
+   "timing": null,
+   "obstruction": "Ketu"
+  },
+  "alone_moves": [],
+  "alone_reproduces": [],
+  "removal_changes_state": [
+   "nodes"
+  ]
+ },
+ "pad-family-22": {
+  "question": "Will my brother and I reconcile?",
+  "qType": "general",
+  "old": {
+   "state": "DELAYED",
+   "score": -2,
+   "timing": {
+    "minDays": 11,
+    "maxDays": 21
+   },
+   "obstruction": "Saturn"
+  },
+  "new": {
+   "state": "DELAYED",
+   "score": 2,
+   "timing": {
+    "minDays": 8,
+    "maxDays": 17
+   },
+   "obstruction": "Saturn"
+  },
+  "alone_moves": [],
+  "alone_reproduces": [],
+  "removal_changes_state": []
+ },
+ "pad-finance-12": {
+  "question": "Will I be able to pay off my credit card debt?",
+  "qType": "finance",
+  "old": {
+   "state": "UNFORMED",
+   "score": -4,
+   "timing": null,
+   "obstruction": "Ketu"
+  },
+  "new": {
+   "state": "UNFORMED",
+   "score": 0,
+   "timing": null,
+   "obstruction": "Ketu"
+  },
+  "alone_moves": [],
+  "alone_reproduces": [],
+  "removal_changes_state": []
+ },
+ "pad-finance-13": {
+  "question": "Will the stock I bought recover?",
+  "qType": "health",
+  "old": {
+   "state": "FULFILLED",
+   "score": 5,
+   "timing": {
+    "minDays": 42,
+    "maxDays": 63
+   },
+   "obstruction": "Saturn"
+  },
+  "new": {
+   "state": "FULFILLED",
+   "score": 8,
+   "timing": {
+    "minDays": 34,
+    "maxDays": 50
+   },
+   "obstruction": "Saturn"
+  },
+  "alone_moves": [],
+  "alone_reproduces": [],
+  "removal_changes_state": []
+ },
+ "pad-finance-14": {
+  "question": "Will my salary increase this year?",
+  "qType": "career",
+  "old": {
+   "state": "BLOCKED",
+   "score": -5,
+   "timing": {
+    "minDays": 3,
+    "maxDays": 7
+   },
+   "obstruction": "MoonDisagreement"
+  },
+  "new": {
+   "state": "UNFORMED",
+   "score": -1,
+   "timing": null,
+   "obstruction": "MoonDisagreement"
+  },
+  "alone_moves": [
+   "nodes",
+   "sign",
+   "scaling",
+   "ladder"
+  ],
+  "alone_reproduces": [
+   "nodes",
+   "sign",
+   "scaling",
+   "ladder"
+  ],
+  "removal_changes_state": []
+ },
+ "pad-general-27": {
+  "question": "Is now a favourable time to start something new?",
+  "qType": "general",
+  "old": {
+   "state": "BLOCKED",
+   "score": -8,
+   "timing": {
+    "minDays": 45,
+    "maxDays": 90
+   },
+   "obstruction": "Ketu"
+  },
+  "new": {
+   "state": "DELAYED",
+   "score": -3,
+   "timing": {
+    "minDays": 45,
+    "maxDays": 90
+   },
+   "obstruction": "None"
+  },
+  "alone_moves": [
+   "nodes"
+  ],
+  "alone_reproduces": [
+   "nodes"
+  ],
+  "removal_changes_state": []
+ },
+ "pad-general-28": {
+  "question": "Will things improve for me soon?",
+  "qType": "general",
+  "old": {
+   "state": "BLOCKED",
+   "score": -9,
+   "timing": {
+    "minDays": 11,
+    "maxDays": 21
+   },
+   "obstruction": "Mars"
+  },
+  "new": {
+   "state": "DELAYED",
+   "score": -4,
+   "timing": {
+    "minDays": 8,
+    "maxDays": 17
+   },
+   "obstruction": "Mars"
+  },
+  "alone_moves": [],
+  "alone_reproduces": [],
+  "removal_changes_state": [
+   "nodes"
+  ]
+ },
+ "pad-lostitem-26": {
+  "question": "Will my missing phone be found?",
+  "qType": "lostitem",
+  "old": {
+   "state": "DELAYED",
+   "score": -1,
+   "timing": {
+    "minDays": 45,
+    "maxDays": 90
+   },
+   "obstruction": "Ketu"
+  },
+  "new": {
+   "state": "FULFILLED",
+   "score": 4,
+   "timing": {
+    "minDays": 45,
+    "maxDays": 90
+   },
+   "obstruction": "None"
+  },
+  "alone_moves": [],
+  "alone_reproduces": [],
+  "removal_changes_state": [
+   "nodes",
+   "sign",
+   "scaling",
+   "ladder"
+  ]
+ },
+ "pad-property-15": {
+  "question": "Will construction on my new house finish on time?",
+  "qType": "property",
+  "old": {
+   "state": "DELAYED",
+   "score": 1,
+   "timing": {
+    "minDays": 42,
+    "maxDays": 63
+   },
+   "obstruction": "Saturn"
+  },
+  "new": {
+   "state": "FULFILLED",
+   "score": 4,
+   "timing": {
+    "minDays": 34,
+    "maxDays": 50
+   },
+   "obstruction": "Saturn"
+  },
+  "alone_moves": [],
+  "alone_reproduces": [],
+  "removal_changes_state": [
+   "nodes",
+   "scaling",
+   "ladder"
+  ]
+ },
+ "pad-property-16": {
+  "question": "Should I buy agricultural land this season?",
+  "qType": "property",
+  "old": {
+   "state": "DELAYED",
+   "score": -4,
+   "timing": {
+    "minDays": 45,
+    "maxDays": 90
+   },
+   "obstruction": "Ketu"
+  },
+  "new": {
+   "state": "DELAYED",
+   "score": 0,
+   "timing": {
+    "minDays": 45,
+    "maxDays": 90
+   },
+   "obstruction": "None"
+  },
+  "alone_moves": [],
+  "alone_reproduces": [],
+  "removal_changes_state": []
+ },
+ "pad-relationship-01": {
+  "question": "Will my relationship with my partner last?",
+  "qType": "marriage",
+  "old": {
+   "state": "BLOCKED",
+   "score": -8,
+   "timing": {
+    "minDays": 45,
+    "maxDays": 90
+   },
+   "obstruction": "Ketu"
+  },
+  "new": {
+   "state": "DELAYED",
+   "score": -3,
+   "timing": {
+    "minDays": 45,
+    "maxDays": 90
+   },
+   "obstruction": "MoonDisagreement"
+  },
+  "alone_moves": [
+   "nodes"
+  ],
+  "alone_reproduces": [
+   "nodes"
+  ],
+  "removal_changes_state": []
+ },
+ "pad-relationship-02": {
+  "question": "Should I trust my partner right now?",
+  "qType": "marriage",
+  "old": {
+   "state": "DELAYED",
+   "score": 3,
+   "timing": {
+    "minDays": 45,
+    "maxDays": 90
+   },
+   "obstruction": "None"
+  },
+  "new": {
+   "state": "FULFILLED",
+   "score": 6,
+   "timing": {
+    "minDays": 45,
+    "maxDays": 90
+   },
+   "obstruction": "None"
+  },
+  "alone_moves": [
+   "scaling"
+  ],
+  "alone_reproduces": [
+   "scaling"
+  ],
+  "removal_changes_state": []
+ },
+ "pad-relationship-03": {
+  "question": "Will my long-distance relationship survive?",
+  "qType": "marriage",
+  "old": {
+   "state": "REVERSING",
+   "score": -2,
+   "timing": {
+    "minDays": 135,
+    "maxDays": 225
+   },
+   "obstruction": "Mars"
+  },
+  "new": {
+   "state": "REVERSING",
+   "score": 1,
+   "timing": {
+    "minDays": 135,
+    "maxDays": 225
+   },
+   "obstruction": "Mars"
+  },
+  "alone_moves": [],
+  "alone_reproduces": [],
+  "removal_changes_state": []
+ },
+ "pad-relationship-04": {
+  "question": "Will my ex come back to me?",
+  "qType": "marriage",
+  "old": {
+   "state": "BLOCKED",
+   "score": -11,
+   "timing": {
+    "minDays": 135,
+    "maxDays": 225
+   },
+   "obstruction": "Rahu"
+  },
+  "new": {
+   "state": "BLOCKED",
+   "score": -7,
+   "timing": {
+    "minDays": 135,
+    "maxDays": 225
+   },
+   "obstruction": "Rahu"
+  },
+  "alone_moves": [],
+  "alone_reproduces": [],
+  "removal_changes_state": []
+ },
+ "pad-spiritual-25": {
+  "question": "Will I overcome the evil eye affecting me?",
+  "qType": "general",
+  "old": {
+   "state": "BLOCKED",
+   "score": -9,
+   "timing": {
+    "minDays": 14,
+    "maxDays": 30
+   },
+   "obstruction": "Ketu"
+  },
+  "new": {
+   "state": "UNFORMED",
+   "score": -4,
+   "timing": null,
+   "obstruction": "Ketu"
+  },
+  "alone_moves": [],
+  "alone_reproduces": [],
+  "removal_changes_state": [
+   "nodes"
+  ]
+ },
+ "pad-travel-17": {
+  "question": "Will my visa interview go well?",
+  "qType": "career",
+  "old": {
+   "state": "BLOCKED",
+   "score": -9,
+   "timing": {
+    "minDays": 45,
+    "maxDays": 90
+   },
+   "obstruction": "MoonDisagreement"
+  },
+  "new": {
+   "state": "DELAYED",
+   "score": -3,
+   "timing": {
+    "minDays": 45,
+    "maxDays": 90
+   },
+   "obstruction": "MoonDisagreement"
+  },
+  "alone_moves": [
+   "ladder"
+  ],
+  "alone_reproduces": [
+   "ladder"
+  ],
+  "removal_changes_state": []
+ },
+ "pad-travel-18": {
+  "question": "Is it safe for me to travel by road tomorrow?",
+  "qType": "travel",
+  "old": {
+   "state": "BLOCKED",
+   "score": -6,
+   "timing": {
+    "minDays": 42,
+    "maxDays": 63
+   },
+   "obstruction": "Saturn"
+  },
+  "new": {
+   "state": "DELAYED",
+   "score": -1,
+   "timing": {
+    "minDays": 34,
+    "maxDays": 50
+   },
+   "obstruction": "Saturn"
+  },
+  "alone_moves": [
+   "nodes",
+   "scaling"
+  ],
+  "alone_reproduces": [
+   "nodes",
+   "scaling"
+  ],
+  "removal_changes_state": []
+ },
+ "property-001": {
+  "question": "Will I be able to buy this house?",
+  "qType": "property",
+  "old": {
+   "state": "UNFORMED",
+   "score": 0,
+   "timing": null,
+   "obstruction": "None"
+  },
+  "new": {
+   "state": "FULFILLED",
+   "score": 4,
+   "timing": {
+    "minDays": 3,
+    "maxDays": 7
+   },
+   "obstruction": "None"
+  },
+  "alone_moves": [
+   "nodes",
+   "scaling"
+  ],
+  "alone_reproduces": [],
+  "removal_changes_state": [
+   "nodes",
+   "sign",
+   "scaling",
+   "ladder"
+  ]
+ },
+ "property-002": {
+  "question": "Should I sell my land now or wait?",
+  "qType": "property",
+  "old": {
+   "state": "UNFORMED",
+   "score": -4,
+   "timing": null,
+   "obstruction": "Ketu"
+  },
+  "new": {
+   "state": "UNFORMED",
+   "score": 0,
+   "timing": null,
+   "obstruction": "Ketu"
+  },
+  "alone_moves": [],
+  "alone_reproduces": [],
+  "removal_changes_state": []
+ },
+ "property-003": {
+  "question": "Will the property dispute with my neighbour end well?",
+  "qType": "property",
+  "old": {
+   "state": "BLOCKED",
+   "score": -6,
+   "timing": {
+    "minDays": 11,
+    "maxDays": 21
+   },
+   "obstruction": "Saturn"
+  },
+  "new": {
+   "state": "DELAYED",
+   "score": -1,
+   "timing": {
+    "minDays": 8,
+    "maxDays": 17
+   },
+   "obstruction": "Saturn"
+  },
+  "alone_moves": [
+   "nodes",
+   "scaling"
+  ],
+  "alone_reproduces": [
+   "nodes",
+   "scaling"
+  ],
+  "removal_changes_state": []
+ },
+ "property-004": {
+  "question": "Will my rental agreement be renewed?",
+  "qType": "general",
+  "old": {
+   "state": "UNFORMED",
+   "score": 0,
+   "timing": null,
+   "obstruction": "None"
+  },
+  "new": {
+   "state": "MOVING",
+   "score": 3,
+   "timing": {
+    "minDays": 3,
+    "maxDays": 7
+   },
+   "obstruction": "None"
+  },
+  "alone_moves": [
+   "scaling"
+  ],
+  "alone_reproduces": [
+   "scaling"
+  ],
+  "removal_changes_state": []
+ },
+ "property-005": {
+  "question": "Should I take a mortgage for this property?",
+  "qType": "property",
+  "old": {
+   "state": "DELAYED",
+   "score": -1,
+   "timing": {
+    "minDays": 42,
+    "maxDays": 63
+   },
+   "obstruction": "Saturn"
+  },
+  "new": {
+   "state": "FULFILLED",
+   "score": 4,
+   "timing": {
+    "minDays": 34,
+    "maxDays": 50
+   },
+   "obstruction": "Saturn"
+  },
+  "alone_moves": [],
+  "alone_reproduces": [],
+  "removal_changes_state": [
+   "nodes",
+   "scaling",
+   "ladder"
+  ]
+ },
+ "spiritual-001": {
+  "question": "Am I under the effect of black magic?",
+  "qType": "general",
+  "old": {
+   "state": "BLOCKED",
+   "score": -9,
+   "timing": {
+    "minDays": 11,
+    "maxDays": 21
+   },
+   "obstruction": "Mars"
+  },
+  "new": {
+   "state": "DELAYED",
+   "score": -4,
+   "timing": {
+    "minDays": 8,
+    "maxDays": 17
+   },
+   "obstruction": "Mars"
+  },
+  "alone_moves": [],
+  "alone_reproduces": [],
+  "removal_changes_state": [
+   "nodes"
+  ]
+ },
+ "spiritual-002": {
+  "question": "Will my dua for guidance be answered?",
+  "qType": "general",
+  "old": {
+   "state": "UNFORMED",
+   "score": 0,
+   "timing": null,
+   "obstruction": "None"
+  },
+  "new": {
+   "state": "MOVING",
+   "score": 3,
+   "timing": {
+    "minDays": 3,
+    "maxDays": 7
+   },
+   "obstruction": "None"
+  },
+  "alone_moves": [
+   "scaling"
+  ],
+  "alone_reproduces": [
+   "scaling"
+  ],
+  "removal_changes_state": []
+ },
+ "timing-00": {
+  "question": "Will I get the job I interviewed for?",
+  "qType": "career",
+  "old": {
+   "state": "BLOCKED",
+   "score": -5,
+   "timing": {
+    "minDays": 3,
+    "maxDays": 7
+   },
+   "obstruction": "MoonDisagreement"
+  },
+  "new": {
+   "state": "UNFORMED",
+   "score": -1,
+   "timing": null,
+   "obstruction": "MoonDisagreement"
+  },
+  "alone_moves": [
+   "nodes",
+   "sign",
+   "scaling",
+   "ladder"
+  ],
+  "alone_reproduces": [
+   "nodes",
+   "sign",
+   "scaling",
+   "ladder"
+  ],
+  "removal_changes_state": []
+ },
+ "timing-01": {
+  "question": "Will I get the job I interviewed for?",
+  "qType": "career",
+  "old": {
+   "state": "BLOCKED",
+   "score": -5,
+   "timing": {
+    "minDays": 3,
+    "maxDays": 7
+   },
+   "obstruction": "MoonDisagreement"
+  },
+  "new": {
+   "state": "UNFORMED",
+   "score": -1,
+   "timing": null,
+   "obstruction": "MoonDisagreement"
+  },
+  "alone_moves": [
+   "nodes",
+   "sign",
+   "scaling",
+   "ladder"
+  ],
+  "alone_reproduces": [
+   "nodes",
+   "sign",
+   "scaling",
+   "ladder"
+  ],
+  "removal_changes_state": []
+ },
+ "timing-04": {
+  "question": "Will I get the job I interviewed for?",
+  "qType": "career",
+  "old": {
+   "state": "BLOCKED",
+   "score": -5,
+   "timing": {
+    "minDays": 3,
+    "maxDays": 7
+   },
+   "obstruction": "MoonDisagreement"
+  },
+  "new": {
+   "state": "UNFORMED",
+   "score": -1,
+   "timing": null,
+   "obstruction": "MoonDisagreement"
+  },
+  "alone_moves": [
+   "nodes",
+   "sign",
+   "scaling",
+   "ladder"
+  ],
+  "alone_reproduces": [
+   "nodes",
+   "sign",
+   "scaling",
+   "ladder"
+  ],
+  "removal_changes_state": []
+ },
+ "timing-05": {
+  "question": "Will I get the job I interviewed for?",
+  "qType": "career",
+  "old": {
+   "state": "UNFORMED",
+   "score": -4,
+   "timing": null,
+   "obstruction": "Ketu"
+  },
+  "new": {
+   "state": "MOVING",
+   "score": 1,
+   "timing": {
+    "minDays": 11,
+    "maxDays": 24
+   },
+   "obstruction": "Ketu"
+  },
+  "alone_moves": [],
+  "alone_reproduces": [],
+  "removal_changes_state": [
+   "nodes",
+   "sign",
+   "scaling",
+   "ladder"
+  ]
+ },
+ "timing-06": {
+  "question": "Will I get the job I interviewed for?",
+  "qType": "career",
+  "old": {
+   "state": "UNFORMED",
+   "score": -4,
+   "timing": null,
+   "obstruction": "Ketu"
+  },
+  "new": {
+   "state": "MOVING",
+   "score": 1,
+   "timing": {
+    "minDays": 11,
+    "maxDays": 24
+   },
+   "obstruction": "Ketu"
+  },
+  "alone_moves": [],
+  "alone_reproduces": [],
+  "removal_changes_state": [
+   "nodes",
+   "sign",
+   "scaling",
+   "ladder"
+  ]
+ },
+ "timing-09": {
+  "question": "Will I get the job I interviewed for?",
+  "qType": "career",
+  "old": {
+   "state": "UNFORMED",
+   "score": -4,
+   "timing": null,
+   "obstruction": "Ketu"
+  },
+  "new": {
+   "state": "MOVING",
+   "score": 1,
+   "timing": {
+    "minDays": 11,
+    "maxDays": 24
+   },
+   "obstruction": "Ketu"
+  },
+  "alone_moves": [],
+  "alone_reproduces": [],
+  "removal_changes_state": [
+   "nodes",
+   "sign",
+   "scaling",
+   "ladder"
+  ]
+ },
+ "timing-10": {
+  "question": "Will I get the job I interviewed for?",
+  "qType": "career",
+  "old": {
+   "state": "BLOCKED",
+   "score": -10,
+   "timing": {
+    "minDays": 11,
+    "maxDays": 21
+   },
+   "obstruction": "Saturn"
+  },
+  "new": {
+   "state": "DELAYED",
+   "score": -5,
+   "timing": {
+    "minDays": 8,
+    "maxDays": 17
+   },
+   "obstruction": "Saturn"
+  },
+  "alone_moves": [],
+  "alone_reproduces": [],
+  "removal_changes_state": [
+   "nodes",
+   "sign",
+   "scaling",
+   "ladder"
+  ]
+ },
+ "timing-14": {
+  "question": "Will I get the job I interviewed for?",
+  "qType": "career",
+  "old": {
+   "state": "BLOCKED",
+   "score": -10,
+   "timing": {
+    "minDays": 11,
+    "maxDays": 21
+   },
+   "obstruction": "Saturn"
+  },
+  "new": {
+   "state": "DELAYED",
+   "score": -5,
+   "timing": {
+    "minDays": 8,
+    "maxDays": 17
+   },
+   "obstruction": "Saturn"
+  },
+  "alone_moves": [],
+  "alone_reproduces": [],
+  "removal_changes_state": [
+   "nodes",
+   "sign",
+   "scaling",
+   "ladder"
+  ]
+ },
+ "timing-15": {
+  "question": "Will I get the job I interviewed for?",
+  "qType": "career",
+  "old": {
+   "state": "DELAYED",
+   "score": 0,
+   "timing": {
+    "minDays": 15,
+    "maxDays": 32
+   },
+   "obstruction": "Rahu"
+  },
+  "new": {
+   "state": "DELAYED",
+   "score": 3,
+   "timing": {
+    "minDays": 15,
+    "maxDays": 32
+   },
+   "obstruction": "None"
+  },
+  "alone_moves": [],
+  "alone_reproduces": [],
+  "removal_changes_state": []
+ },
+ "timing-19": {
+  "question": "Will I get the job I interviewed for?",
+  "qType": "career",
+  "old": {
+   "state": "DELAYED",
+   "score": 0,
+   "timing": {
+    "minDays": 15,
+    "maxDays": 32
+   },
+   "obstruction": "Rahu"
+  },
+  "new": {
+   "state": "DELAYED",
+   "score": 3,
+   "timing": {
+    "minDays": 15,
+    "maxDays": 32
+   },
+   "obstruction": "None"
+  },
+  "alone_moves": [],
+  "alone_reproduces": [],
+  "removal_changes_state": []
+ },
+ "timing-20": {
+  "question": "Will I get the job I interviewed for?",
+  "qType": "career",
+  "old": {
+   "state": "BLOCKED",
+   "score": -9,
+   "timing": {
+    "minDays": 45,
+    "maxDays": 90
+   },
+   "obstruction": "MoonDisagreement"
+  },
+  "new": {
+   "state": "DELAYED",
+   "score": -3,
+   "timing": {
+    "minDays": 45,
+    "maxDays": 90
+   },
+   "obstruction": "MoonDisagreement"
+  },
+  "alone_moves": [
+   "ladder"
+  ],
+  "alone_reproduces": [
+   "ladder"
+  ],
+  "removal_changes_state": []
+ },
+ "timing-24": {
+  "question": "Will I get the job I interviewed for?",
+  "qType": "career",
+  "old": {
+   "state": "BLOCKED",
+   "score": -9,
+   "timing": {
+    "minDays": 45,
+    "maxDays": 90
+   },
+   "obstruction": "MoonDisagreement"
+  },
+  "new": {
+   "state": "DELAYED",
+   "score": -3,
+   "timing": {
+    "minDays": 45,
+    "maxDays": 90
+   },
+   "obstruction": "MoonDisagreement"
+  },
+  "alone_moves": [
+   "ladder"
+  ],
+  "alone_reproduces": [
+   "ladder"
+  ],
+  "removal_changes_state": []
+ },
+ "timing-25": {
+  "question": "Will I get the job I interviewed for?",
+  "qType": "career",
+  "old": {
+   "state": "BLOCKED",
+   "score": -5,
+   "timing": {
+    "minDays": 42,
+    "maxDays": 63
+   },
+   "obstruction": "Saturn"
+  },
+  "new": {
+   "state": "DELAYED",
+   "score": 1,
+   "timing": {
+    "minDays": 34,
+    "maxDays": 50
+   },
+   "obstruction": "Saturn"
+  },
+  "alone_moves": [
+   "nodes",
+   "scaling",
+   "ladder"
+  ],
+  "alone_reproduces": [
+   "nodes",
+   "scaling",
+   "ladder"
+  ],
+  "removal_changes_state": []
+ },
+ "timing-29": {
+  "question": "Will I get the job I interviewed for?",
+  "qType": "career",
+  "old": {
+   "state": "BLOCKED",
+   "score": -5,
+   "timing": {
+    "minDays": 42,
+    "maxDays": 63
+   },
+   "obstruction": "Saturn"
+  },
+  "new": {
+   "state": "DELAYED",
+   "score": 1,
+   "timing": {
+    "minDays": 34,
+    "maxDays": 50
+   },
+   "obstruction": "Saturn"
+  },
+  "alone_moves": [
+   "nodes",
+   "scaling",
+   "ladder"
+  ],
+  "alone_reproduces": [
+   "nodes",
+   "scaling",
+   "ladder"
+  ],
+  "removal_changes_state": []
+ },
+ "timing-30": {
+  "question": "Will I get the job I interviewed for?",
+  "qType": "career",
+  "old": {
+   "state": "BLOCKED",
+   "score": -5,
+   "timing": {
+    "minDays": 135,
+    "maxDays": 225
+   },
+   "obstruction": "Mars"
+  },
+  "new": {
+   "state": "REVERSING",
+   "score": -1,
+   "timing": {
+    "minDays": 135,
+    "maxDays": 225
+   },
+   "obstruction": "Mars"
+  },
+  "alone_moves": [
+   "nodes",
+   "scaling",
+   "ladder"
+  ],
+  "alone_reproduces": [
+   "nodes",
+   "scaling",
+   "ladder"
+  ],
+  "removal_changes_state": []
+ },
+ "timing-44": {
+  "question": "Will I get the job I interviewed for?",
+  "qType": "career",
+  "old": {
+   "state": "DELAYED",
+   "score": 2,
+   "timing": {
+    "minDays": 42,
+    "maxDays": 63
+   },
+   "obstruction": "Saturn"
+  },
+  "new": {
+   "state": "FULFILLED",
+   "score": 5,
+   "timing": {
+    "minDays": 34,
+    "maxDays": 50
+   },
+   "obstruction": "Saturn"
+  },
+  "alone_moves": [],
+  "alone_reproduces": [],
+  "removal_changes_state": []
+ },
+ "timing-45": {
+  "question": "Will I get the job I interviewed for?",
+  "qType": "career",
+  "old": {
+   "state": "BLOCKED",
+   "score": -7,
+   "timing": {
+    "minDays": 45,
+    "maxDays": 90
+   },
+   "obstruction": "Ketu"
+  },
+  "new": {
+   "state": "DELAYED",
+   "score": -3,
+   "timing": {
+    "minDays": 45,
+    "maxDays": 90
+   },
+   "obstruction": "None"
+  },
+  "alone_moves": [],
+  "alone_reproduces": [],
+  "removal_changes_state": []
+ },
+ "timing-59": {
+  "question": "Will I get the job I interviewed for?",
+  "qType": "career",
+  "old": {
+   "state": "DELAYED",
+   "score": -4,
+   "timing": {
+    "minDays": 11,
+    "maxDays": 21
+   },
+   "obstruction": "Mars"
+  },
+  "new": {
+   "state": "DELAYED",
+   "score": 0,
+   "timing": {
+    "minDays": 8,
+    "maxDays": 17
+   },
+   "obstruction": "Mars"
+  },
+  "alone_moves": [],
+  "alone_reproduces": [],
+  "removal_changes_state": []
+ },
+ "travel-001": {
+  "question": "Will my visa be approved for the trip?",
+  "qType": "travel",
+  "old": {
+   "state": "BLOCKED",
+   "score": -6,
+   "timing": {
+    "minDays": 42,
+    "maxDays": 63
+   },
+   "obstruction": "Saturn"
+  },
+  "new": {
+   "state": "DELAYED",
+   "score": -1,
+   "timing": {
+    "minDays": 34,
+    "maxDays": 50
+   },
+   "obstruction": "Saturn"
+  },
+  "alone_moves": [
+   "nodes",
+   "scaling"
+  ],
+  "alone_reproduces": [
+   "nodes",
+   "scaling"
+  ],
+  "removal_changes_state": []
+ },
+ "travel-002": {
+  "question": "Should I travel abroad this month?",
+  "qType": "travel",
+  "old": {
+   "state": "REVERSING",
+   "score": 4,
+   "timing": {
+    "minDays": 135,
+    "maxDays": 225
+   },
+   "obstruction": "Mars"
+  },
+  "new": {
+   "state": "FULFILLED",
+   "score": 7,
+   "timing": {
+    "minDays": 135,
+    "maxDays": 225
+   },
+   "obstruction": "Mars"
+  },
+  "alone_moves": [
+   "ladder"
+  ],
+  "alone_reproduces": [
+   "ladder"
+  ],
+  "removal_changes_state": [
+   "ladder"
+  ]
+ },
+ "travel-003": {
+  "question": "Will my flight be delayed?",
+  "qType": "travel",
+  "old": {
+   "state": "BLOCKED",
+   "score": -6,
+   "timing": {
+    "minDays": 135,
+    "maxDays": 225
+   },
+   "obstruction": "Rahu"
+  },
+  "new": {
+   "state": "REVERSING",
+   "score": -2,
+   "timing": {
+    "minDays": 135,
+    "maxDays": 225
+   },
+   "obstruction": "Rahu"
+  },
+  "alone_moves": [
+   "nodes",
+   "scaling"
+  ],
+  "alone_reproduces": [
+   "nodes",
+   "scaling"
+  ],
+  "removal_changes_state": []
+ },
+ "travel-004": {
+  "question": "Is it a good time to relocate to another country?",
+  "qType": "travel",
+  "old": {
+   "state": "DELAYED",
+   "score": 2,
+   "timing": {
+    "minDays": 42,
+    "maxDays": 63
+   },
+   "obstruction": "Saturn"
+  },
+  "new": {
+   "state": "FULFILLED",
+   "score": 4,
+   "timing": {
+    "minDays": 34,
+    "maxDays": 50
+   },
+   "obstruction": "Saturn"
+  },
+  "alone_moves": [],
+  "alone_reproduces": [],
+  "removal_changes_state": [
+   "scaling",
+   "ladder"
+  ]
+ },
+ "travel-005": {
+  "question": "Will my pilgrimage journey go smoothly?",
+  "qType": "travel",
+  "old": {
+   "state": "DELAYED",
+   "score": 0,
+   "timing": {
+    "minDays": 15,
+    "maxDays": 32
+   },
+   "obstruction": "Saturn"
+  },
+  "new": {
+   "state": "DELAYED",
+   "score": 2,
+   "timing": {
+    "minDays": 15,
+    "maxDays": 32
+   },
+   "obstruction": "Saturn"
+  },
+  "alone_moves": [],
+  "alone_reproduces": [],
+  "removal_changes_state": []
+ }
+}
