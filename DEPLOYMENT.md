@@ -124,6 +124,30 @@ removes a user's records in both regardless (`functions/account.ts`).
 2. Verify region is `asia-south1` (matches functions/firebase.json)
 3. Ensure Cloud Build API is enabled (should be automatic)
 
+#### Secret — `LOG_HASH_KEY` (required before deploying)
+
+Audit and security records carry keyed correlation codes instead of question
+text and IP addresses (`functions/src/utils/keyedHash.ts`, HMAC-SHA-256).
+`askWatchOracle`, `discussReading`, `verifyGooglePlayPurchase` and `razorpayWebhook`
+bind this secret, so deployment fails until it exists. Create it once, with a
+random value that is never written anywhere else:
+
+```bash
+openssl rand -hex 32 | firebase functions:secrets:set LOG_HASH_KEY --data-file=-
+```
+
+- Do not store the key in source, Firestore or `.env` files, and do not log it.
+- If the key is ever unavailable at runtime the codes are omitted, never
+  replaced with an unkeyed hash.
+- Transition: records written before this change keep their old unkeyed
+  values (8-hex FNV question codes, 16-hex SHA-256 IP codes); new ones are
+  `h1:` + 32 hex. The two never match, so correlation does not span the
+  switch, and old values cannot be re-keyed because the raw inputs were never
+  stored. The old values remain guessable — removing them from existing
+  records is a separate, owner-approved data change.
+- Rotating the key breaks correlation the same way; it would need a new
+  version prefix (`h2:`) in `keyedHash.ts`.
+
 ### Security Rules
 
 Deploy Firestore rules locally:

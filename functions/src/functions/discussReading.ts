@@ -44,10 +44,11 @@ import { verifyAuth } from '../middleware/auth';
 import { enforceRateLimit } from '../middleware/rateLimit';
 import { parse, DiscussReadingSchema } from '../middleware/validate';
 import { measure } from '../middleware/telemetry';
-import { logger, hashText } from '../utils/logger';
+import { logger } from '../utils/logger';
 import {
   ORACLE_FUNCTION_OPTS,
   ANTHROPIC_API_KEY,
+  LOG_HASH_KEY,
   DISCUSSION_TURN_LIMIT,
   MIN_DISCUSSION_BALANCE_MILLI,
 } from '../config';
@@ -64,6 +65,7 @@ import {
 } from '../oracle/discussionComposer';
 import { requestRef } from '../utils/requestRef';
 import { assertAccountActive } from '../utils/accountState';
+import { keyedHash } from '../utils/keyedHash';
 
 /**
  * A short, server-derived tag for a reading — "the finance reading", never
@@ -205,7 +207,7 @@ export interface DiscussReadingResponse {
 export const discussReading = onCall(
   {
     ...ORACLE_FUNCTION_OPTS,
-    secrets: [ANTHROPIC_API_KEY],
+    secrets: [ANTHROPIC_API_KEY, LOG_HASH_KEY],
     enforceAppCheck: process.env.FUNCTIONS_EMULATOR !== 'true',
   },
   async (request): Promise<DiscussReadingResponse> => {
@@ -427,7 +429,7 @@ export const discussReading = onCall(
       const audit: Omit<AuditLogDoc, 'ts'> = {
         userId,
         action: 'discussion_turn',
-        questionHash: hashText(input.message),
+        questionHash: keyedHash('question', input.message),
         source: 'callable',
         readingId: input.readingId,
       };

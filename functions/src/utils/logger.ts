@@ -4,8 +4,9 @@
  * Security rules:
  *  - Never log raw PII (email, full name, raw question text).
  *  - User IDs are logged because they are opaque UUIDs, not PII by themselves.
- *  - Question text is hashed (FNV-1a) before logging so we can correlate
- *    without storing the actual question.
+ *  - Question text and IPs are never logged or stored; records carry a keyed
+ *    correlation code instead (utils/keyedHash.ts). hashText() below is an
+ *    unkeyed FNV-1a, kept only for non-personal values (a verdict digest).
  */
 
 type Level = 'info' | 'warn' | 'error' | 'debug';

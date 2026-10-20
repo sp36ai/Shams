@@ -55,7 +55,7 @@ import { measure } from '../middleware/telemetry';
 import { logger, hashText } from '../utils/logger';
 import { localIsoFromOffset } from '../utils/localTime';
 import { toBoundaryPlanetName } from '../utils/planetBoundaryName';
-import { ORACLE_FUNCTION_OPTS, ANTHROPIC_API_KEY } from '../config';
+import { ORACLE_FUNCTION_OPTS, ANTHROPIC_API_KEY, LOG_HASH_KEY } from '../config';
 import { claimQuotaSlot, refundQuotaSlot } from '../utils/quotaSlots';
 import { claimRequest, completeRequest, releaseRequest } from '../utils/idempotency';
 import type { AuditLogDoc, ReadingDoc } from '../types';
@@ -80,6 +80,7 @@ import type { WatchState, WatchVerdict } from '../engine/rkp/watchJudgment';
 import { requestRef } from '../utils/requestRef';
 import { isOutOfScopeQuestion } from '../oracle/questionScope';
 import { writeIfAccountActive } from '../utils/accountState';
+import { keyedHash } from '../utils/keyedHash';
 
 /**
  * The six watch states expressed in the app's existing verdict vocabulary, so
@@ -154,7 +155,7 @@ export const askWatchOracle = onCall(
     // The judgment itself is pure computation, but the oracle voice is
     // synthesised by Anthropic (up to 25s) — so this needs the same headroom
     // and the same secret binding as askOracle.
-    secrets: [ANTHROPIC_API_KEY],
+    secrets: [ANTHROPIC_API_KEY, LOG_HASH_KEY],
     enforceAppCheck: process.env.FUNCTIONS_EMULATOR !== 'true',
   },
   async (request): Promise<WatchOracleResponse> => {
@@ -392,7 +393,7 @@ export const askWatchOracle = onCall(
       const audit: Omit<AuditLogDoc, 'ts'> = {
         userId,
         action: 'oracle_computed',
-        questionHash: hashText(input.question),
+        questionHash: keyedHash('question', input.question),
         verdict: STATE_TO_VERDICT[verdict.state],
         plan,
         source: 'callable',

@@ -15,7 +15,11 @@
  * reasoning and its limits.
  */
 
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
+
+// ipHash is a keyed code (utils/keyedHash.ts); without a key it is omitted.
+vi.mock('../../config', () => ({ LOG_HASH_KEY: { value: () => 'test-log-hash-key' } }));
+
 import { trustedClientIp, requestMetaFromHttp } from '../requestMeta';
 import type { Request } from 'firebase-functions/v2/https';
 

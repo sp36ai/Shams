@@ -35,6 +35,7 @@ import {
   FUNCTION_OPTS,
   GOOGLE_PLAY_CLIENT_EMAIL,
   GOOGLE_PLAY_PRIVATE_KEY,
+  LOG_HASH_KEY,
   PLAY_PRODUCT_MAP,
 } from '../../config';
 import { assertAccountActive, writeIfAccountActive } from '../../utils/accountState';
@@ -219,7 +220,7 @@ export const verifyGooglePlayPurchase = onCall(
   {
     ...FUNCTION_OPTS,
     enforceAppCheck: process.env.FUNCTIONS_EMULATOR !== 'true',
-    secrets: [GOOGLE_PLAY_CLIENT_EMAIL, GOOGLE_PLAY_PRIVATE_KEY],
+    secrets: [GOOGLE_PLAY_CLIENT_EMAIL, GOOGLE_PLAY_PRIVATE_KEY, LOG_HASH_KEY],
   },
   async request => {
     const startedAt = Date.now();

@@ -91,6 +91,7 @@ function reset(): void {
 
 vi.mock('../../../config', () => ({
   RAZORPAY_WEBHOOK_SECRET: { value: () => WEBHOOK_SECRET },
+  LOG_HASH_KEY: { value: () => 'test-log-hash-key' },
   REGION: 'asia-south1',
   PLAN_DURATION_DAYS: { free: 0, mureed: 31, khass: 31 },
 }));

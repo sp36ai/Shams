@@ -48,7 +48,13 @@ import { FieldValue } from 'firebase-admin/firestore';
 import { db, auth } from '../../utils/admin';
 import { logger } from '../../utils/logger';
 import { requestMetaFromHttp, type RequestAuditMeta } from '../../utils/requestMeta';
-import { RAZORPAY_WEBHOOK_SECRET, REGION, PLAN_DURATION_DAYS, type PlanTier } from '../../config';
+import {
+  RAZORPAY_WEBHOOK_SECRET,
+  LOG_HASH_KEY,
+  REGION,
+  PLAN_DURATION_DAYS,
+  type PlanTier,
+} from '../../config';
 import { writeIfAccountActive } from '../../utils/accountState';
 
 // Per-IP sliding-window rate limiter for the webhook endpoint.
@@ -364,7 +370,12 @@ async function upgradePlan(
 }
 
 export const razorpayWebhook = onRequest(
-  { region: REGION, timeoutSeconds: 30, cors: false, secrets: [RAZORPAY_WEBHOOK_SECRET] },
+  {
+    region: REGION,
+    timeoutSeconds: 30,
+    cors: false,
+    secrets: [RAZORPAY_WEBHOOK_SECRET, LOG_HASH_KEY],
+  },
   async (req, res) => {
     const startedAt = Date.now();
     const requestMeta = requestMetaFromHttp(req);
