@@ -92,21 +92,28 @@ Follow these steps in [Firebase Console](https://console.firebase.google.com):
    - **Billing**: Requires billing enabled (see step 3 above)
 3. Do NOT use Firestore in Datastore mode (use Native mode)
 
-#### TTL policy — `idempotencyKeys` (required)
+#### TTL policies — `idempotencyKeys` and rate-limit `minutes` (required)
 
-`askWatchOracle` records each submission's `requestId` so a retry replays the
-original reading instead of casting and charging for a second one. Those
-records exist only to deduplicate a retry, and each carries an `expiresAt`
-timestamp 24 hours out — but Firestore only acts on it once a TTL policy names
-that field:
+Two kinds of short-lived records carry an `expiresAt` timestamp, and Firestore
+only deletes them once a TTL policy names that field:
 
-1. Go to **Build → Firestore Database → Time-to-live (TTL)**
-2. **Create policy**
-   - Collection group: `idempotencyKeys`
-   - Timestamp field: `expiresAt`
+- `idempotencyKeys` — `askWatchOracle` and `discussReading` record each
+  submission's `requestId`, with the full response, so a retry replays the
+  original reading instead of casting and charging for a second one.
+  `expiresAt` is 24 hours out.
+- `rateLimits/{uid}/minutes/*` — per-minute request counters. `expiresAt` is
+  2 minutes out. The TTL policy must name the `minutes` collection group (the
+  subcollection the counters live in), not `rateLimits`.
 
-Skipping this is not a correctness problem — deduplication still works — but the
-collection then grows without bound, one document per question ever asked.
+Both policies are declared in `firestore.indexes.json` (`fieldOverrides`) and
+are created by `firebase deploy --only firestore:indexes`. Afterwards, confirm
+both appear under **Build → Firestore Database → Time-to-live (TTL)**. If an
+older `rateLimits` policy exists there from before, it can be removed — no
+documents in that group carry `expiresAt`.
+
+Skipping this is not a correctness problem — deduplication and rate limiting
+still work — but both collections then grow without bound. Account deletion
+removes a user's records in both regardless (`functions/account.ts`).
 
 ### Cloud Functions
 
