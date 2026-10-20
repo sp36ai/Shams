@@ -417,6 +417,23 @@ established, which matters because three of the four verdicts that look most
 implausible (cases 2–4 in `case_records.md`) are decided entirely by rows
 L14–L17 and L21.
 
+## Release controls (apply to every rule change)
+
+1. **No owner answer, no rule change.** Unanswered items stay UNKNOWN and current behaviour is kept.
+2. **Verbatim and attributed.** Each decision is logged in the owner's exact words, with the date, the channel
+   and who gave it. A message that cannot be attributed is recorded as received, not as confirmed.
+3. **Dependencies first.** Rules that depend on each other are settled together before any is implemented
+   (for example self-protection with its stacking condition, before Case 4's scoring is touched).
+4. **One rule at a time.** Each change gets positive, negative and exception tests, and every verdict
+   transition against the frozen baseline is recorded (`attribution-harness/`).
+5. **Regression gate before merge or deploy.** Replay the golden corpus, inspect every unexpected positive
+   and negative transition, and obtain approval. The functions are deployed before the app build.
+6. **Decision and code must agree.** A signed decision establishes the intended rule; it does not show the
+   code implements it. The ledger entry, the code and the tests must say the same thing, and a test must
+   exist for the worked example the owner gave.
+
+Current disposition: engine frozen at phase 1, branch experimental and unmerged, all unresolved rules UNKNOWN.
+
 ## Release gate for any change to a HYPOTHESIS row
 
 1. The new rule traces to owner confirmation or a named source, recorded here.
