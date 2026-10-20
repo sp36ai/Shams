@@ -174,6 +174,54 @@ Open issues to put back to the owner before any code change:
   needs an explicit, attributed "I change my table".
 - **S7 Self-protection.** Not in any answer. Confirm, with exact conditions.
 
+### OD-002 — reply received 2026-10-20, written in this session
+
+Channel: written message in the working chat, from the project owner's session.
+It begins "Yes, I am Sarfaraz, and I confirm these rules" and answers S1–S7 and
+the two blind charts. The message opens with a line addressed to someone who will
+"send back to Claude", so it was drafted with an AI's help. We record it as the
+owner's written confirmation, since he states in the first person that he is
+Sarfaraz and confirms; we cannot verify identity beyond that. It also settles
+OD-001, whose items he says he confirms. Verbatim answers (the text before
+"My blind judgment"):
+
+> **S1.** "Use the phone's tap-Send minute. If the phone's clock differs from the server time by more than 2 minutes, fall back to the server's receive minute so bad device clocks don't break the chart."
+>
+> **S2.** "For a job/career question, a neutral or friendly Zuhal on or aspecting the 10th adds −1 AND forces the state to Delayed (unless the final score reaches +4 or higher for Fulfilled). It should never force Blocked on its own."
+>
+> **S3.** "Check in this exact order: Score >= +4 -> Fulfilled (Yes) (overrides retrograde). Score <= -6 AND no exalted/own-sign benefic sits in or aspects the target Ghar -> Blocked (No). (If a strong benefic is present at <= -6, cap it at Delayed instead of Blocked). Target ruler is retrograde -> Reversing. Zuhal sits in/aspects target Ghar (and is not own/exalted) OR target ruler is weak -> Delayed. Score >= +1 -> Moving (Yes). Otherwise (-5 to 0) -> Unformed."
+>
+> **S4.** "Always counted as Ghars 3, 6, 10, and 11 from the 1st Ghar. If a malefic sits in 3, 6, 10, or 11 in its own or exalted sign, it scores +2 for ALL question types. If an ordinary (neutral/friendly) malefic sits in 3, 6, 10, or 11, it scores 0 (no penalty) only for career, legal, business, and finance questions (when checking both the target Ghar and the 11th Ghar). For other questions (like marriage or health), keep the normal malefic penalty."
+>
+> **S5.** "They act only in the Ghar they sit in. Do not give them 5th, 7th, or 9th aspects."
+>
+> **S6.** "Update the table to use 4 and 8 as the denying Ghars for travel. Leaving it empty was an omission in the old doc."
+>
+> **S7.** "If the ruler of the target Ghar sits in the target Ghar or casts a 7th aspect on the target Ghar, add +2 (note: if it sits in its own Ghar, it is already in its own sign so it gets the +2 strong-ruler score—do not double-count; the extra +2 is specifically when the ruler sits in the opposite Ghar and aspects its own Ghar back). Apply the same rule to the 11th Ghar ruler aspecting the 11th Ghar."
+
+His blind judgments: case-3 YES (fulfilled after slight delay, 2–3 months); case-4
+YES (moving, 15–30 days). Their text still said the "current app" gave −6/−7, so
+they are recorded as the owner's view, not as an independent blind test.
+
+How each answer is applied, and what is held back as ambiguous. The rule used for
+the implementation is written next to each; anything not listed here is NOT
+implemented and stays as it was.
+
+| Rule | Implemented? | How it is read / what is still open |
+|---|---|---|
+| S1 client minute | Yes | Client sends its tap-Send instant; server uses it if within 2 minutes of server time, else its own. Optional field, so old app versions keep working |
+| S3 ladder | Yes | Exactly the six steps above. "Strong benefic" = Mushtari or Zuhrah, exalted or own sign, sitting in or aspecting the target Ghar. "Weak ruler" = existing definition (enemy sign or debilitated). Zuhal check is explicit (sits in or aspects the target Ghar, not own/exalted) |
+| S5 nodes | Yes | Ras and Dhanab have no aspects at all |
+| S6 travel | Yes | Denial Ghars 4 and 8; supersedes the "—" in `RKP_RULES_FROM_SARFARAZ.md` |
+| 2.7 sign strength | Yes | Matter ruler: exalted/own +2, friendly +1, neutral 0, enemy −1, debilitated −2 |
+| 2.3 scaling | Yes | Mushtari or Zuhrah exalted/own sitting or aspecting target/11th: +3. Malefic sitting −2, malefic aspecting −1 |
+| S4 upachaya, Case A | Yes | Own/exalted malefic sitting in Ghar 3/6/10/11 counted on the target or 11th Ghar: +2, all question types |
+| 4.1 modality | Yes | Cardinal ×0.8, dual ×1.0, fixed ×1.25 on the matter ruler's sign, after the existing multipliers |
+| S4 upachaya, Cases B and C | **No** | Open: S4 says "neutral/friendly" malefic = 0 for four question types; the sheet (2.4 Case B/C) says everything except own/exalted/debilitated = 0, and debilitated = −1 for all types. What about an enemy-sign malefic, and is the debilitated −1 for all types? |
+| 2.2 Utarid, Qamar, Shams | **No** | Open: Utarid conjunct a malefic is "0 or −1"; is the Shams +1 for sitting only, or also aspecting? Qamar ±1 needs the same sitting/aspect rule |
+| S2 / 2.5 Zuhal on the 10th, scoring | **No** | Open: does the Zuhal −1 / +2 / −2 table replace or add to the generic malefic score (−2 sitting, −1 aspecting)? Does it also apply to business, where the 10th is a helping Ghar and not the matter's Ghar? |
+| S7 self-protection | **No** | Open: the answer is internally inconsistent. Read as "the extra +2 is only when the ruler sits in the opposite (7th-from) Ghar and aspects back". Does the 11th ruler sitting in the 11th itself get +2, given the 11th ruler has no strong-ruler credit today? |
+
 Entry format for each decision once confirmed:
 
 ```
