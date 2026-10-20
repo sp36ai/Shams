@@ -1,7 +1,7 @@
 {
   "provenance": {
     "generator": "functions/scripts/rkp-case-audit.ts",
-    "gitCommit": "4c3cfb9",
+    "gitCommit": "a2f7284",
     "workingTreeDirty": false,
     "engineVersion": "2.0.0-moshier",
     "ayanamsa": "Lahiri (primitives/ayanamsa.ts, sidereal mode 1)",
@@ -34,6 +34,56 @@
           12
         ]
       },
+      "gharSigns": [
+        {
+          "ghar": 1,
+          "sign": "Burj Sunbula"
+        },
+        {
+          "ghar": 2,
+          "sign": "Burj Meezan"
+        },
+        {
+          "ghar": 3,
+          "sign": "Burj Aqrab"
+        },
+        {
+          "ghar": 4,
+          "sign": "Burj Qaus"
+        },
+        {
+          "ghar": 5,
+          "sign": "Burj Jadi"
+        },
+        {
+          "ghar": 6,
+          "sign": "Burj Dalw"
+        },
+        {
+          "ghar": 7,
+          "sign": "Burj Hoot"
+        },
+        {
+          "ghar": 8,
+          "sign": "Burj Hamal"
+        },
+        {
+          "ghar": 9,
+          "sign": "Burj Saur"
+        },
+        {
+          "ghar": 10,
+          "sign": "Burj Jauza"
+        },
+        {
+          "ghar": 11,
+          "sign": "Burj Sartan"
+        },
+        {
+          "ghar": 12,
+          "sign": "Burj Asad"
+        }
+      ],
       "targetGhar": {
         "ghar": 10,
         "label": "10th Ghar",
@@ -239,6 +289,56 @@
           12
         ]
       },
+      "gharSigns": [
+        {
+          "ghar": 1,
+          "sign": "Burj Qaus"
+        },
+        {
+          "ghar": 2,
+          "sign": "Burj Jadi"
+        },
+        {
+          "ghar": 3,
+          "sign": "Burj Dalw"
+        },
+        {
+          "ghar": 4,
+          "sign": "Burj Hoot"
+        },
+        {
+          "ghar": 5,
+          "sign": "Burj Hamal"
+        },
+        {
+          "ghar": 6,
+          "sign": "Burj Saur"
+        },
+        {
+          "ghar": 7,
+          "sign": "Burj Jauza"
+        },
+        {
+          "ghar": 8,
+          "sign": "Burj Sartan"
+        },
+        {
+          "ghar": 9,
+          "sign": "Burj Asad"
+        },
+        {
+          "ghar": 10,
+          "sign": "Burj Sunbula"
+        },
+        {
+          "ghar": 11,
+          "sign": "Burj Meezan"
+        },
+        {
+          "ghar": 12,
+          "sign": "Burj Aqrab"
+        }
+      ],
       "targetGhar": {
         "ghar": 10,
         "label": "10th Ghar",
@@ -471,6 +571,56 @@
           12
         ]
       },
+      "gharSigns": [
+        {
+          "ghar": 1,
+          "sign": "Burj Jauza"
+        },
+        {
+          "ghar": 2,
+          "sign": "Burj Sartan"
+        },
+        {
+          "ghar": 3,
+          "sign": "Burj Asad"
+        },
+        {
+          "ghar": 4,
+          "sign": "Burj Sunbula"
+        },
+        {
+          "ghar": 5,
+          "sign": "Burj Meezan"
+        },
+        {
+          "ghar": 6,
+          "sign": "Burj Aqrab"
+        },
+        {
+          "ghar": 7,
+          "sign": "Burj Qaus"
+        },
+        {
+          "ghar": 8,
+          "sign": "Burj Jadi"
+        },
+        {
+          "ghar": 9,
+          "sign": "Burj Dalw"
+        },
+        {
+          "ghar": 10,
+          "sign": "Burj Hoot"
+        },
+        {
+          "ghar": 11,
+          "sign": "Burj Hamal"
+        },
+        {
+          "ghar": 12,
+          "sign": "Burj Saur"
+        }
+      ],
       "targetGhar": {
         "ghar": 7,
         "label": "7th Ghar",
@@ -702,6 +852,56 @@
           12
         ]
       },
+      "gharSigns": [
+        {
+          "ghar": 1,
+          "sign": "Burj Dalw"
+        },
+        {
+          "ghar": 2,
+          "sign": "Burj Hoot"
+        },
+        {
+          "ghar": 3,
+          "sign": "Burj Hamal"
+        },
+        {
+          "ghar": 4,
+          "sign": "Burj Saur"
+        },
+        {
+          "ghar": 5,
+          "sign": "Burj Jauza"
+        },
+        {
+          "ghar": 6,
+          "sign": "Burj Sartan"
+        },
+        {
+          "ghar": 7,
+          "sign": "Burj Asad"
+        },
+        {
+          "ghar": 8,
+          "sign": "Burj Sunbula"
+        },
+        {
+          "ghar": 9,
+          "sign": "Burj Meezan"
+        },
+        {
+          "ghar": 10,
+          "sign": "Burj Aqrab"
+        },
+        {
+          "ghar": 11,
+          "sign": "Burj Qaus"
+        },
+        {
+          "ghar": 12,
+          "sign": "Burj Jadi"
+        }
+      ],
       "targetGhar": {
         "ghar": 7,
         "label": "7th Ghar",
@@ -942,6 +1142,56 @@
           12
         ]
       },
+      "gharSigns": [
+        {
+          "ghar": 1,
+          "sign": "Burj Saur"
+        },
+        {
+          "ghar": 2,
+          "sign": "Burj Jauza"
+        },
+        {
+          "ghar": 3,
+          "sign": "Burj Sartan"
+        },
+        {
+          "ghar": 4,
+          "sign": "Burj Asad"
+        },
+        {
+          "ghar": 5,
+          "sign": "Burj Sunbula"
+        },
+        {
+          "ghar": 6,
+          "sign": "Burj Meezan"
+        },
+        {
+          "ghar": 7,
+          "sign": "Burj Aqrab"
+        },
+        {
+          "ghar": 8,
+          "sign": "Burj Qaus"
+        },
+        {
+          "ghar": 9,
+          "sign": "Burj Jadi"
+        },
+        {
+          "ghar": 10,
+          "sign": "Burj Dalw"
+        },
+        {
+          "ghar": 11,
+          "sign": "Burj Hoot"
+        },
+        {
+          "ghar": 12,
+          "sign": "Burj Hamal"
+        }
+      ],
       "targetGhar": {
         "ghar": 1,
         "label": "1st Ghar",

@@ -37,7 +37,7 @@ Absence from a classical text is not evidence against a rule either.
 
 | ID | Rule as implemented | Where | Status | Basis / note |
 |---|---|---|---|---|
-| L1 | Local clock minute → twelve 5-minute brackets → 1st Ghar sign (00–04 Hamal … 55–59 Hoot); rest in zodiac order | `watchGrid.ts` | UNKNOWN | Not in the owner document. Code header calls it the "Digital Watch Oracle" mechanism and compares it to KP's number method. Needs owner confirmation of the bracket→sign mapping |
+| L1 | Local clock minute → twelve 5-minute brackets → 1st Ghar sign (00–04 Hamal … 55–59 Hoot); rest in zodiac order. The minute is the server's receive time shifted by the phone's UTC offset; seconds ignored | `watchGrid.ts`, `localTime.ts`, `askWatchOracle.ts` | UNKNOWN | Not in the owner document. Code header calls it the "Digital Watch Oracle" mechanism and compares it to KP's number method. Needs the exact rule, boundary handling and a worked example (sheet 1.1) |
 | L2 | Planets are real sidereal positions placed into the watch frame by sign | `watchChart.ts` | HYPOTHESIS | Design choice stated in code; no owner statement found |
 | L3 | Lahiri ayanamsa | `primitives/ayanamsa.ts` | VERIFIED-OWNER | Doc §3 "Lahiri only" |
 | L4 | Rahu/Ketu use mean node, always retrograde | `primitives` | UNKNOWN | Not addressed in owner document |
@@ -84,6 +84,42 @@ Two consequences:
   reversal independent of state, "bespoke" timing model). I could not locate the
   document those findings came from. L21 and L23 should be read with that in
   mind: a previous review already flagged both as engineering choices.
+
+## What each kind of evidence does and does not show
+
+| Evidence | Shows | Does not show |
+|---|---|---|
+| Owner's confirmation (recorded below) | The intended rule | That the code implements it |
+| `src/astrology/rkp/__tests__` (96 tests) | The code does today what the tests say | That the rule is RKP, or that the tests' expectations are right |
+| Extractor's aspect cross-check against L9 | The engine's occupancy and aspect output agrees with the documented table | That the L9 table is authoritative RKP |
+| Extractor determinism (two runs identical) | The output is reproducible | That it is correct |
+| Golden-corpus replay | A change did not alter other verdicts unexpectedly | That the new or old verdicts are right |
+| An outside AI's opinion | A hypothesis worth asking the owner | Anything about RKP, unless it names a verifiable RKP source |
+
+The "audit finding #1, #2, #3" references in the tests stay UNRESOLVED until the
+original document is found or the rules they describe (state-resolution order,
+reversal independent of state, the timing model) are confirmed by the owner.
+
+## Owner decisions log
+
+Empty until Astro Sarfaraz replies. One entry per decision, in his words:
+
+```
+Decision ID:    OD-001
+Date received:  <date>
+Channel:        <how it was given: written message, voice note transcript, document>
+Sheet item:     <e.g. 1.1 a–f>
+Verbatim:       "<his exact words>"
+Ledger rows:    <e.g. L1>
+New status:     VERIFIED-OWNER | HYPOTHESIS | UNKNOWN | CONTRADICTED
+Code change:    none | <exact change, files, tests>
+Worked example: <input → expected result>, becomes test <name>
+```
+
+When a reply arrives: log it first and change the row's status; then name the
+precise implementation change, if any; change the code and the matching tests in
+one commit; run the engine unit tests, the extractor (with its cross-check) and
+the golden-corpus replay; review every changed verdict before any merge.
 
 ## Cross-references
 

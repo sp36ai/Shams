@@ -19,12 +19,42 @@ The "Now" line says what the app does today. The sample charts are in
 
 ## Part 1 — The frame (please confirm first; everything depends on it)
 
-**1.1 Watch minute → 1st Ghar.** Now: minutes 00–04 give Hamal as the 1st Ghar,
-05–09 Saur, 10–14 Jauza, 15–19 Sartan, 20–24 Asad, 25–29 Sunbula, 30–34
-Meezan, 35–39 Aqrab, 40–44 Qaus, 45–49 Jadi, 50–54 Dalw, 55–59 Hoot. The other
-signs follow in order as Ghars 2–12. Only the minute is used.
-Is this exactly your rule? Which clock minute counts (the moment the question is
-sent, or when it is read)?
+**1.1 The watch-minute rule — please answer in your own words, exactly.**
+This is the first thing we need, because every other Ghar in the app depends on
+it. Please do not just say "looks right"; state the rule.
+
+What the app does today, so you can correct it line by line:
+
+- It takes the **minute** of the querent's local clock (the hour, date and place
+  are never used). Seconds are ignored.
+- It splits the 60 minutes into twelve blocks of five: 00–04 → Hamal is the 1st
+  Ghar, 05–09 → Saur, 10–14 → Jauza, 15–19 → Sartan, 20–24 → Asad, 25–29 →
+  Sunbula, 30–34 → Meezan, 35–39 → Aqrab, 40–44 → Qaus, 45–49 → Jadi, 50–54 →
+  Dalw, 55–59 → Hoot. The other eleven signs follow in zodiac order as Ghars 2–12.
+- Minute 04 is the last minute of a block and minute 05 the first of the next;
+  nothing special happens at midnight, at the hour, or at any date.
+- Important: the minute used is the moment the **app's server receives the
+  question**, not the moment the person began typing or tapped the mic. The
+  person's time zone offset comes from their phone. A question typed at 07:29
+  and received at 07:30 uses the 30–34 block.
+- If no valid time can be read, the question fails; there is no default sign.
+
+Please state:
+
+a. How the local time selects the 1st Ghar — the exact blocks and signs, if
+   different from above (for example, does the first block really begin at
+   minute 00 with Hamal?).
+b. Whether anything else changes the mapping — date, place, day or night,
+   weekday, the sign the Sun is in.
+c. Which minute counts: the moment of asking, of typing, or of reading? How
+   should the start and end of a block be treated (is minute 05 in the first
+   block or the second)?
+d. What should happen at 59→00, at an exact block boundary, and if the time is
+   unknown?
+e. Whether the app's mapping is **your rule**, or only our interpretation of it
+   that you have not yet agreed.
+f. **One worked example.** Give an exact local time and the 1st Ghar sign it
+   should produce, for instance "11:13 → ____". We will turn it into a test.
 
 **1.2 Planets.** Now: real positions at the moment of asking (Lahiri, sidereal),
 placed in whichever Ghar their sign falls in. Rahu and Dhanab use the mean node.
@@ -117,13 +147,28 @@ below. Travel has no denial Ghar; business uses the 7th; health uses the 1st.
 What is the real timing method? What decides the unit (days, weeks, months)?
 How do cardinal, fixed and dual signs change it, if at all?
 
-## Part 5 — Two charts for you to judge
+## Part 5 — Charts for you to judge your own way
 
-Please judge these two charts yourself, without looking at the app's answer:
-**case-3** (marriage) and **case-4** (business) in `case_records_blind.md`. Both
-contain strong helping planets and several malefics. For each, say Yes / No /
-Delayed / Not settled, and which planets made you decide. The app's answers are
-in `RKP_RULE_VERIFICATION_ANSWER_KEY.md` and are kept back until you answer.
+Open `case_records_blind.md`. Each chart shows only the raw facts: the question,
+the local time, which sign is in which Ghar, and where each planet stands (sign,
+degree, Ghar, whether retrograde). Nothing the app works out is shown — no
+aspects, no strengths, no matter-Ghar, no score, no answer.
+
+Please do **case-3** (marriage) and **case-4** (business); the other three are
+optional. For each chart, tell us **how** you would judge it, step by step, as you
+ordinarily would:
+
+1. Which Ghar or Ghars you look at for this question, and why.
+2. Which planets you consult, and in what order.
+3. What you consider a help and what a hindrance, and which wins.
+4. Your answer (Yes / No / Delayed / Not settled), any timing, and what made you
+   decide.
+5. **Anything you needed that is not on the sheet.** If you need the aspects, the
+   planet strengths, the ruler of a Ghar, the day, the place, or anything else,
+   list it. We would rather learn what is missing than guess it for you.
+
+We are not testing whether you reproduce the app's answer. The app's answers are
+held back on purpose and will be compared only after yours are recorded.
 
 ---
 

@@ -157,6 +157,7 @@ function record(c: AuditCase) {
     watchMinute: chart.window.minute,
     lagna: chart.lagnaSignName,
     houseMatrix: { primary: matrix.primary, favorable: matrix.favorable, denial: matrix.denial },
+    gharSigns: chart.houses.map(h => ({ ghar: h.house, sign: h.signName })),
     targetGhar: ghar(target),
     fulfilmentGhar: ghar(fulfilment),
     querentRuler: cond(querentRuler),
@@ -231,31 +232,32 @@ for (const r of records) {
 }
 writeFileSync(resolve(outDir, 'case_records.md'), md.join('\n'));
 
-// Blind sheet for the owner: the same chart facts, no engine verdict or factors,
-// so a human judge is not anchored by the app's answer.
+// Blind sheet for the owner. Raw chart only: the question, the moment, which
+// sign is in which Ghar, and where each planet stands (sign, degree, Ghar,
+// retrograde). It deliberately omits everything the engine derives — the
+// matter's Ghar and ruler, the 11th-Ghar convention, aspects, dignity,
+// combustion, obstruction, score, verdict — so the owner's own procedure, and
+// whatever extra facts he needs, are what we learn.
 const blind: string[] = [
-  '# RKP charts for the owner to judge (engine verdict withheld)',
+  '# RKP charts for the owner to judge — raw chart only',
   '',
-  'Same chart facts as case_records.md. Aspect lists are the app\'s own table.',
+  'No engine verdict, score, aspect list, dignity or "matter Ghar" is shown. If you',
+  'need any of those to judge a chart, please say which — do not assume we left',
+  'it out by mistake. Sign names and Ghar numbers follow the watch-minute rule',
+  'in the app (see sheet item 1.1); retrograde is the planet\'s real motion.',
   '',
 ];
 for (const r of records) {
   blind.push(
     `## ${r.id} — "${r.question}"`,
     '',
-    `Local moment ${r.localMoment} · 1st Ghar ${r.lagna}`,
+    `Question asked at local time ${r.localMoment} (minute ${r.watchMinute}).`,
     '',
-    '| Ghar | Sign (ruler) | Occupants | Aspected by |',
-    '|---|---|---|---|',
-    `| Target ${r.targetGhar.ghar} | ${r.targetGhar.sign} (${r.targetGhar.ruler}) | ${list(r.targetGhar.occupants)} | ${list(r.targetGhar.aspectedBy)} |`,
-    `| 11th | ${r.fulfilmentGhar.sign} (${r.fulfilmentGhar.ruler}) | ${list(r.fulfilmentGhar.occupants)} | ${list(r.fulfilmentGhar.aspectedBy)} |`,
+    `Ghars: ${r.gharSigns.map(g => `${g.ghar} ${g.sign}`).join(' · ')}`,
     '',
-    '| Planet | Sign | Ghar | Dignity | Flags |',
+    '| Planet | Sign | Degree | Ghar | Retrograde |',
     '|---|---|---|---|---|',
-    ...r.planets.map(
-      p =>
-        `| ${p.planet} | ${p.sign} ${p.degreeInSign}° | ${p.ghar} | ${p.dignity} | ${[p.retrograde ? 'R' : '', p.combust ? 'C' : ''].filter(Boolean).join(' ') || '—'} |`,
-    ),
+    ...r.planets.map(p => `| ${p.planet} | ${p.sign} | ${p.degreeInSign}° | ${p.ghar} | ${p.retrograde ? 'yes' : 'no'} |`),
     '',
   );
 }
