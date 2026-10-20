@@ -143,7 +143,12 @@ export const en: StringTable = {
     retry: 'Retry',
     failedGeneric: 'The scrolls of this moment have not opened their seal. Try again.',
     outOfScope:
-      'I read the chart for questions about your own life — your work, family, love, money, health or plans. Ask me something like “Will I get the job?” or “Will my marriage happen this year?”',
+      'I read the chart for matters of a life — yours, or someone close to you: work, family, love, money, health or plans. Facts and general knowledge are outside what the chart answers. Tap an example below, or ask it in your own words.',
+    scopeExplain:
+      'The chart is cast for a matter in a life, not for general facts, so I did not cast one for that. Nothing was used from your questions. Ask about your own matter, or someone close to you — for example “Will I get the job?” or “Will my brother’s business improve?”',
+    scopeExample1: 'Will I get the job?',
+    scopeExample2: 'Will my marriage happen this year?',
+    scopeExample3: 'Will my brother’s business improve?',
     failureRef: 'Ref {{ref}}',
     quotaExhausted: "Today's questions are used. Come back tomorrow, or upgrade for unlimited.",
     micPermissionDenied: 'Microphone access is needed for voice questions. Enable it in Settings.',

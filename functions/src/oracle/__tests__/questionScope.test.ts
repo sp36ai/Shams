@@ -38,6 +38,9 @@ describe('isOutOfScopeQuestion (owner decision 2026-10-14)', () => {
       'Hi, will things get better?',
       'Name the best time for my business',
       'What is my ex thinking?',
+      'What is babloo future',
+      "What is Ahmed's future?",
+      'Tell me about Sara marriage',
     ]) {
       expect(outOfScope(q), q).toBe(false);
     }

@@ -17,7 +17,9 @@
  *   2. it is written in Latin script — Urdu and Hindi questions always pass,
  *      since the patterns below are English;
  *   3. it names no person at all — no I / my / we / he / she / they, no
- *      family member, no friend;
+ *      family member, no friend — and no matter of a life (future, luck,
+ *      marriage, job…): "What is babloo's future?" asks about someone's life
+ *      even though the name is not a pronoun (owner decision 2026-10-20);
  *   4. it opens like a request for information or a task ("name", "list",
  *      "what is", "who was", "how many", "translate", "tell me a …"), or it
  *      is nothing but a greeting.
@@ -33,6 +35,13 @@ const NON_LATIN_SCRIPT = /[\p{Script=Arabic}\p{Script=Devanagari}]/u;
 /** A person — the seeker or anyone in their life. */
 const PERSONAL_REFERENCE =
   /\b(?:i|i'm|im|i've|i'll|me|my|mine|myself|we|us|our|ours|he|she|him|her|his|hers|they|them|their|someone|somebody|anyone|mother|mom|mum|ammi|father|dad|abbu|brother|sister|son|daughter|wife|husband|friend|boyfriend|girlfriend|family|boss|ex)\b/i;
+
+/**
+ * A matter of someone's life. A named third party ("babloo") is not caught by
+ * PERSONAL_REFERENCE, so without this "What is babloo future" read as trivia.
+ */
+const LIFE_MATTER =
+  /\b(?:future|fate|luck|destiny|fortune|career|job|marriage|wedding|health|business|money|wealth|love|life|relationship|success|children|baby|exam|visa|court|case)\b/i;
 
 /** "tell me …" / "give me …" / "show me …" — the "me" is the request, not the subject. */
 const REQUEST_PREFIX = /^(?:please\s+)?(?:tell|give|show)\s+me\b/i;
@@ -92,5 +101,6 @@ export function isOutOfScopeQuestion(text: string, qType: QuestionType): boolean
   if (!INFORMATION_REQUEST.test(q)) {
     return false;
   }
-  return !PERSONAL_REFERENCE.test(q.replace(REQUEST_PREFIX, ' '));
+  const subject = q.replace(REQUEST_PREFIX, ' ');
+  return !PERSONAL_REFERENCE.test(subject) && !LIFE_MATTER.test(subject);
 }

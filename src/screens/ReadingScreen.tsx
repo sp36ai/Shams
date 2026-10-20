@@ -87,6 +87,7 @@ import { discussReading } from '../firebase/oracleDiscussion';
 import { toReadingRecord } from '../data/watchReadingRecord';
 import { buildShareText, canShare } from '../data/readingShare';
 import { readingTitleFor } from '../data/readingTitle';
+import { isScopeClarification } from '../data/scopeClarification';
 import StarfieldBackground from '@components/StarfieldBackground';
 import ChatBubble from '@components/oracle/ChatBubble';
 import ChatComposer from '@components/oracle/ChatComposer';
@@ -555,6 +556,41 @@ const ReadingScreen: React.FC = () => {
           ? current
           : null);
       const existing = continuing !== null ? null : current;
+
+      // The seeker asking about a refusal ("Why not of others?") is not a new
+      // matter for the chart. The thread holds no reading, so without this the
+      // text would be cast as a restatement and spend a quota slot on a verdict
+      // nobody asked for. Answered with the fixed scope explanation — no call,
+      // no charge, no judgment — and the seeker's next real question casts as
+      // usual.
+      if (
+        existing !== null &&
+        existing.readingId === null &&
+        isScopeClarification(trimmed) &&
+        [...existing.messages].reverse().find(m => m.role === 'oracle')?.declined === true
+      ) {
+        addMessage(existing.id, {
+          id: userId,
+          role: 'user',
+          text: trimmed,
+          kind,
+          createdAt: now,
+          status: 'sent',
+        });
+        addMessage(existing.id, {
+          id: oracleId,
+          role: 'oracle',
+          text: t('oracleChat.scopeExplain'),
+          createdAt: now,
+          status: 'sent',
+          replyToId: userId,
+          variant: 'discussion',
+        });
+        setInputText('');
+        sendingRef.current = false;
+        setSending(false);
+        return;
+      }
       const target =
         existing ??
         createThread({
@@ -622,7 +658,7 @@ const ReadingScreen: React.FC = () => {
         setSending(false);
       });
     },
-    [threadId, lang, createThread, restateQuestion, addMessage, runAsk, runDiscuss, route],
+    [threadId, lang, t, createThread, restateQuestion, addMessage, runAsk, runDiscuss, route],
   );
 
   const handleSend = useCallback(() => {

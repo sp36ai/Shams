@@ -201,6 +201,16 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({
           >
             {message.errorMessage ?? t('oracleChat.failedGeneric')}
           </Text>
+          {message.declined === true && (
+            <SuggestedQuestionsRow
+              questions={[
+                t('oracleChat.scopeExample1'),
+                t('oracleChat.scopeExample2'),
+                t('oracleChat.scopeExample3'),
+              ]}
+              onSelect={onSelectSuggestedQuestion}
+            />
+          )}
           {failureRef !== undefined && message.declined !== true && (
             <Text
               selectable

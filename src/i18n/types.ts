@@ -217,6 +217,10 @@ export interface StringTable {
     retry: string;
     failedGeneric: string;
     outOfScope: string;
+    scopeExplain: string;
+    scopeExample1: string;
+    scopeExample2: string;
+    scopeExample3: string;
     failureRef: string;
     quotaExhausted: string;
     micPermissionDenied: string;
