@@ -391,6 +391,7 @@ const ReadingScreen: React.FC = () => {
       oracleMessageId: string,
       question: string,
       requestId: string,
+      sentAtMs: number,
     ): Promise<void> => {
       if (!canAsk || !consumeOne()) {
         updateMessage(targetThreadId, oracleMessageId, {
@@ -409,6 +410,9 @@ const ReadingScreen: React.FC = () => {
           // killed mid-call — replays that reading rather than casting and
           // charging for a second one.
           requestId,
+          // The phone's clock at the moment Send was tapped — the minute the
+          // owner's watch rule counts (the server checks it against its own).
+          clientSentAtMs: sentAtMs,
           ...(seekerProfile !== null ? { seekerProfile } : {}),
         });
         updateMessage(targetThreadId, oracleMessageId, {
@@ -539,8 +543,9 @@ const ReadingScreen: React.FC = () => {
       sendingRef.current = true;
       setSending(true);
 
-      const now = new Date().toISOString();
-      const userId = `u_${Date.now()}`;
+      const sentAtMs = Date.now();
+      const now = new Date(sentAtMs).toISOString();
+      const userId = `u_${sentAtMs}`;
       const oracleId = `o_${Date.now()}`;
 
       // A thread exists only once a question has been submitted — this is
@@ -651,7 +656,7 @@ const ReadingScreen: React.FC = () => {
       const run =
         isFollowUp && followUpRequestId !== undefined
           ? runDiscuss(target.id, oracleId, userId, trimmed, readingId, followUpRequestId)
-          : runAsk(target.id, oracleId, trimmed, askRequestId);
+          : runAsk(target.id, oracleId, trimmed, askRequestId, sentAtMs);
 
       run.finally(() => {
         sendingRef.current = false;
@@ -719,7 +724,7 @@ const ReadingScreen: React.FC = () => {
               owner.readingId,
               oracleMsg.requestId,
             )
-          : runAsk(owner.id, oracleMsg.id, userMsg.text, owner.requestId);
+          : runAsk(owner.id, oracleMsg.id, userMsg.text, owner.requestId, Date.now());
 
       run.finally(() => {
         sendingRef.current = false;

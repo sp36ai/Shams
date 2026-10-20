@@ -75,6 +75,13 @@ export const AskWatchOracleSchema = z
      * it still works; such a call simply gets no deduplication.
      */
     requestId: z.string().trim().min(8).max(128).optional(),
+    /**
+     * The phone's clock (epoch milliseconds) at the moment the seeker tapped
+     * Send. The server uses it to pick the watch bracket only if it is within
+     * two minutes of its own clock — see utils/localTime.ts
+     * (chooseAskedInstant). Optional so a client that predates it still works.
+     */
+    clientSentAtMs: z.number().int().positive().optional(),
   })
   .strict();
 

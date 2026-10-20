@@ -58,6 +58,17 @@ describe('AskWatchOracleSchema', () => {
     expect(() => parse(AskWatchOracleSchema, baseAskInput())).not.toThrow();
   });
 
+  it('accepts the optional clientSentAtMs and rejects a malformed one', () => {
+    expect(
+      parse(AskWatchOracleSchema, { ...baseAskInput(), clientSentAtMs: 1_790_000_000_000 })
+        .clientSentAtMs,
+    ).toBe(1_790_000_000_000);
+    expect(() => parse(AskWatchOracleSchema, { ...baseAskInput(), clientSentAtMs: -5 })).toThrow();
+    expect(() =>
+      parse(AskWatchOracleSchema, { ...baseAskInput(), clientSentAtMs: 'now' }),
+    ).toThrow();
+  });
+
   it('rejects a question shorter than 5 characters', () => {
     expect(() => parse(AskWatchOracleSchema, baseAskInput({ question: 'Hi?' }))).toThrow(
       HttpsError,

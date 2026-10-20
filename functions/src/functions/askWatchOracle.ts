@@ -33,8 +33,13 @@
  *   43, which selects a different bracket entirely.
  *
  *   The split is deliberate:
- *     - the INSTANT is the server's own `Date.now()`, never client-supplied,
- *       so a querent cannot replay or hand-pick a moment to re-roll a reading;
+ *     - the INSTANT is the server's own `Date.now()`, so a querent cannot
+ *       replay or hand-pick a moment to re-roll a reading. The one exception,
+ *       owner decision OD-002 (S1): the minute that counts is the one on the
+ *       watch when Send was tapped, so the phone may send that instant, and it
+ *       is used for the bracket only when within two minutes of the server's
+ *       clock (utils/localTime.ts, chooseAskedInstant). `computedAt` stays the
+ *       server's;
  *     - the OFFSET is client-asserted, because only the device knows which
  *       zone its owner is standing in.
  *
@@ -53,7 +58,7 @@ import { enforceRateLimit } from '../middleware/rateLimit';
 import { parse, AskWatchOracleSchema } from '../middleware/validate';
 import { measure } from '../middleware/telemetry';
 import { logger, hashText } from '../utils/logger';
-import { localIsoFromOffset } from '../utils/localTime';
+import { localIsoFromOffset, chooseAskedInstant } from '../utils/localTime';
 import { toBoundaryPlanetName } from '../utils/planetBoundaryName';
 import { ORACLE_FUNCTION_OPTS, ANTHROPIC_API_KEY } from '../config';
 import { claimQuotaSlot, refundQuotaSlot } from '../utils/quotaSlots';
@@ -246,7 +251,16 @@ export const askWatchOracle = onCall(
       try {
         // Instant is ours; only the zone comes from the caller.
         instant = new Date();
-        localMoment = localIsoFromOffset(instant, input.utcOffsetMinutes);
+        const askedAt = chooseAskedInstant(instant, input.clientSentAtMs);
+        if (input.clientSentAtMs !== undefined && askedAt === instant) {
+          // The phone sent a time but it was outside the tolerance, so the
+          // server's own minute was used. Logged without any seeker content.
+          logger.info('askWatchOracle: client clock outside tolerance, using server time', {
+            skewMs: input.clientSentAtMs - instant.getTime(),
+            userId,
+          });
+        }
+        localMoment = localIsoFromOffset(askedAt, input.utcOffsetMinutes);
 
         stage = 'chart-build';
         chart = buildWatchChart(localMoment);

@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 
-import { localIsoFromOffset } from '../localTime';
+import { CLIENT_CLOCK_TOLERANCE_MS, chooseAskedInstant, localIsoFromOffset } from '../localTime';
 import { watchWindowFromIso } from '../../engine/rkp/watchGrid';
 
 describe('localIsoFromOffset', () => {
@@ -67,5 +67,48 @@ describe('the minute the engine actually selects on', () => {
       const iso = localIsoFromOffset(new Date('2026-08-08T05:43:00Z'), offset);
       expect(() => watchWindowFromIso(iso)).not.toThrow();
     }
+  });
+});
+
+describe('chooseAskedInstant (owner decision OD-002, S1)', () => {
+  // 11:13 on the server; a phone in +05:30 shows 11:13 as well.
+  const serverNow = new Date('2026-08-08T05:43:30Z');
+
+  it("uses the phone's tap-Send minute when it is close to the server clock", () => {
+    // Tapped at 05:43:50 local-equivalent; the request reached the server 20 s later, at 05:44:10.
+    const tapped = new Date('2026-08-08T05:43:50Z').getTime();
+    const received = new Date('2026-08-08T05:44:10Z');
+    const asked = chooseAskedInstant(received, tapped);
+    expect(asked.getTime()).toBe(tapped);
+    expect(watchWindowFromIso(localIsoFromOffset(asked, 330)).minute).toBe(13);
+    // The server's own minute (14) would have been the same bracket here, but
+    // a tap at :29:50 delivered at :30:10 must stay in the earlier bracket:
+    const tappedAt29 = new Date('2026-08-08T05:29:50Z').getTime();
+    const receivedAt30 = new Date('2026-08-08T05:30:10Z');
+    expect(
+      watchWindowFromIso(localIsoFromOffset(chooseAskedInstant(receivedAt30, tappedAt29), 0))
+        .minute,
+    ).toBe(29);
+    expect(watchWindowFromIso(localIsoFromOffset(receivedAt30, 0)).minute).toBe(30);
+  });
+
+  it('accepts exactly the tolerance and rejects anything beyond it', () => {
+    const edge = serverNow.getTime() - CLIENT_CLOCK_TOLERANCE_MS;
+    expect(chooseAskedInstant(serverNow, edge).getTime()).toBe(edge);
+    const tooFar = serverNow.getTime() - CLIENT_CLOCK_TOLERANCE_MS - 1;
+    expect(chooseAskedInstant(serverNow, tooFar)).toBe(serverNow);
+    const future = serverNow.getTime() + CLIENT_CLOCK_TOLERANCE_MS + 1;
+    expect(chooseAskedInstant(serverNow, future)).toBe(serverNow);
+  });
+
+  it('falls back to the server time when the phone sends nothing usable', () => {
+    expect(chooseAskedInstant(serverNow, undefined)).toBe(serverNow);
+    expect(chooseAskedInstant(serverNow, Number.NaN)).toBe(serverNow);
+    expect(chooseAskedInstant(serverNow, Number.POSITIVE_INFINITY)).toBe(serverNow);
+  });
+
+  it('a wrong device clock or a hand-picked minute cannot move the bracket by more than the tolerance', () => {
+    const wrongClock = serverNow.getTime() + 60 * 60_000; // an hour fast
+    expect(chooseAskedInstant(serverNow, wrongClock)).toBe(serverNow);
   });
 });

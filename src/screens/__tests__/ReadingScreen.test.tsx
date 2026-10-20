@@ -324,6 +324,10 @@ describe('ReadingScreen', () => {
     // Same call, same shape a typed send produces — kind is stored on the
     // message for display, never threaded into the askWatchOracle payload.
     expect(voiceCallArgs).toMatchObject({ question: 'Will I get the job?' });
+    // Owner decision OD-002 (S1): the phone's clock at the moment of sending
+    // travels with the question (the server checks it against its own).
+    expect(voiceCallArgs.clientSentAtMs).toEqual(expect.any(Number));
+    expect(Math.abs(Date.now() - voiceCallArgs.clientSentAtMs)).toBeLessThan(60_000);
     expect(voiceCallArgs).not.toHaveProperty('kind');
     expect(voiceCallArgs).not.toHaveProperty('inputMethod');
 

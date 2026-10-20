@@ -7,13 +7,17 @@
  * authored here but executed on the server, where functions/scripts/sync-engine
  * copies it at build time.
  *
- * Two things this call does NOT send, both deliberate:
- *   - No lat/lon. The watch frame replaces the house cusps and planetary
- *     positions are location-invariant, so the reading needs no location. This
- *     is what lets it run the moment the app opens.
- *   - No timestamp. The server takes its own instant, so a reading cannot be
- *     replayed or hand-picked. Only the timezone OFFSET travels, because only
- *     the device knows which zone its owner is standing in.
+ * What this call does NOT send, deliberately: lat/lon. The watch frame replaces
+ * the house cusps and planetary positions are location-invariant, so the
+ * reading needs no location. This is what lets it run the moment the app opens.
+ *
+ * What it sends about time (owner decision OD-002, S1): the timezone OFFSET,
+ * because only the device knows which zone its owner is standing in, and the
+ * phone's clock at the moment Send was tapped (`clientSentAtMs`), because the
+ * minute that counts is the one on the seeker's watch then, not when a slow
+ * network delivers it. The server uses that time only if it is within two
+ * minutes of its own clock; otherwise it uses its own, so a reading still
+ * cannot be hand-picked.
  */
 
 import { regionalFunctions } from './functionsRegion';
@@ -71,6 +75,11 @@ export interface AskWatchOracleInput {
    * Send a NEW id only for a genuinely new question.
    */
   requestId?: string;
+  /**
+   * The phone's `Date.now()` at the moment the seeker tapped Send (or the
+   * recognizer handed over a voice transcript). See the file header.
+   */
+  clientSentAtMs?: number;
 }
 
 /**
@@ -139,6 +148,7 @@ export async function askWatchOracle(args: AskWatchOracleInput): Promise<AskWatc
     utcOffsetMinutes: deviceUtcOffsetMinutes(),
     ...(args.seekerProfile !== undefined ? { seekerProfile: args.seekerProfile } : {}),
     ...(args.requestId !== undefined ? { requestId: args.requestId } : {}),
+    ...(args.clientSentAtMs !== undefined ? { clientSentAtMs: args.clientSentAtMs } : {}),
   };
 
   // withDeadline, not withTimeout: a callable's failure carries its meaning in

@@ -40,3 +40,36 @@ export function localIsoFromOffset(instant: Date, utcOffsetMinutes: number): str
 
   return `${date}T${time}${offset}`;
 }
+
+/**
+ * How far the phone's clock may differ from the server's before it is ignored.
+ * Owner decision OD-002 (S1): two minutes.
+ */
+export const CLIENT_CLOCK_TOLERANCE_MS = 2 * 60_000;
+
+/**
+ * The instant whose local minute selects the watch bracket.
+ *
+ * The owner's rule is that the minute that counts is the one on the querent's
+ * watch when they tapped Send, so a slow network cannot move a 07:29 question
+ * into the 07:30 block. The phone's reading of that moment is only trusted when
+ * it is close to the server's own clock (within CLIENT_CLOCK_TOLERANCE_MS,
+ * inclusive); a missing, non-finite or distant value falls back to the server's
+ * receive time, so a wrong device clock — or a caller choosing a minute to
+ * re-roll a reading — can shift the bracket by at most two minutes.
+ *
+ * Only the BRACKET moment comes from here. The reading's recorded
+ * `computedAt` stays the server's own instant.
+ */
+export function chooseAskedInstant(
+  serverNow: Date,
+  clientSentAtMs: number | undefined,
+  toleranceMs: number = CLIENT_CLOCK_TOLERANCE_MS,
+): Date {
+  if (clientSentAtMs === undefined || !Number.isFinite(clientSentAtMs)) {
+    return serverNow;
+  }
+  return Math.abs(clientSentAtMs - serverNow.getTime()) <= toleranceMs
+    ? new Date(clientSentAtMs)
+    : serverNow;
+}
