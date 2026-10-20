@@ -37,29 +37,29 @@ Absence from a classical text is not evidence against a rule either.
 
 | ID | Rule as implemented | Where | Status | Basis / note |
 |---|---|---|---|---|
-| L1 | Local clock minute → twelve 5-minute brackets → 1st Ghar sign (00–04 Hamal … 55–59 Hoot); rest in zodiac order. The minute is the server's receive time shifted by the phone's UTC offset; seconds ignored | `watchGrid.ts`, `localTime.ts`, `askWatchOracle.ts` | UNKNOWN | Not in the owner document. Code header calls it the "Digital Watch Oracle" mechanism and compares it to KP's number method. Needs the exact rule, boundary handling and a worked example (sheet 1.1) |
-| L2 | Planets are real sidereal positions placed into the watch frame by sign | `watchChart.ts` | HYPOTHESIS | Design choice stated in code; no owner statement found |
-| L3 | Lahiri ayanamsa | `primitives/ayanamsa.ts` | VERIFIED-OWNER | Doc §3 "Lahiri only" |
-| L4 | Rahu/Ketu use mean node, always retrograde | `primitives` | UNKNOWN | Not addressed in owner document |
-| L5 | House matrix: primary / favourable / denial per question type (career, marriage, finance, health, property, travel, legal, education, business, children, lostitem) | `kp/rules/houseMatrix.ts` | VERIFIED-OWNER | Doc §2 calls it "the exact owner-provided table". Travel denial "—" and business primary 7 both match the doc |
+|  L1 | Local clock minute → twelve 5-minute brackets → 1st Ghar sign (00–04 Hamal … 55–59 Hoot); rest in zodiac order. The minute is the server's receive time shifted by the phone's UTC offset; seconds ignored | `watchGrid.ts`, `localTime.ts`, `askWatchOracle.ts` | VERIFIED-OWNER | OD-002 (1.1). Mapping and 11:13 → Jauza confirmed. The minute is now the phone's tap-Send minute when within 2 minutes of server time (commit ddac7db); the worked example is a test |
+|  L2 | Planets are real sidereal positions placed into the watch frame by sign | `watchChart.ts` | VERIFIED-OWNER | OD-002 (1.2) |
+|  L3 | Lahiri ayanamsa | `primitives/ayanamsa.ts` | VERIFIED-OWNER | OD-002 (1.2); also owner doc §3 |
+|  L4 | Rahu/Ketu use mean node, always retrograde | `primitives` | VERIFIED-OWNER | OD-002 (1.2): mean node, always retrograde |
+|  L5 | House matrix: primary / favourable / denial per question type (career, marriage, finance, health, property, travel, legal, education, business, children, lostitem) | `kp/rules/houseMatrix.ts` | VERIFIED-OWNER | OD-002 (3.1). One row changed by the owner: travel denial Ghars are now 4 and 8 (supersedes "—" in RKP_RULES_FROM_SARFARAZ.md). Implemented |
 | L6 | Extension types `enemies`, `spiritual`, `general` | same | HYPOTHESIS | Doc marks them "app-retained", not part of the owner's table |
-| L7 | 11th Ghar is the fulfilment Ghar for every question | `watchJudgment.ts` | HYPOTHESIS | Hard-coded constant; no owner statement found |
+|  L7 | 11th Ghar is the fulfilment Ghar for every question | `watchJudgment.ts` | VERIFIED-OWNER | OD-002 (2.10) |
 | L8 | Benefics = Mushtari, Zuhrah only; malefics = Zuhal, Mirrikh, Ras, Dhanab; Shams, Qamar, Utarid neutral | `rules.ts` | HYPOTHESIS | Code comments give no owner source |
-| L9 | Aspects: all planets 7th; Mirrikh 4,7,8; Mushtari 5,7,9; Zuhal 3,7,10; Ras/Dhanab 5,7,9 | `rules.ts` | HYPOTHESIS | Code comment: nodes follow Mushtari's pattern, "the common convention" |
-| L10 | Exaltation/debilitation signs, own signs; Rahu exalted Saur, Ketu Aqrab | `rules.ts` | HYPOTHESIS | Code comment: "We follow the common assignment" for the nodes. Node exaltation is disputed in the wider tradition |
-| L11 | Friendship table, one-way (A→B may differ from B→A) | `rules.ts` | HYPOTHESIS | Comment calls it the classical table. Whether RKP uses it, and one-way, is unconfirmed |
-| L12 | Strong = exalted or own sign; weak = enemy sign or debilitated; friendly/neutral give 0 | `rules.ts` | HYPOTHESIS | Threshold is an engineering choice |
+|  L9 | Aspects: all planets 7th; Mirrikh 4,7,8; Mushtari 5,7,9; Zuhal 3,7,10; Ras/Dhanab 5,7,9 | `rules.ts` | PARTLY VERIFIED-OWNER | OD-002 (S5): Ras and Dhanab cast no aspects — implemented. The other planets' aspect table is still HYPOTHESIS |
+|  L10 | Exaltation/debilitation signs, own signs; Rahu exalted Saur, Ketu Aqrab | `rules.ts` | VERIFIED-OWNER | OD-002 (2.11), including the node exaltations |
+|  L11 | Friendship table, one-way (A→B may differ from B→A) | `rules.ts` | VERIFIED-OWNER | OD-002 (2.8): fixed, one-way |
+|  L12 | Strong = exalted or own sign; weak = enemy sign or debilitated; friendly/neutral give 0 | `rules.ts` | VERIFIED-OWNER | OD-002 (2.7): friendly +1, neutral 0, enemy −1, debilitated −2, exalted/own +2 — implemented. "Weak" for the DELAYED rule still means enemy or debilitated |
 | L13 | Same planet rules querent and matter → relation step adds nothing | `watchJudgment.ts` S2 | VERIFIED-OWNER | Owner decision 2026-10-08, recorded in doc §2 |
-| L14 | Matter ruler strong +2 / weak −2 | S1 | HYPOTHESIS | Weight not in owner material |
+|  L14 | Matter ruler strong +2 / weak −2 | S1 | VERIFIED-OWNER | OD-002 (2.7). Implemented |
 | L15 | Querent ruler friend of matter ruler +2 / enemy −2 | S2 | HYPOTHESIS | Weight not in owner material (the 2026-10-08 decision only removes the self case) |
-| L16 | Each benefic on/aspecting target Ghar +2; each malefic −2 | S3 | HYPOTHESIS | Equal ±2 across 4 malefics vs 2 benefics; measured effect in `case_records.md` and the earlier 1,952-moment sweep |
-| L17 | Same weights for planets on/aspecting the 11th Ghar | S4 | HYPOTHESIS | As L16 |
+|  L16 | Each benefic on/aspecting target Ghar +2; each malefic −2 | S3 | PARTLY VERIFIED-OWNER | OD-002 (2.3, S4). Implemented: Mushtari/Zuhrah exalted or own +3; malefic sitting −2, aspecting −1; own/exalted malefic sitting in 3/6/10/11 +2. NOT implemented (ambiguous): S4 cases B and C, Utarid/Qamar/Shams |
+|  L17 | Same weights for planets on/aspecting the 11th Ghar | S4 | PARTLY VERIFIED-OWNER | As L16, for the 11th Ghar |
 | L18 | Matter ruler lands in favourable Ghar +1 / denial −1 | S5 | HYPOTHESIS | Uses the verified matrix (L5) but the ±1 weight is unconfirmed |
-| L19 | Matter ruler retrograde → REVERSING; combust −1 | S6, ladder | HYPOTHESIS | Not in owner material. Old flow's retrograde modifier was a different rule (turned YES into DELAYED) |
+|  L19 | Matter ruler retrograde → REVERSING; combust −1 | S6, ladder | VERIFIED-OWNER | OD-002 (2.9). Combustion degrees equal the code's constants. Retrograde now ranks below a +4 score (S3) |
 | L20 | Obstruction order: Zuhal, Mirrikh, Ras, Dhanab; occupant before aspect; Qamar in 8/12 = "mind not settled" | `firstObstruction` | HYPOTHESIS | No source |
-| L21 | State ladder: ≤−5 BLOCKED; retrograde REVERSING; ≥5 FULFILLED; Zuhal obstruction or weak ruler DELAYED; ≥2 MOVING; else UNFORMED | `resolveState` | HYPOTHESIS | Thresholds not in owner material. Old flow used ≥3 / ≤−2, so these are new |
-| L22 | Confidence bands by score magnitude; downgrade when benefic and malefic both present | `bandConfidence` | HYPOTHESIS | No source |
-| L23 | Timing base days per planet, ×1.5 retrograde, ×1.5 weak, ×0.7 exalted | `BASE_TIMING`, `computeTiming` | HYPOTHESIS | Doc §6 describes a different timing method (dasha years × score ratio). Code comment says "reflecting classical speed" |
+|  L21 | State ladder: ≤−5 BLOCKED; retrograde REVERSING; ≥5 FULFILLED; Zuhal obstruction or weak ruler DELAYED; ≥2 MOVING; else UNFORMED | `resolveState` | VERIFIED-OWNER | OD-002 (S3), implemented in the owner's order and thresholds (+4 / −6 / +1) |
+|  L22 | Confidence bands by score magnitude; downgrade when benefic and malefic both present | `bandConfidence` | VERIFIED-OWNER | OD-002 (2.12), unchanged |
+|  L23 | Timing base days per planet, ×1.5 retrograde, ×1.5 weak, ×0.7 exalted | `BASE_TIMING`, `computeTiming` | VERIFIED-OWNER | OD-002 (4.1): base days and ×1.5/×1.5/×0.7 confirmed; modality ×0.8 / ×1.0 / ×1.25 added and implemented |
 
 ## Authority is not implementation
 
@@ -280,6 +280,40 @@ that maps to no row, or a row no document asks about, is a gap.
 | B10 | 4.1 | L23 |
 | H2 | 2.4 | L16, L17 (a NEW rule the engine does not have) |
 | — | 2.12 | L22 |
+
+## Status after OD-002 (phase 1 implemented)
+
+Commits on `claude/chat-qa-36u5ig`: `3be9f30` (rules), `652e28b` (fixtures and
+golden replay report), `ddac7db` (client minute). Engine unit tests (134),
+functions tests (747) and client tests (435) pass. Not merged, not deployed.
+Before/after: `golden_replay_OD-002_phase1.md` (76 of 111 golden cases changed
+state).
+
+Rows still unresolved or only partly applied, and why:
+
+- L8 (Utarid, Qamar, Shams): owner decision recorded, NOT implemented — Utarid
+  conjunct a malefic is "0 or −1"; Shams/Qamar need a sitting-or-aspecting rule.
+- L16/L17: S4 cases B and C (enemy-sign and debilitated malefic in 3/6/10/11).
+- L20 (obstruction): unchanged except that a malefic scored as helping is no
+  longer named as the obstruction. That is a consequence of S4, not a stated
+  owner rule. Zuhal-on-the-10th scoring (S2, 2.5) is not implemented.
+- S7 self-protection: not implemented.
+
+Check against the owner's own blind judgments (`case_records.md`, engine after phase 1):
+
+| Case | Owner | Engine now | Match |
+|---|---|---|---|
+| 3 marriage | Yes, fulfilled | FULFILLED (+4) | yes |
+| 4 business | Yes, moving | UNFORMED (−1) | **no** |
+| 1 job | Moving / fulfilled | MOVING (+2) | yes |
+| 2 job | Delayed / reversing | REVERSING (0) | yes |
+| 5 health | Delayed | DELAYED (+1) | yes (timing differs: owner 90–150 days, engine 15–32) |
+
+Case 4 is the open one: with every confirmed rule applied the 7th Ghar carries
+Mirrikh and Dhanab sitting (−2 each), Zuhal counts the 7th's ruler an enemy
+(−2), and nothing in the owner's answers adds enough to reach +1. Either a rule
+that drives his judgment is not yet written down (for example the 7th's ruler
+standing in the 10th), or the pending rules above move it. This needs the owner.
 
 ## Summary
 
