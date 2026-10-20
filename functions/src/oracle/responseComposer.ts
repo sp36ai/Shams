@@ -231,6 +231,37 @@ function formatTiming(window: { minDays: number; maxDays: number } | null): stri
 }
 
 /**
+ * How much room the reading gets (owner decision 2026-10-20, refining the
+ * 2026-10-14 short-reply decision): a simple, clear reading stays a short
+ * chat reply; a delay, a condition or a layered diagnosis gets room to
+ * explain itself. Decided here from the settled diagnosis, never by the
+ * model. A question about another person is lifted to EXTENDED by the
+ * prompt itself, since only the model reads the question.
+ *
+ * Exported for direct testing.
+ */
+export type NarrationLengthTier = 'SHORT' | 'EXTENDED';
+
+/**
+ * "Layered": three or more secondary patterns. Every NO already carries two
+ * patterns from its outcome alone (diagnosis.ts), so "any secondary pattern"
+ * made almost every reading EXTENDED — 104 of the 111 golden-corpus cases.
+ * At three, 29 of 111 are SHORT. A tunable, not an engine rule.
+ */
+const LAYERED_SECONDARY_PATTERNS = 3;
+
+export function narrationLengthTier(
+  diagnosis: Pick<NarrationContext['diagnosis'], 'outcome' | 'secondaryPatterns'>,
+): NarrationLengthTier {
+  const needsExplaining =
+    diagnosis.outcome === 'DELAYED' ||
+    diagnosis.outcome === 'CONDITIONAL' ||
+    diagnosis.outcome === 'PREMATURE' ||
+    diagnosis.secondaryPatterns.length >= LAYERED_SECONDARY_PATTERNS;
+  return needsExplaining ? 'EXTENDED' : 'SHORT';
+}
+
+/**
  * The JSON shape WATCH_ORACLE_SYNTHESIS_PROMPT asks for, enforced by the API
  * (structured outputs) so the reply always parses. Production logs (Oct 2026)
  * showed 3 of 4 readings dropping to the deterministic fallback with
@@ -340,6 +371,8 @@ ${diagnosis.rationale.map(r => `  - ${r}`).join('\n')}
 
 SELECTED INTERVENTIONS (settled — explain why they fit, do not rename or replace)
 ${remedyLines}
+
+RESPONSE LENGTH: ${narrationLengthTier(diagnosis)}
 
 INTERVENTION REQUIRED: ${remedy.interventionRequired ? 'yes' : 'no'}
 ${remedy.guidance ? `NO-REMEDY GUIDANCE: ${remedy.guidance}` : ''}
@@ -559,11 +592,15 @@ export async function composeWatchOracleResponse(
   // The calendar sentence is appended AFTER validation, deliberately: it is
   // fixed wording over contract timing (timingWindow.ts), not model text,
   // and the validator rightly rejects any calendar date a model writes.
-  const timingWindow = computeTimingWindowDates(
-    contract.diagnosis.timing,
-    instant,
-    utcOffsetMinutes,
-  );
+  //
+  // Never on a NO (owner decision 2026-10-20): the engine still carries a
+  // day window on a blocked reading, and the card keeps showing those days,
+  // but a calendar range beside a "no" reads as a promise that something
+  // happens then. UNFAVOURABLE is exactly the BLOCKED state, i.e. NO.
+  const timingWindow =
+    contract.diagnosis.outcome === 'UNFAVOURABLE'
+      ? null
+      : computeTimingWindowDates(contract.diagnosis.timing, instant, utcOffsetMinutes);
   const speakableText =
     narration === null
       ? null

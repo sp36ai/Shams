@@ -28,6 +28,7 @@ vi.mock('firebase-functions/v2', () => ({
 import {
   buildSpeakableText,
   composeWatchOracleResponse,
+  narrationLengthTier,
   type NarrationFields,
 } from '../responseComposer';
 import { WATCH_ORACLE_SYNTHESIS_PROMPT } from '../../prompts/watchOracleSynthesisPrompt';
@@ -208,5 +209,69 @@ describe('Rafiq–Nusrat regression', () => {
     expect(composition.speakableText).toBeNull();
     expect(composition.timingWindow?.label).toBe('1–22 December 2026');
     expect(composition.diagnosis.outcome).toBe('DELAYED');
+  });
+
+  it('gives the Rafiq reading the EXTENDED length tier', async () => {
+    await compose();
+    expect(sentRequest().user).toContain('RESPONSE LENGTH: EXTENDED');
+  });
+});
+
+describe('owner decision 2026-10-20: no calendar dates on a NO', () => {
+  const BLOCKED = {
+    ...VERDICT,
+    state: 'BLOCKED',
+    timing: { minDays: 45, maxDays: 90 },
+  } as unknown as DisplayWatchVerdict;
+
+  it('keeps the engine days but attaches no dates, on card or voice', async () => {
+    const { composition } = await composeWatchOracleResponse({
+      verdict: BLOCKED,
+      question: 'Will I marry the person I love?',
+      computedAt: ASKED_AT,
+      utcOffsetMinutes: IST,
+    });
+    expect(composition.diagnosis.outcome).toBe('UNFAVOURABLE');
+    expect(composition.timingWindow).toBeNull();
+    expect(composition.speakableText ?? '').not.toMatch(/By the calendar/);
+  });
+});
+
+describe('owner decision 2026-10-20: length tier follows the diagnosis', () => {
+  const tierFor = (overrides: Record<string, unknown>): string =>
+    narrationLengthTier(diagnose({ ...VERDICT, ...overrides } as unknown as DisplayWatchVerdict));
+
+  it('a clean YES is SHORT', () => {
+    expect(
+      tierFor({ state: 'FULFILLED', obstruction: 'None', timing: { minDays: 3, maxDays: 7 } }),
+    ).toBe('SHORT');
+  });
+
+  it('a delay is EXTENDED', () => {
+    expect(tierFor({})).toBe('EXTENDED');
+  });
+
+  it('a YES with an obstruction (conditional) is EXTENDED', () => {
+    expect(tierFor({ state: 'FULFILLED', obstruction: 'Saturn' })).toBe('EXTENDED');
+  });
+
+  it('a plain NO is SHORT; a layered one is EXTENDED', () => {
+    // BLOCKED + Saturn: OBSTRUCTION, NEEDS_PATIENCE plus the assertive
+    // controller's EXTERNAL_OPPOSITION — two secondary patterns.
+    expect(tierFor({ state: 'BLOCKED' })).toBe('SHORT');
+    // An enemy ruler and a possible reversal add two more.
+    expect(tierFor({ state: 'BLOCKED', rulerRelation: 'Enemy', reversal: 'POSSIBLE' })).toBe(
+      'EXTENDED',
+    );
+  });
+
+  it('a delay stays EXTENDED even with a single pattern', () => {
+    expect(tierFor({ obstruction: 'None', controllerProfile: 'Passive' })).toBe('EXTENDED');
+  });
+
+  it('the prompt lifts any question about another person to EXTENDED', () => {
+    expect(WATCH_ORACLE_SYNTHESIS_PROMPT).toContain(
+      'If the question is about another person (see above), use EXTENDED even when the brief says SHORT',
+    );
   });
 });
