@@ -417,6 +417,18 @@ established, which matters because three of the four verdicts that look most
 implausible (cases 2–4 in `case_records.md`) are decided entirely by rows
 L14–L17 and L21.
 
+## Frozen reference points (rollback and comparison)
+
+| Point | Commit | What it is | Test results recorded |
+|---|---|---|---|
+| Pre-change baseline | `72a5021` | Engine as on `origin/main` before any OD-002 rule; fresh golden capture reproduced from it byte for byte | `src/astrology/rkp` tests: 96 passing. Full functions and app counts at this commit were not captured |
+| Phase 1 | `ddac7db` | Rules `3be9f30`, fixtures `652e28b`, client minute `ddac7db`. Engine version `2.0.0-moshier` | `src/astrology`: 134 passing; functions: 747 passing (2 skipped); app: 435 passing; typecheck and lint clean |
+| Audit artefacts since | later docs-only commits | No source change after `ddac7db`: `git diff ddac7db HEAD -- src functions/src` is empty | — |
+
+Roll back to the pre-change engine with `72a5021`'s `src/astrology` and `functions/src/engine`. Compare any later
+experiment with the phase-1 case records (`case_records.json`, `OD-002_phase1_attribution.json`) and with the
+per-case golden replay (`golden_replay_OD-002_phase1.md`).
+
 ## Release controls (apply to every rule change)
 
 1. **No owner answer, no rule change.** Unanswered items stay UNKNOWN and current behaviour is kept.
