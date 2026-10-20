@@ -443,6 +443,12 @@ Tags: annotated tags `rkp-baseline-pre-od002` (`72a5021`) and `rkp-phase1-od002`
 session that created them; pushing them was refused (HTTP 403), so they are NOT on the remote. They are to be
 created and pushed from an authorised machine; until then the commit ids above are the references.
 
+Intake of the returned open-decisions form: `node functions/scripts/rkp-form-intake.mjs <form.md>` (from
+`functions/`). It parses every tick-box, flags no answer, several ticked, UNKNOWN and an empty "other", checks the
+sign-off block, lists which rule groups are complete, and drafts a ledger entry quoting the answers verbatim. It
+decides nothing and changes no engine file; a complete group is only a candidate, and the release controls below
+still apply. Tested on a synthetic form (not committed).
+
 ## Release controls (apply to every rule change)
 
 1. **No owner answer, no rule change.** Unanswered items stay UNKNOWN and current behaviour is kept.
