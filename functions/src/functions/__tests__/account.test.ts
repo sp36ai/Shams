@@ -8,6 +8,9 @@
  * parent document leaves its subcollections behind. That is the property
  * the rate-limit cleanup depends on, so the fake models it rather than
  * hiding it.
+ *
+ * utils/accountState.ts is NOT mocked here: the real deleted-account marker
+ * runs against this fake, including a write that arrives mid-deletion.
  */
 
 import { describe, it, expect, vi, beforeEach, type Mock } from 'vitest';
@@ -19,10 +22,20 @@ const store = new Map<string, Data>();
 /** Number of further batch commits that should fail, to simulate a crash. */
 let failNextCommits = 0;
 let commitsBeforeFailure = Infinity;
+/** Every mutation in order, to prove the marker is written before any delete. */
+const ops: string[] = [];
+/** Runs once, just before the first batch commit — a request landing mid-deletion. */
+let onFirstCommit: (() => Promise<void>) | null = null;
 
 interface FakeDocRef {
   path: string;
   collection: (name: string) => FakeQuery;
+  set: (data: Data, opts?: { merge?: boolean }) => Promise<void>;
+}
+
+function write(path: string, data: Data, opts?: { merge?: boolean }): void {
+  ops.push(`set ${path}`);
+  store.set(path, opts?.merge === true ? { ...(store.get(path) ?? {}), ...data } : data);
 }
 
 interface FakeQuery {
@@ -33,7 +46,14 @@ interface FakeQuery {
 }
 
 function docRef(path: string): FakeDocRef {
-  return { path, collection: name => query(`${path}/${name}`) };
+  return {
+    path,
+    collection: name => query(`${path}/${name}`),
+    set: (data, opts) => {
+      write(path, data, opts);
+      return Promise.resolve();
+    },
+  };
 }
 
 function query(
@@ -76,16 +96,41 @@ const fakeDb = {
       delete: (ref: FakeDocRef) => {
         deletes.push(ref.path);
       },
-      commit: () => {
+      commit: async () => {
+        if (onFirstCommit !== null) {
+          const hook = onFirstCommit;
+          onFirstCommit = null;
+          await hook();
+        }
         if (commitsBeforeFailure <= 0 && failNextCommits > 0) {
           failNextCommits -= 1;
-          return Promise.reject(new Error('simulated Firestore failure'));
+          throw new Error('simulated Firestore failure');
         }
         commitsBeforeFailure -= 1;
-        deletes.forEach(p => store.delete(p));
-        return Promise.resolve();
+        deletes.forEach(p => {
+          ops.push(`delete ${p}`);
+          store.delete(p);
+        });
       },
     };
+  },
+  // Sequential, which is enough here: the interleavings that matter are
+  // staged explicitly (onFirstCommit), not left to timing.
+  runTransaction: async <T>(
+    fn: (tx: {
+      get: (ref: FakeDocRef) => Promise<{ exists: boolean }>;
+      set: (ref: FakeDocRef, data: Data, opts?: { merge?: boolean }) => void;
+    }) => Promise<T>,
+  ): Promise<T> => {
+    const writes: Array<() => void> = [];
+    const result = await fn({
+      get: ref => Promise.resolve({ exists: store.has(ref.path) }),
+      set: (ref, data, opts) => {
+        writes.push(() => write(ref.path, data, opts));
+      },
+    });
+    writes.forEach(w => w());
+    return result;
   },
 };
 
@@ -96,7 +141,9 @@ vi.mock('../../utils/admin', () => ({
   db: {
     collection: (name: string) => fakeDb.collection(name),
     batch: () => fakeDb.batch(),
+    runTransaction: (fn: Parameters<typeof fakeDb.runTransaction>[0]) => fakeDb.runTransaction(fn),
   },
+  FieldValue: { serverTimestamp: () => 'SERVER_TIMESTAMP' },
   auth: { deleteUser: (uid: string) => deleteUserMock(uid) as Promise<void> },
 }));
 
@@ -106,14 +153,17 @@ vi.mock('firebase-functions/v2', () => ({
 
 // The real enforceRateLimit writes this minute's counter before deletion
 // begins; model that so the test proves the call's own counter goes too.
+const rateLimitOpts: unknown[] = [];
 vi.mock('../../middleware/rateLimit', () => ({
-  enforceRateLimit: (userId: string) => {
+  enforceRateLimit: (userId: string, opts?: unknown) => {
+    rateLimitOpts.push(opts);
     store.set(`rateLimits/${userId}/minutes/NOW`, { count: 1, expiresAt: 'later' });
     return Promise.resolve();
   },
 }));
 
 import { deleteAccount } from '../account';
+import { writeIfAccountActive } from '../../utils/accountState';
 
 type Runnable = { run: (req: unknown) => Promise<unknown> };
 
@@ -151,12 +201,15 @@ beforeEach(() => {
   store.clear();
   failNextCommits = 0;
   commitsBeforeFailure = Infinity;
+  ops.length = 0;
+  onFirstCommit = null;
+  rateLimitOpts.length = 0;
   deleteUserMock.mockReset().mockResolvedValue(undefined);
   seed();
 });
 
 describe('deleteAccount — what is deleted', () => {
-  it('removes profile, quota, trial, readings, reply copies and rate-limit counters', async () => {
+  it('removes profile, quota, trial, readings, reply copies, wallet and rate-limit counters', async () => {
     await callDelete('alice');
     const left = pathsFor('alice');
     for (const gone of [
@@ -168,6 +221,8 @@ describe('deleteAccount — what is deleted', () => {
       'idempotencyKeys/alice__req1',
       'rateLimits/alice/minutes/2026-10-20T10:00',
       'rateLimits/alice/minutes/NOW',
+      'wallets/alice',
+      'wallets/alice/ledger/e1',
     ]) {
       expect(left).not.toContain(gone);
     }
@@ -191,17 +246,25 @@ describe('deleteAccount — what is deleted', () => {
 });
 
 describe('deleteAccount — what is deliberately kept', () => {
-  it('keeps fraud/security records and the wallet pending a retention decision', async () => {
+  it('keeps fraud/security records and the deleted-account marker', async () => {
     await callDelete('alice');
     expect(pathsFor('alice')).toEqual(
       expect.arrayContaining([
         'auditLogs/log-alice',
+        'deletedAccounts/alice',
         'purchaseTokens/hash-alice',
         'securityEvents/ev-alice',
-        'wallets/alice',
-        'wallets/alice/ledger/e1',
       ]),
     );
+  });
+
+  it('the marker holds only timestamps, and expires', async () => {
+    await callDelete('alice');
+    const marker = store.get('deletedAccounts/alice');
+    expect(Object.keys(marker ?? {}).sort()).toEqual(['deletedAt', 'expiresAt']);
+    const hours = ((marker!.expiresAt as Date).getTime() - Date.now()) / 3_600_000;
+    expect(hours).toBeGreaterThan(23);
+    expect(hours).toBeLessThanOrEqual(24);
   });
 
   it('writes an account_deleted audit entry with counts and no personal data', async () => {
@@ -215,7 +278,7 @@ describe('deleteAccount — what is deliberately kept', () => {
 
   it('leaves nothing for alice beyond the kept records', async () => {
     await callDelete('alice');
-    const kept = /^(auditLogs|purchaseTokens|securityEvents|wallets)\//;
+    const kept = /^(auditLogs|deletedAccounts|purchaseTokens|securityEvents)\//;
     expect(pathsFor('alice').filter(p => !kept.test(p))).toEqual([]);
   });
 });
@@ -234,7 +297,7 @@ describe('deleteAccount — failure and retry', () => {
     failNextCommits = 1;
     await expect(callDelete('alice')).rejects.toBeTruthy();
     await callDelete('alice');
-    const kept = /^(auditLogs|purchaseTokens|securityEvents|wallets)\//;
+    const kept = /^(auditLogs|deletedAccounts|purchaseTokens|securityEvents)\//;
     expect(pathsFor('alice').filter(p => !kept.test(p))).toEqual([]);
     expect(deleteUserMock).toHaveBeenCalledWith('alice');
   });
@@ -247,6 +310,61 @@ describe('deleteAccount — failure and retry', () => {
   it('any other login-deletion error is reported, not swallowed', async () => {
     deleteUserMock.mockRejectedValue({ code: 'auth/internal-error' });
     await expect(callDelete('alice')).rejects.toMatchObject({ code: 'internal' });
+  });
+});
+
+describe('deleteAccount — the deletion race', () => {
+  it('writes the marker before deleting anything', async () => {
+    await callDelete('alice');
+    const markerAt = ops.indexOf('set deletedAccounts/alice');
+    const firstDelete = ops.findIndex(o => o.startsWith('delete '));
+    expect(markerAt).toBeGreaterThanOrEqual(0);
+    expect(markerAt).toBeLessThan(firstDelete);
+  });
+
+  it('a request that lands mid-deletion is refused and leaves nothing behind', async () => {
+    let inFlight: Promise<void> | null = null;
+    onFirstCommit = () => {
+      // An askWatchOracle call still casting when the seeker hit Delete.
+      inFlight = writeIfAccountActive('alice', tx => {
+        tx.set(fakeDb.collection('readings').doc('alice-late') as never, { userId: 'alice' });
+      });
+      return inFlight.catch(() => undefined);
+    };
+    await callDelete('alice');
+    await expect(inFlight).rejects.toMatchObject({ code: 'failed-precondition' });
+    expect(store.has('readings/alice-late')).toBe(false);
+  });
+
+  it('a write after deletion completes (e.g. a still-valid token) is refused', async () => {
+    await callDelete('alice');
+    await expect(
+      writeIfAccountActive('alice', tx => {
+        tx.set(fakeDb.collection('quotas').doc('alice') as never, { plan: 'free' });
+      }),
+    ).rejects.toMatchObject({ code: 'failed-precondition' });
+    expect(store.has('quotas/alice')).toBe(false);
+  });
+
+  it('a write that committed before the marker is swept with everything else', async () => {
+    await writeIfAccountActive('alice', tx => {
+      tx.set(fakeDb.collection('readings').doc('alice-early') as never, { userId: 'alice' });
+    });
+    await callDelete('alice');
+    expect(store.has('readings/alice-early')).toBe(false);
+  });
+
+  it('other users can still write while alice is being deleted', async () => {
+    await callDelete('alice');
+    await writeIfAccountActive('bob', tx => {
+      tx.set(fakeDb.collection('readings').doc('bob-new') as never, { userId: 'bob' });
+    });
+    expect(store.has('readings/bob-new')).toBe(true);
+  });
+
+  it('lets its own retry past the rate-limit check that refuses everyone else', async () => {
+    await callDelete('alice');
+    expect(rateLimitOpts).toEqual([{ allowDeletedAccount: true }]);
   });
 });
 
@@ -263,6 +381,12 @@ describe('TTL policies match the paths the code writes', () => {
     expect(src).toContain(".collection('minutes')");
     expect(ttlGroups).toContain('minutes');
     expect(ttlGroups).not.toContain('rateLimits');
+  });
+
+  it('covers the deleted-account marker', () => {
+    const src = readFileSync(join(__dirname, '../../utils/accountState.ts'), 'utf8');
+    expect(src).toContain("const COLLECTION = 'deletedAccounts'");
+    expect(ttlGroups).toContain('deletedAccounts');
   });
 
   it('covers the saved reply copies', () => {

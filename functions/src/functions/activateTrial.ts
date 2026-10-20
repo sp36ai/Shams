@@ -18,6 +18,7 @@ import { enforceRateLimit } from '../middleware/rateLimit';
 import { FUNCTION_OPTS, TRIAL_DURATION_DAYS } from '../config';
 import { measure } from '../middleware/telemetry';
 import type { TrialDoc } from '../types';
+import { assertAccountActive } from '../utils/accountState';
 
 export interface ActivateTrialResponse {
   startedAt: string;
@@ -36,6 +37,7 @@ export const activateTrial = onCall(
       const trialRef = db.collection('trials').doc(userId);
 
       return db.runTransaction(async tx => {
+        await assertAccountActive(tx, userId);
         const snap = await tx.get(trialRef);
 
         if (snap.exists) {

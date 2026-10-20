@@ -14,6 +14,7 @@
 import { HttpsError } from 'firebase-functions/v2/https';
 import { db, FieldValue } from '../utils/admin';
 import { RATE_LIMIT_PER_MINUTE } from '../config';
+import { assertAccountActive } from '../utils/accountState';
 
 const DEFAULT_MAX_PER_MINUTE = 10;
 
@@ -30,12 +31,24 @@ function minuteKey(): string {
   return new Date().toISOString().slice(0, 16);
 }
 
-export async function enforceRateLimit(userId: string): Promise<void> {
+/**
+ * Every callable passes through here first, so this is also where a call on
+ * a deleted account is turned away — before any model call or charge.
+ * Only deleteAccount itself passes `allowDeletedAccount`, so a retry of an
+ * interrupted deletion can finish.
+ */
+export async function enforceRateLimit(
+  userId: string,
+  opts: { readonly allowDeletedAccount?: boolean } = {},
+): Promise<void> {
   const key = minuteKey();
   const ref = db.collection('rateLimits').doc(userId).collection('minutes').doc(key);
   const limit = maxPerMinute();
 
   await db.runTransaction(async tx => {
+    if (opts.allowDeletedAccount !== true) {
+      await assertAccountActive(tx, userId);
+    }
     const snap = await tx.get(ref);
     const count = snap.exists ? ((snap.data()?.count as number) ?? 0) : 0;
 

@@ -28,6 +28,7 @@
  */
 
 import { HttpsError } from 'firebase-functions/v2/https';
+import { assertAccountActive, writeIfAccountActive } from './accountState';
 import { db } from './admin';
 import { logger } from './logger';
 
@@ -77,6 +78,7 @@ export async function claimRequest<T>(userId: string, requestId: string): Promis
   const now = Date.now();
 
   return db.runTransaction(async tx => {
+    await assertAccountActive(tx, userId);
     const snap = await tx.get(ref);
 
     if (snap.exists) {
@@ -112,10 +114,11 @@ export async function completeRequest(
   response: unknown,
 ): Promise<void> {
   try {
-    await db
-      .collection(COLLECTION)
-      .doc(docId(userId, requestId))
-      .set(
+    // Guarded: this copy holds the full reply, and must not land after the
+    // account's deletion has begun (see utils/accountState.ts).
+    await writeIfAccountActive(userId, tx => {
+      tx.set(
+        db.collection(COLLECTION).doc(docId(userId, requestId)),
         {
           userId,
           status: 'done',
@@ -125,6 +128,7 @@ export async function completeRequest(
         },
         { merge: true },
       );
+    });
   } catch (err) {
     // The reading itself succeeded and has been returned. Failing to record
     // that only costs deduplication of a retry, which must not turn a

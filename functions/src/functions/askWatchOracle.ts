@@ -79,6 +79,7 @@ import type { ReadingContract } from '../oracle/readingContract';
 import type { WatchState, WatchVerdict } from '../engine/rkp/watchJudgment';
 import { requestRef } from '../utils/requestRef';
 import { isOutOfScopeQuestion } from '../oracle/questionScope';
+import { writeIfAccountActive } from '../utils/accountState';
 
 /**
  * The six watch states expressed in the app's existing verdict vocabulary, so
@@ -345,9 +346,13 @@ export const askWatchOracle = onCall(
         };
 
         stage = 'firestore-write';
-        await readingRef.set({
-          ...readingDoc,
-          createdAt: new Date(),
+        // Guarded: a reading still being cast when its seeker deleted their
+        // account must not land after the deletion sweep (utils/accountState.ts).
+        await writeIfAccountActive(userId, tx => {
+          tx.set(readingRef, {
+            ...readingDoc,
+            createdAt: new Date(),
+          });
         });
       } catch (err) {
         // The one explicit log line for this failure category. Firestore

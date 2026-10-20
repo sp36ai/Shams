@@ -4,7 +4,46 @@
  * entry. Firestore is faked at the module boundary.
  */
 
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+
+// The deleted-account marker itself is tested in accountState.test.ts. Here
+// the account is active unless a test flips `accountState.deleted`, which is
+// how each write path below proves it consults the marker.
+const accountState = vi.hoisted(() => ({ deleted: false }));
+vi.mock('../accountState', async () => {
+  // A real HttpsError, as the real module throws: callables rethrow those
+  // as-is and wrap anything else as 'internal'.
+  const { HttpsError } = await vi.importActual<typeof import('firebase-functions/v2/https')>(
+    'firebase-functions/v2/https',
+  );
+  const refuse = (): never => {
+    throw new HttpsError('failed-precondition', 'This account has been deleted.');
+  };
+  return {
+    isAccountDeleted: () => Promise.resolve(accountState.deleted),
+    assertAccountActive: () => {
+      if (accountState.deleted) {
+        refuse();
+      }
+      return Promise.resolve();
+    },
+    writeIfAccountActive: async (
+      _userId: string,
+      write: (tx: { set: (ref: unknown, data: unknown, opts?: unknown) => void }) => void,
+    ) => {
+      if (accountState.deleted) {
+        refuse();
+      }
+      const pending: unknown[] = [];
+      write({
+        set: (ref, data, opts) => {
+          pending.push((ref as { set: (d: unknown, o?: unknown) => unknown }).set(data, opts));
+        },
+      });
+      await Promise.all(pending);
+    },
+  };
+});
 
 type Doc = Record<string, unknown>;
 const wallets = new Map<string, Doc>();
@@ -106,5 +145,22 @@ describe('creditWallet', () => {
   it('refuses a non-positive or fractional amount', async () => {
     await expect(creditWallet('u', 0, 'grant')).rejects.toThrow();
     await expect(creditWallet('u', 1.5, 'grant')).rejects.toThrow();
+  });
+});
+
+describe('deleted account (utils/accountState.ts marker)', () => {
+  afterEach(() => {
+    accountState.deleted = false;
+  });
+
+  it('charges and credits nothing on a deleted account', async () => {
+    accountState.deleted = true;
+    await expect(chargeDiscussion('u', 'r1', 10_000)).rejects.toMatchObject({
+      code: 'failed-precondition',
+    });
+    await expect(creditWallet('u', 1000, 'grant')).rejects.toMatchObject({
+      code: 'failed-precondition',
+    });
+    expect(wallets.has('u')).toBe(false);
   });
 });

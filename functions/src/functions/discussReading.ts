@@ -63,6 +63,7 @@ import {
   type ReadingGrounding,
 } from '../oracle/discussionComposer';
 import { requestRef } from '../utils/requestRef';
+import { assertAccountActive } from '../utils/accountState';
 
 /**
  * A short, server-derived tag for a reading — "the finance reading", never
@@ -293,6 +294,7 @@ export const discussReading = onCall(
 
       try {
         ({ doc, turnsRemaining, compareDocs } = await db.runTransaction(async tx => {
+          await assertAccountActive(tx, userId);
           const snap = await tx.get(readingRef);
           if (!snap.exists) {
             throw new HttpsError('not-found', 'That reading is no longer available.');

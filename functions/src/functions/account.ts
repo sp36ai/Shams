@@ -16,12 +16,17 @@
  *     kept until a TTL policy (if one is configured) expires them.
  *   - /rateLimits/{uid}/minutes/* and /rateLimits/{uid} — per-minute
  *     request counters, i.e. a record of when this user was active.
+ *   - /wallets/{uid}/ledger/* and /wallets/{uid} — the coin balance and its
+ *     history (owner decision 2026-10-20). No real-money purchase writes a
+ *     ledger entry yet; revisit before paid coin packs launch, since a
+ *     ledger of payments may then have to be kept and disclosed.
  *
- * Not deleted, pending an owner retention decision:
- *   - /wallets/{uid} and /wallets/{uid}/ledger/* — the coin balance and its
- *     transaction history. Coins are real money once coin-pack purchases
- *     ship (utils/wallet.ts 'purchase'), so whether the ledger is kept as a
- *     financial record is a decision, not a cleanup.
+ * The deletion race: a request already in flight (or one carrying a still-
+ * valid ID token after the Auth user is gone) could otherwise write data
+ * after the sweep. So the first thing this does is write the deleted-
+ * account marker, which every user-data write checks in its own
+ * transaction — see utils/accountState.ts. The marker itself (uid +
+ * timestamps only) expires by TTL.
  *
  * Deliberately NOT deleted:
  *   - /purchaseTokens/{tokenHash} entries referencing this uid — deleting
@@ -51,6 +56,7 @@ import { verifyAuth } from '../middleware/auth';
 import { enforceRateLimit } from '../middleware/rateLimit';
 import { logger } from '../utils/logger';
 import { FUNCTION_OPTS } from '../config';
+import { markAccountDeleted } from '../utils/accountState';
 
 // Firestore batches cap at 500 ops; stay comfortably under that per page so a
 // single query+batch round-trip never risks hitting the ceiling from a
@@ -85,14 +91,20 @@ async function deleteInPages(query: () => Query): Promise<number> {
  * Everything keyed to this user that deleteAccount removes, before the
  * Auth user itself. Exported for direct testing.
  */
-export async function deleteUserData(
-  userId: string,
-): Promise<{ readings: number; replayCopies: number; rateLimitCounters: number }> {
+export async function deleteUserData(userId: string): Promise<{
+  readings: number;
+  replayCopies: number;
+  walletEntries: number;
+  rateLimitCounters: number;
+}> {
   const readings = await deleteInPages(() =>
     db.collection('readings').where('userId', '==', userId),
   );
   const replayCopies = await deleteInPages(() =>
     db.collection('idempotencyKeys').where('userId', '==', userId),
+  );
+  const walletEntries = await deleteInPages(() =>
+    db.collection('wallets').doc(userId).collection('ledger'),
   );
   // Rate-limit counters live in a subcollection, which deleting the parent
   // document would leave behind — so the children go first, explicitly.
@@ -108,9 +120,10 @@ export async function deleteUserData(
   cleanupBatch.delete(db.collection('quotas').doc(userId));
   cleanupBatch.delete(db.collection('trials').doc(userId));
   cleanupBatch.delete(db.collection('rateLimits').doc(userId));
+  cleanupBatch.delete(db.collection('wallets').doc(userId));
   await cleanupBatch.commit();
 
-  return { readings, replayCopies, rateLimitCounters };
+  return { readings, replayCopies, walletEntries, rateLimitCounters };
 }
 
 export const deleteAccount = onCall(
@@ -121,9 +134,13 @@ export const deleteAccount = onCall(
   },
   async request => {
     const { userId } = verifyAuth(request);
-    await enforceRateLimit(userId);
+    // A retry of an interrupted deletion must get past the marker it wrote.
+    await enforceRateLimit(userId, { allowDeletedAccount: true });
 
     try {
+      // First, before anything is deleted: from here on no write can add
+      // data for this user (utils/accountState.ts).
+      await markAccountDeleted(userId);
       const deleted = await deleteUserData(userId);
       const deletedReadings = deleted.readings;
 

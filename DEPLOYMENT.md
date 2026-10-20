@@ -92,9 +92,9 @@ Follow these steps in [Firebase Console](https://console.firebase.google.com):
    - **Billing**: Requires billing enabled (see step 3 above)
 3. Do NOT use Firestore in Datastore mode (use Native mode)
 
-#### TTL policies — `idempotencyKeys` and rate-limit `minutes` (required)
+#### TTL policies — `idempotencyKeys`, rate-limit `minutes`, `deletedAccounts` (required)
 
-Two kinds of short-lived records carry an `expiresAt` timestamp, and Firestore
+Three kinds of short-lived records carry an `expiresAt` timestamp, and Firestore
 only deletes them once a TTL policy names that field:
 
 - `idempotencyKeys` — `askWatchOracle` and `discussReading` record each
@@ -104,10 +104,13 @@ only deletes them once a TTL policy names that field:
 - `rateLimits/{uid}/minutes/*` — per-minute request counters. `expiresAt` is
   2 minutes out. The TTL policy must name the `minutes` collection group (the
   subcollection the counters live in), not `rateLimits`.
+- `deletedAccounts/{uid}` — the marker `deleteAccount` writes first, so no
+  in-flight request can add data after deletion (`utils/accountState.ts`).
+  Holds only the uid and timestamps; `expiresAt` is 24 hours out.
 
-Both policies are declared in `firestore.indexes.json` (`fieldOverrides`) and
+All three policies are declared in `firestore.indexes.json` (`fieldOverrides`) and
 are created by `firebase deploy --only firestore:indexes`. Afterwards, confirm
-both appear under **Build → Firestore Database → Time-to-live (TTL)**. If an
+all three appear under **Build → Firestore Database → Time-to-live (TTL)**. If an
 older `rateLimits` policy exists there from before, it can be removed — no
 documents in that group carry `expiresAt`.
 
