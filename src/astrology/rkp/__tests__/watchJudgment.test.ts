@@ -6,7 +6,10 @@
  * deterministic behavioral). It does not assert that the frozen behavior is
  * astrologically "correct" — docs/RKP_RULES_FROM_SARFARAZ.md documents the
  * classical KP horary engine (judgeHorary.ts), not this watch engine, so
- * there is no owner-approved spec to check this scoring model against yet.
+ * there was no owner-approved spec to check this scoring model against. The
+ * owner has since confirmed a set of rules (docs/rkp-audit/RKP_RULE_LEDGER.md,
+ * OD-002); tests marked "OD-002" below encode those. Rules the owner has NOT
+ * yet settled are still frozen as current behaviour and say so.
  * See Pass 1 findings before changing anything this file locks in:
  *
  *   1. resolveState's retrograde override precedence (below: "state
@@ -55,6 +58,8 @@ function signWithDignity(planet: Planet, dignity: Dignity): SignIndex {
 
 interface PlanetSpec {
   readonly house: HouseNumber;
+  /** Pin the planet to a real sign; dignity is then read from the real table. */
+  readonly sign?: SignIndex;
   readonly dignity?: Dignity;
   readonly retrograde?: boolean;
   readonly combust?: boolean;
@@ -63,11 +68,12 @@ interface PlanetSpec {
 }
 
 function planetAt(planet: Planet, spec: PlanetSpec): WatchPlanet {
-  const dignity = spec.dignity ?? 'NeutralSign';
+  const dignity =
+    spec.dignity ?? (spec.sign !== undefined ? dignityOf(planet, spec.sign) : 'NeutralSign');
   return {
     planet,
     name: PLANET_NAME[planet],
-    sign: signWithDignity(planet, dignity),
+    sign: spec.sign ?? signWithDignity(planet, dignity),
     degreeInSign: 15,
     house: spec.house,
     isRetrograde: spec.retrograde ?? false,
@@ -223,18 +229,16 @@ describe('factor: ruler dignity', () => {
     expect(judgeWatchChart(chart, qType).score).toBe(-2);
   });
 
-  it('contributes nothing from this factor when the ruler is FriendlySign/NeutralSign', () => {
+  it('OD-002: friendly sign adds +1, neutral 0, enemy sign subtracts 1', () => {
     const ruler = targetRulerFor(qType);
-    const friendly = quietChart({
-      qType,
-      overrides: { [ruler]: { house: QUIET_HOUSE, dignity: 'FriendlySign' } },
-    });
-    const neutral = quietChart({
-      qType,
-      overrides: { [ruler]: { house: QUIET_HOUSE, dignity: 'NeutralSign' } },
-    });
-    expect(judgeWatchChart(friendly, qType).score).toBe(0);
-    expect(judgeWatchChart(neutral, qType).score).toBe(0);
+    const scoreFor = (dignity: Dignity): number =>
+      judgeWatchChart(
+        quietChart({ qType, overrides: { [ruler]: { house: QUIET_HOUSE, dignity } } }),
+        qType,
+      ).score;
+    expect(scoreFor('FriendlySign')).toBe(1);
+    expect(scoreFor('NeutralSign')).toBe(0);
+    expect(scoreFor('EnemySign')).toBe(-1);
   });
 });
 
@@ -286,7 +290,7 @@ describe('factor: witnesses on the target house', () => {
     expect(judgeWatchChart(chart, qType).score).toBe(4);
   });
 
-  it('subtracts 2 per malefic occupant or aspect, stacking', () => {
+  it('OD-002: a malefic sitting on the Ghar subtracts 2, one only aspecting it subtracts 1', () => {
     const chart = quietChart({
       qType,
       lagnaRuler: NEUTRAL_LAGNA_RULER,
@@ -294,7 +298,7 @@ describe('factor: witnesses on the target house', () => {
       targetAspectedBy: ['Mars'],
     });
     const verdict = judgeWatchChart(chart, qType);
-    expect(verdict.score).toBe(-4);
+    expect(verdict.score).toBe(-3); // Saturn sits -2, Mars aspects -1
     // Saturn occupies outranks Mars aspecting in the obstruction precedence.
     expect(verdict.obstruction).toBe('Saturn');
   });
@@ -314,18 +318,111 @@ describe('factor: witnesses on the target house', () => {
 describe('factor: witnesses on the fulfilment (11th) house', () => {
   const qType: QuestionType = 'lostitem'; // primary house 2, fulfilment always 11
 
-  it('adds +2 per benefic and subtracts 2 per malefic on the 11th, independent of the target', () => {
+  it('OD-002: +2 per benefic, -2 per malefic sitting, -1 per malefic aspecting, independent of the target', () => {
     const chart = quietChart({
       qType,
       fulfilmentOccupants: ['Venus'],
     });
     expect(judgeWatchChart(chart, qType).score).toBe(2);
 
-    const blocked = quietChart({
+    const aspected = quietChart({
       qType,
       fulfilmentAspectedBy: ['Rahu'],
     });
-    expect(judgeWatchChart(blocked, qType).score).toBe(-2);
+    expect(judgeWatchChart(aspected, qType).score).toBe(-1);
+
+    const sitting = quietChart({
+      qType,
+      fulfilmentOccupants: ['Rahu'],
+    });
+    expect(judgeWatchChart(sitting, qType).score).toBe(-2);
+  });
+});
+
+describe('OD-002: witness weights', () => {
+  it('a benefic that is exalted or in its own sign scores +3 sitting or aspecting, either Ghar', () => {
+    const qType: QuestionType = 'legal';
+    const exalted = quietChart({
+      qType,
+      lagnaRuler: 'Sun',
+      overrides: { Jupiter: { house: 6, dignity: 'Exalted' } },
+      targetOccupants: ['Jupiter'],
+    });
+    expect(judgeWatchChart(exalted, qType).score).toBe(3);
+
+    const ownAspect = quietChart({
+      qType,
+      lagnaRuler: 'Sun',
+      overrides: { Venus: { house: 12, dignity: 'OwnSign' } },
+      targetAspectedBy: ['Venus'],
+    });
+    expect(judgeWatchChart(ownAspect, qType).score).toBe(3);
+
+    const eleventh = quietChart({
+      qType,
+      lagnaRuler: 'Sun',
+      overrides: { Jupiter: { house: 11, dignity: 'Exalted' } },
+      fulfilmentOccupants: ['Jupiter'],
+    });
+    expect(judgeWatchChart(eleventh, qType).score).toBe(3);
+  });
+
+  it('a malefic in its own or exalted sign, sitting in the 3rd/6th/10th/11th Ghar, scores +2 for any question', () => {
+    // 6th Ghar is legal's target; the 11th is always the fulfilment Ghar.
+    const legal = quietChart({
+      qType: 'legal',
+      lagnaRuler: 'Sun',
+      overrides: { Mars: { house: 6, dignity: 'OwnSign' } },
+      targetOccupants: ['Mars'],
+    });
+    expect(judgeWatchChart(legal, 'legal').score).toBe(2);
+
+    // The owner's own example: Mirrikh in its own sign Hamal in the 11th Ghar.
+    const marriage = quietChart({
+      qType: 'marriage',
+      lagnaRuler: 'Mars', // Mars→Venus (marriage's ruler) is Neutral — keeps the relation factor at 0
+      overrides: { Mars: { house: 11, dignity: 'OwnSign' } },
+      fulfilmentOccupants: ['Mars'],
+    });
+    expect(judgeWatchChart(marriage, 'marriage').score).toBe(2);
+  });
+
+  it('the same malefic sitting in a Ghar that is not 3rd/6th/10th/11th still scores -2', () => {
+    const chart = quietChart({
+      qType: 'marriage', // target 7th
+      lagnaRuler: 'Mars', // Neutral to Venus, the 7th's ruler
+      overrides: { Mars: { house: 7, dignity: 'OwnSign' } },
+      targetOccupants: ['Mars'],
+    });
+    expect(judgeWatchChart(chart, 'marriage').score).toBe(-2);
+  });
+
+  it('PENDING owner (S4 cases B and C): an ordinary malefic sitting in a growing Ghar is still -2 today', () => {
+    // The owner's text says 0 for career/legal/business/finance, but his two
+    // statements differ on enemy-sign and debilitated malefics (ledger OD-002).
+    // Until he settles it this is frozen as the current behaviour.
+    const chart = quietChart({
+      qType: 'legal',
+      lagnaRuler: 'Sun',
+      targetOccupants: ['Saturn'], // NeutralSign
+    });
+    expect(judgeWatchChart(chart, 'legal').score).toBe(-2);
+  });
+
+  it('a malefic scored as helping (own sign, growing Ghar) is not named as the obstruction', () => {
+    const chart = quietChart({
+      qType: 'legal',
+      lagnaRuler: 'Sun',
+      overrides: { Mars: { house: 6, dignity: 'OwnSign' } },
+      targetOccupants: ['Mars'],
+    });
+    const verdict = judgeWatchChart(chart, 'legal');
+    expect(verdict.score).toBe(2);
+    expect(verdict.obstruction).toBe('None');
+  });
+
+  it('travel is denied by the 4th and 8th Ghars (owner decision OD-002, S6)', () => {
+    expect(HOUSE_MATRIX.travel.denial).toEqual([4, 8]);
   });
 });
 
@@ -443,7 +540,7 @@ describe('state resolution order (current behavior — see audit finding #1)', (
   const qType: QuestionType = 'spiritual'; // primary house 9, denial [6,8]
   const ruler = targetRulerFor(qType);
 
-  it('a hard block (score <= -5) wins even when the ruler is also retrograde', () => {
+  it('a hard block (score <= -6) wins even when the ruler is also retrograde', () => {
     // spiritual's ruler at lagna 1 is Jupiter, which no planet regards as an
     // Enemy (see the FRIENDSHIP table — Jupiter has no natural enemies), so
     // the block has to come from dignity + house placement + a malefic
@@ -455,14 +552,13 @@ describe('state resolution order (current behavior — see audit finding #1)', (
       lagnaRuler: 'Mercury', // Neutral to Jupiter — isolates the block from the relation factor
     });
     const verdict = judgeWatchChart(chart, qType);
-    expect(verdict.score).toBeLessThanOrEqual(-5);
+    expect(verdict.score).toBeLessThanOrEqual(-6);
     expect(verdict.state).toBe('BLOCKED');
   });
 
-  it('retrograde overrides a strongly favorable score (>= 5) to REVERSING, not FULFILLED', () => {
-    // This is the behavior flagged in Pass 1 finding #1: a chart that would
-    // otherwise read FULFILLED reads REVERSING instead once the ruler is
-    // retrograde. Locked in as CURRENT behavior, not endorsed as correct.
+  it('OD-002: a score of +4 or more is FULFILLED even when the ruler is retrograde', () => {
+    // Superseded Pass 1 finding #1: retrograde used to override a favourable
+    // score. The owner's ladder checks the score first.
     const chart = quietChart({
       qType,
       overrides: { [ruler]: { house: 5, dignity: 'Exalted', retrograde: true } }, // +2 dignity, +1 favorable house(5)
@@ -470,8 +566,98 @@ describe('state resolution order (current behavior — see audit finding #1)', (
       lagnaRuler: 'Sun', // Sun→Jupiter is Friend: +2
     });
     const verdict = judgeWatchChart(chart, qType);
-    expect(verdict.score).toBeGreaterThanOrEqual(5);
-    expect(verdict.state).toBe('REVERSING');
+    expect(verdict.score).toBeGreaterThanOrEqual(4);
+    expect(verdict.state).toBe('FULFILLED');
+  });
+
+  it('OD-002: +4 is FULFILLED, +3 is MOVING', () => {
+    const at = (benefics: number) =>
+      judgeWatchChart(
+        quietChart({
+          qType,
+          lagnaRuler: 'Mercury',
+          targetOccupants: Array.from({ length: benefics }, () => 'Venus' as Planet),
+        }),
+        qType,
+      );
+    expect(at(2).score).toBe(4);
+    expect(at(2).state).toBe('FULFILLED');
+    expect(at(1).state).toBe('MOVING');
+  });
+
+  it('OD-002: -6 is BLOCKED, -5 is not', () => {
+    const legal: QuestionType = 'legal'; // target 6th (a growing Ghar), ruler Mercury
+    const build = (malefics: Planet[]) =>
+      judgeWatchChart(
+        quietChart({ qType: legal, lagnaRuler: 'Sun', targetOccupants: malefics }),
+        legal,
+      );
+    const blocked = build(['Saturn', 'Mars', 'Rahu']); // -2 each
+    expect(blocked.score).toBe(-6);
+    expect(blocked.state).toBe('BLOCKED');
+
+    const near = judgeWatchChart(
+      quietChart({
+        qType: legal,
+        lagnaRuler: 'Sun',
+        targetOccupants: ['Saturn', 'Mars'],
+        targetAspectedBy: ['Rahu', 'Ketu'], // -1 each
+      }),
+      legal,
+    );
+    expect(near.score).toBe(-6);
+    const fiveDown = judgeWatchChart(
+      quietChart({
+        qType: legal,
+        lagnaRuler: 'Sun',
+        targetOccupants: ['Saturn', 'Mars'],
+        targetAspectedBy: ['Rahu'],
+      }),
+      legal,
+    );
+    expect(fiveDown.score).toBe(-5);
+    expect(fiveDown.state).not.toBe('BLOCKED');
+  });
+
+  it('OD-002: at -6 or below a strong benefic on the matter caps the answer at DELAYED', () => {
+    const legal: QuestionType = 'legal';
+    const chart = quietChart({
+      qType: legal,
+      lagnaRuler: 'Sun',
+      overrides: {
+        Jupiter: { house: 6, dignity: 'Exalted' },
+        [targetRulerFor(legal)]: { house: QUIET_HOUSE, dignity: 'Debilitated' },
+      },
+      targetOccupants: ['Saturn', 'Mars', 'Rahu', 'Ketu', 'Jupiter'], // -8 +3, ruler -2
+    });
+    const verdict = judgeWatchChart(chart, legal);
+    expect(verdict.score).toBeLessThanOrEqual(-6);
+    expect(verdict.state).toBe('DELAYED');
+  });
+
+  it('OD-002: a Zuhal in its own or exalted sign on the matter does not force DELAYED', () => {
+    const career: QuestionType = 'career'; // target 10th, ruled by Saturn under lagna 1
+    const ownZuhal = judgeWatchChart(
+      quietChart({
+        qType: career,
+        lagnaRuler: 'Venus',
+        overrides: { Saturn: { house: 10, dignity: 'OwnSign' } },
+        targetOccupants: ['Saturn'],
+      }),
+      career,
+    );
+    expect(ownZuhal.state).not.toBe('DELAYED');
+
+    const plainZuhal = judgeWatchChart(
+      quietChart({
+        qType: career,
+        lagnaRuler: 'Venus',
+        overrides: { Saturn: { house: 10, dignity: 'FriendlySign' } },
+        targetOccupants: ['Saturn'],
+      }),
+      career,
+    );
+    expect(plainZuhal.state).toBe('DELAYED');
   });
 
   it('retrograde overrides MOVING and UNFORMED too, not only FULFILLED', () => {
@@ -591,17 +777,28 @@ describe('confidence banding', () => {
     const mixedChart = quietChart({
       qType,
       targetOccupants: ['Jupiter'],
-      targetAspectedBy: ['Venus', 'Mars'], // +2 +2 -2 = net +2, sawBenefic && sawMalefic
+      targetAspectedBy: ['Venus', 'Mars'], // +2 +2 -1 = net +3, sawBenefic && sawMalefic
     });
     const verdict = judgeWatchChart(mixedChart, qType);
-    expect(verdict.score).toBe(2);
-    expect(verdict.confidence).toBe('LOW'); // MODERATE (|2|) downgraded once
+    expect(verdict.score).toBe(3); // Jupiter +2, Venus +2, Mars aspecting -1
+    expect(verdict.confidence).toBe('LOW'); // MODERATE (|3|) downgraded once
   });
 });
 
 /* -------------------------------------------------------------------------- */
 /*  Timing                                                                    */
 /* -------------------------------------------------------------------------- */
+
+/** Owner decision OD-002 (4.1): movable ×0.8, dual ×1.0, fixed ×1.25. */
+function modalityFactor(sign: SignIndex): number {
+  if ([1, 4, 7, 10].includes(sign)) {
+    return 0.8;
+  }
+  if ([2, 5, 8, 11].includes(sign)) {
+    return 1.25;
+  }
+  return 1;
+}
 
 describe('timing multipliers (bespoke model — see audit finding #3)', () => {
   const qType: QuestionType = 'health'; // primary house 1
@@ -629,10 +826,30 @@ describe('timing multipliers (bespoke model — see audit finding #3)', () => {
     });
     const verdict = judgeWatchChart(chart, qType);
     expect(verdict.score).toBe(4);
-    expect(verdict.state).toBe('MOVING');
-    // Mars base timing: 30–60 days (BASE_TIMING); NeutralSign ruler applies
-    // no multiplier.
-    expect(verdict.timing).toEqual({ minDays: 30, maxDays: 60 });
+    expect(verdict.state).toBe('FULFILLED');
+    // Mars base timing: 30–60 days (BASE_TIMING); a NeutralSign ruler applies
+    // no dignity multiplier, only the sign-modality one.
+    const m = modalityFactor(chart.planets[targetRulerFor(qType)].sign);
+    expect(verdict.timing).toEqual({ minDays: Math.round(30 * m), maxDays: Math.round(60 * m) });
+  });
+
+  it("OD-002: sign modality — movable ×0.8, dual ×1.0, fixed ×1.25 on the ruler's sign", () => {
+    const spiritual: QuestionType = 'spiritual'; // target 9th, ruled by Jupiter under lagna 1
+    const timingWhen = (sign: SignIndex) =>
+      judgeWatchChart(
+        quietChart({
+          qType: spiritual,
+          lagnaRuler: 'Mercury',
+          overrides: { Jupiter: { house: QUIET_HOUSE, sign } },
+          targetOccupants: ['Venus'],
+        }),
+        spiritual,
+      ).timing;
+    // Jupiter base 60–90. Aries (movable, friendly): ×0.8. Leo (fixed, friendly):
+    // ×1.25. Sagittarius (dual, own sign): ×1.0.
+    expect(timingWhen(1)).toEqual({ minDays: 48, maxDays: 72 });
+    expect(timingWhen(5)).toEqual({ minDays: 75, maxDays: 113 });
+    expect(timingWhen(9)).toEqual({ minDays: 60, maxDays: 90 });
   });
 
   it('stretches timing 1.5x for retrograde and 1.5x again for a weak ruler, compounding', () => {
@@ -643,10 +860,12 @@ describe('timing multipliers (bespoke model — see audit finding #3)', () => {
       lagnaRuler: 'Jupiter',
     });
     const verdict = judgeWatchChart(chart, qType);
-    // isWeak('EnemySign') is true (rank 1) → x1.5; retrograde → x1.5; 1.5*1.5=2.25
+    // isWeak('EnemySign') is true (rank 1) → x1.5; retrograde → x1.5; 1.5*1.5=2.25;
+    // then the sign-modality factor of the sign the fixture put Mars in.
+    const m = modalityFactor(chart.planets[ruler].sign);
     expect(verdict.timing).toEqual({
-      minDays: Math.round(30 * 2.25),
-      maxDays: Math.round(60 * 2.25),
+      minDays: Math.round(30 * 1.5 * 1.5 * m),
+      maxDays: Math.round(60 * 1.5 * 1.5 * m),
     });
   });
 
@@ -658,9 +877,10 @@ describe('timing multipliers (bespoke model — see audit finding #3)', () => {
       targetOccupants: ['Jupiter'],
     });
     const verdict = judgeWatchChart(chart, qType);
+    const m = modalityFactor(chart.planets[ruler].sign);
     expect(verdict.timing).toEqual({
-      minDays: Math.round(30 * 0.7),
-      maxDays: Math.round(60 * 0.7),
+      minDays: Math.round(30 * 0.7 * m),
+      maxDays: Math.round(60 * 0.7 * m),
     });
   });
 });

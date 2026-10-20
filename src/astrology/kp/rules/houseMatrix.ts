@@ -49,7 +49,7 @@ export const HOUSE_MATRIX: Readonly<Record<QuestionType, HouseMatrixEntry>> = Ob
   finance: { favorable: [2, 6, 11], denial: [8, 12], primary: 2, secondary: [6, 11] },
   health: { favorable: [1, 5, 11], denial: [6, 8, 12], primary: 1, secondary: [5, 11] },
   property: { favorable: [4, 11, 2], denial: [8, 12], primary: 4, secondary: [11, 2] },
-  travel: { favorable: [3, 9, 12], denial: [], primary: 9, secondary: [3, 12] },
+  travel: { favorable: [3, 9, 12], denial: [4, 8], primary: 9, secondary: [3, 12] },
   legal: { favorable: [6, 11], denial: [8, 12], primary: 6, secondary: [11] },
   education: { favorable: [4, 9, 11], denial: [8, 12], primary: 4, secondary: [9, 11] },
   business: { favorable: [7, 10, 11], denial: [6, 8, 12], primary: 7, secondary: [10, 11] },

@@ -135,6 +135,21 @@ const BASE_TIMING: Readonly<Record<Planet, TimingWindow>> = Object.freeze({
 
 const FULFILMENT_HOUSE: HouseNumber = 11;
 
+/**
+ * Ghars where a malefic works FOR a matter instead of against it (owner
+ * decision OD-002, S4): the 3rd, 6th, 10th and 11th, counted from the 1st.
+ */
+const GROWING_GHARS: readonly HouseNumber[] = [3, 6, 10, 11];
+
+/**
+ * Sign modality, for the timing multiplier (owner decision OD-002, 4.1):
+ * movable signs act faster, fixed signs slower, dual signs at the base pace.
+ */
+const MOVABLE_SIGNS: readonly number[] = [1, 4, 7, 10];
+const FIXED_SIGNS: readonly number[] = [2, 5, 8, 11];
+const MOVABLE_FACTOR = 0.8;
+const FIXED_FACTOR = 1.25;
+
 /* -------------------------------------------------------------------------- */
 /*  Judgment                                                                  */
 /* -------------------------------------------------------------------------- */
@@ -160,15 +175,28 @@ export function judgeWatchChart(chart: WatchChart, qType: QuestionType): WatchVe
   let score = 0;
 
   // ── 1. Strength of the planet that owns the matter ──────────────────────
+  // Owner decision OD-002 (2.7): exalted/own +2, friendly +1, neutral 0,
+  // enemy -1, debilitated -2. Enemy and debilitated both still count as "weak"
+  // for the DELAYED rule below (isWeak).
   if (isStrong(rulerPos.dignity)) {
     score += 2;
     factors.push(
       `${rulerPos.name} rules the ${gharLabel(targetHouse)} and is ${rulerPos.dignity} in ${SIGN_META[rulerPos.sign].name} — it holds real control of the matter.`,
     );
-  } else if (isWeak(rulerPos.dignity)) {
+  } else if (rulerPos.dignity === 'Debilitated') {
     score -= 2;
     factors.push(
       `${rulerPos.name} rules the ${gharLabel(targetHouse)} but is ${rulerPos.dignity} in ${SIGN_META[rulerPos.sign].name} — it cannot deliver unaided.`,
+    );
+  } else if (rulerPos.dignity === 'EnemySign') {
+    score -= 1;
+    factors.push(
+      `${rulerPos.name} rules the ${gharLabel(targetHouse)} but is ${rulerPos.dignity} in ${SIGN_META[rulerPos.sign].name} — it delivers with difficulty.`,
+    );
+  } else if (rulerPos.dignity === 'FriendlySign') {
+    score += 1;
+    factors.push(
+      `${rulerPos.name} rules the ${gharLabel(targetHouse)} and sits in the friendly ${SIGN_META[rulerPos.sign].name} — it is supported.`,
     );
   }
 
@@ -193,18 +221,27 @@ export function judgeWatchChart(chart: WatchChart, qType: QuestionType): WatchVe
   }
 
   // ── 3. Who sits on, and who looks at, the matter's Ghar ─────────────────
+  // Weights (owner decision OD-002): see witnessWeight.
   const onTarget = [...target.occupants, ...target.aspectedBy];
   let sawBenefic = false;
   let sawMalefic = false;
   for (const planet of onTarget) {
     const pos = chart.planets[planet];
-    const how = target.occupants.includes(planet) ? 'sits in' : 'casts its gaze on';
-    if (isBenefic(planet)) {
-      score += 2;
-      sawBenefic = true;
-      factors.push(`${pos.name} ${how} the ${gharLabel(targetHouse)} — protection and expansion.`);
-    } else if (isMalefic(planet)) {
-      score -= 2;
+    const sits = target.occupants.includes(planet);
+    const how = sits ? 'sits in' : 'casts its gaze on';
+    const weight = witnessWeight(chart, planet, sits, targetHouse);
+    if (weight === 0) {
+      continue;
+    }
+    score += weight;
+    if (weight > 0) {
+      sawBenefic = sawBenefic || isBenefic(planet);
+      factors.push(
+        isBenefic(planet)
+          ? `${pos.name} ${how} the ${gharLabel(targetHouse)} — protection and expansion${weight === 3 ? ', and it stands strong there' : ''}.`
+          : `${pos.name} stands strong in the ${gharLabel(targetHouse)} — a malefic in a growing house works for the matter.`,
+      );
+    } else {
       sawMalefic = true;
       factors.push(`${pos.name} ${how} the ${gharLabel(targetHouse)} — friction on the matter.`);
     }
@@ -213,16 +250,21 @@ export function judgeWatchChart(chart: WatchChart, qType: QuestionType): WatchVe
   // ── 4. The Ghar of fulfilment ────────────────────────────────────────────
   const onFulfilment = [...fulfilment.occupants, ...fulfilment.aspectedBy];
   for (const planet of onFulfilment) {
-    if (isBenefic(planet)) {
-      score += 2;
+    const pos = chart.planets[planet];
+    const sits = fulfilment.occupants.includes(planet);
+    const weight = witnessWeight(chart, planet, sits, FULFILMENT_HOUSE);
+    if (weight === 0) {
+      continue;
+    }
+    score += weight;
+    if (weight > 0) {
       factors.push(
-        `${chart.planets[planet].name} supports the 11th Ghar — the desire has room to materialise.`,
+        isBenefic(planet)
+          ? `${pos.name} supports the 11th Ghar — the desire has room to materialise.`
+          : `${pos.name} stands strong in the 11th Ghar — a malefic in a growing house helps fulfilment.`,
       );
-    } else if (isMalefic(planet)) {
-      score -= 2;
-      factors.push(
-        `${chart.planets[planet].name} weighs on the 11th Ghar — fulfilment itself is obstructed.`,
-      );
+    } else {
+      factors.push(`${pos.name} weighs on the 11th Ghar — fulfilment itself is obstructed.`);
     }
   }
 
@@ -267,11 +309,20 @@ export function judgeWatchChart(chart: WatchChart, qType: QuestionType): WatchVe
   }
 
   // ── 8. Settle the state ──────────────────────────────────────────────────
+  // The two facts the ladder needs that are not part of the score. A strong
+  // benefic is Mushtari or Zuhrah, exalted or in its own sign, on the matter's
+  // Ghar; the Zuhal rule applies to a Zuhal that is NOT in its own or exalted
+  // sign (owner decision OD-002, S3).
+  const strongBeneficOnTarget = onTarget.some(
+    p => isBenefic(p) && isStrong(chart.planets[p].dignity),
+  );
+  const zuhalHindering = onTarget.includes('Saturn') && !isStrong(chart.planets.Saturn.dignity);
   const state = resolveState({
     score,
     retrograde: rulerPos.isRetrograde,
-    obstruction,
     rulerWeak: isWeak(rulerPos.dignity),
+    zuhalHindering,
+    strongBeneficOnTarget,
   });
 
   // ── 9. Confidence, downgraded when the witnesses disagree ───────────────
@@ -321,8 +372,13 @@ function firstObstruction(chart: WatchChart, targetHouse: HouseNumber): Obstruct
   const target = houseOf(chart, targetHouse);
   const order: readonly Planet[] = ['Saturn', 'Mars', 'Rahu', 'Ketu'];
 
+  // A malefic in its own or exalted sign, sitting in a growing Ghar, is scored
+  // as helping the matter (owner decision OD-002, S4) — so it is not named as
+  // the thing obstructing it.
+  const worksForMatter = (planet: Planet): boolean =>
+    GROWING_GHARS.includes(targetHouse) && isStrong(chart.planets[planet].dignity);
   for (const planet of order) {
-    if (target.occupants.includes(planet)) {
+    if (target.occupants.includes(planet) && !worksForMatter(planet)) {
       return planet;
     }
   }
@@ -341,32 +397,71 @@ function firstObstruction(chart: WatchChart, targetHouse: HouseNumber): Obstruct
   return 'None';
 }
 
+/**
+ * The answer ladder, in the owner's order (decision OD-002, S3):
+ *   1. score >= +4                                  FULFILLED (beats retrograde)
+ *   2. score <= -6                                  BLOCKED, or DELAYED when a
+ *                                                   strong benefic is on the matter
+ *   3. matter's ruler retrograde                    REVERSING
+ *   4. Zuhal on/aspecting the matter (not own or
+ *      exalted), or the ruler is weak               DELAYED
+ *   5. score >= +1                                  MOVING
+ *   6. otherwise                                    UNFORMED
+ */
 function resolveState(input: {
   score: number;
   retrograde: boolean;
-  obstruction: Obstruction;
   rulerWeak: boolean;
+  zuhalHindering: boolean;
+  strongBeneficOnTarget: boolean;
 }): WatchState {
-  const { score, retrograde, obstruction, rulerWeak } = input;
+  const { score, retrograde, rulerWeak, zuhalHindering, strongBeneficOnTarget } = input;
 
-  // A hard block outranks everything: there is nothing to reverse or delay.
-  if (score <= -5) {
-    return 'BLOCKED';
+  if (score >= 4) {
+    return 'FULFILLED';
   }
-  // Retrogression is its own condition — the matter turns back on itself.
+  if (score <= -6) {
+    return strongBeneficOnTarget ? 'DELAYED' : 'BLOCKED';
+  }
   if (retrograde) {
     return 'REVERSING';
   }
-  if (score >= 5) {
-    return 'FULFILLED';
-  }
-  if (obstruction === 'Saturn' || rulerWeak) {
+  if (zuhalHindering || rulerWeak) {
     return 'DELAYED';
   }
-  if (score >= 2) {
+  if (score >= 1) {
     return 'MOVING';
   }
   return 'UNFORMED';
+}
+
+/**
+ * What one witness (a planet sitting in, or aspecting, a Ghar) adds to the
+ * score. Owner decision OD-002 (S3, 2.3, S4):
+ *   - Mushtari or Zuhrah: +2, or +3 when exalted or in its own sign;
+ *   - a malefic sitting in the Ghar: -2, except in the 3rd/6th/10th/11th Ghar
+ *     in its own or exalted sign, where it works for the matter: +2;
+ *   - a malefic only aspecting the Ghar: -1.
+ * Everything else — Shams, Qamar, Utarid — scores nothing. (Their weights are
+ * still awaiting the owner; see docs/rkp-audit/RKP_RULE_LEDGER.md, OD-002.)
+ */
+function witnessWeight(
+  chart: WatchChart,
+  planet: Planet,
+  sits: boolean,
+  ghar: HouseNumber,
+): number {
+  const dignity = chart.planets[planet].dignity;
+  if (isBenefic(planet)) {
+    return isStrong(dignity) ? 3 : 2;
+  }
+  if (isMalefic(planet)) {
+    if (!sits) {
+      return -1;
+    }
+    return GROWING_GHARS.includes(ghar) && isStrong(dignity) ? 2 : -2;
+  }
+  return 0;
 }
 
 function bandConfidence(score: number): Confidence {
@@ -416,6 +511,13 @@ function computeTiming(chart: WatchChart, ruler: Planet): TimingWindow {
   }
   if (pos.dignity === 'Exalted') {
     factor *= 0.7;
+  }
+  // Sign modality (owner decision OD-002, 4.1): movable signs are faster,
+  // fixed signs slower, dual signs unchanged.
+  if (MOVABLE_SIGNS.includes(pos.sign)) {
+    factor *= MOVABLE_FACTOR;
+  } else if (FIXED_SIGNS.includes(pos.sign)) {
+    factor *= FIXED_FACTOR;
   }
 
   return {

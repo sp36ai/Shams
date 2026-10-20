@@ -264,10 +264,10 @@ const SPECIAL_ASPECT_DISTANCES: Readonly<Record<Planet, readonly number[]>> = Ob
   Jupiter: [5, 7, 9],
   Venus: [7],
   Saturn: [3, 7, 10],
-  // The nodes are given Mushtari's pattern, the common convention for shadow
-  // points in this system.
-  Rahu: [5, 7, 9],
-  Ketu: [5, 7, 9],
+  // Owner decision OD-002 (S5): Ras and Dhanab cast no aspects; they act only
+  // in the Ghar they sit in.
+  Rahu: [],
+  Ketu: [],
 });
 
 /**

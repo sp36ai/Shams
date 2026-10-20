@@ -91,10 +91,15 @@ describe('aspect', () => {
     expect(houseDistance(12, 1)).toBe(2);
   });
 
-  it('gives every planet the seventh aspect', () => {
+  it('gives every planet except the nodes the seventh aspect', () => {
     for (const planet of PLANETS) {
-      expect(aspectsHouse(planet, 1, 7)).toBe(true);
+      expect(aspectsHouse(planet, 1, 7)).toBe(planet !== 'Rahu' && planet !== 'Ketu');
     }
+  });
+
+  it('OD-002 (S5): Ras and Dhanab cast no aspects at all', () => {
+    expect(housesAspectedBy('Rahu', 1)).toEqual([]);
+    expect(housesAspectedBy('Ketu', 1)).toEqual([]);
   });
 
   it('gives Zuhal the 3rd, 7th and 10th', () => {
