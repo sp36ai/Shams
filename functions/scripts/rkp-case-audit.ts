@@ -63,8 +63,8 @@ function stepOf(factor: string): string {
  * Independent cross-check of the engine's aspect output.
  *
  * The table below is written out separately from rules.ts, from the ledger's
- * row L9 (inclusive house-distance, every planet the 7th, plus the special
- * aspects). It checks the engine against the DOCUMENTED table — it does not
+ * row L9 (inclusive house-distance, every planet except the nodes the 7th, plus
+ * the special aspects). It checks the engine against the DOCUMENTED table — it does not
  * show the table is RKP's. Any mismatch aborts the run, so a record is never
  * written from a chart whose aspect data disagrees with the ledger.
  */
@@ -76,8 +76,9 @@ const LEDGER_L9: Readonly<Record<string, readonly number[]>> = {
   Jupiter: [5, 7, 9],
   Venus: [7],
   Saturn: [3, 7, 10],
-  Rahu: [5, 7, 9],
-  Ketu: [5, 7, 9],
+  // Owner decision OD-002 (S5): Ras and Dhanab cast no aspects.
+  Rahu: [],
+  Ketu: [],
 };
 
 function crossCheck(id: string, chart: WatchChart): void {

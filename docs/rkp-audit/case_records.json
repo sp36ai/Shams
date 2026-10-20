@@ -1,7 +1,7 @@
 {
   "provenance": {
     "generator": "functions/scripts/rkp-case-audit.ts",
-    "gitCommit": "a2f7284",
+    "gitCommit": "ddac7db",
     "workingTreeDirty": false,
     "engineVersion": "2.0.0-moshier",
     "ayanamsa": "Lahiri (primitives/ayanamsa.ts, sidereal mode 1)",
@@ -90,9 +90,7 @@
         "sign": "Burj Jauza",
         "ruler": "Utarid",
         "occupants": [],
-        "aspectedBy": [
-          "Ras al-Tinnin"
-        ]
+        "aspectedBy": []
       },
       "fulfilmentGhar": {
         "ghar": 11,
@@ -225,11 +223,7 @@
           "dignity": "FriendlySign",
           "retrograde": true,
           "combust": false,
-          "aspectsGhars": [
-            10,
-            12,
-            2
-          ]
+          "aspectsGhars": []
         },
         {
           "planet": "Dhanab al-Tinnin",
@@ -239,25 +233,24 @@
           "dignity": "EnemySign",
           "retrograde": true,
           "combust": false,
-          "aspectsGhars": [
-            4,
-            6,
-            8
-          ]
+          "aspectsGhars": []
         }
       ],
       "engineVerdict": {
-        "state": "UNFORMED",
-        "score": -2,
+        "state": "MOVING",
+        "score": 2,
         "confidence": "MODERATE",
-        "obstruction": "Rahu",
+        "obstruction": "None",
         "reversal": "NONE",
-        "timing": null
+        "timing": {
+          "minDays": 6,
+          "maxDays": 11
+        }
       },
       "factors": [
         {
           "step": "S3 on/aspecting target Ghar",
-          "text": "Ras al-Tinnin casts its gaze on the 10th Ghar — friction on the matter."
+          "text": "Utarid rules the 10th Ghar and sits in the friendly Meezan — it is supported."
         },
         {
           "step": "S4 fulfilment Ghar (11th)",
@@ -358,8 +351,7 @@
         "ruler": "Zuhrah",
         "occupants": [],
         "aspectedBy": [
-          "Mushtari",
-          "Ras al-Tinnin"
+          "Mushtari"
         ]
       },
       "querentRuler": {
@@ -480,11 +472,7 @@
           "dignity": "FriendlySign",
           "retrograde": true,
           "combust": false,
-          "aspectsGhars": [
-            7,
-            9,
-            11
-          ]
+          "aspectsGhars": []
         },
         {
           "planet": "Dhanab al-Tinnin",
@@ -494,22 +482,18 @@
           "dignity": "EnemySign",
           "retrograde": true,
           "combust": false,
-          "aspectsGhars": [
-            1,
-            3,
-            5
-          ]
+          "aspectsGhars": []
         }
       ],
       "engineVerdict": {
-        "state": "BLOCKED",
-        "score": -5,
-        "confidence": "MODERATE",
+        "state": "REVERSING",
+        "score": 0,
+        "confidence": "UNCERTAIN",
         "obstruction": "Saturn",
         "reversal": "POSSIBLE",
         "timing": {
-          "minDays": 11,
-          "maxDays": 21
+          "minDays": 13,
+          "maxDays": 26
         }
       },
       "factors": [
@@ -523,7 +507,7 @@
         },
         {
           "step": "S3 on/aspecting target Ghar",
-          "text": "Zuhrah casts its gaze on the 10th Ghar — protection and expansion."
+          "text": "Zuhrah casts its gaze on the 10th Ghar — protection and expansion, and it stands strong there."
         },
         {
           "step": "S3 on/aspecting target Ghar",
@@ -532,10 +516,6 @@
         {
           "step": "S4 fulfilment Ghar (11th)",
           "text": "Mushtari supports the 11th Ghar — the desire has room to materialise."
-        },
-        {
-          "step": "S4 fulfilment Ghar (11th)",
-          "text": "Ras al-Tinnin weighs on the 11th Ghar — fulfilment itself is obstructed."
         },
         {
           "step": "S6 retrograde (no points)",
@@ -631,8 +611,7 @@
           "Utarid",
           "Mushtari",
           "Zuhrah",
-          "Zuhal",
-          "Dhanab al-Tinnin"
+          "Zuhal"
         ]
       },
       "fulfilmentGhar": {
@@ -643,9 +622,7 @@
         "occupants": [
           "Mirrikh"
         ],
-        "aspectedBy": [
-          "Dhanab al-Tinnin"
-        ]
+        "aspectedBy": []
       },
       "querentRuler": {
         "planet": "Utarid",
@@ -765,11 +742,7 @@
           "dignity": "FriendlySign",
           "retrograde": true,
           "combust": false,
-          "aspectsGhars": [
-            1,
-            3,
-            5
-          ]
+          "aspectsGhars": []
         },
         {
           "planet": "Dhanab al-Tinnin",
@@ -779,17 +752,13 @@
           "dignity": "EnemySign",
           "retrograde": true,
           "combust": false,
-          "aspectsGhars": [
-            7,
-            9,
-            11
-          ]
+          "aspectsGhars": []
         }
       ],
       "engineVerdict": {
-        "state": "BLOCKED",
-        "score": -6,
-        "confidence": "HIGH",
+        "state": "FULFILLED",
+        "score": 4,
+        "confidence": "MODERATE",
         "obstruction": "Saturn",
         "reversal": "NONE",
         "timing": {
@@ -800,7 +769,7 @@
       "factors": [
         {
           "step": "unclassified",
-          "text": "Mushtari rules the 7th Ghar but is EnemySign in Jauza — it cannot deliver unaided."
+          "text": "Mushtari rules the 7th Ghar but is EnemySign in Jauza — it delivers with difficulty."
         },
         {
           "step": "S3 on/aspecting target Ghar",
@@ -815,16 +784,8 @@
           "text": "Zuhal casts its gaze on the 7th Ghar — friction on the matter."
         },
         {
-          "step": "S3 on/aspecting target Ghar",
-          "text": "Dhanab al-Tinnin casts its gaze on the 7th Ghar — friction on the matter."
-        },
-        {
           "step": "S4 fulfilment Ghar (11th)",
-          "text": "Mirrikh weighs on the 11th Ghar — fulfilment itself is obstructed."
-        },
-        {
-          "step": "S4 fulfilment Ghar (11th)",
-          "text": "Dhanab al-Tinnin weighs on the 11th Ghar — fulfilment itself is obstructed."
+          "text": "Mirrikh stands strong in the 11th Ghar — a malefic in a growing house helps fulfilment."
         },
         {
           "step": "S9 confidence downgrade",
@@ -913,9 +874,7 @@
           "Mushtari",
           "Dhanab al-Tinnin"
         ],
-        "aspectedBy": [
-          "Ras al-Tinnin"
-        ]
+        "aspectedBy": []
       },
       "fulfilmentGhar": {
         "ghar": 11,
@@ -925,8 +884,7 @@
         "occupants": [],
         "aspectedBy": [
           "Mushtari",
-          "Zuhal",
-          "Dhanab al-Tinnin"
+          "Zuhal"
         ]
       },
       "querentRuler": {
@@ -1047,11 +1005,7 @@
           "dignity": "FriendlySign",
           "retrograde": true,
           "combust": false,
-          "aspectsGhars": [
-            5,
-            7,
-            9
-          ]
+          "aspectsGhars": []
         },
         {
           "planet": "Dhanab al-Tinnin",
@@ -1061,25 +1015,22 @@
           "dignity": "EnemySign",
           "retrograde": true,
           "combust": false,
-          "aspectsGhars": [
-            11,
-            1,
-            3
-          ]
+          "aspectsGhars": []
         }
       ],
       "engineVerdict": {
-        "state": "BLOCKED",
-        "score": -7,
-        "confidence": "HIGH",
+        "state": "UNFORMED",
+        "score": -1,
+        "confidence": "UNCERTAIN",
         "obstruction": "Mars",
         "reversal": "POSSIBLE",
-        "timing": {
-          "minDays": 14,
-          "maxDays": 30
-        }
+        "timing": null
       },
       "factors": [
+        {
+          "step": "S3 on/aspecting target Ghar",
+          "text": "Shams rules the 7th Ghar and sits in the friendly Aqrab — it is supported."
+        },
         {
           "step": "S2 querent-vs-matter ruler",
           "text": "Zuhal (your own ruler) counts Shams an enemy — expect rigidity and refusal to adjust."
@@ -1097,20 +1048,12 @@
           "text": "Dhanab al-Tinnin sits in the 7th Ghar — friction on the matter."
         },
         {
-          "step": "S3 on/aspecting target Ghar",
-          "text": "Ras al-Tinnin casts its gaze on the 7th Ghar — friction on the matter."
-        },
-        {
           "step": "S4 fulfilment Ghar (11th)",
           "text": "Mushtari supports the 11th Ghar — the desire has room to materialise."
         },
         {
           "step": "S4 fulfilment Ghar (11th)",
           "text": "Zuhal weighs on the 11th Ghar — fulfilment itself is obstructed."
-        },
-        {
-          "step": "S4 fulfilment Ghar (11th)",
-          "text": "Dhanab al-Tinnin weighs on the 11th Ghar — fulfilment itself is obstructed."
         },
         {
           "step": "S5 ruler placement",
@@ -1333,11 +1276,7 @@
           "dignity": "FriendlySign",
           "retrograde": true,
           "combust": false,
-          "aspectsGhars": [
-            2,
-            4,
-            6
-          ]
+          "aspectsGhars": []
         },
         {
           "planet": "Dhanab al-Tinnin",
@@ -1347,16 +1286,12 @@
           "dignity": "EnemySign",
           "retrograde": true,
           "combust": false,
-          "aspectsGhars": [
-            8,
-            10,
-            12
-          ]
+          "aspectsGhars": []
         }
       ],
       "engineVerdict": {
         "state": "DELAYED",
-        "score": -1,
+        "score": 1,
         "confidence": "LOW",
         "obstruction": "Saturn",
         "reversal": "NONE",
