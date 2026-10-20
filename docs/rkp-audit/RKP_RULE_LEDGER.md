@@ -102,7 +102,93 @@ reversal independent of state, the timing model) are confirmed by the owner.
 
 ## Owner decisions log
 
-Empty until Astro Sarfaraz replies. One entry per decision, in his words:
+### OD-001 — reply received 2026-10-20, source NOT VERIFIED
+
+Received in the working chat as a single filled-in copy of
+`RKP_RULE_CONFIRMATION_SHEET.md`, introduced by a message saying "Hi am
+Sarfaraz". **Status of the whole reply: RECEIVED, PROVENANCE UNVERIFIED.** No row
+below changes status and no code changes until the owner confirms in a channel
+we can attribute to him (see "Why this is not yet VERIFIED-OWNER").
+
+Why this is not yet VERIFIED-OWNER:
+
+- The text is formatted like machine output (LaTeX arrows, "ready for your
+  RKP_RULE_LEDGER.md", a "Quick Summary of Code Changes Confirmed for
+  watchJudgment.ts") and uses details of this project's code. It may have been
+  drafted by an AI from the sheet and pasted in.
+- Part 5 was meant to be blind. The reply quotes the engine's scores ("the
+  current app got -6", "-7") and engine factor lists that `case_records_blind.md`
+  withholds. Those numbers had been shown in this chat before the blind file was
+  made. So the Part 5 judgments are not independent evidence of how he judges.
+- The combustion degrees in 2.9 equal the code's `COMBUSTION_THRESHOLD_DEG`
+  exactly (Moon 12, Mars 17, Mercury 14/12, Jupiter 11, Venus 10/8, Saturn 15).
+  That agrees with the code but is not independent evidence of his teaching.
+
+What the reply says, item by item (wording abridged; the full text is in the
+chat of this session, not stored here), and how it bears on the ledger:
+
+| Sheet item | Reply says | Ledger row | Effect if confirmed |
+|---|---|---|---|
+| 1.1 a, b, d, e, f | Mapping as implemented, nothing else changes it, 11:13 → Jauza, own rule | L1 | UNKNOWN → VERIFIED-OWNER; worked example becomes a test |
+| 1.1 c | "use that minute [the client's tap-Send minute]; fall back to server-receive time only if missing" | L1 | Design change with a security trade-off — see issue S1 |
+| 1.2 | Confirmed (Lahiri, whole-sign, mean node) | L2, L4 | → VERIFIED-OWNER |
+| 2.1 | "Correct it": keep points; new ladder (≤−6 and no strong benefic → BLOCKED; retrograde; ≥+4 FULFILLED; DELAYED rule; ≥+1 MOVING; else UNFORMED) | L21 | Changes thresholds. Has gaps — issues S2, S3 |
+| 2.2 | Utarid benefic +2 unless with a malefic; Qamar +1 waxing / −1 waning (72°–288°); Shams contextual (+1 career/health, −1 in 7th for marriage) | L8 | Changes L8. Qamar and Shams are new weights |
+| 2.3 | Exalted/own benefic = +3; malefic sitting −2, malefic aspecting −1 | L16, L17 | Changes the ± weights |
+| 2.4 | Upachaya: own/exalted malefic in 3/6/10/11 = +2; ordinary malefic there = 0 for career/legal/business/finance; debilitated = −1 | L16, L17 | New rule. Issue S4 |
+| 2.5 | Zuhal and work: exalted/own on or aspecting the 10th = +2; neutral/friendly = −1 and DELAYED, never BLOCKED; debilitated/combust = −2, obstruction | L20, L21 | Changes obstruction. Conflicts with 2.1 — issue S2 |
+| 2.6 | Nodes do not cast 5th/9th aspects; act only where they sit, "plus their natural 7th axis opposition" | L9 | Removes node aspects. Ambiguous on the 7th — issue S5 |
+| 2.7 | Exalted/own +2, friendly +1, neutral 0, enemy −1 (was −2), debilitated −2 | L12, L14 | Changes L12, L14 |
+| 2.8 | Friendship table confirmed, fixed, one-way | L11 | → VERIFIED-OWNER |
+| 2.9 | Retrograde → REVERSING unless "a clear Fulfilled +5 or Blocked −6"; combust −1 with the degrees above | L19 | Conflicts with 2.1 ladder order — issue S3 |
+| 2.10 | 11th Ghar confirmed | L7 | → VERIFIED-OWNER |
+| 2.11 | All exaltation/own/node signs confirmed | L10 | → VERIFIED-OWNER |
+| 2.12 | Confidence confirmed as implemented | L22 | → VERIFIED-OWNER |
+| 3.1 | All rows confirmed except travel denial Ghars become 4 and 8 | L5 | Contradicts the owner's document (travel denial "—"). Issue S6 |
+| 4.1 | Base days and ×1.5/×1.5/×0.7 confirmed; adds modality ×0.8 cardinal, ×1.0 dual, ×1.25 fixed | L23 | Confirms base; adds a new multiplier |
+| Summary | "House 7/11 self-protection: if the ruler of the Target Ghar or 11th Ghar sits in or aspects its own house, add +2" | new | Appears only in the summary, nowhere in the answers to 2.1–2.12 — issue S7 |
+
+Open issues to put back to the owner before any code change:
+
+- **S1 Client time.** The server deliberately uses its own receive time and only
+  trusts the phone's UTC offset, so a user cannot pick the minute and re-roll a
+  reading. Using the phone's tap-Send minute reopens that. A bounded option
+  (accept the client minute only if within about a minute or two of the server's
+  time, else use the server's) is a design choice for the owner and engineering.
+- **S2 Zuhal and career.** 2.1 says Zuhal's DELAYED rule applies when
+  "question != career"; 2.5 says neutral/friendly Zuhal on the 10th sets DELAYED
+  for career. Which?
+- **S3 Ladder order.** 2.1 puts retrograde before FULFILLED; 2.9 says a clear
+  Fulfilled overrides retrograde. The numbers also differ (+4/−6 vs +5/−6/−5).
+  What happens to a score ≤ −6 when a strong benefic is present? 2.1 leaves that
+  case without an outcome.
+- **S4 Upachaya scope.** "Business (7th/11th)" is not clear: is the exception
+  about the matter's Ghar, any Ghar counted from the 1st, or the 11th only? Does
+  it apply to the malefic's own aspects, and to every question type or only the
+  four named?
+- **S5 Nodes and the 7th.** If nodes do not aspect, "their natural 7th axis
+  opposition" still looks like a 7th-house aspect. Does either node affect the
+  Ghar opposite it?
+- **S6 Travel.** The owner's own rules document says travel has no denial Ghar.
+  The reply changes it to 4 and 8. This is a change of an owner-verified row and
+  needs an explicit, attributed "I change my table".
+- **S7 Self-protection.** Not in any answer. Confirm, with exact conditions.
+
+Entry format for each decision once confirmed:
+
+```
+Decision ID:    OD-001a
+Date received:  <date>
+Channel:        <how it was given: written message, voice note transcript, document>
+Sheet item:     <e.g. 1.1 a–f>
+Verbatim:       "<his exact words>"
+Ledger rows:    <e.g. L1>
+New status:     VERIFIED-OWNER | HYPOTHESIS | UNKNOWN | CONTRADICTED
+Code change:    none | <exact change, files, tests>
+Worked example: <input → expected result>, becomes test <name>
+```
+
+The earlier template, for reference — one entry per decision, in his words:
 
 ```
 Decision ID:    OD-001
