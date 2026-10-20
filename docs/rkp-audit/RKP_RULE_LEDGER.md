@@ -222,6 +222,27 @@ implemented and stays as it was.
 | S2 / 2.5 Zuhal on the 10th, scoring | **No** | Open: does the Zuhal −1 / +2 / −2 table replace or add to the generic malefic score (−2 sitting, −1 aspecting)? Does it also apply to business, where the 10th is a helping Ghar and not the matter's Ghar? |
 | S7 self-protection | **No** | Open: the answer is internally inconsistent. Read as "the extra +2 is only when the ruler sits in the opposite (7th-from) Ghar and aspects back". Does the 11th ruler sitting in the 11th itself get +2, given the 11th ruler has no strong-ruler credit today? |
 
+### OD-003 — message received 2026-10-20, source NOT VERIFIED, no new decisions
+
+A restatement of OD-002's Parts 3–5 in the same AI-assisted format, ending with a
+"Summary of Engine Divergences". Nothing in it settles an open rule. What it adds
+or changes, recorded for the owner to confirm:
+
+- **Case 4 timing** is now "20 to 38 days" (was "20 to 40"). The engine gives no
+  timing for Case 4 because its state is Unformed.
+- **Case 3 timing** says Mushtari, "Dual sign × 1.0", 60–90 days. Mushtari is in
+  Jauza, an enemy sign for Mushtari, so the owner's own multiplier (×1.5 for a
+  weak ruler) gives 90–135 days, which is what the engine returns. His judgment and
+  his written rule disagree.
+- **S7 is restated more broadly:** "A ruler casting an aspect onto its own house
+  grants +2 protection." OD-002's S7 said a 7th aspect only. These differ, and the
+  difference decides Case 4: the 11th's ruler Mushtari sits in the 7th and casts its
+  5th aspect onto the 11th. Counted, Case 4 moves from −1 (Unformed) to +1 (Moving),
+  the owner's own verdict. Not counted, it stays Unformed. Recorded as a question
+  for the owner, not applied.
+- The summary lists S4 case B ("no blanket −2 for career, business, legal,
+  financial") as a divergence. It is still not implemented (see dispositions).
+
 Entry format for each decision once confirmed:
 
 ```
