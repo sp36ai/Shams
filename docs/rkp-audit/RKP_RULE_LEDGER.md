@@ -421,7 +421,7 @@ L14–L17 and L21.
 
 | Point | Commit | What it is | Test results recorded |
 |---|---|---|---|
-| Pre-change baseline | `72a5021` | Engine as on `origin/main` before any OD-002 rule; fresh golden capture reproduced from it byte for byte | `src/astrology/rkp` tests: 96 passing; all of `src/astrology`: 122 passing (measured in the rollback drill below). Full functions and app counts at this commit itself were not captured |
+| Pre-change baseline | `72a5021` | Engine as on `origin/main` before any OD-002 rule; fresh golden capture reproduced from it byte for byte | Two counts, two scopes, both re-measured at this commit: `npx jest src/astrology/rkp` → 5 suites, **96** tests; `npx jest src/astrology` (also the KP-rules and primitives tests) → 8 suites, **122** tests. Neither replaces the other. Full functions and app counts at this commit itself were not captured |
 | Phase 1 | `ddac7db` | Rules `3be9f30`, fixtures `652e28b`, client minute `ddac7db`. Engine version `2.0.0-moshier` | `src/astrology`: 134 passing; functions: 747 passing (2 skipped); app: 435 passing; typecheck and lint clean |
 | Audit artefacts since | later docs-only commits | No source change after `ddac7db`: `git diff ddac7db HEAD -- src functions/src` is empty | — |
 
@@ -438,6 +438,10 @@ The client-minute change (`ddac7db`: `clientSentAtMs` in the schema, callable, c
 independent of the rules and stays unless it is reverted separately. Compare any later experiment with the
 phase-1 case records (`case_records.json`, `OD-002_phase1_attribution.json`) and the per-case golden replay
 (`golden_replay_OD-002_phase1.md`).
+
+Tags: annotated tags `rkp-baseline-pre-od002` (`72a5021`) and `rkp-phase1-od002` (`ddac7db`) exist locally in the
+session that created them; pushing them was refused (HTTP 403), so they are NOT on the remote. They are to be
+created and pushed from an authorised machine; until then the commit ids above are the references.
 
 ## Release controls (apply to every rule change)
 
