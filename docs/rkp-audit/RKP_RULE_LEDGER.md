@@ -247,6 +247,39 @@ Read-only simulation of the open readings (S7 strict vs broad, S4 B1/B2), with t
 Case 3 longitude check and the node-aspect counts: `OD-002_OPEN_RULE_SIMULATION.md`.
 Nothing there is implemented.
 
+### Self-protection (S7): two interpretations, recorded separately, neither selected
+
+Neither is implemented; the branch applies no self-protection. Status of both: UNKNOWN until the owner
+chooses. Neither is the default, and neither is chosen because of what it does to Case 4.
+
+| | S7-A strict | S7-B broad |
+|---|---|---|
+| Text it rests on | OD-002 S7: the ruler "casts a 7th aspect on the target Ghar"; the extra +2 only when it sits in the opposite Ghar and aspects back; same for the 11th ruler | OD-003 summary: "A ruler casting an aspect onto its own house grants +2 protection" |
+| Aspects that count | the 7th aspect only | any aspect, including special aspects (Mushtari 5th/9th, Mirrikh 4th/8th, Zuhal 3rd/10th) |
+| Applies to | ruler of the target Ghar; ruler of the 11th | same |
+| Simulated effect (read-only) | Case 4 stays Unformed (−1); Case 1 Fulfilled; Case 3 Fulfilled (+6); distribution up modestly | Case 4 Moving (+1); Case 1 Fulfilled; Case 3 Fulfilled (+6); distribution up further |
+
+Conditions recorded for whichever is chosen:
+- Special aspects (Mushtari's 5th, Mirrikh's and Zuhal's special aspects) are separate influences until the
+  owner says whether each counts for self-protection.
+- No implicit stacking: one credit per planet per Ghar. A ruler that sits in its own Ghar already scores the
+  strong-ruler +2 (matter's ruler only) and does not also get this credit; a relationship already credited
+  elsewhere (a benefic aspect on the Ghar, say) is not credited a second time under this rule unless the owner
+  says it stacks.
+- Whether the 11th ruler sitting in the 11th itself gets +2 is a third, separate question (the 11th ruler has
+  no strong-ruler credit today).
+
+### Other open decisions, recorded independently (none inferred from the five cases)
+
+| Decision | What the owner must state |
+|---|---|
+| Utarid affliction | Which planets afflict it; whether aspect counts as well as conjunction; whether a benefic mitigates; "0 or −1" |
+| Shams contextual weights | +1 career/health, −1 marriage: does the matter's Ghar or the Ghar Shams occupies control the override; sitting only or aspecting too |
+| Qamar bright half | Forward elongation (Moon − Sun) mod 360; inclusive or exclusive at 72° and 288°; treatment of new and full Moon; the "waxing" label does not fit 180°–288° |
+| S4 cases B and C | Ordinary and enemy-sign malefics in 3/6/10/11; debilitated −1 for all types or only four |
+| Zuhal on the 10th | Replace or add to the malefic score; business separately |
+| Case 4 | The owner's own reason for Yes, not reverse-engineered from the engine |
+
 Entry format for each decision once confirmed:
 
 ```
