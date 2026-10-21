@@ -144,6 +144,15 @@ jobs:
           curl --fail --silent --show-error --max-time 30 \
             https://asia-south1-shams-app-4d0e7.cloudfunctions.net/health
 
+      # TTL policies in firestore.indexes.json (idempotency reply copies,
+      # rate-limit counters, the deleted-account marker) only take effect once
+      # deployed; no other workflow deploys them. Additive only: without
+      # --force, a non-interactive deploy never deletes an index or field
+      # override that exists in the project but not in the file (firebase-
+      # tools lib/firestore/api.js — the delete prompt defaults to "no").
+      - name: Deploy Firestore indexes and TTL policies (additive only)
+        run: npx firebase-tools deploy --only firestore:indexes --project shams-app-4d0e7 --non-interactive
+
       # One-off removal of the unkeyed question/IP codes written before
       # keyedHash.ts (functions/src/maintenance/stripLegacyHashes.ts). Only
       # after a healthy deploy, and after the old revision's in-flight
