@@ -121,7 +121,7 @@
         </div>
         <p class="by-line">by Astro Sarfaraz</p>
         <p class="meta">
-          Privacy Policy &nbsp;·&nbsp; Effective Date: 1 June 2026 &nbsp;·&nbsp; Last Updated: 20
+          Privacy Policy &nbsp;·&nbsp; Effective Date: 1 June 2026 &nbsp;·&nbsp; Last Updated: 21
           October 2026
         </p>
       </header>
@@ -244,9 +244,31 @@
         transmitted to our servers.
       </p>
       <p>
-        We retain your data for as long as your account is active. If you delete your account, all
-        associated data (readings, quota records, subscription status) is permanently deleted within
-        30 days.
+        We keep your data for as long as your account is active. Deleting your account (in-app,
+        under Settings → Account → Delete Account) immediately and permanently deletes your profile,
+        every reading and its follow-up discussion, saved copies of the oracle's replies, your
+        quota, trial and coin-wallet records, and your sign-in credentials. A request that was
+        already in progress when you deleted your account cannot add new data afterwards.
+      </p>
+      <p>
+        <strong>Kept after account deletion:</strong> the link between a redeemed purchase and the
+        account that redeemed it (so one purchase cannot be redeemed twice), and our audit and
+        security logs, kept for fraud prevention, security and legal compliance. These records do
+        not contain your name, email, question text or reading content. They can contain short codes
+        derived from your question text and from your IP address. The codes are made with a secret
+        key, so they cannot be worked back by guessing without that key, but they are not anonymous:
+        we can still match them. A record that your account was deleted, holding only its internal
+        ID and the time of deletion, is kept for about a day so that no request still in progress
+        can recreate your data.
+      </p>
+      <p>
+        <strong>Server logs:</strong> our servers write operational logs to Google Cloud Logging.
+        They contain your account's internal ID and request details such as time and outcome, and
+        occasionally a short excerpt of the oracle's generated text when it fails an automated
+        check. Google Cloud also records standard details of each request to our servers, including
+        your IP address and device type. These logs do not contain your question text. They are kept
+        for {{LOG_RETENTION_DAYS}} days. They are separate from the text sent to Anthropic described
+        in Section 4.
       </p>
 
       <h2>6. Your Rights</h2>
@@ -255,7 +277,9 @@
         <li><strong>Access</strong> — request a copy of the data we hold about you.</li>
         <li><strong>Correction</strong> — request correction of inaccurate data.</li>
         <li>
-          <strong>Deletion</strong> — request deletion of your account and all associated data.
+          <strong>Deletion</strong> — delete your account and all associated data at any time,
+          in-app, under Settings → Account → Delete Account (see Section 5 for exactly what is and
+          isn't included). You may also request this by email instead.
         </li>
         <li><strong>Portability</strong> — request your reading history in a structured format.</li>
         <li>

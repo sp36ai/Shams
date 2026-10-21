@@ -26,6 +26,35 @@ jobs:
         with:
           ref: ${{ github.event.workflow_run.head_sha || github.sha }}
 
+      # The privacy policy states how long Cloud Logging keeps server logs.
+      # The figure is read from the project here (read-only) and written into
+      # the page at deploy time, so the published number is always the one
+      # actually configured. If it cannot be read, nothing is published.
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v3
+        with:
+          credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+
+      - name: Fill verified log retention into the privacy policy
+        run: |
+          set -euo pipefail
+          page=hosting/privacy-policy.html
+          if grep -q '{{LOG_RETENTION_DAYS}}' "$page"; then
+            days=$(gcloud logging buckets describe _Default --location=global \
+              --project shams-app-4d0e7 --format='value(retentionDays)' 2>&1) || true
+            if ! [[ "$days" =~ ^[1-9][0-9]*$ ]]; then
+              echo "::error::Could not read the _Default log bucket retention: ${days}"
+              echo "::error::Grant the deploy service account roles/logging.viewer, then re-run."
+              exit 1
+            fi
+            sed -i "s/{{LOG_RETENTION_DAYS}}/${days}/g" "$page"
+            echo "Log retention published as ${days} days."
+          fi
+          if grep -q '{{[A-Z_]*}}' "$page"; then
+            echo "::error::Unresolved placeholder left in $page"
+            exit 1
+          fi
+
       - name: Deploy to Firebase Hosting
         uses: FirebaseExtended/action-hosting-deploy@v0
         with:
