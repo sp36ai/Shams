@@ -109,7 +109,9 @@ only deletes them once a TTL policy names that field:
   Holds only the uid and timestamps; `expiresAt` is 24 hours out.
 
 All three policies are declared in `firestore.indexes.json` (`fieldOverrides`) and
-are created by `firebase deploy --only firestore:indexes`. Afterwards, confirm
+are created by `firebase deploy --only firestore:indexes`, which the functions
+deploy workflow runs after every deploy (non-interactive, without `--force`, so
+it never deletes an index or override that exists only in the console). Afterwards, confirm
 all three appear under **Build → Firestore Database → Time-to-live (TTL)**. If an
 older `rateLimits` policy exists there from before, it can be removed — no
 documents in that group carry `expiresAt`.
