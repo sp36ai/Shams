@@ -35,8 +35,10 @@ import {
   FUNCTION_OPTS,
   GOOGLE_PLAY_CLIENT_EMAIL,
   GOOGLE_PLAY_PRIVATE_KEY,
+  LOG_HASH_KEY,
   PLAY_PRODUCT_MAP,
 } from '../../config';
+import { assertAccountActive, writeIfAccountActive } from '../../utils/accountState';
 
 // ── Google Play API client (no googleapis SDK to keep bundle small) ───────────
 
@@ -218,7 +220,7 @@ export const verifyGooglePlayPurchase = onCall(
   {
     ...FUNCTION_OPTS,
     enforceAppCheck: process.env.FUNCTIONS_EMULATOR !== 'true',
-    secrets: [GOOGLE_PLAY_CLIENT_EMAIL, GOOGLE_PLAY_PRIVATE_KEY],
+    secrets: [GOOGLE_PLAY_CLIENT_EMAIL, GOOGLE_PLAY_PRIVATE_KEY, LOG_HASH_KEY],
   },
   async request => {
     const startedAt = Date.now();
@@ -265,6 +267,9 @@ export const verifyGooglePlayPurchase = onCall(
       // different account attempting to redeem the same token is rejected.
       const tokenRef = db.collection('purchaseTokens').doc(hashPurchaseToken(input.purchaseToken));
       const boundToOtherAccount = await db.runTransaction(async tx => {
+        // A deleted account gets no plan; the purchase then stays
+        // unacknowledged and Google refunds it automatically.
+        await assertAccountActive(tx, userId);
         const snap = await tx.get(tokenRef);
         if (snap.exists) {
           const boundUserId = snap.data()?.userId as string | undefined;
@@ -321,15 +326,18 @@ export const verifyGooglePlayPurchase = onCall(
       }
 
       // Update Firestore
-      await db.collection('quotas').doc(userId).set(
-        {
-          plan,
-          planExpiry: expiresAt.toISOString(),
-          orderId: purchase.orderId,
-          updatedAt: FieldValue.serverTimestamp(),
-        },
-        { merge: true },
-      );
+      await writeIfAccountActive(userId, tx => {
+        tx.set(
+          db.collection('quotas').doc(userId),
+          {
+            plan,
+            planExpiry: expiresAt.toISOString(),
+            orderId: purchase.orderId,
+            updatedAt: FieldValue.serverTimestamp(),
+          },
+          { merge: true },
+        );
+      });
 
       // Merge into existing claims — do NOT replace (would wipe admin: true, etc.)
       const existingUser = await auth.getUser(userId);

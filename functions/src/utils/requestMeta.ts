@@ -1,16 +1,11 @@
-import * as crypto from 'crypto';
 import type { CallableRequest, Request } from 'firebase-functions/v2/https';
+import { keyedHash } from './keyedHash';
 
 export interface RequestAuditMeta {
   source: 'callable' | 'http';
   ipAddress?: string;
   ipHash?: string;
   userAgent?: string;
-}
-
-function hashIp(ip: string): string {
-  // Shortened hash keeps logs useful for correlation without storing raw IPs.
-  return crypto.createHash('sha256').update(ip).digest('hex').slice(0, 16);
 }
 
 function normalizeHeader(v: string | string[] | undefined): string | undefined {
@@ -77,7 +72,10 @@ export function requestMetaFromHttp(req: Request): RequestAuditMeta {
   return {
     source: 'http',
     ipAddress: ip,
-    ipHash: ip ? hashIp(ip) : undefined,
+    // Keyed (utils/keyedHash.ts): an unsalted hash of an IP can be reversed
+    // by enumerating every address. The raw `ipAddress` above is used only
+    // in memory (razorpay.ts's per-IP rate limit) and is never stored.
+    ipHash: ip ? keyedHash('ip', ip) : undefined,
     userAgent: userAgent ? userAgent.slice(0, 256) : undefined,
   };
 }

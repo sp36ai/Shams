@@ -112,6 +112,30 @@ jobs:
         with:
           credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
 
+      # LOG_HASH_KEY (functions/src/utils/keyedHash.ts) is bound by
+      # askWatchOracle, discussReading, verifyGooglePlayPurchase and
+      # razorpayWebhook, so the deploy below fails without it. Created here
+      # exactly once, with a random value that is never printed or stored
+      # anywhere but Secret Manager. Only an explicit NOT_FOUND creates it: any
+      # other failure (e.g. missing permission) stops the job, because adding
+      # a version to an existing key would silently rotate it and break every
+      # correlation code (see DEPLOYMENT.md).
+      - name: Ensure LOG_HASH_KEY secret exists
+        run: |
+          set -euo pipefail
+          if err=$(gcloud secrets describe LOG_HASH_KEY --project shams-app-4d0e7 2>&1 >/dev/null); then
+            echo "LOG_HASH_KEY exists - left unchanged."
+          elif grep -q "NOT_FOUND" <<<"$err"; then
+            echo "LOG_HASH_KEY not found - creating it with a random value."
+            openssl rand -hex 32 | tr -d '\n' \
+              | npx firebase-tools functions:secrets:set LOG_HASH_KEY \
+                  --data-file=- --project shams-app-4d0e7 --force
+          else
+            echo "::error::Could not check LOG_HASH_KEY (not a NOT_FOUND):"
+            echo "$err"
+            exit 1
+          fi
+
       - name: Deploy to Firebase
         run: npx firebase-tools deploy --only functions --project shams-app-4d0e7 --force
 
@@ -119,3 +143,15 @@ jobs:
         run: |
           curl --fail --silent --show-error --max-time 30 \
             https://asia-south1-shams-app-4d0e7.cloudfunctions.net/health
+
+      # One-off removal of the unkeyed question/IP codes written before
+      # keyedHash.ts (functions/src/maintenance/stripLegacyHashes.ts). Only
+      # after a healthy deploy, and after the old revision's in-flight
+      # requests (max function timeout 120 s) can no longer write a legacy
+      # value behind it. Removes fields, never documents; prints counts only;
+      # --once records completion so later deploys skip the scan.
+      - name: Remove legacy unkeyed hashes (one-off)
+        run: |
+          sleep 150
+          npx vite-node scripts/strip-legacy-hashes.ts --project shams-app-4d0e7 --apply --once
+        working-directory: functions

@@ -92,27 +92,71 @@ Follow these steps in [Firebase Console](https://console.firebase.google.com):
    - **Billing**: Requires billing enabled (see step 3 above)
 3. Do NOT use Firestore in Datastore mode (use Native mode)
 
-#### TTL policy — `idempotencyKeys` (required)
+#### TTL policies — `idempotencyKeys`, rate-limit `minutes`, `deletedAccounts` (required)
 
-`askWatchOracle` records each submission's `requestId` so a retry replays the
-original reading instead of casting and charging for a second one. Those
-records exist only to deduplicate a retry, and each carries an `expiresAt`
-timestamp 24 hours out — but Firestore only acts on it once a TTL policy names
-that field:
+Three kinds of short-lived records carry an `expiresAt` timestamp, and Firestore
+only deletes them once a TTL policy names that field:
 
-1. Go to **Build → Firestore Database → Time-to-live (TTL)**
-2. **Create policy**
-   - Collection group: `idempotencyKeys`
-   - Timestamp field: `expiresAt`
+- `idempotencyKeys` — `askWatchOracle` and `discussReading` record each
+  submission's `requestId`, with the full response, so a retry replays the
+  original reading instead of casting and charging for a second one.
+  `expiresAt` is 24 hours out.
+- `rateLimits/{uid}/minutes/*` — per-minute request counters. `expiresAt` is
+  2 minutes out. The TTL policy must name the `minutes` collection group (the
+  subcollection the counters live in), not `rateLimits`.
+- `deletedAccounts/{uid}` — the marker `deleteAccount` writes first, so no
+  in-flight request can add data after deletion (`utils/accountState.ts`).
+  Holds only the uid and timestamps; `expiresAt` is 24 hours out.
 
-Skipping this is not a correctness problem — deduplication still works — but the
-collection then grows without bound, one document per question ever asked.
+All three policies are declared in `firestore.indexes.json` (`fieldOverrides`) and
+are created by `firebase deploy --only firestore:indexes`. Afterwards, confirm
+all three appear under **Build → Firestore Database → Time-to-live (TTL)**. If an
+older `rateLimits` policy exists there from before, it can be removed — no
+documents in that group carry `expiresAt`.
+
+Skipping this is not a correctness problem — deduplication and rate limiting
+still work — but both collections then grow without bound. Account deletion
+removes a user's records in both regardless (`functions/account.ts`).
 
 ### Cloud Functions
 
 1. Go to **Build → Functions**
 2. Verify region is `asia-south1` (matches functions/firebase.json)
 3. Ensure Cloud Build API is enabled (should be automatic)
+
+#### Secret — `LOG_HASH_KEY` (required before deploying)
+
+Audit and security records carry keyed correlation codes instead of question
+text and IP addresses (`functions/src/utils/keyedHash.ts`, HMAC-SHA-256).
+`askWatchOracle`, `discussReading`, `verifyGooglePlayPurchase` and `razorpayWebhook`
+bind this secret, so deployment fails until it exists. The functions deploy
+workflow (`.github/workflows/deploy-functions.yml`, step "Ensure LOG_HASH_KEY
+secret exists") creates it on the first deploy that needs it, with a random
+value that is never printed, and leaves it unchanged afterwards. It creates
+the key only on an explicit `NOT_FOUND`; any other error (such as a missing
+Secret Manager permission on the deploy service account) stops the deploy.
+To create it by hand instead:
+
+```bash
+openssl rand -hex 32 | tr -d '\n' | firebase functions:secrets:set LOG_HASH_KEY --data-file=-
+```
+
+- Do not store the key in source, Firestore or `.env` files, and do not log it.
+- If the key is ever unavailable at runtime the codes are omitted, never
+  replaced with an unkeyed hash.
+- Transition: records written before this change keep their old unkeyed
+  values (8-hex FNV question codes, 16-hex SHA-256 IP codes); new ones are
+  `h1:` + 32 hex. The two never match, so correlation does not span the
+  switch, and old values cannot be re-keyed because the raw inputs were never
+  stored. Because the old values remain guessable, they are removed (owner
+  decision 2026-10-21): after a healthy deploy the workflow runs
+  `functions/scripts/strip-legacy-hashes.ts --apply --once`, which deletes
+  only legacy-format `questionHash`/`ipHash` fields from `auditLogs` and
+  `securityEvents`, never documents, and records completion in
+  `_system/migration-strip-legacy-hashes-v1` so later deploys skip it. Dry
+  run (counts only): `npx vite-node scripts/strip-legacy-hashes.ts --project <id>`.
+- Rotating the key breaks correlation the same way; it would need a new
+  version prefix (`h2:`) in `keyedHash.ts`.
 
 ### Security Rules
 

@@ -48,7 +48,14 @@ import { FieldValue } from 'firebase-admin/firestore';
 import { db, auth } from '../../utils/admin';
 import { logger } from '../../utils/logger';
 import { requestMetaFromHttp, type RequestAuditMeta } from '../../utils/requestMeta';
-import { RAZORPAY_WEBHOOK_SECRET, REGION, PLAN_DURATION_DAYS, type PlanTier } from '../../config';
+import {
+  RAZORPAY_WEBHOOK_SECRET,
+  LOG_HASH_KEY,
+  REGION,
+  PLAN_DURATION_DAYS,
+  type PlanTier,
+} from '../../config';
+import { writeIfAccountActive } from '../../utils/accountState';
 
 // Per-IP sliding-window rate limiter for the webhook endpoint.
 // Razorpay retries events a fixed number of times — 30 req/min per IP is very generous.
@@ -321,15 +328,20 @@ async function upgradePlan(
   const currentClaims = existingUser.customClaims ?? {};
 
   // Firestore update (authoritative for quota checks) — only after the
-  // identity above is confirmed real.
-  await db.collection('quotas').doc(userId).set(
-    {
-      plan,
-      planExpiry: expiresAt.toISOString(),
-      updatedAt: FieldValue.serverTimestamp(),
-    },
-    { merge: true },
-  );
+  // identity above is confirmed real, and never once its deletion has begun
+  // (between the deleted-account marker and the Auth deletion, getUser
+  // above still succeeds — utils/accountState.ts).
+  await writeIfAccountActive(userId, tx => {
+    tx.set(
+      db.collection('quotas').doc(userId),
+      {
+        plan,
+        planExpiry: expiresAt.toISOString(),
+        updatedAt: FieldValue.serverTimestamp(),
+      },
+      { merge: true },
+    );
+  });
 
   // Merge into existing claims — do NOT replace (would wipe admin: true, etc.)
   await auth.setCustomUserClaims(userId, {
@@ -358,7 +370,12 @@ async function upgradePlan(
 }
 
 export const razorpayWebhook = onRequest(
-  { region: REGION, timeoutSeconds: 30, cors: false, secrets: [RAZORPAY_WEBHOOK_SECRET] },
+  {
+    region: REGION,
+    timeoutSeconds: 30,
+    cors: false,
+    secrets: [RAZORPAY_WEBHOOK_SECRET, LOG_HASH_KEY],
+  },
   async (req, res) => {
     const startedAt = Date.now();
     const requestMeta = requestMetaFromHttp(req);

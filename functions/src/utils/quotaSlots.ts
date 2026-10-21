@@ -24,6 +24,7 @@ import {
 import type { TrialDoc, QuotaDoc } from '../types';
 import { monetizationModeFor, type MonetizationMode } from './monetization';
 import { balanceOf, walletRef, writeBalance } from './wallet';
+import { assertAccountActive, isAccountDeleted } from './accountState';
 
 /**
  * What a claimed question was paid with, so refundQuotaSlot can give back
@@ -88,6 +89,7 @@ async function claimLegacySlot(userId: string): Promise<{
   let trialActive = false;
 
   await db.runTransaction(async tx => {
+    await assertAccountActive(tx, userId);
     const [quotaSnap, trialSnap] = await Promise.all([tx.get(quotaRef), tx.get(trialRef)]);
     const d = quotaSnap.exists ? (quotaSnap.data() as Partial<QuotaDoc>) : {};
 
@@ -171,6 +173,7 @@ async function claimCoinsModeSlot(userId: string): Promise<{
   const wRef = walletRef(userId);
 
   return db.runTransaction(async tx => {
+    await assertAccountActive(tx, userId);
     const [quotaSnap, walletSnap] = await Promise.all([tx.get(quotaRef), tx.get(wRef)]);
     const d = quotaSnap.exists ? (quotaSnap.data() as Partial<QuotaDoc>) : {};
     const now = Date.now();
@@ -269,18 +272,27 @@ export async function refundQuotaSlot(
   }
   if (charge.kind === 'free_weekly') {
     // Give the free question back: restore the clock to where it was.
-    await db
-      .collection('quotas')
-      .doc(userId)
-      .set(
+    // A refund on a deleted account is simply dropped — it must neither
+    // recreate the quota record nor throw over the error being refunded.
+    const quotaRef = db.collection('quotas').doc(userId);
+    await db.runTransaction(async tx => {
+      if (await isAccountDeleted(tx, userId)) {
+        return;
+      }
+      tx.set(
+        quotaRef,
         { lastFreeAt: charge.previousLastFreeAt, updatedAt: FieldValue.serverTimestamp() },
         { merge: true },
       );
+    });
     return;
   }
   if (charge.kind === 'coins') {
     const wRef = walletRef(userId);
     await db.runTransaction(async tx => {
+      if (await isAccountDeleted(tx, userId)) {
+        return;
+      }
       const snap = await tx.get(wRef);
       const balance = snap.exists ? balanceOf(snap.data()) : 0;
       writeBalance(tx, userId, balance + charge.amountMilli, {

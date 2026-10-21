@@ -226,12 +226,12 @@ export interface TrialDoc {
 export interface AuditLogDoc {
   userId: string;
   action: AuditAction;
-  questionHash?: string; // FNV-1a of question text — never raw text
+  questionHash?: string; // keyed code of question text (utils/keyedHash.ts) — never raw text
   verdict?: VerdictKind;
   plan?: PlanTier;
   source?: 'callable' | 'http';
   ipAddress?: string;
-  ipHash?: string; // SHA-256 hash prefix of caller IP, never raw IP
+  ipHash?: string; // keyed code of caller IP (utils/keyedHash.ts) — never raw IP
   userAgent?: string;
   durationMs?: number;
   /**

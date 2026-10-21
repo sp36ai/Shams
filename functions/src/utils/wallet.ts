@@ -16,6 +16,7 @@
 import type { Transaction, DocumentReference } from 'firebase-admin/firestore';
 import { db, FieldValue } from './admin';
 import { TOKENS_PER_MILLICOIN } from '../config';
+import { assertAccountActive } from './accountState';
 
 export type LedgerType =
   | 'grant' // added by an admin (testing, goodwill)
@@ -93,6 +94,7 @@ export async function chargeDiscussion(
 ): Promise<{ chargedMilli: number; balanceMilli: number }> {
   const cost = discussionCostMilli(tokens);
   return db.runTransaction(async tx => {
+    await assertAccountActive(tx, userId);
     const snap = await tx.get(walletRef(userId));
     const balance = snap.exists ? balanceOf(snap.data()) : 0;
     const charged = Math.min(cost, Math.max(0, balance));
@@ -120,6 +122,7 @@ export async function creditWallet(
     throw new Error('creditWallet: amount must be a positive integer of millicoins');
   }
   return db.runTransaction(async tx => {
+    await assertAccountActive(tx, userId);
     const snap = await tx.get(walletRef(userId));
     const after = (snap.exists ? balanceOf(snap.data()) : 0) + amountMilli;
     writeBalance(tx, userId, after, { type, amountMilli, ...extra });

@@ -12,6 +12,7 @@
     "logs": "firebase functions:log",
     "lint": "tsc --noEmit && eslint . --ext .ts --max-warnings=0",
     "test": "vitest --passWithNoTests",
+    "test:emulator": "FIRESTORE_EMULATOR_HOST=127.0.0.1:8080 FIREBASE_AUTH_EMULATOR_HOST=127.0.0.1:9099 GCLOUD_PROJECT=demo-shams RATE_LIMIT_PER_MINUTE=100000 vitest run --no-file-parallelism account.emulator stripLegacyHashes",
     "test:watch": "vitest --watch",
     "test:ui": "vitest --ui",
     "test:coverage": "vitest --coverage"

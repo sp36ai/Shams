@@ -11,7 +11,46 @@
  * in-memory map of seeded documents — no emulator needed.
  */
 
-import { describe, it, expect, vi, beforeEach, type Mock } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach, type Mock } from 'vitest';
+
+// The deleted-account marker itself is tested in accountState.test.ts. Here
+// the account is active unless a test flips `accountState.deleted`, which is
+// how each write path below proves it consults the marker.
+const accountState = vi.hoisted(() => ({ deleted: false }));
+vi.mock('../../utils/accountState', async () => {
+  // A real HttpsError, as the real module throws: callables rethrow those
+  // as-is and wrap anything else as 'internal'.
+  const { HttpsError } = await vi.importActual<typeof import('firebase-functions/v2/https')>(
+    'firebase-functions/v2/https',
+  );
+  const refuse = (): never => {
+    throw new HttpsError('failed-precondition', 'This account has been deleted.');
+  };
+  return {
+    isAccountDeleted: () => Promise.resolve(accountState.deleted),
+    assertAccountActive: () => {
+      if (accountState.deleted) {
+        refuse();
+      }
+      return Promise.resolve();
+    },
+    writeIfAccountActive: async (
+      _userId: string,
+      write: (tx: { set: (ref: unknown, data: unknown, opts?: unknown) => void }) => void,
+    ) => {
+      if (accountState.deleted) {
+        refuse();
+      }
+      const pending: unknown[] = [];
+      write({
+        set: (ref, data, opts) => {
+          pending.push((ref as { set: (d: unknown, o?: unknown) => unknown }).set(data, opts));
+        },
+      });
+      await Promise.all(pending);
+    },
+  };
+});
 import { HttpsError } from 'firebase-functions/v2/https';
 
 interface FakeDoc {
@@ -146,5 +185,19 @@ describe('activateTrial — idempotent replay (the file’s own stated core prop
     expect(bob).toMatchObject({ alreadyActive: false });
     expect(trials.has('alice')).toBe(true);
     expect(trials.has('bob')).toBe(true);
+  });
+});
+
+describe('deleted account (utils/accountState.ts marker)', () => {
+  afterEach(() => {
+    accountState.deleted = false;
+  });
+
+  it('activates no trial for a deleted account', async () => {
+    accountState.deleted = true;
+    await expect(invokeActivateTrial('alice')).rejects.toMatchObject({
+      code: 'failed-precondition',
+    });
+    expect(trials.has('alice')).toBe(false);
   });
 });
