@@ -129,11 +129,16 @@ removes a user's records in both regardless (`functions/account.ts`).
 Audit and security records carry keyed correlation codes instead of question
 text and IP addresses (`functions/src/utils/keyedHash.ts`, HMAC-SHA-256).
 `askWatchOracle`, `discussReading`, `verifyGooglePlayPurchase` and `razorpayWebhook`
-bind this secret, so deployment fails until it exists. Create it once, with a
-random value that is never written anywhere else:
+bind this secret, so deployment fails until it exists. The functions deploy
+workflow (`.github/workflows/deploy-functions.yml`, step "Ensure LOG_HASH_KEY
+secret exists") creates it on the first deploy that needs it, with a random
+value that is never printed, and leaves it unchanged afterwards. It creates
+the key only on an explicit `NOT_FOUND`; any other error (such as a missing
+Secret Manager permission on the deploy service account) stops the deploy.
+To create it by hand instead:
 
 ```bash
-openssl rand -hex 32 | firebase functions:secrets:set LOG_HASH_KEY --data-file=-
+openssl rand -hex 32 | tr -d '\n' | firebase functions:secrets:set LOG_HASH_KEY --data-file=-
 ```
 
 - Do not store the key in source, Firestore or `.env` files, and do not log it.
@@ -143,8 +148,13 @@ openssl rand -hex 32 | firebase functions:secrets:set LOG_HASH_KEY --data-file=-
   values (8-hex FNV question codes, 16-hex SHA-256 IP codes); new ones are
   `h1:` + 32 hex. The two never match, so correlation does not span the
   switch, and old values cannot be re-keyed because the raw inputs were never
-  stored. The old values remain guessable — removing them from existing
-  records is a separate, owner-approved data change.
+  stored. Because the old values remain guessable, they are removed (owner
+  decision 2026-10-21): after a healthy deploy the workflow runs
+  `functions/scripts/strip-legacy-hashes.ts --apply --once`, which deletes
+  only legacy-format `questionHash`/`ipHash` fields from `auditLogs` and
+  `securityEvents`, never documents, and records completion in
+  `_system/migration-strip-legacy-hashes-v1` so later deploys skip it. Dry
+  run (counts only): `npx vite-node scripts/strip-legacy-hashes.ts --project <id>`.
 - Rotating the key breaks correlation the same way; it would need a new
   version prefix (`h2:`) in `keyedHash.ts`.
 

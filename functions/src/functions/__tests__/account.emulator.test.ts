@@ -9,10 +9,10 @@
  * fall back to the production project id):
  *
  *   firebase emulators:start --only firestore,auth --project demo-shams
- *   cd functions
- *   FIRESTORE_EMULATOR_HOST=127.0.0.1:8080 FIREBASE_AUTH_EMULATOR_HOST=127.0.0.1:9099 \
- *   GCLOUD_PROJECT=demo-shams RATE_LIMIT_PER_MINUTE=100000 \
- *   npx vitest run account.emulator
+ *   cd functions && npm run test:emulator
+ *
+ * The emulator suites share one database and each clears it, so they must
+ * run one file at a time — test:emulator passes --no-file-parallelism.
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';
