@@ -60,4 +60,17 @@ describe('privacy policy matches behaviour', () => {
     expect(text).toContain("Anthropic's Claude model");
     expect(text).not.toMatch(/OpenAI/i);
   });
+
+  it('describes location as on-device only, and not used for readings', () => {
+    expect(text).toContain('never sent to our servers');
+    expect(text).toContain('Readings are unaffected');
+    expect(text).not.toContain('disable chart generation');
+    // True by construction: the reading request schema is strict and has no
+    // coordinates, so the server rejects any request that carries them.
+    const validate = read('functions/src/middleware/validate.ts');
+    const start = validate.indexOf('export const AskWatchOracleSchema');
+    const block = validate.slice(start, validate.indexOf('.strict();', start));
+    expect(start).toBeGreaterThan(-1);
+    expect(block).not.toMatch(/\b(lat|lon|latitude|longitude)\b\s*:/);
+  });
 });

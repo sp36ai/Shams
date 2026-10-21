@@ -152,9 +152,12 @@
           sign-up via Firebase Authentication (Google Sign-In or email/password).
         </li>
         <li>
-          <strong>Location data</strong> — GPS coordinates at the time you ask a question. Location
-          is used solely to calculate the astronomical chart for that moment (latitude, longitude,
-          and local time). It is not stored permanently or used for tracking.
+          <strong>Location data (optional)</strong> — if you allow it, your device's coordinates are
+          used on your device only, to show the live sky display (the Sky Clock and planetary-hour
+          timings) for where you are. They are saved on your device, never sent to our servers, and
+          not used for readings or tracking. They stay on the device until a newer location replaces
+          them or you clear the app's data or uninstall it. Without location, the sky display uses a
+          default location.
         </li>
         <li>
           <strong>Question content</strong> — the text of questions you submit to the oracle, stored
@@ -284,7 +287,9 @@
         <li><strong>Portability</strong> — request your reading history in a structured format.</li>
         <li>
           <strong>Withdrawal of consent</strong> — you may revoke location permission at any time
-          via your device settings; this will disable chart generation.
+          via your device settings. Readings are unaffected; the live sky display then uses a
+          default location. Coordinates already saved stay on your device until you clear the app's
+          data.
         </li>
       </ul>
       <p>
