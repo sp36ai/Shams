@@ -84,12 +84,11 @@ const LocationPermissionScreen: React.FC = () => {
 
       setPermissionGranted(true);
 
-      // Capture the current position: precise fix first, then a coarse/network
-      // fallback that resolves indoors where high-accuracy GPS times out.
-      // acquireLocation has its own per-stage backstops, so it always settles
-      // and never hangs this screen on its spinner. A null result means both
-      // stages failed — advance anyway; OracleScreen retries on entry.
-      const coords = await acquireLocation(permResult.status === 'granted-fine');
+      // Capture the approximate position. acquireLocation has its own
+      // per-stage backstops, so it always settles and never hangs this screen
+      // on its spinner. A null result means no fix — advance anyway;
+      // OracleScreen retries on entry.
+      const coords = await acquireLocation();
       if (coords !== null) {
         setLastLocation({
           lat: coords.lat,

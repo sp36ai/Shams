@@ -522,6 +522,11 @@ jobs:
             adb logcat -c
             nohup adb logcat -v threadtime > logcat_full.txt 2>&1 &
             adb install -r android/app/build/outputs/apk/debug/app-debug.apk
+            # Approximate location only (owner decision 2026-10-22): read what
+            # the installed APK actually requests from the package manager —
+            # the merged manifest, library contributions included — and fail
+            # if precise location is requested or approximate is missing.
+            adb shell dumpsys package com.astrosarfaraz.shamsalasrar | sed -n '/requested permissions:/,/install permissions:/p' > requested_permissions.txt; cat requested_permissions.txt; grep -q 'ACCESS_COARSE_LOCATION' requested_permissions.txt && ! grep -qE 'ACCESS_FINE_LOCATION|ACCESS_BACKGROUND_LOCATION' requested_permissions.txt || { echo "::error::Installed APK must request ACCESS_COARSE_LOCATION and not ACCESS_FINE_LOCATION/ACCESS_BACKGROUND_LOCATION (see requested_permissions above)"; exit 1; }
             adb emu geo fix 67.0011 24.8607
             for i in 1 2 3; do curl -fsSL --retry 3 --retry-all-errors "https://get.maestro.mobile.dev" | MAESTRO_VERSION=1.39.0 bash && [ -x "$HOME/.maestro/bin/maestro" ] && break; echo "Maestro install attempt $i failed; retrying in 15s"; rm -rf "$HOME/.maestro"; sleep 15; done; [ -x "$HOME/.maestro/bin/maestro" ] || { echo "Maestro install failed after 3 attempts"; exit 1; }
             # issue #124: signup-journey has repeatedly lost its emulator

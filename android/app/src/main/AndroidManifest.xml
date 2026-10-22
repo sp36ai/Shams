@@ -4,9 +4,13 @@
     <!-- ═══ Required for app function ═══ -->
     <uses-permission android:name="android.permission.INTERNET" />
 
-    <!-- ═══ Prashna chart requires GPS coords (city-level fine) ═══ -->
-    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <!-- ═══ Approximate location only, for the on-device sky display ═══ -->
+    <!-- Readings never use location. Approximate (~3 km²) is enough for the
+         planetary hours, sunrise/sunset and Sky Clock chart
+         (src/utils/__tests__/approximateLocation.test.ts). The remove rule
+         keeps a library manifest from merging precise location back in. -->
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" tools:node="remove" />
 
     <!-- ═══ Phase 4: Google Play Billing (subscriptions) ═══ -->
     <uses-permission android:name="com.android.vending.BILLING" />

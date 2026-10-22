@@ -55,7 +55,7 @@ it('discloses the optional, on-device purpose — not a requirement', async () =
 });
 
 it('Allow: stores the fix, records the grant, and lets the seeker through', async () => {
-  requestMock.mockResolvedValue({ status: 'granted-fine' });
+  requestMock.mockResolvedValue({ status: 'granted' });
   await renderScreen(<LocationPermissionScreen />);
   fireEvent.press(screen.getByTestId('location-grant-btn'));
   await waitFor(() => expect(state().prompted).toBe(true));
@@ -64,7 +64,7 @@ it('Allow: stores the fix, records the grant, and lets the seeker through', asyn
 });
 
 it('Allow but GPS finds no fix: still lets the seeker through, with no location', async () => {
-  requestMock.mockResolvedValue({ status: 'granted-coarse' });
+  requestMock.mockResolvedValue({ status: 'granted' });
   acquireMock.mockResolvedValue(null);
   await renderScreen(<LocationPermissionScreen />);
   fireEvent.press(screen.getByTestId('location-grant-btn'));

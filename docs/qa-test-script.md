@@ -55,13 +55,17 @@
 **Steps:**
 
 1. After sign-up, observe the location permission screen
-2. Tap "Allow" on the system GPS prompt
+2. Tap "Allow" and answer the system location prompt
 
 **Expected:**
 
-- Device GPS prompt fires (NOT hardcoded New Delhi)
+- The system prompt offers approximate location only — no "Precise" toggle
+  (`adb shell dumpsys package com.astrosarfaraz.shamsalasrar | grep -i location` lists
+  `ACCESS_COARSE_LOCATION` and no `ACCESS_FINE_LOCATION`)
 - On Allow: coordinates appear in OracleScreen header chip (e.g. `24.86, 67.01`)
-- On Deny: chip shows "Location is required"
+- On Don't allow, or "Not now" on the app screen: the app continues; the chip
+  shows "Location improves the sky display. Readings work without it."
+- Readings are the same with and without location
 
 ---
 
