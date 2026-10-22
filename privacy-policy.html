@@ -121,8 +121,8 @@
         </div>
         <p class="by-line">by Astro Sarfaraz</p>
         <p class="meta">
-          Privacy Policy &nbsp;·&nbsp; Effective Date: 1 June 2026 &nbsp;·&nbsp; Last Updated: 11
-          June 2026
+          Privacy Policy &nbsp;·&nbsp; Effective Date: 1 June 2026 &nbsp;·&nbsp; Last Updated: 21
+          October 2026
         </p>
       </header>
 
@@ -152,9 +152,12 @@
           sign-up via Firebase Authentication (Google Sign-In or email/password).
         </li>
         <li>
-          <strong>Location data</strong> — GPS coordinates at the time you ask a question. Location
-          is used solely to calculate the astronomical chart for that moment (latitude, longitude,
-          and local time). It is not stored permanently or used for tracking.
+          <strong>Location data (optional)</strong> — if you allow it, your device's coordinates are
+          used on your device only, to show the live sky display (the Sky Clock and planetary-hour
+          timings) for where you are. They are saved on your device, never sent to our servers, and
+          not used for readings or tracking. They stay on the device until you sign out or delete
+          your account, a newer location replaces them, or you clear the app's data or uninstall it.
+          Without location, the sky display uses a default location.
         </li>
         <li>
           <strong>Question content</strong> — the text of questions you submit to the oracle, stored
@@ -222,9 +225,15 @@
           >
         </li>
         <li>
-          <strong>Anthropic (Claude API)</strong> — The oracle response text is generated using
-          Anthropic's Claude model. Your question text and chart data are sent to Anthropic's API
-          for this purpose.
+          <strong>Anthropic (Claude API)</strong> — The app uses Anthropic's Claude model to write
+          the oracle's reading text and to check that a question is suitable for a reading. For
+          these purposes your question text and chart data are sent to Anthropic's API, together
+          with your name and your mother's name if you have chosen to enter them. When you complete
+          onboarding, your answers to its three questions are also sent to Anthropic's API once, to
+          choose the style of guidance shown to you. When you use follow-up discussions, your
+          follow-up message, the earlier messages in that conversation and the reading being
+          discussed — plus any other of your readings you ask to compare it with — are also sent to
+          Anthropic's API to generate a reply.
           <a href="https://www.anthropic.com/privacy" target="_blank" rel="noopener"
             >Anthropic Privacy Policy</a
           >
@@ -238,19 +247,37 @@
         transmitted to our servers.
       </p>
       <p>
-        We retain your data for as long as your account is active. Deleting your account (in-app,
-        under Settings → Account → Delete Account) permanently and immediately deletes your profile,
-        every reading, your quota record, and your subscription/plan status, and deletes your account
-        credentials entirely — this is not a manual or delayed process on our end.
+        We keep your data for as long as your account is active. Deleting your account (in-app,
+        under Settings → Account → Delete Account) immediately and permanently deletes your profile,
+        every reading and its follow-up discussion, saved copies of the oracle's replies, your
+        quota, trial and coin-wallet records, and your sign-in credentials. On the device you delete
+        it from, it also removes your saved readings, location, name, mother's name and onboarding
+        answers. A request that was already in progress when you deleted your account cannot add new
+        data afterwards.
       </p>
       <p>
-        <strong>Retained after account deletion:</strong> a limited set of fraud-prevention and
-        security records — the internal binding between a redeemed subscription purchase token and
-        the account that redeemed it (so a leaked purchase token cannot later be redeemed a second
-        time), and abuse/security event logs. These records do not contain your name, email, question
-        text, or reading content — question text is one-way hashed before being logged, and reading
-        content is never included — and are retained only for fraud prevention, security, and legal
-        compliance purposes, not as personal data about you.
+        <strong>Kept after account deletion:</strong> the link between a redeemed purchase and the
+        account that redeemed it (so one purchase cannot be redeemed twice), and our audit and
+        security logs, kept for fraud prevention, security and legal compliance. These records do
+        not contain your name, email, question text or reading content. They can contain short codes
+        derived from your question text and from your IP address. The codes are made with a secret
+        key, so they cannot be worked back by guessing without that key, but they are not anonymous:
+        we can still match them. Audit records written before this version of the policy could also
+        hold your IP address itself, or older codes made without a secret key; we remove those
+        fields from our audit and security records and keep the rest of each record. Any copies in
+        database backups are not changed and are deleted when those backups expire. A record that
+        your account was deleted, holding only its internal ID and the time of deletion, is kept for
+        about a day so that no request still in progress can recreate your data.
+      </p>
+      <p>
+        <strong>Server logs:</strong> our servers write operational logs to Google Cloud Logging.
+        They contain your account's internal ID and request details such as time and outcome, and
+        occasionally a short excerpt of the oracle's generated text when it fails an automated
+        check. Google Cloud also records standard details of each request to our servers, including
+        your IP address and device type. These logs do not contain your question text. They are kept
+        for {{LOG_RETENTION_DAYS}} days. Logs written before this version of the policy may also
+        contain your IP address itself or the older codes; they are deleted on the same schedule.
+        They are separate from the text sent to Anthropic described in Section 4.
       </p>
 
       <h2>6. Your Rights</h2>
@@ -266,7 +293,9 @@
         <li><strong>Portability</strong> — request your reading history in a structured format.</li>
         <li>
           <strong>Withdrawal of consent</strong> — you may revoke location permission at any time
-          via your device settings; this will disable chart generation.
+          via your device settings. Readings are unaffected; the live sky display then uses a
+          default location. Coordinates already saved stay on your device until you sign out, delete
+          your account or clear the app's data.
         </li>
       </ul>
       <p>

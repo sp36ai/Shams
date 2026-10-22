@@ -52,16 +52,70 @@
 
 ## TC-03: Location Permission
 
-**Steps:**
+Run on a real device (or an emulator) from a fresh install, once for each
+journey. Record the device model, Android version, app build, date, and the
+raw output of every command below in the test record. Application ID (debug
+and release): `com.astrosarfaraz.shamsalasrar`.
 
-1. After sign-up, observe the location permission screen
-2. Tap "Allow" on the system GPS prompt
+Reset before each journey:
+
+```bash
+adb uninstall com.astrosarfaraz.shamsalasrar
+adb install app-release.apk   # or the debug APK under test
+```
+
+Check what the installed app requests (both journeys):
+
+```bash
+adb shell dumpsys package com.astrosarfaraz.shamsalasrar \
+  | sed -n '/requested permissions:/,/install permissions:/p' | grep LOCATION
+```
+
+Expected: exactly one line, `android.permission.ACCESS_COARSE_LOCATION`. No
+`ACCESS_FINE_LOCATION` or `ACCESS_BACKGROUND_LOCATION`.
+
+### TC-03A: Allow
+
+1. Sign up; the location screen appears.
+2. Tap "Grant location access"; the Android prompt offers approximate
+   location only (no "Precise" toggle). Choose "While using the app".
+3. Complete onboarding.
+
+**Expected:** coordinates appear in the Home header chip (e.g. `24.86°N 67.01°E`).
+
+### TC-03B: Decline, then use the Oracle
+
+1. Sign up; the location screen appears.
+2. Tap "Not now". No Android permission dialog may appear. (Repeat this
+   journey once tapping "Grant location access" and then "Don't allow" in
+   the Android dialog.)
+3. Complete onboarding; the Oracle home screen appears.
+4. Ask a question and send it.
+5. Close the app fully (swipe it away) and open it again.
 
 **Expected:**
 
-- Device GPS prompt fires (NOT hardcoded New Delhi)
-- On Allow: coordinates appear in OracleScreen header chip (e.g. `24.86, 67.01`)
-- On Deny: chip shows "Location is required"
+- Step 3: the chip shows "Location improves the sky display. Readings work
+  without it." — no red warning.
+- Step 4: a reading is returned, with no location prompt or location error.
+- Step 5: the app opens to Home; neither the location screen nor an Android
+  permission dialog appears.
+- The actual grant state, after step 5:
+
+  ```bash
+  adb shell dumpsys package com.astrosarfaraz.shamsalasrar \
+    | grep -E 'android\.permission\.ACCESS_(COARSE|FINE)_LOCATION: granted='
+  ```
+
+  Pass: exactly one line, for `ACCESS_COARSE_LOCATION`, reading
+  `granted=false`; no `ACCESS_FINE_LOCATION` line. Fail: any line with
+  `granted=true`. Android 6–15 print runtime grants in this form; on a
+  version that prints no such line, record the full `dumpsys package` output
+  and confirm in Settings → Apps → Shams al-Asrār → Permissions → Location
+  that it reads "Don't allow" / "Not allowed".
+
+The result stays "not run" until someone runs these steps and records the
+outputs. Unit tests do not replace this check.
 
 ---
 

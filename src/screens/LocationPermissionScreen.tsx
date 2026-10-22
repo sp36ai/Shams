@@ -2,11 +2,12 @@
  * LocationPermissionScreen — onboarding step.
  * --------------------------------------------------------------------------
  * Why this screen exists:
- *   A horary chart is anchored to the precise moment AND place of the
- *   question. Without GPS, the chart cannot be cast — the engine simply
- *   refuses to produce a verdict from a missing ascendant. Asking for
- *   permission upfront (before signup) gives a higher grant rate than
- *   asking after the user is already invested in their first question.
+ *   Location is optional and used only on the device, for the live sky
+ *   display (Sky Clock, planetary-hour timings). Readings never use it: the
+ *   Digital Watch Oracle's frame is watch-derived, and askWatchOracle's
+ *   input has no coordinates. This screen is Google Play's prominent
+ *   disclosure, so its text must say exactly that (owner decision
+ *   2026-10-22) — never that the app or a reading needs location.
  *
  * Flow contract:
  *   1. User lands here before the main shell (RootNavigator gates on
@@ -14,8 +15,10 @@
  *   2. User taps "Grant access" → the native OS dialog appears → on grant
  *      we capture coordinates immediately and store
  *      to settingsStore.lastLocation, then mark onboardingPrompted=true.
- *   3. User taps "Skip" → we mark onboardingPrompted=true WITHOUT
- *      capturing location. Oracle screen will re-prompt on first question.
+ *   3. User taps "Not now" → we mark onboardingPrompted=true WITHOUT
+ *      opening the OS prompt or capturing location. Nothing re-prompts:
+ *      acquireLocation never requests permission (skipPermissionRequests),
+ *      and readings work without location.
  *   4. Either way, RootNavigator's gate re-renders and opens the main shell.
  *
  * Permission state machine (simplified — full handling in §1.11 utils):
@@ -39,7 +42,7 @@
  */
 
 import React, { useCallback, useState } from 'react';
-import { Linking, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Linking, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Circle, G, Line, Path } from 'react-native-svg';
 import StarfieldBackground from '@components/StarfieldBackground';
@@ -81,12 +84,11 @@ const LocationPermissionScreen: React.FC = () => {
 
       setPermissionGranted(true);
 
-      // Capture the current position: precise fix first, then a coarse/network
-      // fallback that resolves indoors where high-accuracy GPS times out.
-      // acquireLocation has its own per-stage backstops, so it always settles
-      // and never hangs this screen on its spinner. A null result means both
-      // stages failed — advance anyway; OracleScreen retries on entry.
-      const coords = await acquireLocation(permResult.status === 'granted-fine');
+      // Capture the approximate position. acquireLocation has its own
+      // per-stage backstops, so it always settles and never hangs this screen
+      // on its spinner. A null result means no fix — advance anyway;
+      // OracleScreen retries on entry.
+      const coords = await acquireLocation();
       if (coords !== null) {
         setLastLocation({
           lat: coords.lat,
@@ -105,6 +107,14 @@ const LocationPermissionScreen: React.FC = () => {
     }
   }, [setLastLocation, setPermissionGranted, markLocationPrompted]);
 
+  // Declining must not require tapping "Grant" and refusing in the system
+  // dialog: location is optional (readings never use it), so this moves on
+  // without opening the OS prompt and without recording a permission
+  // decision — the user can still grant it later from system settings.
+  const handleNotNow = useCallback(() => {
+    markLocationPrompted();
+  }, [markLocationPrompted]);
+
   const handleOpenSettings = useCallback(() => {
     void Linking.openSettings();
   }, []);
@@ -113,10 +123,8 @@ const LocationPermissionScreen: React.FC = () => {
   const isLoading = status === 'requesting';
 
   // Google Play Compliance: Prominent disclosure must be shown before the system prompt.
-  const titleText = isDenied ? t('permission.deniedTitle') : 'Location Required to Continue';
-  const bodyText = isDenied
-    ? t('permission.deniedBody')
-    : 'Shams al-Asrār requires your precise location to read the heavens for your exact position. Every question is anchored to its moment and place — without both, the celestial counsel cannot be trusted.\n\nWithout location access, the app cannot function.';
+  const titleText = isDenied ? t('permission.deniedTitle') : t('permission.locationTitle');
+  const bodyText = isDenied ? t('permission.deniedBody') : t('permission.locationRationale');
 
   return (
     <SafeAreaView
@@ -184,6 +192,14 @@ const LocationPermissionScreen: React.FC = () => {
               label={
                 status === 'blocked' ? t('permission.openSettings') : t('permission.grantAccess')
               }
+              testID="location-grant-btn"
+            />
+            <Button
+              style="ghost"
+              onPress={handleNotNow}
+              disabled={isLoading}
+              label={t('permission.notNow')}
+              testID="location-not-now-btn"
             />
           </View>
         </View>
@@ -196,9 +212,7 @@ const LocationPermissionScreen: React.FC = () => {
           ]}
         >
           {'✦  '}
-          {Platform.OS === 'android'
-            ? 'Coordinates are captured at the moment of each question and stored on this device.'
-            : 'Coordinates stay on this device.'}
+          {t('permission.privacyNote')}
           {'  ✦'}
         </Text>
       </ScrollView>

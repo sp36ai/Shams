@@ -21,6 +21,7 @@ import { getBalanceMilli } from '../utils/wallet';
 import { nextFreeAt } from '../utils/quotaSlots';
 import { measure } from '../middleware/telemetry';
 import type { QuotaResponse, QuotaDoc, TrialDoc } from '../types';
+import { writeIfAccountActive } from '../utils/accountState';
 
 export const getQuota = onCall(
   { ...FUNCTION_OPTS, enforceAppCheck: process.env.FUNCTIONS_EMULATOR !== 'true' },
@@ -90,10 +91,13 @@ export const getQuota = onCall(
         // this correction only ever lives in this response, never persisted, and
         // every getQuota call before the next askOracle call keeps re-deriving it
         // from scratch instead of the doc reflecting reality.
-        db.collection('quotas')
-          .doc(userId)
-          .set({ plan: 'free', planExpiry: null }, { merge: true })
-          .catch(() => undefined);
+        writeIfAccountActive(userId, tx => {
+          tx.set(
+            db.collection('quotas').doc(userId),
+            { plan: 'free', planExpiry: null },
+            { merge: true },
+          );
+        }).catch(() => undefined);
       }
 
       const unlimited = UNLIMITED_PLANS.includes(effectivePlan);

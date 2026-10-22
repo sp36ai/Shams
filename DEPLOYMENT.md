@@ -92,27 +92,136 @@ Follow these steps in [Firebase Console](https://console.firebase.google.com):
    - **Billing**: Requires billing enabled (see step 3 above)
 3. Do NOT use Firestore in Datastore mode (use Native mode)
 
-#### TTL policy — `idempotencyKeys` (required)
+#### TTL policies — `idempotencyKeys`, rate-limit `minutes`, `deletedAccounts` (required)
 
-`askWatchOracle` records each submission's `requestId` so a retry replays the
-original reading instead of casting and charging for a second one. Those
-records exist only to deduplicate a retry, and each carries an `expiresAt`
-timestamp 24 hours out — but Firestore only acts on it once a TTL policy names
-that field:
+Three kinds of short-lived records carry an `expiresAt` timestamp, and Firestore
+only deletes them once a TTL policy names that field:
 
-1. Go to **Build → Firestore Database → Time-to-live (TTL)**
-2. **Create policy**
-   - Collection group: `idempotencyKeys`
-   - Timestamp field: `expiresAt`
+- `idempotencyKeys` — `askWatchOracle` and `discussReading` record each
+  submission's `requestId`, with the full response, so a retry replays the
+  original reading instead of casting and charging for a second one.
+  `expiresAt` is 24 hours out.
+- `rateLimits/{uid}/minutes/*` — per-minute request counters. `expiresAt` is
+  2 minutes out. The TTL policy must name the `minutes` collection group (the
+  subcollection the counters live in), not `rateLimits`.
+- `deletedAccounts/{uid}` — the marker `deleteAccount` writes first, so no
+  in-flight request can add data after deletion (`utils/accountState.ts`).
+  Holds only the uid and timestamps; `expiresAt` is 24 hours out.
 
-Skipping this is not a correctness problem — deduplication still works — but the
-collection then grows without bound, one document per question ever asked.
+All three policies are declared in `firestore.indexes.json` (`fieldOverrides`) and
+are created by `firebase deploy --only firestore:indexes`, which the functions
+deploy workflow runs after every deploy (non-interactive, without `--force`, so
+it never deletes an index or override that exists only in the console). Afterwards, confirm
+all three appear under **Build → Firestore Database → Time-to-live (TTL)**. If an
+older `rateLimits` policy exists there from before, it can be removed — no
+documents in that group carry `expiresAt`.
+
+Skipping this is not a correctness problem — deduplication and rate limiting
+still work — but both collections then grow without bound. Account deletion
+removes a user's records in both regardless (`functions/account.ts`).
 
 ### Cloud Functions
 
 1. Go to **Build → Functions**
 2. Verify region is `asia-south1` (matches functions/firebase.json)
 3. Ensure Cloud Build API is enabled (should be automatic)
+
+#### Secret — `LOG_HASH_KEY` (required before deploying)
+
+Audit and security records carry keyed correlation codes instead of question
+text and IP addresses (`functions/src/utils/keyedHash.ts`, HMAC-SHA-256).
+`askWatchOracle`, `discussReading`, `verifyGooglePlayPurchase` and `razorpayWebhook`
+bind this secret, so deployment fails until it exists. The functions deploy
+workflow (`.github/workflows/deploy-functions.yml`, step "Ensure LOG_HASH_KEY
+secret exists") creates it on the first deploy that needs it, with a random
+value that is never printed, and leaves it unchanged afterwards. It creates
+the key only on an explicit `NOT_FOUND`; any other error (such as a missing
+Secret Manager permission on the deploy service account) stops the deploy.
+To create it by hand instead:
+
+```bash
+openssl rand -hex 32 | tr -d '\n' | firebase functions:secrets:set LOG_HASH_KEY --data-file=-
+```
+
+- Do not store the key in source, Firestore or `.env` files, and do not log it.
+- If the key is ever unavailable at runtime the codes are omitted, never
+  replaced with an unkeyed hash.
+- Transition: new codes are `h1:` + 32 hex. Older records hold unkeyed
+  values (8-hex FNV question codes, 16-hex SHA-256 IP codes) that never match
+  the new ones, so correlation does not span the switch. They cannot be
+  re-keyed, because these records never held the question text, and the raw IPs
+  that were stored are being removed (below).
+
+#### Legacy log fields: what was stored, what is removed, what is not
+
+What older code wrote into Firestore, established from every writer in git
+history (owner decisions 2026-10-21 and 2026-10-22):
+
+| Field          | Content                                    | Written to                                                                         | Period                                                                                                                                       |
+| -------------- | ------------------------------------------ | ---------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| `ipAddress`    | the caller's **raw IP address**            | `auditLogs` — the old `askOracle` (`oracle_computed`) and Razorpay `plan_upgraded` | 2026-05-10 to 2026-08-25 (askOracle), 2026-05-10 to 2026-06-27 (Razorpay), per `main`; actual dates depend on when each version was deployed |
+| `ipHash`       | unsalted SHA-256 prefix of the IP (16 hex) | `auditLogs`, `securityEvents`                                                      | until the keyed-code deploy                                                                                                                  |
+| `questionHash` | bare 32-bit FNV-1a of the question (8 hex) | `auditLogs`                                                                        | until the keyed-code deploy                                                                                                                  |
+
+No other collection ever received these fields, and no other raw-IP field
+name was ever used. Razorpay also logged the raw IP to Cloud Logging
+(`logger.info('plan upgraded')`).
+
+**The migration** (`functions/src/maintenance/stripLegacyLogFields.ts`, run
+by `.github/workflows/deploy-functions.yml` after a healthy deploy) removes
+exactly those three fields from `auditLogs` and `securityEvents`: `ipAddress`
+whenever present, the two codes only in their unkeyed format (`h1:` codes are
+untouched). It never deletes a document or any other field. Three steps, each
+printing counts only, never a value:
+
+1. **Preview**: counts the documents and fields it would remove.
+2. **Apply**: refuses, changing nothing, unless a fresh scan matches the
+   preview's counts; removes the fields in batches of at most 400 updates;
+   fails if it removed anything other than what the preview counted; records
+   `_system/migration-strip-legacy-log-fields-v1` (counts only). Later
+   deploys see the record and skip all three steps.
+3. **Verify**: a fresh scan; the deploy fails if any targeted field remains.
+
+The deploy waits 150 s after the new functions are live before the preview,
+longer than the 120 s function timeout, so the old revision's in-flight
+requests can finish. The wait is not proof that no old instance still writes
+a legacy value: apply's fresh scan and count comparison, and the final
+verify, are what catch one. Any failure exits non-zero and leaves no
+completion record. Rerunning is
+safe: a field already removed is neither counted nor touched. If a run
+fails, start again from the preview. By hand (counts only):
+
+```bash
+cd functions
+npx vite-node scripts/strip-legacy-log-fields.ts --project <id>              # preview
+npx vite-node scripts/strip-legacy-log-fields.ts --project <id> --apply --once \
+  --expect '<the "counts" object the preview printed>'
+npx vite-node scripts/strip-legacy-log-fields.ts --project <id> --verify
+```
+
+Tested against synthetic records on the Firestore emulator, in CI on every
+pull request (Functions Quality → "Emulator suites"; locally
+`cd functions && npm run test:emulator:ci`): each field alone and together, keyed codes,
+records with no target fields, a nested `ipAddress` that must survive,
+1,050 records across three pages, an out-of-scope collection, a refused
+apply, a failed batch, a write during the run, and the CLI sequence above.
+
+**What the migration does not reach**, and what a zero from step 3 does not
+prove:
+
+- **Cloud Logging**: entries written before the deploy may contain the raw IP
+  (Razorpay, above) or the unkeyed codes. They are not changed and are
+  deleted when the log bucket's retention ends (the policy states the
+  retention, read from the `_Default` bucket at hosting deploy).
+- **Firestore backups and exports**: not changed. `BACKUP_AND_DISASTER_RECOVERY.md`
+  records no backups as of 2026-08-23; check
+  `gcloud firestore backups schedules list --project=shams-app-4d0e7`. Any
+  backup taken before the migration keeps these fields until it expires.
+- A verify result of zero means only that the scan finds none in the two
+  collections at that moment; it is not evidence about any other copy.
+
+- Rotating the key breaks correlation the same way; it would need a new
+  version prefix (`h2:`) in `keyedHash.ts`.
 
 ### Security Rules
 

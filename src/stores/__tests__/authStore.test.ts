@@ -14,6 +14,7 @@ import { useAuthStore } from '../authStore';
 import { useQuotaStore } from '../quotaStore';
 import { useReadingThreadsStore } from '../readingThreadsStore';
 import { useReadingsStore } from '../readingsStore';
+import { useSettingsStore } from '../settingsStore';
 import { storage, KEYS } from '@storage/mmkv';
 
 type Listener = (user: unknown) => void | Promise<void>;
@@ -233,5 +234,54 @@ describe("another account's Readings", () => {
 
     expect(useReadingThreadsStore.getState().threads).toHaveLength(1);
     expect(useReadingsStore.getState().readings).toHaveLength(1);
+  });
+});
+
+describe('the last GPS fix', () => {
+  const FIX = { lat: 31.634, lon: 74.3587, label: null, capturedAt: 1 };
+  const LOCATION_KEYS = [
+    KEYS.LOCATION_LAST_LAT,
+    KEYS.LOCATION_LAST_LON,
+    KEYS.LOCATION_LAST_TIMESTAMP,
+  ] as const;
+
+  function expectNoFixLeft(): void {
+    expect(useSettingsStore.getState().lastLocation).toBeNull();
+    for (const key of LOCATION_KEYS) {
+      expect(storage.getNumber(key)).toBeUndefined();
+    }
+  }
+
+  beforeEach(() => {
+    useSettingsStore.getState().setLastLocation(FIX);
+    expect(storage.getNumber(KEYS.LOCATION_LAST_LAT)).toBe(FIX.lat);
+  });
+
+  it('is cleared from the device on sign-out', async () => {
+    await useAuthStore.getState().signOut();
+    expectNoFixLeft();
+  });
+
+  it('is cleared even when the native sign-out fails', async () => {
+    authInstance.signOut.mockRejectedValueOnce(new Error('network'));
+    await useAuthStore
+      .getState()
+      .signOut()
+      .catch(() => undefined);
+    expectNoFixLeft();
+  });
+
+  it('is cleared by the account-deletion sequence (resetForNewAccount, then signOut)', async () => {
+    // SettingsScreen's handleDeleteAccount runs exactly these two after the
+    // server deletion succeeds.
+    useSettingsStore.getState().resetForNewAccount();
+    await useAuthStore.getState().signOut();
+    expectNoFixLeft();
+  });
+
+  it('leaves the device-level location permission flag alone', async () => {
+    useSettingsStore.setState({ onboardingPermissionGranted: true });
+    await useAuthStore.getState().signOut();
+    expect(useSettingsStore.getState().onboardingPermissionGranted).toBe(true);
   });
 });

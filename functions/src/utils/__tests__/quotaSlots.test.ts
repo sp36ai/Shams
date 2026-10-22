@@ -13,7 +13,46 @@
  * contract this file depends on, not something worth an emulator for.
  */
 
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+
+// The deleted-account marker itself is tested in accountState.test.ts. Here
+// the account is active unless a test flips `accountState.deleted`, which is
+// how each write path below proves it consults the marker.
+const accountState = vi.hoisted(() => ({ deleted: false }));
+vi.mock('../accountState', async () => {
+  // A real HttpsError, as the real module throws: callables rethrow those
+  // as-is and wrap anything else as 'internal'.
+  const { HttpsError } = await vi.importActual<typeof import('firebase-functions/v2/https')>(
+    'firebase-functions/v2/https',
+  );
+  const refuse = (): never => {
+    throw new HttpsError('failed-precondition', 'This account has been deleted.');
+  };
+  return {
+    isAccountDeleted: () => Promise.resolve(accountState.deleted),
+    assertAccountActive: () => {
+      if (accountState.deleted) {
+        refuse();
+      }
+      return Promise.resolve();
+    },
+    writeIfAccountActive: async (
+      _userId: string,
+      write: (tx: { set: (ref: unknown, data: unknown, opts?: unknown) => void }) => void,
+    ) => {
+      if (accountState.deleted) {
+        refuse();
+      }
+      const pending: unknown[] = [];
+      write({
+        set: (ref, data, opts) => {
+          pending.push((ref as { set: (d: unknown, o?: unknown) => unknown }).set(data, opts));
+        },
+      });
+      await Promise.all(pending);
+    },
+  };
+});
 import { FREE_LIMIT, TRIAL_DAILY_LIMIT, todayKey } from '../../config';
 
 interface StoredDoc {
@@ -212,5 +251,25 @@ describe('refundQuotaSlot', () => {
     await refundQuotaSlot('u1');
 
     expect(quotas.get('u1')?.used).toBe(0);
+  });
+});
+
+describe('deleted account (utils/accountState.ts marker)', () => {
+  afterEach(() => {
+    accountState.deleted = false;
+  });
+
+  it('claims no slot for a deleted account', async () => {
+    accountState.deleted = true;
+    await expect(claimQuotaSlot('u1')).rejects.toMatchObject({ code: 'failed-precondition' });
+    expect(quotas.has('u1')).toBe(false);
+  });
+
+  it('drops a free-question refund quietly instead of recreating the quota record', async () => {
+    accountState.deleted = true;
+    await expect(
+      refundQuotaSlot('u1', { kind: 'free_weekly', previousLastFreeAt: null }),
+    ).resolves.toBeUndefined();
+    expect(quotas.has('u1')).toBe(false);
   });
 });

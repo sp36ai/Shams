@@ -34,6 +34,7 @@ import { enforceRateLimit } from '../middleware/rateLimit';
 import { parse, SyncReadingsSchema, DeleteReadingSchema } from '../middleware/validate';
 import { logger } from '../utils/logger';
 import { FUNCTION_OPTS } from '../config';
+import { writeIfAccountActive } from '../utils/accountState';
 
 const MAX_BATCH_SIZE = 500; // Firestore batch limit
 
@@ -107,27 +108,29 @@ export const syncReadings = onCall(
       // Firestore batches are capped at 500 ops; chunk if needed.
       for (let i = 0; i < readings.length; i += MAX_BATCH_SIZE) {
         const chunk = readings.slice(i, i + MAX_BATCH_SIZE);
-        const batch = db.batch();
 
-        for (const r of chunk) {
-          const ref = db.collection('readings').doc(r.id);
-          batch.set(
-            ref,
-            {
-              userId, // server sets this — client cannot fake it
-              question: r.question,
-              questionLang: r.questionLang,
-              category: r.category,
-              verdict: r.verdict,
-              createdAt: new Date(r.createdAt),
-              syncedAt: FieldValue.serverTimestamp(),
-            },
-            { merge: true },
-          );
-          synced++;
-        }
-
-        await batch.commit();
+        // A transaction rather than a batch so it can read the
+        // deleted-account marker: a sync arriving after the seeker deleted
+        // their account must not recreate their readings.
+        await writeIfAccountActive(userId, tx => {
+          for (const r of chunk) {
+            const ref = db.collection('readings').doc(r.id);
+            tx.set(
+              ref,
+              {
+                userId, // server sets this — client cannot fake it
+                question: r.question,
+                questionLang: r.questionLang,
+                category: r.category,
+                verdict: r.verdict,
+                createdAt: new Date(r.createdAt),
+                syncedAt: FieldValue.serverTimestamp(),
+              },
+              { merge: true },
+            );
+          }
+        });
+        synced += chunk.length;
       }
 
       logger.info('readings synced', { userId, count: synced });

@@ -112,6 +112,30 @@ jobs:
         with:
           credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
 
+      # LOG_HASH_KEY (functions/src/utils/keyedHash.ts) is bound by
+      # askWatchOracle, discussReading, verifyGooglePlayPurchase and
+      # razorpayWebhook, so the deploy below fails without it. Created here
+      # exactly once, with a random value that is never printed or stored
+      # anywhere but Secret Manager. Only an explicit NOT_FOUND creates it: any
+      # other failure (e.g. missing permission) stops the job, because adding
+      # a version to an existing key would silently rotate it and break every
+      # correlation code (see DEPLOYMENT.md).
+      - name: Ensure LOG_HASH_KEY secret exists
+        run: |
+          set -euo pipefail
+          if err=$(gcloud secrets describe LOG_HASH_KEY --project shams-app-4d0e7 2>&1 >/dev/null); then
+            echo "LOG_HASH_KEY exists - left unchanged."
+          elif grep -q "NOT_FOUND" <<<"$err"; then
+            echo "LOG_HASH_KEY not found - creating it with a random value."
+            openssl rand -hex 32 | tr -d '\n' \
+              | npx firebase-tools functions:secrets:set LOG_HASH_KEY \
+                  --data-file=- --project shams-app-4d0e7 --force
+          else
+            echo "::error::Could not check LOG_HASH_KEY (not a NOT_FOUND):"
+            echo "$err"
+            exit 1
+          fi
+
       - name: Deploy to Firebase
         run: npx firebase-tools deploy --only functions --project shams-app-4d0e7 --force
 
@@ -119,3 +143,54 @@ jobs:
         run: |
           curl --fail --silent --show-error --max-time 30 \
             https://asia-south1-shams-app-4d0e7.cloudfunctions.net/health
+
+      # TTL policies in firestore.indexes.json (idempotency reply copies,
+      # rate-limit counters, the deleted-account marker) only take effect once
+      # deployed; no other workflow deploys them. Additive only: without
+      # --force, a non-interactive deploy never deletes an index or field
+      # override that exists in the project but not in the file (firebase-
+      # tools lib/firestore/api.js — the delete prompt defaults to "no").
+      - name: Deploy Firestore indexes and TTL policies (additive only)
+        run: npx firebase-tools deploy --only firestore:indexes --project shams-app-4d0e7 --non-interactive
+
+      # One-off removal of privacy-sensitive fields older code wrote into
+      # /auditLogs and /securityEvents: raw IP addresses (`ipAddress`) and the
+      # unkeyed `ipHash` / `questionHash` codes
+      # (functions/src/maintenance/stripLegacyLogFields.ts). Removes those
+      # fields only, never documents; every step prints counts, never values.
+      #
+      # Only after a healthy deploy. The 150 s wait (longer than the 120 s
+      # function timeout) lets the old revision's in-flight requests finish,
+      # but is not proof that no old instance still writes: the fresh scan in
+      # apply, its count comparison and the final verify are the safeguards
+      # that catch a late legacy write. Three steps:
+      #   1. preview — counts what would be removed (recorded in this log);
+      #      skips everything once the migration has completed.
+      #   2. apply   — refuses, changing nothing, unless the data still
+      #      matches the preview's counts; fails if it removed anything other
+      #      than what the preview counted; records completion.
+      #   3. verify  — a fresh scan; fails the deploy if any targeted field
+      #      remains. Zero here means the scan finds none in these two
+      #      collections — it says nothing about Cloud Logging, backups or
+      #      exports (DEPLOYMENT.md).
+      - name: Legacy log fields — preview (counts only)
+        id: legacy-preview
+        run: |
+          sleep 150
+          out=$(npx vite-node scripts/strip-legacy-log-fields.ts --project shams-app-4d0e7 --once)
+          echo "$out"
+          echo "recorded=$(jq -r '.recorded' <<<"$out")" >> "$GITHUB_OUTPUT"
+          echo "counts=$(jq -c '.counts // empty' <<<"$out")" >> "$GITHUB_OUTPUT"
+        working-directory: functions
+
+      - name: Legacy log fields — apply (only if the data matches the preview)
+        if: steps.legacy-preview.outputs.recorded == 'false'
+        env:
+          EXPECTED: ${{ steps.legacy-preview.outputs.counts }}
+        run: npx vite-node scripts/strip-legacy-log-fields.ts --project shams-app-4d0e7 --apply --once --expect "$EXPECTED"
+        working-directory: functions
+
+      - name: Legacy log fields — verify none remain
+        if: steps.legacy-preview.outputs.recorded == 'false'
+        run: npx vite-node scripts/strip-legacy-log-fields.ts --project shams-app-4d0e7 --verify
+        working-directory: functions

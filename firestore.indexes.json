@@ -45,7 +45,19 @@
   ],
   "fieldOverrides": [
     {
-      "collectionGroup": "rateLimits",
+      "collectionGroup": "minutes",
+      "fieldPath": "expiresAt",
+      "ttl": true,
+      "indexes": []
+    },
+    {
+      "collectionGroup": "idempotencyKeys",
+      "fieldPath": "expiresAt",
+      "ttl": true,
+      "indexes": []
+    },
+    {
+      "collectionGroup": "deletedAccounts",
       "fieldPath": "expiresAt",
       "ttl": true,
       "indexes": []

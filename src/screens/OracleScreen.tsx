@@ -226,7 +226,7 @@ const OracleScreen: React.FC = () => {
   // a raw pair; no reverse geocoder is installed, so there is no place name.
   const locationLabel =
     lastLocation === null
-      ? t('errors.locationRequired')
+      ? t('oracle.locationOptional')
       : `${Math.abs(lastLocation.lat).toFixed(2)}°${lastLocation.lat >= 0 ? 'N' : 'S'} ${Math.abs(
           lastLocation.lon,
         ).toFixed(2)}°${lastLocation.lon >= 0 ? 'E' : 'W'}`;
@@ -470,14 +470,15 @@ const OracleScreen: React.FC = () => {
           <View style={styles.locationLine} testID="home-location">
             <TabIcon
               name="pin"
-              color={lastLocation === null ? colors.negative : P.antiqueGold}
+              color={lastLocation === null ? colors.textMuted : P.antiqueGold}
               size={11}
             />
             <Text
               style={[
                 typography('caption'),
                 styles.locationText,
-                lastLocation === null && { color: colors.negative },
+                // Information, not a warning: readings never need location.
+                lastLocation === null && { color: colors.textMuted },
               ]}
               numberOfLines={1}
             >

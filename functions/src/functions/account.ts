@@ -9,6 +9,25 @@
  * account deletion, and until this function existed, nothing in the
  * codebase actually did that.
  *
+ * Also deleted (deletion hardening, 2026-10-20 — these survived deletion
+ * before, contrary to the policy's "every reading" promise):
+ *   - /idempotencyKeys docs with this userId — each stores a full reading
+ *     or follow-up reply so a retried request can be replayed; otherwise
+ *     kept until a TTL policy (if one is configured) expires them.
+ *   - /rateLimits/{uid}/minutes/* and /rateLimits/{uid} — per-minute
+ *     request counters, i.e. a record of when this user was active.
+ *   - /wallets/{uid}/ledger/* and /wallets/{uid} — the coin balance and its
+ *     history (owner decision 2026-10-20). No real-money purchase writes a
+ *     ledger entry yet; revisit before paid coin packs launch, since a
+ *     ledger of payments may then have to be kept and disclosed.
+ *
+ * The deletion race: a request already in flight (or one carrying a still-
+ * valid ID token after the Auth user is gone) could otherwise write data
+ * after the sweep. So the first thing this does is write the deleted-
+ * account marker, which every user-data write checks in its own
+ * transaction — see utils/accountState.ts. The marker itself (uid +
+ * timestamps only) expires by TTL.
+ *
  * Deliberately NOT deleted:
  *   - /purchaseTokens/{tokenHash} entries referencing this uid — deleting
  *     the token binding would defeat its whole purpose (a leaked purchase
@@ -31,27 +50,29 @@
  */
 
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
-import { FieldValue } from 'firebase-admin/firestore';
+import { FieldValue, type Query } from 'firebase-admin/firestore';
 import { db, auth } from '../utils/admin';
 import { verifyAuth } from '../middleware/auth';
 import { enforceRateLimit } from '../middleware/rateLimit';
 import { logger } from '../utils/logger';
 import { FUNCTION_OPTS } from '../config';
+import { markAccountDeleted } from '../utils/accountState';
 
 // Firestore batches cap at 500 ops; stay comfortably under that per page so a
 // single query+batch round-trip never risks hitting the ceiling from a
 // concurrent write landing between the query and the commit.
-const READINGS_DELETE_PAGE_SIZE = 400;
+const DELETE_PAGE_SIZE = 400;
 
-async function deleteAllReadings(userId: string): Promise<number> {
+/**
+ * Delete every document a query matches, one page per batch, re-querying
+ * after each page so deleted documents are never fetched twice. Safe to
+ * re-run after a partial failure: it just finds what is left.
+ */
+async function deleteInPages(query: () => Query): Promise<number> {
   let deleted = 0;
   // eslint-disable-next-line no-constant-condition
   while (true) {
-    const snap = await db
-      .collection('readings')
-      .where('userId', '==', userId)
-      .limit(READINGS_DELETE_PAGE_SIZE)
-      .get();
+    const snap = await query().limit(DELETE_PAGE_SIZE).get();
     if (snap.empty) {
       break;
     }
@@ -59,11 +80,50 @@ async function deleteAllReadings(userId: string): Promise<number> {
     snap.docs.forEach(doc => batch.delete(doc.ref));
     await batch.commit();
     deleted += snap.size;
-    if (snap.size < READINGS_DELETE_PAGE_SIZE) {
+    if (snap.size < DELETE_PAGE_SIZE) {
       break;
     }
   }
   return deleted;
+}
+
+/**
+ * Everything keyed to this user that deleteAccount removes, before the
+ * Auth user itself. Exported for direct testing.
+ */
+export async function deleteUserData(userId: string): Promise<{
+  readings: number;
+  replayCopies: number;
+  walletEntries: number;
+  rateLimitCounters: number;
+}> {
+  const readings = await deleteInPages(() =>
+    db.collection('readings').where('userId', '==', userId),
+  );
+  const replayCopies = await deleteInPages(() =>
+    db.collection('idempotencyKeys').where('userId', '==', userId),
+  );
+  const walletEntries = await deleteInPages(() =>
+    db.collection('wallets').doc(userId).collection('ledger'),
+  );
+  // Rate-limit counters live in a subcollection, which deleting the parent
+  // document would leave behind — so the children go first, explicitly.
+  // This call's own counter (enforceRateLimit runs before it) goes too.
+  const rateLimitCounters = await deleteInPages(() =>
+    db.collection('rateLimits').doc(userId).collection('minutes'),
+  );
+
+  // Profile (with plan status), quota, trial, rate-limit parent — small,
+  // fixed set, one batch. Deleting a document that does not exist is a no-op.
+  const cleanupBatch = db.batch();
+  cleanupBatch.delete(db.collection('users').doc(userId));
+  cleanupBatch.delete(db.collection('quotas').doc(userId));
+  cleanupBatch.delete(db.collection('trials').doc(userId));
+  cleanupBatch.delete(db.collection('rateLimits').doc(userId));
+  cleanupBatch.delete(db.collection('wallets').doc(userId));
+  await cleanupBatch.commit();
+
+  return { readings, replayCopies, walletEntries, rateLimitCounters };
 }
 
 export const deleteAccount = onCall(
@@ -74,17 +134,15 @@ export const deleteAccount = onCall(
   },
   async request => {
     const { userId } = verifyAuth(request);
-    await enforceRateLimit(userId);
+    // A retry of an interrupted deletion must get past the marker it wrote.
+    await enforceRateLimit(userId, { allowDeletedAccount: true });
 
     try {
-      const deletedReadings = await deleteAllReadings(userId);
-
-      // Profile, quota, trial — small, fixed set, one batch.
-      const cleanupBatch = db.batch();
-      cleanupBatch.delete(db.collection('users').doc(userId));
-      cleanupBatch.delete(db.collection('quotas').doc(userId));
-      cleanupBatch.delete(db.collection('trials').doc(userId));
-      await cleanupBatch.commit();
+      // First, before anything is deleted: from here on no write can add
+      // data for this user (utils/accountState.ts).
+      await markAccountDeleted(userId);
+      const deleted = await deleteUserData(userId);
+      const deletedReadings = deleted.readings;
 
       // Auth user last (see module doc). "Already gone" counts as success —
       // that's what makes calling this twice (a retried request after a
@@ -98,7 +156,7 @@ export const deleteAccount = onCall(
         }
       }
 
-      logger.info('account deleted', { userId, deletedReadings });
+      logger.info('account deleted', { userId, ...deleted });
 
       // Deliberately no PII here either — same policy as every other audit
       // log in this codebase (see utils/logger.ts).

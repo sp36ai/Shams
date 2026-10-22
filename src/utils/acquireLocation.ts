@@ -1,20 +1,16 @@
 /**
  * acquireLocation — resilient device-location acquisition.
  * --------------------------------------------------------------------------
- * The oracle needs a lat/lon to cast a chart. The naive path — a single
- * getCurrentPosition({ enableHighAccuracy: true }) with a short timeout —
- * fails constantly in the field: a precise GPS (satellite) fix routinely
- * times out indoors and on the first fix after launch, and when it fails the
- * app was left with no coordinates at all, showing "location is required"
- * even though permission was granted.
+ * The on-device sky display (planetary hours, sunrise/sunset, Sky Clock)
+ * uses a lat/lon; readings never do. The app holds only the approximate
+ * location permission (ACCESS_COARSE_LOCATION), so a precise GPS request
+ * cannot do better than a network fix — and approximate location is enough
+ * for everything location drives (src/utils/__tests__/approximateLocation.test.ts).
  *
- * This helper escalates through three strategies and only returns null when
- * ALL of them fail:
- *   1. precise one-shot  (GPS)      — best accuracy when a fix is warm
- *   2. coarse one-shot   (network)  — Wi-Fi + cell, resolves fast indoors
- *   3. watch             (any)      — keeps listening for the first fix a
- *                                     one-shot getCurrentPosition often misses
- *                                     on a cold start
+ * This helper tries two strategies and only returns null when both fail:
+ *   1. one-shot  (network)  — Wi-Fi + cell, resolves fast indoors
+ *   2. watch     (any)      — keeps listening for the first fix a one-shot
+ *                             getCurrentPosition often misses on a cold start
  *
  * Every stage has a JS-side backstop because some OEM location stacks never
  * invoke either callback (no fix, no error), which would otherwise hang the
@@ -49,11 +45,7 @@ function ensureConfigured(): void {
   }
 }
 
-function oneShot(
-  enableHighAccuracy: boolean,
-  timeoutMs: number,
-  maximumAgeMs: number,
-): Promise<AcquiredCoords | null> {
+function oneShot(timeoutMs: number, maximumAgeMs: number): Promise<AcquiredCoords | null> {
   return new Promise<AcquiredCoords | null>(resolve => {
     let settled = false;
     const finish = (value: AcquiredCoords | null): void => {
@@ -77,7 +69,7 @@ function oneShot(
           clearTimeout(backstop);
           finish(null);
         },
-        { enableHighAccuracy, timeout: timeoutMs, maximumAge: maximumAgeMs },
+        { enableHighAccuracy: false, timeout: timeoutMs, maximumAge: maximumAgeMs },
       );
     } catch {
       clearTimeout(backstop);
@@ -129,24 +121,15 @@ function watchForFix(timeoutMs: number): Promise<AcquiredCoords | null> {
 }
 
 /**
- * Resolve the device's coordinates, or null if no fix could be obtained.
- *
- * @param preferHighAccuracy start with a precise GPS fix (pass the "fine"
- *        permission result). Set false to skip straight to the coarse fix.
+ * Resolve the device's approximate coordinates, or null if no fix could be
+ * obtained.
  */
-export async function acquireLocation(preferHighAccuracy = true): Promise<AcquiredCoords | null> {
+export async function acquireLocation(): Promise<AcquiredCoords | null> {
   ensureConfigured();
 
-  if (preferHighAccuracy) {
-    const precise = await oneShot(true, 8000, 30000);
-    if (precise !== null) {
-      return precise;
-    }
-  }
-
-  const coarse = await oneShot(false, 8000, 120000);
-  if (coarse !== null) {
-    return coarse;
+  const fix = await oneShot(8000, 120000);
+  if (fix !== null) {
+    return fix;
   }
 
   // Last resort: keep listening for a cold first fix.

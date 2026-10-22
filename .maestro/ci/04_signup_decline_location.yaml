@@ -1,0 +1,108 @@
+appId: com.astrosarfaraz.shamsalasrar
+name: 'Journey — sign up, decline location, still reach the Oracle'
+---
+# Location is optional: readings never use it (askWatchOracle sends no
+# coordinates), and the app asks for approximate location only. A seeker
+# who declines must still reach the Oracle, and must not be asked again
+# (owner decision 2026-10-22).
+#
+# Runs in the signup-journey leg, chained from 02_signup_journey.yaml after
+# the allow path, so both journeys share one emulator. Also runs on its own
+# (maestro test .maestro/ci/04_signup_decline_location.yaml) on a device.
+# Sign-up steps and their timeouts are 02_signup_journey.yaml's; see its
+# comments for why each is what it is.
+
+# Location starts denied, so nothing the app does can read a position.
+- launchApp:
+    clearState: true
+    permissions:
+      location: deny
+
+- extendedWaitUntil:
+    visible:
+      id: 'auth-tab-signup'
+    timeout: 90000
+- tapOn:
+    id: 'auth-tab-signup'
+
+- tapOn:
+    id: 'auth-input-name'
+- inputText: 'CI Test Seeker'
+- tapOn:
+    id: 'auth-input-email'
+- inputText: 'e2e-'
+- inputRandomNumber:
+    length: 10
+- inputText: '@e2e.shamsalasrar.test'
+- tapOn:
+    id: 'auth-input-password'
+- inputText: 'CiTestPass!2026'
+- scrollUntilVisible:
+    element:
+      id: 'auth-input-confirm'
+    direction: DOWN
+    timeout: 20000
+- tapOn:
+    id: 'auth-input-confirm'
+- inputText: 'CiTestPass!2026'
+- hideKeyboard
+- scrollUntilVisible:
+    element:
+      id: 'auth-submit-btn'
+    direction: DOWN
+    timeout: 20000
+- tapOn:
+    id: 'auth-submit-btn'
+
+# The app's own disclosure screen comes first, before any Android dialog.
+- extendedWaitUntil:
+    visible:
+      id: 'location-not-now-btn'
+    timeout: 90000
+- tapOn:
+    id: 'location-not-now-btn'
+
+# "Not now" must not open the Android permission dialog. If a dialog shows
+# anyway, decline it so the run continues to the Oracle — and the
+# assertion after onboarding still fails the run, since a dialog appeared.
+- waitForAnimationToEnd
+- runFlow:
+    when:
+      visible: '(?i)don.t allow|deny'
+    commands:
+      - tapOn: '(?i)don.t allow|deny'
+      - evalScript: ${output.systemDialogShown = true}
+
+- extendedWaitUntil:
+    visible: 'QUESTION ONE — INTENT'
+    timeout: 20000
+- tapOn: 'I face a decision and need clarity'
+
+- extendedWaitUntil:
+    visible: 'QUESTION TWO — REGISTER'
+    timeout: 5000
+- tapOn: 'Directly — I want clear answers'
+
+- extendedWaitUntil:
+    visible: 'QUESTION THREE — TIMING'
+    timeout: 5000
+- tapOn: 'Before important choices'
+
+- extendedWaitUntil:
+    visible:
+      id: 'onboarding-enter-btn'
+    timeout: 60000
+- tapOn:
+    id: 'onboarding-enter-btn'
+
+# The Oracle is reachable without location.
+- extendedWaitUntil:
+    visible: 'SHAMS AL-ASRĀR'
+    timeout: 10000
+
+# Not asked again: Home's location re-acquire runs without permission
+# requests, so neither the disclosure screen nor an Android dialog returns.
+- assertNotVisible:
+    id: 'location-not-now-btn'
+- assertNotVisible: '(?i)don.t allow|deny'
+- assertTrue: ${!output.systemDialogShown}

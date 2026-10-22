@@ -128,3 +128,7 @@ name: 'Journey — sign up through onboarding to the Oracle'
 - extendedWaitUntil:
     visible: 'SHAMS AL-ASRĀR'
     timeout: 10000
+
+# Decline path, same emulator and leg (owner decision 2026-10-22): sign up a
+# second account with location denied and reach the Oracle without it.
+- runFlow: 04_signup_decline_location.yaml

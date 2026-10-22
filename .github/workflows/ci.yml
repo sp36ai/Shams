@@ -125,6 +125,29 @@ jobs:
       - name: Unit tests
         run: npm test -- --run
 
+      # The Firestore emulator is a JVM process; firebase-tools >= 15 needs
+      # Java 21 for it (same as firestore-rules-tests.yml).
+      - name: Setup Java (Firestore emulator)
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 21
+
+      # The account-deletion race and the legacy log-field migration run
+      # against real Firestore/Auth semantics only here: `npm test` above
+      # skips them without an emulator. test:emulator:ci starts the
+      # emulators (firebase.test.json, project demo-shams, offline: a demo-
+      # project never reaches a real backend), runs both suites, always stops
+      # the emulators, and fails if they cannot start. REQUIRE_EMULATOR=1
+      # makes a missing emulator a failure rather than a skip, the suites
+      # refuse any project but demo-shams or any non-local host
+      # (src/__tests__/emulatorGuard.ts), and
+      # scripts/check-emulator-results.mjs fails unless every expected test
+      # ran and passed — so removing or skipping one of them fails CI.
+      # Never runs the production migration.
+      - name: Emulator suites (account deletion race, legacy log-field migration)
+        run: npm run test:emulator:ci
+
   e2e-build:
     name: E2E Build (debug APK)
     runs-on: ubuntu-24.04
@@ -522,6 +545,11 @@ jobs:
             adb logcat -c
             nohup adb logcat -v threadtime > logcat_full.txt 2>&1 &
             adb install -r android/app/build/outputs/apk/debug/app-debug.apk
+            # Approximate location only (owner decision 2026-10-22): read what
+            # the installed APK actually requests from the package manager —
+            # the merged manifest, library contributions included — and fail
+            # if precise location is requested or approximate is missing.
+            adb shell dumpsys package com.astrosarfaraz.shamsalasrar | sed -n '/requested permissions:/,/install permissions:/p' > requested_permissions.txt; cat requested_permissions.txt; grep -q 'ACCESS_COARSE_LOCATION' requested_permissions.txt && ! grep -qE 'ACCESS_FINE_LOCATION|ACCESS_BACKGROUND_LOCATION' requested_permissions.txt || { echo "::error::Installed APK must request ACCESS_COARSE_LOCATION and not ACCESS_FINE_LOCATION/ACCESS_BACKGROUND_LOCATION (see requested_permissions above)"; exit 1; }
             adb emu geo fix 67.0011 24.8607
             for i in 1 2 3; do curl -fsSL --retry 3 --retry-all-errors "https://get.maestro.mobile.dev" | MAESTRO_VERSION=1.39.0 bash && [ -x "$HOME/.maestro/bin/maestro" ] && break; echo "Maestro install attempt $i failed; retrying in 15s"; rm -rf "$HOME/.maestro"; sleep 15; done; [ -x "$HOME/.maestro/bin/maestro" ] || { echo "Maestro install failed after 3 attempts"; exit 1; }
             # issue #124: signup-journey has repeatedly lost its emulator
@@ -547,6 +575,10 @@ jobs:
             # uploaded/published — see PHASE_2A_REPORT.md for the reasoning
             # and what could only be verified by an actual GitHub Actions run.
             "$HOME/.maestro/bin/maestro" test -e MAESTRO_E2E_TEST_ACCOUNT_EMAIL="$MAESTRO_E2E_TEST_ACCOUNT_EMAIL" -e MAESTRO_E2E_TEST_ACCOUNT_PASSWORD="$MAESTRO_E2E_TEST_ACCOUNT_PASSWORD" --format junit --output maestro-results.xml .maestro/ci/${{ matrix.flow }}
+            # signup-journey ends on the decline path (04_signup_decline_location.yaml):
+            # read the emulator's actual grant state and fail if the app holds
+            # any location permission after the seeker declined.
+            [ "${{ matrix.id }}" != "signup-journey" ] || { adb shell dumpsys package com.astrosarfaraz.shamsalasrar | grep -E 'LOCATION: granted=' > location_grant_state.txt; cat location_grant_state.txt; ! grep -q 'granted=true' location_grant_state.txt || { echo "::error::A location permission is granted after the seeker declined (see location_grant_state above)"; exit 1; }; }
 
       - name: Report resource state (issue #124 — is the emulator getting OOM-killed or CPU-starved?)
         if: always()
