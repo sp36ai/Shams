@@ -125,6 +125,29 @@ jobs:
       - name: Unit tests
         run: npm test -- --run
 
+      # The Firestore emulator is a JVM process; firebase-tools >= 15 needs
+      # Java 21 for it (same as firestore-rules-tests.yml).
+      - name: Setup Java (Firestore emulator)
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 21
+
+      # The account-deletion race and the legacy log-field migration run
+      # against real Firestore/Auth semantics only here: `npm test` above
+      # skips them without an emulator. test:emulator:ci starts the
+      # emulators (firebase.test.json, project demo-shams, offline: a demo-
+      # project never reaches a real backend), runs both suites, always stops
+      # the emulators, and fails if they cannot start. REQUIRE_EMULATOR=1
+      # makes a missing emulator a failure rather than a skip, the suites
+      # refuse any project but demo-shams or any non-local host
+      # (src/__tests__/emulatorGuard.ts), and
+      # scripts/check-emulator-results.mjs fails unless every expected test
+      # ran and passed — so removing or skipping one of them fails CI.
+      # Never runs the production migration.
+      - name: Emulator suites (account deletion race, legacy log-field migration)
+        run: npm run test:emulator:ci
+
   e2e-build:
     name: E2E Build (debug APK)
     runs-on: ubuntu-24.04

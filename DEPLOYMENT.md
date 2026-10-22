@@ -194,8 +194,9 @@ npx vite-node scripts/strip-legacy-log-fields.ts --project <id> --apply --once \
 npx vite-node scripts/strip-legacy-log-fields.ts --project <id> --verify
 ```
 
-Tested against synthetic records on the Firestore emulator
-(`npm run test:emulator`): each field alone and together, keyed codes,
+Tested against synthetic records on the Firestore emulator, in CI on every
+pull request (Functions Quality → "Emulator suites"; locally
+`cd functions && npm run test:emulator:ci`): each field alone and together, keyed codes,
 records with no target fields, a nested `ipAddress` that must survive,
 1,050 records across three pages, an out-of-scope collection, a refused
 apply, a failed batch, a write during the run, and the CLI sequence above.

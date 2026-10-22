@@ -3,7 +3,7 @@
  * the Firestore emulator against synthetic records (when pointed at one,
  * demo- project only).
  *
- *   cd functions && npm run test:emulator   (serial: suites share one database)
+ *   cd functions && npm run test:emulator:ci   (starts and stops the emulators itself)
  *
  * Every assertion about what changed compares each document with its seeded
  * original, so "removes only the targeted fields" is checked field by field,
@@ -20,6 +20,7 @@ import {
   PAGE,
   type LegacyCounts,
 } from '../stripLegacyLogFields';
+import { emulatorTarget } from '../../__tests__/emulatorGuard';
 
 describe('field rules', () => {
   it('treats the old unkeyed code formats as legacy', () => {
@@ -54,12 +55,12 @@ describe('field rules', () => {
   });
 });
 
-const PROJECT = process.env.GCLOUD_PROJECT ?? '';
-const FS_HOST = process.env.FIRESTORE_EMULATOR_HOST ?? '';
-const ON_EMULATOR = FS_HOST !== '';
-if (ON_EMULATOR && !PROJECT.startsWith('demo-')) {
-  throw new Error(`refusing to run: GCLOUD_PROJECT must be a demo- project, got "${PROJECT}"`);
-}
+// Throws unless the project is demo-shams and the host is local; with
+// REQUIRE_EMULATOR=1 a missing emulator throws instead of skipping.
+const TARGET = emulatorTarget(['firestore']);
+const PROJECT = TARGET.project;
+const FS_HOST = TARGET.hosts.firestore;
+const ON_EMULATOR = TARGET.on;
 
 type Doc = Record<string, unknown>;
 

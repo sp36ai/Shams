@@ -5,26 +5,31 @@
  * real rate-limit gate and the real deleted-account marker.
  *
  * Skipped unless pointed at the emulators, and refuses outright to run
- * against anything but a `demo-` project (utils/admin.ts would otherwise
- * fall back to the production project id):
+ * against anything but the local `demo-shams` project (utils/admin.ts would
+ * otherwise fall back to the production project id); see emulatorGuard.ts.
+ * In CI (REQUIRE_EMULATOR=1) a missing emulator fails instead of skipping.
+ *
+ *   cd functions && npm run test:emulator:ci   (starts and stops the emulators)
+ *
+ * or, against emulators you started yourself on the default ports:
  *
  *   firebase emulators:start --only firestore,auth --project demo-shams
  *   cd functions && npm run test:emulator
  *
  * The emulator suites share one database and each clears it, so they must
- * run one file at a time — test:emulator passes --no-file-parallelism.
+ * run one file at a time — both scripts pass --no-file-parallelism.
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';
+import { emulatorTarget } from '../../__tests__/emulatorGuard';
 
-const PROJECT = process.env.GCLOUD_PROJECT ?? '';
-const FS_HOST = process.env.FIRESTORE_EMULATOR_HOST ?? '';
-const AUTH_HOST = process.env.FIREBASE_AUTH_EMULATOR_HOST ?? '';
-const ON_EMULATOR = FS_HOST !== '' && AUTH_HOST !== '';
-
-if (ON_EMULATOR && !PROJECT.startsWith('demo-')) {
-  throw new Error(`refusing to run: GCLOUD_PROJECT must be a demo- project, got "${PROJECT}"`);
-}
+// Throws unless the project is demo-shams and the hosts are local; with
+// REQUIRE_EMULATOR=1 a missing emulator throws instead of skipping.
+const TARGET = emulatorTarget(['firestore', 'auth']);
+const PROJECT = TARGET.project;
+const FS_HOST = TARGET.hosts.firestore;
+const AUTH_HOST = TARGET.hosts.auth;
+const ON_EMULATOR = TARGET.on;
 
 type Runnable = { run: (req: unknown) => Promise<unknown> };
 

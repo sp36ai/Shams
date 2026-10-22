@@ -12,7 +12,9 @@
     "logs": "firebase functions:log",
     "lint": "tsc --noEmit && eslint . --ext .ts --max-warnings=0",
     "test": "vitest --passWithNoTests",
-    "test:emulator": "FIRESTORE_EMULATOR_HOST=127.0.0.1:8080 FIREBASE_AUTH_EMULATOR_HOST=127.0.0.1:9099 GCLOUD_PROJECT=demo-shams RATE_LIMIT_PER_MINUTE=100000 vitest run --no-file-parallelism account.emulator stripLegacyLogFields",
+    "test:emulator": "FIRESTORE_EMULATOR_HOST=127.0.0.1:8080 FIREBASE_AUTH_EMULATOR_HOST=127.0.0.1:9099 GCLOUD_PROJECT=demo-shams npm run test:emulator:suites",
+    "test:emulator:suites": "REQUIRE_EMULATOR=1 RATE_LIMIT_PER_MINUTE=100000 vitest run --no-file-parallelism --reporter=verbose --reporter=json --outputFile.json=emulator-results.json account.emulator stripLegacyLogFields && node scripts/check-emulator-results.mjs emulator-results.json",
+    "test:emulator:ci": "npx --yes firebase-tools@15.29.0 emulators:exec --config ../firebase.test.json --project demo-shams --only firestore,auth \"npm run test:emulator:suites\"",
     "test:watch": "vitest --watch",
     "test:ui": "vitest --ui",
     "test:coverage": "vitest --coverage"
