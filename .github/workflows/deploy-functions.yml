@@ -159,9 +159,11 @@ jobs:
       # (functions/src/maintenance/stripLegacyLogFields.ts). Removes those
       # fields only, never documents; every step prints counts, never values.
       #
-      # Only after a healthy deploy, and after the old revision's in-flight
-      # requests (max function timeout 120 s) can no longer write a legacy
-      # value behind it. Three steps:
+      # Only after a healthy deploy. The 150 s wait (longer than the 120 s
+      # function timeout) lets the old revision's in-flight requests finish,
+      # but is not proof that no old instance still writes: the fresh scan in
+      # apply, its count comparison and the final verify are the safeguards
+      # that catch a late legacy write. Three steps:
       #   1. preview — counts what would be removed (recorded in this log);
       #      skips everything once the migration has completed.
       #   2. apply   — refuses, changing nothing, unless the data still

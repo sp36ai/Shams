@@ -182,7 +182,12 @@ printing counts only, never a value:
    deploys see the record and skip all three steps.
 3. **Verify**: a fresh scan; the deploy fails if any targeted field remains.
 
-Any failure exits non-zero and leaves no completion record. Rerunning is
+The deploy waits 150 s after the new functions are live before the preview,
+longer than the 120 s function timeout, so the old revision's in-flight
+requests can finish. The wait is not proof that no old instance still writes
+a legacy value: apply's fresh scan and count comparison, and the final
+verify, are what catch one. Any failure exits non-zero and leaves no
+completion record. Rerunning is
 safe: a field already removed is neither counted nor touched. If a run
 fails, start again from the preview. By hand (counts only):
 
