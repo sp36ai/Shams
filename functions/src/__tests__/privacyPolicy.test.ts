@@ -73,4 +73,24 @@ describe('privacy policy matches behaviour', () => {
     expect(start).toBeGreaterThan(-1);
     expect(block).not.toMatch(/\b(lat|lon|latitude|longitude)\b\s*:/);
   });
+
+  it('says the saved location and local data are cleared on sign-out and deletion, as the app does', () => {
+    expect(text).toContain('until you sign out or delete your account');
+    expect(text).toContain(
+      "On the device you delete it from, it also removes your saved readings, location, name, mother's name and onboarding answers",
+    );
+    const authStore = read('src/stores/authStore.ts');
+    const signOut = authStore.slice(authStore.indexOf('signOut: async'));
+    expect(signOut.slice(0, signOut.indexOf('auth().signOut()'))).toContain('clearLocation()');
+    const settings = read('src/screens/SettingsScreen.tsx');
+    const handler = settings.slice(settings.indexOf('const handleDeleteAccount'));
+    expect(handler).toMatch(/resetForNewAccount\(\);[\s\S]*await signOut\(\);/);
+    const reset = read('src/stores/settingsStore.ts');
+    const resetBody = reset.slice(reset.indexOf('resetForNewAccount: (): void =>'));
+    for (const key of ['SEEKER_NAME', 'MOTHER_NAME', 'ONBOARDING_ANSWERS']) {
+      expect(resetBody.slice(0, resetBody.indexOf('set({'))).toContain(
+        `storage.delete(KEYS.${key})`,
+      );
+    }
+  });
 });
