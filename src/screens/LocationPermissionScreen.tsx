@@ -2,11 +2,12 @@
  * LocationPermissionScreen — onboarding step.
  * --------------------------------------------------------------------------
  * Why this screen exists:
- *   A horary chart is anchored to the precise moment AND place of the
- *   question. Without GPS, the chart cannot be cast — the engine simply
- *   refuses to produce a verdict from a missing ascendant. Asking for
- *   permission upfront (before signup) gives a higher grant rate than
- *   asking after the user is already invested in their first question.
+ *   Location is optional and used only on the device, for the live sky
+ *   display (Sky Clock, planetary-hour timings). Readings never use it: the
+ *   Digital Watch Oracle's frame is watch-derived, and askWatchOracle's
+ *   input has no coordinates. This screen is Google Play's prominent
+ *   disclosure, so its text must say exactly that (owner decision
+ *   2026-10-22) — never that the app or a reading needs location.
  *
  * Flow contract:
  *   1. User lands here before the main shell (RootNavigator gates on
@@ -39,7 +40,7 @@
  */
 
 import React, { useCallback, useState } from 'react';
-import { Linking, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Linking, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Circle, G, Line, Path } from 'react-native-svg';
 import StarfieldBackground from '@components/StarfieldBackground';
@@ -113,10 +114,8 @@ const LocationPermissionScreen: React.FC = () => {
   const isLoading = status === 'requesting';
 
   // Google Play Compliance: Prominent disclosure must be shown before the system prompt.
-  const titleText = isDenied ? t('permission.deniedTitle') : 'Location Required to Continue';
-  const bodyText = isDenied
-    ? t('permission.deniedBody')
-    : 'Shams al-Asrār requires your precise location to read the heavens for your exact position. Every question is anchored to its moment and place — without both, the celestial counsel cannot be trusted.\n\nWithout location access, the app cannot function.';
+  const titleText = isDenied ? t('permission.deniedTitle') : t('permission.locationTitle');
+  const bodyText = isDenied ? t('permission.deniedBody') : t('permission.locationRationale');
 
   return (
     <SafeAreaView
@@ -196,9 +195,7 @@ const LocationPermissionScreen: React.FC = () => {
           ]}
         >
           {'✦  '}
-          {Platform.OS === 'android'
-            ? 'Coordinates are captured at the moment of each question and stored on this device.'
-            : 'Coordinates stay on this device.'}
+          {t('permission.privacyNote')}
           {'  ✦'}
         </Text>
       </ScrollView>
