@@ -402,6 +402,14 @@ export const useAuthStore = create<AuthState>(set => ({
     set({ isLoading: true });
     invalidateAuthSync();
     invalidateQuotaCache();
+    // The last GPS fix is personal data kept only on this device (it drives
+    // the local sky display, never a reading). Cleared here, first — before
+    // the native sign-out below, which can stall or fail — so neither signing
+    // out nor deleting the account (whose handler ends in this call) can leave
+    // it behind. OracleScreen re-acquires a fix on its next mount while
+    // location permission is still granted; until then the sky display uses
+    // its default location.
+    useSettingsStore.getState().clearLocation();
     // auth().signOut() is a native round-trip with no SDK-level timeout
     // guarantee — same failure class as the App Check/ID-token probes this
     // file already guards. Bound it, and clear local state unconditionally
