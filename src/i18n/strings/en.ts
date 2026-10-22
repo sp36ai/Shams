@@ -40,15 +40,16 @@ export const en: StringTable = {
   },
 
   permission: {
-    locationTitle: 'Location for chart judgment',
+    locationTitle: 'Location for the sky display',
     locationRationale:
-      'Celestial counsel depends on the exact moment and place of the question. Without location, the heavens cannot be read for your precise position and the judgment cannot be trusted. Your coordinates stay on this device.',
+      'Shams al-Asrār uses your location only on this device, to show the live sky — the Sky Clock and planetary hours — for where you are. Readings do not use it and work without it. Your coordinates are never sent to our servers.',
     grantAccess: 'Grant location access',
     notNow: 'Not now',
-    deniedTitle: 'Location is required',
+    deniedTitle: 'Location is off',
     deniedBody:
-      'Without location, the app cannot cast a reliable horary chart. You can enable it later in system settings.',
+      'Readings work as usual. The sky display will use a default location; you can turn location on later in system settings.',
     openSettings: 'Open Settings',
+    privacyNote: 'Coordinates stay on this device and are never sent to our servers.',
   },
 
   auth: {
@@ -85,6 +86,7 @@ export const en: StringTable = {
   },
 
   oracle: {
+    locationOptional: 'Location improves the sky display. Readings work without it.',
     headerTitle: 'Shams al-Asrār',
     verdictYes: 'YES',
     verdictNo: 'NO',
@@ -315,7 +317,6 @@ export const en: StringTable = {
     sessionExpired: 'Your session has expired. Please sign in again.',
     signInFailed: 'The gate did not open. Check your email and password.',
     signUpFailed: 'The account could not be sealed. Please try again.',
-    locationRequired: 'Location is required to cast the chart and judge the question.',
     tooManyAttempts: 'Too many attempts. The gate rests for {{seconds}}s.',
     tooManyAttemptsWait: 'Too many attempts. Pause a moment before trying again.',
   },

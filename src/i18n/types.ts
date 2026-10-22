@@ -127,6 +127,7 @@ export interface StringTable {
     deniedTitle: string;
     deniedBody: string;
     openSettings: string;
+    privacyNote: string;
   };
   auth: {
     signInTab: string;
@@ -160,6 +161,7 @@ export interface StringTable {
     noAccount: string;
   };
   oracle: {
+    locationOptional: string;
     headerTitle: string;
     verdictYes: string;
     verdictNo: string;
@@ -380,7 +382,6 @@ export interface StringTable {
     sessionExpired: string;
     signInFailed: string;
     signUpFailed: string;
-    locationRequired: string;
     /** Client lockout countdown — interpolates {{seconds}}. */
     tooManyAttempts: string;
     /** Firebase server-side throttle (no known countdown). */
