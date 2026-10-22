@@ -147,7 +147,9 @@ const RootNavigator: React.FC = () => {
   const splashStillShowing = !splashElapsed || !authBootstrapped;
 
   const isAuthenticated = user !== null && !isAuthLoading;
-  // Location permission is MANDATORY for all builds
+  // Shown once per account; always passable ("Not now", or declining in the
+  // OS dialog). Location is optional — it only drives the on-device sky
+  // display, never a reading.
   const needsLocationPermission = isAuthenticated && !onboardingLocationPrompted;
   const needsOnboardingFlow = isAuthenticated && onboardingLocationPrompted && !hasSeenOnboarding;
 

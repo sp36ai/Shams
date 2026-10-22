@@ -15,8 +15,10 @@
  *   2. User taps "Grant access" → the native OS dialog appears → on grant
  *      we capture coordinates immediately and store
  *      to settingsStore.lastLocation, then mark onboardingPrompted=true.
- *   3. User taps "Skip" → we mark onboardingPrompted=true WITHOUT
- *      capturing location. Oracle screen will re-prompt on first question.
+ *   3. User taps "Not now" → we mark onboardingPrompted=true WITHOUT
+ *      opening the OS prompt or capturing location. Nothing re-prompts:
+ *      acquireLocation never requests permission (skipPermissionRequests),
+ *      and readings work without location.
  *   4. Either way, RootNavigator's gate re-renders and opens the main shell.
  *
  * Permission state machine (simplified — full handling in §1.11 utils):
@@ -106,6 +108,14 @@ const LocationPermissionScreen: React.FC = () => {
     }
   }, [setLastLocation, setPermissionGranted, markLocationPrompted]);
 
+  // Declining must not require tapping "Grant" and refusing in the system
+  // dialog: location is optional (readings never use it), so this moves on
+  // without opening the OS prompt and without recording a permission
+  // decision — the user can still grant it later from system settings.
+  const handleNotNow = useCallback(() => {
+    markLocationPrompted();
+  }, [markLocationPrompted]);
+
   const handleOpenSettings = useCallback(() => {
     void Linking.openSettings();
   }, []);
@@ -183,6 +193,14 @@ const LocationPermissionScreen: React.FC = () => {
               label={
                 status === 'blocked' ? t('permission.openSettings') : t('permission.grantAccess')
               }
+              testID="location-grant-btn"
+            />
+            <Button
+              style="ghost"
+              onPress={handleNotNow}
+              disabled={isLoading}
+              label={t('permission.notNow')}
+              testID="location-not-now-btn"
             />
           </View>
         </View>
