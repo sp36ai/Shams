@@ -146,17 +146,74 @@ openssl rand -hex 32 | tr -d '\n' | firebase functions:secrets:set LOG_HASH_KEY 
 - Do not store the key in source, Firestore or `.env` files, and do not log it.
 - If the key is ever unavailable at runtime the codes are omitted, never
   replaced with an unkeyed hash.
-- Transition: records written before this change keep their old unkeyed
-  values (8-hex FNV question codes, 16-hex SHA-256 IP codes); new ones are
-  `h1:` + 32 hex. The two never match, so correlation does not span the
-  switch, and old values cannot be re-keyed because the raw inputs were never
-  stored. Because the old values remain guessable, they are removed (owner
-  decision 2026-10-21): after a healthy deploy the workflow runs
-  `functions/scripts/strip-legacy-hashes.ts --apply --once`, which deletes
-  only legacy-format `questionHash`/`ipHash` fields from `auditLogs` and
-  `securityEvents`, never documents, and records completion in
-  `_system/migration-strip-legacy-hashes-v1` so later deploys skip it. Dry
-  run (counts only): `npx vite-node scripts/strip-legacy-hashes.ts --project <id>`.
+- Transition: new codes are `h1:` + 32 hex. Older records hold unkeyed
+  values (8-hex FNV question codes, 16-hex SHA-256 IP codes) that never match
+  the new ones, so correlation does not span the switch. They cannot be
+  re-keyed, because these records never held the question text, and the raw IPs
+  that were stored are being removed (below).
+
+#### Legacy log fields: what was stored, what is removed, what is not
+
+What older code wrote into Firestore, established from every writer in git
+history (owner decisions 2026-10-21 and 2026-10-22):
+
+| Field          | Content                                    | Written to                                                                         | Period                                                                                                                                       |
+| -------------- | ------------------------------------------ | ---------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| `ipAddress`    | the caller's **raw IP address**            | `auditLogs` — the old `askOracle` (`oracle_computed`) and Razorpay `plan_upgraded` | 2026-05-10 to 2026-08-25 (askOracle), 2026-05-10 to 2026-06-27 (Razorpay), per `main`; actual dates depend on when each version was deployed |
+| `ipHash`       | unsalted SHA-256 prefix of the IP (16 hex) | `auditLogs`, `securityEvents`                                                      | until the keyed-code deploy                                                                                                                  |
+| `questionHash` | bare 32-bit FNV-1a of the question (8 hex) | `auditLogs`                                                                        | until the keyed-code deploy                                                                                                                  |
+
+No other collection ever received these fields, and no other raw-IP field
+name was ever used. Razorpay also logged the raw IP to Cloud Logging
+(`logger.info('plan upgraded')`).
+
+**The migration** (`functions/src/maintenance/stripLegacyLogFields.ts`, run
+by `.github/workflows/deploy-functions.yml` after a healthy deploy) removes
+exactly those three fields from `auditLogs` and `securityEvents`: `ipAddress`
+whenever present, the two codes only in their unkeyed format (`h1:` codes are
+untouched). It never deletes a document or any other field. Three steps, each
+printing counts only, never a value:
+
+1. **Preview**: counts the documents and fields it would remove.
+2. **Apply**: refuses, changing nothing, unless a fresh scan matches the
+   preview's counts; removes the fields in batches of at most 400 updates;
+   fails if it removed anything other than what the preview counted; records
+   `_system/migration-strip-legacy-log-fields-v1` (counts only). Later
+   deploys see the record and skip all three steps.
+3. **Verify**: a fresh scan; the deploy fails if any targeted field remains.
+
+Any failure exits non-zero and leaves no completion record. Rerunning is
+safe: a field already removed is neither counted nor touched. If a run
+fails, start again from the preview. By hand (counts only):
+
+```bash
+cd functions
+npx vite-node scripts/strip-legacy-log-fields.ts --project <id>              # preview
+npx vite-node scripts/strip-legacy-log-fields.ts --project <id> --apply --once \
+  --expect '<the "counts" object the preview printed>'
+npx vite-node scripts/strip-legacy-log-fields.ts --project <id> --verify
+```
+
+Tested against synthetic records on the Firestore emulator
+(`npm run test:emulator`): each field alone and together, keyed codes,
+records with no target fields, a nested `ipAddress` that must survive,
+1,050 records across three pages, an out-of-scope collection, a refused
+apply, a failed batch, a write during the run, and the CLI sequence above.
+
+**What the migration does not reach**, and what a zero from step 3 does not
+prove:
+
+- **Cloud Logging**: entries written before the deploy may contain the raw IP
+  (Razorpay, above) or the unkeyed codes. They are not changed and are
+  deleted when the log bucket's retention ends (the policy states the
+  retention, read from the `_Default` bucket at hosting deploy).
+- **Firestore backups and exports**: not changed. `BACKUP_AND_DISASTER_RECOVERY.md`
+  records no backups as of 2026-08-23; check
+  `gcloud firestore backups schedules list --project=shams-app-4d0e7`. Any
+  backup taken before the migration keeps these fields until it expires.
+- A verify result of zero means only that the scan finds none in the two
+  collections at that moment; it is not evidence about any other copy.
+
 - Rotating the key breaks correlation the same way; it would need a new
   version prefix (`h2:`) in `keyedHash.ts`.
 

@@ -153,14 +153,42 @@ jobs:
       - name: Deploy Firestore indexes and TTL policies (additive only)
         run: npx firebase-tools deploy --only firestore:indexes --project shams-app-4d0e7 --non-interactive
 
-      # One-off removal of the unkeyed question/IP codes written before
-      # keyedHash.ts (functions/src/maintenance/stripLegacyHashes.ts). Only
-      # after a healthy deploy, and after the old revision's in-flight
+      # One-off removal of privacy-sensitive fields older code wrote into
+      # /auditLogs and /securityEvents: raw IP addresses (`ipAddress`) and the
+      # unkeyed `ipHash` / `questionHash` codes
+      # (functions/src/maintenance/stripLegacyLogFields.ts). Removes those
+      # fields only, never documents; every step prints counts, never values.
+      #
+      # Only after a healthy deploy, and after the old revision's in-flight
       # requests (max function timeout 120 s) can no longer write a legacy
-      # value behind it. Removes fields, never documents; prints counts only;
-      # --once records completion so later deploys skip the scan.
-      - name: Remove legacy unkeyed hashes (one-off)
+      # value behind it. Three steps:
+      #   1. preview — counts what would be removed (recorded in this log);
+      #      skips everything once the migration has completed.
+      #   2. apply   — refuses, changing nothing, unless the data still
+      #      matches the preview's counts; fails if it removed anything other
+      #      than what the preview counted; records completion.
+      #   3. verify  — a fresh scan; fails the deploy if any targeted field
+      #      remains. Zero here means the scan finds none in these two
+      #      collections — it says nothing about Cloud Logging, backups or
+      #      exports (DEPLOYMENT.md).
+      - name: Legacy log fields — preview (counts only)
+        id: legacy-preview
         run: |
           sleep 150
-          npx vite-node scripts/strip-legacy-hashes.ts --project shams-app-4d0e7 --apply --once
+          out=$(npx vite-node scripts/strip-legacy-log-fields.ts --project shams-app-4d0e7 --once)
+          echo "$out"
+          echo "recorded=$(jq -r '.recorded' <<<"$out")" >> "$GITHUB_OUTPUT"
+          echo "counts=$(jq -c '.counts // empty' <<<"$out")" >> "$GITHUB_OUTPUT"
+        working-directory: functions
+
+      - name: Legacy log fields — apply (only if the data matches the preview)
+        if: steps.legacy-preview.outputs.recorded == 'false'
+        env:
+          EXPECTED: ${{ steps.legacy-preview.outputs.counts }}
+        run: npx vite-node scripts/strip-legacy-log-fields.ts --project shams-app-4d0e7 --apply --once --expect "$EXPECTED"
+        working-directory: functions
+
+      - name: Legacy log fields — verify none remain
+        if: steps.legacy-preview.outputs.recorded == 'false'
+        run: npx vite-node scripts/strip-legacy-log-fields.ts --project shams-app-4d0e7 --verify
         working-directory: functions

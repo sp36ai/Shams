@@ -262,9 +262,12 @@
         not contain your name, email, question text or reading content. They can contain short codes
         derived from your question text and from your IP address. The codes are made with a secret
         key, so they cannot be worked back by guessing without that key, but they are not anonymous:
-        we can still match them. A record that your account was deleted, holding only its internal
-        ID and the time of deletion, is kept for about a day so that no request still in progress
-        can recreate your data.
+        we can still match them. Audit records written before this version of the policy could also
+        hold your IP address itself, or older codes made without a secret key; we remove those
+        fields from our audit and security records and keep the rest of each record. Any copies in
+        database backups are not changed and are deleted when those backups expire. A record that
+        your account was deleted, holding only its internal ID and the time of deletion, is kept for
+        about a day so that no request still in progress can recreate your data.
       </p>
       <p>
         <strong>Server logs:</strong> our servers write operational logs to Google Cloud Logging.
@@ -272,8 +275,9 @@
         occasionally a short excerpt of the oracle's generated text when it fails an automated
         check. Google Cloud also records standard details of each request to our servers, including
         your IP address and device type. These logs do not contain your question text. They are kept
-        for {{LOG_RETENTION_DAYS}} days. They are separate from the text sent to Anthropic described
-        in Section 4.
+        for {{LOG_RETENTION_DAYS}} days. Logs written before this version of the policy may also
+        contain your IP address itself or the older codes; they are deleted on the same schedule.
+        They are separate from the text sent to Anthropic described in Section 4.
       </p>
 
       <h2>6. Your Rights</h2>

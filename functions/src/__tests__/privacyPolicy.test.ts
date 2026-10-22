@@ -56,6 +56,34 @@ describe('privacy policy matches behaviour', () => {
     expect(text).toContain('including your IP address');
   });
 
+  it('discloses the raw IPs and unkeyed codes older audit records held, and that only those fields are removed', () => {
+    expect(text).toContain(
+      'Audit records written before this version of the policy could also hold your IP address itself, or older codes made without a secret key; we remove those fields from our audit and security records and keep the rest of each record.',
+    );
+    const migration = read('functions/src/maintenance/stripLegacyLogFields.ts');
+    expect(migration).toContain(
+      "export const FIELDS = ['ipAddress', 'ipHash', 'questionHash'] as const;",
+    );
+    expect(migration).toContain(
+      "export const COLLECTIONS = ['auditLogs', 'securityEvents'] as const;",
+    );
+    expect(migration).not.toMatch(/batch\.delete\(|\.ref\.delete\(|recursiveDelete/);
+    const deploy = read('.github/workflows/deploy-functions.yml');
+    for (const step of ['--once)', '--apply --once --expect "$EXPECTED"', '--verify']) {
+      expect(deploy).toContain(step);
+    }
+  });
+
+  it('does not claim legacy data is already erased everywhere: backups and old logs expire on their own schedule', () => {
+    expect(text).toContain('Any copies in database backups are not changed');
+    expect(text).toContain(
+      'Logs written before this version of the policy may also contain your IP address itself or the older codes',
+    );
+    expect(text).not.toMatch(
+      /(have|has) been (removed|deleted|erased)|all (historical|old|legacy) (data|records)/i,
+    );
+  });
+
   it('names Anthropic, the provider the code actually calls, and no other', () => {
     expect(text).toContain("Anthropic's Claude model");
     expect(text).not.toMatch(/OpenAI/i);
