@@ -552,6 +552,10 @@ jobs:
             # uploaded/published — see PHASE_2A_REPORT.md for the reasoning
             # and what could only be verified by an actual GitHub Actions run.
             "$HOME/.maestro/bin/maestro" test -e MAESTRO_E2E_TEST_ACCOUNT_EMAIL="$MAESTRO_E2E_TEST_ACCOUNT_EMAIL" -e MAESTRO_E2E_TEST_ACCOUNT_PASSWORD="$MAESTRO_E2E_TEST_ACCOUNT_PASSWORD" --format junit --output maestro-results.xml .maestro/ci/${{ matrix.flow }}
+            # signup-journey ends on the decline path (04_signup_decline_location.yaml):
+            # read the emulator's actual grant state and fail if the app holds
+            # any location permission after the seeker declined.
+            [ "${{ matrix.id }}" != "signup-journey" ] || { adb shell dumpsys package com.astrosarfaraz.shamsalasrar | grep -E 'LOCATION: granted=' > location_grant_state.txt; cat location_grant_state.txt; ! grep -q 'granted=true' location_grant_state.txt || { echo "::error::A location permission is granted after the seeker declined (see location_grant_state above)"; exit 1; }; }
 
       - name: Report resource state (issue #124 — is the emulator getting OOM-killed or CPU-starved?)
         if: always()
