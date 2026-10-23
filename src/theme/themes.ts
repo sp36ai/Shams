@@ -2,10 +2,12 @@
  * Shams al-Asrār — DĀR AL-SHAMS Master Theme System
  * "The House of the Hidden Sun"
  * --------------------------------------------------------------------------
- * Eight canonical themes. Single theme per session, MMKV-persisted.
+ * Nine canonical themes. Single theme per session, MMKV-persisted.
  *
  * VISUAL PHILOSOPHY:
- * - Obsidian manuscript black / illuminated gold (darAlShams — free default)
+ * - Midnight navy / antique embossed gold (midnightCelestial — free default
+ *   for new installs; matches the Home hero's Midnight Celestial palette)
+ * - Obsidian manuscript black / illuminated gold (darAlShams — free)
  * - Midnight lapis lazuli / sapphire (laylAlBahr — Mureed)
  * - Iron-black / crimson (narAlHadid — Mureed)
  * - Dawn parchment / antique gold (subhAlWahy — light, Mureed)
@@ -20,7 +22,7 @@
  * verdict card and was removed with it.
  *
  * TIER GATING — every theme requires a minimum PlanTier (see THEME_TIER
- * below). darAlShams is the one free-tier default; the other five original
+ * below). midnightCelestial (the default) and darAlShams are free; the other five original
  * colour variants require Mureed; the two newest (qutbAlAnwar, kanzAlAsrar)
  * require Khāṣṣ. Gating is enforced in two places: ThemeSwitcher.tsx (which
  * themes are selectable) and ThemeProvider.tsx (falls back to
@@ -31,6 +33,7 @@
 import type { PlanTier } from '@stores/quotaStore';
 
 export type ThemeId =
+  | 'midnightCelestial'
   | 'darAlShams'
   | 'laylAlBahr'
   | 'narAlHadid'
@@ -38,7 +41,9 @@ export type ThemeId =
   | 'zaytunAlHikma'
   | 'sirrAlBanafsaj'
   | 'qutbAlAnwar'
-  | 'kanzAlAsrar';
+  | 'kanzAlAsrar'
+  | 'qamarAlFidda'
+  | 'zumurrudAlMalakut';
 
 export interface ThemeColors {
   /** Deepest background */
@@ -159,6 +164,41 @@ export interface ThemeColors {
   iconAccent?: string;
 }
 
+/**
+ * Home's own look under a theme: the palette of the full-screen panel and the
+ * shapes of its widgets. The two premium themes change the shapes as well as
+ * the colours; every other theme keeps the original shapes and takes its
+ * palette from its colours (see getHomeStyle).
+ */
+export interface HomePalette {
+  /** Panel background (and the status bar on Home). */
+  midnight: string;
+  /** Raised widgets: tiles, chips, menu, Genie button. */
+  deepTeal: string;
+  /** Rims, labels and quiet accents. */
+  antiqueGold: string;
+  /** Bright accent: wordmark, values, icons. */
+  champagne: string;
+  /** Subdued metal: separators, the Genie's seeker bubbles. */
+  bronze: string;
+  /** Body text on the panel. */
+  ivory: string;
+  /** Warm glow behind the emblem. */
+  amber: string;
+}
+
+export interface HomeStyle {
+  palette: HomePalette;
+  /** Info tiles: rounded cards, mihrab arches (round top) or cut facets. */
+  tileShape: 'rounded' | 'arch' | 'facet';
+  /** Info tiles: a 3 × 2 grid of centred tiles, or a 2-column list. */
+  tileLayout: 'grid' | 'list';
+  /** Sunrise / hora / sunset: pills, round medallions or arch-top tablets. */
+  capsule: 'pill' | 'medallion' | 'tablet';
+  /** The emblem artwork (see scripts/generate-home-mandala.py). */
+  emblem: 'gold' | 'silver' | 'emerald';
+}
+
 export interface Theme {
   id: ThemeId;
   labelKey: string;
@@ -166,7 +206,92 @@ export interface Theme {
   subtitle: string;
   isDark: boolean;
   colors: ThemeColors;
+  /** Home overrides; anything left out comes from getHomeStyle's defaults. */
+  home?: Partial<HomeStyle>;
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 0. MIDNIGHT CELESTIAL — Midnight Navy · Antique Gold  (dark, default)
+// ─────────────────────────────────────────────────────────────────────────────
+// Built from the Home hero's Midnight Celestial palette (its `home.palette` below)
+// so the whole app matches the hero by default. Text colours checked against
+// bg #061722: text 15.5:1, textMuted 8.1:1, textFaint 6.2:1, and textFaint
+// stays above 4.5:1 on surfaceElevated too (5.1:1) (WCAG AA).
+const midnightCelestial: Theme = {
+  id: 'midnightCelestial',
+  labelKey: 'theme.midnightCelestial',
+  name: 'Midnight Celestial',
+  subtitle: 'Midnight Navy · Antique Gold',
+  isDark: true,
+  // The Home hero's original palette, exactly.
+  home: {
+    palette: {
+      midnight: '#061722',
+      deepTeal: '#0B2735',
+      antiqueGold: '#C5A36A',
+      champagne: '#F2D9A0',
+      bronze: '#80603D',
+      ivory: '#F6EBDD',
+      amber: '#D89A4A',
+    },
+  },
+  colors: {
+    bg: '#061722',
+    surface: '#0A1F2C',
+    surfaceElevated: '#0F2A3B',
+    border: '#1D3547',
+    borderAccent: '#C5A36A',
+
+    gold: '#C5A36A',
+    goldBright: '#F2D9A0',
+    brass: '#80603D',
+
+    maqbool: '#D9B26A',
+    maqboolGlow: 'rgba(217, 178, 106, 0.25)',
+    mardood: '#6B7F92',
+    mardoodGlow: 'rgba(107, 127, 146, 0.15)',
+    caution: '#D9B26A',
+
+    text: '#F6EBDD',
+    textMuted: '#B8AC94',
+    textFaint: '#9C9787',
+    textOnGold: '#1A1308',
+
+    celestialDust: '#F2D9A0',
+    vellumOverlay: 'rgba(246, 235, 221, 0.03)',
+    manuscriptFog: 'rgba(197, 163, 106, 0.08)',
+    sacredGlow: '#C5A36A',
+    lunarReflection: '#8FA8BE',
+    candlelight: '#F2D9A0',
+
+    accent: '#C5A36A',
+    amber: '#F2D9A0',
+    primary: '#C5A36A',
+    textOnPrimary: '#1A1308',
+    positive: '#D9B26A',
+    negative: '#6B7F92',
+
+    starfield: '#F2D9A0',
+    nebula1: 'rgba(197, 163, 106, 0.08)',
+    nebula2: 'rgba(30, 70, 95, 0.10)',
+    nebula3: 'rgba(242, 217, 160, 0.03)',
+
+    chatUserBg: '#0F2A3B',
+    chatUserBorder: '#1D3547',
+    chatShamsBg: 'rgba(197, 163, 106, 0.07)',
+    chatShamsBorder: '#C5A36A',
+
+    statusBar: '#061722',
+    statusBarStyle: 'light-content',
+
+    atmTop: 'rgba(30, 70, 95, 0.22)',
+    atmBot: 'rgba(6, 23, 34, 0.0)',
+    jaliStroke: '#C5A36A',
+    jaliOpacity: 0.05,
+    sealGradient: ['#C5A36A', '#F2D9A0'],
+    horaGradient: ['rgba(197, 163, 106, 0.12)', 'rgba(197, 163, 106, 0.04)'],
+  },
+};
 
 // ─────────────────────────────────────────────────────────────────────────────
 // 1. DĀR AL-SHAMS — Obsidian · Illuminated Gold  (dark)
@@ -726,7 +851,181 @@ const kanzAlAsrar: Theme = {
 // ─────────────────────────────────────────────────────────────────────────────
 // Registry
 // ─────────────────────────────────────────────────────────────────────────────
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PREMIUM · QAMAR AL-FIḌḌA — Moonlit Silver · Indigo Night  (dark, Mureed)
+// ─────────────────────────────────────────────────────────────────────────────
+// Silver instead of gold, and different shapes on Home: cut-facet tiles in a
+// two-column list, round medallion capsules and the silver emblem.
+// Contrast on bg #0B0F1A: text 17.0:1, muted 9.1:1, faint 6.7:1 (5.6:1 on
+// surfaceElevated).
+const qamarAlFidda: Theme = {
+  id: 'qamarAlFidda',
+  labelKey: 'theme.qamarAlFidda',
+  name: 'Qamar al-Fiḍḍa',
+  subtitle: 'Moonlit Silver · Indigo Night',
+  isDark: true,
+  home: {
+    palette: {
+      midnight: '#0B0F1A',
+      deepTeal: '#18203A',
+      antiqueGold: '#C9D3E3',
+      champagne: '#F1F5FB',
+      bronze: '#4B5873',
+      ivory: '#EEF2F8',
+      amber: '#9FB4D6',
+    },
+    tileShape: 'facet',
+    tileLayout: 'list',
+    capsule: 'medallion',
+    emblem: 'silver',
+  },
+  colors: {
+    bg: '#0B0F1A',
+    surface: '#121828',
+    surfaceElevated: '#1A2236',
+    border: '#2A3550',
+    borderAccent: '#C9D3E3',
+
+    gold: '#C9D3E3',
+    goldBright: '#F1F5FB',
+    brass: '#7D8AA3',
+
+    maqbool: '#BFD4F2',
+    maqboolGlow: 'rgba(191, 212, 242, 0.22)',
+    mardood: '#8A8FA3',
+    mardoodGlow: 'rgba(138, 143, 163, 0.15)',
+    caution: '#D9C9A0',
+
+    text: '#EEF2F8',
+    textMuted: '#A9B4C7',
+    textFaint: '#8E9AB0',
+    textOnGold: '#0B0F1A',
+
+    celestialDust: '#F1F5FB',
+    vellumOverlay: 'rgba(238, 242, 248, 0.03)',
+    manuscriptFog: 'rgba(201, 211, 227, 0.07)',
+    sacredGlow: '#C9D3E3',
+    lunarReflection: '#9FB4D6',
+    candlelight: '#F1F5FB',
+
+    accent: '#C9D3E3',
+    amber: '#F1F5FB',
+    primary: '#C9D3E3',
+    textOnPrimary: '#0B0F1A',
+    positive: '#BFD4F2',
+    negative: '#8A8FA3',
+
+    starfield: '#F1F5FB',
+    nebula1: 'rgba(159, 180, 214, 0.08)',
+    nebula2: 'rgba(40, 52, 90, 0.12)',
+    nebula3: 'rgba(241, 245, 251, 0.03)',
+
+    chatUserBg: '#1A2236',
+    chatUserBorder: '#2A3550',
+    chatShamsBg: 'rgba(201, 211, 227, 0.07)',
+    chatShamsBorder: '#C9D3E3',
+
+    statusBar: '#0B0F1A',
+    statusBarStyle: 'light-content',
+
+    atmTop: 'rgba(40, 52, 90, 0.24)',
+    atmBot: 'rgba(11, 15, 26, 0.0)',
+    jaliStroke: '#C9D3E3',
+    jaliOpacity: 0.05,
+    sealGradient: ['#C9D3E3', '#F1F5FB'],
+    horaGradient: ['rgba(201, 211, 227, 0.12)', 'rgba(201, 211, 227, 0.04)'],
+  },
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PREMIUM · ZUMURRUD AL-MALAKŪT — Emerald · Royal Gold  (dark, Khāṣṣ)
+// ─────────────────────────────────────────────────────────────────────────────
+// Emerald and gold, with mihrab-arch tiles, arch-top tablet capsules and the
+// emerald emblem on Home.
+// Contrast on bg #04140F: text 16.2:1, muted 9.1:1, faint 6.9:1 (5.5:1 on
+// surfaceElevated).
+const zumurrudAlMalakut: Theme = {
+  id: 'zumurrudAlMalakut',
+  labelKey: 'theme.zumurrudAlMalakut',
+  name: 'Zumurrud al-Malakūt',
+  subtitle: 'Emerald · Royal Gold',
+  isDark: true,
+  home: {
+    palette: {
+      midnight: '#04140F',
+      deepTeal: '#0E3326',
+      antiqueGold: '#D4AF5A',
+      champagne: '#F3DC9A',
+      bronze: '#7A5A26',
+      ivory: '#F2EEDF',
+      amber: '#5FBF92',
+    },
+    tileShape: 'arch',
+    tileLayout: 'grid',
+    capsule: 'tablet',
+    emblem: 'emerald',
+  },
+  colors: {
+    bg: '#04140F',
+    surface: '#08201A',
+    surfaceElevated: '#0D2C23',
+    border: '#1C4537',
+    borderAccent: '#D4AF5A',
+
+    gold: '#D4AF5A',
+    goldBright: '#F3DC9A',
+    brass: '#8A6A30',
+
+    maqbool: '#E2C072',
+    maqboolGlow: 'rgba(226, 192, 114, 0.25)',
+    mardood: '#7E9A8E',
+    mardoodGlow: 'rgba(126, 154, 142, 0.15)',
+    caution: '#E2C072',
+
+    text: '#F2EEDF',
+    textMuted: '#B8B59C',
+    textFaint: '#97A08A',
+    textOnGold: '#04140F',
+
+    celestialDust: '#F3DC9A',
+    vellumOverlay: 'rgba(242, 238, 223, 0.03)',
+    manuscriptFog: 'rgba(212, 175, 90, 0.08)',
+    sacredGlow: '#D4AF5A',
+    lunarReflection: '#5FBF92',
+    candlelight: '#F3DC9A',
+
+    accent: '#D4AF5A',
+    amber: '#F3DC9A',
+    primary: '#D4AF5A',
+    textOnPrimary: '#04140F',
+    positive: '#E2C072',
+    negative: '#7E9A8E',
+
+    starfield: '#F3DC9A',
+    nebula1: 'rgba(212, 175, 90, 0.08)',
+    nebula2: 'rgba(20, 90, 67, 0.12)',
+    nebula3: 'rgba(243, 220, 154, 0.03)',
+
+    chatUserBg: '#0D2C23',
+    chatUserBorder: '#1C4537',
+    chatShamsBg: 'rgba(212, 175, 90, 0.07)',
+    chatShamsBorder: '#D4AF5A',
+
+    statusBar: '#04140F',
+    statusBarStyle: 'light-content',
+
+    atmTop: 'rgba(20, 90, 67, 0.24)',
+    atmBot: 'rgba(4, 20, 15, 0.0)',
+    jaliStroke: '#D4AF5A',
+    jaliOpacity: 0.05,
+    sealGradient: ['#D4AF5A', '#F3DC9A'],
+    horaGradient: ['rgba(212, 175, 90, 0.12)', 'rgba(212, 175, 90, 0.04)'],
+  },
+};
+
 export const THEMES: Readonly<Record<ThemeId, Theme>> = Object.freeze({
+  midnightCelestial,
   darAlShams,
   laylAlBahr,
   narAlHadid,
@@ -735,9 +1034,12 @@ export const THEMES: Readonly<Record<ThemeId, Theme>> = Object.freeze({
   sirrAlBanafsaj,
   qutbAlAnwar,
   kanzAlAsrar,
+  qamarAlFidda,
+  zumurrudAlMalakut,
 });
 
 export const THEME_IDS: readonly ThemeId[] = [
+  'midnightCelestial',
   'darAlShams',
   'laylAlBahr',
   'narAlHadid',
@@ -746,19 +1048,46 @@ export const THEME_IDS: readonly ThemeId[] = [
   'sirrAlBanafsaj',
   'qutbAlAnwar',
   'kanzAlAsrar',
+  'qamarAlFidda',
+  'zumurrudAlMalakut',
 ];
 
-export const DEFAULT_THEME_ID: ThemeId = 'darAlShams';
+/**
+ * The themes offered in the theme picker (owner decision): three colour
+ * themes and the two premium themes. Every other theme still exists and still works — a user already
+ * on one keeps it, and the picker shows it while it is active so they can see
+ * what they are on — but it is no longer offered.
+ */
+export const VISIBLE_THEME_IDS: readonly ThemeId[] = [
+  'midnightCelestial',
+  'darAlShams',
+  'laylAlBahr',
+  'qamarAlFidda',
+  'zumurrudAlMalakut',
+];
+
+/** The picker's list: the visible themes, plus the active one if it is hidden. */
+export function pickerThemeIds(activeId: ThemeId): readonly ThemeId[] {
+  return VISIBLE_THEME_IDS.includes(activeId)
+    ? VISIBLE_THEME_IDS
+    : [...VISIBLE_THEME_IDS, activeId];
+}
+
+// New installs start in Midnight Celestial. Existing users keep whatever theme
+// is already persisted (ThemeProvider writes the active id on first launch).
+export const DEFAULT_THEME_ID: ThemeId = 'midnightCelestial';
 
 /**
- * The minimum plan tier that unlocks each theme. darAlShams is the one
- * free-tier default; the original five colour variants require Mureed;
- * the two newest require Khāṣṣ.
+ * The minimum plan tier that unlocks each theme. midnightCelestial (the
+ * default) and darAlShams are free; the original five colour variants require Mureed;
+ * qutbAlAnwar and kanzAlAsrar require Khāṣṣ; of the two premium themes,
+ * Qamar al-Fiḍḍa requires Mureed and Zumurrud al-Malakūt requires Khāṣṣ.
  *
  * Kept here (not in quotaStore) because it's a property of the theme, not
  * of the plan — quotaStore has no reason to know which themes exist.
  */
 export const THEME_TIER: Readonly<Record<ThemeId, PlanTier>> = Object.freeze({
+  midnightCelestial: 'free',
   darAlShams: 'free',
   laylAlBahr: 'mureed',
   narAlHadid: 'mureed',
@@ -767,6 +1096,8 @@ export const THEME_TIER: Readonly<Record<ThemeId, PlanTier>> = Object.freeze({
   sirrAlBanafsaj: 'mureed',
   qutbAlAnwar: 'khass',
   kanzAlAsrar: 'khass',
+  qamarAlFidda: 'mureed',
+  zumurrudAlMalakut: 'khass',
 });
 
 const TIER_RANK: Readonly<Record<PlanTier, number>> = Object.freeze({
@@ -782,7 +1113,7 @@ export function tierMeetsRequirement(userTier: PlanTier, requiredTier: PlanTier)
 
 /**
  * TEMPORARY — internal testing only. When true, every theme is selectable
- * regardless of plan, so testers can see all 8 (including the two Khāṣṣ
+ * regardless of plan, so testers can see all 11 (including the Khāṣṣ
  * exclusives) without needing a live subscription on the test account.
  *
  * THEME_TIER and tierMeetsRequirement() are untouched and fully tested
@@ -802,6 +1133,30 @@ export function isThemeUnlocked(id: ThemeId, userTier: PlanTier): boolean {
 
 export function getTheme(id: ThemeId): Theme {
   return THEMES[id];
+}
+
+/**
+ * Home's look under a theme. Themes without an explicit palette take one from
+ * their colours (bg, surfaceElevated, gold, goldBright, brass, text, amber),
+ * and the original shapes and gold emblem.
+ */
+export function getHomeStyle(theme: Theme): HomeStyle {
+  const c = theme.colors;
+  return {
+    palette: theme.home?.palette ?? {
+      midnight: c.bg,
+      deepTeal: c.surfaceElevated,
+      antiqueGold: c.gold,
+      champagne: c.goldBright,
+      bronze: c.brass,
+      ivory: c.text,
+      amber: c.amber,
+    },
+    tileShape: theme.home?.tileShape ?? 'rounded',
+    tileLayout: theme.home?.tileLayout ?? 'grid',
+    capsule: theme.home?.capsule ?? 'pill',
+    emblem: theme.home?.emblem ?? 'gold',
+  };
 }
 
 export function isValidThemeId(value: unknown): value is ThemeId {

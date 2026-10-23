@@ -4,16 +4,23 @@ import { buildWatchChart } from '../../engine/rkp/watchChart';
 import { judgeWatchChart, type DisplayWatchVerdict } from '../../engine/rkp/watchJudgment';
 import { diagnose } from '../../engine/rkp/diagnosis';
 import { classifyQuestion } from '../../engine/kp/rules/questionKeywords';
+import type { QuestionType } from '../../engine/kp/rules/houseMatrix';
 import { selectRemedyProtocol } from '../remedySelection';
 import { toBoundaryPlanetName } from '../../utils/planetBoundaryName';
 import { buildReadingContract, type ReadingContract } from '../readingContract';
-import { validateNarration } from '../narrationValidator';
+import { findOutcomeAssertion, validateNarration } from '../narrationValidator';
 import { buildDeterministicFallbackNarration } from '../narrationFallback';
 import type { NarrationFields } from '../responseComposer';
 
-function contractFor(moment: string, question: string): ReadingContract {
+function contractFor(
+  moment: string,
+  question: string,
+  // A production reading is replayed as it was cast: classifyQuestion's
+  // keywords can change after the fact (owner decision 2026-10-10 added
+  // "app" to business), so those tests pin the category it had then.
+  qType: QuestionType = classifyQuestion(question),
+): ReadingContract {
   const chart = buildWatchChart(moment);
-  const qType = classifyQuestion(question);
   const rawVerdict = judgeWatchChart(chart, qType);
   const verdict: DisplayWatchVerdict = {
     ...rawVerdict,
@@ -320,6 +327,34 @@ describe('validateNarration — celestial entity consistency', () => {
     );
     expect(result.valid).toBe(true);
   });
+
+  // A production Reading (10 Oct 2026, 14:06 IST): REVERSING, Zuhrah ruling,
+  // Zuhal obstructing — the Sun is not among its entities.
+  const sunlessContract = (): ReadingContract =>
+    contractFor('2026-10-10T14:06:00+05:30', 'Will this app will be successful', 'general');
+
+  it("does not read the app's own name as a claim about the Sun", () => {
+    const contract = sunlessContract();
+    expect(contract.celestialEntities).not.toContain('Sun');
+    for (const name of ['Shams al-Asrār', 'Shams al-Asrar', 'Shams-al-Asrār', 'shams al asrar']) {
+      const result = validateNarration(
+        contract,
+        baseNarration({ rkp_finding: `As ${name} reads it, Zuhal holds the gate.` }),
+      );
+      expect(result.valid).toBe(true);
+    }
+  });
+
+  it('still rejects the Sun named on its own where the reading does not name it', () => {
+    const contract = sunlessContract();
+    for (const text of ['Shams weighs on this matter.', 'Like a cloud across the sun.']) {
+      const result = validateNarration(contract, baseNarration({ rkp_finding: text }));
+      expect(result.valid).toBe(false);
+      if (!result.valid) {
+        expect(result.failures.some(f => f.code === 'UNAUTHORIZED_CELESTIAL_ENTITY')).toBe(true);
+      }
+    }
+  });
 });
 
 describe('validateNarration — diagnosis consistency', () => {
@@ -525,5 +560,110 @@ describe('buildDeterministicFallbackNarration', () => {
     };
     const fallback = buildDeterministicFallbackNarration(noIntervention);
     expect(fallback.why_this_remedy).toBe(noIntervention.remedy.guidance);
+  });
+});
+
+// A production Reading (10 Oct 2026, 16:28 IST): DELAYED, so phrases from
+// both polarity lists are refused; timing window 7–14 days.
+describe('validateNarration — denied phrases and day ordinals', () => {
+  const contract = contractFor(
+    '2026-10-10T16:28:00+05:30',
+    'When will this app will be launched successfully',
+    'general',
+  );
+  const check = (text: string) =>
+    validateNarration(contract, baseNarration({ interpretation: text }));
+  const codes = (text: string) => {
+    const result = check(text);
+    return result.valid ? [] : result.failures.map(f => f.code);
+  };
+
+  it('fixes the reading the tests rely on', () => {
+    expect(contract.diagnosis.outcome).toBe('DELAYED');
+    expect(contract.diagnosis.timing).toEqual({ minDays: 7, maxDays: 14 });
+  });
+
+  it('accepts a refused phrase denied in its own clause', () => {
+    for (const text of [
+      'This is not a matter that is denied; it is held.',
+      "It isn't so that the matter is blocked — it is waiting.",
+      'It isnt so that the matter is blocked.',
+      'It was never true that the answer is no.',
+    ]) {
+      expect(check(text).valid).toBe(true);
+    }
+  });
+
+  it('still rejects the phrase asserted plainly', () => {
+    for (const text of [
+      'This is denied.',
+      'There is no doubt the answer is yes.',
+      'Not only is the path clear but the matter is fulfilled.',
+      'It is not delayed for long, so the answer is no.',
+      'This is not a matter that is denied. Still, the matter is blocked.',
+      'Nothing here is not plain: it is denied.',
+    ]) {
+      expect(codes(text)).toContain('VERDICT_CONTRADICTION');
+    }
+  });
+
+  it('checks every occurrence, so a denied mention cannot excuse a plain one', () => {
+    expect(codes('Not a door that is denied; yet it is denied all the same.')).toContain(
+      'VERDICT_CONTRADICTION',
+    );
+  });
+
+  it('keeps the new-question check strict about denied phrases', () => {
+    expect(findOutcomeAssertion('This is not a matter that is denied.')).toBe('is denied');
+  });
+
+  it('reads "the Nth day" as a day count inside the window, not a date', () => {
+    expect(check('Look again after the 14th day.').valid).toBe(true);
+    expect(codes('Look again after the 30th day.')).toContain('TIMING_ALTERATION');
+    expect(codes('Look again on the 14th.')).toContain('TIMING_FABRICATION');
+  });
+});
+
+// A production Reading (11 Oct 2026, 22:01 IST): business, BLOCKED by
+// Mirrikh, with Ras al-Tinnin and Dhanab al-Tinnin in its own factor lines.
+// The follow-up "Is my business connected to this?" failed on the two
+// false positives below.
+describe('validateNarration — planets in the factor lines and house lists', () => {
+  const contract = contractFor('2026-10-11T22:01:00+05:30', 'When should I launch this app');
+  const check = (text: string) =>
+    validateNarration(contract, baseNarration({ interpretation: text }));
+  const codes = (text: string) => {
+    const result = check(text);
+    return result.valid ? [] : result.failures.map(f => f.code);
+  };
+
+  it('fixes the reading the tests rely on', () => {
+    expect(contract.question.questionType).toBe('business');
+    expect(contract.celestialEntities).not.toContain('Rahu');
+    expect(contract.judgment.factors.join(' ')).toContain('Ras al-Tinnin');
+    expect(contract.judgment.factors.join(' ')).toContain('Dhanab al-Tinnin');
+  });
+
+  it('accepts every factor line of the reading repeated verbatim', () => {
+    for (const factor of contract.judgment.factors) {
+      expect(check(`The reading shows: ${factor}`).valid).toBe(true);
+    }
+  });
+
+  it('still rejects a planet the reading never names', () => {
+    expect(codes('Zuhal presses on the 7th Ghar.')).toContain('UNAUTHORIZED_CELESTIAL_ENTITY');
+  });
+
+  it('reads a list of ordinals ending in a house as houses, not dates', () => {
+    expect(check('Read through the 7th, 10th and 11th Ghar.').valid).toBe(true);
+    expect(check('The 10th and the 11th houses support it.').valid).toBe(true);
+  });
+
+  it('still reads a bare ordinal, or a list of them, as a date', () => {
+    expect(codes('The 7th Ghar leads, with the 10th and 11th supporting.')).toContain(
+      'TIMING_FABRICATION',
+    );
+    expect(codes('Launch on the 10th or the 12th.')).toContain('TIMING_FABRICATION');
+    expect(codes('Look again on the 10th and 11th days.')).toContain('TIMING_FABRICATION');
   });
 });

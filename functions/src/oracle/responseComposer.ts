@@ -33,13 +33,15 @@
  * string and was not modified by this refactor).
  *
  * DEPLOYMENT NOTE:
- * The mystical Shams al-Asrār narration voice is loaded from
- * watchOracleSynthesisPrompt.ts (WATCH_ORACLE_SYNTHESIS_PROMPT constant).
- * This orchestrates the response composition with Claude Opus 5 using the
- * mystical manuscript register, proper confidence calibration, and full
- * remedy protocol integration. Verify Cloud Functions redeploy.
+ * The Shams al-Asrār narration voice is loaded from
+ * watchOracleSynthesisPrompt.ts (WATCH_ORACLE_SYNTHESIS_PROMPT constant):
+ * a warm, direct, answer-first chat register (owner decision 2026-10-14,
+ * replacing the earlier manuscript register whose fixed imagery made every
+ * reading sound alike), with confidence calibration and the remedy protocol
+ * unchanged. Verify Cloud Functions redeploy.
  */
 
+import { agentShortName } from './agentNames';
 import { ANTHROPIC_API_KEY } from '../config';
 import { logger } from '../utils/logger';
 import { WATCH_ORACLE_SYNTHESIS_PROMPT } from '../prompts/watchOracleSynthesisPrompt';
@@ -209,6 +211,38 @@ function formatTiming(window: { minDays: number; maxDays: number } | null): stri
   return `${window.minDays} to ${window.maxDays} days`;
 }
 
+/**
+ * The JSON shape WATCH_ORACLE_SYNTHESIS_PROMPT asks for, enforced by the API
+ * (structured outputs) so the reply always parses. Production logs (Oct 2026)
+ * showed 3 of 4 readings dropping to the deterministic fallback with
+ * "missing required fields" when the shape was only requested in the prompt.
+ */
+const NARRATION_SCHEMA = {
+  type: 'object',
+  properties: {
+    rkp_finding: { type: 'string' },
+    interpretation: { type: 'string' },
+    recommended_approach: { type: 'string' },
+    why_this_remedy: { anyOf: [{ type: 'string' }, { type: 'null' }] },
+    signature: { type: 'string' },
+  },
+  required: [
+    'rkp_finding',
+    'interpretation',
+    'recommended_approach',
+    'why_this_remedy',
+    'signature',
+  ],
+  additionalProperties: false,
+} as const;
+
+const REQUIRED_NARRATION_FIELDS = [
+  'rkp_finding',
+  'interpretation',
+  'recommended_approach',
+  'signature',
+] as const;
+
 function stripJsonFence(text: string): string {
   const trimmed = text.trim();
   const fenced = /^```(?:json)?\s*([\s\S]*?)\s*```$/.exec(trimmed);
@@ -278,7 +312,7 @@ ${questionBlock}RKP DIAGNOSIS (settled — explain, do not revise)
   Timing posture:     ${diagnosis.timingPosture}
   Timing window:      ${formatTiming(diagnosis.timing)}
   Confidence:         ${diagnosis.confidence.toFixed(2)}
-  Obstructing agent:  ${diagnosis.obstructingAgent ?? 'none'}
+  Obstructing agent:  ${agentShortName(diagnosis.obstructingAgent) ?? 'none'}
   Target house:       ${diagnosis.targetHouse}
   Question type:      ${diagnosis.questionType}
 
@@ -536,7 +570,10 @@ async function narrate(ctx: NarrationContext): Promise<NarrationFields | null> {
         // together; 1500 was sized for a non-thinking model and would truncate
         // the JSON before the required fields were emitted.
         max_tokens: 4096,
-        output_config: { effort: 'low' },
+        output_config: {
+          effort: 'low',
+          format: { type: 'json_schema', schema: NARRATION_SCHEMA },
+        },
         system: WATCH_ORACLE_SYNTHESIS_PROMPT,
         messages: [
           {
@@ -557,7 +594,10 @@ async function narrate(ctx: NarrationContext): Promise<NarrationFields | null> {
       return null;
     }
 
-    const json = (await res.json()) as { content?: Array<{ type: string; text?: string }> };
+    const json = (await res.json()) as {
+      content?: Array<{ type: string; text?: string }>;
+      stop_reason?: string;
+    };
     const raw = json.content?.find(b => b.type === 'text')?.text ?? '';
 
     const parsed = JSON.parse(stripJsonFence(raw)) as Partial<NarrationFields>;
@@ -568,7 +608,10 @@ async function narrate(ctx: NarrationContext): Promise<NarrationFields | null> {
       !parsed.recommended_approach ||
       !parsed.signature
     ) {
-      logger.warn('watch oracle narration missing required fields');
+      logger.warn('watch oracle narration missing required fields', {
+        missing: REQUIRED_NARRATION_FIELDS.filter(field => !parsed[field]),
+        stopReason: json.stop_reason,
+      });
       return null;
     }
 

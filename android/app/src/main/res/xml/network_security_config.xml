@@ -9,10 +9,19 @@
         <domain includeSubdomains="true">firestore.googleapis.com</domain>
         <domain includeSubdomains="true">firebase.googleapis.com</domain>
         <domain includeSubdomains="true">identitytoolkit.googleapis.com</domain>
-        <pin-set expiration="2027-05-01">
-            <!-- Pins for Google/Firebase Endpoints captured 2026-05-07 -->
-            <pin digest="SHA-256">NHasLBXL7uS5JzodPAdAqd/YoGIy3AySHd7yyKRg5xo=</pin>
-            <pin digest="SHA-256">oVK9AMvzuTJhavj8JKMULZqcgPvnTenud/VH/97y/XY=</pin>
+        <pin-set expiration="2027-09-28">
+            <!-- Pins for Google/Firebase Endpoints captured 2026-09-28.
+                 The May 2026 pins had rotated out entirely (leaf and
+                 intermediate both changed) before their own expiration date;
+                 Android enforces an unexpired pin-set even when neither
+                 pin matches the live chain, so that gap silently broke
+                 every pinned connection. Two leaf pins (firestore's own;
+                 firebase+identitytoolkit share one) plus one intermediate
+                 CA pin as a backup, so a future leaf-only rotation alone
+                 doesn't repeat this. -->
+            <pin digest="SHA-256">uK9L9aDngAT+YOlf8KJtIfdokWitnFxoEVxM+ZOzyfM=</pin>
+            <pin digest="SHA-256">xK6JnwfKpIlWU2Hxl1z23Geo3aiOenuX90sRu1lxGVU=</pin>
+            <pin digest="SHA-256">YPtHaftLw6/0vnc2BnNKGF54xiCA28WFcccjkA4ypCM=</pin>
         </pin-set>
         <trust-anchors>
             <certificates src="system" />

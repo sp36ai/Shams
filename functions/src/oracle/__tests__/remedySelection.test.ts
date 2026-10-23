@@ -158,3 +158,52 @@ describe('library integrity', () => {
     }
   });
 });
+
+describe('planet-tied remedies (owner decision 2026-10-08)', () => {
+  const planetTied = REMEDY_LIBRARY.filter(r => (r.planetaryCorrespondences?.length ?? 0) > 0);
+  const blocked = { state: 'BLOCKED', confidence: 'HIGH' } as const;
+  const chosenIds = (over: Partial<DisplayWatchVerdict>) =>
+    protocolFor({ ...blocked, ...over }).steps.map(s => s.remedy.id);
+
+  it('never offers a planet-tied remedy for a planet that is not the obstruction', () => {
+    const agents: DisplayWatchVerdict['obstruction'][] = [
+      'None',
+      'Saturn',
+      'Mars',
+      'Sun',
+      'Ras' as DisplayWatchVerdict['obstruction'],
+      'Dhanab' as DisplayWatchVerdict['obstruction'],
+      'MoonDisagreement',
+    ];
+    for (const obstruction of agents) {
+      const diagnosis = diagnose({ ...CLEAN, ...blocked, obstruction });
+      const agent =
+        diagnosis.obstructingAgent === 'MoonDisagreement' ? 'Moon' : diagnosis.obstructingAgent;
+      for (const step of selectRemedyProtocol(diagnosis).steps) {
+        const tied = step.remedy.planetaryCorrespondences ?? [];
+        if (tied.length > 0) {
+          expect(agent !== null && tied.includes(agent)).toBe(true);
+        }
+      }
+    }
+  });
+
+  it('keeps Zuhal Observance off a reading obstructed by Dhanab (the device screenshot)', () => {
+    expect(
+      chosenIds({ obstruction: 'Dhanab' as DisplayWatchVerdict['obstruction'] }),
+    ).not.toContain('astro_saturn_discipline');
+  });
+
+  it('still offers Zuhal Observance when Zuhal is the obstruction', () => {
+    expect(chosenIds({ obstruction: 'Saturn' })).toContain('astro_saturn_discipline');
+  });
+
+  it('covers every planet-tied remedy in the library', () => {
+    expect(planetTied.map(r => r.id).sort()).toEqual([
+      'astro_mars_restraint',
+      'astro_moon_settling',
+      'astro_node_clarification',
+      'astro_saturn_discipline',
+    ]);
+  });
+});

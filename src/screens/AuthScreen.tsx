@@ -38,6 +38,7 @@ import { useAuthStore } from '@stores/authStore';
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
 import { GOOGLE_WEB_CLIENT_ID } from '@stores/authStore';
 import StarfieldBackground from '@components/StarfieldBackground';
+import BrandFooter from '@components/ui/BrandFooter';
 
 /* -------------------------------------------------------------------------- */
 /*  Form state machine                                                        */
@@ -579,6 +580,7 @@ const AuthScreen: React.FC = () => {
           </Text>
         </ScrollView>
       </KeyboardAvoidingView>
+      <BrandFooter />
     </SafeAreaView>
   );
 };

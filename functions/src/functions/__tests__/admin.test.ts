@@ -102,3 +102,79 @@ describe('PHASE 6C-2 — setAdminClaim is rate-limited', () => {
     expect(enforceRateLimitMock).not.toHaveBeenCalled();
   });
 });
+
+describe('setAdminClaim — input validation (the razorpay PHASE 6A-R1 gap, applied here)', () => {
+  // Before this fix, `const { targetUid, isAdmin } = request.data as {...}`
+  // plus a bare `!targetUid` check only rejected falsy values — a non-string
+  // truthy value (an object, array, or number) passed straight through to
+  // auth.getUser(targetUid), an uncontrolled type error caught only by the
+  // generic outer catch as 'internal', never cleanly rejected as
+  // 'invalid-argument' the way every other callable's Zod schema does. This
+  // is the exact defect class razorpay.ts's extractNonEmptyString() fixed
+  // for notes.userId (PHASE 6A-R1) — setAdminClaim never got the same fix
+  // until now, despite granting the highest-privilege claim in the app.
+  it('rejects a non-string targetUid (an object) before it reaches auth.getUser()', async () => {
+    const handler = setAdminClaim as unknown as {
+      run: (req: {
+        data: unknown;
+        auth: { uid: string; token: Record<string, unknown> };
+      }) => Promise<unknown>;
+    };
+    await expect(
+      handler.run({
+        data: { targetUid: { uid: 'nested-object' }, isAdmin: true },
+        auth: { uid: 'admin-1', token: { admin: true } },
+      }),
+    ).rejects.toMatchObject({ code: 'invalid-argument' });
+    expect(getUser).not.toHaveBeenCalled();
+    expect(setCustomUserClaims).not.toHaveBeenCalled();
+  });
+
+  it('rejects a non-string targetUid (a number)', async () => {
+    await expect(invokeSetAdminClaim(12345 as unknown as string, true)).rejects.toMatchObject({
+      code: 'invalid-argument',
+    });
+    expect(getUser).not.toHaveBeenCalled();
+  });
+
+  it('rejects an empty-string targetUid', async () => {
+    await expect(invokeSetAdminClaim('', true)).rejects.toMatchObject({
+      code: 'invalid-argument',
+    });
+  });
+
+  it('rejects a non-boolean isAdmin', async () => {
+    const handler = setAdminClaim as unknown as {
+      run: (req: {
+        data: unknown;
+        auth: { uid: string; token: Record<string, unknown> };
+      }) => Promise<unknown>;
+    };
+    await expect(
+      handler.run({
+        data: { targetUid: 'target-1', isAdmin: 'true' },
+        auth: { uid: 'admin-1', token: { admin: true } },
+      }),
+    ).rejects.toMatchObject({ code: 'invalid-argument' });
+  });
+
+  it('is strict — rejects an unrecognized field (e.g. a smuggled admin: true)', async () => {
+    const handler = setAdminClaim as unknown as {
+      run: (req: {
+        data: unknown;
+        auth: { uid: string; token: Record<string, unknown> };
+      }) => Promise<unknown>;
+    };
+    await expect(
+      handler.run({
+        data: { targetUid: 'target-1', isAdmin: true, admin: true },
+        auth: { uid: 'admin-1', token: { admin: true } },
+      }),
+    ).rejects.toMatchObject({ code: 'invalid-argument' });
+  });
+
+  it('still accepts a well-formed request — the fix did not tighten the legitimate path', async () => {
+    const result = await invokeSetAdminClaim('target-1', true, 'admin-1');
+    expect(result).toMatchObject({ success: true });
+  });
+});

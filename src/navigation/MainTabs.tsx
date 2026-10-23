@@ -7,8 +7,10 @@
  * Home is the initial route — it is the primary landing surface.
  *
  * Visual contract:
- *   - Tab bar background: theme.colors.surface, top hairline border.
- *   - Active tint: theme.colors.accent.
+ *   - Tab bar background: theme.colors.surface with a gold (borderAccent)
+ *     hairline along the top and a deep upward shadow — the premium kit's
+ *     "lit edge", shared with Home's header divider.
+ *   - Active tint: theme.colors.goldBright, with a soft glow and underline.
  *   - Inactive tint: theme.colors.mutedText.
  *   - Labels: theme typography 'caption' variant, lang-aware via useTypography.
  *   - Icons: TabIcon component (custom SVG, color follows tint).
@@ -115,20 +117,21 @@ const MainTabs: React.FC = () => {
         headerShown: false,
         tabBarShowLabel: true,
         tabBarHideOnKeyboard: true,
-        tabBarActiveTintColor: colors.accent,
+        tabBarActiveTintColor: colors.goldBright,
         tabBarInactiveTintColor: colors.textMuted,
         tabBarButton: TabButton,
         tabBarStyle: {
-          backgroundColor: colors.surfaceElevated,
-          borderTopColor: 'transparent',
-          height: Platform.select({ ios: 84, android: 64 }),
+          backgroundColor: colors.surface,
+          borderTopColor: colors.borderAccent + '80',
+          borderTopWidth: 1,
+          height: Platform.select({ ios: 84, android: 66 }),
           paddingTop: 6,
           paddingBottom: Platform.select({ ios: 24, android: 8 }),
           shadowColor: '#000',
-          shadowOpacity: 0.14,
-          shadowRadius: 24,
+          shadowOpacity: 0.5,
+          shadowRadius: 20,
           shadowOffset: { width: 0, height: -8 },
-          elevation: 10,
+          elevation: 16,
         },
         tabBarLabelStyle: {
           ...typography('caption'),
@@ -174,7 +177,14 @@ const MainTabs: React.FC = () => {
         ),
       })}
     >
-      <Tab.Screen name="Home" component={HomeRoute} options={{ tabBarLabel: labels.Home }} />
+      {/* Home is one full-screen panel with its own ≡ menu (Al-Falak, Readings,
+          Settings), so the tab bar is hidden there; the other tabs keep it,
+          and its Home tab is the way back. */}
+      <Tab.Screen
+        name="Home"
+        component={HomeRoute}
+        options={{ tabBarLabel: labels.Home, tabBarStyle: { display: 'none' } }}
+      />
       <Tab.Screen
         name="AlFalak"
         component={AlFalakRoute}

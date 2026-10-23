@@ -39,6 +39,7 @@ import {
   TABLE_PLANET_ORDER,
   type PlanetName,
 } from '@utils/siderealPositions';
+import BrandFooter from '@components/ui/BrandFooter';
 
 // ── Timing state ──────────────────────────────────────────────────────────────
 
@@ -522,6 +523,7 @@ const SkyClockScreen: React.FC = () => {
           judgment uses the full KP engine on the server.
         </Text>
       </ScrollView>
+      <BrandFooter />
     </SafeAreaView>
   );
 };

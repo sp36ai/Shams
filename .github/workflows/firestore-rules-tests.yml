@@ -28,7 +28,7 @@ permissions:
 jobs:
   rules-tests:
     name: Run Security Rules Tests
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - name: Checkout Repo
         uses: actions/checkout@v5

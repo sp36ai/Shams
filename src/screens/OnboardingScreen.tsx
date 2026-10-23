@@ -18,6 +18,7 @@ import { useTypography } from '@theme/useTypography';
 import StarfieldBackground from '@components/StarfieldBackground';
 import Button from '@components/ui/Button';
 import { useSettingsStore, type SeekerProfile } from '@stores/settingsStore';
+import BrandFooter from '@components/ui/BrandFooter';
 
 // ── Question definitions ──────────────────────────────────────────────────────
 
@@ -302,6 +303,7 @@ const OnboardingScreen: React.FC = () => {
           ))}
         </View>
       </View>
+      <BrandFooter />
     </SafeAreaView>
   );
 };

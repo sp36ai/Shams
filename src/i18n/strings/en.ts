@@ -121,6 +121,14 @@ export const en: StringTable = {
     moonManzilTitle: 'Moon Manzil',
     rulingPlanetsNowLabel: 'Ruling Planets Now',
     currentHoraLordLabel: 'Current Hora Lord',
+    horaName: '{{planet}} Hora',
+    dayIsUnder: 'is under',
+    hourCarries: 'This hour carries',
+    openAlFalakA11y: 'Open Al-Falak sky timing',
+    menuA11y: 'Menu',
+    trialEndsSoon: 'Your open doors close in 2 days.',
+    trialEndsTonight: 'Your open doors close tonight — Choose Your Path',
+    choosePathA11y: 'Choose your path — open subscription plans',
   },
 
   oracleChat: {
@@ -134,6 +142,9 @@ export const en: StringTable = {
     readingChart: 'Reading the chart…',
     retry: 'Retry',
     failedGeneric: 'The scrolls of this moment have not opened their seal. Try again.',
+    outOfScope:
+      'I read the chart for questions about your own life — your work, family, love, money, health or plans. Ask me something like “Will I get the job?” or “Will my marriage happen this year?”',
+    failureRef: 'Ref {{ref}}',
     quotaExhausted: "Today's questions are used. Come back tomorrow, or upgrade for unlimited.",
     micPermissionDenied: 'Microphone access is needed for voice questions. Enable it in Settings.',
     noSpeechDetected: "Didn't catch that — try again.",
@@ -157,6 +168,9 @@ export const en: StringTable = {
     separateQuestionNote: 'This may be a separate question — it would need its own moment.',
     discussionUnavailable: 'The oracle did not answer that. Try asking again.',
     discussionReadingGone: 'That reading is no longer available to discuss.',
+    discussionLimitReached:
+      'This Reading has said what it can. Ask your next question as a new Reading.',
+    discussionClosedHint: '✦ This Reading has said what it can — ask your next question',
     suggestedQuestionsLabel: 'You may ask',
   },
 
@@ -260,7 +274,34 @@ export const en: StringTable = {
     deleteAccountError: 'Account deletion failed. Please try again or contact support.',
   },
 
+  wallet: {
+    title: 'Your coins',
+    coinsA11y: '{{coins}} coins. Open wallet',
+    unknown: 'Your balance appears here once coins are active on your account.',
+    rate: '1 coin = ₹10',
+    freeAvailable: 'Your free question for this week is available.',
+    nextFree: 'Next free question: {{date}}',
+    priceQuestion: 'An extra question costs {{coins}} coins.',
+    priceDiscussion:
+      'Discussion after a verdict is charged by length, like ChatGPT: 1 coin per 10,000 tokens. A typical reply costs less than 1 coin.',
+    premium:
+      'Premium ₹299/month: unlimited questions (fair use: 10 a day). Discussion still uses coins.',
+    buySoon: 'Buying coins is coming soon.',
+    seePremium: 'See Premium',
+    freeQuestionLabel: 'Free question',
+    available: 'Available',
+    nextLabel: 'Next free',
+    todayLabel: 'Today',
+    freeQuestionUsed:
+      'Your free question for this week is used. An extra question costs {{cost}} coins; you have {{balance}}.',
+    fairUseReached:
+      "You've reached today's fair-use limit of {{limit}} questions. It resets at midnight UTC.",
+    discussionNeedsCoins:
+      'Discussing a reading uses coins. You have {{balance}}; at least {{min}} is needed to continue.',
+  },
+
   theme: {
+    midnightCelestial: 'Midnight Celestial',
     darAlShams: 'Dār al-Shams',
     laylAlBahr: 'Layl al-Baḥr',
     narAlHadid: 'Nār al-Ḥadīd',

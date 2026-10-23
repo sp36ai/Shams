@@ -7,7 +7,18 @@ import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import { db } from '../utils/admin';
 import { verifyAuth } from '../middleware/auth';
 import { enforceRateLimit } from '../middleware/rateLimit';
-import { FUNCTION_OPTS, UNLIMITED_PLANS, FREE_LIMIT, TRIAL_DAILY_LIMIT, todayKey } from '../config';
+import {
+  FUNCTION_OPTS,
+  UNLIMITED_PLANS,
+  FREE_LIMIT,
+  TRIAL_DAILY_LIMIT,
+  todayKey,
+  PAID_DAILY_FAIR_USE,
+  EXTRA_QUESTION_COST_MILLI,
+} from '../config';
+import { monetizationModeFor } from '../utils/monetization';
+import { getBalanceMilli } from '../utils/wallet';
+import { nextFreeAt } from '../utils/quotaSlots';
 import { measure } from '../middleware/telemetry';
 import type { QuotaResponse, QuotaDoc, TrialDoc } from '../types';
 
@@ -18,6 +29,10 @@ export const getQuota = onCall(
 
     return measure<QuotaResponse>('getQuota', userId, async () => {
       await enforceRateLimit(userId);
+
+      if ((await monetizationModeFor(userId)) === 'coins') {
+        return coinsModeQuota(userId);
+      }
 
       const [snap, trialSnap] = await Promise.all([
         db.collection('quotas').doc(userId).get(),
@@ -61,12 +76,20 @@ export const getQuota = onCall(
         plan !== 'free' && planExpiry !== null && Date.now() > new Date(planExpiry).getTime();
       const effectivePlan = expired ? 'free' : plan;
 
+      // Reported alongside effectivePlan below — a 'free' response must
+      // never carry a stale (now-meaningless, already-past) expiry date,
+      // the same way the no-existing-doc branch above always pairs
+      // plan: 'free' with planExpiry: null. Computed regardless of
+      // whether the self-heal write below succeeds, so THIS response is
+      // internally consistent even on a write failure — only future
+      // reads depend on that write landing.
+      const effectivePlanExpiry = expired ? null : planExpiry;
+
       if (expired) {
         // Self-heal the stale doc, matching askOracle's claimQuotaSlot — otherwise
         // this correction only ever lives in this response, never persisted, and
         // every getQuota call before the next askOracle call keeps re-deriving it
-        // from scratch instead of the doc reflecting reality. Best-effort: the
-        // response above is already correct regardless of whether this succeeds.
+        // from scratch instead of the doc reflecting reality.
         db.collection('quotas')
           .doc(userId)
           .set({ plan: 'free', planExpiry: null }, { merge: true })
@@ -77,7 +100,14 @@ export const getQuota = onCall(
       const limit = unlimited ? null : dailyLimit;
       const remaining = unlimited ? null : Math.max(0, dailyLimit - used);
 
-      return { plan: effectivePlan, used, limit, remaining, dayKey: currentDay, planExpiry };
+      return {
+        plan: effectivePlan,
+        used,
+        limit,
+        remaining,
+        dayKey: currentDay,
+        planExpiry: effectivePlanExpiry,
+      };
     }).catch(err => {
       if (err instanceof HttpsError) {
         throw err;
@@ -86,3 +116,52 @@ export const getQuota = onCall(
     });
   },
 );
+
+/**
+ * Coins mode (see utils/monetization.ts) — mirrors claimQuotaSlot's
+ * coins-mode rules exactly:
+ *   paid plan  limit = PAID_DAILY_FAIR_USE per UTC day
+ *   free plan  limit = 1 free question; remaining 1 when it is available now,
+ *              0 otherwise (nextFreeAt says when; extra questions cost coins)
+ */
+async function coinsModeQuota(userId: string): Promise<QuotaResponse> {
+  const [snap, balanceMilli] = await Promise.all([
+    db.collection('quotas').doc(userId).get(),
+    getBalanceMilli(userId),
+  ]);
+  const d = snap.exists ? (snap.data() as Partial<QuotaDoc>) : {};
+  const now = Date.now();
+  const currentDay = todayKey(now);
+  const plan = d.plan ?? 'free';
+  const planExpiry = d.planExpiry ?? null;
+  const paidActive =
+    plan !== 'free' && (planExpiry === null || now <= new Date(planExpiry).getTime());
+
+  if (paidActive) {
+    const used = (d.dayKey ?? '') === currentDay ? (d.used ?? 0) : 0;
+    return {
+      plan,
+      used,
+      limit: PAID_DAILY_FAIR_USE,
+      remaining: Math.max(0, PAID_DAILY_FAIR_USE - used),
+      dayKey: currentDay,
+      planExpiry,
+      mode: 'coins',
+      balanceMilli,
+    };
+  }
+
+  const next = nextFreeAt(d.lastFreeAt ?? null, now);
+  return {
+    plan: 'free',
+    used: next === null ? 0 : 1,
+    limit: 1,
+    remaining: next === null ? 1 : 0,
+    dayKey: currentDay,
+    planExpiry: null,
+    mode: 'coins',
+    balanceMilli,
+    nextFreeAt: next,
+    questionCostMilli: EXTRA_QUESTION_COST_MILLI,
+  };
+}

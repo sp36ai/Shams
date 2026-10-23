@@ -71,8 +71,17 @@ export interface ReadingMessage {
   /** On a 'discussion' message: the oracle judged this follow-up to be its own
    *  horary question and declined to answer it from the standing reading. */
   suggestsNewQuestion?: boolean;
+  /** On a 'discussion' message: the oracle closed this Reading's
+   *  conversation with it (owner decision 2026-10-11). */
+  closesDiscussion?: boolean;
   /** Present on a 'failed' message — shown next to the retry control. */
   errorMessage?: string;
+  /**
+   * On a 'failed' message: the Oracle declined this question as not about the
+   * seeker's own life (owner decision 2026-10-14). Retrying the same words
+   * would only be declined again, so no retry control is offered.
+   */
+  declined?: boolean;
   /** On an oracle message: the user message id this is answering. */
   replyToId?: string;
   /**
@@ -151,6 +160,15 @@ export interface ReadingThread {
    * with no such lineage, which is the common case.
    */
   relatedReadingIds?: readonly string[];
+  /**
+   * The Reading asked just before this one in the same conversation, when a
+   * new question was asked from inside a Reading's chat (owner decision
+   * 2026-10-11). Each question is still its own Reading — its own moment,
+   * verdict, requestId and history entry; this link only lets the Reading
+   * screen show the conversation as one thread, earlier Readings above.
+   * Written once, at creation.
+   */
+  previousThreadId?: string;
 }
 
 /** A Reading as the list needs it — no messages, so rows stay cheap. */
@@ -188,7 +206,34 @@ function isThread(value: unknown): value is ReadingThread {
   );
 }
 
+/**
+ * Turns every oracle message still marked 'sending' into 'failed'.
+ *
+ * Applied only to what was read from disk at startup, when no call can be in
+ * flight: a 'sending' message there was cut off by the app closing mid-call.
+ * Left as is, it rendered as a spinner forever, with no retry, because only a
+ * 'failed' turn offers one. A retry reuses the original requestId, so if the
+ * server did finish the call, it replays that answer instead of charging again.
+ * Exported for testing.
+ */
+export function recoverInterruptedMessages(threads: ReadingThread[]): ReadingThread[] {
+  return threads.map(thread =>
+    thread.messages.some(m => m.status === 'sending')
+      ? {
+          ...thread,
+          messages: thread.messages.map(m =>
+            m.status === 'sending' ? { ...m, status: 'failed' as const } : m,
+          ),
+        }
+      : thread,
+  );
+}
+
 function readCache(): ReadingThread[] {
+  return recoverInterruptedMessages(readStoredThreads());
+}
+
+function readStoredThreads(): ReadingThread[] {
   const raw = storage.getString(KEYS.READING_THREADS);
   if (raw === undefined) {
     // No threads cache: either a fresh install or a seeker upgrading from the
@@ -421,6 +466,8 @@ export interface ReadingThreadsState {
     questionLang: 'en' | 'ur' | 'hi';
     /** Lineage this thread was opened from — see ReadingThread.relatedReadingIds. */
     relatedReadingIds?: readonly string[];
+    /** The Reading this one continues — see ReadingThread.previousThreadId. */
+    previousThreadId?: string;
   }) => ReadingThread;
 
   addMessage: (threadId: string, message: ReadingMessage) => void;
@@ -452,7 +499,14 @@ function touch(thread: ReadingThread, at: string): ReadingThread {
 export const useReadingThreadsStore = create<ReadingThreadsState>((set, get) => ({
   threads: readCache(),
 
-  createThread: ({ id, requestId, question, questionLang, relatedReadingIds }): ReadingThread => {
+  createThread: ({
+    id,
+    requestId,
+    question,
+    questionLang,
+    relatedReadingIds,
+    previousThreadId,
+  }): ReadingThread => {
     const now = new Date().toISOString();
     const thread: ReadingThread = {
       id,
@@ -469,6 +523,7 @@ export const useReadingThreadsStore = create<ReadingThreadsState>((set, get) => 
       ...(relatedReadingIds !== undefined && relatedReadingIds.length > 0
         ? { relatedReadingIds: relatedReadingIds.slice(0, 4) }
         : {}),
+      ...(previousThreadId !== undefined ? { previousThreadId } : {}),
     };
     const next = [thread, ...get().threads];
     writeCache(next);
@@ -678,6 +733,67 @@ export function groupByRecency<T extends { updatedAt: string }>(
  * everything from `beforeMessageId` onward is excluded because that message
  * travels as the request's own `message`.
  */
+/** Longest conversation the Reading screen will draw — a guard, not a rule. */
+const CONVERSATION_LIMIT = 30;
+
+/**
+ * Every Reading of the conversation `thread` belongs to, oldest first: its
+ * predecessors (via previousThreadId), itself, and the Readings asked after
+ * it. Readings no longer on the device simply end the chain there. Cycles and
+ * runaway chains are cut at CONVERSATION_LIMIT.
+ */
+export function conversationOf(
+  threads: readonly ReadingThread[],
+  thread: ReadingThread,
+): ReadingThread[] {
+  const before: ReadingThread[] = [];
+  const seen = new Set<string>([thread.id]);
+  let cursor = thread.previousThreadId;
+  while (cursor !== undefined && !seen.has(cursor) && before.length < CONVERSATION_LIMIT) {
+    const prev = threadById(threads, cursor);
+    if (prev === null) {
+      break;
+    }
+    seen.add(prev.id);
+    before.unshift(prev);
+    cursor = prev.previousThreadId;
+  }
+  const after: ReadingThread[] = [];
+  let tail = thread;
+  while (before.length + after.length < CONVERSATION_LIMIT) {
+    const next = threads.find(t => t.previousThreadId === tail.id && !seen.has(t.id));
+    if (next === undefined) {
+      break;
+    }
+    seen.add(next.id);
+    after.push(next);
+    tail = next;
+  }
+  return [...before, thread, ...after];
+}
+
+/**
+ * Whether the oracle has closed this Reading's conversation. Once it has, the
+ * next send is a new question, not a follow-up.
+ */
+export function isDiscussionClosed(thread: ReadingThread): boolean {
+  return thread.messages.some(m => m.closesDiscussion === true);
+}
+
+/**
+ * The most transcript turns one follow-up may carry. Must match
+ * `turns.max(20)` in functions/src/middleware/validate.ts
+ * (DiscussReadingSchema): the server rejects a longer transcript outright.
+ * Before this cap the whole history was sent, so with 40 follow-ups allowed
+ * per reading every follow-up after the 11th failed with invalid-argument
+ * and no retry could recover (audit 2026-10-15).
+ *
+ * Dropping the oldest turns loses no authority: the verdict, diagnosis,
+ * timing and remedies are reloaded server-side from the stored reading on
+ * every follow-up, never taken from this transcript.
+ */
+export const MAX_DISCUSSION_TURNS = 20;
+
 export function discussionTurnsFor(
   thread: ReadingThread,
   beforeMessageId?: string,
@@ -704,5 +820,5 @@ export function discussionTurnsFor(
       turns.push({ role: 'oracle', text: m.text });
     }
   }
-  return turns;
+  return turns.slice(-MAX_DISCUSSION_TURNS);
 }

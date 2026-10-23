@@ -45,7 +45,7 @@
  *   the offset for a trusted value.
  */
 
-import { onCall } from 'firebase-functions/v2/https';
+import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import type { DocumentReference } from 'firebase-admin/firestore';
 import { db } from '../utils/admin';
 import { verifyAuth } from '../middleware/auth';
@@ -77,6 +77,8 @@ import type { WatchOracleComposition } from '../oracle/responseComposer';
 import type { ReadingContract } from '../oracle/readingContract';
 
 import type { WatchState, WatchVerdict } from '../engine/rkp/watchJudgment';
+import { requestRef } from '../utils/requestRef';
+import { isOutOfScopeQuestion } from '../oracle/questionScope';
 
 /**
  * The six watch states expressed in the app's existing verdict vocabulary, so
@@ -162,6 +164,26 @@ export const askWatchOracle = onCall(
 
       await enforceRateLimit(userId);
 
+      // ── Scope gate, BEFORE the request is claimed or charged ──────────────
+      //
+      // Owner decision 2026-10-14: text that is not about the seeker's own
+      // life ("Name two cat breeds") is declined, not judged. Nothing is
+      // claimed, charged or cast, so the seeker can simply ask something else.
+      // The gate only decides whether to cast; see oracle/questionScope.ts.
+      if (isOutOfScopeQuestion(input.question, classifyQuestion(input.question))) {
+        logger.info('askWatchOracle: declined out-of-scope question', {
+          ...(requestRef(input.requestId) !== undefined
+            ? { ref: requestRef(input.requestId) }
+            : {}),
+          userId,
+        });
+        throw new HttpsError(
+          'invalid-argument',
+          'The Oracle answers questions about your own life and matters.',
+          { reason: 'out_of_scope' },
+        );
+      }
+
       // ── Idempotency, BEFORE anything is charged or cast ──────────────────
       //
       // A client-side guard cannot survive process death: if this function
@@ -186,8 +208,9 @@ export const askWatchOracle = onCall(
       // Costs the same as an astronomical reading — same helper, same ledger.
       let plan: Awaited<ReturnType<typeof claimQuotaSlot>>['plan'];
       let remaining: Awaited<ReturnType<typeof claimQuotaSlot>>['remaining'];
+      let charge: Awaited<ReturnType<typeof claimQuotaSlot>>['charge'];
       try {
-        ({ plan, remaining } = await claimQuotaSlot(userId));
+        ({ plan, remaining, charge } = await claimQuotaSlot(userId));
       } catch (err) {
         // Out of quota, or the ledger failed: nothing was cast, so the claim
         // must not outlive the attempt — tomorrow's retry is a real attempt.
@@ -278,6 +301,7 @@ export const askWatchOracle = onCall(
           readingContract = result.contract;
         } catch (err) {
           logger.warn('askWatchOracle: oracle composition failed', {
+            ...(requestRef(requestId) !== undefined ? { ref: requestRef(requestId) } : {}),
             err: String(err),
             userId,
           });
@@ -341,11 +365,14 @@ export const askWatchOracle = onCall(
         // re-deriving it from the stack trace.
         logger.error('askWatchOracle: engine failure', {
           stage,
+          ...(requestRef(requestId) !== undefined ? { ref: requestRef(requestId) } : {}),
           err: String(err),
           stack: err instanceof Error ? err.stack : undefined,
           userId,
         });
-        await refundQuotaSlot(userId).catch(refundErr => {
+        // Gives back exactly what was charged: a daily slot, the week's free
+        // question, or the coins an extra question cost.
+        await refundQuotaSlot(userId, charge).catch(refundErr => {
           logger.warn('askWatchOracle: quota refund failed after engine error', {
             err: String(refundErr),
             userId,

@@ -132,9 +132,17 @@ export function numberSteps<T extends { isEscalation: boolean }>(
 
 export interface RemedyProtocolCardProps {
   composition: WatchOracleComposition;
+  /**
+   * False when a VerdictSeal above already states the verdict: the card then
+   * opens on the narration, without a second headline.
+   */
+  showFinding?: boolean;
 }
 
-const RemedyProtocolCard: React.FC<RemedyProtocolCardProps> = ({ composition }) => {
+const RemedyProtocolCard: React.FC<RemedyProtocolCardProps> = ({
+  composition,
+  showFinding = true,
+}) => {
   const colors = useColors();
   const typography = useTypography();
 
@@ -169,20 +177,22 @@ const RemedyProtocolCard: React.FC<RemedyProtocolCardProps> = ({ composition }) 
       style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border }]}
       accessibilityRole="summary"
     >
-      {/* ── The finding ──────────────────────────────────────────────────── */}
-      <View style={[styles.readingSection, { backgroundColor: readingBg }]}>
-        <Text
-          style={[typography('caption'), styles.eyebrow, { color: outcomeColor, opacity: 0.7 }]}
-        >
-          {'✧ THE READING'}
-        </Text>
-        <Text style={[typography('heading'), styles.headline, { color: outcomeColor }]}>
-          {outcomeHeadline}
-        </Text>
-        <Text style={[typography('caption'), styles.subtiming, { color: colors.textMuted }]}>
-          {`${postureLabel} • ${confidenceLabel(diagnosis.confidence)}`}
-        </Text>
-      </View>
+      {/* ── The finding, unless a VerdictSeal above already gives it ───── */}
+      {showFinding && (
+        <View style={[styles.readingSection, { backgroundColor: readingBg }]}>
+          <Text
+            style={[typography('caption'), styles.eyebrow, { color: outcomeColor, opacity: 0.7 }]}
+          >
+            {'✧ THE READING'}
+          </Text>
+          <Text style={[typography('heading'), styles.headline, { color: outcomeColor }]}>
+            {outcomeHeadline}
+          </Text>
+          <Text style={[typography('caption'), styles.subtiming, { color: colors.textMuted }]}>
+            {`${postureLabel} • ${confidenceLabel(diagnosis.confidence)}`}
+          </Text>
+        </View>
+      )}
 
       {/* ── Narration, when synthesis succeeded ──────────────────────────── */}
       {hasNarration && (
