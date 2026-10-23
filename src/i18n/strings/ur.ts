@@ -129,6 +129,15 @@ export const ur: StringTable = {
     moonManzilTitle: 'منزلِ قمر',
     rulingPlanetsNowLabel: 'موجودہ حاکم سیارے',
     currentHoraLordLabel: 'موجودہ ہورا کا حاکم',
+    horaName: '{{planet}} ہورا',
+    dayIsUnder: 'کے تحت',
+    hourCarries: 'اس گھڑی پر',
+    openAlFalakA11y: 'الفلک کھولیں — آسمانی اوقات',
+    // TODO(owner): translation needed — English placeholder.
+    menuA11y: 'Menu',
+    trialEndsSoon: 'آپ کے کھلے دروازے دو دن میں بند ہو جائیں گے۔',
+    trialEndsTonight: 'آپ کے کھلے دروازے آج رات بند ہو جائیں گے — اپنا راستہ چنیں',
+    choosePathA11y: 'اپنا راستہ چنیں — رکنیت کے منصوبے کھولیں',
   },
 
   oracleChat: {
@@ -142,6 +151,9 @@ export const ur: StringTable = {
     readingChart: 'چارٹ پڑھا جا رہا ہے…',
     retry: 'دوبارہ کوشش کریں',
     failedGeneric: 'اس لمحے کی مہر نہیں کھلی۔ دوبارہ کوشش کریں۔',
+    outOfScope:
+      'میں آپ کی اپنی زندگی کے سوالوں کا زائچہ دیکھتا ہوں — کام، گھر والے، محبت، پیسہ، صحت یا آپ کے منصوبے۔ مثلاً پوچھیں: “کیا مجھے نوکری ملے گی؟” یا “کیا اس سال میری شادی ہوگی؟”',
+    failureRef: 'حوالہ {{ref}}',
     quotaExhausted: 'آج کے سوالات ختم ہو چکے۔ کل واپس آئیں، یا لامحدود کے لیے اپ گریڈ کریں۔',
     micPermissionDenied: 'آواز سے سوال کے لیے مائیکروفون کی اجازت درکار ہے۔ سیٹنگز میں فعال کریں۔',
     noSpeechDetected: 'کچھ سنائی نہیں دیا — دوبارہ کوشش کریں۔',
@@ -166,7 +178,8 @@ export const ur: StringTable = {
     discussionUnavailable: 'اوریکل نے اس کا جواب نہیں دیا۔ دوبارہ پوچھیں۔',
     discussionReadingGone: 'یہ جواب اب گفتگو کے لیے دستیاب نہیں۔',
     discussionLimitReached:
-      'اس زائچے پر جتنی گفتگو ہو سکتی تھی ہو چکی۔ اپنا سوال نئے زائچے کے طور پر پوچھیں۔',
+      'یہ زائچہ جو کہہ سکتا تھا کہہ چکا۔ اپنا اگلا سوال نئے زائچے کے طور پر پوچھیں۔',
+    discussionClosedHint: '✦ یہ زائچہ جو کہہ سکتا تھا کہہ چکا — اپنا اگلا سوال پوچھیں',
     suggestedQuestionsLabel: 'آپ پوچھ سکتے ہیں',
   },
 
@@ -269,7 +282,35 @@ export const ur: StringTable = {
     deleteAccountError: 'اکاؤنٹ حذف نہیں ہو سکا۔ براہ کرم دوبارہ کوشش کریں یا سپورٹ سے رابطہ کریں۔',
   },
 
+  // TODO(owner): Urdu translation needed — English placeholder.
+  wallet: {
+    title: 'Your coins',
+    coinsA11y: '{{coins}} coins. Open wallet',
+    unknown: 'Your balance appears here once coins are active on your account.',
+    rate: '1 coin = ₹10',
+    freeAvailable: 'Your free question for this week is available.',
+    nextFree: 'Next free question: {{date}}',
+    priceQuestion: 'An extra question costs {{coins}} coins.',
+    priceDiscussion:
+      'Discussion after a verdict is charged by length, like ChatGPT: 1 coin per 10,000 tokens. A typical reply costs less than 1 coin.',
+    premium:
+      'Premium ₹299/month: unlimited questions (fair use: 10 a day). Discussion still uses coins.',
+    buySoon: 'Buying coins is coming soon.',
+    seePremium: 'See Premium',
+    freeQuestionLabel: 'Free question',
+    available: 'Available',
+    nextLabel: 'Next free',
+    todayLabel: 'Today',
+    freeQuestionUsed:
+      'Your free question for this week is used. An extra question costs {{cost}} coins; you have {{balance}}.',
+    fairUseReached:
+      "You've reached today's fair-use limit of {{limit}} questions. It resets at midnight UTC.",
+    discussionNeedsCoins:
+      'Discussing a reading uses coins. You have {{balance}}; at least {{min}} is needed to continue.',
+  },
+
   theme: {
+    midnightCelestial: 'Midnight Celestial',
     darAlShams: 'دارُ الشمس',
     laylAlBahr: 'لیلُ البحر',
     narAlHadid: 'نارُ الحدید',

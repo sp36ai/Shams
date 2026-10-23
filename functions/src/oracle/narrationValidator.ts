@@ -323,6 +323,47 @@ const NEGATIVE_ASSERTIONS: readonly string[] = Object.freeze([
 ]);
 
 /**
+ * Whether `lower` asserts `phrase` anywhere, rather than only denying it.
+ *
+ * An occurrence counts as denied when its own clause (back to the nearest
+ * . , ; : ! ? — or bracket) has "not", "never" or a contraction such as
+ * "isn't" within the six words before it — "this is not a matter that is
+ * denied". Every occurrence is checked, so a denied mention cannot excuse a
+ * plain one elsewhere. "no" is
+ * deliberately not a negator: "there is no doubt the matter is fulfilled"
+ * asserts the phrase. "not only" does not negate either.
+ *
+ * Known residual, accepted by the owner: a negator that governs some other
+ * word in the same short clause ("it is not surprising that the matter is
+ * blocked") also exempts the phrase. A keyword check cannot tell these apart;
+ * the reply prompt already forbids stating an outcome either way.
+ */
+const CLAUSE_BREAK = /[.,;:!?()\u2014\u2013]/g;
+// Contractions are listed whole, apostrophe optional: canonicalization
+// (textSecurity.ts) may strip it, and every matching tier must agree.
+const NEGATOR_BEFORE =
+  /(?:\bnot\b(?!\s+only\b)|\bnever\b|\b(?:is|are|was|were|do|does|did|has|have|had|wo|ca|could|would|should|must)n['\u2019]?t\b)(?:\s+\S+){0,6}\s*$/;
+
+function assertsPhrase(lower: string, phrase: string): boolean {
+  let from = 0;
+  for (;;) {
+    const at = lower.indexOf(phrase, from);
+    if (at === -1) {
+      return false;
+    }
+    const before = lower.slice(0, at);
+    let clauseStart = 0;
+    for (const m of before.matchAll(CLAUSE_BREAK)) {
+      clauseStart = (m.index ?? 0) + 1;
+    }
+    if (!NEGATOR_BEFORE.test(before.slice(clauseStart))) {
+      return true;
+    }
+    from = at + phrase.length;
+  }
+}
+
+/**
  * Checks narration text against the settled outcome's polarity. Does NOT
  * attempt to confirm the narration correctly states the outcome — only
  * that it does not assert the OPPOSITE polarity outright. A neutral/
@@ -339,7 +380,7 @@ export function checkVerdictConsistency(
   const lower = text.toLowerCase();
 
   if (polarity !== 'positive') {
-    const hit = POSITIVE_ASSERTIONS.find(p => lower.includes(p));
+    const hit = POSITIVE_ASSERTIONS.find(p => assertsPhrase(lower, p));
     if (hit) {
       return {
         code: 'VERDICT_CONTRADICTION',
@@ -349,7 +390,7 @@ export function checkVerdictConsistency(
     }
   }
   if (polarity !== 'negative') {
-    const hit = NEGATIVE_ASSERTIONS.find(p => lower.includes(p));
+    const hit = NEGATIVE_ASSERTIONS.find(p => assertsPhrase(lower, p));
     if (hit) {
       return {
         code: 'VERDICT_CONTRADICTION',
@@ -448,9 +489,19 @@ const WEEKDAY_NAMES = [
  * build. Recorded as a known, pre-existing, out-of-scope residual in
  * `docs/audit/PHASE_5E_R_HARDENING.md`, not silently expanded past the
  * one demonstrated collision.
+ *
+ * An ordinal followed by "day" ("after the 14th day") is excluded too: it
+ * counts days from the reading, not a date on the calendar. It is not left
+ * unchecked — extractDayCounts() reads it, so it must still fall inside the
+ * engine's own timing window like any "N days".
+ *
+ * A list of ordinals ending in a house ("the 7th, 10th and 11th Ghar",
+ * "the 10th and the 11th houses") is the same house reference, not a run
+ * of dates. A bare "the 10th" with no house after it is still read as a
+ * date, since that is exactly how a date is written.
  */
 const DATE_LIKE_PATTERN =
-  /\b\d{1,4}[/-]\d{1,2}([/-]\d{1,4})?\b|\bthe\s+\d{1,2}(st|nd|rd|th)\b(?!\s+(?:house|ghar)\b)/i;
+  /\b\d{1,4}[/-]\d{1,2}([/-]\d{1,4})?\b|\bthe\s+\d{1,2}(st|nd|rd|th)\b(?!\s+day\b)(?!(?:(?:\s*,\s*|\s+(?:and|or|&)\s+)(?:the\s+)?\d{1,2}(?:st|nd|rd|th)\b)*\s+(?:houses?|ghars?)\b)/i;
 
 /**
  * PHASE 4A: split into two tiers, per the review gate's demonstrated
@@ -493,10 +544,10 @@ const HEDGE_QUALIFIERS: readonly string[] = Object.freeze([
   'perhaps',
 ]);
 
-/** Extracts every "N day(s)"-shaped number mentioned in the text. */
+/** Extracts every "N day(s)" or "Nth day"-shaped number mentioned in the text. */
 function extractDayCounts(text: string): number[] {
   const out: number[] = [];
-  const re = /(\d+)\s*day/gi;
+  const re = /(\d+)(?:st|nd|rd|th)?\s*day/gi;
   let m: RegExpExecArray | null;
   while ((m = re.exec(text)) !== null) {
     out.push(Number(m[1]));
@@ -688,16 +739,44 @@ export function checkRemedyConsistency(
  * construction) — it recognizes that a remedy's own already-authoritative,
  * deterministic name is not narration invention when repeated verbatim.
  */
+/**
+ * The app's own name, "Shams al-Asrār", begins with the Sun's classical name.
+ * The Oracle speaks as Shams al-Asrār (see oracleDiscussionPrompt.ts), so a
+ * reply naming itself is not a claim about the Sun, yet on every reading
+ * without the Sun in its allow-list it was rejected as one. Removed before
+ * the scan below, in every form the three matching tiers produce
+ * ("Shams al-Asrār", "Shams al-Asrar", "Shams alAsrar", "ShamsalAsrar").
+ * A bare "Shams" is still checked.
+ */
+const APP_NAME_PATTERN = /\bshams[\s\-_]*al[\s\-_]*asr(?:a\u0304?|\u0101)r\b/gi;
+
 export function checkCelestialEntities(
   contract: ReadingContract,
   field: keyof NarrationFields,
-  text: string,
+  rawText: string,
 ): ValidationFailure | null {
+  const text = rawText.replace(APP_NAME_PATTERN, ' ');
   const allowed = new Set(expandAllowedEntityNames(contract.celestialEntities));
   for (const step of contract.remedy.steps) {
     for (const planet of ALL_PLANETS) {
       if (
         PLANET_ALIASES[planet].some(alias => step.name.toLowerCase().includes(alias.toLowerCase()))
+      ) {
+        for (const alias of PLANET_ALIASES[planet]) {
+          allowed.add(alias.toLowerCase());
+        }
+      }
+    }
+  }
+  // The same holds for this reading's own factor lines, which the seeker
+  // sees on the reading card ("Ras al-Tinnin weighs on the 11th Ghar"):
+  // repeating a planet the engine itself named is not invention.
+  for (const factor of contract.judgment?.factors ?? []) {
+    for (const planet of ALL_PLANETS) {
+      if (
+        PLANET_ALIASES[planet].some(alias =>
+          new RegExp(`\\b${escapeRegExp(alias)}\\b`, 'i').test(factor),
+        )
       ) {
         for (const alias of PLANET_ALIASES[planet]) {
           allowed.add(alias.toLowerCase());

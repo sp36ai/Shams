@@ -36,6 +36,19 @@ on:
           - alpha
           - beta
           - production
+      rollout:
+        description: >-
+          Production only. 'full' releases to 100% (required for an app's
+          first production release: Play rejects a staged first release).
+          'staged-10' starts at 10%. 'draft' leaves the release in Play
+          Console for you to roll out by hand.
+        required: false
+        default: 'full'
+        type: choice
+        options:
+          - full
+          - staged-10
+          - draft
       dry_run:
         description: 'Dry run: build + sign the AAB and keep it as an artifact, but do NOT upload to Play'
         required: false
@@ -256,6 +269,7 @@ jobs:
       # false -- uploads exactly as before; anything other than 'true' falls
       # back to uploading, never to silently skipping a real release.
       - name: Deploy to Play Store
+        id: play_deploy
         if: env.IS_DRY_RUN != 'true'
         uses: r0adkll/upload-google-play@v1
         with:
@@ -263,11 +277,37 @@ jobs:
           packageName: com.astrosarfaraz.shamsalasrar
           releaseFiles: android/app/build/outputs/bundle/release/app-release.aab
           tracks: ${{ github.event.inputs.track || 'internal' }}
-          # Production releases roll out staged at 10%; promote to 100% in
-          # Play Console (or re-run with a higher fraction) once stable.
-          status: ${{ github.event.inputs.track == 'production' && 'inProgress' || 'completed' }}
-          userFraction: ${{ github.event.inputs.track == 'production' && '0.1' || '' }}
+          # Production follows the `rollout` input. The default is 'full':
+          # the first production release (14 Oct 2026, staged at 10%) was
+          # refused with "Precondition check failed", and Play does not
+          # accept a staged rollout for an app's first production release.
+          # Choose 'staged-10' for later updates you want to roll out slowly.
+          status: >-
+            ${{ github.event.inputs.track != 'production' && 'completed'
+              || github.event.inputs.rollout == 'staged-10' && 'inProgress'
+              || github.event.inputs.rollout == 'draft' && 'draft'
+              || 'completed' }}
+          userFraction: ${{ github.event.inputs.track == 'production' && github.event.inputs.rollout == 'staged-10' && '0.1' || '' }}
           whatsNewDirectory: android/fastlane/metadata/android/en-US/changelogs
+
+      - name: Explain a Play rejection (read-only, never commits)
+        # r0adkll/upload-google-play prints only Google's short status
+        # ("Precondition check failed"). This asks the Play API directly and
+        # prints the real reason plus every track's state. It opens a
+        # temporary edit, validates, and deletes it: nothing is published.
+        if: failure() && steps.play_deploy.outcome == 'failure'
+        env:
+          PLAY_SA_JSON: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON }}
+          TRACK: ${{ github.event.inputs.track || 'internal' }}
+          STATUS: >-
+            ${{ github.event.inputs.track != 'production' && 'completed'
+              || github.event.inputs.rollout == 'staged-10' && 'inProgress'
+              || github.event.inputs.rollout == 'draft' && 'draft'
+              || 'completed' }}
+          FRACTION: ${{ github.event.inputs.track == 'production' && github.event.inputs.rollout == 'staged-10' && '0.1' || '' }}
+        run: |
+          pip install --quiet --disable-pip-version-check google-auth requests
+          python3 scripts/play-diagnose.py com.astrosarfaraz.shamsalasrar "$TRACK" "$STATUS" "$FRACTION"
 
       - name: Dry run summary
         if: env.IS_DRY_RUN == 'true'

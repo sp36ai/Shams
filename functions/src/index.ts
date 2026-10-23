@@ -12,6 +12,7 @@
  *   verifyGooglePlayPurchase — callable — verify IAP, upgrade plan + set custom claims
  *   razorpayWebhook          — HTTP    — Razorpay payment event handler
  *   setAdminClaim            — callable — manage administrative privileges
+ *   grantCoins               — callable — admin-only coin grant (testing, goodwill)
  *   health                   — HTTP    — readiness/liveness check
  *
  * Auth model:
@@ -32,7 +33,7 @@ export { deleteAccount } from './functions/account';
 export { verifyGooglePlayPurchase } from './functions/payments/googlePlay';
 export { razorpayWebhook } from './functions/payments/razorpay';
 export { health } from './functions/health';
-export { setAdminClaim } from './functions/admin';
+export { setAdminClaim, grantCoins } from './functions/admin';
 export { classifyQuestion } from './functions/classifyQuestion';
 export { inferProfile } from './functions/inferProfile';
 // selectRemedies — removed. It was the second, LLM-driven remedy-selection

@@ -31,7 +31,15 @@
  *
  * A follow-up that turns out to be its own horary question is never answered
  * from this Reading and never mutates its context: the oracle flags it, and
- * the seeker can open it as a NEW Reading in one tap.
+ * the seeker can open it as a NEW Reading in one tap. Once the oracle has
+ * closed a Reading's conversation, the next send is likewise a new Reading.
+ *
+ * A Reading asked that way continues the conversation on THIS screen (owner
+ * decision 2026-10-11): it is still its own thread — its own moment, verdict,
+ * requestId, quota slot and history entry — linked to the one before it by
+ * previousThreadId, and drawn below it, each Reading opening on its own
+ * moment chip. The composer always talks to the newest Reading; opening an
+ * earlier one from history lands on the newest of its conversation.
  *
  * No chart logic lives here. Judgment happens server-side; this screen renders
  * what came back (RkpWatchCard/RemedyProtocolCard via ChatBubble) and files it
@@ -67,6 +75,8 @@ import {
   useReadingThreadsStore,
   threadById,
   discussionTurnsFor,
+  isDiscussionClosed,
+  conversationOf,
   type MessageInputKind,
   type ReadingMessage,
   type ReadingThread,
@@ -81,6 +91,9 @@ import StarfieldBackground from '@components/StarfieldBackground';
 import ChatBubble from '@components/oracle/ChatBubble';
 import ChatComposer from '@components/oracle/ChatComposer';
 import ReadingHeader from '@components/oracle/ReadingHeader';
+import { requestRef } from '@utils/requestRef';
+import BrandFooter from '@components/ui/BrandFooter';
+import { formatCoins, useWalletStore } from '@stores/walletStore';
 
 /**
  * Maps a send failure to a message the seeker can act on. Firebase callable
@@ -97,6 +110,36 @@ export function errorMessageFor(
     typeof err === 'object' && err !== null && 'code' in err
       ? String((err as { code: unknown }).code)
       : '';
+  // The coin economy's refusals carry their reason (and the numbers to show)
+  // in the callable error's `details` — see functions/src/utils/quotaSlots.ts
+  // and discussReading.ts.
+  const details =
+    typeof err === 'object' && err !== null && 'details' in err
+      ? ((err as { details: unknown }).details as Record<string, unknown> | null)
+      : null;
+  const reason = typeof details?.reason === 'string' ? details.reason : null;
+  const coins = (milli: unknown): string => (typeof milli === 'number' ? formatCoins(milli) : '—');
+
+  if (reason === 'out_of_scope') {
+    return t('oracleChat.outOfScope');
+  }
+  if (reason === 'free_used') {
+    return t('wallet.freeQuestionUsed', {
+      cost: coins(details?.questionCostMilli),
+      balance: coins(details?.balanceMilli),
+    });
+  }
+  if (reason === 'fair_use') {
+    return t('wallet.fairUseReached', {
+      limit: typeof details?.limit === 'number' ? String(details.limit) : '—',
+    });
+  }
+  if (reason === 'insufficient_coins') {
+    return t('wallet.discussionNeedsCoins', {
+      balance: coins(details?.balanceMilli),
+      min: coins(details?.minBalanceMilli),
+    });
+  }
 
   if (call === 'discuss' && code === 'resource-exhausted') {
     // discussReading's limit is per Reading (DISCUSSION_TURN_LIMIT), not the
@@ -127,6 +170,62 @@ export function errorMessageFor(
     return t('oracleChat.discussionReadingGone');
   }
   return t('oracleChat.failedGeneric');
+}
+
+/**
+ * Whether askWatchOracle declined the question as not about the seeker's own
+ * life (functions/src/oracle/questionScope.ts). Nothing was charged; the
+ * seeker only needs to ask something else. Exported for direct unit testing.
+ */
+export function isOutOfScopeError(err: unknown): boolean {
+  if (typeof err !== 'object' || err === null || !('details' in err)) {
+    return false;
+  }
+  const details = (err as { details: unknown }).details;
+  return (
+    typeof details === 'object' &&
+    details !== null &&
+    (details as { reason?: unknown }).reason === 'out_of_scope'
+  );
+}
+
+/** One row of the conversation: a Reading's moment chip, or a message. */
+type ChatItem =
+  | { kind: 'moment'; key: string; thread: ReadingThread }
+  | { kind: 'message'; key: string; message: ReadingMessage; thread: ReadingThread };
+
+/**
+ * One Reading as chat bubbles: the question that opened it is the seeker's
+ * first bubble, the verdict the Oracle's reply, every follow-up after that.
+ * A Reading filed without its opening turn (one carried over from the older
+ * readings archive) still opens on the seeker's question.
+ */
+function readingMessagesOf(thread: ReadingThread): ReadingMessage[] {
+  if (thread.messages[0]?.role === 'user') {
+    return thread.messages;
+  }
+  return [
+    {
+      id: `${thread.id}-question`,
+      role: 'user',
+      text: thread.question,
+      createdAt: thread.createdAt,
+      status: 'sent',
+    },
+    ...thread.messages,
+  ];
+}
+
+/**
+ * What a Reading hands to the next one asked from it: its own reading id and
+ * its lineage, so the next can be compared against them in discussion — see
+ * ReadingThread.relatedReadingIds.
+ */
+function lineageOf(thread: ReadingThread): string[] {
+  return [
+    ...(thread.readingId !== null ? [thread.readingId] : []),
+    ...(thread.relatedReadingIds ?? []),
+  ].slice(0, 4);
 }
 
 /** Shown before the first question of a new Reading. */
@@ -206,12 +305,18 @@ const ReadingScreen: React.FC = () => {
    * verdict. Every call site now uses push(), so this should not arise; this
    * makes it structurally impossible rather than merely unlikely.
    */
+  //
+  // Only a CHANGE of the route's thread moves the screen: the screen also
+  // moves itself — to the latest Reading of a conversation, or to a new
+  // question asked from inside one — and must not be pulled back.
   const routeThreadId = route.params?.threadId;
+  const followedRouteThreadId = useRef(routeThreadId);
   useEffect(() => {
-    if (routeThreadId !== undefined && routeThreadId !== threadId) {
+    if (routeThreadId !== undefined && routeThreadId !== followedRouteThreadId.current) {
+      followedRouteThreadId.current = routeThreadId;
       setThreadId(routeThreadId);
     }
-  }, [routeThreadId, threadId]);
+  }, [routeThreadId]);
   const [inputText, setInputText] = useState('');
   const [sending, setSending] = useState(false);
   const sendingRef = useRef(false);
@@ -220,30 +325,42 @@ const ReadingScreen: React.FC = () => {
   const thread = useMemo(() => threadById(threads, threadId ?? undefined), [threads, threadId]);
 
   /**
+   * Every Reading of this conversation, oldest first (owner decision
+   * 2026-10-11): a new question asked from inside a Reading's chat is its own
+   * Reading, shown below the one before it on this same screen.
+   */
+  const conversation = useMemo(
+    () => (thread === null ? [] : conversationOf(threads, thread)),
+    [threads, thread],
+  );
+  // The composer always talks to the newest Reading: opening an earlier one
+  // of a conversation lands on its latest.
+  const latestThreadId = conversation[conversation.length - 1]?.id;
+  useEffect(() => {
+    if (latestThreadId !== undefined && latestThreadId !== threadId) {
+      setThreadId(latestThreadId);
+    }
+  }, [latestThreadId, threadId]);
+
+  /**
    * The conversation, as a chat thread: the question that opened the Reading
    * is the seeker's first bubble, the verdict the Oracle's reply to it, and
    * every follow-up after that in order.
    */
-  const messages = useMemo((): ReadingMessage[] => {
-    if (thread === null) {
-      return [];
-    }
-    // A Reading filed without its opening turn (one carried over from the
-    // older readings archive) still opens on the seeker's question.
-    if (thread.messages[0]?.role === 'user') {
-      return thread.messages;
-    }
-    return [
-      {
-        id: `${thread.id}-question`,
-        role: 'user',
-        text: thread.question,
-        createdAt: thread.createdAt,
-        status: 'sent',
-      },
-      ...thread.messages,
-    ];
-  }, [thread]);
+  const items = useMemo((): ChatItem[] => {
+    const out: ChatItem[] = [];
+    conversation.forEach((reading, index) => {
+      // Each later Reading opens on its own moment chip, as the first one
+      // does in the list header.
+      if (index > 0) {
+        out.push({ kind: 'moment', key: `${reading.id}-moment`, thread: reading });
+      }
+      for (const message of readingMessagesOf(reading)) {
+        out.push({ kind: 'message', key: message.id, message, thread: reading });
+      }
+    });
+    return out;
+  }, [conversation]);
 
   // ── The two send paths ────────────────────────────────────────────────────
   //
@@ -328,6 +445,7 @@ const ReadingScreen: React.FC = () => {
         updateMessage(targetThreadId, oracleMessageId, {
           status: 'failed',
           errorMessage: errorMessageFor(err, t),
+          ...(isOutOfScopeError(err) ? { declined: true } : {}),
         });
         setThreadStatus(targetThreadId, 'error');
       }
@@ -379,8 +497,27 @@ const ReadingScreen: React.FC = () => {
           status: 'sent',
           text: result.answer,
           suggestsNewQuestion: result.isNewQuestion,
+          closesDiscussion: result.conversationComplete,
         });
+        if (result.balanceMilli !== undefined) {
+          // Coins mode: the server charged this reply; show the new balance.
+          useWalletStore.getState().update({ balanceMilli: result.balanceMilli });
+        }
       } catch (err) {
+        const code =
+          typeof err === 'object' && err !== null && 'code' in err
+            ? String((err as { code: unknown }).code)
+            : '';
+        if (code === 'resource-exhausted') {
+          // The conversation was already closed (or reached its cost
+          // ceiling) — say so as a close, not as a failure to retry.
+          updateMessage(targetThreadId, oracleMessageId, {
+            status: 'sent',
+            text: t('oracleChat.discussionLimitReached'),
+            closesDiscussion: true,
+          });
+          return;
+        }
         updateMessage(targetThreadId, oracleMessageId, {
           status: 'failed',
           errorMessage: errorMessageFor(err, t, 'discuss'),
@@ -393,7 +530,7 @@ const ReadingScreen: React.FC = () => {
   // ── The ONE path every send funnels into ─────────────────────────────────
 
   const sendMessage = useCallback(
-    (text: string, kind: MessageInputKind) => {
+    (text: string, kind: MessageInputKind, continueFrom?: ReadingThread) => {
       const trimmed = text.trim();
       if (trimmed.length === 0 || sendingRef.current) {
         return;
@@ -407,7 +544,17 @@ const ReadingScreen: React.FC = () => {
 
       // A thread exists only once a question has been submitted — this is
       // that moment for a new Reading.
-      const existing = threadById(useReadingThreadsStore.getState().threads, threadId ?? undefined);
+      const current = threadById(useReadingThreadsStore.getState().threads, threadId ?? undefined);
+      // A new question asked from inside a Reading — handed over by "Start a
+      // new Reading for this", or typed once the oracle has closed this
+      // Reading's conversation — is its own Reading, cast for its own moment,
+      // continuing this one on the same screen.
+      const continuing =
+        continueFrom ??
+        (current !== null && current.readingId !== null && isDiscussionClosed(current)
+          ? current
+          : null);
+      const existing = continuing !== null ? null : current;
       const target =
         existing ??
         createThread({
@@ -415,7 +562,9 @@ const ReadingScreen: React.FC = () => {
           requestId: newRequestId(),
           question: trimmed,
           questionLang: lang,
-          relatedReadingIds: route.params?.relatedReadingIds,
+          relatedReadingIds:
+            continuing !== null ? lineageOf(continuing) : route.params?.relatedReadingIds,
+          ...(continuing !== null ? { previousThreadId: continuing.id } : {}),
         });
       if (existing === null) {
         setThreadId(target.id);
@@ -503,11 +652,13 @@ const ReadingScreen: React.FC = () => {
 
   const handleRetry = useCallback(
     (userMessageId: string) => {
-      if (sendingRef.current || thread === null) {
+      // The Reading this turn belongs to — any Reading of the conversation.
+      const owner = conversation.find(r => r.messages.some(m => m.id === userMessageId));
+      if (sendingRef.current || owner === undefined) {
         return;
       }
-      const userMsg = thread.messages.find(m => m.id === userMessageId);
-      const oracleMsg = thread.messages.find(
+      const userMsg = owner.messages.find(m => m.id === userMessageId);
+      const oracleMsg = owner.messages.find(
         m => m.role === 'oracle' && m.replyToId === userMessageId,
       );
       if (userMsg === undefined || oracleMsg === undefined) {
@@ -515,31 +666,31 @@ const ReadingScreen: React.FC = () => {
       }
       sendingRef.current = true;
       setSending(true);
-      updateMessage(thread.id, oracleMsg.id, { status: 'sending', errorMessage: undefined });
+      updateMessage(owner.id, oracleMsg.id, { status: 'sending', errorMessage: undefined });
 
       // Retry the call this turn actually was, against the SAME thread — a
       // failed follow-up retried as a reading would silently cast a chart and
       // charge for it, and a retried cast must not open a second Reading.
       const run =
         oracleMsg.variant === 'discussion' &&
-        thread.readingId !== null &&
+        owner.readingId !== null &&
         oracleMsg.requestId !== undefined
           ? runDiscuss(
-              thread.id,
+              owner.id,
               oracleMsg.id,
               userMsg.id,
               userMsg.text,
-              thread.readingId,
+              owner.readingId,
               oracleMsg.requestId,
             )
-          : runAsk(thread.id, oracleMsg.id, userMsg.text, thread.requestId);
+          : runAsk(owner.id, oracleMsg.id, userMsg.text, owner.requestId);
 
       run.finally(() => {
         sendingRef.current = false;
         setSending(false);
       });
     },
-    [thread, runAsk, runDiscuss, updateMessage],
+    [conversation, runAsk, runDiscuss, updateMessage],
   );
 
   /**
@@ -549,25 +700,13 @@ const ReadingScreen: React.FC = () => {
    */
   const handleAskAsNewReading = useCallback(
     (userMessageId: string) => {
-      const userMsg = thread?.messages.find(m => m.id === userMessageId);
-      if (userMsg === undefined) {
-        return;
+      const userMsg = conversation.flatMap(r => r.messages).find(m => m.id === userMessageId);
+      if (userMsg !== undefined && thread !== null) {
+        // Continues from the newest Reading, so the conversation stays one line.
+        sendMessage(userMsg.text, 'text', thread);
       }
-      // Carry this Reading forward as lineage: the new one can then be
-      // compared against it (and whatever it was itself descended from) in
-      // discussion — see ReadingThread.relatedReadingIds.
-      const lineage = [
-        ...(thread?.readingId !== null && thread?.readingId !== undefined
-          ? [thread.readingId]
-          : []),
-        ...(thread?.relatedReadingIds ?? []),
-      ].slice(0, 4);
-      navigation.push('Reading', {
-        initialQuestion: userMsg.text,
-        ...(lineage.length > 0 ? { relatedReadingIds: lineage } : {}),
-      });
     },
-    [thread, navigation],
+    [conversation, thread, sendMessage],
   );
 
   const handleShare = useCallback(() => {
@@ -628,28 +767,31 @@ const ReadingScreen: React.FC = () => {
 
   // ── Scroll to the newest message whenever the list grows ──────────────────
   useEffect(() => {
-    if (messages.length > 0) {
+    if (items.length > 0) {
       listRef.current?.scrollToEnd({ animated: true });
     }
-  }, [messages.length]);
+  }, [items.length]);
 
-  const renderMessage = useCallback(
-    ({ item }: { item: ReadingMessage }) => (
-      <ChatBubble
-        message={item}
-        questionLang={lang}
-        readingLang={thread?.questionLang ?? lang}
-        onRetry={handleRetry}
-        onAskAsNewQuestion={handleAskAsNewReading}
-        ttsStatus={tts.status}
-        ttsActiveMessageId={tts.activeMessageId}
-        onToggleSpeech={tts.toggle}
-        onSelectSuggestedQuestion={setInputText}
-      />
-    ),
+  const renderItem = useCallback(
+    ({ item }: { item: ChatItem }) =>
+      item.kind === 'moment' ? (
+        <ReadingHeader thread={item.thread} />
+      ) : (
+        <ChatBubble
+          message={item.message}
+          questionLang={lang}
+          readingLang={item.thread.questionLang}
+          onRetry={handleRetry}
+          failureRef={requestRef(item.message.requestId ?? item.thread.requestId)}
+          onAskAsNewQuestion={handleAskAsNewReading}
+          ttsStatus={tts.status}
+          ttsActiveMessageId={tts.activeMessageId}
+          onToggleSpeech={tts.toggle}
+          onSelectSuggestedQuestion={setInputText}
+        />
+      ),
     [
       lang,
-      thread?.questionLang,
       handleRetry,
       handleAskAsNewReading,
       tts.status,
@@ -685,21 +827,30 @@ const ReadingScreen: React.FC = () => {
   const headerThread = thread ?? provisionalThread;
   // Until the handed-over question is filed, it is shown as the seeker's
   // bubble straight away — the thread's own copy replaces it once it exists.
-  const listData: ReadingMessage[] =
-    thread === null && initialQuestion !== undefined
+  const listData: ChatItem[] =
+    provisionalThread !== null && initialQuestion !== undefined
       ? [
           {
-            id: 'provisional-question',
-            role: 'user',
-            text: initialQuestion,
-            kind: initialQuestionKind,
-            createdAt: provisionalThread?.createdAt ?? new Date().toISOString(),
-            status: 'sent',
+            kind: 'message',
+            key: 'provisional-question',
+            thread: provisionalThread,
+            message: {
+              id: 'provisional-question',
+              role: 'user',
+              text: initialQuestion,
+              kind: initialQuestionKind,
+              createdAt: provisionalThread.createdAt,
+              status: 'sent',
+            },
           },
         ]
-      : messages;
+      : items;
+  // A conversation is known by the Reading that opened it.
+  const firstThread = conversation[0] ?? headerThread;
   // Once a reading stands, every send in this Reading is a follow-up.
   const isDiscussMode = thread !== null && thread.readingId !== null;
+  // Closed by the oracle: the composer asks the next question instead.
+  const isDiscussionDone = isDiscussMode && isDiscussionClosed(thread);
 
   return (
     <SafeAreaView style={[styles.root, { backgroundColor: theme.colors.bg }]} edges={['top']}>
@@ -720,7 +871,7 @@ const ReadingScreen: React.FC = () => {
           <Text style={[typography('label'), { color: colors.accent, fontSize: 20 }]}>‹</Text>
         </Pressable>
         <Text style={[typography('subheading'), { color: colors.goldBright }]} numberOfLines={1}>
-          {headerThread?.title ?? t('reading.newReading')}
+          {firstThread?.title ?? t('reading.newReading')}
         </Text>
         {shareable ? (
           <Pressable
@@ -748,9 +899,9 @@ const ReadingScreen: React.FC = () => {
           <FlatList
             ref={listRef}
             data={listData}
-            keyExtractor={m => m.id}
-            renderItem={renderMessage}
-            ListHeaderComponent={<ReadingHeader thread={headerThread} />}
+            keyExtractor={item => item.key}
+            renderItem={renderItem}
+            ListHeaderComponent={<ReadingHeader thread={firstThread ?? headerThread} />}
             contentContainerStyle={styles.listContent}
             onContentSizeChange={() => listRef.current?.scrollToEnd({ animated: true })}
           />
@@ -770,12 +921,6 @@ const ReadingScreen: React.FC = () => {
          * changes, so the seeker sees "you can keep talking" without
          * having to notice the placeholder swap first.
          */}
-        {isDiscussMode && (
-          <Text style={[typography('caption'), styles.discussHint, { color: colors.textFaint }]}>
-            {t('oracleChat.modeDiscuss')}
-          </Text>
-        )}
-
         <ChatComposer
           value={inputText}
           onChangeText={setInputText}
@@ -786,9 +931,17 @@ const ReadingScreen: React.FC = () => {
           micDisabled={sending}
           micAvailable={stt.isAvailable}
           // Once a reading stands, every send in this Reading is a follow-up.
-          mode={isDiscussMode ? 'discuss' : 'ask'}
+          mode={isDiscussMode && !isDiscussionDone ? 'discuss' : 'ask'}
+          hint={
+            isDiscussionDone
+              ? t('oracleChat.discussionClosedHint')
+              : isDiscussMode
+                ? t('oracleChat.modeDiscuss')
+                : undefined
+          }
         />
       </KeyboardAvoidingView>
+      <BrandFooter />
     </SafeAreaView>
   );
 };
@@ -827,11 +980,6 @@ const styles = StyleSheet.create({
   micErrorBanner: {
     paddingHorizontal: 16,
     paddingVertical: 8,
-  },
-  discussHint: {
-    textAlign: 'center',
-    paddingTop: 6,
-    paddingHorizontal: 16,
   },
 });
 

@@ -1,7 +1,15 @@
 import { buildWatchChart } from '@astrology/rkp/watchChart';
 import { judgeWatchChart, type WatchVerdict } from '@astrology/rkp/watchJudgment';
 
-import { obstructionLabel, rulerRowValue, STATE_HEADLINE, timingLabel } from '../RkpWatchCard';
+import {
+  factorLabel,
+  focusHeading,
+  obstructionLabel,
+  rulerRowValue,
+  STATE_HEADLINE,
+  timingLabel,
+  groupFactors,
+} from '../RkpWatchCard';
 
 const MOMENT = '2026-08-08T11:13:00+05:30';
 
@@ -33,10 +41,13 @@ describe('state headlines', () => {
 });
 
 describe('timing label', () => {
-  it('scales the unit to the size of the window', () => {
+  it('gives the engine window in days, exactly', () => {
     expect(timingLabel(verdictWith({ timing: { minDays: 3, maxDays: 7 } }))).toBe('3–7 days');
-    expect(timingLabel(verdictWith({ timing: { minDays: 30, maxDays: 60 } }))).toBe('4–9 weeks');
-    expect(timingLabel(verdictWith({ timing: { minDays: 90, maxDays: 150 } }))).toBe('3–5 months');
+    expect(timingLabel(verdictWith({ timing: { minDays: 30, maxDays: 60 } }))).toBe('30–60 days');
+    expect(timingLabel(verdictWith({ timing: { minDays: 90, maxDays: 150 } }))).toBe('90–150 days');
+    // The 11 Oct 22:01 Reading: shown as the engine gives it, not "2–5 weeks".
+    expect(timingLabel(verdictWith({ timing: { minDays: 15, maxDays: 32 } }))).toBe('15–32 days');
+    expect(timingLabel(verdictWith({ timing: { minDays: 7, maxDays: 7 } }))).toBe('7 days');
   });
 
   it('says so plainly when the chart gives no timing', () => {
@@ -88,5 +99,99 @@ describe('ruler row', () => {
       rulerRelation: 'Neutral',
     });
     expect(rulerRowValue(v, 'Mirrikh')).toBe('Zuhrah, which your ruler Mirrikh counts neutral');
+  });
+});
+
+describe('factor label', () => {
+  it("says a ruler's dignity in words rather than as its type token", () => {
+    expect(
+      factorLabel(
+        'Zuhrah rules the 1st Ghar and is OwnSign in Meezan — it holds real control of the matter.',
+      ),
+    ).toBe(
+      'Zuhrah rules the 1st Ghar and is in its own sign, Meezan — it holds real control of the matter.',
+    );
+    expect(
+      factorLabel(
+        'Mirrikh rules the 7th Ghar but is Debilitated in Sartan — it cannot deliver unaided.',
+      ),
+    ).toBe('Mirrikh rules the 7th Ghar but is debilitated in Sartan — it cannot deliver unaided.');
+    expect(factorLabel('Shams rules the 10th Ghar and is Exalted in Hamal — x.')).toBe(
+      'Shams rules the 10th Ghar and is exalted in Hamal — x.',
+    );
+    expect(factorLabel('Zuhal rules the 4th Ghar but is EnemySign in Asad — x.')).toBe(
+      "Zuhal rules the 4th Ghar but is in Asad, an enemy's sign — x.",
+    );
+  });
+
+  it('leaves every real factor line free of dignity tokens', () => {
+    for (const factor of verdictWith({}).factors) {
+      expect(factorLabel(factor)).not.toMatch(
+        /\b(OwnSign|FriendlySign|NeutralSign|EnemySign|Exalted|Debilitated)\b/,
+      );
+    }
+  });
+
+  it('passes a line without a dignity claim through unchanged', () => {
+    const line = 'Zuhal casts its gaze on the 1st Ghar — friction on the matter.';
+    expect(factorLabel(line)).toBe(line);
+  });
+});
+
+describe('focus heading', () => {
+  const focus = { direction: 'North' as const, focus: 'Stalled and accumulated things.' };
+
+  it('says the direction is where the obstruction sits', () => {
+    expect(focusHeading(focus, 'Zuhal')).toBe('Attend to the north, where Zuhal sits');
+  });
+
+  it('still reads when no obstruction is named', () => {
+    expect(focusHeading(focus, null)).toBe('Attend to the north, where the obstruction sits');
+  });
+});
+
+// The 11 Oct 2026 22:01 Reading's own factor lines, as the engine wrote them.
+describe('grouped factor lines', () => {
+  const factors = [
+    'Zuhrah rules the 7th Ghar and is OwnSign in Meezan — it holds real control of the matter.',
+    'Zuhrah sits in the 7th Ghar — protection and expansion.',
+    'Mirrikh casts its gaze on the 7th Ghar — friction on the matter.',
+    'Ras al-Tinnin casts its gaze on the 7th Ghar — friction on the matter.',
+    'Ras al-Tinnin weighs on the 11th Ghar — fulfilment itself is obstructed.',
+    'Mirrikh weighs on the 11th Ghar — fulfilment itself is obstructed.',
+    'Dhanab al-Tinnin weighs on the 11th Ghar — fulfilment itself is obstructed.',
+    'Zuhrah has landed in the 7th Ghar, a supporting house for this question.',
+    'Zuhrah is retrograde — decisions already taken on this matter are liable to be reopened.',
+    'Benefic and malefic witnesses both fall on the matter — the reading carries genuine conflict.',
+  ];
+
+  it('joins planets acting on the same Ghar in the same way, in place', () => {
+    expect(groupFactors(factors)).toEqual([
+      factors[0],
+      factors[1],
+      'Mirrikh and Ras al-Tinnin cast their gaze on the 7th Ghar — friction on the matter.',
+      'Ras al-Tinnin, Mirrikh and Dhanab al-Tinnin weigh on the 11th Ghar — fulfilment itself is obstructed.',
+      factors[7],
+      factors[8],
+      factors[9],
+    ]);
+  });
+
+  it('keeps apart lines that differ in Ghar or effect, and leaves the input as it was', () => {
+    const lines = [
+      'Mushtari casts its gaze on the 10th Ghar — protection and expansion.',
+      'Mirrikh casts its gaze on the 10th Ghar — friction on the matter.',
+      'Mirrikh weighs on the 11th Ghar — fulfilment itself is obstructed.',
+    ];
+    const copy = [...lines];
+    expect(groupFactors(lines)).toEqual(lines);
+    expect(lines).toEqual(copy);
+  });
+
+  it('shows a line in any other form as it is', () => {
+    expect(groupFactors(['Something new.', 'Something new.'])).toEqual([
+      'Something new.',
+      'Something new.',
+    ]);
   });
 });

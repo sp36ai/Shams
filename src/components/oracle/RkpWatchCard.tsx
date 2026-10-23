@@ -73,14 +73,14 @@ export function timingLabel(verdict: DisplayWatchVerdict): string {
   if (verdict.timing === null) {
     return 'Unclear';
   }
+  // The engine's own window, exactly. Rounding to weeks or months widened
+  // it (15–32 days read "2–5 weeks", i.e. 14–35) and disagreed with the
+  // interpretation, which gives the days (owner decision 2026-10-11).
   const { minDays, maxDays } = verdict.timing;
-  if (maxDays <= 14) {
-    return `${minDays}–${maxDays} days`;
+  if (minDays === maxDays) {
+    return `${maxDays} ${maxDays === 1 ? 'day' : 'days'}`;
   }
-  if (maxDays <= 60) {
-    return `${Math.round(minDays / 7)}–${Math.round(maxDays / 7)} weeks`;
-  }
-  return `${Math.round(minDays / 30)}–${Math.round(maxDays / 30)} months`;
+  return `${minDays}–${maxDays} days`;
 }
 
 /**
@@ -95,6 +95,101 @@ export function rulerRowValue(verdict: DisplayWatchVerdict, lagnaRulerName: stri
   const relation =
     typeof verdict.rulerRelation === 'string' ? verdict.rulerRelation.toLowerCase() : 'unrecorded';
   return `${verdict.targetRulerName}, which your ruler ${lagnaRulerName} counts ${relation}`;
+}
+
+/**
+ * The engine's factor lines name a ruler's dignity by its type token
+ * ("is OwnSign in Meezan"). Say it in words. Applied at display so readings
+ * already stored in history read the same; the factor text itself is
+ * unchanged.
+ */
+const DIGNITY_PHRASE: Readonly<Record<string, (sign: string) => string>> = Object.freeze({
+  Exalted: (sign: string) => `is exalted in ${sign}`,
+  OwnSign: (sign: string) => `is in its own sign, ${sign}`,
+  FriendlySign: (sign: string) => `is in ${sign}, a friendly sign`,
+  NeutralSign: (sign: string) => `is in ${sign}, a neutral sign`,
+  EnemySign: (sign: string) => `is in ${sign}, an enemy's sign`,
+  Debilitated: (sign: string) => `is debilitated in ${sign}`,
+});
+
+const DIGNITY_CLAIM =
+  /\bis (Exalted|OwnSign|FriendlySign|NeutralSign|EnemySign|Debilitated) in ([A-Z][\w'-]*)/g;
+
+export function factorLabel(factor: string): string {
+  return factor.replace(
+    DIGNITY_CLAIM,
+    (match, dignity: string, sign: string) => DIGNITY_PHRASE[dignity]?.(sign) ?? match,
+  );
+}
+
+/**
+ * Planets acting on the same Ghar in the same way are one line on the card:
+ * "Ras al-Tinnin, Mirrikh and Dhanab al-Tinnin weigh on the 11th Ghar —
+ * fulfilment itself is obstructed." rather than that sentence three times.
+ * Display only: the engine's factors are unchanged, and a line in any other
+ * form is shown as it is. A group keeps the place of its first line.
+ */
+const PLURAL_VERB: Readonly<Record<string, string>> = Object.freeze({
+  'weighs on': 'weigh on',
+  supports: 'support',
+  'sits in': 'sit in',
+  'casts its gaze on': 'cast their gaze on',
+});
+
+const PLANET_NAMES = Object.values(PLANET_NAME)
+  .slice()
+  .sort((a, b) => b.length - a.length);
+
+const SHARED_FACTOR = new RegExp(
+  `^(${PLANET_NAMES.map(n => n.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|')}) (${Object.keys(
+    PLURAL_VERB,
+  ).join('|')}) (.+)$`,
+);
+
+function joinNames(names: readonly string[]): string {
+  const last = names[names.length - 1] ?? '';
+  return names.length <= 1 ? last : `${names.slice(0, -1).join(', ')} and ${last}`;
+}
+
+export function groupFactors(factors: readonly string[]): string[] {
+  const groups: {
+    key: string | null;
+    verb: string;
+    rest: string;
+    names: string[];
+    text: string;
+  }[] = [];
+  for (const factor of factors) {
+    const [, name, verb, rest] = SHARED_FACTOR.exec(factor) ?? [];
+    if (name === undefined || verb === undefined || rest === undefined) {
+      groups.push({ key: null, verb: '', rest: '', names: [], text: factor });
+      continue;
+    }
+    const key = `${verb} ${rest}`;
+    const group = groups.find(g => g.key === key);
+    if (group === undefined) {
+      groups.push({ key, verb, rest, names: [name], text: factor });
+    } else if (!group.names.includes(name)) {
+      group.names.push(name);
+    }
+  }
+  return groups.map(g =>
+    g.key === null || g.names.length === 1
+      ? g.text
+      : `${joinNames(g.names)} ${PLURAL_VERB[g.verb]} ${g.rest}`,
+  );
+}
+
+/**
+ * Heading for the physical-correspondence box. Its direction is where the
+ * obstruction sits, not the matter's own Direction row above it, so it says
+ * whose it is rather than reading as a second, conflicting direction.
+ */
+export function focusHeading(focus: DirectionalFocus, obstruction: string | null): string {
+  const where = focus.direction.toLowerCase();
+  return obstruction === null
+    ? `Attend to the ${where}, where the obstruction sits`
+    : `Attend to the ${where}, where ${obstruction} sits`;
 }
 
 function pad2(n: number): string {
@@ -251,7 +346,7 @@ const RkpWatchCard: React.FC<RkpWatchCardProps> = ({
       {directionalFocus !== null && directionalFocus !== undefined && (
         <View style={[styles.focus, { borderColor: colors.border }]}>
           <Text style={[typography('label'), { color: colors.goldBright }]}>
-            {`Attend to the ${directionalFocus.direction.toLowerCase()}`}
+            {focusHeading(directionalFocus, obstruction)}
           </Text>
           <Text style={[typography('caption'), { color: colors.textMuted, marginTop: 2 }]}>
             {directionalFocus.focus}
@@ -264,11 +359,11 @@ const RkpWatchCard: React.FC<RkpWatchCardProps> = ({
       <Text style={[typography('label'), { color: colors.text, marginBottom: 6 }]}>
         {'How the chart reads'}
       </Text>
-      {factors.map((factor, i) => (
+      {groupFactors(factors).map((factor, i) => (
         <View key={`${i}-${factor.slice(0, 12)}`} style={styles.factorRow}>
           <Text style={[typography('caption'), { color: colors.goldBright }]}>{'✦'}</Text>
           <Text style={[typography('caption'), styles.factorText, { color: colors.textMuted }]}>
-            {factor}
+            {factorLabel(factor)}
           </Text>
         </View>
       ))}

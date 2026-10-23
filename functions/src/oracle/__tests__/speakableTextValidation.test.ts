@@ -282,6 +282,30 @@ describe('PHASE 5H-R — composeWatchOracleResponse: the TTS artifact check is w
     expect(composition.speakableText).toBe(buildSpeakableText(genuine));
   });
 
+  it('the narration request asks the API to enforce the five-key JSON shape', async () => {
+    mockDraft(SPLIT_REVERSAL_ATTACK);
+
+    await composeWatchOracleResponse({
+      verdict: noneReversal.judgment,
+      question: 'Should I close my failing business?',
+      readingId: noneReversal.provenance.readingId,
+      computedAt: new Date('2026-08-15T00:00:00.000Z'),
+    });
+
+    const [, init] = vi.mocked(globalThis.fetch).mock.calls[0] as [string, RequestInit];
+    const body = JSON.parse(init.body as string) as {
+      output_config: { format: { type: string; schema: { required: string[] } } };
+    };
+    expect(body.output_config.format.type).toBe('json_schema');
+    expect(body.output_config.format.schema.required).toEqual([
+      'rkp_finding',
+      'interpretation',
+      'recommended_approach',
+      'why_this_remedy',
+      'signature',
+    ]);
+  });
+
   it('B. the split-field reversal claim (5H-1) triggers the deterministic fallback, not the raw draft', async () => {
     mockDraft(SPLIT_REVERSAL_ATTACK);
 
