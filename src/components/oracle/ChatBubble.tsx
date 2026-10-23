@@ -76,6 +76,11 @@ interface ChatBubbleProps {
   readingLang?: 'en' | 'ur' | 'hi';
   onRetry: (userMessageId: string) => void;
   /**
+   * Shown on a failed turn so a screenshot can be matched to the server's
+   * failure log for that request (see utils/requestRef). Not shown otherwise.
+   */
+  failureRef?: string;
+  /**
    * Open a follow-up the oracle declined to answer as its OWN Reading, cast
    * for its own moment. A new chart and a quota slot — so it is always an
    * explicit tap, never something this bubble does on the seeker's behalf.
@@ -93,6 +98,7 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({
   questionLang,
   readingLang,
   onRetry,
+  failureRef,
   onAskAsNewQuestion,
   ttsStatus,
   ttsActiveMessageId,
@@ -184,13 +190,30 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({
           style={[
             styles.bubble,
             styles.oracleBubble,
-            { backgroundColor: colors.surface, borderColor: colors.negative + '55' },
+            {
+              backgroundColor: colors.surface,
+              // A declined question is the Oracle speaking, not a failure.
+              borderColor: message.declined === true ? colors.border : colors.negative + '55',
+            },
           ]}
         >
-          <Text style={[typography('body'), { color: colors.textMuted }]}>
+          <Text
+            style={[
+              typography('body'),
+              { color: message.declined === true ? colors.text : colors.textMuted },
+            ]}
+          >
             {message.errorMessage ?? t('oracleChat.failedGeneric')}
           </Text>
-          {message.replyToId !== undefined && (
+          {failureRef !== undefined && message.declined !== true && (
+            <Text
+              selectable
+              style={[typography('caption'), styles.failureRef, { color: colors.textMuted }]}
+            >
+              {t('oracleChat.failureRef', { ref: failureRef })}
+            </Text>
+          )}
+          {message.replyToId !== undefined && message.declined !== true && (
             <Pressable
               onPress={() => onRetry(message.replyToId!)}
               style={({ pressed }) => [styles.retryBtn, { opacity: pressed ? 0.7 : 1 }]}
@@ -405,6 +428,10 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     height: 1,
+  },
+  failureRef: {
+    marginTop: 6,
+    opacity: 0.8,
   },
   retryBtn: {
     marginTop: 8,

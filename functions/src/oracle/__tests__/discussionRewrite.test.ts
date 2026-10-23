@@ -11,7 +11,6 @@ import { describe, it, expect, vi, afterEach } from 'vitest';
 import { buildWatchChart } from '../../engine/rkp/watchChart';
 import { judgeWatchChart, type DisplayWatchVerdict } from '../../engine/rkp/watchJudgment';
 import { diagnose } from '../../engine/rkp/diagnosis';
-import { classifyQuestion } from '../../engine/kp/rules/questionKeywords';
 import { selectRemedyProtocol } from '../remedySelection';
 import { toBoundaryPlanetName } from '../../utils/planetBoundaryName';
 import { buildReadingContract, type ReadingContract } from '../readingContract';
@@ -21,6 +20,7 @@ import {
   rewriteNote,
   type ReadingGrounding,
 } from '../discussionComposer';
+import { logger } from '../../utils/logger';
 
 vi.mock('../../config', () => ({
   ANTHROPIC_API_KEY: { value: () => 'test-key' },
@@ -35,10 +35,9 @@ vi.mock('firebase-functions/v2', () => ({
 const QUESTION = 'When will this app will be launched successfully';
 
 function launchContract(): ReadingContract {
-  const raw = judgeWatchChart(
-    buildWatchChart('2026-10-10T16:28:00+05:30'),
-    classifyQuestion(QUESTION),
-  );
+  // Replayed as cast: "general". The question would classify as business
+  // since "app" became a business keyword (owner decision 2026-10-10).
+  const raw = judgeWatchChart(buildWatchChart('2026-10-10T16:28:00+05:30'), 'general');
   const verdict: DisplayWatchVerdict = {
     ...raw,
     obstruction: toBoundaryPlanetName(raw.obstruction),
@@ -175,5 +174,72 @@ describe('rejectedPhrases / rewriteNote', () => {
   it('still asks for a rewrite when a failure quotes nothing', () => {
     expect(rejectedPhrases(['HOUSE_CLAIM_CONTRADICTION: narration claims house 5'])).toEqual([]);
     expect(rewriteNote([])).toContain('does not support');
+  });
+});
+
+describe('composeDiscussionReply — conversation_complete', () => {
+  function mockRaw(body: Record<string, unknown>) {
+    globalThis.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve({ content: [{ type: 'text', text: JSON.stringify(body) }] }),
+    }) as unknown as typeof fetch;
+  }
+
+  it('carries the close through', async () => {
+    mockRaw({ answer: ACCEPTED, is_new_question: false, conversation_complete: true });
+    expect((await ask())?.conversationComplete).toBe(true);
+  });
+
+  it('defaults to open when the key is missing', async () => {
+    mockRaw({ answer: ACCEPTED, is_new_question: false });
+    expect((await ask())?.conversationComplete).toBe(false);
+  });
+
+  it('never closes a reply that points to a new question', async () => {
+    mockRaw({ answer: ACCEPTED, is_new_question: true, conversation_complete: true });
+    const reply = await ask();
+    expect(reply?.isNewQuestion).toBe(true);
+    expect(reply?.conversationComplete).toBe(false);
+  });
+});
+
+describe('composeDiscussionReply — failure logs carry the reference', () => {
+  const logContext = { ref: '3k9x2m1a', readingId: 'r-launch' };
+  const askWithRef = () =>
+    composeDiscussionReply({
+      groundings: groundings(),
+      turns: [],
+      message: 'What should I watch for next?',
+      replyLang: 'en',
+      logContext,
+    });
+
+  it('stamps both validation logs of a refused follow-up', async () => {
+    vi.spyOn(logger, 'info').mockImplementation(() => undefined);
+    vi.spyOn(logger, 'warn').mockImplementation(() => undefined);
+    mockAnswers(REFUSED, REFUSED);
+    expect(await askWithRef()).toBeNull();
+    expect(logger.info).toHaveBeenCalledWith(
+      'oracle discussion reply failed validation — rewriting once',
+      expect.objectContaining({ ...logContext, attempt: 1 }),
+    );
+    expect(logger.warn).toHaveBeenCalledWith(
+      'oracle discussion reply failed validation — no reply returned',
+      expect.objectContaining({ ...logContext, attempt: 2 }),
+    );
+  });
+
+  it('stamps a transport failure', async () => {
+    vi.spyOn(logger, 'warn').mockImplementation(() => undefined);
+    globalThis.fetch = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 529,
+      text: () => Promise.resolve('overloaded'),
+    }) as unknown as typeof fetch;
+    expect(await askWithRef()).toBeNull();
+    expect(logger.warn).toHaveBeenCalledWith(
+      'oracle discussion HTTP error',
+      expect.objectContaining({ ...logContext, status: 529 }),
+    );
   });
 });

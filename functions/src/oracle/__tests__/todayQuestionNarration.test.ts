@@ -84,7 +84,7 @@ describe('the deterministic fallback for that reading', () => {
   });
 
   it('states the patterns in plain words, and still passes validation', () => {
-    expect(fallback.interpretation).toContain('The pattern the chart shows is');
+    expect(fallback.interpretation).toContain('What the reading shows around this is');
     expect(validateNarration(contract, fallback).valid).toBe(true);
   });
 });

@@ -143,6 +143,10 @@ jest.mock('react-native-tts', () => ({
   default: {
     getInitStatus: jest.fn(() => Promise.resolve('success')),
     setDefaultLanguage: jest.fn(() => Promise.resolve('success')),
+    setDefaultVoice: jest.fn(() => Promise.resolve('success')),
+    setDefaultPitch: jest.fn(() => Promise.resolve('success')),
+    setDefaultRate: jest.fn(() => Promise.resolve('success')),
+    voices: jest.fn(() => Promise.resolve([])),
     speak: jest.fn(),
     stop: jest.fn(() => Promise.resolve(true)),
     pause: jest.fn(() => Promise.resolve(true)),

@@ -67,6 +67,7 @@
  * documented residual limitation of label-based attribution.
  */
 
+import { agentShortName } from './agentNames';
 import { ANTHROPIC_API_KEY } from '../config';
 import { logger } from '../utils/logger';
 import { ORACLE_DISCUSSION_PROMPT } from '../prompts/oracleDiscussionPrompt';
@@ -153,6 +154,12 @@ export interface DiscussionInput {
   /** The new follow-up. */
   readonly message: string;
   readonly replyLang: LangCode;
+  /**
+   * Added to every log line this reply writes — the caller's `ref` and
+   * readingId — so the stage that failed can be found from the reference
+   * the seeker sees on a failed turn.
+   */
+  readonly logContext?: Readonly<Record<string, string>>;
 }
 
 export interface DiscussionReply {
@@ -163,6 +170,17 @@ export interface DiscussionReply {
    * casts a fresh chart and costs a quota slot like any other reading.
    */
   readonly isNewQuestion: boolean;
+  /**
+   * True when the model judged the conversation has done its work and made
+   * this reply a graceful close (see ORACLE_DISCUSSION_PROMPT). Never true
+   * together with `isNewQuestion` — that reply already points elsewhere.
+   */
+  readonly conversationComplete: boolean;
+  /**
+   * Model tokens (input + output, every attempt that went into this reply)
+   * as reported by the API's `usage` — what a coins-mode turn is priced on.
+   */
+  readonly tokensUsed: number;
 }
 
 const LANG_NAME: Readonly<Record<LangCode, string>> = Object.freeze({
@@ -193,6 +211,22 @@ export function flattenText(raw: string, maxChars: number): string {
       .slice(0, maxChars)
   );
 }
+
+/**
+ * The JSON shape ORACLE_DISCUSSION_PROMPT asks for, enforced by the API
+ * (structured outputs). Production logs (7–17 Oct 2026) showed every
+ * follow-up failing to parse because the model answered in plain prose.
+ */
+const DISCUSSION_REPLY_SCHEMA = {
+  type: 'object',
+  properties: {
+    answer: { type: 'string' },
+    is_new_question: { type: 'boolean' },
+    conversation_complete: { type: 'boolean' },
+  },
+  required: ['answer', 'is_new_question', 'conversation_complete'],
+  additionalProperties: false,
+} as const;
 
 function stripJsonFence(text: string): string {
   const trimmed = text.trim();
@@ -248,7 +282,7 @@ ${oracle.narration.why_this_remedy ? `  Why these:      ${oracle.narration.why_t
   Primary pattern:    ${oracle?.diagnosis.primaryPattern ?? 'not recorded'}
   Secondary patterns: ${oracle?.diagnosis.secondaryPatterns.join(', ') || 'none'}
   Timing posture:     ${formatTimingPosture(oracle)}
-  Obstructing agent:  ${oracle?.diagnosis.obstructingAgent ?? 'none'}
+  Obstructing agent:  ${agentShortName(oracle?.diagnosis.obstructingAgent ?? null) ?? 'none'}
 
 CHART RATIONALE (the engine's own reasoning)
 ${(oracle?.diagnosis.rationale ?? []).map(r => `  - ${r}`).join('\n') || '  (not recorded)'}
@@ -568,6 +602,24 @@ export function checkNewQuestionReply(answer: string, isNewQuestion: boolean): s
 interface DraftReply {
   readonly answer: string;
   readonly isNewQuestion: boolean;
+  readonly conversationComplete: boolean;
+  /** This call's input + output tokens, from the API's `usage`. */
+  readonly tokens: number;
+}
+
+/** Input + output tokens from a Messages API `usage` object (0 when absent). */
+export function tokensFromUsage(usage: unknown): number {
+  if (usage === null || typeof usage !== 'object') {
+    return 0;
+  }
+  const u = usage as Record<string, unknown>;
+  const n = (k: string): number => (typeof u[k] === 'number' && Number.isFinite(u[k]) ? u[k] : 0);
+  return (
+    n('input_tokens') +
+    n('output_tokens') +
+    n('cache_creation_input_tokens') +
+    n('cache_read_input_tokens')
+  );
 }
 
 /** Why a draft may not be shown: log fields, plus the wording to avoid on a rewrite. */
@@ -645,6 +697,7 @@ async function requestDraft(
   system: ReadonlyArray<{ type: 'text'; text: string }>,
   messages: ReturnType<typeof toApiMessages>,
   timeoutMs: number,
+  ctx: Readonly<Record<string, string>>,
 ): Promise<DraftReply | null> {
   const controller = new AbortController();
   const timer = setTimeout(() => {
@@ -664,7 +717,10 @@ async function requestDraft(
         // Opus 5 thinks by default and max_tokens bounds thinking + reply
         // together — a short reply still needs room ahead of it.
         max_tokens: 2048,
-        output_config: { effort: 'low' },
+        output_config: {
+          effort: 'low',
+          format: { type: 'json_schema', schema: DISCUSSION_REPLY_SCHEMA },
+        },
         system,
         messages,
       }),
@@ -674,30 +730,38 @@ async function requestDraft(
     if (!res.ok) {
       const body = await res.text().catch(() => '');
       logger.warn('oracle discussion HTTP error', {
+        ...ctx,
         status: res.status,
         body: body.slice(0, 300),
       });
       return null;
     }
 
-    const json = (await res.json()) as { content?: Array<{ type: string; text?: string }> };
+    const json = (await res.json()) as {
+      content?: Array<{ type: string; text?: string }>;
+      usage?: unknown;
+    };
     const raw = json.content?.find(b => b.type === 'text')?.text ?? '';
     const parsed = JSON.parse(stripJsonFence(raw)) as {
       answer?: unknown;
       is_new_question?: unknown;
+      conversation_complete?: unknown;
     };
 
     if (typeof parsed.answer !== 'string' || parsed.answer.trim().length === 0) {
-      logger.warn('oracle discussion reply missing answer');
+      logger.warn('oracle discussion reply missing answer', ctx);
       return null;
     }
 
     return {
       answer: parsed.answer.trim(),
       isNewQuestion: parsed.is_new_question === true,
+      conversationComplete:
+        parsed.conversation_complete === true && parsed.is_new_question !== true,
+      tokens: tokensFromUsage(json.usage),
     };
   } catch (err) {
-    logger.warn('oracle discussion failed', { err: String(err) });
+    logger.warn('oracle discussion failed', { ...ctx, err: String(err) });
     return null;
   } finally {
     clearTimeout(timer);
@@ -707,9 +771,10 @@ async function requestDraft(
 export async function composeDiscussionReply(
   input: DiscussionInput,
 ): Promise<DiscussionReply | null> {
+  const ctx = input.logContext ?? {};
   const apiKey = ANTHROPIC_API_KEY.value();
   if (!apiKey) {
-    logger.warn('oracle discussion skipped: ANTHROPIC_API_KEY not bound');
+    logger.warn('oracle discussion skipped: ANTHROPIC_API_KEY not bound', ctx);
     return null;
   }
 
@@ -726,13 +791,13 @@ export async function composeDiscussionReply(
     { type: 'text' as const, text: buildDiscussionBrief(input.groundings, input.replyLang) },
   ];
 
-  const first = await requestDraft(apiKey, system, messages, DISCUSSION_TIMEOUT_MS);
+  const first = await requestDraft(apiKey, system, messages, DISCUSSION_TIMEOUT_MS, ctx);
   if (first === null) {
     return null;
   }
   const firstRejection = rejectionOf(input, first);
   if (firstRejection === null) {
-    return { answer: first.answer, isNewQuestion: first.isNewQuestion };
+    return { ...withoutTokens(first), tokensUsed: first.tokens };
   }
 
   // A rejected draft is often a correct answer phrased in wording a
@@ -743,6 +808,7 @@ export async function composeDiscussionReply(
   const remaining = deadline - Date.now();
   if (remaining < RETRY_MIN_MS) {
     logger.warn('oracle discussion reply failed validation — no reply returned', {
+      ...ctx,
       ...firstRejection.log,
       attempt: 1,
       retried: false,
@@ -750,6 +816,7 @@ export async function composeDiscussionReply(
     return null;
   }
   logger.info('oracle discussion reply failed validation — rewriting once', {
+    ...ctx,
     ...firstRejection.log,
     attempt: 1,
   });
@@ -759,6 +826,7 @@ export async function composeDiscussionReply(
     [...system, { type: 'text', text: rewriteNote(firstRejection.phrases) }],
     messages,
     Math.min(DISCUSSION_TIMEOUT_MS, remaining),
+    ctx,
   );
   if (second === null) {
     return null;
@@ -766,12 +834,21 @@ export async function composeDiscussionReply(
   const secondRejection = rejectionOf(input, second);
   if (secondRejection !== null) {
     logger.warn('oracle discussion reply failed validation — no reply returned', {
+      ...ctx,
       ...secondRejection.log,
       attempt: 2,
       retried: true,
     });
     return null;
   }
-  logger.info('oracle discussion rewrite passed validation');
-  return { answer: second.answer, isNewQuestion: second.isNewQuestion };
+  logger.info('oracle discussion rewrite passed validation', ctx);
+  return { ...withoutTokens(second), tokensUsed: first.tokens + second.tokens };
+}
+
+function withoutTokens(d: DraftReply): Omit<DiscussionReply, 'tokensUsed'> {
+  return {
+    answer: d.answer,
+    isNewQuestion: d.isNewQuestion,
+    conversationComplete: d.conversationComplete,
+  };
 }

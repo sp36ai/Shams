@@ -2,6 +2,11 @@
 
 **Shams al-Asrār | Engine v2.0.0-moshier | Audit date: 2026-05-09**
 
+> **SUPERSEDED — historical record only.**
+> KP (Krishnamurti Paddhati) and the old astronomical judgment system were intentionally removed after this audit. The RKP Watch Engine is now the only authoritative calculation and judgment system.
+> Every "keep", "add", "already implemented" or scoring recommendation below (including the Kotamraju filter, promise denial and significator weighting) describes the removed KP engine. None of it is current methodology or a to-do item, and none of it should be re-implemented, imported or used as a fallback.
+> This file is kept for provenance only.
+
 ---
 
 ## A. What True KP Actually Is

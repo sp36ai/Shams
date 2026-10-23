@@ -586,6 +586,20 @@ jobs:
           # job -- see e2e-build's debug-APK upload step comment.
           retention-days: 7
 
+      - name: Upload Home screen screenshot
+        if: always() && matrix.id == 'settings-signout'
+        uses: actions/upload-artifact@v6
+        with:
+          name: shams-home-screen
+          # takeScreenshot writes relative to Maestro's working directory
+          # (the repo root here); the second path covers Maestro versions
+          # that write into their test output folder instead.
+          path: |
+            shams-home-screen.png
+            ~/.maestro/tests/**/shams-home-screen.png
+          if-no-files-found: warn
+          retention-days: 7
+
       - name: Upload Maestro results
         if: always()
         uses: actions/upload-artifact@v6

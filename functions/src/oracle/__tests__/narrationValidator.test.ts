@@ -4,6 +4,7 @@ import { buildWatchChart } from '../../engine/rkp/watchChart';
 import { judgeWatchChart, type DisplayWatchVerdict } from '../../engine/rkp/watchJudgment';
 import { diagnose } from '../../engine/rkp/diagnosis';
 import { classifyQuestion } from '../../engine/kp/rules/questionKeywords';
+import type { QuestionType } from '../../engine/kp/rules/houseMatrix';
 import { selectRemedyProtocol } from '../remedySelection';
 import { toBoundaryPlanetName } from '../../utils/planetBoundaryName';
 import { buildReadingContract, type ReadingContract } from '../readingContract';
@@ -11,9 +12,15 @@ import { findOutcomeAssertion, validateNarration } from '../narrationValidator';
 import { buildDeterministicFallbackNarration } from '../narrationFallback';
 import type { NarrationFields } from '../responseComposer';
 
-function contractFor(moment: string, question: string): ReadingContract {
+function contractFor(
+  moment: string,
+  question: string,
+  // A production reading is replayed as it was cast: classifyQuestion's
+  // keywords can change after the fact (owner decision 2026-10-10 added
+  // "app" to business), so those tests pin the category it had then.
+  qType: QuestionType = classifyQuestion(question),
+): ReadingContract {
   const chart = buildWatchChart(moment);
-  const qType = classifyQuestion(question);
   const rawVerdict = judgeWatchChart(chart, qType);
   const verdict: DisplayWatchVerdict = {
     ...rawVerdict,
@@ -324,7 +331,7 @@ describe('validateNarration — celestial entity consistency', () => {
   // A production Reading (10 Oct 2026, 14:06 IST): REVERSING, Zuhrah ruling,
   // Zuhal obstructing — the Sun is not among its entities.
   const sunlessContract = (): ReadingContract =>
-    contractFor('2026-10-10T14:06:00+05:30', 'Will this app will be successful');
+    contractFor('2026-10-10T14:06:00+05:30', 'Will this app will be successful', 'general');
 
   it("does not read the app's own name as a claim about the Sun", () => {
     const contract = sunlessContract();
@@ -562,6 +569,7 @@ describe('validateNarration — denied phrases and day ordinals', () => {
   const contract = contractFor(
     '2026-10-10T16:28:00+05:30',
     'When will this app will be launched successfully',
+    'general',
   );
   const check = (text: string) =>
     validateNarration(contract, baseNarration({ interpretation: text }));
@@ -613,5 +621,49 @@ describe('validateNarration — denied phrases and day ordinals', () => {
     expect(check('Look again after the 14th day.').valid).toBe(true);
     expect(codes('Look again after the 30th day.')).toContain('TIMING_ALTERATION');
     expect(codes('Look again on the 14th.')).toContain('TIMING_FABRICATION');
+  });
+});
+
+// A production Reading (11 Oct 2026, 22:01 IST): business, BLOCKED by
+// Mirrikh, with Ras al-Tinnin and Dhanab al-Tinnin in its own factor lines.
+// The follow-up "Is my business connected to this?" failed on the two
+// false positives below.
+describe('validateNarration — planets in the factor lines and house lists', () => {
+  const contract = contractFor('2026-10-11T22:01:00+05:30', 'When should I launch this app');
+  const check = (text: string) =>
+    validateNarration(contract, baseNarration({ interpretation: text }));
+  const codes = (text: string) => {
+    const result = check(text);
+    return result.valid ? [] : result.failures.map(f => f.code);
+  };
+
+  it('fixes the reading the tests rely on', () => {
+    expect(contract.question.questionType).toBe('business');
+    expect(contract.celestialEntities).not.toContain('Rahu');
+    expect(contract.judgment.factors.join(' ')).toContain('Ras al-Tinnin');
+    expect(contract.judgment.factors.join(' ')).toContain('Dhanab al-Tinnin');
+  });
+
+  it('accepts every factor line of the reading repeated verbatim', () => {
+    for (const factor of contract.judgment.factors) {
+      expect(check(`The reading shows: ${factor}`).valid).toBe(true);
+    }
+  });
+
+  it('still rejects a planet the reading never names', () => {
+    expect(codes('Zuhal presses on the 7th Ghar.')).toContain('UNAUTHORIZED_CELESTIAL_ENTITY');
+  });
+
+  it('reads a list of ordinals ending in a house as houses, not dates', () => {
+    expect(check('Read through the 7th, 10th and 11th Ghar.').valid).toBe(true);
+    expect(check('The 10th and the 11th houses support it.').valid).toBe(true);
+  });
+
+  it('still reads a bare ordinal, or a list of them, as a date', () => {
+    expect(codes('The 7th Ghar leads, with the 10th and 11th supporting.')).toContain(
+      'TIMING_FABRICATION',
+    );
+    expect(codes('Launch on the 10th or the 12th.')).toContain('TIMING_FABRICATION');
+    expect(codes('Look again on the 10th and 11th days.')).toContain('TIMING_FABRICATION');
   });
 });

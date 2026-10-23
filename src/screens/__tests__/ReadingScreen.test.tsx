@@ -229,6 +229,8 @@ describe('ReadingScreen', () => {
         screen.getByText('The scrolls of this moment have not opened their seal. Try again.'),
       ).toBeTruthy(),
     );
+    // A failed cast shows the reference of the cast's own requestId.
+    expect(screen.getByText(`Ref ${onlyThread()!.requestId.slice(0, 8)}`)).toBeTruthy();
 
     // Now let a retry succeed.
     (httpsCallable as jest.Mock).mockImplementation((name: string) => {
@@ -448,7 +450,7 @@ describe('ReadingScreen', () => {
       });
     });
 
-    it('opens a follow-up judged to be its own question as a NEW Reading', async () => {
+    it('casts a follow-up judged to be its own question as a NEW Reading, on the same screen', async () => {
       const askCallable = jest.fn(() => Promise.resolve({ data: successPayload() }));
       (httpsCallable as jest.Mock).mockImplementation((name: string) => {
         if (name === 'askWatchOracle') {
@@ -482,16 +484,161 @@ describe('ReadingScreen', () => {
 
       await user.press(screen.getByTestId('oracle-chat-ask-as-new'));
 
-      // A new matter gets its OWN Reading, cast for its own moment. This
-      // Reading's context is never reused for it, and this Reading is not
-      // recast either. Its readingId travels forward as lineage, so the new
-      // Reading can be compared against it in discussion later.
-      expect(mockPush).toHaveBeenCalledWith('Reading', {
-        initialQuestion: 'Will my brother travel?',
-        relatedReadingIds: ['r1'],
+      // A new matter gets its OWN Reading, cast for its own moment — this
+      // Reading's context is never reused for it, nor is this Reading recast.
+      // It continues the conversation on this same screen (owner decision
+      // 2026-10-11), linked to this Reading, whose id travels forward as
+      // lineage for comparison in discussion.
+      await waitFor(() => expect(askCallable).toHaveBeenCalledTimes(2));
+      expect(askCallable.mock.calls[1]?.[0]).toMatchObject({
+        question: 'Will my brother travel?',
       });
-      expect(askCallable).toHaveBeenCalledTimes(1);
-      expect(useReadingThreadsStore.getState().threads).toHaveLength(1);
+      expect(mockPush).not.toHaveBeenCalled();
+      const [newer, first] = useReadingThreadsStore.getState().threads;
+      expect(newer?.question).toBe('Will my brother travel?');
+      expect(newer?.previousThreadId).toBe(first?.id);
+      expect(newer?.relatedReadingIds).toEqual(['r1']);
+      expect(newer?.requestId).not.toBe(first?.requestId);
+      // Both Readings are on screen, the earlier one above.
+      expect(screen.getByText('Will I get the job?')).toBeTruthy();
+      expect(screen.getAllByText('Will my brother travel?').length).toBeGreaterThan(0);
+    });
+
+    it('turns the composer to a new question once the oracle closes the conversation', async () => {
+      const askCallable = jest.fn(() => Promise.resolve({ data: successPayload() }));
+      const discussCallable = jest.fn(() =>
+        Promise.resolve({
+          data: {
+            answer: 'You hold what this reading can give.',
+            isNewQuestion: false,
+            turnsRemaining: 30,
+            conversationComplete: true,
+          },
+        }),
+      );
+      (httpsCallable as jest.Mock).mockImplementation((name: string) => {
+        if (name === 'askWatchOracle') {
+          return askCallable;
+        }
+        if (name === 'discussReading') {
+          return discussCallable;
+        }
+        return defaultImpl(name);
+      });
+
+      await renderScreen(<ReadingScreen />);
+      const user = userEvent.setup();
+      await askOnce(user);
+
+      await user.type(screen.getByTestId('oracle-chat-input'), 'Thank you, that helps.');
+      await user.press(screen.getByTestId('oracle-chat-send-btn'));
+      await waitFor(() =>
+        expect(screen.getByText('You hold what this reading can give.')).toBeTruthy(),
+      );
+      expect(
+        screen.getByText('✦ This Reading has said what it can — ask your next question'),
+      ).toBeTruthy();
+
+      // The next send is a new question: its own Reading, cast below this
+      // one on the same screen, with this one as lineage.
+      await user.type(screen.getByTestId('oracle-chat-input'), 'Will my visa come through?');
+      await user.press(screen.getByTestId('oracle-chat-send-btn'));
+
+      await waitFor(() => expect(askCallable).toHaveBeenCalledTimes(2));
+      expect(askCallable.mock.calls[1]?.[0]).toMatchObject({
+        question: 'Will my visa come through?',
+      });
+      expect(discussCallable).toHaveBeenCalledTimes(1);
+      expect(mockPush).not.toHaveBeenCalled();
+      const [newer, first] = useReadingThreadsStore.getState().threads;
+      expect(newer?.previousThreadId).toBe(first?.id);
+      expect(newer?.relatedReadingIds).toEqual(['r1']);
+      // The earlier Reading's closing reply is still on screen above.
+      expect(screen.getByText('You hold what this reading can give.')).toBeTruthy();
+    });
+
+    it('sends follow-ups to the newest Reading of the conversation', async () => {
+      const askCallable = jest.fn(() => Promise.resolve({ data: successPayload() }));
+      const discussCallable = jest
+        .fn()
+        .mockResolvedValueOnce({
+          data: {
+            answer: 'That is its own question, and needs its own moment.',
+            isNewQuestion: true,
+            turnsRemaining: 30,
+          },
+        })
+        .mockResolvedValueOnce({
+          data: { answer: 'The second reading holds.', isNewQuestion: false, turnsRemaining: 30 },
+        });
+      (httpsCallable as jest.Mock).mockImplementation((name: string) => {
+        if (name === 'askWatchOracle') {
+          return askCallable;
+        }
+        if (name === 'discussReading') {
+          return discussCallable;
+        }
+        return defaultImpl(name);
+      });
+
+      await renderScreen(<ReadingScreen />);
+      const user = userEvent.setup();
+      await askOnce(user);
+
+      await user.type(screen.getByTestId('oracle-chat-input'), 'Will my brother travel?');
+      await user.press(screen.getByTestId('oracle-chat-send-btn'));
+      await waitFor(() => expect(screen.getByTestId('oracle-chat-ask-as-new')).toBeTruthy());
+      await user.press(screen.getByTestId('oracle-chat-ask-as-new'));
+      await waitFor(() => expect(askCallable).toHaveBeenCalledTimes(2));
+      await waitFor(() =>
+        expect(useReadingThreadsStore.getState().threads[0]?.readingId).not.toBeNull(),
+      );
+
+      await user.type(screen.getByTestId('oracle-chat-input'), 'When?');
+      await user.press(screen.getByTestId('oracle-chat-send-btn'));
+      await waitFor(() => expect(screen.getByText('The second reading holds.')).toBeTruthy());
+
+      // The follow-up belongs to the newest Reading, and carries only its turns.
+      const newer = useReadingThreadsStore.getState().threads[0];
+      expect(newer?.messages.some(m => m.text === 'When?')).toBe(true);
+      expect(discussCallable.mock.calls[1]?.[0]).toMatchObject({
+        message: 'When?',
+        turns: [],
+        compareReadingIds: ['r1'],
+      });
+    });
+
+    it('shows an already-closed conversation as a close, not a failure to retry', async () => {
+      (httpsCallable as jest.Mock).mockImplementation((name: string) => {
+        if (name === 'askWatchOracle') {
+          return jest.fn(() => Promise.resolve({ data: successPayload() }));
+        }
+        if (name === 'discussReading') {
+          return jest.fn(() =>
+            Promise.reject(Object.assign(new Error('closed'), { code: 'resource-exhausted' })),
+          );
+        }
+        return defaultImpl(name);
+      });
+
+      await renderScreen(<ReadingScreen />);
+      const user = userEvent.setup();
+      await askOnce(user);
+
+      await user.type(screen.getByTestId('oracle-chat-input'), 'One more thing?');
+      await user.press(screen.getByTestId('oracle-chat-send-btn'));
+
+      await waitFor(() =>
+        expect(
+          screen.getByText(
+            'This Reading has said what it can. Ask your next question as a new Reading.',
+          ),
+        ).toBeTruthy(),
+      );
+      expect(oracleMessages().at(-1)?.status).toBe('sent');
+      expect(
+        screen.getByText('✦ This Reading has said what it can — ask your next question'),
+      ).toBeTruthy();
     });
 
     it('retries a follow-up under its own SAME requestId, so the turn is not spent twice', async () => {
@@ -530,6 +677,32 @@ describe('ReadingScreen', () => {
       // And it is persisted, so the id survives the app being killed.
       const pending = oracleMessages().find(m => m.variant === 'discussion');
       expect(pending?.requestId).toBe(first.requestId);
+    });
+
+    it('shows the reference the server logs a failed follow-up under', async () => {
+      const discussCallable = jest.fn(() =>
+        Promise.reject(Object.assign(new Error('down'), { code: 'unavailable' })),
+      );
+      (httpsCallable as jest.Mock).mockImplementation((name: string) => {
+        if (name === 'askWatchOracle') {
+          return jest.fn(() => Promise.resolve({ data: successPayload() }));
+        }
+        if (name === 'discussReading') {
+          return discussCallable;
+        }
+        return defaultImpl(name);
+      });
+
+      await renderScreen(<ReadingScreen />);
+      const user = userEvent.setup();
+      await askOnce(user);
+
+      await user.type(screen.getByTestId('oracle-chat-input'), 'Is my business connected to this?');
+      await user.press(screen.getByTestId('oracle-chat-send-btn'));
+      await waitFor(() => expect(screen.getByText('↻ Retry')).toBeTruthy());
+
+      const sent = discussCallable.mock.calls[0]?.[0] as { requestId: string };
+      expect(screen.getByText(`Ref ${sent.requestId.slice(0, 8)}`)).toBeTruthy();
     });
 
     it('retries a failed follow-up as a follow-up, never as a new reading', async () => {
@@ -662,6 +835,49 @@ describe('ReadingScreen', () => {
       ).toBe('2026-08-08T11:13:00+05:30');
     });
 
+    it('opens an earlier Reading of a conversation on the whole conversation, talking to the newest', async () => {
+      const askCallable = jest.fn(() => Promise.resolve({ data: successPayload() }));
+      const discussCallable = jest.fn(() =>
+        Promise.resolve({
+          data: { answer: 'About the later one.', isNewQuestion: false, turnsRemaining: 30 },
+        }),
+      );
+      (httpsCallable as jest.Mock).mockImplementation((name: string) => {
+        if (name === 'askWatchOracle') {
+          return askCallable;
+        }
+        if (name === 'discussReading') {
+          return discussCallable;
+        }
+        return defaultImpl(name);
+      });
+
+      const store = useReadingThreadsStore.getState();
+      store.createThread({ id: 't_a', question: 'Will the shop open?', questionLang: 'en' });
+      store.attachReading('t_a', { ...successPayload(), readingId: 'r_a' } as never);
+      store.createThread({
+        id: 't_b',
+        question: 'Will the loan be approved?',
+        questionLang: 'en',
+        relatedReadingIds: ['r_a'],
+        previousThreadId: 't_a',
+      });
+      store.attachReading('t_b', { ...successPayload(), readingId: 'r_b' } as never);
+      setRoute({ threadId: 't_a' });
+
+      await renderScreen(<ReadingScreen />);
+
+      expect(askCallable).not.toHaveBeenCalled();
+      expect(screen.getByText('Will the shop open?')).toBeTruthy();
+      expect(screen.getByText('Will the loan be approved?')).toBeTruthy();
+
+      const user = userEvent.setup();
+      await user.type(screen.getByTestId('oracle-chat-input'), 'And the timing?');
+      await user.press(screen.getByTestId('oracle-chat-send-btn'));
+      await waitFor(() => expect(screen.getByText('About the later one.')).toBeTruthy());
+      expect(discussCallable.mock.calls[0]?.[0]).toMatchObject({ readingId: 'r_b' });
+    });
+
     it("speaks a Reading in the language it was cast in, not the app's current one", async () => {
       // Cast in Urdu; the app is now showing English (renderScreen's default).
       const store = useReadingThreadsStore.getState();
@@ -786,6 +1002,33 @@ describe('ReadingScreen', () => {
 describe('errorMessageFor', () => {
   const t = ((key: string) => key) as unknown as Parameters<typeof errorMessageFor>[1];
   const exhausted = { code: 'resource-exhausted' };
+
+  it('explains a used free question with the price and balance the server sent', () => {
+    const calls: Array<[string, unknown]> = [];
+    const tt = ((key: string, params?: unknown) => {
+      calls.push([key, params]);
+      return key;
+    }) as unknown as Parameters<typeof errorMessageFor>[1];
+    const err = {
+      code: 'resource-exhausted',
+      details: { reason: 'free_used', questionCostMilli: 3000, balanceMilli: 1500 },
+    };
+    expect(errorMessageFor(err, tt)).toBe('wallet.freeQuestionUsed');
+    expect(calls[0]).toEqual(['wallet.freeQuestionUsed', { cost: '3.0', balance: '1.5' }]);
+  });
+
+  it('explains the paid fair-use limit', () => {
+    const err = { code: 'resource-exhausted', details: { reason: 'fair_use', limit: 10 } };
+    expect(errorMessageFor(err, t)).toBe('wallet.fairUseReached');
+  });
+
+  it('explains that discussing needs coins, rather than calling it the follow-up limit', () => {
+    const err = {
+      code: 'failed-precondition',
+      details: { reason: 'insufficient_coins', balanceMilli: 200, minBalanceMilli: 1000 },
+    };
+    expect(errorMessageFor(err, t, 'discuss')).toBe('wallet.discussionNeedsCoins');
+  });
 
   it('reports the daily quota when a cast is refused', () => {
     expect(errorMessageFor(exhausted, t)).toBe('oracleChat.quotaExhausted');

@@ -195,6 +195,21 @@ describe('DiscussReadingSchema', () => {
     expect(() => parse(DiscussReadingSchema, baseDiscussInput())).not.toThrow();
   });
 
+  it('accepts exactly 20 transcript turns and rejects 21', () => {
+    // The app trims its transcript to MAX_DISCUSSION_TURNS = 20
+    // (src/stores/readingThreadsStore.ts). If this bound changes, change that
+    // constant with it, or long conversations break again (audit 2026-10-15).
+    const turns = (n: number) =>
+      Array.from({ length: n }, (_, i) => ({
+        role: i % 2 === 0 ? 'seeker' : 'oracle',
+        text: `turn ${i}`,
+      }));
+    expect(() => parse(DiscussReadingSchema, baseDiscussInput({ turns: turns(20) }))).not.toThrow();
+    expect(() => parse(DiscussReadingSchema, baseDiscussInput({ turns: turns(21) }))).toThrow(
+      HttpsError,
+    );
+  });
+
   it('rejects an empty message', () => {
     expect(() => parse(DiscussReadingSchema, baseDiscussInput({ message: '' }))).toThrow(
       HttpsError,

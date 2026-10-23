@@ -33,6 +33,7 @@ import { useReadingsStore, type VerdictKind } from '@stores/readingsStore';
 import { useReadingThreadsStore } from '@stores/readingThreadsStore';
 import { useQuotaStore, FREE_DAILY_LIMIT, type PlanTier } from '@stores/quotaStore';
 import { deleteAccount } from '../firebase/account';
+import BrandFooter from '@components/ui/BrandFooter';
 
 const SEAL_IMAGE = require('@assets/images/sky-clock-disk.png');
 
@@ -450,6 +451,7 @@ const SettingsScreen: React.FC = () => {
           </View>
         </Section>
       </ScrollView>
+      <BrandFooter />
     </SafeAreaView>
   );
 };
