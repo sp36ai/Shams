@@ -181,6 +181,10 @@ export const ur: StringTable = {
       'یہ زائچہ جو کہہ سکتا تھا کہہ چکا۔ اپنا اگلا سوال نئے زائچے کے طور پر پوچھیں۔',
     discussionClosedHint: '✦ یہ زائچہ جو کہہ سکتا تھا کہہ چکا — اپنا اگلا سوال پوچھیں',
     suggestedQuestionsLabel: 'آپ پوچھ سکتے ہیں',
+    dayToday: 'آج',
+    dayYesterday: 'کل',
+    copied: 'کاپی ہو گیا',
+    copyHint: 'کاپی کرنے کے لیے دبائے رکھیں',
   },
 
   reading: {

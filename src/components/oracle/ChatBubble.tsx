@@ -90,7 +90,33 @@ interface ChatBubbleProps {
   onToggleSpeech: (messageId: string, text: string, lang: 'en' | 'ur' | 'hi') => void;
   /** Fills the seeker's message box with the tapped suggestion. Never sends. */
   onSelectSuggestedQuestion: (question: string) => void;
+  /**
+   * Long-press copy of a text bubble (the seeker's words, or a follow-up
+   * reply). Absent → bubbles are not copyable. Verdict cards are not copied
+   * here; the Reading's own Share action covers those.
+   */
+  onCopyText?: (text: string) => void;
+  /** Narration progress (0–1) of the ACTIVE message; null when nothing plays. */
+  ttsProgress?: number | null;
 }
+
+/** A thin bar under the play control, filled to how far narration has got. */
+const NarrationProgress: React.FC<{ progress: number }> = ({ progress }) => {
+  const colors = useColors();
+  const percent = Math.round(progress * 100);
+  return (
+    <View
+      style={[styles.progressTrack, { backgroundColor: colors.border }]}
+      testID="narration-progress"
+      accessibilityRole="progressbar"
+      accessibilityValue={{ min: 0, max: 100, now: percent }}
+    >
+      <View
+        style={[styles.progressFill, { width: `${percent}%`, backgroundColor: colors.goldBright }]}
+      />
+    </View>
+  );
+};
 
 const ChatBubble: React.FC<ChatBubbleProps> = ({
   message,
@@ -103,6 +129,8 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({
   ttsActiveMessageId,
   onToggleSpeech,
   onSelectSuggestedQuestion,
+  onCopyText,
+  ttsProgress = null,
 }) => {
   const colors = useColors();
   const typography = useTypography();
@@ -113,7 +141,13 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({
   if (isUser) {
     return (
       <View style={[styles.row, styles.rowUser]}>
-        <View style={[styles.bubble, styles.userBubble, { backgroundColor: colors.accent }]}>
+        <Pressable
+          onLongPress={onCopyText !== undefined ? () => onCopyText(message.text) : undefined}
+          disabled={onCopyText === undefined}
+          accessibilityHint={onCopyText !== undefined ? t('oracleChat.copyHint') : undefined}
+          style={[styles.bubble, styles.userBubble, { backgroundColor: colors.accent }]}
+          testID="chat-bubble-user"
+        >
           {message.kind === 'voice' && (
             <Text style={[typography('caption'), { color: colors.textOnPrimary, opacity: 0.75 }]}>
               {'🎙 ' + t('oracleChat.voiceInputTag')}
@@ -129,7 +163,7 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({
           >
             {bubbleTime(message.createdAt)}
           </Text>
-        </View>
+        </Pressable>
       </View>
     );
   }
@@ -230,11 +264,17 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({
   const reading = message.reading;
   const isSpeaking = ttsActiveMessageId === message.id && ttsStatus === 'speaking';
   const isPaused = ttsActiveMessageId === message.id && ttsStatus === 'paused';
+  const narrationProgress =
+    ttsActiveMessageId === message.id && ttsProgress !== null ? ttsProgress : null;
 
   if (message.variant === 'discussion') {
     return (
       <View style={[styles.row, styles.rowOracle]}>
-        <View
+        <Pressable
+          onLongPress={onCopyText !== undefined ? () => onCopyText(message.text) : undefined}
+          disabled={onCopyText === undefined}
+          accessibilityHint={onCopyText !== undefined ? t('oracleChat.copyHint') : undefined}
+          testID="chat-bubble-discussion"
           style={[
             styles.bubble,
             styles.oracleBubble,
@@ -288,10 +328,11 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({
                   : '▶ ' + t('oracleChat.listenToVerdict')}
             </Text>
           </Pressable>
+          {narrationProgress !== null && <NarrationProgress progress={narrationProgress} />}
           <Text style={[typography('caption'), styles.time, { color: colors.textFaint }]}>
             {bubbleTime(message.createdAt)}
           </Text>
-        </View>
+        </Pressable>
       </View>
     );
   }
@@ -334,6 +375,7 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({
             </Pressable>
           )}
         </View>
+        {narrationProgress !== null && <NarrationProgress progress={narrationProgress} />}
         {reading !== undefined && (
           <>
             <VerdictSeal verdict={reading.verdict} diagnosis={reading.oracle?.diagnosis} />
@@ -471,6 +513,16 @@ const styles = StyleSheet.create({
   },
   quickReplies: {
     width: '94%',
+  },
+  progressTrack: {
+    height: 2,
+    borderRadius: 1,
+    marginTop: 6,
+    marginBottom: 2,
+    overflow: 'hidden',
+  },
+  progressFill: {
+    height: 2,
   },
 });
 

@@ -92,6 +92,8 @@ import ChatBubble from '@components/oracle/ChatBubble';
 import ChatComposer from '@components/oracle/ChatComposer';
 import ReadingHeader from '@components/oracle/ReadingHeader';
 import { requestRef } from '@utils/requestRef';
+import { dayLabelFor, withDaySeparators, type DaySeparatorRow } from '@utils/chatTime';
+import { copyText } from '@utils/clipboard';
 import BrandFooter from '@components/ui/BrandFooter';
 import { formatCoins, useWalletStore } from '@stores/walletStore';
 
@@ -189,10 +191,23 @@ export function isOutOfScopeError(err: unknown): boolean {
   );
 }
 
-/** One row of the conversation: a Reading's moment chip, or a message. */
+/** One row of the conversation: a day chip, a Reading's moment chip, or a message. */
 type ChatItem =
+  | DaySeparatorRow
   | { kind: 'moment'; key: string; thread: ReadingThread }
   | { kind: 'message'; key: string; message: ReadingMessage; thread: ReadingThread };
+
+/** When a row happened, for day separators. A day chip itself has no time. */
+function chatItemTime(item: ChatItem): string | undefined {
+  switch (item.kind) {
+    case 'moment':
+      return item.thread.createdAt;
+    case 'message':
+      return item.message.createdAt;
+    default:
+      return undefined;
+  }
+}
 
 /**
  * One Reading as chat bubbles: the question that opened it is the seeker's
@@ -227,6 +242,41 @@ function lineageOf(thread: ReadingThread): string[] {
     ...(thread.relatedReadingIds ?? []),
   ].slice(0, 4);
 }
+
+/**
+ * A day chip between messages from different days — "Today", "Yesterday",
+ * or the date. A Reading can be discussed over several days; this keeps a
+ * reply from three days later from reading as if it came a minute after the
+ * verdict.
+ */
+const DaySeparator: React.FC<{ iso: string; lang: 'en' | 'ur' | 'hi' }> = ({ iso, lang }) => {
+  const colors = useColors();
+  const typography = useTypography();
+  const t = useTranslation();
+  const label = dayLabelFor(iso, new Date(), lang);
+  if (label === null) {
+    return null;
+  }
+  const text =
+    label.kind === 'today'
+      ? t('oracleChat.dayToday')
+      : label.kind === 'yesterday'
+        ? t('oracleChat.dayYesterday')
+        : label.text;
+  return (
+    <View style={styles.daySeparatorRow} testID="chat-day-separator">
+      <Text
+        style={[
+          typography('caption'),
+          styles.daySeparatorChip,
+          { color: colors.textMuted, backgroundColor: colors.surface, borderColor: colors.border },
+        ]}
+      >
+        {text}
+      </Text>
+    </View>
+  );
+};
 
 /** Shown before the first question of a new Reading. */
 const EmptyState: React.FC = () => {
@@ -359,7 +409,7 @@ const ReadingScreen: React.FC = () => {
         out.push({ kind: 'message', key: message.id, message, thread: reading });
       }
     });
-    return out;
+    return withDaySeparators(out, chatItemTime);
   }, [conversation]);
 
   // ── The two send paths ────────────────────────────────────────────────────
@@ -772,9 +822,13 @@ const ReadingScreen: React.FC = () => {
     }
   }, [items.length]);
 
+  const handleCopyText = useCallback((text: string) => copyText(text, t('oracleChat.copied')), [t]);
+
   const renderItem = useCallback(
     ({ item }: { item: ChatItem }) =>
-      item.kind === 'moment' ? (
+      item.kind === 'day' ? (
+        <DaySeparator iso={item.iso} lang={lang} />
+      ) : item.kind === 'moment' ? (
         <ReadingHeader thread={item.thread} />
       ) : (
         <ChatBubble
@@ -788,6 +842,8 @@ const ReadingScreen: React.FC = () => {
           ttsActiveMessageId={tts.activeMessageId}
           onToggleSpeech={tts.toggle}
           onSelectSuggestedQuestion={setInputText}
+          onCopyText={handleCopyText}
+          ttsProgress={tts.progress}
         />
       ),
     [
@@ -797,7 +853,9 @@ const ReadingScreen: React.FC = () => {
       tts.status,
       tts.activeMessageId,
       tts.toggle,
+      tts.progress,
       setInputText,
+      handleCopyText,
     ],
   );
 
@@ -970,6 +1028,17 @@ const styles = StyleSheet.create({
   listContent: {
     paddingVertical: 12,
     flexGrow: 1,
+  },
+  daySeparatorRow: {
+    alignItems: 'center',
+    marginVertical: 8,
+  },
+  daySeparatorChip: {
+    paddingHorizontal: 10,
+    paddingVertical: 3,
+    borderRadius: 10,
+    borderWidth: StyleSheet.hairlineWidth,
+    overflow: 'hidden',
   },
   emptyWrap: {
     flex: 1,

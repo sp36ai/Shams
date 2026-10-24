@@ -288,3 +288,57 @@ describe('useTextToSpeech', () => {
     });
   });
 });
+
+describe('narration progress', () => {
+  it('quantizedProgress rounds down to 5% steps and clamps to [0, 1]', () => {
+    const { quantizedProgress } = jest.requireActual('../useTextToSpeech');
+    expect(quantizedProgress(0, 100)).toBe(0);
+    expect(quantizedProgress(4, 100)).toBe(0);
+    expect(quantizedProgress(5, 100)).toBe(0.05);
+    expect(quantizedProgress(49, 100)).toBe(0.45);
+    expect(quantizedProgress(100, 100)).toBe(1);
+    expect(quantizedProgress(250, 100)).toBe(1);
+    expect(quantizedProgress(-3, 100)).toBe(0);
+    expect(quantizedProgress(10, 0)).toBe(0);
+    expect(quantizedProgress(Number.NaN, 100)).toBe(0);
+  });
+
+  it('is null while idle, 0 when speech starts, and follows tts-progress', async () => {
+    const { result } = await renderHook(() => useTextToSpeech());
+    expect(result.current.progress).toBeNull();
+
+    const text = 'x'.repeat(100);
+    result.current.speak('m1', text, 'en');
+    await waitFor(() => expect(result.current.progress).toBe(0));
+
+    await emitTts('tts-progress', { start: 52 });
+    expect(result.current.progress).toBe(0.5);
+  });
+
+  it('keeps progress across pause/resume, counting the already-spoken part', async () => {
+    const { result } = await renderHook(() => useTextToSpeech());
+    const text = 'y'.repeat(200);
+    result.current.speak('m1', text, 'en');
+    await waitFor(() => expect(result.current.status).toBe('speaking'));
+    await emitTts('tts-progress', { start: 50 }); // 25%
+
+    result.current.toggle('m1', text, 'en'); // pause
+    await waitFor(() => expect(result.current.status).toBe('paused'));
+    expect(result.current.progress).toBe(0.25);
+
+    result.current.toggle('m1', text, 'en'); // resume: remainder starts at offset 0
+    await waitFor(() => expect(result.current.status).toBe('speaking'));
+    await emitTts('tts-progress', { start: 50 }); // 50 more of 200 → 100/200
+    expect(result.current.progress).toBe(0.5);
+  });
+
+  it('clears to null when narration finishes', async () => {
+    const { result } = await renderHook(() => useTextToSpeech());
+    result.current.speak('m1', 'z'.repeat(40), 'en');
+    await waitFor(() => expect(result.current.progress).toBe(0));
+
+    await emitTts('tts-finish', { utteranceId: 1 });
+    expect(result.current.progress).toBeNull();
+    expect(result.current.activeMessageId).toBeNull();
+  });
+});

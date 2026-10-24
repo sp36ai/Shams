@@ -172,6 +172,10 @@ export const en: StringTable = {
       'This Reading has said what it can. Ask your next question as a new Reading.',
     discussionClosedHint: '✦ This Reading has said what it can — ask your next question',
     suggestedQuestionsLabel: 'You may ask',
+    dayToday: 'Today',
+    dayYesterday: 'Yesterday',
+    copied: 'Copied',
+    copyHint: 'Long press to copy',
   },
 
   reading: {
