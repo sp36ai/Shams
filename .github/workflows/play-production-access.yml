@@ -1,0 +1,46 @@
+name: Play production access check
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
+
+# Read-only. Reports whether Google Play will accept a production release for
+# this app yet. Until 15 Oct 2026 every production release was refused with
+# FAILED_PRECONDITION because the developer account had no production access
+# (see PR #193). This answers "is it unlocked yet?" without building or
+# publishing anything.
+#
+# How: scripts/play-diagnose.py opens a temporary edit, stages a DRAFT
+# production release of the newest already-uploaded version code, asks Play
+# to validate it, and deletes the edit. Nothing is committed, so no release,
+# review submission or track change can result. The verdict line
+# PRODUCTION_ACCESS=locked|unlocked|unknown is printed in the log and in the
+# run summary.
+on:
+  schedule:
+    - cron: '41 3 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  # Share the release workflow's group: Play allows one open edit per app, so
+  # this check must never overlap a real upload.
+  group: release-play-store
+  cancel-in-progress: false
+
+jobs:
+  check:
+    name: Check production access
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Ask Google Play (read-only, never commits)
+        env:
+          PLAY_SA_JSON: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON }}
+        run: |
+          pip install --quiet --disable-pip-version-check google-auth requests
+          python3 scripts/play-diagnose.py com.astrosarfaraz.shamsalasrar production draft

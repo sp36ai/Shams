@@ -152,3 +152,14 @@ android/app/build/outputs/
 
 # Firestore emulator log
 firestore-debug.log
+
+# android/app/debug.keystore IS committed, despite the *.keystore excludes
+# above — see its own signingConfigs.debug comment in android/app/build.gradle.
+# It's a debug-only keystore (password "android", never used for release
+# signing), and CI needs it to be the SAME keystore on every run, not a
+# fresh one each time (see #132: a freshly generated debug keystore has a
+# different SHA-1 every run, which Firebase's Android API key restrictions
+# can never be configured to allow — every CI signup silently failed
+# Firebase Auth as a result). A single committed keystore has one stable
+# SHA-1 the project owner registers once in Firebase Console.
+!android/app/debug.keystore

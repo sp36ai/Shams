@@ -196,6 +196,14 @@ export interface StringTable {
     moonManzilTitle: string;
     rulingPlanetsNowLabel: string;
     currentHoraLordLabel: string;
+    horaName: string;
+    dayIsUnder: string;
+    hourCarries: string;
+    openAlFalakA11y: string;
+    menuA11y: string;
+    trialEndsSoon: string;
+    trialEndsTonight: string;
+    choosePathA11y: string;
   };
   oracleChat: {
     headerTitle: string;
@@ -208,6 +216,8 @@ export interface StringTable {
     readingChart: string;
     retry: string;
     failedGeneric: string;
+    outOfScope: string;
+    failureRef: string;
     quotaExhausted: string;
     micPermissionDenied: string;
     noSpeechDetected: string;
@@ -236,6 +246,9 @@ export interface StringTable {
     separateQuestionNote: string;
     discussionUnavailable: string;
     discussionReadingGone: string;
+    discussionLimitReached: string;
+    /** Composer hint once the oracle has closed a Reading's conversation. */
+    discussionClosedHint: string;
     /** Header over the suggested-follow-up-question chips. */
     suggestedQuestionsLabel: string;
     /** Day separator for messages sent today / yesterday. */
@@ -340,7 +353,28 @@ export interface StringTable {
     deleteAccountConfirmBody: string;
     deleteAccountError: string;
   };
+  wallet: {
+    title: string;
+    coinsA11y: string;
+    unknown: string;
+    rate: string;
+    freeAvailable: string;
+    nextFree: string;
+    priceQuestion: string;
+    priceDiscussion: string;
+    premium: string;
+    buySoon: string;
+    seePremium: string;
+    freeQuestionLabel: string;
+    available: string;
+    nextLabel: string;
+    todayLabel: string;
+    freeQuestionUsed: string;
+    fairUseReached: string;
+    discussionNeedsCoins: string;
+  };
   theme: {
+    midnightCelestial: string;
     darAlShams: string;
     laylAlBahr: string;
     narAlHadid: string;

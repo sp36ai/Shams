@@ -307,8 +307,8 @@ firebase deploy --only functions,firestore --project shams-app-4d0e7
 ### Cloud Functions Logs
 
 ```bash
-gcloud functions describe askOracle --region=asia-south1 --gen2
-gcloud functions logs read askOracle --region=asia-south1 --limit=50
+gcloud functions describe askWatchOracle --region=asia-south1 --gen2
+gcloud functions logs read askWatchOracle --region=asia-south1 --limit=50
 ```
 
 Or via [Cloud Logging Console](https://console.cloud.google.com/logs)
@@ -353,7 +353,7 @@ firebase validate-rules firestore.rules
 # Local test
 cd functions
 npm run serve  # Start emulator
-# Test askOracle via Firestore emulator
+# Test askWatchOracle via Firestore emulator
 ```
 
 ### App Check Mismatch

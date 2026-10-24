@@ -20,6 +20,7 @@ import { useColors, useTheme } from '@theme/ThemeProvider';
 import { useTypography } from '@theme/useTypography';
 import { useTranslation } from '@i18n/I18nProvider';
 import StarfieldBackground from '@components/StarfieldBackground';
+import BrandFooter from '@components/ui/BrandFooter';
 
 const SEAL_IMAGE = require('@assets/images/sky-clock-disk.png');
 
@@ -298,6 +299,9 @@ const SplashScreen: React.FC = () => {
           {t('app.tagline')}
         </Text>
       </Animated.View>
+      <View style={styles.footer} pointerEvents="none">
+        <BrandFooter />
+      </View>
     </View>
   );
 };
@@ -308,6 +312,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 32,
+  },
+  footer: {
+    position: 'absolute',
+    start: 0,
+    end: 0,
+    bottom: 24,
   },
   rays: {
     marginBottom: -40, // let the rays overlap into the halo/seal above it

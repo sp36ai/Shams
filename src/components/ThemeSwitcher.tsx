@@ -21,7 +21,7 @@ import { useNavigation } from '@react-navigation/native';
 import type { AppNavigation } from '@navigation/types';
 import { useTheme, useColors } from '@theme/ThemeProvider';
 import {
-  THEME_IDS,
+  pickerThemeIds,
   THEME_TIER,
   getTheme,
   isThemeUnlocked,
@@ -33,6 +33,7 @@ import { useQuotaStore, type PlanTier } from '@stores/quotaStore';
 
 // Dot preview colors per theme (the "sphere" swatch)
 const THEME_DOT_COLORS: Record<ThemeId, [string, string]> = {
+  midnightCelestial: ['#F2D9A0', '#061722'],
   darAlShams: ['#F0C84A', '#3A2808'],
   laylAlBahr: ['#90C8E0', '#060810'],
   narAlHadid: ['#F09060', '#0C0806'],
@@ -41,6 +42,8 @@ const THEME_DOT_COLORS: Record<ThemeId, [string, string]> = {
   sirrAlBanafsaj: ['#A78BFA', '#0B0A14'],
   qutbAlAnwar: ['#F2F4F8', '#0A0C10'],
   kanzAlAsrar: ['#F0BE8A', '#08110D'],
+  qamarAlFidda: ['#F1F5FB', '#0B0F1A'],
+  zumurrudAlMalakut: ['#F3DC9A', '#0E3326'],
 };
 
 const TIER_LABEL: Record<PlanTier, string> = {
@@ -65,7 +68,7 @@ export function ThemeSwitcher() {
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.row}
       >
-        {THEME_IDS.map(id => {
+        {pickerThemeIds(themeId).map(id => {
           const t = getTheme(id);
           const isActive = id === themeId;
           const unlocked = isThemeUnlocked(id, plan);

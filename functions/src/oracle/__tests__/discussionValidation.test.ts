@@ -115,7 +115,8 @@ describe('PHASE 5F — validateDiscussionReply: positive/negative controls', () 
   it('4. unauthorized celestial entity → rejected', () => {
     const result = validateDiscussionReply(
       primary,
-      'Jupiter also weighs heavily on this matter, in ways not yet discussed.',
+      // Not Jupiter: Mushtari is in this reading's own factor lines.
+      'Venus also weighs heavily on this matter, in ways not yet discussed.',
     );
     expect(result.valid).toBe(false);
   });
@@ -342,6 +343,27 @@ describe('PHASE 5F — composeDiscussionReply integration: invalid output never 
     expect(reply?.answer).toBe(
       'The chart still shows delay, not denial — patience remains the guidance.',
     );
+  });
+
+  it('the discussion request asks the API to enforce the three-key JSON shape', async () => {
+    mockFetchAnswer('The chart still shows delay, not denial — patience remains the guidance.');
+    await composeDiscussionReply({
+      groundings: grounding(primary),
+      turns: [],
+      message: 'What does the reading say?',
+      replyLang: 'en',
+    });
+
+    const [, init] = vi.mocked(globalThis.fetch).mock.calls[0] as [string, RequestInit];
+    const body = JSON.parse(init.body as string) as {
+      output_config: { format: { type: string; schema: { required: string[] } } };
+    };
+    expect(body.output_config.format.type).toBe('json_schema');
+    expect(body.output_config.format.schema.required).toEqual([
+      'answer',
+      'is_new_question',
+      'conversation_complete',
+    ]);
   });
 
   it('a null contract (legacy reading) does not block an otherwise-normal reply', async () => {

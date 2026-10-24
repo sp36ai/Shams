@@ -1,4 +1,4 @@
-import { bubbleTimeLabel, dayLabelFor, localDayKey, withDaySeparators } from '../chatTime';
+import { dayLabelFor, localDayKey, withDaySeparators } from '../chatTime';
 
 /** A local-time instant, so every assertion holds in any test-machine timezone. */
 function local(y: number, mo: number, d: number, h = 12, mi = 0): string {
@@ -14,18 +14,6 @@ describe('localDayKey', () => {
   it('returns null for an unparseable timestamp', () => {
     expect(localDayKey('not a date')).toBeNull();
     expect(localDayKey('')).toBeNull();
-  });
-});
-
-describe('bubbleTimeLabel', () => {
-  it('formats hours and minutes', () => {
-    const label = bubbleTimeLabel(local(2026, 9, 23, 16, 7), 'en');
-    expect(label).toMatch(/4:07/);
-  });
-
-  it('shows nothing, never "Invalid Date", for an unparseable timestamp', () => {
-    expect(bubbleTimeLabel('garbage', 'en')).toBeNull();
-    expect(bubbleTimeLabel('garbage', 'ur')).toBeNull();
   });
 });
 
@@ -61,43 +49,41 @@ describe('dayLabelFor', () => {
 });
 
 describe('withDaySeparators', () => {
-  const msg = (id: string, createdAt: string) => ({ id, createdAt });
+  const row = (key: string, at?: string) => ({ key, at });
+  const sep = (rows: { key: string; at?: string }[]) => withDaySeparators(rows, r => r.at);
+  const keys = (out: ReturnType<typeof sep>) =>
+    out.map(r => ('kind' in r && r.kind === 'day' ? `|${r.key}` : r.key));
 
   it('is empty for an empty conversation', () => {
-    expect(withDaySeparators([])).toEqual([]);
+    expect(sep([])).toEqual([]);
   });
 
-  it('puts one separator before the first message and one at each day change', () => {
-    const rows = withDaySeparators([
-      msg('a', local(2026, 9, 21, 10)),
-      msg('b', local(2026, 9, 21, 11)),
-      msg('c', local(2026, 9, 23, 9)),
+  it('puts one separator before the first row and one at each day change', () => {
+    const out = sep([
+      row('a', local(2026, 9, 21, 10)),
+      row('b', local(2026, 9, 21, 11)),
+      row('c', local(2026, 9, 23, 9)),
     ]);
-    expect(rows.map(r => (r.type === 'separator' ? `|${r.key}` : r.key))).toEqual([
-      '|day_2026-09-21',
-      'a',
-      'b',
-      '|day_2026-09-23',
-      'c',
-    ]);
+    expect(keys(out)).toEqual(['|day_2026-09-21', 'a', 'b', '|day_2026-09-23', 'c']);
   });
 
-  it('keeps message order and never lets an unparseable timestamp start a new day', () => {
-    const rows = withDaySeparators([
-      msg('a', local(2026, 9, 23, 10)),
-      msg('broken', 'not a date'),
-      msg('b', local(2026, 9, 23, 11)),
+  it('keeps order and never lets a missing or unparseable time start a new day', () => {
+    const out = sep([
+      row('a', local(2026, 9, 23, 10)),
+      row('broken', 'not a date'),
+      row('untimed'),
+      row('b', local(2026, 9, 23, 11)),
     ]);
-    expect(rows.map(r => r.key)).toEqual(['day_2026-09-23', 'a', 'broken', 'b']);
+    expect(keys(out)).toEqual(['|day_2026-09-23', 'a', 'broken', 'untimed', 'b']);
   });
 
   it('gives every row a unique key', () => {
-    const rows = withDaySeparators([
-      msg('a', local(2026, 9, 21)),
-      msg('b', local(2026, 9, 22)),
-      msg('c', local(2026, 9, 23)),
+    const out = sep([
+      row('a', local(2026, 9, 21)),
+      row('b', local(2026, 9, 22)),
+      row('c', local(2026, 9, 23)),
     ]);
-    const keys = rows.map(r => r.key);
-    expect(new Set(keys).size).toBe(keys.length);
+    const all = out.map(r => r.key);
+    expect(new Set(all).size).toBe(all.length);
   });
 });

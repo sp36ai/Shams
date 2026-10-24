@@ -57,8 +57,12 @@ android {
         // armeabi-v7a excluded: Windows MAX_PATH limit causes CMake object-file paths
         // to exceed 260 chars during reanimated native build. All Android 7+ (API 24+)
         // production devices are arm64-v8a. x86_64 retained for emulator testing.
+        // Read from reactNativeArchitectures (gradle.properties: arm64-v8a,x86_64)
+        // so CI's E2E build can pass -PreactNativeArchitectures=x86_64 and skip
+        // the arm64 C++ compile; RNGP only *adds* to abiFilters, so a hardcoded
+        // list here would keep building arm64 regardless (#123).
         ndk {
-            abiFilters "arm64-v8a", "x86_64"
+            abiFilters(*(findProperty("reactNativeArchitectures") ?: "arm64-v8a,x86_64").split(",").collect { it.trim() })
         }
     }
 

@@ -141,6 +141,18 @@ function intensityMismatched(diagnosis: RkpDiagnosis, remedy: Remedy): boolean {
   );
 }
 
+/**
+ * Whether a remedy's planetary correspondence is the planet obstructing this
+ * reading. Qamar's disagreement is recorded as 'MoonDisagreement' rather than
+ * as a planet; it is the unsettled Qamar the Moon remedy describes, so it
+ * matches the Moon.
+ */
+function correspondsToObstruction(diagnosis: RkpDiagnosis, remedy: Remedy): boolean {
+  const agent =
+    diagnosis.obstructingAgent === 'MoonDisagreement' ? 'Moon' : diagnosis.obstructingAgent;
+  return agent !== null && (remedy.planetaryCorrespondences?.includes(agent) ?? false);
+}
+
 function scoreRemedy(
   diagnosis: RkpDiagnosis,
   remedy: Remedy,
@@ -151,6 +163,13 @@ function scoreRemedy(
   }
   // Level-5 entries are admitted only through the escalation path.
   if (remedy.category === 'practical' && remedy.escalationFor) {
+    return null;
+  }
+  // A remedy tied to a planet speaks of that planet carrying the obstruction
+  // ("where Zuhal carries the obstruction…"). Owner decision, 2026-10-08: it is
+  // eligible only when that planet is the obstructing agent, so its own words
+  // stay true. Remedies tied to no planet are unaffected.
+  if (remedy.planetaryCorrespondences?.length && !correspondsToObstruction(diagnosis, remedy)) {
     return null;
   }
 
@@ -175,10 +194,7 @@ function scoreRemedy(
     reasons.push(`suited to a ${diagnosis.outcome.toLowerCase()} reading`);
   }
 
-  if (
-    diagnosis.obstructingAgent &&
-    remedy.planetaryCorrespondences?.includes(diagnosis.obstructingAgent)
-  ) {
+  if (correspondsToObstruction(diagnosis, remedy)) {
     score += W.PLANETARY;
     reasons.push(`corresponds to the obstructing agent (${diagnosis.obstructingAgent})`);
   }

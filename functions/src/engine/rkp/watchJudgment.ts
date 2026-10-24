@@ -173,13 +173,19 @@ export function judgeWatchChart(chart: WatchChart, qType: QuestionType): WatchVe
   }
 
   // ── 2. Querent's ruler versus the matter's ruler ─────────────────────────
+  // Owner decision, 2026-10-08: when one planet rules both the querent and the
+  // matter (every 1st-Ghar question, and a matter in the ruler's other sign),
+  // there is no relation to judge. The classical table counts a planet its own
+  // friend, which scored +2 here on every such reading; this step now adds
+  // nothing and states no factor. `rulerRelation` is still recorded as-is.
   const rulerRelation = relationBetween(lagnaRuler, targetRuler);
-  if (rulerRelation === 'Friend') {
+  const sameRuler = lagnaRuler === targetRuler;
+  if (!sameRuler && rulerRelation === 'Friend') {
     score += 2;
     factors.push(
       `${lagnaRulerPos.name} (your own ruler) counts ${rulerPos.name} a friend — the matter is disposed to cooperate with you.`,
     );
-  } else if (rulerRelation === 'Enemy') {
+  } else if (!sameRuler && rulerRelation === 'Enemy') {
     score -= 2;
     factors.push(
       `${lagnaRulerPos.name} (your own ruler) counts ${rulerPos.name} an enemy — expect rigidity and refusal to adjust.`,

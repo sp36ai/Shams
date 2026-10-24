@@ -121,17 +121,18 @@ export function readPersistedLang(): LangCode {
 
 /**
  * Apply I18nManager direction for the given language.
- * Idempotent — only calls forceRTL when direction actually differs.
- * Returns true if a direction flip occurred (i.e. native restart needed).
+ * Always pins the direction (allowRTL + forceRTL), so a left-to-right
+ * language is never mirrored by an RTL device locale or a stale flag left by
+ * an earlier Urdu session. Both calls are persisted natively and take effect
+ * from the next native launch.
+ * Returns true if the running layout's direction differs from the target
+ * (i.e. a native restart is needed to see it).
  */
 export function applyLayoutDirection(lang: LangCode): boolean {
   const targetRTL = LANG_META[lang].isRTL;
-  if (I18nManager.isRTL === targetRTL) {
-    return false;
-  }
   I18nManager.allowRTL(targetRTL);
   I18nManager.forceRTL(targetRTL);
-  return true;
+  return I18nManager.isRTL !== targetRTL;
 }
 
 /* -------------------------------------------------------------------------- */

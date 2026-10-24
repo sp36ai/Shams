@@ -36,6 +36,24 @@ on:
           - alpha
           - beta
           - production
+      rollout:
+        description: >-
+          Production only. 'full' releases to 100% (required for an app's
+          first production release: Play rejects a staged first release).
+          'staged-10' starts at 10%. 'draft' leaves the release in Play
+          Console for you to roll out by hand.
+        required: false
+        default: 'full'
+        type: choice
+        options:
+          - full
+          - staged-10
+          - draft
+      dry_run:
+        description: 'Dry run: build + sign the AAB and keep it as an artifact, but do NOT upload to Play'
+        required: false
+        default: false
+        type: boolean
 
 permissions:
   contents: read
@@ -43,8 +61,15 @@ permissions:
 jobs:
   release:
     name: Build AAB and deploy to Play Store
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    env:
+      # Single source of truth for "is this a dry run": only a manual run with
+      # dry_run ticked. Accepts the typed boolean (inputs.dry_run) or its
+      # string form (github.event.inputs.dry_run) so a type surprise can't
+      # turn a ticked dry run into a real upload. Always the string 'true' or
+      # 'false'; the automatic workflow_run release is always 'false'.
+      IS_DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && (inputs.dry_run == true || github.event.inputs.dry_run == 'true') }}
     steps:
       - name: Checkout
         uses: actions/checkout@v5
@@ -75,6 +100,26 @@ jobs:
       - name: Write google-services.json
         run: |
           echo "${{ secrets.GOOGLE_SERVICES_JSON }}" | base64 -di > android/app/google-services.json
+
+      - name: Fingerprint google-services.json (diagnostic, no secret exposure)
+        # Prints only the first/last few characters of the API key and its
+        # length -- enough to compare against the real value in GCP Console
+        # without ever putting the full key in CI logs. Added after a build
+        # kept authenticating with a key GCP's own traffic logs reported as
+        # apikey:UNKNOWN -- there was no way to tell from a log line alone
+        # whether the secret held the current key or a stale local copy.
+        run: |
+          node -e '
+            const fs = require("fs");
+            const data = JSON.parse(fs.readFileSync("android/app/google-services.json", "utf8"));
+            const key = data.client?.[0]?.api_key?.[0]?.current_key ?? "(missing)";
+            const projectNumber = data.project_info?.project_number ?? "(missing)";
+            const appId = data.client?.[0]?.client_info?.mobilesdk_app_id ?? "(missing)";
+            const fp = key.length > 18 ? `${key.slice(0, 10)}...${key.slice(-6)}` : "(too short to fingerprint)";
+            console.log(`google-services.json api_key fingerprint: ${fp} (length=${key.length})`);
+            console.log(`project_number: ${projectNumber}`);
+            console.log(`mobilesdk_app_id: ${appId}`);
+          '
 
       - name: Decode keystore
         # PRECEDENCE IS LOAD-BEARING — BASE64_KEYSTORE must win.
@@ -156,8 +201,17 @@ jobs:
           key: gradle-${{ hashFiles('android/**/*.gradle*', 'android/gradle.properties') }}
           restore-keys: gradle-
 
+      # On a dry run, also sample memory/swap once a minute: the release build
+      # (both ABIs + R8) on this 7.75 GB free runner hasn't been measured since
+      # PR #123's memory fix was sized from the debug E2E build.
       - name: Build release AAB
         run: |
+          if [ "${IS_DRY_RUN}" = "true" ]; then
+            nproc && free -m
+            (while true; do date -u +%T; free -m | sed -n '2,3p'; sleep 60; done) &
+            MEM_MONITOR_PID=$!
+            trap 'kill $MEM_MONITOR_PID 2>/dev/null || true' EXIT
+          fi
           cd android && chmod +x gradlew && ./gradlew bundleRelease --no-daemon --no-build-cache --no-configuration-cache \
             -PSHAMS_UPLOAD_STORE_FILE=shams-upload-key.jks \
             -PSHAMS_UPLOAD_STORE_PASSWORD="${{ secrets.SHAMS_UPLOAD_STORE_PASSWORD }}" \
@@ -189,7 +243,7 @@ jobs:
             | grep -iE 'uses-sdk|targetSdk|minSdk|versionCode|versionName|package' || true
 
       - name: Upload AAB artifact
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: shams-aab-${{ github.run_number }}
           path: android/app/build/outputs/bundle/release/app-release.aab
@@ -209,15 +263,53 @@ jobs:
           # the release mechanism itself.
           retention-days: 3
 
+      # Skipped ONLY when IS_DRY_RUN is exactly 'true' (a manual run with
+      # dry_run ticked). Every other path -- the automatic workflow_run release
+      # after CI on main, and a manual run with dry_run left at its default
+      # false -- uploads exactly as before; anything other than 'true' falls
+      # back to uploading, never to silently skipping a real release.
       - name: Deploy to Play Store
+        id: play_deploy
+        if: env.IS_DRY_RUN != 'true'
         uses: r0adkll/upload-google-play@v1
         with:
           serviceAccountJsonPlainText: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON }}
           packageName: com.astrosarfaraz.shamsalasrar
           releaseFiles: android/app/build/outputs/bundle/release/app-release.aab
           tracks: ${{ github.event.inputs.track || 'internal' }}
-          # Production releases roll out staged at 10%; promote to 100% in
-          # Play Console (or re-run with a higher fraction) once stable.
-          status: ${{ github.event.inputs.track == 'production' && 'inProgress' || 'completed' }}
-          userFraction: ${{ github.event.inputs.track == 'production' && '0.1' || '' }}
+          # Production follows the `rollout` input. The default is 'full':
+          # the first production release (14 Oct 2026, staged at 10%) was
+          # refused with "Precondition check failed", and Play does not
+          # accept a staged rollout for an app's first production release.
+          # Choose 'staged-10' for later updates you want to roll out slowly.
+          status: >-
+            ${{ github.event.inputs.track != 'production' && 'completed'
+              || github.event.inputs.rollout == 'staged-10' && 'inProgress'
+              || github.event.inputs.rollout == 'draft' && 'draft'
+              || 'completed' }}
+          userFraction: ${{ github.event.inputs.track == 'production' && github.event.inputs.rollout == 'staged-10' && '0.1' || '' }}
           whatsNewDirectory: android/fastlane/metadata/android/en-US/changelogs
+
+      - name: Explain a Play rejection (read-only, never commits)
+        # r0adkll/upload-google-play prints only Google's short status
+        # ("Precondition check failed"). This asks the Play API directly and
+        # prints the real reason plus every track's state. It opens a
+        # temporary edit, validates, and deletes it: nothing is published.
+        if: failure() && steps.play_deploy.outcome == 'failure'
+        env:
+          PLAY_SA_JSON: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON }}
+          TRACK: ${{ github.event.inputs.track || 'internal' }}
+          STATUS: >-
+            ${{ github.event.inputs.track != 'production' && 'completed'
+              || github.event.inputs.rollout == 'staged-10' && 'inProgress'
+              || github.event.inputs.rollout == 'draft' && 'draft'
+              || 'completed' }}
+          FRACTION: ${{ github.event.inputs.track == 'production' && github.event.inputs.rollout == 'staged-10' && '0.1' || '' }}
+        run: |
+          pip install --quiet --disable-pip-version-check google-auth requests
+          python3 scripts/play-diagnose.py com.astrosarfaraz.shamsalasrar "$TRACK" "$STATUS" "$FRACTION"
+
+      - name: Dry run summary
+        if: env.IS_DRY_RUN == 'true'
+        run: |
+          echo "::notice::DRY RUN - the AAB was built and signed but NOT uploaded to Play. Download artifact shams-aab-${{ github.run_number }} (kept 3 days) to inspect it or upload it by hand."

@@ -23,9 +23,12 @@
  *   again to ask "what does that mean?" would price the seeker out of
  *   understanding the answer they already paid for, and would push them to
  *   re-ask the same question as a fresh reading, which is both worse for them
- *   and more expensive for us. Discussion is therefore free, and bounded
- *   instead: DISCUSSION_TURN_LIMIT turns per reading, enforced server-side on
- *   the reading document, on top of the ordinary per-minute rate limit.
+ *   and more expensive for us. Discussion is therefore free. It ends when the
+ *   oracle judges the conversation has done its work (`conversationComplete`,
+ *   owner decision 2026-10-11): that reply is a graceful close, and the
+ *   reading's `discussionClosed` is set so later follow-ups are declined.
+ *   DISCUSSION_TURN_LIMIT stays only as a cost ceiling, on top of the ordinary
+ *   per-minute rate limit — enforced server-side on the reading document.
  *
  * WHY THE GROUNDING IS LOADED, NOT ACCEPTED
  *   The client sends a readingId and the recent transcript — never the verdict.
@@ -42,7 +45,14 @@ import { enforceRateLimit } from '../middleware/rateLimit';
 import { parse, DiscussReadingSchema } from '../middleware/validate';
 import { measure } from '../middleware/telemetry';
 import { logger, hashText } from '../utils/logger';
-import { ORACLE_FUNCTION_OPTS, ANTHROPIC_API_KEY, DISCUSSION_TURN_LIMIT } from '../config';
+import {
+  ORACLE_FUNCTION_OPTS,
+  ANTHROPIC_API_KEY,
+  DISCUSSION_TURN_LIMIT,
+  MIN_DISCUSSION_BALANCE_MILLI,
+} from '../config';
+import { monetizationModeFor } from '../utils/monetization';
+import { chargeDiscussion, getBalanceMilli } from '../utils/wallet';
 import { claimRequest, completeRequest, releaseRequest } from '../utils/idempotency';
 import type { AuditLogDoc, ReadingDoc } from '../types';
 import type { WatchOracleComposition } from '../oracle/responseComposer';
@@ -52,6 +62,7 @@ import {
   type DiscussionTurn,
   type ReadingGrounding,
 } from '../oracle/discussionComposer';
+import { requestRef } from '../utils/requestRef';
 
 /**
  * A short, server-derived tag for a reading — "the finance reading", never
@@ -179,6 +190,15 @@ export interface DiscussReadingResponse {
   isNewQuestion: boolean;
   /** Follow-ups left on this reading, after this one. */
   turnsRemaining: number;
+  /**
+   * True when this reply closed the conversation. Later follow-ups on this
+   * reading are declined with the same error as an exhausted budget.
+   */
+  conversationComplete: boolean;
+  /** Coins mode: what this reply cost, in millicoins (1 coin = 1000). */
+  coinsChargedMilli?: number;
+  /** Coins mode: the wallet balance after this reply, in millicoins. */
+  balanceMilli?: number;
 }
 
 export const discussReading = onCall(
@@ -209,6 +229,14 @@ export const discussReading = onCall(
         }
       }
 
+      // On every failure log of this request, so the reference the app shows
+      // on a failed turn finds the stage that failed.
+      const failureRef = requestRef(requestId);
+      const logContext = {
+        readingId: input.readingId,
+        ...(failureRef !== undefined ? { ref: failureRef } : {}),
+      };
+
       const release = async (): Promise<void> => {
         if (requestId !== undefined) {
           await releaseRequest(userId, requestId);
@@ -216,6 +244,29 @@ export const discussReading = onCall(
       };
 
       const readingRef = db.collection('readings').doc(input.readingId);
+
+      // ── Coins mode: discussion is paid by tokens (utils/monetization.ts) ──
+      //
+      // A turn only starts with at least MIN_DISCUSSION_BALANCE_MILLI in the
+      // wallet; the reply is charged after it is served, by the tokens it
+      // actually used, and never takes the balance below zero. Nothing is
+      // charged for a turn that produces no reply.
+      const mode = await monetizationModeFor(userId);
+      if (mode === 'coins') {
+        const balanceMilli = await getBalanceMilli(userId);
+        if (balanceMilli < MIN_DISCUSSION_BALANCE_MILLI) {
+          await release();
+          throw new HttpsError(
+            'failed-precondition',
+            'Discussing a reading needs coins. Add coins to continue the conversation.',
+            {
+              reason: 'insufficient_coins',
+              balanceMilli,
+              minBalanceMilli: MIN_DISCUSSION_BALANCE_MILLI,
+            },
+          );
+        }
+      }
 
       // ── Load + ownership + turn budget, atomically ───────────────────────
       //
@@ -254,10 +305,10 @@ export const discussReading = onCall(
           }
 
           const used = data.discussionTurns ?? 0;
-          if (used >= DISCUSSION_TURN_LIMIT) {
+          if (data.discussionClosed === true || used >= DISCUSSION_TURN_LIMIT) {
             throw new HttpsError(
               'resource-exhausted',
-              'This reading has been discussed as far as it goes. Ask a new question.',
+              'This reading has said what it can. Ask your next question as a new Reading.',
             );
           }
 
@@ -284,7 +335,11 @@ export const discussReading = onCall(
         if (err instanceof HttpsError) {
           throw err;
         }
-        logger.error('discussReading: reading load failed', { err: String(err), userId });
+        logger.error('discussReading: reading load failed', {
+          ...logContext,
+          err: String(err),
+          userId,
+        });
         throw new HttpsError('internal', 'Could not open that reading.');
       }
 
@@ -326,6 +381,7 @@ export const discussReading = onCall(
         turns,
         message: input.message,
         replyLang: input.lang,
+        logContext,
       });
 
       if (reply === null) {
@@ -336,13 +392,34 @@ export const discussReading = onCall(
         // rather than inventing a new one). Give the turn back and let the
         // client offer a retry rather than serving invented or ungrounded
         // prose.
+        logger.warn('discussReading: no reply', { ...logContext, userId });
         await readingRef.update({ discussionTurns: FieldValue.increment(-1) }).catch(refundErr => {
           logger.warn('discussReading: turn refund failed', {
+            ...logContext,
             err: String(refundErr),
             userId,
           });
         });
+        // The claim must not outlive this attempt, same as the load-failure
+        // catch above: without this, a seeker who retries under the SAME
+        // requestId — exactly what the client's retry button does, and
+        // exactly what this error message invites — hits claimRequest's
+        // in-flight branch instead of a genuine retry, and is told "already
+        // being read" for up to IN_PROGRESS_TIMEOUT_MS even though nothing
+        // is running.
+        await release();
         throw new HttpsError('unavailable', 'The oracle did not answer. Try again.');
+      }
+
+      if (reply.conversationComplete) {
+        // The closing reply is still returned if this write fails; the next
+        // follow-up is then simply answered (or closed) again — no harm done.
+        await readingRef.update({ discussionClosed: true }).catch(closeErr => {
+          logger.warn('discussReading: marking discussion closed failed', {
+            err: String(closeErr),
+            userId,
+          });
+        });
       }
 
       const audit: Omit<AuditLogDoc, 'ts'> = {
@@ -358,10 +435,29 @@ export const discussReading = onCall(
         logger.warn('discussReading: audit log write failed', { err: String(err) });
       }
 
+      let charge: { chargedMilli: number; balanceMilli: number } | null = null;
+      if (mode === 'coins') {
+        try {
+          charge = await chargeDiscussion(userId, input.readingId, reply.tokensUsed);
+        } catch (err) {
+          // The seeker already has the reply; a failed charge is ours to absorb.
+          logger.error('discussReading: coin charge failed', {
+            ...logContext,
+            tokens: reply.tokensUsed,
+            err: String(err),
+            userId,
+          });
+        }
+      }
+
       const response: DiscussReadingResponse = {
         answer: reply.answer,
         isNewQuestion: reply.isNewQuestion,
         turnsRemaining,
+        conversationComplete: reply.conversationComplete,
+        ...(charge !== null
+          ? { coinsChargedMilli: charge.chargedMilli, balanceMilli: charge.balanceMilli }
+          : {}),
       };
 
       // Stored, so a retry replays THIS answer rather than spending another

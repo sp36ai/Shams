@@ -35,6 +35,13 @@ export const QUESTION_KEYWORDS: Readonly<Record<QuestionType, readonly string[]>
     'salary',
     'office',
     'boss',
+    // Inflected forms of the keywords above (2026-10-14). Matching is whole-
+    // word, so "married" never matched 'marry' and the question fell to
+    // 'general' (1st Ghar). No new vocabulary — only forms of existing words.
+    'jobs',
+    'interviews',
+    'interviewed',
+    'promoted',
     // UR
     'نوکری',
     'کام',
@@ -62,6 +69,18 @@ export const QUESTION_KEYWORDS: Readonly<Record<QuestionType, readonly string[]>
     'nikah',
     'engaged',
     'spouse',
+    // Inflected forms of the keywords above (2026-10-14). Matching is whole-
+    // word, so "married" never matched 'marry' and the question fell to
+    // 'general' (1st Ghar). No new vocabulary — only forms of existing words.
+    'married',
+    'marries',
+    'marrying',
+    'weddings',
+    'proposed',
+    'proposing',
+    // Owner decision 2026-10-14.
+    'girlfriend',
+    'ex',
     // UR
     'شادی',
     'رشتہ',
@@ -90,10 +109,30 @@ export const QUESTION_KEYWORDS: Readonly<Record<QuestionType, readonly string[]>
     'wealth',
     'pay',
     'cash',
+    // Inflected forms of the keywords above (2026-10-14). Matching is whole-
+    // word, so "married" never matched 'marry' and the question fell to
+    // 'general' (1st Ghar). No new vocabulary — only forms of existing words.
+    'loans',
+    'debts',
+    'investing',
+    'invested',
+    'profits',
+    'paid',
+    // Money lent or owed (owner decision 2026-10-08: lending questions about
+    // money are finance; about an object, lostitem — both judge the 2nd Ghar).
+    'owe',
+    'owes',
+    'owed',
+    'repay',
+    'repaid',
+    // Romanised Urdu/Hindi for credit (owner decision 2026-10-08: finance).
+    // Not 'udhar', which is also "there" (اُدھر / उधर).
+    'udhaar',
     // UR
     'پیسہ',
     'پیسے',
     'قرض',
+    'ادھار',
     'دولت',
     'سرمایہ',
     'منافع',
@@ -101,6 +140,7 @@ export const QUESTION_KEYWORDS: Readonly<Record<QuestionType, readonly string[]>
     'पैसा',
     'धन',
     'कर्ज',
+    'उधार',
     'निवेश',
     'लाभ',
     'हानि',
@@ -170,6 +210,16 @@ export const QUESTION_KEYWORDS: Readonly<Record<QuestionType, readonly string[]>
     'migrate',
     'immigration',
     'relocate',
+    // Inflected forms of the keywords above (2026-10-14). Matching is whole-
+    // word, so "married" never matched 'marry' and the question fell to
+    // 'general' (1st Ghar). No new vocabulary — only forms of existing words.
+    'travelling',
+    'traveling',
+    'travelled',
+    'traveled',
+    'trips',
+    'flights',
+    'visas',
     // UR
     'سفر',
     'ویزہ',
@@ -220,6 +270,14 @@ export const QUESTION_KEYWORDS: Readonly<Record<QuestionType, readonly string[]>
     'fail',
     'college',
     'scholarship',
+    // Inflected forms of the keywords above (2026-10-14). Matching is whole-
+    // word, so "married" never matched 'marry' and the question fell to
+    // 'general' (1st Ghar). No new vocabulary — only forms of existing words.
+    'exams',
+    'degrees',
+    'universities',
+    'colleges',
+    'scholarships',
     // UR
     'تعلیم',
     'امتحان',
@@ -244,17 +302,27 @@ export const QUESTION_KEYWORDS: Readonly<Record<QuestionType, readonly string[]>
     'partnership',
     'trade',
     'enterprise',
+    'app',
+    'apps',
+    // Owner decision 2026-10-14.
+    'shop',
+    'shops',
+    'sales',
+    'contract',
+    'contracts',
     // UR
     'کاروبار',
     'تجارت',
     'کمپنی',
     'شراکت',
+    'ایپ',
     // HI
     'व्यापार',
     'कारोबार',
     'कंपनी',
     'साझेदारी',
     'उद्यम',
+    'ऐप',
   ],
   children: [
     // EN
@@ -268,6 +336,13 @@ export const QUESTION_KEYWORDS: Readonly<Record<QuestionType, readonly string[]>
     'conceive',
     'pregnancy',
     'kid',
+    // Inflected forms of the keywords above (2026-10-14). Matching is whole-
+    // word, so "married" never matched 'marry' and the question fell to
+    // 'general' (1st Ghar). No new vocabulary — only forms of existing words.
+    'kids',
+    'babies',
+    'sons',
+    'daughters',
     // UR
     'بچہ',
     'اولاد',
@@ -290,17 +365,37 @@ export const QUESTION_KEYWORDS: Readonly<Record<QuestionType, readonly string[]>
     'search',
     'stolen',
     'misplaced',
+    // An object lent, borrowed or held by someone else (owner decision
+    // 2026-10-08, see finance above). Money words are matched by finance
+    // first, so "the money I lent" never reaches these.
+    'lend',
+    'lent',
+    'borrow',
+    'borrowed',
+    'give back',
+    'gave back',
+    'give me back',
+    'give my',
+    'return my',
+    'returned my',
     // UR
     'گم',
     'کھو',
     'چوری',
     'گمشدہ',
+    'واپس دے',
+    'واپس کرے',
+    'واپس کریں',
     // HI
     'खोया',
     'गुम',
     'चोरी',
     'गायब',
     'खोई',
+    'वापस देगा',
+    'वापस देगी',
+    'वापस करेगा',
+    'वापस करेगी',
   ],
   enemies: [
     // EN

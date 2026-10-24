@@ -5,7 +5,7 @@
 import React from 'react';
 import { fireEvent, screen } from '@testing-library/react-native';
 import { renderScreen } from '../../../test-utils/renderScreen';
-import ChatBubble from '../ChatBubble';
+import ChatBubble, { bubbleTime } from '../ChatBubble';
 import type { ReadingMessage } from '@stores/readingThreadsStore';
 
 const CREATED = new Date(2026, 8, 23, 16, 7).toISOString();
@@ -54,29 +54,13 @@ function renderBubble(
   );
 }
 
-describe('ChatBubble timestamps', () => {
-  it('shows the time on the seeker bubble', async () => {
-    await renderBubble(userMessage());
-    expect(screen.getByTestId('chat-bubble-time')).toHaveTextContent(/4:07/);
+describe('bubbleTime', () => {
+  it('formats hours and minutes', () => {
+    expect(bubbleTime(CREATED)).toMatch(/4:07/);
   });
 
-  it('shows the time on a follow-up reply and on a failed turn', async () => {
-    await renderBubble(replyMessage());
-    expect(screen.getByTestId('chat-bubble-time')).toHaveTextContent(/4:07/);
-
-    await renderBubble(replyMessage({ status: 'failed', errorMessage: 'Network' }));
-    expect(screen.getByTestId('chat-bubble-time')).toHaveTextContent(/4:07/);
-  });
-
-  it('shows no time rather than "Invalid Date" for a malformed record', async () => {
-    await renderBubble(userMessage({ createdAt: 'corrupted' }));
-    expect(screen.queryByTestId('chat-bubble-time')).toBeNull();
-    expect(screen.queryByText(/Invalid Date/)).toBeNull();
-  });
-
-  it('shows no time on a pending turn', async () => {
-    await renderBubble(replyMessage({ status: 'sending', text: '' }));
-    expect(screen.queryByTestId('chat-bubble-time')).toBeNull();
+  it('shows nothing, never "Invalid Date", for a malformed record', () => {
+    expect(bubbleTime('corrupted')).toBe('');
   });
 });
 

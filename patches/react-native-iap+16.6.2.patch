@@ -1,0 +1,28 @@
+diff --git a/node_modules/react-native-iap/src/kit-api.ts b/node_modules/react-native-iap/src/kit-api.ts
+index 2389bfa..a5a9ed5 100644
+--- a/node_modules/react-native-iap/src/kit-api.ts
++++ b/node_modules/react-native-iap/src/kit-api.ts
+@@ -482,19 +482,19 @@ export function kitApi(options: KitApiOptions) {
+       }
+       const query = new URLSearchParams();
+       if (productOptions.platform) {
+-        query.set("platform", productOptions.platform);
++        query.append("platform", productOptions.platform);
+       }
+       if (productOptions.includeClientPayload !== undefined) {
+-        query.set(
++        query.append(
+           "includeClientPayload",
+           String(productOptions.includeClientPayload),
+         );
+       }
+       if (productOptions.limit !== undefined) {
+-        query.set("limit", String(productOptions.limit));
++        query.append("limit", String(productOptions.limit));
+       }
+       if (productOptions.cursor !== undefined) {
+-        query.set("cursor", productOptions.cursor);
++        query.append("cursor", productOptions.cursor);
+       }
+       const encodedQuery = query.toString();
+       const suffix = encodedQuery ? `?${encodedQuery}` : "";

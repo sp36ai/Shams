@@ -81,6 +81,20 @@ export function assertSubscriptionActive(purchase: SubscriptionPurchase, now: nu
   return new Date(expiryMs);
 }
 
+/**
+ * Whether an HTTP response status from the Play Developer API's `acknowledge`
+ * endpoint represents a failure worth logging. Extracted as a pure predicate
+ * — rather than inlined at the one call site — because it used to not exist
+ * at all: httpsPostAuth() resolved on ANY response regardless of status, so
+ * a rejected acknowledgement (expired access token, malformed request, a
+ * Play API outage) silently left the subscription unacknowledged with
+ * nothing in Cloud Logging to explain the auto-refund Google issues days
+ * later for an unacknowledged purchase. Exported for unit testing.
+ */
+export function isAckFailure(status: number): boolean {
+  return status < 200 || status >= 300;
+}
+
 function httpsPost(url: string, body: string, headers: Record<string, string>): Promise<string> {
   return new Promise((resolve, reject) => {
     const u = new URL(url);
@@ -128,7 +142,10 @@ function httpsGet(url: string, accessToken: string): Promise<{ status: number; b
   });
 }
 
-function httpsPostAuth(url: string, accessToken: string): Promise<void> {
+function httpsPostAuth(
+  url: string,
+  accessToken: string,
+): Promise<{ status: number; body: string }> {
   return new Promise((resolve, reject) => {
     const u = new URL(url);
     const req = https.request(
@@ -139,8 +156,11 @@ function httpsPostAuth(url: string, accessToken: string): Promise<void> {
         headers: { Authorization: `Bearer ${accessToken}`, 'Content-Length': '0' },
       },
       res => {
-        res.on('data', () => undefined);
-        res.on('end', () => resolve());
+        let data = '';
+        res.on('data', (c: string) => {
+          data += c;
+        });
+        res.on('end', () => resolve({ status: res.statusCode ?? 0, body: data }));
       },
     );
     req.on('error', reject);
@@ -279,10 +299,25 @@ export const verifyGooglePlayPurchase = onCall(
         );
       }
 
-      // Acknowledge to prevent auto-refund (24h window)
+      // Acknowledge to prevent auto-refund (24h window). Non-fatal by
+      // design — the seeker already paid, so a failure here must not block
+      // granting the plan below — but it used to be INVISIBLE: the promise
+      // resolved on any response regardless of status, so a rejected
+      // acknowledgement (expired access token, malformed request, Play API
+      // outage) left the subscription silently unacknowledged with nothing
+      // in Cloud Logging to explain the eventual auto-refund days later.
       if (purchase.acknowledgementState === 0) {
         const ackUrl = `https://androidpublisher.googleapis.com/androidpublisher/v3/applications/${input.packageName}/purchases/subscriptions/${input.productId}/tokens/${input.purchaseToken}:acknowledge`;
-        await httpsPostAuth(ackUrl, accessToken);
+        const ackResult = await httpsPostAuth(ackUrl, accessToken);
+        if (isAckFailure(ackResult.status)) {
+          logger.warn('play subscription acknowledge failed — auto-refund risk', {
+            userId,
+            status: ackResult.status,
+            body: ackResult.body.slice(0, 200),
+            ipHash: requestMeta.ipHash,
+            durationMs: Date.now() - startedAt,
+          });
+        }
       }
 
       // Update Firestore

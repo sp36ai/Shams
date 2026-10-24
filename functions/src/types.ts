@@ -133,6 +133,14 @@ export interface QuotaResponse {
   remaining: number | null;
   dayKey: string; // "YYYY-MM-DD" (UTC day)
   planExpiry: string | null; // ISO 8601 or null for free/no expiry
+  /** Which pricing rules apply (absent from servers before the coin economy). */
+  mode?: 'legacy' | 'coins';
+  /** Coins mode: wallet balance in millicoins (1 coin = 1000). */
+  balanceMilli?: number;
+  /** Coins mode, free plan: when the next free question is available (null = now). */
+  nextFreeAt?: string | null;
+  /** Coins mode, free plan: price of an extra question, in millicoins. */
+  questionCostMilli?: number;
 }
 
 /** Firestore /quotas/{userId} document shape. */
@@ -141,6 +149,8 @@ export interface QuotaDoc {
   used: number;
   plan: PlanTier;
   planExpiry: string | null;
+  /** Coins mode, free plan: ISO time of the last free question (null = never). */
+  lastFreeAt?: string | null;
   updatedAt: FirebaseFirestore.Timestamp;
 }
 
@@ -187,6 +197,12 @@ export interface ReadingDoc {
    * Incremented (and refunded on failure) by discussReading.
    */
   discussionTurns?: number;
+  /**
+   * Set when the oracle closed the conversation about this reading
+   * (DiscussReadingResponse.conversationComplete). discussReading declines
+   * further follow-ups once it is true.
+   */
+  discussionClosed?: boolean;
   /**
    * PHASE 2B: which build of the chart/judgment engine produced this
    * reading — see ENGINE_VERSION (engine/primitives/chartBuilder.ts).

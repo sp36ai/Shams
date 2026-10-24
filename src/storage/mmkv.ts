@@ -55,8 +55,10 @@ export const KEYS = Object.freeze({
   LOCATION_LAST_LABEL: 'location.lastLabel.v1',
   LOCATION_LAST_TIMESTAMP: 'location.lastTimestamp.v1',
 
-  // Quota domain
-  QUOTA_WEEK: 'quota.week.v1',
+  // Quota domain. Value is 'quota.week.v1' for historical reasons (quota was
+  // weekly before switching to daily) -- kept as-is so existing installs'
+  // stored key isn't invalidated; only the in-code name was corrected.
+  QUOTA_DAY: 'quota.week.v1',
   QUOTA_COUNT: 'quota.count.v1',
   QUOTA_PLAN: 'quota.plan.v1',
   QUOTA_PLAN_EXPIRY: 'quota.planExpiry.v1',

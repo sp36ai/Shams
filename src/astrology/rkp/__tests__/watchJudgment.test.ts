@@ -28,7 +28,12 @@
  * only care what judgeWatchChart does with a chart shape it is handed.
  */
 import { judgeWatchChart, type WatchVerdict } from '@astrology/rkp/watchJudgment';
-import type { WatchChart, WatchHouse, WatchPlanet } from '@astrology/rkp/watchChart';
+import {
+  buildWatchChart,
+  type WatchChart,
+  type WatchHouse,
+  type WatchPlanet,
+} from '@astrology/rkp/watchChart';
 import { dignityOf, type Dignity } from '@astrology/rkp/rules';
 import { PLANET_NAME, SIGN_META, gharLabel, type HouseNumber } from '@astrology/rkp/nomenclature';
 import { PLANETS, type Planet, type SignIndex } from '@astrology/types/chart';
@@ -741,6 +746,32 @@ describe('determinism', () => {
     for (const qType of Object.keys(HOUSE_MATRIX) as QuestionType[]) {
       const chart = quietChart({ qType, targetOccupants: ['Jupiter'], moonHouse: 8 });
       expect(judgeWatchChart(chart, qType)).toEqual(judgeWatchChart(chart, qType));
+    }
+  });
+});
+
+describe('one planet ruling both the querent and the matter (owner decision 2026-10-08)', () => {
+  // Every 1st-Ghar question has the same ruler on both sides. Each 5-minute
+  // watch window carries its own lagna, so sample all twelve.
+  const moments = Array.from({ length: 12 }, (_, w) =>
+    new Date(Date.UTC(2026, 9, 8, 7, w * 5 + 2)).toISOString(),
+  );
+
+  it('neither scores the relation nor states it', () => {
+    for (const moment of moments) {
+      const verdict = judgeWatchChart(buildWatchChart(moment), 'general');
+      expect(verdict.targetRuler).toBe(verdict.lagnaRuler);
+      expect(verdict.factors.some(f => f.includes('(your own ruler) counts'))).toBe(false);
+    }
+  });
+
+  it('still judges the relation when the two rulers differ', () => {
+    const judged = moments
+      .map(moment => judgeWatchChart(buildWatchChart(moment), 'marriage'))
+      .filter(v => v.targetRuler !== v.lagnaRuler && v.rulerRelation !== 'Neutral');
+    expect(judged.length).toBeGreaterThan(0);
+    for (const verdict of judged) {
+      expect(verdict.factors.some(f => f.includes('(your own ruler) counts'))).toBe(true);
     }
   });
 });

@@ -1,13 +1,12 @@
 /**
- * chatTime — timestamps and day separators for a Reading's conversation.
+ * chatTime — day separators for a Reading's conversation.
  * --------------------------------------------------------------------------
  * Presentation only. Every value here is derived from a message's own stored
- * `createdAt`; nothing about the reading or its moment is touched. Times and
- * dates are shown in the device's local timezone, formatted for the UI
- * language.
+ * `createdAt`; nothing about the reading or its moment is touched. Days are
+ * the device's local calendar days; dates are formatted for the UI language.
  *
  * A malformed `createdAt` (a legacy or corrupted record) yields no label
- * rather than "Invalid Date": the bubble simply shows no time.
+ * rather than "Invalid Date", and never starts a new day.
  */
 
 type Lang = 'en' | 'ur' | 'hi';
@@ -32,15 +31,6 @@ export function localDayKey(iso: string): string | null {
   const mm = String(d.getMonth() + 1).padStart(2, '0');
   const dd = String(d.getDate()).padStart(2, '0');
   return `${d.getFullYear()}-${mm}-${dd}`;
-}
-
-/** The time shown in a bubble's corner, e.g. "4:07 PM". Null if unparseable. */
-export function bubbleTimeLabel(iso: string, lang: Lang): string | null {
-  const d = parse(iso);
-  if (d === null) {
-    return null;
-  }
-  return d.toLocaleTimeString(LOCALE_BY_LANG[lang], { hour: 'numeric', minute: '2-digit' });
 }
 
 export type DayLabel = { kind: 'today' } | { kind: 'yesterday' } | { kind: 'date'; text: string };
@@ -74,28 +64,33 @@ export function dayLabelFor(iso: string, now: Date, lang: Lang): DayLabel | null
   };
 }
 
-export type ChatRow<M> =
-  | { type: 'separator'; key: string; iso: string }
-  | { type: 'message'; key: string; message: M };
+/** A day chip row, as interleaved by withDaySeparators. */
+export interface DaySeparatorRow {
+  kind: 'day';
+  key: string;
+  iso: string;
+}
 
 /**
- * Interleave day separators into a conversation, WhatsApp-style: one before
- * the first message and one wherever the local day changes. Messages keep
- * their order; a message with an unparseable timestamp never starts a new
- * day, so it stays with the messages around it.
+ * Interleave day separators into a conversation's rows, WhatsApp-style: one
+ * before the first row and one wherever the local day changes. `isoOf` says
+ * when a row happened. Rows keep their order; a row with no time, or an
+ * unparseable one, never starts a new day, so it stays with the rows around it.
  */
-export function withDaySeparators<M extends { id: string; createdAt: string }>(
-  messages: readonly M[],
-): ChatRow<M>[] {
-  const rows: ChatRow<M>[] = [];
+export function withDaySeparators<T extends { key: string }>(
+  rows: readonly T[],
+  isoOf: (row: T) => string | undefined,
+): (T | DaySeparatorRow)[] {
+  const out: (T | DaySeparatorRow)[] = [];
   let currentDay: string | null = null;
-  for (const message of messages) {
-    const day = localDayKey(message.createdAt);
-    if (day !== null && day !== currentDay) {
-      rows.push({ type: 'separator', key: `day_${day}`, iso: message.createdAt });
+  for (const row of rows) {
+    const iso = isoOf(row);
+    const day = iso === undefined ? null : localDayKey(iso);
+    if (iso !== undefined && day !== null && day !== currentDay) {
+      out.push({ kind: 'day', key: `day_${day}`, iso });
       currentDay = day;
     }
-    rows.push({ type: 'message', key: message.id, message });
+    out.push(row);
   }
-  return rows;
+  return out;
 }

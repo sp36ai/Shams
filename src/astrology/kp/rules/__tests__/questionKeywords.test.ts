@@ -1,0 +1,92 @@
+import { classifyQuestion } from '../questionKeywords';
+
+describe('lending and returning questions (owner decision 2026-10-08)', () => {
+  it('judges an object lent or held by someone else as lostitem', () => {
+    expect(classifyQuestion('Will bilal give my laptop today')).toBe('lostitem');
+    expect(classifyQuestion('Will Bilal give my laptop back?')).toBe('lostitem');
+    expect(classifyQuestion('Will he return my phone?')).toBe('lostitem');
+    expect(classifyQuestion('I lent my car to a friend, will I get it back?')).toBe('lostitem');
+    expect(classifyQuestion('کیا وہ میری کتاب واپس کرے گا؟')).toBe('lostitem');
+    expect(classifyQuestion('क्या वह मेरी किताब वापस करेगा?')).toBe('lostitem');
+  });
+
+  it('judges money lent or owed as finance', () => {
+    expect(classifyQuestion('Will he return the money I lent him?')).toBe('finance');
+    expect(classifyQuestion('Will he repay me?')).toBe('finance');
+    expect(classifyQuestion('Will my brother pay back what he owes?')).toBe('finance');
+    expect(classifyQuestion('Will Ahmed return my loan?')).toBe('finance');
+    expect(classifyQuestion('کیا وہ میرا قرض واپس کرے گا؟')).toBe('finance');
+    // ادھار / उधार (credit) is finance, owner decision 2026-10-08.
+    expect(classifyQuestion('کیا وہ میرا ادھار واپس کرے گا؟')).toBe('finance');
+    expect(classifyQuestion('क्या वह मेरा उधार वापस करेगा?')).toBe('finance');
+    expect(classifyQuestion('Will he return my udhaar?')).toBe('finance');
+  });
+
+  it('leaves questions that only look alike with their own type', () => {
+    expect(classifyQuestion('Will they give me the job?')).toBe('career');
+    expect(classifyQuestion('Will I travel abroad and return?')).toBe('travel');
+    expect(classifyQuestion('Will my marriage happen this year?')).toBe('marriage');
+    // "udhar" / اُدھر / उधर mean "there", not credit.
+    expect(classifyQuestion('Is my lost ring over udhar?')).toBe('lostitem');
+    expect(classifyQuestion('क्या मेरी अंगूठी उधर है?')).toBe('general');
+  });
+});
+
+describe('apps are business (owner decision 2026-10-10)', () => {
+  it('judges a question about an app as business', () => {
+    expect(classifyQuestion('Will this app will be successful')).toBe('business');
+    expect(classifyQuestion('When will this app will be launched successfully')).toBe('business');
+    expect(classifyQuestion('Will my apps do well?')).toBe('business');
+    expect(classifyQuestion('کیا میری ایپ کامیاب ہوگی؟')).toBe('business');
+    expect(classifyQuestion('क्या मेरा ऐप सफल होगा?')).toBe('business');
+  });
+
+  it('matches the whole word only', () => {
+    expect(classifyQuestion('Will my application be accepted?')).not.toBe('business');
+    expect(classifyQuestion('Will he apply the remedy?')).not.toBe('business');
+  });
+
+  it('leaves an earlier type in charge when the question names one', () => {
+    expect(classifyQuestion('Will I get a job through this app?')).toBe('career');
+    expect(classifyQuestion('Will my app make money?')).toBe('finance');
+  });
+});
+
+describe('inflected forms of existing keywords', () => {
+  it('matches the listed inflected forms of existing keywords', () => {
+    expect(classifyQuestion('Will I get married this year?')).toBe('marriage');
+    expect(classifyQuestion('When will I get married?')).toBe('marriage');
+    expect(classifyQuestion('Has he proposed yet?')).toBe('marriage');
+    expect(classifyQuestion('Will my exams go well?')).toBe('education');
+    expect(classifyQuestion('Am I travelling next month?')).toBe('travel');
+    expect(classifyQuestion('Will my debts be cleared?')).toBe('finance');
+  });
+
+  it('adds no new vocabulary and leaves generic words alone', () => {
+    expect(classifyQuestion('Will I get selected?')).toBe('general');
+    expect(classifyQuestion('Is someone plotting against me?')).toBe('general');
+    expect(classifyQuestion('Are you kidding?')).toBe('general');
+    // 'fail' is an education keyword, but a failing business is business.
+    expect(classifyQuestion('Should I close my failing business?')).toBe('business');
+    // Whole-word boundaries still hold: "artwork" is not "work".
+    expect(classifyQuestion('Will my artwork sell?')).toBe('general');
+  });
+});
+
+describe('relationship and business words (owner decision 2026-10-14)', () => {
+  it('judges girlfriend / ex as marriage', () => {
+    expect(classifyQuestion('Will my girlfriend come back?')).toBe('marriage');
+    expect(classifyQuestion('Will my ex return?')).toBe('marriage');
+  });
+
+  it('judges shop / sales / contract as business', () => {
+    expect(classifyQuestion('Will my shop do well?')).toBe('business');
+    expect(classifyQuestion('Will my sales increase?')).toBe('business');
+    expect(classifyQuestion('Will I get the contract?')).toBe('business');
+  });
+
+  it('keeps an earlier type when the question names one', () => {
+    expect(classifyQuestion('Will I sign the job contract?')).toBe('career');
+    expect(classifyQuestion('Should I go shopping?')).toBe('general');
+  });
+});

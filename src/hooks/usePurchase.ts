@@ -2,14 +2,15 @@ import { useCallback, useEffect, useState } from 'react';
 import {
   initConnection,
   endConnection,
-  getSubscriptions,
-  requestSubscription,
+  fetchProducts,
+  requestPurchase,
   getAvailablePurchases,
   purchaseUpdatedListener,
   purchaseErrorListener,
   finishTransaction,
-  type SubscriptionPurchase,
+  type Purchase,
   type PurchaseError,
+  type ProductSubscription,
 } from 'react-native-iap';
 
 import { regionalFunctions } from '../firebase/functionsRegion';
@@ -18,13 +19,20 @@ import { withTimeout } from '../utils/withTimeout';
 import { useQuotaStore } from '@stores/quotaStore';
 import type { PlanTier } from '@stores/quotaStore';
 
-type AndroidSubscriptionProduct = {
-  subscriptionOfferDetails?: Array<{ offerToken: string; basePlanId: string }>;
-};
+export type PurchasePlan =
+  | 'premium_monthly'
+  | 'mureed_monthly'
+  | 'mureed_annual'
+  | 'khass_monthly'
+  | 'khass_annual';
 
-export type PurchasePlan = 'mureed_monthly' | 'mureed_annual' | 'khass_monthly' | 'khass_annual';
-
+/**
+ * premium_monthly (₹299/month, owner decision 2026-10-14) is the one plan
+ * sold; it must exist in Play Console as `shams_premium_monthly`. The older
+ * four stay so existing subscribers can still be restored and verified.
+ */
 export const SKU_MAP: Record<PurchasePlan, string> = {
+  premium_monthly: 'shams_premium_monthly',
   mureed_monthly: 'mureed_monthly',
   mureed_annual: 'mureed_annual',
   khass_monthly: 'khass_monthly',
@@ -42,6 +50,7 @@ const PACKAGE_NAME = 'com.astrosarfaraz.shamsalasrar';
 const APP_CHECK_GATE_TIMEOUT_MS = 8000;
 
 function tierFromPlan(plan: PurchasePlan): PlanTier {
+  // Premium is the top tier (unlocks everything), same mapping as the server.
   return plan.startsWith('mureed') ? 'mureed' : 'khass';
 }
 
@@ -98,8 +107,8 @@ export function usePurchase(): PurchaseState {
     initConnection().catch(() => undefined);
 
     // purchaseUpdatedListener fires for renewals and deferred purchases
-    // that complete outside the requestSubscription flow (e.g., Play Store auto-renewal).
-    const updateSub = purchaseUpdatedListener((p: SubscriptionPurchase) => {
+    // that complete outside the requestPurchase flow (e.g., Play Store auto-renewal).
+    const updateSub = purchaseUpdatedListener((p: Purchase) => {
       if (!p.purchaseToken || !p.productId) {
         return;
       }
@@ -135,21 +144,47 @@ export function usePurchase(): PurchaseState {
       try {
         const sku = SKU_MAP[plan];
 
-        // Validate SKU is live on Play Console and get offer token (required for
-        // Play Billing Library v5+ used by react-native-iap v12).
-        const subs = await getSubscriptions({ skus: [sku] });
-        const sub = subs.find(s => s.productId === sku) as AndroidSubscriptionProduct | undefined;
-        const offerToken = sub?.subscriptionOfferDetails?.[0]?.offerToken;
+        // Validate SKU is live on Play Console and get the offer token
+        // (required by Play Billing Library 8+'s subscriptionOffers param).
+        const subs = await fetchProducts({ skus: [sku], type: 'subs' });
+        const sub = (Array.isArray(subs) ? subs : []).find(
+          (s): s is ProductSubscription => s.id === sku,
+        );
+        const offerToken =
+          sub && 'subscriptionOffers' in sub
+            ? sub.subscriptionOffers?.[0]?.offerTokenAndroid
+            : undefined;
 
         // Launch the Google Play subscription sheet
-        const result = await requestSubscription({
-          sku,
-          ...(offerToken ? { subscriptionOffers: [{ sku, offerToken }] } : {}),
+        await requestPurchase({
+          type: 'subs',
+          request: {
+            google: {
+              skus: [sku],
+              ...(offerToken ? { subscriptionOffers: [{ sku, offerToken }] } : {}),
+            },
+          },
         });
 
-        const p: SubscriptionPurchase | null = Array.isArray(result)
-          ? (result[0] ?? null)
-          : (result ?? null);
+        // The actual result arrives asynchronously via purchaseUpdatedListener /
+        // purchaseErrorListener (registered in the effect above), not this call's
+        // return value. Wait for the first purchase or error event for this SKU.
+        const p = await new Promise<Purchase | null>(resolve => {
+          const updateSub = purchaseUpdatedListener(updatedPurchase => {
+            if (updatedPurchase.productId === sku) {
+              updateSub.remove();
+              errSub.remove();
+              resolve(updatedPurchase);
+            }
+          });
+          const errSub = purchaseErrorListener(error => {
+            if (!error.productId || error.productId === sku) {
+              updateSub.remove();
+              errSub.remove();
+              resolve(null);
+            }
+          });
+        });
 
         if (!p?.purchaseToken) {
           return { success: false, reason: 'user_cancelled' };
@@ -166,7 +201,7 @@ export function usePurchase(): PurchaseState {
         return { success: false, reason: 'verification_failed' };
       } catch (error: unknown) {
         const err = error as { code?: string };
-        if (err?.code === 'E_USER_CANCELLED') {
+        if (err?.code === 'user-cancelled') {
           return { success: false, reason: 'user_cancelled' };
         }
         return { success: false, reason: 'network_error', error };

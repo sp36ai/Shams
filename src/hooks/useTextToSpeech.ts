@@ -29,8 +29,8 @@
  */
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import type { EmitterSubscription } from 'react-native';
-import Tts from 'react-native-tts';
+import { Platform, type EmitterSubscription } from 'react-native';
+import Tts, { type Voice } from 'react-native-tts';
 
 import { createLogger } from '@utils/logger';
 
@@ -43,6 +43,96 @@ const LOCALE_BY_LANG: Readonly<Record<Lang, string>> = {
   ur: 'ur-PK',
   hi: 'hi-IN',
 };
+
+/* -------------------------------------------------------------------------- */
+/*  Narrator voice                                                            */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * The Oracle's narrator: a deep, slow, warm older male voice (owner decision
+ * 2026-10-14). Without this the engine spoke in whatever default voice the
+ * phone shipped with — often a bright female one — which is what seekers
+ * heard as "a random voice".
+ *
+ * This only picks among voices already on the device; it never downloads or
+ * clones one. Candidates are tried in order, deepest first:
+ *   - Google Speech Services English male voices, by their engine names
+ *     (en-us-x-iom / iol / tpd, en-gb-x-rjs / gbd / gbb);
+ *   - Samsung TTS male voices, whose names carry "SMTm" (m = male).
+ * Installed, on-device variants win over network ones. When none is present
+ * the phone's own default voice is kept, so narration still plays.
+ *
+ * English only: Urdu and Hindi keep the engine's default voice for their
+ * locale, because no male voice id for them has been verified on devices.
+ */
+const NARRATOR_VOICE_PREFERENCE: readonly RegExp[] = [
+  /^en-us-x-iom/i,
+  /^en-us-x-iol/i,
+  /^en-us-x-tpd/i,
+  /^en-gb-x-rjs/i,
+  /^en-gb-x-gbd/i,
+  /^en-gb-x-gbb/i,
+  /^en-(?:us|gb|in|au)-x-[a-z]+#male_/i,
+  /^en-(?:us|gb|in)-smtm\d/i,
+];
+
+/** Lower and slower than the engine default: an unhurried narrator. */
+const NARRATOR_PITCH = 0.82;
+/** Android's own scale (skipTransform), where 1.0 is normal speed. */
+const NARRATOR_RATE_ANDROID = 0.86;
+
+/**
+ * The narrator voice id for `lang` among the device's `voices`, or null to
+ * keep the engine default. Pure; exported for direct unit testing.
+ */
+export function chooseNarratorVoice(voices: readonly Voice[], lang: Lang): string | null {
+  if (lang !== 'en') {
+    return null;
+  }
+  const usable = voices.filter(v => typeof v?.id === 'string' && v.notInstalled !== true);
+  for (const pattern of NARRATOR_VOICE_PREFERENCE) {
+    const matches = usable.filter(v => pattern.test(v.id));
+    if (matches.length > 0) {
+      const local = matches.find(v => v.networkConnectionRequired !== true);
+      return (local ?? matches[0]!).id;
+    }
+  }
+  return null;
+}
+
+let voicesPromise: Promise<readonly Voice[]> | null = null;
+
+/** The device's voice list, fetched once per process; [] on any failure. */
+function deviceVoices(): Promise<readonly Voice[]> {
+  if (voicesPromise === null) {
+    try {
+      voicesPromise = Tts.voices().catch((e: unknown) => {
+        log.warn('Tts.voices failed — keeping default voice', { error: String(e) });
+        return [];
+      });
+    } catch (e) {
+      log.warn('Tts.voices threw — keeping default voice', { error: String(e) });
+      voicesPromise = Promise.resolve([]);
+    }
+  }
+  return voicesPromise;
+}
+
+/**
+ * Select the narrator for `lang`. Must run AFTER setDefaultLanguage on every
+ * utterance: Android's setLanguage() resets the engine to that locale's
+ * default voice. Never rejects — a missing voice only means the default one.
+ */
+function applyNarratorVoice(lang: Lang): Promise<void> {
+  return deviceVoices()
+    .then(voices => {
+      const id = chooseNarratorVoice(voices, lang);
+      return id === null ? undefined : Tts.setDefaultVoice(id).then(() => undefined);
+    })
+    .catch((e: unknown) => {
+      log.warn('setDefaultVoice failed — keeping default voice', { error: String(e) });
+    });
+}
 
 export type SpeakingStatus = 'idle' | 'speaking' | 'paused';
 
@@ -168,6 +258,16 @@ function ensureTtsReady(): Promise<void> {
     // than returning a rejected promise, which no .catch() below would see.
     try {
       ttsInitPromise = Tts.getInitStatus()
+        .then(() =>
+          // Pitch and pace persist on the engine, so they are set once here.
+          // A failure only leaves the engine's own defaults in place.
+          Promise.all([
+            Tts.setDefaultPitch(NARRATOR_PITCH).catch(() => undefined),
+            Platform.OS === 'android'
+              ? Tts.setDefaultRate(NARRATOR_RATE_ANDROID, true).catch(() => undefined)
+              : undefined,
+          ]),
+        )
         .then(() => undefined)
         .catch((e: unknown) => {
           log.warn('Tts.getInitStatus failed', { error: String(e) });
@@ -312,6 +412,7 @@ export function useTextToSpeech(): TextToSpeechState {
           }
           return Tts.setDefaultLanguage(LOCALE_BY_LANG[lang])
             .catch(() => undefined) // engine may not have this locale installed; speak anyway
+            .then(() => applyNarratorVoice(lang))
             .then(() => {
               if (playbackRef.current?.messageId === messageId) {
                 Tts.speak(segment);

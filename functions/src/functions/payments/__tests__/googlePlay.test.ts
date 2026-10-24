@@ -14,7 +14,7 @@
 
 import { describe, expect, it } from 'vitest';
 import { HttpsError } from 'firebase-functions/v2/https';
-import { assertSubscriptionActive } from '../googlePlay';
+import { assertSubscriptionActive, isAckFailure } from '../googlePlay';
 
 const NOW = 1_700_000_000_000;
 const FUTURE = String(NOW + 30 * 24 * 60 * 60 * 1000);
@@ -72,5 +72,40 @@ describe('assertSubscriptionActive', () => {
         NOW,
       ),
     ).toThrow(HttpsError);
+  });
+});
+
+/**
+ * Regression coverage for the silent-acknowledge-failure finding: httpsPostAuth
+ * (the Play Developer API's `acknowledge` call) used to resolve on ANY HTTP
+ * response regardless of status, so a rejected acknowledgement was
+ * indistinguishable from a successful one — verifyGooglePlayPurchase would
+ * grant the plan and log nothing, and Google would auto-refund the
+ * unacknowledged subscription days later with no trail explaining why.
+ * isAckFailure() is the extracted, now-testable predicate that decides
+ * whether the call site logs a warning for that response.
+ */
+describe('isAckFailure', () => {
+  it('treats 200 and 204 (Play’s documented success responses) as success', () => {
+    expect(isAckFailure(200)).toBe(false);
+    expect(isAckFailure(204)).toBe(false);
+  });
+
+  it('treats any 4xx or 5xx as a failure worth logging', () => {
+    expect(isAckFailure(400)).toBe(true);
+    expect(isAckFailure(401)).toBe(true);
+    expect(isAckFailure(404)).toBe(true);
+    expect(isAckFailure(500)).toBe(true);
+    expect(isAckFailure(503)).toBe(true);
+  });
+
+  it('treats status 0 (a response with no statusCode at all) as a failure', () => {
+    // httpsPostAuth's `res.statusCode ?? 0` fallback — a malformed or
+    // connection-reset response should never read as silently successful.
+    expect(isAckFailure(0)).toBe(true);
+  });
+
+  it('treats other 2xx codes as success, not just 200/204', () => {
+    expect(isAckFailure(201)).toBe(false);
   });
 });

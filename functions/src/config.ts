@@ -25,15 +25,32 @@ export function todayKey(now = Date.now()): string {
 }
 
 /**
- * How many follow-up turns one reading may carry.
+ * Cost ceiling on follow-up turns for one reading — a backstop, not the
+ * conversational limit.
  *
- * Discussion is free — the unit sold is the reading, not the conversation
- * about it (see discussReading.ts) — so this bound, not the quota, is what
- * keeps a single reading from becoming an unbounded chat session. Generous
- * enough that no ordinary seeker meets it, low enough to cap the cost of one
- * reading; a seeker who exhausts it has a new question, not a follow-up.
+ * Owner decision 2026-10-11: there is no fixed number of follow-ups. The
+ * oracle closes the conversation when it has done its work
+ * (`conversationComplete`, see discussReading.ts). Discussion is free — the
+ * unit sold is the reading — so this bound still keeps one reading from
+ * becoming an unbounded run of model calls; it is set far above where a
+ * conversation ends on its own.
  */
-export const DISCUSSION_TURN_LIMIT = 12;
+export const DISCUSSION_TURN_LIMIT = 40;
+
+// ── Coin economy (owner decision 2026-10-14) ──────────────────────────────
+// Applies only where utils/monetization.ts says the seeker is in 'coins' mode.
+// Amounts are integer millicoins: 1 coin = 1000 milli = ₹10.
+export const MILLI_PER_COIN = 1000;
+/** Free plan: one question per this many days, counted from the last free one. */
+export const FREE_QUESTION_INTERVAL_DAYS = 7;
+/** Free plan: price of a question beyond the free one (3 coins = ₹30). */
+export const EXTRA_QUESTION_COST_MILLI = 3 * MILLI_PER_COIN;
+/** Paid plan: fair-use cap on questions per UTC day ("unlimited*"). */
+export const PAID_DAILY_FAIR_USE = 10;
+/** Discussion price: 1 coin per 10,000 model tokens, i.e. 10 tokens per millicoin. */
+export const TOKENS_PER_MILLICOIN = 10;
+/** Discussion: a turn needs at least this balance to start (1 coin). */
+export const MIN_DISCUSSION_BALANCE_MILLI = 1 * MILLI_PER_COIN;
 
 export const REGION = 'asia-south1'; // Mumbai — closest to primary user base
 
@@ -74,6 +91,10 @@ export const RATE_LIMIT_PER_MINUTE = defineInt('RATE_LIMIT_PER_MINUTE', {
  * Create these exact SKU strings in Google Play Console → Subscriptions.
  */
 export const PLAY_PRODUCT_MAP: Record<string, PlanTier> = {
+  // Premium ₹299/month (owner decision 2026-10-14): the one plan sold from
+  // now on. Maps to the top tier so it unlocks everything (both premium
+  // themes included). The four below stay mapped for existing subscribers.
+  shams_premium_monthly: 'khass',
   mureed_monthly: 'mureed',
   mureed_annual: 'mureed',
   khass_monthly: 'khass',
