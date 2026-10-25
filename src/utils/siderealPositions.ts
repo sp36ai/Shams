@@ -9,6 +9,8 @@
  * KP horary judgment always runs the full Moshier ephemeris server-side.
  */
 
+import { getManzilaDisplay } from '@astrology/manazil';
+
 export const SIGN_NAMES = [
   'Aries',
   'Taurus',
@@ -108,6 +110,15 @@ export function displayLonSidereal(name: PlanetName, nowMs: number): number {
 
 export function nakshatraName(lon: number): string {
   return NAKSHATRAS[Math.floor((lon / 360) * 27)] ?? '—';
+}
+
+/**
+ * Lunar mansion (manzil) name for a sidereal Moon longitude, display only.
+ * 28 equal mansions from manazil.ts — not the 27-fold nakshatraName() split,
+ * so the two can differ for the same longitude.
+ */
+export function manzilName(lon: number): string {
+  return getManzilaDisplay(lon).name;
 }
 
 export function signName(lon: number): string {
