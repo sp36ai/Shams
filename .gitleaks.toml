@@ -1,0 +1,12 @@
+# gitleaks config for the CI "Secret Scan" job (.github/workflows/ci.yml).
+# Default rules, plus an allowlist for files whose key-shaped strings are
+# deliberate fakes used to test that the Oracle never leaks internal data.
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "Fake credentials in Oracle leak-detection tests and the adversarial harness"
+paths = [
+  '''^functions/src/oracle/__tests__/''',
+  '''^functions/scripts/adversarial-harness/''',
+]
