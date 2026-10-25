@@ -113,7 +113,7 @@ from narration wording, not from engine timing.
 
 | Description says | Engine |
 |---|---|
-| **Every** answer includes a verse, a Divine Name, a dua and a practical act | Remedies are **selected by diagnosis** from a fixed 33-entry library (`remedyLibrary.ts`, `remedySelection.ts`). They are not a fixed four-part set |
+| **Every** answer includes a verse, a Divine Name, a dua and a practical act | Remedies are **selected by diagnosis** from a fixed 32-entry library (`remedyLibrary.ts`, `remedySelection.ts`). They are not a fixed four-part set |
 | Qur'ānic verse | Inside specific entries (e.g. `devotional_quran_patience`), only when those entries are selected |
 | One Asmā' al-Ḥusnā | Inside specific entries (e.g. Yā Ṣabūr, `devotional_ya_latif`), not on every reading |
 | Dua | `devotional_dua_ease`, `devotional_istikhara`, etc., when selected |
