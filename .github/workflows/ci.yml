@@ -73,6 +73,13 @@ jobs:
       - name: Unit tests
         run: npm test -- --runInBand
 
+      # Architectural guards (no KP resurrection, voice isolation, client never
+      # judges, user-facing terminology, manzilLord scope). They also run inside
+      # "Unit tests"; this named step makes a guard failure obvious in the PR
+      # checks. Exceptions live in guards/allowlist.json.
+      - name: Architectural guards (app)
+        run: npm run test:guards
+
       - name: Dead code guard (orphans)
         run: npm run check:orphans
 
@@ -124,6 +131,12 @@ jobs:
 
       - name: Unit tests
         run: npm test -- --run
+
+      # Architectural guards (composed-output terminology, askWatchOracle
+      # backend preservation). Also part of "Unit tests"; named so a guard
+      # failure is obvious in the PR checks. Exceptions: guards/allowlist.json.
+      - name: Architectural guards (functions)
+        run: npm run test:guards
 
   e2e-build:
     name: E2E Build (debug APK)

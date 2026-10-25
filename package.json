@@ -17,6 +17,7 @@
     "typecheck": "tsc --noEmit",
     "format": "prettier --write .",
     "test": "jest --testPathIgnorePatterns=firestore.rules.test.ts --testPathIgnorePatterns=functions/",
+    "test:guards": "jest src/__tests__/architectureGuards.test.ts",
     "test:watch": "jest --watch --testPathIgnorePatterns=firestore.rules.test.ts --testPathIgnorePatterns=functions/",
     "test:web": "npx serve ./hosting",
     "test:coverage": "jest --coverage --testPathIgnorePatterns=firestore.rules.test.ts --testPathIgnorePatterns=functions/",
