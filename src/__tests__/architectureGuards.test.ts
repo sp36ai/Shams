@@ -676,7 +676,7 @@ describe('G3 — the client never judges', () => {
           'G3',
           'client imports engine code that is not an approved primitive',
           hits,
-          'judgment runs only on the server (askWatchOracle). Use `import type` for types; render the verdict the server returned. A new display/calculation primitive needs an owner-approved G3 entry.',
+          'judgment runs only on the server (askWatchOracle). Use `import type` for types; render the verdict the server returned. Sky Clock files may use only entries marked skyClock: true. A new display/calculation primitive needs an owner-approved G3 entry.',
         ),
       );
     }
@@ -729,7 +729,7 @@ function bannedTermsIn(text: string): string[] {
   return BANNED_TERMS.filter(t => t.pattern.test(text)).map(t => t.term);
 }
 
-/** User-facing surfaces (OD-2). Composed Oracle output is checked in functions/. */
+/** User-facing surfaces (OD-2). Composed fixture output is checked in functions/. */
 const COPY_CODE_FILES = (): string[] =>
   [
     ...walk('src/i18n/strings'),
@@ -737,6 +737,9 @@ const COPY_CODE_FILES = (): string[] =>
     ...walk('src/components'),
     ...walk('src/data'),
     'functions/src/oracle/remedyLibrary.ts',
+    // Deterministic Oracle narration templates: every branch, including ones
+    // no fixture reading reaches (functions suite covers the composed output).
+    'functions/src/oracle/narrationFallback.ts',
   ].filter(f => !isTestFile(f));
 
 const COPY_TEXT_FILES = (): string[] => [

@@ -155,6 +155,7 @@ const FIXTURE_QUESTIONS = [
   'Will the money I lent be returned to me?',
   'Should I travel abroad for my studies?',
   'Will I find the ring I lost?',
+  'Will my mother recover from her illness?',
 ];
 
 const FIXTURE_MOMENTS = [
@@ -316,14 +317,14 @@ const VALID_DATA = {
 };
 const AUTH = { uid: 'guard-user', token: {} };
 
-async function rejection(p: Promise<unknown>): Promise<HttpsError> {
+/** The HttpsError code a call rejected with (or a description of what it did instead). */
+async function rejectionCode(p: Promise<unknown>): Promise<string> {
   try {
     await p;
   } catch (err) {
-    expect(err).toBeInstanceOf(HttpsError);
-    return err as HttpsError;
+    return err instanceof HttpsError ? err.code : `non-HttpsError: ${String(err)}`;
   }
-  throw new Error('G7 — expected askWatchOracle to reject, but it resolved');
+  return 'resolved (no rejection)';
 }
 
 beforeEach(() => {
@@ -344,24 +345,23 @@ describe('G7 — askWatchOracle backend preservation', () => {
   });
 
   it('rejects an unauthenticated call before validation, rate limiting or quota', async () => {
-    const err = await rejection(handler.run({ data: VALID_DATA }));
-    expect(err.code).toBe('unauthenticated');
+    const code = await rejectionCode(handler.run({ data: VALID_DATA }));
     expect(order, 'G7 — Auth (verifyAuth) must run first').toEqual(['auth']);
+    expect(code).toBe('unauthenticated');
   });
 
   it('rejects invalid input via the Zod schema before rate limiting or quota', async () => {
-    const err = await rejection(handler.run({ data: { question: 'hi' }, auth: AUTH }));
-    expect(err.code).toBe('invalid-argument');
+    const code = await rejectionCode(handler.run({ data: { question: 'hi' }, auth: AUTH }));
     expect(order, 'G7 — Zod validation (parse) must run before the rate limit').toEqual([
       'auth',
       'validate',
     ]);
+    expect(code).toBe('invalid-argument');
   });
 
   it('stops at the rate limit: no quota spent, nothing cast or stored', async () => {
     enforceRateLimitMock.mockRejectedValueOnce(new HttpsError('resource-exhausted', 'slow down'));
-    const err = await rejection(handler.run({ data: VALID_DATA, auth: AUTH }));
-    expect(err.code).toBe('resource-exhausted');
+    const code = await rejectionCode(handler.run({ data: VALID_DATA, auth: AUTH }));
     expect(order, 'G7 — rate limit must run before idempotency and quota').toEqual([
       'auth',
       'validate',
@@ -369,12 +369,12 @@ describe('G7 — askWatchOracle backend preservation', () => {
     ]);
     expect(claimQuotaSlotMock).not.toHaveBeenCalled();
     expect(collectionMock).not.toHaveBeenCalled();
+    expect(code).toBe('resource-exhausted');
   });
 
   it('stops at the quota: nothing cast or stored when no slot is granted', async () => {
     claimQuotaSlotMock.mockRejectedValueOnce(new HttpsError('resource-exhausted', 'no quota'));
-    const err = await rejection(handler.run({ data: VALID_DATA, auth: AUTH }));
-    expect(err.code).toBe('resource-exhausted');
+    const code = await rejectionCode(handler.run({ data: VALID_DATA, auth: AUTH }));
     expect(order, 'G7 — order must be auth → validate → rateLimit → idempotency → quota').toEqual([
       'auth',
       'validate',
@@ -386,6 +386,7 @@ describe('G7 — askWatchOracle backend preservation', () => {
       collectionMock,
       'G7 — no reading may be cast or written before a quota slot is granted',
     ).not.toHaveBeenCalled();
+    expect(code).toBe('resource-exhausted');
   });
 
   it('keeps the stage-tagged engine diagnostics (light structural check)', () => {
