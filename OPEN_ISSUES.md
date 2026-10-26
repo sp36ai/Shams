@@ -101,6 +101,21 @@ go-ahead for anything pushed, released or deployed.
 - **Next:** check each key's creation date in its console (Google Cloud,
   Anthropic, GitHub secrets). Rotate any key created before the exposure.
 
+### 5b. Fork PRs could trigger release/deploy with production secrets 🔴 → fix in PR #209
+
+- **Found 2026-10-26.** The repo is public. `release-play-store.yml`,
+  `deploy-functions.yml` and `deploy-firebase-hosting.yml` run on
+  `workflow_run` of CI with `branches: [main]`, which matches the head branch
+  *name*. CI on a fork PR from a branch named `main` would pass, and the job
+  would check out `workflow_run.head_sha` (the fork's code) with the upload
+  keystore, Play service account or `FIREBASE_SERVICE_ACCOUNT`.
+- **Fix:** PR #209 also requires `workflow_run.event == 'push'`, head branch
+  `main` and `head_repository == github.repository`.
+- **Owner, now:** Settings → Actions → General → "Fork pull request workflows":
+  require approval for **all outside collaborators**. Check the Actions history
+  for any `workflow_run` deploy/release whose triggering run was a
+  `pull_request`. Manual-dispatch gating of the deploys stays with PR #200.
+
 ### 6. Live Oracle output is not checked for engine/Sanskrit terms 🟡
 
 - **Owner:** Owner (approve scope)

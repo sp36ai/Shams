@@ -19,7 +19,18 @@ permissions:
 jobs:
   deploy:
     runs-on: ubuntu-24.04
-    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    # Only a successful CI run triggered by a push to main in this
+    # repository may deploy. `branches: [main]` in `on:` alone matches the
+    # head branch NAME, so CI on a fork PR from a branch called "main" would
+    # pass it and this job would run the fork's code with the deploy
+    # credentials.
+    if: >-
+      github.event_name == 'workflow_dispatch'
+      || (github.event_name == 'workflow_run'
+          && github.event.workflow_run.conclusion == 'success'
+          && github.event.workflow_run.event == 'push'
+          && github.event.workflow_run.head_branch == 'main'
+          && github.event.workflow_run.head_repository.full_name == github.repository)
     steps:
       - name: Checkout
         uses: actions/checkout@v5
