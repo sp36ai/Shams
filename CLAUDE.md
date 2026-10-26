@@ -1,11 +1,25 @@
 # CLAUDE.md — Shams al-Asrār (Astro Sarfaraz)
 
+Read this first. It outranks the status and audit reports elsewhere in the repo.
+
+## 0. What is authoritative
+
+1. **The code on `main`** and the checks CI runs on it.
+2. **This file**, then `OPEN_ISSUES.md` (open work, owners, evidence).
+3. `.claude-context/oracle-decisions.md`: standing Oracle decisions.
+
+Everything else is a **dated snapshot**, not current instructions: the `*_STATUS*.md`,
+`*_READY*.md`, `*_AUDIT*.md`, `*_REPORT*.md` and `*_SUMMARY*.md` files at the repo root,
+`.claude-context/current-task.md`, `session-log.md` and `code-changes.md`. Use them for
+history and check any claim against the code before acting on it.
+`RKP_KP_FORENSIC_AUDIT.md` describes the removed KP engine and is not a to-do list.
+
 ## 1. Project identity
 
 - **Shams al-Asrār — The Hidden Sun of Mystical Astrology.** Brand: Astro Sarfaraz. Android package `com.astrosarfaraz.shamsalasrar`.
 - A horary oracle with an Islamic mystical identity for Urdu/Hindi markets (UI languages: en/ur/hi). The seeker asks a question; the server casts an RKP "watch" chart at the server's own instant and returns a verdict, remedy protocol and narration.
 - **This is an existing production app. Never treat it as a generic astrology app and never rebuild it.** Read the real code before changing anything.
-- Stack: React Native 0.79.7 (React 19, Hermes), TypeScript 5.5, Zustand + react-native-mmkv, React Navigation 7, @react-native-firebase 19 (Auth, App Check, Firestore, Functions, Crashlytics), react-native-iap 16 (Play Billing 8), react-native-tts, @react-native-voice/voice. Backend: Firebase Cloud Functions v2 (Node 22, region `asia-south1`, firebase-functions 7.4, Zod), Firestore, Anthropic (server-side only). Firebase project `shams-app-4d0e7`.
+- Stack: React Native 0.79.7 (React 19, Hermes), TypeScript 5.5, Zustand + react-native-mmkv, React Navigation 7, @react-native-firebase 19 (Auth, App Check, Firestore, Functions, Crashlytics), react-native-iap 16 (resolves Play Billing 9.1.0 per dependency files; not build-verified), react-native-tts, @react-native-voice/voice. Backend: Firebase Cloud Functions v2 (Node 22, region `asia-south1`, firebase-functions 7.4, Zod), Firestore, Anthropic (server-side only). Firebase project `shams-app-4d0e7`.
 
 ## 2. Core principle
 
@@ -32,7 +46,7 @@ Canonical flow:
 - **User-facing text never uses:** RKP, KP, Ratan Kotamraju Paddhati, sub-lord, significator, Lahiri, Placidus, or Sanskrit astrological terms (nakshatra, lagna, dasha, rashi, bhava…). Use Arabic celestial names and "Shams al-Asrār". Internal code may use engine terms.
   - Display names in code today (`src/astrology/rkp/nomenclature.ts`): Shams, Qamar, Mirrikh, Utarid, Mushtari, Zuhrah, Zuhal, Ras al-Tinnin, Dhanab al-Tinnin. Boundary short forms for the nodes: Ras / Dhanab.
 - **Translation boundary (engine → display terms) is server-side:** `functions/src/utils/planetBoundaryName.ts` (structured planet fields leaving the server) + `nomenclature.ts` (display names), enforced on narration by `functions/src/oracle/narrationValidator.ts` (`PROHIBITED_TERMINOLOGY`). Do not add translation elsewhere.
-- **No secrets** in the repo or this file. Never print, log or commit keys. Secrets live in Secret Manager (`firebase.json` → `secrets`). Anthropic calls are server-side only (`responseComposer.ts`, `discussionComposer.ts`).
+- **No secrets** in the repo or this file. Never print, log or commit keys. Secrets live in Secret Manager (`firebase.json` → `secrets`; provisioning: `scripts/Provision-Secrets.ps1`, `.env.example`). `google-services.json` and `functions/.env` are gitignored. Anthropic calls are server-side only (`responseComposer.ts`, `discussionComposer.ts`).
 - Remedy practices come only from `functions/src/oracle/remedyLibrary.ts`; the model writes prose, never practices.
 
 ## 4. Evidence standard
@@ -135,7 +149,7 @@ Needs owner review: empty files `dasha.ts` (root) and `docs/timing.ts`; ~25 stal
 > **Partly stale.** Items not marked re-checked reflect 2026-10-08. Re-verify against current code before acting on any of them. Older notes elsewhere (other branches' CLAUDE.md, root `*_STATUS*.md`) can still mention `KpChartGrid`, a billing stub, or Mureed ₹249 / Khass ₹699 pricing. All three are superseded; see 9b and 9d.
 
 a. **Oracle silent failure (reported August 2026)** — [OPEN: no recorded resolution. Not reproduced statically; production UNVERIFIED]. No commit, log line or device test in the repo closes it. Do not mark it resolved without that evidence. The callable is `askWatchOracle` (`askOracle` is gone). Client uses `regionalFunctions()` → `asia-south1`, matching `functions/src/config.ts`. Submit gate in `ReadingScreen.tsx` is synchronous (`canAsk`/`consumeOne`); it does not await `usePurchase`/`useQuota`. App Check wait is bounded (8 s), call deadline is 45 s with a mapped error bubble. Needs a device test + Cloud Logging check that POSTs reach the function.
-b. **Billing** — [CONFIRMED 2026-10-25]. Not a stub. `usePurchase.ts` is a real implementation using **react-native-iap 16.6.2** (Play Billing 8, PR #123). Kotlin is pinned to 2.1.20 in `android/build.gradle`.
+b. **Billing** — [CONFIRMED 2026-10-25]. Not a stub. `usePurchase.ts` is a real implementation using **react-native-iap 16.6.2** (PR #123; openiap-google 3.5.2 → `billing:9.1.0` per dependency files, not build-verified). Kotlin is pinned to 2.1.20 in `android/build.gradle`.
    - **Plan sold (owner decision 2026-10-14, PR #190):** a single Premium plan, `premium_monthly`, at **₹299/month**. Play SKU `shams_premium_monthly` maps to server tier `khass` (`functions/src/config.ts`). It offers unlimited questions (fair use 10/day), premium themes, and coin-paid discussion. The free plan gets 1 question every 7 days, and an extra question costs 3 coins (1 coin = ₹10).
    - **Legacy:** `mureed_*` / `khass_*` SKUs and the old ₹249/₹699 prices are no longer sold. The SKUs stay in `SKU_MAP` only so existing subscribers can restore and verify. Internal tiers `free | mureed | khass` remain in code.
    - [UNVERIFIED]: `shams_premium_monthly` exists in Play Console → service-account secrets → real purchase on device → `verifyGooglePlayPurchase`.
@@ -144,7 +158,7 @@ d. **Naming leftovers** — [CONFIRMED], owner decision, do not rename/delete:
    - Shared math primitive (legitimate): `primitives/subLord.ts`, `rulingPlanets.ts`, `chartBuilder.ts`, `constants.ts`, `types/chart.ts`, `types/verdict.ts` (KP-era types for legacy readings).
    - Naming/provenance only: `astrology/kp/rules/*` (houseMatrix, questionKeywords used by RKP), code comments in `watchGrid.ts`, `themes.ts`, `favoredQuestion.ts`, `watchReadingRecord.ts`, `permissions.ts`, `askWatchOracle.ts`, `quotaSlots.ts`, `quota.ts`; stale reference to non-existent `judgeHorary.ts` in `planetBoundaryName.ts`.
    - No `KpChartGrid.tsx` or "Kotamraju" found. No active KP judgment path found.
-   - **User-visible violations:** `SkyClockScreen.tsx` shows "Nakshatra", "SIDEREAL (LAHIRI)", and a disclaimer "Horary judgment uses the full KP engine on the server" (also factually wrong); `ReadingsScreen.tsx` renders "Significators" / "Moon Sub-Lord" for legacy readings with `moonSubLord`; `CosmicClock.tsx` and `siderealPositions.ts` comments say "full KP engine".
+   - **User-visible violations:** Sky Clock "Nakshatra" / "SIDEREAL (LAHIRI)" / "full KP engine" disclaimer and the Play title/changelog-3 KP wording were fixed per the owner decision of 2026-10-25 (PR #207). Still open: `ReadingsScreen.tsx` renders "Significators" / "Moon Sub-Lord" for legacy readings with `moonSubLord`; (The `CosmicClock.tsx` / `siderealPositions.ts` "full KP engine" comments were corrected 2026-10-26.)
 e. **Location** — [CONFIRMED not wired to judgment]. `LocationPermissionScreen` + `utils/acquireLocation.ts` exist, but `askWatchOracle` deliberately sends **no lat/lon**; the watch engine discards cusps (`watchChart.ts` uses inert coordinates). No cuspal sub-lord math runs in the live path. Conflicts with the "collect real location for cuspal sub-lord math" decision → owner decision.
 f. **Play Console** — Target SDK 36 [CONFIRMED in `android/app/build.gradle`]. Data Safety disclosure for server-side AI use, developer verification: [UNVERIFIED — owner action]; `docs/OWNER_LAUNCH_CHECKLIST.md` does not cover them.
 g. **Performance notes (sub-lord memoization, RP × significator loops)** — [NOT REPRODUCED/STALE]: the live watch judgment uses neither sub-lords nor significator loops.
@@ -160,7 +174,7 @@ m. No skipped/only tests found (`.skip`, `.only`, `xit`).
 - [ ] Provide `shamsi_method.txt` (not in repo) and confirm it supersedes `docs/RKP_RULES_FROM_SARFARAZ.md`; which sections of that doc are stale (9i)?
 - [ ] Ruling planets: confirm exactly 5 and that horaLord is a witness only; then align `getRulingPlanets` and rules doc §4 (9h).
 - [ ] Location: does the watch engine stay location-free, or should real querent location feed a cuspal/sub-lord layer? If the latter, which rules? (9e)
-- [ ] Sky Clock copy: replace "Nakshatra", "SIDEREAL (LAHIRI)", "full KP engine" with approved Arabic/neutral wording (9d).
+- [x] Sky Clock copy (decided 2026-10-25): Moon row shows "Manzil" from the manazil table, header "CURRENT SKY · SIDEREAL", no KP claim (PR #207). The live Play title must still be changed in Play Console.
 - [ ] Legacy readings: keep, relabel, or hide the "Significators / Moon Sub-Lord" block in `ReadingsScreen` (9d).
 - [ ] Rename `astrology/kp/rules/` → RKP naming? (touches engine sync + imports)
 - [ ] Moon/Venus/node display spellings: code uses Qamar / Zuhrah / Ras al-Tinnin–Dhanab al-Tinnin (boundary: Ras/Dhanab); brief requested al-Qamar / Zuhra / Rahu / Ketu. Which is canonical?
@@ -168,6 +182,23 @@ m. No skipped/only tests found (`.skip`, `.only`, `xit`).
 - [ ] Remedy mapping and EN/UR/HI narration wording are still "provisional" per rules doc §8.
 - [ ] Empty `dasha.ts`, `docs/timing.ts`, and stale root status reports: delete or archive?
 
-## 11. Maintenance
+## 11. Enforced by CI (`.github/workflows/ci.yml`)
+
+| Rule | Check |
+| --- | --- |
+| Architecture guards G1–G7 (KP removal, voice isolation, client never judges, user-facing terms, …) | `npm run test:guards` and `npm --prefix functions run test:guards`; exceptions only in `guards/allowlist.json` |
+| No retired KP engine code | `npm run check:retired-kp` |
+| No secrets in new commits | Secret Scan job (gitleaks, `.gitleaks.toml`) |
+| Engine mirror in sync | `npm --prefix functions run verify-engine-sync` |
+| No unused files in `src/` | `npm run check:orphans` |
+| Cert pins not expiring | `npm run check:cert-pin-expiry` |
+| Narration leaks no internals or forbidden terms | `functions/src/oracle/narrationValidator.ts` (runtime) and its tests |
+
+**Guard tests are mandatory. Never delete or weaken one to make a build pass.** A new
+exception needs an `allowlist.json` entry with a reason; a `debt` entry fails CI 30 days
+after its `debtDate`. Passing CI is static evidence; it does not prove production
+behaves correctly.
+
+## 12. Maintenance
 
 Keep this file short. Update Known Issues and Repo Map when they change. Move long details to docs/ and link them.

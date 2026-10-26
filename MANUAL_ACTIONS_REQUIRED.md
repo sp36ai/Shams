@@ -7,7 +7,7 @@ Revisit this file before every production release.
 
 ## 1. Google Cloud Console — Restrict Firebase API Key
 
-**Key:** `AIzaSyB-c1iC5716lyvonB8N6wGyI4SRgaPCH5U`
+**Key:** the Android app's Firebase API key (`current_key` in `android/app/google-services.json`, which is gitignored; also shown in Firebase Console → Project settings → Your apps). Not copied here so it isn't committed to the repo.
 
 **Steps:**
 

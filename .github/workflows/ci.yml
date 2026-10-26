@@ -90,6 +90,39 @@ jobs:
       - name: Certificate pin expiry check
         run: npm run check:cert-pin-expiry
 
+      # The KP/Astronomical judgment engine was deleted in #92; the RKP Watch
+      # Engine is the only judgment path. This fails if any deleted module,
+      # the askOracle callable, or its prompt/safety gate comes back through
+      # an import, call or re-added file. Shared kp/rules/ tables and
+      # comments are allowed — see the script header.
+      - name: Retired KP engine guard
+        run: npm run check:retired-kp
+
+  secret-scan:
+    name: Secret Scan
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      # Scans only the commits this PR or push adds. Older history already
+      # holds client-side Firebase API keys (see MANUAL_ACTIONS_REQUIRED.md
+      # for restricting those); scanning it again would fail every run on
+      # findings no new commit can fix. Values are redacted in the log.
+      - name: Scan new commits with gitleaks
+        env:
+          RANGE: >-
+            ${{ github.event_name == 'pull_request'
+              && format('{0}..{1}', github.event.pull_request.base.sha, github.event.pull_request.head.sha)
+              || github.event_name == 'push'
+              && format('{0}..{1}', github.event.before, github.sha)
+              || 'HEAD~1..HEAD' }}
+        run: |
+          docker run --rm -v "$PWD:/repo" -w /repo ghcr.io/gitleaks/gitleaks:v8.28.0 \
+            git --config /repo/.gitleaks.toml --log-opts="$RANGE" --redact --verbose /repo
+
   functions-quality:
     name: Functions Quality
     runs-on: ubuntu-24.04
