@@ -23,11 +23,13 @@ go-ahead for anything pushed, released or deployed.
 - **Evidence:** every job on PR #204 and #205 "fails" ~3 s after starting, with
   no steps, empty check output and job logs returning 404. A docs-only commit and
   the unrelated Security Rules workflow fail the same way.
-- **Likely cause:** an account-level Actions block (spending limit, failed
-  payment or used-up minutes). The reason is shown on the run page, e.g.
-  `actions/runs/40200655305`.
+- **Cause (confirmed 2026-10-26 from the job annotation on run
+  `40298632437`):** "The job was not started because your account is locked
+  due to a billing issue." A failed payment, not minutes or a spending limit.
 - **Blocks:** CI on every PR and, under the release policy, every Play release.
-- **Next:** read the run page's banner, fix billing/settings, then re-run.
+- **Next:** settle the failed charge in github.com/settings/billing (Indian card:
+  enable international transactions and approve the e-mandate, or use PayPal),
+  then re-run PR #209's checks.
 
 ### 2. Build 219 rejected by Play: no 16 KB page support 🔴
 
