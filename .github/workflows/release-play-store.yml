@@ -62,7 +62,20 @@ jobs:
   release:
     name: Build AAB and deploy to Play Store
     runs-on: ubuntu-24.04
-    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    # Releases come only from main. A manual run is limited to main here.
+    # The workflow_run path needs more than `branches: [main]` in `on:`:
+    # that filter matches the triggering run's head branch NAME, so CI on a
+    # pull request from a fork whose branch is called "main" would pass it
+    # and this job would check out and sign the fork's code with the release
+    # secrets. Require a successful CI run triggered by a push to this
+    # repository. A manual run from main still does not require green CI.
+    if: >-
+      (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main')
+      || (github.event_name == 'workflow_run'
+          && github.event.workflow_run.conclusion == 'success'
+          && github.event.workflow_run.event == 'push'
+          && github.event.workflow_run.head_branch == 'main'
+          && github.event.workflow_run.head_repository.full_name == github.repository)
     env:
       # Single source of truth for "is this a dry run": only a manual run with
       # dry_run ticked. Accepts the typed boolean (inputs.dry_run) or its

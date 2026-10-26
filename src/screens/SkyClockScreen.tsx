@@ -32,7 +32,7 @@ import type { AppNavigation } from '@navigation/types';
 import {
   SIGN_NAMES,
   displayLonSidereal,
-  nakshatraName,
+  manzilName,
   moonPhase,
   localSiderealTime,
   PLANET_GLYPHS,
@@ -47,7 +47,7 @@ interface TimingState {
   horaLord: string;
   dayLord: string;
   moonSign: string;
-  moonNakshatra: string;
+  moonManzil: string;
   moonPhaseFull: string;
   lst: string;
   timeLabel: string;
@@ -61,7 +61,7 @@ function computeTiming(lonDeg: number): TimingState {
     horaLord: horaLordAtMoment(now, lonDeg),
     dayLord: dayLordAtMoment(now, lonDeg),
     moonSign: SIGN_NAMES[signIdx] ?? '—',
-    moonNakshatra: nakshatraName(moonLon),
+    moonManzil: manzilName(moonLon),
     moonPhaseFull: moonPhase(now),
     lst: localSiderealTime(now, lonDeg),
     timeLabel: new Date().toLocaleTimeString([], {
@@ -311,8 +311,8 @@ const SkyClockScreen: React.FC = () => {
           />
           <View style={[styles.divider, { backgroundColor: colors.border }]} />
           <TimingPill
-            label="Nakshatra"
-            value={timing.moonNakshatra}
+            label="Manzil"
+            value={timing.moonManzil}
             colors={colors}
             typography={typography}
           />
@@ -356,7 +356,7 @@ const SkyClockScreen: React.FC = () => {
               { color: colors.goldBright, letterSpacing: 1.2 },
             ]}
           >
-            CURRENT SKY · SIDEREAL (LAHIRI)
+            CURRENT SKY · SIDEREAL
           </Text>
           <View
             style={[
@@ -519,8 +519,8 @@ const SkyClockScreen: React.FC = () => {
 
         {/* Disclaimer */}
         <Text style={[typography('caption'), styles.disclaimer, { color: colors.textFaint }]}>
-          Sidereal positions are mean-longitude approximations (±1–5°) for display only. Horary
-          judgment uses the full KP engine on the server.
+          Sky positions are approximate (±1–5°) and shown for display only. Your reading is judged
+          at the moment you ask.
         </Text>
       </ScrollView>
       <BrandFooter />
