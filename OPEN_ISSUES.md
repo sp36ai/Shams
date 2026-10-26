@@ -1,7 +1,7 @@
 # Open issues — Shams al-Asrār
 
 Unresolved work, who owns the next step, and the evidence behind each item.
-Last updated **2026-10-25**. Update an item's status when it changes and
+Last updated **2026-10-26**. Update an item's status when it changes and
 delete it once it's closed (git history keeps the record).
 
 **Owner** names who acts next: **Owner** = the app owner (Astro Sarfaraz /
@@ -18,6 +18,8 @@ go-ahead for anything pushed, released or deployed.
 
 - **Owner:** Owner
 - **Since:** 2026-10-25. The last green CI run was on 2026-10-24.
+- **Re-checked 2026-10-26:** still blocked. The scheduled run `40298632437`
+  (09:19 UTC) got a job with no runner and no steps and failed after 4 s.
 - **Evidence:** every job on PR #204 and #205 "fails" ~3 s after starting, with
   no steps, empty check output and job logs returning 404. A docs-only commit and
   the unrelated Security Rules workflow fail the same way.
@@ -55,14 +57,13 @@ go-ahead for anything pushed, released or deployed.
 
 - **Owner:** Owner (decisions), Claude (code changes once decided)
 - After this date, CI fails on **every PR**, hotfixes included, until each of the
-  13 debt entries in `guards/allowlist.json` is fixed or re-dated with a recorded
-  owner decision.
+  7 remaining debt entries in `guards/allowlist.json` is fixed or re-dated with a
+  recorded owner decision.
+  - **Closed 2026-10-26 (PR #207, owner decision 2026-10-25):** Sky Clock
+    "Nakshatra" / "SIDEREAL (LAHIRI)" / "full KP engine" disclaimer, the Play title
+    and changelog 3; their 6 allowlist entries are removed. The **live** Play
+    listing title must still be changed by hand in Play Console.
   - **User-facing copy (needs owner wording):**
-    - Play Store title "Shams al-Asrār — KP Astrology"
-      (`android/fastlane/metadata/android/en-US/title.txt`)
-    - Play changelog 3, "a full KP chart reading" (`changelogs/3.txt`)
-    - Sky Clock: "Nakshatra", "SIDEREAL (LAHIRI)" and the false claim
-      "uses the full KP engine on the server" (`src/screens/SkyClockScreen.tsx`)
     - Readings detail: "Significators", "Moon Sub-Lord"
       (`src/screens/ReadingsScreen.tsx`)
     - Istikhārah remedy: "conflicting significators"
@@ -178,10 +179,8 @@ go-ahead for anything pushed, released or deployed.
 ### 14. Project instructions are partly stale 🟡
 
 - **Owner:** Owner (merge/approve), Claude (edits)
-- The corrected `CLAUDE.md` is in PR #204, not on `main`. It still says
-  "Play Billing 8"; the repo resolves 9.1.0.
-- The guard-rule line "Guard tests are mandatory. Never delete or weaken one to
-  make a build pass." is to be added once CI runs.
+- The corrected `CLAUDE.md` (#204 merged with #208's version) is in the
+  integration PR, not yet on `main`. Billing line and guard rule are now in it.
 - 29 `.md` files at the repo root include stale `*_STATUS*`/`PRODUCTION_*`
   reports.
 - The KP-era `CLAUDE.md` on `claude/affectionate-ptolemy-q3MVn` must not be

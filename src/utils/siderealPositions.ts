@@ -6,7 +6,7 @@
  * second, potentially drifting implementation.
  *
  * These are MEAN-longitude approximations (±1–5°), display only — the real
- * KP horary judgment always runs the full Moshier ephemeris server-side.
+ * Oracle judgment always runs server-side in the RKP Watch Engine (askWatchOracle).
  */
 
 import { getManzilaDisplay } from '@astrology/manazil';

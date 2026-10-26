@@ -133,15 +133,6 @@
       "reason": "Generated mirror of src/astrology/primitives/constants.ts; same pending rename as G1-kp-nava-grahas."
     },
     {
-      "id": "G1-skyclock-disclaimer",
-      "guard": "G1",
-      "kind": "debt",
-      "debtDate": "2026-10-25",
-      "file": "src/screens/SkyClockScreen.tsx",
-      "match": "full KP engine",
-      "reason": "User-visible Sky Clock disclaimer says \"Horary judgment uses the full KP engine on the server\" (also factually wrong). Copy change is a pending owner decision (CLAUDE.md §10); same text as G4-skyclock-disclaimer."
-    },
-    {
       "id": "G1-validator-denylist-kp",
       "guard": "G1",
       "kind": "approved",
@@ -156,6 +147,13 @@
       "file": "functions/src/oracle/narrationValidator.ts",
       "match": "Krishnamurti",
       "reason": "PROHIBITED_TERMINOLOGY deny-list: the 'KP' and 'Krishnamurti' strings exist to block those words in narration. This is the guard against KP, not KP itself."
+    },
+    {
+      "id": "G1-retired-kp-checker",
+      "guard": "G1",
+      "kind": "approved",
+      "file": "scripts/check-retired-kp.mjs",
+      "reason": "CI detector for the KP engine deleted in #92 (npm run check:retired-kp). Its file name, paths and messages name KP so it can find and report it. This is the guard against KP, not KP itself."
     },
     {
       "id": "G1-validator-tests-kp",
@@ -255,8 +253,8 @@
       "kind": "approved",
       "target": "src/astrology/manazil",
       "symbols": ["getManzilaDisplay"],
-      "skyClock": false,
-      "reason": "Lunar-mansion display data for the Oracle home screen. Display only."
+      "skyClock": true,
+      "reason": "Lunar-mansion display data for the Oracle home screen and the Sky Clock Moon row (siderealPositions.manzilName). Owner decision 2026-10-25: the Sky Clock shows the Manzil from the manazil table. Display only."
     },
     {
       "id": "G4-readings-significators",
@@ -277,33 +275,6 @@
       "reason": "Legacy-reading detail label. Same pending owner decision as G4-readings-significators."
     },
     {
-      "id": "G4-skyclock-nakshatra",
-      "guard": "G4",
-      "kind": "debt",
-      "debtDate": "2026-10-25",
-      "file": "src/screens/SkyClockScreen.tsx",
-      "match": "Nakshatra",
-      "reason": "Sky Clock row label. Replacement wording is a pending owner decision (CLAUDE.md §10)."
-    },
-    {
-      "id": "G4-skyclock-lahiri",
-      "guard": "G4",
-      "kind": "debt",
-      "debtDate": "2026-10-25",
-      "file": "src/screens/SkyClockScreen.tsx",
-      "match": "SIDEREAL (LAHIRI)",
-      "reason": "Sky Clock header. Replacement wording is a pending owner decision (CLAUDE.md §10)."
-    },
-    {
-      "id": "G4-skyclock-disclaimer",
-      "guard": "G4",
-      "kind": "debt",
-      "debtDate": "2026-10-25",
-      "file": "src/screens/SkyClockScreen.tsx",
-      "match": "full KP engine",
-      "reason": "Sky Clock disclaimer naming \"the full KP engine\". Pending owner decision (CLAUDE.md §10)."
-    },
-    {
       "id": "G4-istikhara-explanation",
       "guard": "G4",
       "kind": "debt",
@@ -311,24 +282,6 @@
       "file": "functions/src/oracle/remedyLibrary.ts",
       "match": "conflicting significators",
       "reason": "OD-4: Istikharah remedy explanation says \"conflicting significators\" and is shown by RemedyProtocolCard. Remedy copy is not edited in this change."
-    },
-    {
-      "id": "G4-play-title",
-      "guard": "G4",
-      "kind": "debt",
-      "debtDate": "2026-10-25",
-      "file": "android/fastlane/metadata/android/en-US/title.txt",
-      "match": "KP Astrology",
-      "reason": "OD-3: Play Store title \"Shams al-Asrār — KP Astrology\". Store listing is not changed in this change."
-    },
-    {
-      "id": "G4-play-changelog-3",
-      "guard": "G4",
-      "kind": "debt",
-      "debtDate": "2026-10-25",
-      "file": "android/fastlane/metadata/android/en-US/changelogs/3.txt",
-      "match": "full KP chart reading",
-      "reason": "Play Store release note for version code 3 (\"a full KP chart reading\"). Store listing text, treated like OD-3: not changed here."
     }
   ]
 }
