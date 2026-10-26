@@ -77,10 +77,23 @@ export function useQuota(): QuotaState {
       // (OracleScreen: the "veil trembled" fallback). The .catch() below only
       // covers the async rejection, so guard the synchronous build too and
       // degrade to "unknown remaining" instead of taking the screen down.
+      // The plan this request was issued against. If anything writes a
+      // different plan while it is in flight — usePurchase's setPlan() after
+      // a verified purchase, renewal or restore — this response predates that
+      // write and must not overwrite it (issue #156). It is dropped, and the
+      // cache cleared so the next refresh asks the server again.
+      const issuedWith = useQuotaStore.getState();
+      const issuedPlan = issuedWith.plan;
+      const issuedPlanExpiry = issuedWith.planExpiry;
       try {
         regionalFunctions()
           .httpsCallable<object, QuotaResponse>('getQuota')({})
           .then(r => {
+            const current = useQuotaStore.getState();
+            if (current.plan !== issuedPlan || current.planExpiry !== issuedPlanExpiry) {
+              invalidateQuotaCache();
+              return;
+            }
             _cachedRemaining = r.data.remaining;
             _lastFetchAt = Date.now();
             setServerRemaining(r.data.remaining);

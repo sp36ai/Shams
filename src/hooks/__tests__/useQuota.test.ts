@@ -85,6 +85,33 @@ describe('useQuota — reconciling plan/planExpiry from getQuota', () => {
     expect(result.current.canAsk).toBe(false);
   });
 
+  it('a getQuota response issued before a purchase does not overwrite the purchased plan (#156)', async () => {
+    // getQuota is in flight when usePurchase's verified setPlan() lands; the
+    // response then resolves with the pre-purchase 'free'.
+    let resolveQuota: (v: unknown) => void = () => undefined;
+    (httpsCallable as jest.Mock).mockImplementation((name: string) => {
+      if (name === 'getQuota') {
+        return jest.fn(
+          () =>
+            new Promise(resolve => {
+              resolveQuota = resolve;
+            }),
+        );
+      }
+      return jest.fn(() => Promise.resolve({ data: {} }));
+    });
+
+    const { result } = await renderHook(() => useQuota());
+    await waitFor(() => expect(httpsCallable).toHaveBeenCalledWith('getQuota'));
+
+    useQuotaStore.getState().setPlan('khass', '2027-01-01T00:00:00.000Z');
+    resolveQuota({ data: { plan: 'free', planExpiry: null, remaining: 2 } });
+
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    expect(useQuotaStore.getState().plan).toBe('khass');
+    expect(useQuotaStore.getState().planExpiry).toBe('2027-01-01T00:00:00.000Z');
+  });
+
   it('a getQuota failure leaves the local plan untouched rather than clearing it', async () => {
     useQuotaStore.getState().setPlan('khass', '2027-01-01T00:00:00.000Z');
     (httpsCallable as jest.Mock).mockImplementation((name: string) => {
