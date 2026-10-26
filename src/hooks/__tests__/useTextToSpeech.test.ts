@@ -57,7 +57,10 @@ describe('useTextToSpeech', () => {
     result.current.speak('m1', 'the verdict is favourable', 'en');
 
     await waitFor(() => expect(mockedTts.speak).toHaveBeenCalledWith('the verdict is favourable'));
-    expect(result.current.activeMessageId).toBe('m1');
+    // Tts.speak can run (after the awaited engine init) before React commits
+    // speak()'s setState; a synchronous read here failed on cold-cache runs
+    // (CI's case) with activeMessageId still null.
+    await waitFor(() => expect(result.current.activeMessageId).toBe('m1'));
     expect(result.current.status).toBe('speaking');
   });
 

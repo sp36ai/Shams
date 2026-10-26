@@ -140,6 +140,23 @@ go-ahead for anything pushed, released or deployed.
   (`shamsi_method.txt`, not in the repo) to `docs/` as provenance. Guard G5 stays
   an `it.todo` until then.
 
+### 7b. OD-6: lagna-ruler retrograde — `reversal` and `state` disagree ⚪
+
+- **Owner:** Owner (rule), Claude (code + regression test once decided)
+- **Evidence (re-checked on `main` @ b89cf48, 2026-10-26):** in
+  `src/astrology/rkp/watchJudgment.ts`, `reversal` is `POSSIBLE` when the target
+  ruler **or** the lagna ruler is retrograde (line 243), but `resolveState()`
+  gets only the target ruler's retrograde (line 272), and no factor line names a
+  retrograde lagna ruler. PR #94's sweep (Aug 2026, 112,896 moment/question
+  cases) found 9% with `reversal: POSSIBLE` and a different `state`, including
+  247 `FULFILLED` + `reversal: POSSIBLE`.
+- **Choice:** (A) a retrograde lagna ruler also makes the state `REVERSING`
+  (#94's fix; changes ~9% of verdicts), or (B) `reversal` follows the target
+  ruler only (verdicts unchanged; only the reversal flag changes). Not in
+  `docs/RKP_RULES_FROM_SARFARAZ.md`, so not ours to pick.
+- **Next:** owner picks A or B; #94 (stale history, 608 files) is then closed and
+  the chosen fix lands as a small new PR.
+
 ### 8. OD-2: native-script Hindi/Urdu terms ⚪
 
 - **Owner:** Owner
