@@ -1,0 +1,334 @@
+{
+  "$comment": "Single allowlist for the architectural guards (src/__tests__/architectureGuards.test.ts and functions/src/__tests__/architectureGuards.test.ts). Every entry needs a reason. Debt entries need a debtDate (YYYY-MM-DD); a guard fails once a debt entry is more than 30 days past its date. JSON so both the Jest (root) and Vitest (functions/, rootDir ./src) suites can read the same file.",
+  "scanExclusions": [
+    {
+      "path": "src/__tests__/architectureGuards.test.ts",
+      "reason": "The client guard file itself: it names every banned term and path it looks for."
+    },
+    {
+      "path": "functions/src/__tests__/architectureGuards.test.ts",
+      "reason": "The functions guard file itself: it names every banned term it looks for."
+    }
+  ],
+  "openOwnerDecisions": [
+    {
+      "id": "OD-2-native-script",
+      "topic": "Native-script Hindi/Urdu terminology",
+      "note": "G4 bans Latin-script terms only. hi.ts and ur.ts use लग्न / لگن (lagna) as the Ascendant label and ग्रह as the ordinary Hindi word for planet. Whether native-script equivalents are banned is undecided; they are not scanned."
+    },
+    {
+      "id": "OD-5",
+      "topic": "Ruling Planet count and horaLord",
+      "note": "CLAUDE.md says exactly 5 Ruling Planets with horaLord as an extended witness only. docs/RKP_RULES_FROM_SARFARAZ.md §4 lists 5 + Hora Lord as a 6th confirmatory lord, and getRulingPlanets returns a 6-tuple including horaLord. allWitnesses does not exist. shamsi_method.txt is not in the repo. G5 is an it.todo until the owner decides."
+    }
+  ],
+  "bannedUserFacingTerms": {
+    "$comment": "G4 (OD-2): Latin-script terms only, never native-script Hindi/Urdu (see OD-2-native-script). RKP and KP are case-sensitive acronyms so lowercase ids such as \"rkp-card\" are not treated as copy; the rest are case-insensitive. Shared by both guard suites.",
+    "terms": [
+      {
+        "term": "RKP",
+        "pattern": "\\bRKP\\b",
+        "flags": ""
+      },
+      {
+        "term": "KP",
+        "pattern": "\\bKP\\b",
+        "flags": ""
+      },
+      {
+        "term": "Ratan Kotamraju Paddhati",
+        "pattern": "\\bRatan\\s+Kotamraju\\s+Paddhati\\b",
+        "flags": "i"
+      },
+      {
+        "term": "sub-lord",
+        "pattern": "\\bsub[-\\s]?lords?\\b",
+        "flags": "i"
+      },
+      {
+        "term": "significator",
+        "pattern": "\\bsignificators?\\b",
+        "flags": "i"
+      },
+      {
+        "term": "Lahiri",
+        "pattern": "\\bLahiri\\b",
+        "flags": "i"
+      },
+      {
+        "term": "Placidus",
+        "pattern": "\\bPlacidus\\b",
+        "flags": "i"
+      },
+      {
+        "term": "nakshatra",
+        "pattern": "\\bnakshatras?\\b",
+        "flags": "i"
+      },
+      {
+        "term": "lagna",
+        "pattern": "\\blagnas?\\b",
+        "flags": "i"
+      },
+      {
+        "term": "dasha",
+        "pattern": "\\bdashas?\\b",
+        "flags": "i"
+      },
+      {
+        "term": "rashi",
+        "pattern": "\\brashis?\\b",
+        "flags": "i"
+      },
+      {
+        "term": "bhava",
+        "pattern": "\\bbhavas?\\b",
+        "flags": "i"
+      },
+      {
+        "term": "graha",
+        "pattern": "\\bgrahas?\\b",
+        "flags": "i"
+      },
+      {
+        "term": "vimshottari",
+        "pattern": "\\bvimshottari\\b",
+        "flags": "i"
+      }
+    ]
+  },
+  "entries": [
+    {
+      "id": "G1-kp-rules-dir",
+      "guard": "G1",
+      "kind": "debt",
+      "debtDate": "2026-10-25",
+      "pathPrefix": "src/astrology/kp/rules/",
+      "reason": "Runtime lookup tables (houseMatrix, nakshatras, vimshottari) and the question classifier used by the live RKP path; legitimate data despite the directory name (docs/audit/PHASE_0_BASELINE.md Addendum §3). Pending rename kp/ -> rkp/lookupTables is not forced here; this entry expires so the rename is not forgotten."
+    },
+    {
+      "id": "G1-kp-rules-mirror",
+      "guard": "G1",
+      "kind": "debt",
+      "debtDate": "2026-10-25",
+      "pathPrefix": "functions/src/engine/kp/rules/",
+      "reason": "Generated mirror of src/astrology/kp/rules/ (functions/scripts/sync-engine.mjs). Goes away with the same pending kp/ -> rkp/lookupTables rename."
+    },
+    {
+      "id": "G1-kp-nava-grahas",
+      "guard": "G1",
+      "kind": "debt",
+      "debtDate": "2026-10-25",
+      "file": "src/astrology/primitives/constants.ts",
+      "match": "KP_NAVA_GRAHAS",
+      "reason": "Shared math constant (nine-planet index list) with a KP-era name; no caller outside the engine. Rename is an owner decision (naming leftovers, CLAUDE.md 9d)."
+    },
+    {
+      "id": "G1-kp-nava-grahas-mirror",
+      "guard": "G1",
+      "kind": "debt",
+      "debtDate": "2026-10-25",
+      "file": "functions/src/engine/primitives/constants.ts",
+      "match": "KP_NAVA_GRAHAS",
+      "reason": "Generated mirror of src/astrology/primitives/constants.ts; same pending rename as G1-kp-nava-grahas."
+    },
+    {
+      "id": "G1-skyclock-disclaimer",
+      "guard": "G1",
+      "kind": "debt",
+      "debtDate": "2026-10-25",
+      "file": "src/screens/SkyClockScreen.tsx",
+      "match": "full KP engine",
+      "reason": "User-visible Sky Clock disclaimer says \"Horary judgment uses the full KP engine on the server\" (also factually wrong). Copy change is a pending owner decision (CLAUDE.md §10); same text as G4-skyclock-disclaimer."
+    },
+    {
+      "id": "G1-validator-denylist-kp",
+      "guard": "G1",
+      "kind": "approved",
+      "file": "functions/src/oracle/narrationValidator.ts",
+      "match": "KP",
+      "reason": "PROHIBITED_TERMINOLOGY deny-list: the 'KP' and 'Krishnamurti' strings exist to block those words in narration. This is the guard against KP, not KP itself."
+    },
+    {
+      "id": "G1-validator-denylist-krishnamurti",
+      "guard": "G1",
+      "kind": "approved",
+      "file": "functions/src/oracle/narrationValidator.ts",
+      "match": "Krishnamurti",
+      "reason": "PROHIBITED_TERMINOLOGY deny-list: the 'KP' and 'Krishnamurti' strings exist to block those words in narration. This is the guard against KP, not KP itself."
+    },
+    {
+      "id": "G1-validator-tests-kp",
+      "guard": "G1",
+      "kind": "approved",
+      "file": "functions/src/oracle/__tests__/narrationValidator.test.ts",
+      "match": "KP",
+      "reason": "Tests asserting the validator rejects 'KP' and 'Krishnamurti'."
+    },
+    {
+      "id": "G1-validator-tests-krishnamurti",
+      "guard": "G1",
+      "kind": "approved",
+      "file": "functions/src/oracle/__tests__/narrationValidator.test.ts",
+      "match": "Krishnamurti",
+      "reason": "Tests asserting the validator rejects 'KP' and 'Krishnamurti'."
+    },
+    {
+      "id": "G1-validator-unicode-tests",
+      "guard": "G1",
+      "kind": "approved",
+      "file": "functions/src/oracle/__tests__/narrationValidatorUnicodeSecurity.test.ts",
+      "match": "Krishnamurti",
+      "reason": "Tests asserting the validator rejects obfuscated 'Krishnamurti'."
+    },
+    {
+      "id": "G1-adversarial-generators-kp",
+      "guard": "G1",
+      "kind": "approved",
+      "file": "functions/scripts/adversarial-harness/generators.ts",
+      "match": "KP",
+      "reason": "Adversarial harness injects 'KP'/'Krishnamurti' into narration to prove the validator blocks them."
+    },
+    {
+      "id": "G1-adversarial-generators-krishnamurti",
+      "guard": "G1",
+      "kind": "approved",
+      "file": "functions/scripts/adversarial-harness/generators.ts",
+      "match": "Krishnamurti",
+      "reason": "Adversarial harness injects 'KP'/'Krishnamurti' into narration to prove the validator blocks them."
+    },
+    {
+      "id": "G1-kp-forensic-audit-doc",
+      "guard": "G1",
+      "kind": "provenance",
+      "file": "RKP_KP_FORENSIC_AUDIT.md",
+      "reason": "Historical audit of the KP removal. Provenance document, not code."
+    },
+    {
+      "id": "G3-rulingplanets-time-lords",
+      "guard": "G3",
+      "kind": "approved",
+      "target": "src/astrology/primitives/rulingPlanets",
+      "symbols": ["dayLordAtMoment", "horaLordAtMoment", "msUntilNextHora"],
+      "skyClock": true,
+      "reason": "Time-of-day lords and hora countdown for the Sky Clock/timing strip display. Shared calculation primitive; no judgment."
+    },
+    {
+      "id": "G3-chartbuilder-positions",
+      "guard": "G3",
+      "kind": "approved",
+      "target": "src/astrology/primitives/chartBuilder",
+      "symbols": ["buildChart"],
+      "skyClock": true,
+      "reason": "Planet positions for the live Sky Clock display (SkyClockScreen). Computes positions only; judgment (judgeWatchChart) is never called client-side."
+    },
+    {
+      "id": "G3-julianday",
+      "guard": "G3",
+      "kind": "approved",
+      "target": "src/astrology/primitives/julianDay",
+      "symbols": ["dateToJD"],
+      "skyClock": true,
+      "reason": "Pure date-to-Julian-Day math for CosmicClock."
+    },
+    {
+      "id": "G3-rules-dignity",
+      "guard": "G3",
+      "kind": "approved",
+      "target": "src/astrology/rkp/rules",
+      "symbols": ["dignityOf"],
+      "skyClock": true,
+      "reason": "Display dignity of a planet in its sign on the Sky Clock; explicitly allowed by CLAUDE.md §2."
+    },
+    {
+      "id": "G3-nomenclature-display",
+      "guard": "G3",
+      "kind": "approved",
+      "target": "src/astrology/rkp/nomenclature",
+      "symbols": ["HOUSE_META", "PLANET_NAME", "gharLabel"],
+      "skyClock": false,
+      "reason": "Display names and house labels for rendering the server verdict (RkpWatchCard). Display tables only."
+    },
+    {
+      "id": "G3-manazil-display",
+      "guard": "G3",
+      "kind": "approved",
+      "target": "src/astrology/manazil",
+      "symbols": ["getManzilaDisplay"],
+      "skyClock": false,
+      "reason": "Lunar-mansion display data for the Oracle home screen. Display only."
+    },
+    {
+      "id": "G4-readings-significators",
+      "guard": "G4",
+      "kind": "debt",
+      "debtDate": "2026-10-25",
+      "file": "src/screens/ReadingsScreen.tsx",
+      "match": "Significators",
+      "reason": "Legacy-reading detail label. Keep/relabel/hide is a pending owner decision (CLAUDE.md §10)."
+    },
+    {
+      "id": "G4-readings-moon-sublord",
+      "guard": "G4",
+      "kind": "debt",
+      "debtDate": "2026-10-25",
+      "file": "src/screens/ReadingsScreen.tsx",
+      "match": "Moon Sub-Lord",
+      "reason": "Legacy-reading detail label. Same pending owner decision as G4-readings-significators."
+    },
+    {
+      "id": "G4-skyclock-nakshatra",
+      "guard": "G4",
+      "kind": "debt",
+      "debtDate": "2026-10-25",
+      "file": "src/screens/SkyClockScreen.tsx",
+      "match": "Nakshatra",
+      "reason": "Sky Clock row label. Replacement wording is a pending owner decision (CLAUDE.md §10)."
+    },
+    {
+      "id": "G4-skyclock-lahiri",
+      "guard": "G4",
+      "kind": "debt",
+      "debtDate": "2026-10-25",
+      "file": "src/screens/SkyClockScreen.tsx",
+      "match": "SIDEREAL (LAHIRI)",
+      "reason": "Sky Clock header. Replacement wording is a pending owner decision (CLAUDE.md §10)."
+    },
+    {
+      "id": "G4-skyclock-disclaimer",
+      "guard": "G4",
+      "kind": "debt",
+      "debtDate": "2026-10-25",
+      "file": "src/screens/SkyClockScreen.tsx",
+      "match": "full KP engine",
+      "reason": "Sky Clock disclaimer naming \"the full KP engine\". Pending owner decision (CLAUDE.md §10)."
+    },
+    {
+      "id": "G4-istikhara-explanation",
+      "guard": "G4",
+      "kind": "debt",
+      "debtDate": "2026-10-25",
+      "file": "functions/src/oracle/remedyLibrary.ts",
+      "match": "conflicting significators",
+      "reason": "OD-4: Istikharah remedy explanation says \"conflicting significators\" and is shown by RemedyProtocolCard. Remedy copy is not edited in this change."
+    },
+    {
+      "id": "G4-play-title",
+      "guard": "G4",
+      "kind": "debt",
+      "debtDate": "2026-10-25",
+      "file": "android/fastlane/metadata/android/en-US/title.txt",
+      "match": "KP Astrology",
+      "reason": "OD-3: Play Store title \"Shams al-Asrār — KP Astrology\". Store listing is not changed in this change."
+    },
+    {
+      "id": "G4-play-changelog-3",
+      "guard": "G4",
+      "kind": "debt",
+      "debtDate": "2026-10-25",
+      "file": "android/fastlane/metadata/android/en-US/changelogs/3.txt",
+      "match": "full KP chart reading",
+      "reason": "Play Store release note for version code 3 (\"a full KP chart reading\"). Store listing text, treated like OD-3: not changed here."
+    }
+  ]
+}

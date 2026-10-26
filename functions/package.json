@@ -12,6 +12,7 @@
     "logs": "firebase functions:log",
     "lint": "tsc --noEmit && eslint . --ext .ts --max-warnings=0",
     "test": "vitest --passWithNoTests",
+    "test:guards": "vitest --run src/__tests__/architectureGuards.test.ts",
     "test:watch": "vitest --watch",
     "test:ui": "vitest --ui",
     "test:coverage": "vitest --coverage"
