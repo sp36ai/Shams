@@ -28,6 +28,7 @@ import {
 import { useColors } from '@theme/ThemeProvider';
 import { useTypography } from '@theme/useTypography';
 import { useTranslation } from '@i18n/I18nProvider';
+import TabIcon from '@components/TabIcon';
 
 export type ComposerMode = 'ask' | 'discuss';
 
@@ -170,14 +171,11 @@ const ChatComposer: React.FC<ChatComposerProps> = ({
               }
               testID="oracle-chat-mic-btn"
             >
-              <Animated.Text
-                style={{
-                  fontSize: 18,
-                  color: isListening ? colors.textOnPrimary : colors.textMuted,
-                }}
-              >
-                {'🎙'}
-              </Animated.Text>
+              <TabIcon
+                name="mic"
+                size={18}
+                color={isListening ? colors.textOnPrimary : colors.textMuted}
+              />
             </Pressable>
           </View>
         )}
