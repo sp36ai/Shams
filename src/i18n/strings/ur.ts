@@ -170,8 +170,8 @@ export const ur: StringTable = {
     emptyBody: 'لکھیں، یا مائیکروفون دبا کر بولیں۔ اوریکل اسی لمحے سے جواب دیتا ہے۔',
     reply: 'جواب',
     considering: 'آپ کی بات پر غور ہو رہا ہے…',
-    modeDiscuss: '💬 اسی جواب پر گفتگو',
-    modeNewQuestion: '✦ نیا سوال',
+    modeDiscuss: 'اسی جواب پر گفتگو',
+    modeNewQuestion: 'نیا سوال',
     placeholderDiscuss: 'اسی جواب کے بارے میں پوچھیں…',
     askAsNewQuestion: 'اس کے لیے نیا زائچہ کھولیں',
     separateQuestionNote: 'یہ الگ سوال ہو سکتا ہے — اسے اپنا لمحہ درکار ہوگا۔',
@@ -181,6 +181,10 @@ export const ur: StringTable = {
       'یہ زائچہ جو کہہ سکتا تھا کہہ چکا۔ اپنا اگلا سوال نئے زائچے کے طور پر پوچھیں۔',
     discussionClosedHint: '✦ یہ زائچہ جو کہہ سکتا تھا کہہ چکا — اپنا اگلا سوال پوچھیں',
     suggestedQuestionsLabel: 'آپ پوچھ سکتے ہیں',
+    dayToday: 'آج',
+    dayYesterday: 'کل',
+    copied: 'کاپی ہو گیا',
+    copyHint: 'کاپی کرنے کے لیے دبائے رکھیں',
   },
 
   reading: {

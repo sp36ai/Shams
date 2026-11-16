@@ -15,18 +15,30 @@
  * fields happen to be populated.
  */
 
-import React from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import React, { useEffect, useRef } from 'react';
+import {
+  AccessibilityInfo,
+  ActivityIndicator,
+  Animated,
+  Easing,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
+import Svg, { Circle } from 'react-native-svg';
 
 import { useColors } from '@theme/ThemeProvider';
 import { useTypography } from '@theme/useTypography';
 import { useTranslation } from '@i18n/I18nProvider';
+import TabIcon from '@components/TabIcon';
 import type { ReadingMessage } from '@stores/readingThreadsStore';
 import type { WatchReading } from '../../firebase/watchOracle';
 import RkpWatchCard, { STATE_HEADLINE } from './RkpWatchCard';
 import RemedyProtocolCard from './RemedyProtocolCard';
 import SuggestedQuestionsRow from './SuggestedQuestionsRow';
 import VerdictSeal from './VerdictSeal';
+import { Glyph, SealGlyph, useReadingText } from './readingDesign';
 import { directionalFocusFor } from '../../data/watchRemedyContext';
 import type { SpeakingStatus } from '@hooks/useTextToSpeech';
 
@@ -90,7 +102,216 @@ interface ChatBubbleProps {
   onToggleSpeech: (messageId: string, text: string, lang: 'en' | 'ur' | 'hi') => void;
   /** Fills the seeker's message box with the tapped suggestion. Never sends. */
   onSelectSuggestedQuestion: (question: string) => void;
+  /**
+   * Long-press copy of a text bubble (the seeker's words, or a follow-up
+   * reply). Absent → bubbles are not copyable. Verdict cards are not copied
+   * here; the Reading's own Share action covers those.
+   */
+  onCopyText?: (text: string) => void;
+  /** Narration progress (0–1) of the ACTIVE message; null when nothing plays. */
+  ttsProgress?: number | null;
 }
+
+/**
+ * How long after it arrived a verdict still plays its reveal. A Reading opened
+ * later shows its seal already open; one that has just landed unveils it.
+ */
+export const REVEAL_WINDOW_MS = 2 * 60 * 1000;
+
+export function isFreshVerdict(createdAtIso: string, now: number = Date.now()): boolean {
+  const at = Date.parse(createdAtIso);
+  return !Number.isNaN(at) && now - at >= 0 && now - at < REVEAL_WINDOW_MS;
+}
+
+/** A thin bar under the play control, filled to how far narration has got. */
+const NarrationProgress: React.FC<{ progress: number }> = ({ progress }) => {
+  const colors = useColors();
+  const percent = Math.round(progress * 100);
+  return (
+    <View
+      style={[styles.progressTrack, { backgroundColor: colors.border }]}
+      testID="narration-progress"
+      accessibilityRole="progressbar"
+      accessibilityValue={{ min: 0, max: 100, now: percent }}
+    >
+      <View
+        style={[styles.progressFill, { width: `${percent}%`, backgroundColor: colors.goldBright }]}
+      />
+    </View>
+  );
+};
+
+/**
+ * The casting loader (design 8b): an arc turning round a dashed ring that
+ * turns the other way, about a softly pulsing orb. Loops only while this
+ * message is casting; with Reduce Motion it stands still.
+ */
+const CastingOrb: React.FC = () => {
+  const colors = useColors();
+  const spin = useRef(new Animated.Value(0)).current;
+  const counter = useRef(new Animated.Value(0)).current;
+  const pulse = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    let cancelled = false;
+    let loops: Animated.CompositeAnimation | null = null;
+    AccessibilityInfo.isReduceMotionEnabled()
+      .catch(() => false)
+      .then(reduced => {
+        if (cancelled || reduced) {
+          return;
+        }
+        const linear = (value: Animated.Value, duration: number) =>
+          Animated.loop(
+            Animated.timing(value, {
+              toValue: 1,
+              duration,
+              easing: Easing.linear,
+              useNativeDriver: true,
+            }),
+          );
+        loops = Animated.parallel([
+          linear(spin, 2800),
+          linear(counter, 18000),
+          Animated.loop(
+            Animated.sequence([
+              Animated.timing(pulse, {
+                toValue: 1,
+                duration: 1200,
+                easing: Easing.inOut(Easing.sin),
+                useNativeDriver: true,
+              }),
+              Animated.timing(pulse, {
+                toValue: 0,
+                duration: 1200,
+                easing: Easing.inOut(Easing.sin),
+                useNativeDriver: true,
+              }),
+            ]),
+          ),
+        ]);
+        loops.start();
+      });
+    return () => {
+      cancelled = true;
+      loops?.stop();
+    };
+  }, [spin, counter, pulse]);
+
+  const rotate = spin.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '360deg'] });
+  const counterRotate = counter.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['0deg', '-360deg'],
+  });
+  const scale = pulse.interpolate({ inputRange: [0, 1], outputRange: [1, 1.06] });
+
+  return (
+    <View
+      style={styles.orb}
+      accessibilityElementsHidden
+      importantForAccessibility="no-hide-descendants"
+    >
+      <Animated.View style={[StyleSheet.absoluteFill, { transform: [{ rotate }] }]}>
+        <Svg width={ORB} height={ORB} viewBox="0 0 100 100">
+          <Circle cx="50" cy="50" r="49" stroke={colors.border} strokeWidth={0.8} fill="none" />
+          <Circle
+            cx="50"
+            cy="50"
+            r="49"
+            stroke={colors.goldBright}
+            strokeWidth={1}
+            fill="none"
+            strokeDasharray={`${Math.PI * 49 * 0.5} ${Math.PI * 49 * 2}`}
+            strokeLinecap="round"
+          />
+        </Svg>
+      </Animated.View>
+      <Animated.View style={[StyleSheet.absoluteFill, { transform: [{ rotate: counterRotate }] }]}>
+        <Svg width={ORB} height={ORB} viewBox="0 0 100 100">
+          <Circle
+            cx="50"
+            cy="50"
+            r="42"
+            stroke={colors.brass}
+            strokeWidth={0.8}
+            strokeDasharray="3 3"
+            fill="none"
+          />
+        </Svg>
+      </Animated.View>
+      <Animated.View
+        style={[
+          styles.orbCore,
+          {
+            backgroundColor: colors.accent,
+            shadowColor: colors.sacredGlow,
+            transform: [{ scale }],
+          },
+        ]}
+      >
+        <SealGlyph size={ORB_CORE * 0.5} variant="mini" color="transparent" hiColor={colors.bg} />
+      </Animated.View>
+    </View>
+  );
+};
+
+/** "THE ORACLE · 21:15" — who is speaking, and when. */
+const AuthorRow: React.FC<{
+  label: string;
+  time: string;
+  children?: React.ReactNode;
+}> = ({ label, time, children }) => {
+  const colors = useColors();
+  const text = useReadingText();
+  return (
+    <View style={styles.authorRow}>
+      <SealGlyph size={22} variant="mini" color={colors.accent} />
+      <Text style={[text.eyebrow, styles.authorLabel, { color: colors.accent }]} numberOfLines={1}>
+        {time.length > 0 ? `${label} · ${time}` : label}
+      </Text>
+      {children}
+    </View>
+  );
+};
+
+/** The Listen / Pause pill (design AudioControl). */
+const ListenPill: React.FC<{
+  isSpeaking: boolean;
+  isPaused: boolean;
+  onPress: () => void;
+  quiet?: boolean;
+}> = ({ isSpeaking, isPaused, onPress, quiet = false }) => {
+  const colors = useColors();
+  const text = useReadingText();
+  const t = useTranslation();
+  const label = isSpeaking
+    ? t('oracleChat.speaking')
+    : isPaused
+      ? t('oracleChat.paused')
+      : t('oracleChat.listenToVerdict');
+  return (
+    <Pressable
+      onPress={onPress}
+      style={({ pressed }) => [
+        styles.listenPill,
+        {
+          borderColor: quiet ? colors.border : colors.accent,
+          opacity: pressed ? 0.75 : 1,
+        },
+      ]}
+      accessibilityRole="button"
+      accessibilityLabel={
+        isSpeaking ? t('oracleChat.pauseNarration') : t('oracleChat.playNarration')
+      }
+      hitSlop={6}
+    >
+      <View style={[styles.listenDisc, { backgroundColor: colors.accent }]}>
+        <Glyph name={isSpeaking ? 'pause' : 'play'} color={colors.textOnPrimary} size={14} />
+      </View>
+      <Text style={[text.meta, { color: colors.goldBright }]}>{label}</Text>
+    </Pressable>
+  );
+};
 
 const ChatBubble: React.FC<ChatBubbleProps> = ({
   message,
@@ -103,32 +324,38 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({
   ttsActiveMessageId,
   onToggleSpeech,
   onSelectSuggestedQuestion,
+  onCopyText,
+  ttsProgress = null,
 }) => {
   const colors = useColors();
   const typography = useTypography();
+  const text = useReadingText();
   const t = useTranslation();
 
   const isUser = message.role === 'user';
+  const time = bubbleTime(message.createdAt);
 
   if (isUser) {
+    const meta = [time, message.kind === 'voice' ? t('oracleChat.voiceInputTag') : '']
+      .filter(part => part.length > 0)
+      .join(' · ');
     return (
       <View style={[styles.row, styles.rowUser]}>
-        <View style={[styles.bubble, styles.userBubble, { backgroundColor: colors.accent }]}>
-          {message.kind === 'voice' && (
-            <Text style={[typography('caption'), { color: colors.textOnPrimary, opacity: 0.75 }]}>
-              {'🎙 ' + t('oracleChat.voiceInputTag')}
-            </Text>
-          )}
-          <Text style={[typography('body'), { color: colors.textOnPrimary }]}>{message.text}</Text>
-          <Text
-            style={[
-              typography('caption'),
-              styles.time,
-              { color: colors.textOnPrimary, opacity: 0.7 },
-            ]}
-          >
-            {bubbleTime(message.createdAt)}
-          </Text>
+        <Pressable
+          onLongPress={onCopyText !== undefined ? () => onCopyText(message.text) : undefined}
+          disabled={onCopyText === undefined}
+          accessibilityHint={onCopyText !== undefined ? t('oracleChat.copyHint') : undefined}
+          style={[
+            styles.userBubble,
+            { backgroundColor: colors.surfaceElevated, borderColor: colors.border },
+          ]}
+          testID="chat-bubble-user"
+        >
+          <Text style={[typography('body'), { color: colors.text }]}>{message.text}</Text>
+        </Pressable>
+        <View style={styles.userMeta}>
+          {message.kind === 'voice' && <TabIcon name="mic" size={11} color={colors.textMuted} />}
+          {meta.length > 0 && <Text style={[text.meta, { color: colors.textMuted }]}>{meta}</Text>}
         </View>
       </View>
     );
@@ -136,43 +363,31 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({
 
   // Oracle turn — sending / failed / sent.
   if (message.status === 'sending') {
-    // A real chart cast (askWatchOracle) gets the glass/3D calculation
-    // treatment — the "Oracle calculation state" priority zone. A discussion
-    // reply (discussReading) is prose-only and cheap, so it stays the plain
-    // bubble it always was: not every pending state deserves the same weight.
-    const isCasting = message.variant !== 'discussion';
+    // A real chart cast (askWatchOracle) gets the casting loader; a
+    // discussion reply (discussReading) is prose-only and cheap, so it stays
+    // a quiet line in the Oracle's bubble.
+    if (message.variant !== 'discussion') {
+      return (
+        <View style={[styles.row, styles.casting]} testID="chat-casting">
+          <CastingOrb />
+          <Text style={[text.eyebrow, styles.centred, { color: colors.accent }]}>
+            {t('oracleChat.readingChart')}
+          </Text>
+        </View>
+      );
+    }
     return (
       <View style={[styles.row, styles.rowOracle]}>
         <View
           style={[
-            styles.bubble,
-            styles.oracleBubble,
-            styles.pendingBubble,
-            isCasting ? styles.castingBubble : null,
-            {
-              backgroundColor: colors.surface,
-              borderColor: colors.border,
-              ...(isCasting ? { shadowColor: colors.sacredGlow } : null),
-            },
+            styles.oracleCard,
+            styles.pendingCard,
+            { backgroundColor: colors.surface, borderColor: colors.border },
           ]}
         >
-          {isCasting && (
-            <>
-              <View
-                pointerEvents="none"
-                style={[styles.glassOverlay, { backgroundColor: colors.manuscriptFog }]}
-              />
-              <View
-                pointerEvents="none"
-                style={[styles.topHighlight, { backgroundColor: colors.text + '14' }]}
-              />
-            </>
-          )}
           <ActivityIndicator size="small" color={colors.accent} />
           <Text style={[typography('caption'), { color: colors.textMuted, marginLeft: 8 }]}>
-            {message.variant === 'discussion'
-              ? t('oracleChat.considering')
-              : t('oracleChat.readingChart')}
+            {t('oracleChat.considering')}
           </Text>
         </View>
       </View>
@@ -180,44 +395,59 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({
   }
 
   if (message.status === 'failed') {
-    return (
-      <View style={[styles.row, styles.rowOracle]}>
-        <View
-          style={[
-            styles.bubble,
-            styles.oracleBubble,
-            {
-              backgroundColor: colors.surface,
-              // A declined question is the Oracle speaking, not a failure.
-              borderColor: message.declined === true ? colors.border : colors.negative + '55',
-            },
-          ]}
-        >
-          <Text
+    // A declined question is the Oracle speaking, not a failure: it reads as
+    // the Oracle's own words, without the error treatment.
+    if (message.declined === true) {
+      return (
+        <View style={[styles.row, styles.rowOracle]}>
+          <View
             style={[
-              typography('body'),
-              { color: message.declined === true ? colors.text : colors.textMuted },
+              styles.oracleCard,
+              styles.proseCard,
+              { backgroundColor: colors.surface, borderColor: colors.border },
             ]}
           >
+            <AuthorRow label={t('app.name')} time={time} />
+            <Text style={[typography('body'), styles.prose, { color: colors.text }]}>
+              {message.errorMessage ?? t('oracleChat.failedGeneric')}
+            </Text>
+          </View>
+        </View>
+      );
+    }
+    return (
+      <View style={styles.row}>
+        <View
+          style={[
+            styles.errorCard,
+            { backgroundColor: colors.surface, borderColor: colors.border },
+          ]}
+          testID="chat-error-card"
+        >
+          <View style={[styles.eclipse, { borderColor: colors.negative }]}>
+            <Glyph name="eclipse" color={colors.negative} bgColor={colors.surface} size={22} />
+          </View>
+          <Text style={[typography('body'), styles.centred, { color: colors.textMuted }]}>
             {message.errorMessage ?? t('oracleChat.failedGeneric')}
           </Text>
-          {failureRef !== undefined && message.declined !== true && (
-            <Text
-              selectable
-              style={[typography('caption'), styles.failureRef, { color: colors.textMuted }]}
-            >
+          {failureRef !== undefined && (
+            <Text selectable style={[text.meta, styles.centred, { color: colors.textMuted }]}>
               {t('oracleChat.failureRef', { ref: failureRef })}
             </Text>
           )}
-          {message.replyToId !== undefined && message.declined !== true && (
+          {message.replyToId !== undefined && (
             <Pressable
               onPress={() => onRetry(message.replyToId!)}
-              style={({ pressed }) => [styles.retryBtn, { opacity: pressed ? 0.7 : 1 }]}
+              style={({ pressed }) => [
+                styles.primaryBtn,
+                { backgroundColor: colors.accent, opacity: pressed ? 0.8 : 1 },
+              ]}
               accessibilityRole="button"
               accessibilityLabel={t('oracleChat.retry')}
             >
-              <Text style={[typography('label'), { color: colors.accent }]}>
-                {'↻ ' + t('oracleChat.retry')}
+              <Glyph name="retry" color={colors.textOnPrimary} size={15} />
+              <Text style={[text.button, { color: colors.textOnPrimary }]}>
+                {t('oracleChat.retry')}
               </Text>
             </Pressable>
           )}
@@ -230,19 +460,33 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({
   const reading = message.reading;
   const isSpeaking = ttsActiveMessageId === message.id && ttsStatus === 'speaking';
   const isPaused = ttsActiveMessageId === message.id && ttsStatus === 'paused';
+  const narrationProgress =
+    ttsActiveMessageId === message.id && ttsProgress !== null ? ttsProgress : null;
 
   if (message.variant === 'discussion') {
     return (
       <View style={[styles.row, styles.rowOracle]}>
-        <View
+        <Pressable
+          onLongPress={onCopyText !== undefined ? () => onCopyText(message.text) : undefined}
+          disabled={onCopyText === undefined}
+          accessibilityHint={onCopyText !== undefined ? t('oracleChat.copyHint') : undefined}
+          testID="chat-bubble-discussion"
           style={[
-            styles.bubble,
-            styles.oracleBubble,
-            styles.discussionBubble,
+            styles.oracleCard,
+            styles.proseCard,
             { backgroundColor: colors.surface, borderColor: colors.border },
           ]}
         >
-          <Text style={[typography('body'), { color: colors.text, lineHeight: 22 }]}>
+          <AuthorRow label={t('app.name')} time={time}>
+            <ListenPill
+              quiet
+              isSpeaking={isSpeaking}
+              isPaused={isPaused}
+              onPress={() => onToggleSpeech(message.id, message.text, questionLang)}
+            />
+          </AuthorRow>
+          {narrationProgress !== null && <NarrationProgress progress={narrationProgress} />}
+          <Text style={[typography('body'), styles.prose, { color: colors.text }]}>
             {message.text}
           </Text>
 
@@ -254,44 +498,31 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({
             ignore this and keep typing.
           */}
           {message.suggestsNewQuestion === true && message.replyToId !== undefined && (
-            <View style={[styles.suggestionBlock, { borderTopColor: colors.border }]}>
+            <View
+              style={[styles.newQuestionCard, { borderColor: colors.accent }]}
+              testID="new-question-card"
+            >
               <Text style={[typography('caption'), { color: colors.textMuted }]}>
                 {t('oracleChat.separateQuestionNote')}
               </Text>
               <Pressable
                 onPress={() => onAskAsNewQuestion(message.replyToId!)}
-                style={({ pressed }) => [styles.newQuestionBtn, { opacity: pressed ? 0.7 : 1 }]}
+                style={({ pressed }) => [
+                  styles.primaryBtn,
+                  styles.primaryBtnStart,
+                  { backgroundColor: colors.accent, opacity: pressed ? 0.8 : 1 },
+                ]}
                 accessibilityRole="button"
                 accessibilityLabel={t('oracleChat.askAsNewQuestion')}
                 testID="oracle-chat-ask-as-new"
               >
-                <Text style={[typography('label'), { color: colors.goldBright }]}>
-                  {'✦ ' + t('oracleChat.askAsNewQuestion')}
+                <Text style={[text.button, { color: colors.textOnPrimary }]}>
+                  {t('oracleChat.askAsNewQuestion')}
                 </Text>
               </Pressable>
             </View>
           )}
-
-          <Pressable
-            onPress={() => onToggleSpeech(message.id, message.text, questionLang)}
-            style={({ pressed }) => [styles.discussionSpeechBtn, { opacity: pressed ? 0.7 : 1 }]}
-            accessibilityRole="button"
-            accessibilityLabel={
-              isSpeaking ? t('oracleChat.pauseNarration') : t('oracleChat.playNarration')
-            }
-          >
-            <Text style={[typography('caption'), { color: colors.textFaint }]}>
-              {isSpeaking
-                ? '⏸ ' + t('oracleChat.speaking')
-                : isPaused
-                  ? '▶ ' + t('oracleChat.paused')
-                  : '▶ ' + t('oracleChat.listenToVerdict')}
-            </Text>
-          </Pressable>
-          <Text style={[typography('caption'), styles.time, { color: colors.textFaint }]}>
-            {bubbleTime(message.createdAt)}
-          </Text>
-        </View>
+        </Pressable>
       </View>
     );
   }
@@ -300,44 +531,38 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({
     <View style={[styles.row, styles.rowOracle]}>
       <View
         style={[
-          styles.bubble,
-          styles.oracleBubble,
-          styles.readingBubble,
-          { backgroundColor: colors.chatShamsBg, borderColor: colors.borderAccent + '55' },
+          styles.oracleCard,
+          styles.readingCard,
+          { backgroundColor: colors.surface, borderColor: colors.border },
         ]}
+        testID="chat-oracle-reading"
       >
-        <View style={styles.senderRow}>
-          <Text style={[typography('label'), { color: colors.goldBright }]}>
-            {'☉ ' + t('app.name')}
-          </Text>
-          {reading !== undefined && (
-            <Pressable
-              onPress={() =>
-                onToggleSpeech(message.id, speakableTextFor(reading), readingLang ?? questionLang)
-              }
-              style={({ pressed }) => [
-                styles.speechPill,
-                { borderColor: colors.borderAccent, opacity: pressed ? 0.7 : 1 },
-              ]}
-              accessibilityRole="button"
-              accessibilityLabel={
-                isSpeaking ? t('oracleChat.pauseNarration') : t('oracleChat.playNarration')
-              }
-            >
-              <Text style={[typography('caption'), { color: colors.goldBright }]}>
-                {isSpeaking
-                  ? '⏸ ' + t('oracleChat.speaking')
-                  : isPaused
-                    ? '▶ ' + t('oracleChat.paused')
-                    : '▶ ' + t('oracleChat.listenToVerdict')}
-              </Text>
-            </Pressable>
-          )}
+        <View style={styles.readingAuthor}>
+          <AuthorRow label={t('app.name')} time={time}>
+            {reading !== undefined && (
+              <ListenPill
+                isSpeaking={isSpeaking}
+                isPaused={isPaused}
+                onPress={() =>
+                  onToggleSpeech(message.id, speakableTextFor(reading), readingLang ?? questionLang)
+                }
+              />
+            )}
+          </AuthorRow>
+          {narrationProgress !== null && <NarrationProgress progress={narrationProgress} />}
         </View>
         {reading !== undefined && (
           <>
-            <VerdictSeal verdict={reading.verdict} diagnosis={reading.oracle?.diagnosis} />
+            <VerdictSeal
+              verdict={reading.verdict}
+              diagnosis={reading.oracle?.diagnosis}
+              reveal={isFreshVerdict(message.createdAt)}
+            />
+            {reading.oracle !== undefined && (
+              <RemedyProtocolCard composition={reading.oracle} showFinding={false} flush />
+            )}
             <RkpWatchCard
+              flush
               showVerdict={false}
               window={reading.window}
               lagnaSignName={reading.lagnaSignName}
@@ -345,9 +570,6 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({
               verdict={reading.verdict}
               directionalFocus={directionalFocusFor(reading.verdict)}
             />
-            {reading.oracle !== undefined && (
-              <RemedyProtocolCard composition={reading.oracle} showFinding={false} />
-            )}
             {/* PHASE 2B/2B-F: this used to also render a GuidanceCard, fed by
                 a second, LLM-driven remedy path — disconnected in 2B,
                 its now-unreachable component deleted in 2B-F. See
@@ -356,9 +578,6 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({
                 presentation. */}
           </>
         )}
-        <Text style={[typography('caption'), styles.time, { color: colors.textFaint }]}>
-          {bubbleTime(message.createdAt)}
-        </Text>
       </View>
       {/* Suggestions sit under the bubble, like quick replies — they are
           offers to the seeker, not part of the Oracle's answer. */}
@@ -374,9 +593,12 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({
   );
 };
 
+const ORB = 120;
+const ORB_CORE = 62;
+
 const styles = StyleSheet.create({
   row: {
-    marginVertical: 6,
+    marginVertical: 7,
     paddingHorizontal: 12,
   },
   rowUser: {
@@ -385,92 +607,155 @@ const styles = StyleSheet.create({
   rowOracle: {
     alignItems: 'flex-start',
   },
-  bubble: {
+  centred: {
+    textAlign: 'center',
+  },
+  // User bubble — 20/20/6/20, the tail corner toward the seeker's side.
+  userBubble: {
     maxWidth: '82%',
-    borderRadius: 16,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderTopStartRadius: 20,
+    borderTopEndRadius: 20,
+    borderBottomEndRadius: 6,
+    borderBottomStartRadius: 20,
     paddingHorizontal: 14,
     paddingVertical: 10,
   },
-  userBubble: {
-    borderBottomRightRadius: 4,
-  },
-  oracleBubble: {
-    borderWidth: StyleSheet.hairlineWidth,
-    borderBottomLeftRadius: 4,
-  },
-  pendingBubble: {
+  userMeta: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: 5,
+    marginTop: 5,
   },
-  castingBubble: {
-    overflow: 'hidden', // clips the glass overlay/highlight to the rounded corners
-    shadowOpacity: 0.3,
-    shadowRadius: 18,
-    shadowOffset: { width: 0, height: 8 },
-    elevation: 5,
+  // Oracle card — 6/22/22/22, the tail corner toward the Oracle's side.
+  oracleCard: {
+    borderWidth: StyleSheet.hairlineWidth,
+    borderTopStartRadius: 6,
+    borderTopEndRadius: 22,
+    borderBottomEndRadius: 22,
+    borderBottomStartRadius: 22,
+    overflow: 'hidden',
   },
-  glassOverlay: {
-    ...StyleSheet.absoluteFillObject,
+  pendingCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 14,
+    paddingVertical: 12,
   },
-  topHighlight: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    height: 1,
-  },
-  failureRef: {
-    marginTop: 6,
-    opacity: 0.8,
-  },
-  retryBtn: {
-    marginTop: 8,
-    alignSelf: 'flex-start',
-  },
-  discussionBubble: {
+  proseCard: {
     maxWidth: '92%',
-  },
-  suggestionBlock: {
-    marginTop: 12,
+    paddingHorizontal: 14,
     paddingTop: 10,
-    borderTopWidth: StyleSheet.hairlineWidth,
+    paddingBottom: 14,
   },
-  newQuestionBtn: {
-    marginTop: 8,
-    alignSelf: 'flex-start',
+  prose: {
+    marginTop: 10,
   },
-  discussionSpeechBtn: {
-    marginTop: 8,
-    alignSelf: 'flex-start',
+  readingCard: {
+    width: '100%',
   },
-  readingBubble: {
-    // The verdict cards need the width; the bubble still leaves a gutter on
-    // the right so it reads as the Oracle's side of the thread.
-    maxWidth: '94%',
-    width: '94%',
-    paddingHorizontal: 8,
-    paddingTop: 8,
+  readingAuthor: {
+    paddingTop: 10,
+    paddingHorizontal: 12,
   },
-  senderRow: {
+  authorRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    gap: 10,
+  },
+  authorLabel: {
+    flex: 1,
+  },
+  listenPill: {
+    height: 36,
+    borderRadius: 18,
+    borderWidth: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
     gap: 8,
-    paddingHorizontal: 6,
+    paddingStart: 5,
+    paddingEnd: 12,
   },
-  speechPill: {
+  listenDisc: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  casting: {
+    alignItems: 'center',
+    gap: 14,
+    paddingVertical: 18,
+  },
+  orb: {
+    width: ORB,
+    height: ORB,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  orbCore: {
+    width: ORB_CORE,
+    height: ORB_CORE,
+    borderRadius: ORB_CORE / 2,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowOpacity: 0.6,
+    shadowRadius: 24,
+    shadowOffset: { width: 0, height: 0 },
+    elevation: 8,
+  },
+  errorCard: {
     borderWidth: StyleSheet.hairlineWidth,
-    borderRadius: 999,
-    paddingHorizontal: 10,
-    paddingVertical: 3,
+    borderRadius: 22,
+    paddingTop: 22,
+    paddingHorizontal: 18,
+    paddingBottom: 18,
+    alignItems: 'center',
+    gap: 10,
   },
-  time: {
-    alignSelf: 'flex-end',
-    fontSize: 11,
-    marginTop: 4,
+  eclipse: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  primaryBtn: {
+    minHeight: 48,
+    borderRadius: 24,
+    paddingHorizontal: 26,
+    marginTop: 6,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+  },
+  primaryBtnStart: {
+    alignSelf: 'flex-start',
+    marginTop: 12,
+  },
+  newQuestionCard: {
+    marginTop: 14,
+    borderWidth: 1,
+    borderStyle: 'dashed',
+    borderRadius: 18,
+    padding: 14,
   },
   quickReplies: {
-    width: '94%',
+    width: '100%',
+    marginTop: 4,
+  },
+  progressTrack: {
+    height: 2,
+    borderRadius: 1,
+    marginTop: 8,
+    marginBottom: 2,
+    overflow: 'hidden',
+  },
+  progressFill: {
+    height: 2,
   },
 });
 

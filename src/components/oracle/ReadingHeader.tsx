@@ -19,8 +19,8 @@ import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { useColors } from '@theme/ThemeProvider';
-import { useTypography } from '@theme/useTypography';
 import type { ReadingThread } from '@stores/readingThreadsStore';
+import { Diamond, useReadingText } from './readingDesign';
 
 /** "27 Aug 2026 · 1:32 PM", in the device's own locale. */
 export function formatReadingMoment(iso: string): string {
@@ -39,7 +39,7 @@ export function formatReadingMoment(iso: string): string {
 
 const ReadingHeader: React.FC<{ thread: ReadingThread }> = ({ thread }) => {
   const colors = useColors();
-  const typography = useTypography();
+  const text = useReadingText();
 
   // The stored moment, falling back to when the thread was opened — a cast
   // that never landed still has a question and a time it was asked.
@@ -48,22 +48,26 @@ const ReadingHeader: React.FC<{ thread: ReadingThread }> = ({ thread }) => {
     (part): part is string => part !== undefined && part.length > 0,
   );
 
-  // A chat-thread date chip, not a document title: the title is already in
-  // the screen header and the question is the seeker's own opening bubble.
+  // The cast line of the design: a quiet caps line between two hairlines,
+  // the way a messaging thread dates its conversation. The title is already
+  // in the screen header and the question is the seeker's own opening bubble.
   return (
     <View style={styles.wrap} accessibilityRole="header">
-      <View style={[styles.chip, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-        {firstLine.length > 0 && (
-          <Text style={[typography('caption'), styles.centred, { color: colors.textMuted }]}>
-            {firstLine.join('  ·  ')}
-          </Text>
-        )}
-        {thread.context !== null && (
-          <Text style={[typography('caption'), styles.centred, { color: colors.goldBright }]}>
-            {`${thread.context.lagnaSignName} · ${thread.context.lagnaRulerName}`}
-          </Text>
-        )}
+      <View style={styles.row}>
+        <View style={[styles.rule, { backgroundColor: colors.border }]} />
+        <Diamond color={colors.brass} size={5} filled={false} />
+        <View style={[styles.rule, { backgroundColor: colors.border }]} />
       </View>
+      {firstLine.length > 0 && (
+        <Text style={[text.meta, styles.centred, { color: colors.textMuted }]}>
+          {firstLine.join('  ·  ')}
+        </Text>
+      )}
+      {thread.context !== null && (
+        <Text style={[text.meta, styles.centred, { color: colors.goldBright }]}>
+          {`${thread.context.lagnaSignName} · ${thread.context.lagnaRulerName}`}
+        </Text>
+      )}
     </View>
   );
 };
@@ -71,16 +75,21 @@ const ReadingHeader: React.FC<{ thread: ReadingThread }> = ({ thread }) => {
 const styles = StyleSheet.create({
   wrap: {
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingTop: 12,
-    paddingBottom: 6,
+    paddingHorizontal: 24,
+    paddingTop: 14,
+    paddingBottom: 8,
+    gap: 6,
   },
-  chip: {
-    borderWidth: StyleSheet.hairlineWidth,
-    borderRadius: 12,
-    paddingHorizontal: 14,
-    paddingVertical: 6,
-    maxWidth: '90%',
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    alignSelf: 'stretch',
+    marginBottom: 2,
+  },
+  rule: {
+    flex: 1,
+    height: StyleSheet.hairlineWidth,
   },
   centred: {
     textAlign: 'center',

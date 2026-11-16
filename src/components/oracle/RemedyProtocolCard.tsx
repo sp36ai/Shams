@@ -27,6 +27,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import { useColors } from '@theme/ThemeProvider';
 import { useTypography } from '@theme/useTypography';
 import type { RkpOutcome, TimingPosture } from '@astrology/rkp/diagnosis';
+import { SectionEyebrow } from './readingDesign';
 import type {
   EvidenceType,
   OracleProtocolStep,
@@ -137,11 +138,19 @@ export interface RemedyProtocolCardProps {
    * opens on the narration, without a second headline.
    */
   showFinding?: boolean;
+  /**
+   * Drawn as sections inside the Oracle's message card (the Reading design):
+   * no card chrome of its own, hairline-separated sections with diamond
+   * eyebrows, and the counselled practices in their own accent-bordered
+   * "Your remedy" box. Every field shown is the same either way.
+   */
+  flush?: boolean;
 }
 
 const RemedyProtocolCard: React.FC<RemedyProtocolCardProps> = ({
   composition,
   showFinding = true,
+  flush = false,
 }) => {
   const colors = useColors();
   const typography = useTypography();
@@ -174,8 +183,13 @@ const RemedyProtocolCard: React.FC<RemedyProtocolCardProps> = ({
 
   return (
     <View
-      style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border }]}
+      style={
+        flush
+          ? styles.flushCard
+          : [styles.card, { backgroundColor: colors.surface, borderColor: colors.border }]
+      }
       accessibilityRole="summary"
+      testID={flush ? 'remedy-protocol-sections' : undefined}
     >
       {/* ── The finding, unless a VerdictSeal above already gives it ───── */}
       {showFinding && (
@@ -196,7 +210,18 @@ const RemedyProtocolCard: React.FC<RemedyProtocolCardProps> = ({
 
       {/* ── Narration, when synthesis succeeded ──────────────────────────── */}
       {hasNarration && (
-        <View style={styles.narrativeSection}>
+        <View
+          style={
+            flush
+              ? [styles.flushSection, { borderTopColor: colors.border }]
+              : styles.narrativeSection
+          }
+        >
+          {flush && (
+            <View style={styles.flushEyebrow}>
+              <SectionEyebrow label="Celestial interpretation" color={colors.accent} />
+            </View>
+          )}
           <Text style={[typography('body'), styles.prose, { color: colors.text, lineHeight: 22 }]}>
             {narration.rkp_finding}
           </Text>
@@ -222,6 +247,7 @@ const RemedyProtocolCard: React.FC<RemedyProtocolCardProps> = ({
           <View
             style={[
               styles.guidance,
+              flush ? styles.flushInset : null,
               { backgroundColor: colors.maqbool + '08', borderColor: colors.maqbool + '30' },
             ]}
           >
@@ -249,10 +275,29 @@ const RemedyProtocolCard: React.FC<RemedyProtocolCardProps> = ({
 
       {/* ── The protocol ─────────────────────────────────────────────────── */}
       {steps.length > 0 && (
-        <View style={styles.protocolSection}>
-          <Text style={[typography('label'), styles.protocolLabel, { color: colors.text }]}>
-            {protocol?.interventionRequired === true ? '✧ What is counselled' : '✧ Also noted'}
-          </Text>
+        <View
+          style={
+            flush
+              ? [
+                  styles.remedyBox,
+                  { borderColor: colors.accent, backgroundColor: colors.accent + '0D' },
+                ]
+              : styles.protocolSection
+          }
+          testID={flush ? 'remedy-box' : undefined}
+        >
+          {flush ? (
+            <View style={styles.flushEyebrow}>
+              <SectionEyebrow
+                label={protocol?.interventionRequired === true ? 'Your remedy' : 'Also noted'}
+                color={colors.accent}
+              />
+            </View>
+          ) : (
+            <Text style={[typography('label'), styles.protocolLabel, { color: colors.text }]}>
+              {protocol?.interventionRequired === true ? '✧ What is counselled' : '✧ Also noted'}
+            </Text>
+          )}
           <View style={styles.stepsContainer}>
             {numberSteps(steps).map(({ step, index }) => (
               <ProtocolStep
@@ -272,17 +317,24 @@ const RemedyProtocolCard: React.FC<RemedyProtocolCardProps> = ({
         <View
           style={[
             styles.why,
+            flush ? styles.flushInset : null,
             { backgroundColor: colors.goldBright + '06', borderColor: colors.goldBright + '25' },
           ]}
         >
-          <Text
-            style={[
-              typography('label'),
-              { color: colors.goldBright, fontSize: 12, fontWeight: '600', marginBottom: 6 },
-            ]}
-          >
-            {'Why this was chosen'}
-          </Text>
+          {flush ? (
+            <View style={styles.flushEyebrow}>
+              <SectionEyebrow label="Why this was chosen" color={colors.accent} />
+            </View>
+          ) : (
+            <Text
+              style={[
+                typography('label'),
+                { color: colors.goldBright, fontSize: 12, fontWeight: '600', marginBottom: 6 },
+              ]}
+            >
+              {'Why this was chosen'}
+            </Text>
+          )}
           <Text style={[typography('caption'), { color: colors.textMuted, lineHeight: 20 }]}>
             {narration.why_this_remedy}
           </Text>
@@ -290,14 +342,28 @@ const RemedyProtocolCard: React.FC<RemedyProtocolCardProps> = ({
       )}
 
       {hasNarration && (
-        <Text style={[typography('caption'), styles.signature, { color: colors.textFaint }]}>
+        <Text
+          style={[
+            typography('caption'),
+            styles.signature,
+            flush ? styles.flushInset : null,
+            { color: colors.textFaint },
+          ]}
+        >
           {narration.signature}
         </Text>
       )}
 
       {/* ── Brand seal — fixed text, present even on a degraded reading ──── */}
       {composition.brandSeal !== null && composition.brandSeal !== undefined && (
-        <Text style={[typography('caption'), styles.brandSeal, { color: colors.textFaint }]}>
+        <Text
+          style={[
+            typography('caption'),
+            styles.brandSeal,
+            flush ? styles.flushInset : null,
+            { color: colors.textFaint },
+          ]}
+        >
           {composition.brandSeal}
         </Text>
       )}
@@ -561,6 +627,28 @@ const styles = StyleSheet.create({
   },
 
   /* ── Why Section ──– */
+  flushCard: {
+    paddingBottom: 16,
+  },
+  flushSection: {
+    borderTopWidth: StyleSheet.hairlineWidth,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+  },
+  flushEyebrow: {
+    marginBottom: 9,
+  },
+  flushInset: {
+    marginHorizontal: 16,
+  },
+  remedyBox: {
+    marginHorizontal: 12,
+    marginTop: 6,
+    marginBottom: 6,
+    padding: 16,
+    borderRadius: 22,
+    borderWidth: 1,
+  },
   why: {
     marginTop: 12,
     marginBottom: 12,
