@@ -18,6 +18,7 @@ import { ELEVATION, RADIUS, SPACING } from '@theme/themes';
 import { HOUSE_META, PLANET_NAME, gharLabel } from '@astrology/rkp/nomenclature';
 import type { DisplayWatchVerdict, WatchState } from '@astrology/rkp/watchJudgment';
 import type { DirectionalFocus } from '../../data/watchRemedyContext';
+import { SectionEyebrow } from './readingDesign';
 
 /* -------------------------------------------------------------------------- */
 /*  Presentation tables                                                       */
@@ -215,6 +216,12 @@ export interface RkpWatchCardProps {
    * opens on what was judged, without restating the answer.
    */
   showVerdict?: boolean;
+  /**
+   * Drawn as a section inside the Oracle's message card (the Reading
+   * design): no card border, fill, glass or shadow of its own — a hairline
+   * above it and a section eyebrow instead. Content is identical either way.
+   */
+  flush?: boolean;
 }
 
 const RkpWatchCard: React.FC<RkpWatchCardProps> = ({
@@ -224,6 +231,7 @@ const RkpWatchCard: React.FC<RkpWatchCardProps> = ({
   verdict,
   directionalFocus,
   showVerdict = true,
+  flush = false,
 }) => {
   const colors = useColors();
   const typography = useTypography();
@@ -263,17 +271,22 @@ const RkpWatchCard: React.FC<RkpWatchCardProps> = ({
 
   return (
     <View
-      style={[
-        styles.card,
-        {
-          backgroundColor: colors.surface,
-          borderColor: colors.border,
-          borderLeftWidth: 3,
-          borderLeftColor: stateColor,
-          shadowColor: stateColor,
-        },
-      ]}
+      style={
+        flush
+          ? [styles.flush, { borderTopColor: colors.border }]
+          : [
+              styles.card,
+              {
+                backgroundColor: colors.surface,
+                borderColor: colors.border,
+                borderLeftWidth: 3,
+                borderLeftColor: stateColor,
+                shadowColor: stateColor,
+              },
+            ]
+      }
       accessibilityRole="summary"
+      testID={flush ? 'rkp-watch-section' : undefined}
     >
       {/*
         Glass+3D elevation — this is the "elevated 3D Oracle result card" the
@@ -282,19 +295,31 @@ const RkpWatchCard: React.FC<RkpWatchCardProps> = ({
         the verdict's own state color (reusing `stateColor`, not a new value)
         plus a soft top highlight, layered under the real content below.
         Nothing here changes what the card shows — every field still reads
-        straight off `verdict`, unchanged.
+        straight off `verdict`, unchanged. A flush section sits inside the
+        Oracle's own card, which already carries the surface, so it has none.
       */}
-      <View
-        pointerEvents="none"
-        style={[styles.glassOverlay, { backgroundColor: stateColor + '0F' }]}
-      />
-      <View
-        pointerEvents="none"
-        style={[styles.topHighlight, { backgroundColor: colors.text + '14' }]}
-      />
+      {!flush && (
+        <>
+          <View
+            pointerEvents="none"
+            style={[styles.glassOverlay, { backgroundColor: stateColor + '0F' }]}
+          />
+          <View
+            pointerEvents="none"
+            style={[styles.topHighlight, { backgroundColor: colors.text + '14' }]}
+          />
+        </>
+      )}
+      {flush && <SectionEyebrow label="The chart" color={colors.accent} />}
 
       {/* ── The window this reading was taken in ─────────────────────────── */}
-      <Text style={[typography('caption'), { color: colors.textFaint, letterSpacing: 1.5 }]}>
+      <Text
+        style={[
+          typography('caption'),
+          { color: colors.textFaint, letterSpacing: 1.5 },
+          flush ? styles.flushFirst : null,
+        ]}
+      >
         {`WATCH WINDOW  :${pad2(window.startMinute)}–:${pad2(
           window.endMinute % 60,
         )}  ·  ${lagnaSignName}`}
@@ -356,9 +381,15 @@ const RkpWatchCard: React.FC<RkpWatchCardProps> = ({
 
       {/* ── Why — spoken from the engine's own record ────────────────────── */}
       <View style={[styles.rule, { backgroundColor: colors.border }]} />
-      <Text style={[typography('label'), { color: colors.text, marginBottom: 6 }]}>
-        {'How the chart reads'}
-      </Text>
+      {flush ? (
+        <View style={styles.flushEyebrow}>
+          <SectionEyebrow label="How the chart reads" color={colors.accent} />
+        </View>
+      ) : (
+        <Text style={[typography('label'), { color: colors.text, marginBottom: 6 }]}>
+          {'How the chart reads'}
+        </Text>
+      )}
       {groupFactors(factors).map((factor, i) => (
         <View key={`${i}-${factor.slice(0, 12)}`} style={styles.factorRow}>
           <Text style={[typography('caption'), { color: colors.goldBright }]}>{'✦'}</Text>
@@ -401,6 +432,17 @@ const styles = StyleSheet.create({
     // this base spread supplies opacity/radius/offset/elevation only. Bumped
     // from ELEVATION.rest to .floating — this card is a named glass/3D
     // priority zone, meant to sit visibly above the conversation around it.
+  },
+  flush: {
+    borderTopWidth: StyleSheet.hairlineWidth,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+  },
+  flushEyebrow: {
+    marginBottom: 8,
+  },
+  flushFirst: {
+    marginTop: 9,
   },
   glassOverlay: {
     ...StyleSheet.absoluteFillObject,

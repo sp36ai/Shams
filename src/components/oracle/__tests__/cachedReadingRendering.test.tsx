@@ -24,6 +24,7 @@ import { ThemeProvider } from '@theme/ThemeProvider';
 import { I18nProvider } from '@i18n/I18nProvider';
 import RkpWatchCard from '../RkpWatchCard';
 import RemedyProtocolCard from '../RemedyProtocolCard';
+import VerdictSeal from '../VerdictSeal';
 import type { WatchOracleComposition } from '../../../types/watchOracle';
 
 const MOMENT = '2026-08-08T11:13:00+05:30';
@@ -141,5 +142,57 @@ describe('RemedyProtocolCard with a degraded cached composition', () => {
     const { queryByText } = await wrap(<RemedyProtocolCard composition={degraded} />);
     // Falls back to the engine's own word rather than a blank headline.
     expect(queryByText('SOMETHING_NEW')).not.toBeNull();
+  });
+});
+
+/*
+ * The Reading design draws these same cards as sections inside the Oracle's
+ * message (`flush`), under a redesigned VerdictSeal. Cached data reaches that
+ * layout exactly as it reached the old one, so the same contract holds.
+ */
+describe('the Reading design layout with degraded cached data', () => {
+  it('renders the flush chart section for a verdict missing confidence and factors', async () => {
+    const verdict = { ...freshVerdict(), confidence: undefined, factors: undefined } as never;
+    const { getByTestId } = await wrap(
+      <RkpWatchCard
+        flush
+        showVerdict={false}
+        window={WINDOW}
+        lagnaSignName="Burj Jauza"
+        lagnaRulerName="Utarid"
+        verdict={verdict}
+        directionalFocus={null}
+      />,
+    );
+    expect(getByTestId('rkp-watch-section')).toBeTruthy();
+  });
+
+  it('renders the flush remedy sections when narration is undefined and steps are absent', async () => {
+    const degraded = {
+      ...composition(),
+      narration: undefined,
+      protocol: { interventionRequired: true, guidance: null },
+    } as never;
+    const { getByTestId } = await wrap(
+      <RemedyProtocolCard composition={degraded} showFinding={false} flush />,
+    );
+    expect(getByTestId('remedy-protocol-sections')).toBeTruthy();
+  });
+
+  it('renders the verdict seal for an unknown state with no confidence, showing no pips', async () => {
+    const verdict = { ...freshVerdict(), state: 'SOMETHING_NEW', confidence: undefined } as never;
+    const { getByTestId, queryByTestId, getByText } = await wrap(
+      <VerdictSeal verdict={verdict} diagnosis={null} />,
+    );
+    expect(getByTestId('verdict-seal')).toBeTruthy();
+    expect(getByText('This reading could not be described')).toBeTruthy();
+    // No confidence on record → no strength shown, never a guessed one.
+    expect(queryByTestId('verdict-strength-pips')).toBeNull();
+  });
+
+  it('renders the verdict seal mid-reveal without throwing', async () => {
+    await expect(
+      wrap(<VerdictSeal verdict={freshVerdict() as never} diagnosis={null} reveal />),
+    ).resolves.toBeDefined();
   });
 });

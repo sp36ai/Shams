@@ -95,6 +95,7 @@ import { requestRef } from '@utils/requestRef';
 import { dayLabelFor, withDaySeparators, type DaySeparatorRow } from '@utils/chatTime';
 import { copyText } from '@utils/clipboard';
 import BrandFooter from '@components/ui/BrandFooter';
+import { Glyph, SealGlyph, useReadingText } from '@components/oracle/readingDesign';
 import { formatCoins, useWalletStore } from '@stores/walletStore';
 
 /**
@@ -251,7 +252,7 @@ function lineageOf(thread: ReadingThread): string[] {
  */
 const DaySeparator: React.FC<{ iso: string; lang: 'en' | 'ur' | 'hi' }> = ({ iso, lang }) => {
   const colors = useColors();
-  const typography = useTypography();
+  const readingText = useReadingText();
   const t = useTranslation();
   const label = dayLabelFor(iso, new Date(), lang);
   if (label === null) {
@@ -267,7 +268,7 @@ const DaySeparator: React.FC<{ iso: string; lang: 'en' | 'ur' | 'hi' }> = ({ iso
     <View style={styles.daySeparatorRow} testID="chat-day-separator">
       <Text
         style={[
-          typography('caption'),
+          readingText.meta,
           styles.daySeparatorChip,
           { color: colors.textMuted, backgroundColor: colors.surface, borderColor: colors.border },
         ]}
@@ -285,7 +286,10 @@ const EmptyState: React.FC = () => {
   const t = useTranslation();
   return (
     <View style={styles.emptyWrap}>
-      <Text style={[typography('title'), { color: colors.text, textAlign: 'center' }]}>
+      <View style={styles.emptySeal}>
+        <SealGlyph size={84} color={colors.brass} hiColor={colors.accent} fillColor="transparent" />
+      </View>
+      <Text style={[typography('title'), { color: colors.goldBright, textAlign: 'center' }]}>
         {t('oracleChat.emptyTitle')}
       </Text>
       <Text
@@ -306,6 +310,7 @@ const ReadingScreen: React.FC = () => {
   const { theme } = useTheme();
   const colors = useColors();
   const typography = useTypography();
+  const readingText = useReadingText();
   const t = useTranslation();
   const { lang } = useI18n();
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
@@ -919,16 +924,21 @@ const ReadingScreen: React.FC = () => {
         nebula3={colors.nebula3}
       />
 
-      <View style={[styles.header, { borderColor: colors.border }]}>
+      <View
+        style={[styles.header, { borderColor: colors.border, backgroundColor: colors.surface }]}
+      >
         <Pressable
           onPress={() => navigation.goBack()}
           style={styles.headerBtn}
           accessibilityRole="button"
           accessibilityLabel={t('common.back')}
         >
-          <Text style={[typography('label'), { color: colors.accent, fontSize: 20 }]}>‹</Text>
+          <Glyph name="back" color={colors.goldBright} size={22} />
         </Pressable>
-        <Text style={[typography('subheading'), { color: colors.goldBright }]} numberOfLines={1}>
+        <Text
+          style={[readingText.title, styles.headerTitle, { color: colors.goldBright }]}
+          numberOfLines={1}
+        >
           {firstThread?.title ?? t('reading.newReading')}
         </Text>
         {shareable ? (
@@ -939,7 +949,7 @@ const ReadingScreen: React.FC = () => {
             accessibilityLabel={t('reading.shareReading')}
             testID="reading-share-btn"
           >
-            <Text style={[typography('label'), { color: colors.accent }]}>{'↗'}</Text>
+            <Glyph name="share" color={colors.goldBright} size={19} />
           </Pressable>
         ) : (
           <View style={styles.headerBtn} />
@@ -1015,15 +1025,19 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 8,
-    paddingVertical: 10,
+    paddingHorizontal: 4,
+    paddingVertical: 2,
     borderBottomWidth: StyleSheet.hairlineWidth,
   },
   headerBtn: {
-    width: 40,
-    height: 40,
+    width: 48,
+    height: 48,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  headerTitle: {
+    flex: 1,
+    textAlign: 'center',
   },
   listContent: {
     paddingVertical: 12,
@@ -1034,9 +1048,9 @@ const styles = StyleSheet.create({
     marginVertical: 8,
   },
   daySeparatorChip: {
-    paddingHorizontal: 10,
-    paddingVertical: 3,
-    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+    borderRadius: 12,
     borderWidth: StyleSheet.hairlineWidth,
     overflow: 'hidden',
   },
@@ -1045,6 +1059,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 32,
+  },
+  emptySeal: {
+    marginBottom: 18,
   },
   micErrorBanner: {
     paddingHorizontal: 16,

@@ -243,7 +243,7 @@ describe('ReadingScreen', () => {
       return defaultImpl(name);
     });
 
-    await user.press(screen.getByText('↻ Retry'));
+    await user.press(screen.getByText('Retry'));
 
     await waitFor(() => {
       const oracleMsg = oracleMessages()[0];
@@ -664,9 +664,9 @@ describe('ReadingScreen', () => {
 
       await user.type(screen.getByTestId('oracle-chat-input'), 'Why so long?');
       await user.press(screen.getByTestId('oracle-chat-send-btn'));
-      await waitFor(() => expect(screen.getByText('↻ Retry')).toBeTruthy());
+      await waitFor(() => expect(screen.getByText('Retry')).toBeTruthy());
 
-      await user.press(screen.getByText('↻ Retry'));
+      await user.press(screen.getByText('Retry'));
       await waitFor(() => expect(discussCallable).toHaveBeenCalledTimes(2));
 
       const first = discussCallable.mock.calls[0]?.[0] as { requestId?: string };
@@ -702,7 +702,7 @@ describe('ReadingScreen', () => {
 
       await user.type(screen.getByTestId('oracle-chat-input'), 'Is my business connected to this?');
       await user.press(screen.getByTestId('oracle-chat-send-btn'));
-      await waitFor(() => expect(screen.getByText('↻ Retry')).toBeTruthy());
+      await waitFor(() => expect(screen.getByText('Retry')).toBeTruthy());
 
       const sent = discussCallable.mock.calls[0]?.[0] as { requestId: string };
       expect(screen.getByText(`Ref ${sent.requestId.slice(0, 8)}`)).toBeTruthy();
@@ -734,10 +734,10 @@ describe('ReadingScreen', () => {
 
       await user.type(screen.getByTestId('oracle-chat-input'), 'Why so long?');
       await user.press(screen.getByTestId('oracle-chat-send-btn'));
-      await waitFor(() => expect(screen.getByText('↻ Retry')).toBeTruthy());
+      await waitFor(() => expect(screen.getByText('Retry')).toBeTruthy());
 
       discussFails = false;
-      await user.press(screen.getByText('↻ Retry'));
+      await user.press(screen.getByText('Retry'));
 
       await waitFor(() => expect(screen.getByText('Delay, not denial.')).toBeTruthy());
       expect(askCallable).toHaveBeenCalledTimes(1);
@@ -924,9 +924,9 @@ describe('ReadingScreen', () => {
       const user = userEvent.setup();
       await user.type(screen.getByTestId('oracle-chat-input'), 'Will I get the job?');
       await user.press(screen.getByTestId('oracle-chat-send-btn'));
-      await waitFor(() => expect(screen.getByText('↻ Retry')).toBeTruthy());
+      await waitFor(() => expect(screen.getByText('Retry')).toBeTruthy());
 
-      await user.press(screen.getByText('↻ Retry'));
+      await user.press(screen.getByText('Retry'));
       await waitFor(() => expect(askCallable).toHaveBeenCalledTimes(2));
 
       // The id identifies the seeker's ACT of asking, not the call: same id on
@@ -951,7 +951,7 @@ describe('ReadingScreen', () => {
       const user = userEvent.setup();
       await user.type(screen.getByTestId('oracle-chat-input'), 'Will I get the job?');
       await user.press(screen.getByTestId('oracle-chat-send-btn'));
-      await waitFor(() => expect(screen.getByText('↻ Retry')).toBeTruthy());
+      await waitFor(() => expect(screen.getByText('Retry')).toBeTruthy());
 
       // Different words, not the Retry button: the seeker is asking something
       // else, in a Reading that never got a chart.
@@ -987,14 +987,14 @@ describe('ReadingScreen', () => {
       const user = userEvent.setup();
       await user.type(screen.getByTestId('oracle-chat-input'), 'Will I get the job?');
       await user.press(screen.getByTestId('oracle-chat-send-btn'));
-      await waitFor(() => expect(screen.getByText('↻ Retry')).toBeTruthy());
+      await waitFor(() => expect(screen.getByText('Retry')).toBeTruthy());
 
       (httpsCallable as jest.Mock).mockImplementation((name: string) =>
         name === 'askWatchOracle'
           ? jest.fn(() => Promise.resolve({ data: successPayload() }))
           : defaultImpl(name),
       );
-      await user.press(screen.getByText('↻ Retry'));
+      await user.press(screen.getByText('Retry'));
 
       await waitFor(() => expect(onlyThread()?.readingId).toBe('r1'));
       expect(useReadingThreadsStore.getState().threads).toHaveLength(1);
