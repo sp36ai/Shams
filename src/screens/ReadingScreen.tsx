@@ -92,7 +92,10 @@ import ChatBubble from '@components/oracle/ChatBubble';
 import ChatComposer from '@components/oracle/ChatComposer';
 import ReadingHeader from '@components/oracle/ReadingHeader';
 import { requestRef } from '@utils/requestRef';
+import { dayLabelFor, withDaySeparators, type DaySeparatorRow } from '@utils/chatTime';
+import { copyText } from '@utils/clipboard';
 import BrandFooter from '@components/ui/BrandFooter';
+import { Glyph, SealGlyph, useReadingText } from '@components/oracle/readingDesign';
 import { formatCoins, useWalletStore } from '@stores/walletStore';
 
 /**
@@ -189,10 +192,23 @@ export function isOutOfScopeError(err: unknown): boolean {
   );
 }
 
-/** One row of the conversation: a Reading's moment chip, or a message. */
+/** One row of the conversation: a day chip, a Reading's moment chip, or a message. */
 type ChatItem =
+  | DaySeparatorRow
   | { kind: 'moment'; key: string; thread: ReadingThread }
   | { kind: 'message'; key: string; message: ReadingMessage; thread: ReadingThread };
+
+/** When a row happened, for day separators. A day chip itself has no time. */
+function chatItemTime(item: ChatItem): string | undefined {
+  switch (item.kind) {
+    case 'moment':
+      return item.thread.createdAt;
+    case 'message':
+      return item.message.createdAt;
+    default:
+      return undefined;
+  }
+}
 
 /**
  * One Reading as chat bubbles: the question that opened it is the seeker's
@@ -228,6 +244,41 @@ function lineageOf(thread: ReadingThread): string[] {
   ].slice(0, 4);
 }
 
+/**
+ * A day chip between messages from different days — "Today", "Yesterday",
+ * or the date. A Reading can be discussed over several days; this keeps a
+ * reply from three days later from reading as if it came a minute after the
+ * verdict.
+ */
+const DaySeparator: React.FC<{ iso: string; lang: 'en' | 'ur' | 'hi' }> = ({ iso, lang }) => {
+  const colors = useColors();
+  const readingText = useReadingText();
+  const t = useTranslation();
+  const label = dayLabelFor(iso, new Date(), lang);
+  if (label === null) {
+    return null;
+  }
+  const text =
+    label.kind === 'today'
+      ? t('oracleChat.dayToday')
+      : label.kind === 'yesterday'
+        ? t('oracleChat.dayYesterday')
+        : label.text;
+  return (
+    <View style={styles.daySeparatorRow} testID="chat-day-separator">
+      <Text
+        style={[
+          readingText.meta,
+          styles.daySeparatorChip,
+          { color: colors.textMuted, backgroundColor: colors.surface, borderColor: colors.border },
+        ]}
+      >
+        {text}
+      </Text>
+    </View>
+  );
+};
+
 /** Shown before the first question of a new Reading. */
 const EmptyState: React.FC = () => {
   const colors = useColors();
@@ -235,7 +286,10 @@ const EmptyState: React.FC = () => {
   const t = useTranslation();
   return (
     <View style={styles.emptyWrap}>
-      <Text style={[typography('title'), { color: colors.text, textAlign: 'center' }]}>
+      <View style={styles.emptySeal}>
+        <SealGlyph size={84} color={colors.brass} hiColor={colors.accent} fillColor="transparent" />
+      </View>
+      <Text style={[typography('title'), { color: colors.goldBright, textAlign: 'center' }]}>
         {t('oracleChat.emptyTitle')}
       </Text>
       <Text
@@ -256,6 +310,7 @@ const ReadingScreen: React.FC = () => {
   const { theme } = useTheme();
   const colors = useColors();
   const typography = useTypography();
+  const readingText = useReadingText();
   const t = useTranslation();
   const { lang } = useI18n();
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
@@ -359,7 +414,7 @@ const ReadingScreen: React.FC = () => {
         out.push({ kind: 'message', key: message.id, message, thread: reading });
       }
     });
-    return out;
+    return withDaySeparators(out, chatItemTime);
   }, [conversation]);
 
   // ── The two send paths ────────────────────────────────────────────────────
@@ -772,9 +827,13 @@ const ReadingScreen: React.FC = () => {
     }
   }, [items.length]);
 
+  const handleCopyText = useCallback((text: string) => copyText(text, t('oracleChat.copied')), [t]);
+
   const renderItem = useCallback(
     ({ item }: { item: ChatItem }) =>
-      item.kind === 'moment' ? (
+      item.kind === 'day' ? (
+        <DaySeparator iso={item.iso} lang={lang} />
+      ) : item.kind === 'moment' ? (
         <ReadingHeader thread={item.thread} />
       ) : (
         <ChatBubble
@@ -788,6 +847,8 @@ const ReadingScreen: React.FC = () => {
           ttsActiveMessageId={tts.activeMessageId}
           onToggleSpeech={tts.toggle}
           onSelectSuggestedQuestion={setInputText}
+          onCopyText={handleCopyText}
+          ttsProgress={tts.progress}
         />
       ),
     [
@@ -797,7 +858,9 @@ const ReadingScreen: React.FC = () => {
       tts.status,
       tts.activeMessageId,
       tts.toggle,
+      tts.progress,
       setInputText,
+      handleCopyText,
     ],
   );
 
@@ -861,16 +924,21 @@ const ReadingScreen: React.FC = () => {
         nebula3={colors.nebula3}
       />
 
-      <View style={[styles.header, { borderColor: colors.border }]}>
+      <View
+        style={[styles.header, { borderColor: colors.border, backgroundColor: colors.surface }]}
+      >
         <Pressable
           onPress={() => navigation.goBack()}
           style={styles.headerBtn}
           accessibilityRole="button"
           accessibilityLabel={t('common.back')}
         >
-          <Text style={[typography('label'), { color: colors.accent, fontSize: 20 }]}>‹</Text>
+          <Glyph name="back" color={colors.goldBright} size={22} />
         </Pressable>
-        <Text style={[typography('subheading'), { color: colors.goldBright }]} numberOfLines={1}>
+        <Text
+          style={[readingText.title, styles.headerTitle, { color: colors.goldBright }]}
+          numberOfLines={1}
+        >
           {firstThread?.title ?? t('reading.newReading')}
         </Text>
         {shareable ? (
@@ -881,7 +949,7 @@ const ReadingScreen: React.FC = () => {
             accessibilityLabel={t('reading.shareReading')}
             testID="reading-share-btn"
           >
-            <Text style={[typography('label'), { color: colors.accent }]}>{'↗'}</Text>
+            <Glyph name="share" color={colors.goldBright} size={19} />
           </Pressable>
         ) : (
           <View style={styles.headerBtn} />
@@ -957,25 +1025,43 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 8,
-    paddingVertical: 10,
+    paddingHorizontal: 4,
+    paddingVertical: 2,
     borderBottomWidth: StyleSheet.hairlineWidth,
   },
   headerBtn: {
-    width: 40,
-    height: 40,
+    width: 48,
+    height: 48,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  headerTitle: {
+    flex: 1,
+    textAlign: 'center',
   },
   listContent: {
     paddingVertical: 12,
     flexGrow: 1,
+  },
+  daySeparatorRow: {
+    alignItems: 'center',
+    marginVertical: 8,
+  },
+  daySeparatorChip: {
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+    borderRadius: 12,
+    borderWidth: StyleSheet.hairlineWidth,
+    overflow: 'hidden',
   },
   emptyWrap: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 32,
+  },
+  emptySeal: {
+    marginBottom: 18,
   },
   micErrorBanner: {
     paddingHorizontal: 16,

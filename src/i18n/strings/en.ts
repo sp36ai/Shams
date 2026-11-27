@@ -161,8 +161,8 @@ export const en: StringTable = {
     emptyBody: 'Type it, or tap the mic to speak it. The oracle answers from this exact moment.',
     reply: 'Reply',
     considering: 'Considering your words…',
-    modeDiscuss: '💬 Discuss this reading',
-    modeNewQuestion: '✦ New question',
+    modeDiscuss: 'Discuss this reading',
+    modeNewQuestion: 'New question',
     placeholderDiscuss: 'Ask about this reading…',
     askAsNewQuestion: 'Start a new Reading for this',
     separateQuestionNote: 'This may be a separate question — it would need its own moment.',
@@ -172,6 +172,10 @@ export const en: StringTable = {
       'This Reading has said what it can. Ask your next question as a new Reading.',
     discussionClosedHint: '✦ This Reading has said what it can — ask your next question',
     suggestedQuestionsLabel: 'You may ask',
+    dayToday: 'Today',
+    dayYesterday: 'Yesterday',
+    copied: 'Copied',
+    copyHint: 'Long press to copy',
   },
 
   reading: {

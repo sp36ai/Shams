@@ -28,6 +28,8 @@ import {
 import { useColors } from '@theme/ThemeProvider';
 import { useTypography } from '@theme/useTypography';
 import { useTranslation } from '@i18n/I18nProvider';
+import TabIcon from '@components/TabIcon';
+import { Glyph, useReadingText } from './readingDesign';
 
 export type ComposerMode = 'ask' | 'discuss';
 
@@ -69,6 +71,7 @@ const ChatComposer: React.FC<ChatComposerProps> = ({
 }) => {
   const colors = useColors();
   const typography = useTypography();
+  const text = useReadingText();
   const t = useTranslation();
 
   const pulse = useRef(new Animated.Value(0)).current;
@@ -99,89 +102,12 @@ const ChatComposer: React.FC<ChatComposerProps> = ({
   }, [isListening, pulse]);
 
   const canSend = value.trim().length > 0 && !sending;
+  const isDiscuss = mode === 'discuss';
+  const sendLabel = isDiscuss ? t('oracleChat.reply') : t('oracleChat.send');
 
   return (
     <View style={[styles.bar, { backgroundColor: colors.surface, borderTopColor: colors.border }]}>
-      {hint !== undefined && (
-        <Text style={[typography('caption'), styles.hint, { color: colors.textFaint }]}>
-          {hint}
-        </Text>
-      )}
       <View style={styles.wrap}>
-        {/* No recognizer in this build or on this device: the mic is not
-          rendered at all rather than offered and then failing. */}
-        {micAvailable && (
-          <View style={styles.micWrap}>
-            {isListening && (
-              <>
-                {/*
-                Second, static ring behind the existing animated pulse — a
-                restrained stand-in for the concentric "celestial" rings the
-                design spec calls for around voice input, sized to this
-                inline composer rather than a full-screen takeover (the real
-                voice flow has no separate listening screen: it's this mic
-                button, live in the composer bar).
-              */}
-                <View
-                  pointerEvents="none"
-                  style={[styles.glassRing, { borderColor: colors.negative + '40' }]}
-                />
-                <Animated.View
-                  pointerEvents="none"
-                  style={[
-                    styles.pulseRing,
-                    {
-                      borderColor: colors.negative,
-                      opacity: pulse.interpolate({ inputRange: [0, 1], outputRange: [0.7, 0] }),
-                      transform: [
-                        { scale: pulse.interpolate({ inputRange: [0, 1], outputRange: [1, 1.6] }) },
-                      ],
-                    },
-                  ]}
-                />
-              </>
-            )}
-            <Pressable
-              onPress={onMicPress}
-              disabled={micDisabled}
-              style={({ pressed }) => [
-                styles.micBtn,
-                {
-                  backgroundColor: isListening ? colors.negative : colors.surfaceElevated,
-                  borderColor: isListening ? colors.negative : colors.border,
-                  opacity: micDisabled ? 0.4 : pressed ? 0.75 : 1,
-                  // Depth behind the mic only while it's actually doing
-                  // something — an idle mic stays flat, same rule as the
-                  // Home composer's send button.
-                  ...(isListening
-                    ? {
-                        shadowColor: colors.negative,
-                        shadowOpacity: 0.55,
-                        shadowRadius: 10,
-                        shadowOffset: { width: 0, height: 0 },
-                        elevation: 5,
-                      }
-                    : null),
-                },
-              ]}
-              accessibilityRole="button"
-              accessibilityLabel={
-                isListening ? t('oracleChat.stopRecording') : t('oracleChat.startRecording')
-              }
-              testID="oracle-chat-mic-btn"
-            >
-              <Animated.Text
-                style={{
-                  fontSize: 18,
-                  color: isListening ? colors.textOnPrimary : colors.textMuted,
-                }}
-              >
-                {'🎙'}
-              </Animated.Text>
-            </Pressable>
-          </View>
-        )}
-
         <TextInput
           style={[
             typography('body'),
@@ -189,7 +115,7 @@ const ChatComposer: React.FC<ChatComposerProps> = ({
             {
               color: colors.text,
               backgroundColor: colors.surfaceElevated,
-              borderColor: colors.border,
+              borderColor: isListening ? colors.accent : colors.border,
             },
           ]}
           value={value}
@@ -197,7 +123,7 @@ const ChatComposer: React.FC<ChatComposerProps> = ({
           placeholder={
             isListening
               ? t('oracleChat.listening')
-              : mode === 'discuss'
+              : isDiscuss
                 ? t('oracleChat.placeholderDiscuss')
                 : t('oracleChat.placeholder')
           }
@@ -208,34 +134,86 @@ const ChatComposer: React.FC<ChatComposerProps> = ({
           testID="oracle-chat-input"
         />
 
+        {/* No recognizer in this build or on this device: the mic is not
+          rendered at all rather than offered and then failing. */}
+        {micAvailable && (
+          <View style={styles.micWrap}>
+            {isListening && (
+              <Animated.View
+                pointerEvents="none"
+                style={[
+                  styles.pulseRing,
+                  {
+                    borderColor: colors.accent,
+                    opacity: pulse.interpolate({ inputRange: [0, 1], outputRange: [0.7, 0] }),
+                    transform: [
+                      { scale: pulse.interpolate({ inputRange: [0, 1], outputRange: [1, 1.25] }) },
+                    ],
+                  },
+                ]}
+              />
+            )}
+            <Pressable
+              onPress={onMicPress}
+              disabled={micDisabled}
+              style={({ pressed }) => [
+                styles.roundBtn,
+                {
+                  backgroundColor: isListening ? colors.accent : 'transparent',
+                  borderColor: colors.accent,
+                  opacity: micDisabled ? 0.4 : pressed ? 0.75 : 1,
+                },
+              ]}
+              accessibilityRole="button"
+              accessibilityLabel={
+                isListening ? t('oracleChat.stopRecording') : t('oracleChat.startRecording')
+              }
+              testID="oracle-chat-mic-btn"
+            >
+              <TabIcon
+                name="mic"
+                size={20}
+                color={isListening ? colors.textOnPrimary : colors.goldBright}
+              />
+            </Pressable>
+          </View>
+        )}
+
         <Pressable
           onPress={onSend}
           disabled={!canSend}
           style={({ pressed }) => [
-            styles.sendBtn,
+            isDiscuss ? styles.roundBtn : styles.askBtn,
             {
-              backgroundColor: canSend ? colors.accent : colors.surfaceElevated,
+              backgroundColor: canSend ? colors.accent : 'transparent',
+              borderColor: canSend ? colors.accent : colors.border,
               opacity: pressed && canSend ? 0.8 : 1,
             },
           ]}
           accessibilityRole="button"
-          accessibilityLabel={mode === 'discuss' ? t('oracleChat.reply') : t('oracleChat.send')}
+          accessibilityLabel={sendLabel}
           testID="oracle-chat-send-btn"
         >
           {sending ? (
-            <ActivityIndicator size="small" color={colors.textOnPrimary} />
+            <ActivityIndicator size="small" color={colors.accent} />
+          ) : isDiscuss ? (
+            <Glyph
+              name="arrowUp"
+              size={20}
+              color={canSend ? colors.textOnPrimary : colors.textFaint}
+            />
           ) : (
-            <Animated.Text
-              style={[
-                typography('label'),
-                { color: canSend ? colors.textOnPrimary : colors.textFaint },
-              ]}
+            <Text
+              style={[text.button, { color: canSend ? colors.textOnPrimary : colors.textFaint }]}
             >
-              {mode === 'discuss' ? t('oracleChat.reply') : t('oracleChat.send')}
-            </Animated.Text>
+              {sendLabel}
+            </Text>
           )}
         </Pressable>
       </View>
+      {hint !== undefined && (
+        <Text style={[text.meta, styles.hint, { color: colors.textMuted }]}>{hint}</Text>
+      )}
     </View>
   );
 };
@@ -243,62 +221,59 @@ const ChatComposer: React.FC<ChatComposerProps> = ({
 const styles = StyleSheet.create({
   bar: {
     borderTopWidth: StyleSheet.hairlineWidth,
+    paddingTop: 10,
+    paddingBottom: 6,
+    paddingHorizontal: 12,
   },
   hint: {
-    textAlign: 'center',
-    paddingTop: 6,
-    paddingHorizontal: 16,
+    paddingTop: 8,
+    paddingHorizontal: 6,
+    paddingBottom: 2,
   },
   wrap: {
     flexDirection: 'row',
     alignItems: 'flex-end',
-    paddingHorizontal: 10,
-    paddingVertical: 8,
     gap: 8,
   },
   micWrap: {
     alignItems: 'center',
     justifyContent: 'center',
-    width: 52,
-    height: 52,
-  },
-  glassRing: {
-    position: 'absolute',
-    width: 52,
-    height: 52,
-    borderRadius: 26,
-    borderWidth: 1,
+    width: 48,
+    height: 48,
   },
   pulseRing: {
     position: 'absolute',
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     borderWidth: 1.5,
   },
-  micBtn: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    borderWidth: StyleSheet.hairlineWidth,
+  roundBtn: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  askBtn: {
+    minWidth: 64,
+    height: 48,
+    borderRadius: 24,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 16,
   },
   input: {
     flex: 1,
+    minHeight: 48,
     borderWidth: StyleSheet.hairlineWidth,
-    borderRadius: 18,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    maxHeight: 100,
-  },
-  sendBtn: {
-    minWidth: 56,
-    height: 38,
-    borderRadius: 19,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 12,
+    borderRadius: 24,
+    paddingHorizontal: 16,
+    paddingTop: 12,
+    paddingBottom: 12,
+    maxHeight: 120,
   },
 });
 
